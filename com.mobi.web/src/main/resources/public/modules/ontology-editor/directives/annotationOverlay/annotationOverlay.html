@@ -26,17 +26,17 @@
         <div class="form-group">
             <label class="control-label">Annotation</label>
             <ui-select ng-model="dvm.os.annotationSelect" ng-disabled="dvm.os.editingAnnotation" autofocus on-select="dvm.selectProp()">
-                <ui-select-match placeholder="Select an annotation">{{dvm.ro.getItemIri($select.selected)}}</ui-select-match>
-                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="annotation in dvm.os.listItem.annotations.iris | filter: $select.search | orderBy:dvm.ontoUtils.getDropDownText" ui-disable-choice="dvm.disableProp(annotation)">
+                <ui-select-match placeholder="Select an annotation">{{$select.selected}}</ui-select-match>
+                <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="annotation in dvm.annotations | filter: $select.search | orderBy:dvm.ontoUtils.getDropDownText" ui-disable-choice="dvm.disableProp(annotation)">
                     <div ng-bind-html="dvm.ontoUtils.getDropDownText(annotation) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
         </div>
-        <div ng-if="dvm.ro.getItemIri(dvm.os.annotationSelect) !== dvm.prefixes.owl + 'deprecated'">
+        <div ng-if="dvm.os.annotationSelect !== dvm.prefixes.owl + 'deprecated'">
             <text-area ng-model="dvm.os.annotationValue" display-text="'Value'"></text-area>
             <language-select ng-model="dvm.os.annotationLanguage"></language-select>
         </div>
-        <div ng-if="dvm.ro.getItemIri(dvm.os.annotationSelect) === dvm.prefixes.owl + 'deprecated'">
+        <div ng-if="dvm.os.annotationSelect === dvm.prefixes.owl + 'deprecated'">
             <radio-button display-text="'True'" value="'true'" ng-model="dvm.os.annotationValue"></radio-button>
             <radio-button display-text="'False'" value="'false'" ng-model="dvm.os.annotationValue"></radio-button>
         </div>

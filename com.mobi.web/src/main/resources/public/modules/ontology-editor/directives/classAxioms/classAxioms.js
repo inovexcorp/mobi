@@ -27,9 +27,9 @@
         .module('classAxioms', [])
         .directive('classAxioms', classAxioms);
 
-        classAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService', 'ontologyManagerService'];
+        classAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'prefixes', 'ontologyUtilsManagerService', 'ontologyManagerService'];
 
-        function classAxioms(ontologyStateService, propertyManagerService, responseObj, prefixes, ontologyUtilsManagerService, ontologyManagerService) {
+        function classAxioms(ontologyStateService, propertyManagerService, prefixes, ontologyUtilsManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,19 +41,20 @@
                     var om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.pm = propertyManagerService;
-                    dvm.ro = responseObj;
                     dvm.ontoUtils = ontologyUtilsManagerService;
 
+                    dvm.getAxioms = function() {
+                        return _.map(dvm.pm.classAxiomList, 'iri');
+                    }
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
                         dvm.index = index;
                         dvm.showRemoveOverlay = true;
                     }
                     dvm.updateHierarchy = function(axiom, values) {
-                        if (_.get(axiom, 'localName') === 'subClassOf' && values.length) {
-                            var classIRIs = _.map(values, value => dvm.ro.getItemIri(value));
-                            dvm.ontoUtils.setSuperClasses(dvm.os.listItem.selected['@id'], classIRIs);
-                            dvm.ontoUtils.updateflatIndividualsHierarchy(classIRIs);
+                        if (axiom === prefixes.rdfs + 'subClassOf' && values.length) {
+                            dvm.ontoUtils.setSuperClasses(dvm.os.listItem.selected['@id'], values);
+                            dvm.ontoUtils.updateflatIndividualsHierarchy(values);
                             dvm.os.setVocabularyStuff();
                         }
                     }

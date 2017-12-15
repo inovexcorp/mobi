@@ -135,7 +135,6 @@
             'prefixes',
             'propertyManager',
             'provManager',
-            'responseObj',
             'settingsManager',
             'sparqlManager',
             'stateManager',

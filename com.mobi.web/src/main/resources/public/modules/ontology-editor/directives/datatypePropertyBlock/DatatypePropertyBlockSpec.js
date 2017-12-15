@@ -26,15 +26,12 @@ describe('Datatype Property Block directive', function() {
     beforeEach(function() {
         module('templates');
         module('datatypePropertyBlock');
-        injectBeautifyFilter();
-        injectSplitIRIFilter();
-        injectShowPropertiesFilter();
         mockOntologyState();
-        mockResponseObj();
         mockPrefixes();
         mockOntologyUtilsManager();
+        injectShowPropertiesFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
@@ -92,8 +89,6 @@ describe('Datatype Property Block directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-        });
         it('should set the correct manager values when opening the Add Data Property Overlay', function() {
             this.controller.openAddDataPropOverlay();
             expect(ontologyStateSvc.editingProperty).toBe(false);
@@ -116,7 +111,6 @@ describe('Datatype Property Block directive', function() {
                 ontologyStateSvc.listItem.selected = {
                     'prop1': [{'@value': 'value', '@language': 'lang'}]
                 };
-                ontologyStateSvc.listItem.dataPropertyRange = ['type'];
                 this.controller.editDataProp(propertyIRI, 0);
                 expect(ontologyStateSvc.editingProperty).toBe(true);
                 expect(ontologyStateSvc.propertySelect).toEqual(propertyIRI);
@@ -131,7 +125,6 @@ describe('Datatype Property Block directive', function() {
                 ontologyStateSvc.listItem.selected = {
                     'prop1': [{'@value': 'value', '@type': 'type'}]
                 };
-                ontologyStateSvc.listItem.dataPropertyRange = ['type'];
                 this.controller.editDataProp(propertyIRI, 0);
                 expect(ontologyStateSvc.editingProperty).toBe(true);
                 expect(ontologyStateSvc.propertySelect).toEqual(propertyIRI);

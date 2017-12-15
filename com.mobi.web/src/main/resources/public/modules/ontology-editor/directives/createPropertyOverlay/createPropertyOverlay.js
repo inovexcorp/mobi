@@ -27,9 +27,9 @@
         .module('createPropertyOverlay', [])
         .directive('createPropertyOverlay', createPropertyOverlay);
 
-        createPropertyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService', 'responseObj'];
+        createPropertyOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createPropertyOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService, responseObj) {
+        function createPropertyOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,7 +40,6 @@
                     var dvm = this;
                     var setAsObject = false;
                     var setAsDatatype = false;
-                    var ro = responseObj;
 
                     dvm.characteristics = [
                         {
@@ -57,7 +56,6 @@
                         }
                     ];
                     dvm.prefixes = prefixes;
-                    dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
@@ -142,12 +140,12 @@
                     }
 
                     function commonUpdate(key, setThisOpened) {
-                        dvm.os.listItem[key].iris.push(ro.createItemFromIri(dvm.property['@id']));
+                        dvm.os.listItem[key].iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
                         if (dvm.values.length) {
                             dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
                             dvm.ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), key);
-                            if (dvm.ontoUtils.containsDerivedSemanticRelation(_.map(dvm.values, obj => ro.createItemFromIri(obj['@id'])))) {
-                                dvm.os.listItem.derivedSemanticRelations.push(ro.createItemFromIri(dvm.property['@id']));
+                            if (dvm.ontoUtils.containsDerivedSemanticRelation(_.map(dvm.values, '@id'))) {
+                                dvm.os.listItem.derivedSemanticRelations.push(dvm.property['@id']);
                             }
                         } else {
                             dvm.os.listItem[key].hierarchy.push({'entityIRI': dvm.property['@id']});

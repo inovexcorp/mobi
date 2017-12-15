@@ -29,7 +29,7 @@
                 <ui-select-match placeholder="Select Concept(s)">
                     <span title="{{$item}}">{{dvm.ontoUtils.getLabelForIRI($item)}}</span>
                 </ui-select-match>
-                <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.conceptList | filter:$select.search | orderBy:dvm.ontoUtils.getLabelForIRI track by iri">
+                <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.filteredConcepts | filter:$select.search | orderBy:dvm.ontoUtils.getLabelForIRI">
                     <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getLabelForIRI(iri) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>

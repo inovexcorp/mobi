@@ -21,29 +21,26 @@
  * #L%
  */
 describe('Create Property Overlay directive', function() {
-    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, prefixes, ontoUtils, responseObj;
+    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
         module('createPropertyOverlay');
-        injectRegexConstant();
-        injectCamelCaseFilter();
-        injectTrustedFilter();
-        injectHighlightFilter();
         mockOntologyManager();
         mockOntologyState();
         mockPrefixes();
         mockOntologyUtilsManager();
-        mockResponseObj();
+        injectCamelCaseFilter();
+        injectTrustedFilter();
+        injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_, _responseObj_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
             ontoUtils = _ontologyUtilsManagerService_;
-            responseObj = _responseObj_;
         });
 
         this.iri = 'iri#';
@@ -63,7 +60,6 @@ describe('Create Property Overlay directive', function() {
         ontologyStateSvc = null;
         prefixes = null;
         ontoUtils = null;
-        responseObj = null;
         this.element.remove();
     });
 
@@ -226,7 +222,6 @@ describe('Create Property Overlay directive', function() {
         describe('create calls the correct manager functions', function() {
             beforeEach(function() {
                 ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
-                responseObj.createItemFromIri.and.returnValue({namespace: 'beginthen', localName: 'end'});
                 this.controller.property['@id'] = 'property-iri';
                 this.controller.property['@type'] = [];
                 this.controller.property[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
@@ -267,14 +262,13 @@ describe('Create Property Overlay directive', function() {
                     expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.property['@id']);
                     expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                    expect(ontologyStateSvc.listItem.objectProperties.iris).toContain({namespace: 'beginthen', localName: 'end'});
+                    expect(ontologyStateSvc.listItem.objectProperties.iris).toEqual(_.set({}, "['" + this.controller.property['@id'] + "']", ontologyStateSvc.listItem.ontologyId));
                     expect(ontologyStateSvc.setObjectPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, true);
-                    expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual([]);
+                    expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual({});
                     expect(ontologyStateSvc.listItem.dataProperties.hierarchy).toEqual([]);
-                    expect(ontologyStateSvc.listItem.annotations.iris).toEqual([]);
+                    expect(ontologyStateSvc.listItem.annotations.iris).toEqual({});
                     expect(ontologyStateSvc.listItem.objectProperties.hierarchy).toContain({entityIRI: this.controller.property['@id']});
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectProperties.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
-                    expect(responseObj.createItemFromIri).toHaveBeenCalledWith('property-iri');
                 });
                 describe('has values', function() {
                     beforeEach(function() {
@@ -294,15 +288,14 @@ describe('Create Property Overlay directive', function() {
                         expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.property['@id']);
                         expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                        expect(ontologyStateSvc.listItem.objectProperties.iris).toContain({namespace: 'beginthen', localName: 'end'});
+                        expect(ontologyStateSvc.listItem.objectProperties.iris).toEqual(_.set({}, "['" + this.controller.property['@id'] + "']", ontologyStateSvc.listItem.ontologyId));
                         expect(ontologyStateSvc.setObjectPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, true);
-                        expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual([]);
+                        expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual({});
                         expect(ontologyStateSvc.listItem.dataProperties.hierarchy).toEqual([]);
-                        expect(ontologyStateSvc.listItem.annotations.iris).toEqual([]);
+                        expect(ontologyStateSvc.listItem.annotations.iris).toEqual({});
                         expect(this.controller.property[prefixes.rdfs + 'subPropertyOf']).toEqual([{'@id': 'propertyA'}]);
                         expect(ontoUtils.setSuperProperties).toHaveBeenCalledWith('property-iri', ['propertyA'], 'objectProperties');
-                        expect(ontologyStateSvc.listItem.derivedSemanticRelations).toContain({namespace: 'beginthen', localName: 'end'});
-                        expect(responseObj.createItemFromIri).toHaveBeenCalledWith('property-iri');
+                        expect(ontologyStateSvc.listItem.derivedSemanticRelations).toContain(this.controller.property['@id']);
                     });
                     it('without a derived semantic relation', function() {
                         this.controller.create();
@@ -317,15 +310,14 @@ describe('Create Property Overlay directive', function() {
                         expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.property['@id']);
                         expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                        expect(ontologyStateSvc.listItem.objectProperties.iris).toContain({namespace: 'beginthen', localName: 'end'});
+                        expect(ontologyStateSvc.listItem.objectProperties.iris).toEqual(_.set({}, "['" + this.controller.property['@id'] + "']", ontologyStateSvc.listItem.ontologyId));
                         expect(ontologyStateSvc.setObjectPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, true);
-                        expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual([]);
+                        expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual({});
                         expect(ontologyStateSvc.listItem.dataProperties.hierarchy).toEqual([]);
-                        expect(ontologyStateSvc.listItem.annotations.iris).toEqual([]);
+                        expect(ontologyStateSvc.listItem.annotations.iris).toEqual({});
                         expect(this.controller.property[prefixes.rdfs + 'subPropertyOf']).toEqual([{'@id': 'propertyA'}]);
                         expect(ontoUtils.setSuperProperties).toHaveBeenCalledWith('property-iri', ['propertyA'], 'objectProperties');
                         expect(ontologyStateSvc.listItem.derivedSemanticRelations).toEqual([]);
-                        expect(responseObj.createItemFromIri).toHaveBeenCalledWith('property-iri');
                     });
                 });
             });
@@ -343,10 +335,10 @@ describe('Create Property Overlay directive', function() {
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
                     expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
                     expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.controller.property);
-                    expect(ontologyStateSvc.listItem.objectProperties.iris).toEqual([]);
+                    expect(ontologyStateSvc.listItem.objectProperties.iris).toEqual({});
                     expect(ontologyStateSvc.listItem.objectProperties.hierarchy).toEqual([]);
-                    expect(ontologyStateSvc.listItem.annotations.iris).toEqual([]);
-                    expect(ontologyStateSvc.listItem.dataProperties.iris).toContain({namespace: 'beginthen', localName: 'end'});
+                    expect(ontologyStateSvc.listItem.annotations.iris).toEqual({});
+                    expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual(_.set({}, "['" + this.controller.property['@id'] + "']", ontologyStateSvc.listItem.ontologyId));
                     expect(ontologyStateSvc.setDataPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, true);
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
                     expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.property['@id']);
@@ -354,7 +346,6 @@ describe('Create Property Overlay directive', function() {
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(ontologyStateSvc.listItem.dataProperties.hierarchy).toContain({entityIRI: this.controller.property['@id']});
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataProperties.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
-                    expect(responseObj.createItemFromIri).toHaveBeenCalledWith('property-iri');
                 });
                 it('has values', function() {
                     this.controller.values = [{'@id': 'propertyA'}];
@@ -366,10 +357,10 @@ describe('Create Property Overlay directive', function() {
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
                     expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
                     expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.controller.property);
-                    expect(ontologyStateSvc.listItem.objectProperties.iris).toEqual([]);
+                    expect(ontologyStateSvc.listItem.objectProperties.iris).toEqual({});
                     expect(ontologyStateSvc.listItem.objectProperties.hierarchy).toEqual([]);
-                    expect(ontologyStateSvc.listItem.annotations.iris).toEqual([]);
-                    expect(ontologyStateSvc.listItem.dataProperties.iris).toContain({namespace: 'beginthen', localName: 'end'});
+                    expect(ontologyStateSvc.listItem.annotations.iris).toEqual({});
+                    expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual(_.set({}, "['" + this.controller.property['@id'] + "']", ontologyStateSvc.listItem.ontologyId));
                     expect(ontologyStateSvc.setDataPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, true);
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
                     expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.property['@id']);
@@ -377,7 +368,6 @@ describe('Create Property Overlay directive', function() {
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(this.controller.property[prefixes.rdfs + 'subPropertyOf']).toEqual([{'@id': 'propertyA'}]);
                     expect(ontoUtils.setSuperProperties).toHaveBeenCalledWith('property-iri', ['propertyA'], 'dataProperties');
-                    expect(responseObj.createItemFromIri).toHaveBeenCalledWith('property-iri');
                 });
             });
             it('if the property is an annotation property', function() {
@@ -388,11 +378,11 @@ describe('Create Property Overlay directive', function() {
                 expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(this.controller.property);
                 expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.property);
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.controller.property);
-                expect(ontologyStateSvc.listItem.objectProperties.iris).toEqual([]);
+                expect(ontologyStateSvc.listItem.objectProperties.iris).toEqual({});
                 expect(ontologyStateSvc.listItem.objectProperties.hierarchy).toEqual([]);
-                expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual([]);
+                expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual({});
                 expect(ontologyStateSvc.listItem.dataProperties.hierarchy).toEqual([]);
-                expect(ontologyStateSvc.listItem.annotations.iris).toContain({namespace: 'beginthen', localName: 'end'});
+                expect(ontologyStateSvc.listItem.annotations.iris).toEqual(_.set({}, "['" + this.controller.property['@id'] + "']", ontologyStateSvc.listItem.ontologyId));
                 expect(ontologyStateSvc.listItem.annotations.hierarchy).toContain({entityIRI: this.controller.property['@id']});
                 expect(ontologyStateSvc.setAnnotationPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, true);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
@@ -400,7 +390,6 @@ describe('Create Property Overlay directive', function() {
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.property['@id']);
                 expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                expect(responseObj.createItemFromIri).toHaveBeenCalledWith('property-iri');
             });
             describe('if characteristics', function() {
                 it('are set', function() {

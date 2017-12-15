@@ -21,26 +21,22 @@
  * #L%
  */
 describe('Datatype Property Overlay directive', function() {
-    var $compile, scope, ontologyStateSvc, responseObj, prefixes, ontoUtils;
+    var $compile, scope, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
         module('datatypePropertyOverlay');
-        injectRegexConstant();
-        injectHighlightFilter();
-        injectTrustedFilter();
-        mockOntologyManager();
         mockOntologyState();
-        mockResponseObj();
         mockUtil();
         mockPrefixes();
         mockOntologyUtilsManager();
+        injectHighlightFilter();
+        injectTrustedFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            responseObj = _responseObj_;
             prefixes = _prefixes_;
             ontoUtils = _ontologyUtilsManagerService_;
         });
@@ -54,7 +50,6 @@ describe('Datatype Property Overlay directive', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        responseObj = null;
         prefixes = null;
         ontoUtils = null;
         this.element.remove();
@@ -104,11 +99,10 @@ describe('Datatype Property Overlay directive', function() {
             beforeEach(function() {
                 this.value = 'value';
                 ontologyStateSvc.listItem.selected = {};
-                responseObj.getItemIri.and.returnValue('prop');
             });
             it('with a type and no language', function() {
                 var type = {'@id': 'type'};
-                this.controller.addProperty({}, this.value, type);
+                this.controller.addProperty('prop', this.value, type);
                 expect(ontologyStateSvc.listItem.selected.prop).toBeDefined();
                 expect(ontologyStateSvc.listItem.selected.prop).toContain({'@value': this.value, '@type': type['@id']});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
@@ -117,7 +111,7 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('without a type and no language', function() {
-                this.controller.addProperty({}, this.value);
+                this.controller.addProperty('prop', this.value);
                 expect(ontologyStateSvc.listItem.selected.prop).toBeDefined();
                 expect(ontologyStateSvc.listItem.selected.prop).toContain({'@value': this.value});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
@@ -129,7 +123,7 @@ describe('Datatype Property Overlay directive', function() {
                 spyOn(this.controller, 'isStringType').and.returnValue(true);
                 var language = 'en';
                 var type = {'@id': 'type'};
-                this.controller.addProperty({}, this.value, type, language);
+                this.controller.addProperty('prop', this.value, type, language);
                 expect(ontologyStateSvc.listItem.selected.prop).toBeDefined();
                 expect(ontologyStateSvc.listItem.selected.prop).toContain({'@value': this.value, '@language': language});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
@@ -141,7 +135,7 @@ describe('Datatype Property Overlay directive', function() {
                 spyOn(this.controller, 'isStringType').and.returnValue(false);
                 var language = 'en';
                 var type = {'@id': 'type'};
-                this.controller.addProperty({}, this.value, type, language);
+                this.controller.addProperty('prop', this.value, type, language);
                 expect(ontologyStateSvc.listItem.selected.prop).toBeDefined();
                 expect(ontologyStateSvc.listItem.selected.prop).toContain({'@value': this.value, '@type': type['@id']});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
@@ -152,7 +146,7 @@ describe('Datatype Property Overlay directive', function() {
             it('without a language', function() {
                 spyOn(this.controller, 'isStringType').and.returnValue(false);
                 var type = {'@id': 'type'};
-                this.controller.addProperty({}, this.value, type);
+                this.controller.addProperty('prop', this.value, type);
                 expect(ontologyStateSvc.listItem.selected.prop).toBeDefined();
                 expect(ontologyStateSvc.listItem.selected.prop).toContain({'@value': this.value, '@type': type['@id']});
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(false);
@@ -165,12 +159,11 @@ describe('Datatype Property Overlay directive', function() {
             beforeEach(function() {
                 this.value = 'value';
                 ontologyStateSvc.listItem.selected = {prop: [{}]};
-                responseObj.getItemIri.and.returnValue('prop');
                 ontologyStateSvc.propertyIndex = 0;
             });
             it('if the type is provided and no language', function() {
                 var type = {'@id': 'type'};
-                this.controller.editProperty({}, this.value, type);
+                this.controller.editProperty('prop', this.value, type);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.listItem.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value, '@type': type['@id']});
@@ -180,7 +173,7 @@ describe('Datatype Property Overlay directive', function() {
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('if the type is not provided and no language', function() {
-                this.controller.editProperty({}, this.value);
+                this.controller.editProperty('prop', this.value);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.listItem.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value});
@@ -193,7 +186,7 @@ describe('Datatype Property Overlay directive', function() {
                 spyOn(this.controller, 'isStringType').and.returnValue(true);
                 var language = 'en';
                 var type = {'@id': 'type'};
-                this.controller.editProperty({}, this.value, type, language);
+                this.controller.editProperty('prop', this.value, type, language);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.listItem.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value, '@language': language});
@@ -206,7 +199,7 @@ describe('Datatype Property Overlay directive', function() {
                 spyOn(this.controller, 'isStringType').and.returnValue(false);
                 var language = 'en';
                 var type = {'@id': 'type'};
-                this.controller.editProperty({}, this.value, type, language);
+                this.controller.editProperty('prop', this.value, type, language);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.listItem.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value, '@type': type['@id']});
@@ -217,7 +210,7 @@ describe('Datatype Property Overlay directive', function() {
             });
             it('if the language is not provided', function() {
                 var type = {'@id': 'type'};
-                this.controller.editProperty({}, this.value, type);
+                this.controller.editProperty('prop', this.value, type);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.listItem.selected.prop[ontologyStateSvc.propertyIndex]).toEqual({'@value': this.value, '@type': type['@id']});

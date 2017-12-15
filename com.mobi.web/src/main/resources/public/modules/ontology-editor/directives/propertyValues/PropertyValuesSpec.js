@@ -21,22 +21,18 @@
  * #L%
  */
 describe('Property Values directive', function() {
-    var $compile, scope, resObj, ontologyUtilsManagerSvc, ontologyManagerSvc;
+    var $compile, scope, ontologyUtilsManagerSvc, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('propertyValues');
-        injectTrustedFilter();
-        injectBeautifyFilter();
-        mockResponseObj();
         mockOntologyState();
         mockOntologyUtilsManager();
         mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _responseObj_, _ontologyUtilsManagerService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyUtilsManagerService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            resObj = _responseObj_;
             ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
         });
@@ -56,7 +52,6 @@ describe('Property Values directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        resObj = null;
         ontologyUtilsManagerSvc = null;
         ontologyManagerSvc = null;
         this.element.remove();
@@ -117,11 +112,9 @@ describe('Property Values directive', function() {
         });
     });
     it('should call edit when the appropriate button is clicked', function() {
-        resObj.createItemFromIri.and.returnValue({});
         var editButton = angular.element(this.element.querySelectorAll('.value-container [title=Edit]')[0]);
         editButton.triggerHandler('click');
-        expect(resObj.createItemFromIri).toHaveBeenCalledWith(scope.property);
-        expect(scope.edit).toHaveBeenCalledWith({}, 0);
+        expect(scope.edit).toHaveBeenCalledWith(scope.property, 0);
     });
     it('should call remove when the appropriate button is clicked', function() {
         var removeButton = angular.element(this.element.querySelectorAll('.value-container [title=Delete]')[0]);

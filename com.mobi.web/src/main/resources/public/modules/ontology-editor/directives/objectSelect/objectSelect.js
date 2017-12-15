@@ -27,9 +27,9 @@
         .module('objectSelect', [])
         .directive('objectSelect', objectSelect);
 
-        objectSelect.$inject = ['ontologyManagerService', 'responseObj', 'settingsManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
+        objectSelect.$inject = ['ontologyManagerService', 'settingsManagerService', 'ontologyStateService', 'ontologyUtilsManagerService'];
 
-        function objectSelect(ontologyManagerService, responseObj, settingsManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
+        function objectSelect(ontologyManagerService, settingsManagerService, ontologyStateService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -49,30 +49,25 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    var ro = responseObj;
                     var os = ontologyStateService;
+                    var om = ontologyManagerService;
                     $scope.multiSelect = angular.isDefined($scope.multiSelect) ? $scope.multiSelect : true;
 
-                    dvm.om = ontologyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.tooltipDisplay = settingsManagerService.getTooltipDisplay();
                     dvm.values = [];
 
-                    dvm.getItemOntologyIri = function(item) {
-                        return _.get(item, 'ontologyId', os.listItem.ontologyId);
+                    dvm.getOntologyIri = function(iri) {
+                        return _.get(dvm.selectList, "['" + iri + "']", os.listItem.ontologyId);
                     }
-                    dvm.getItemIri = function(item) {
-                        return _.get(item, '@id', ro.getItemIri(item));
-                    }
-                    dvm.getTooltipDisplay = function(item) {
-                        var itemIri = dvm.getItemIri(item);
-                        var result = itemIri;
-                        if (!_.has(item, 'ontologyId')) {
-                            var selectedObject = os.getEntityByRecordId(os.listItem.ontologyRecord.recordId, itemIri);
+                    dvm.getTooltipDisplay = function(iri) {
+                        var result = iri;
+                        if (dvm.getOntologyIri(iri) === os.listItem.ontologyId) {
+                            var selectedObject = os.getEntityByRecordId(os.listItem.ontologyRecord.recordId, iri);
                             if (dvm.tooltipDisplay === 'comment') {
-                                result = dvm.om.getEntityDescription(selectedObject) || itemIri;
+                                result = om.getEntityDescription(selectedObject) || iri;
                             } else if (dvm.tooltipDisplay === 'label') {
-                                result = dvm.om.getEntityName(selectedObject) || itemIri;
+                                result = om.getEntityName(selectedObject) || iri;
                             } else if (_.has(selectedObject, '@id')) {
                                 result = selectedObject['@id'];
                             }
@@ -80,7 +75,7 @@
                         return result;
                     }
                     dvm.getValues = function(searchText) {
-                        dvm.values = dvm.ontoUtils.getSelectList(dvm.selectList, searchText, dvm.ontoUtils.getDropDownText);
+                        dvm.values = dvm.ontoUtils.getSelectList(_.keys(dvm.selectList), searchText, dvm.ontoUtils.getDropDownText);
                     }
                 }]
             }

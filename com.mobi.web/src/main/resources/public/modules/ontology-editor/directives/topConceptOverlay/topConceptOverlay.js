@@ -38,7 +38,6 @@
          * @name topConceptOverlay.directive:topConceptOverlay
          * @scope
          * @restrict E
-         * @requires responseObj.service:responseObj
          * @requires ontologyManager.service:ontologyManagerService
          * @requires ontologyState.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
@@ -70,24 +69,29 @@
                 controller: function() {
                     var dvm = this;
                     var om = ontologyManagerService;
-                    var state = ontologyStateService;
+                    var os = ontologyStateService;
                     var axiom = prefixes.skos + 'hasTopConcept';
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.util = utilService;
                     dvm.values = [];
-                    dvm.conceptList = getConceptList();
+
+                    var concepts = getConceptList();
+                    dvm.filteredConcepts = concepts;
 
                     dvm.addTopConcept = function() {
-                        state.listItem.selected[axiom] = _.union(_.get(state.listItem.selected, axiom, []), dvm.values);
-                        state.addToAdditions(state.listItem.ontologyRecord.recordId, {'@id': state.listItem.selected['@id'], [axiom]: dvm.values});
+                        os.listItem.selected[axiom] = _.union(_.get(os.listItem.selected, axiom, []), dvm.values);
+                        os.addToAdditions(os.listItem.ontologyRecord.recordId, {'@id': os.listItem.selected['@id'], [axiom]: dvm.values});
                         dvm.closeOverlay();
                         dvm.ontoUtils.saveCurrentChanges();
-                        dvm.onSubmit({relationship: {namespace: prefixes.skos, localName: 'hasTopConcept'}, values: dvm.values})
+                        dvm.onSubmit({relationship: prefixes.skos + 'hasTopConcept', values: dvm.values})
+                    }
+                    dvm.getValues = function(searchText) {
+                        dvm.filteredConcepts = dvm.ontoUtils.getSelectList(concepts, searchText);
                     }
 
                     function getConceptList() {
-                        var all = om.getConceptIRIs(state.getOntologiesArray(), state.listItem.derivedConcepts);
-                        var set = _.map(_.get(state.listItem.selected, axiom), '@id');
+                        var all = om.getConceptIRIs(os.getOntologiesArray(), os.listItem.derivedConcepts);
+                        var set = _.map(_.get(os.listItem.selected, axiom), '@id');
                         return _.difference(all, set);
                     }
                 }

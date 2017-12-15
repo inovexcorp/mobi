@@ -27,9 +27,9 @@
         .module('datatypePropertyOverlay', [])
         .directive('datatypePropertyOverlay', datatypePropertyOverlay);
 
-        datatypePropertyOverlay.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'prefixes', 'ontologyUtilsManagerService'];
+        datatypePropertyOverlay.$inject = ['ontologyStateService', 'utilService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function datatypePropertyOverlay(responseObj, ontologyStateService, utilService, prefixes, ontologyUtilsManagerService) {
+        function datatypePropertyOverlay(ontologyStateService, utilService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,37 +39,33 @@
                 controller: function() {
                     var dvm = this;
                     dvm.ontoUtils = ontologyUtilsManagerService;
-                    dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
+                    dvm.dataProperties = _.keys(dvm.os.listItem.dataProperties.iris);
 
                     dvm.addProperty = function(select, value, type, language) {
-                        var property = dvm.ro.getItemIri(select);
-                        if (property) {
+                        if (select) {
                             var valueObj = {'@value': value};
                             if (language && dvm.isStringType()) {
                                 valueObj['@language'] = language;
                             } else if (type) {
                                 valueObj['@type'] = type['@id'];
                             }
-                            if (_.has(dvm.os.listItem.selected, property)) {
-                                dvm.os.listItem.selected[property].push(valueObj);
+                            if (_.has(dvm.os.listItem.selected, select)) {
+                                dvm.os.listItem.selected[select].push(valueObj);
                             } else {
-                                dvm.os.listItem.selected[property] = [valueObj];
+                                dvm.os.listItem.selected[select] = [valueObj];
                             }
                         }
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'],
-                            property, valueObj));
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, valueObj));
                         dvm.os.showDataPropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }
 
                     dvm.editProperty = function(select, value, type, language) {
-                        var property = dvm.ro.getItemIri(select);
-                        if (property) {
-                            var propertyObj = dvm.os.listItem.selected[property][dvm.os.propertyIndex];
-                            dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'],
-                                property, propertyObj));
+                        if (select) {
+                            var propertyObj = dvm.os.listItem.selected[select][dvm.os.propertyIndex];
+                            dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, propertyObj));
                             propertyObj['@value'] = value;
                             if (type && !(language && dvm.isStringType())) {
                                 propertyObj['@type'] = type['@id'];
@@ -81,8 +77,7 @@
                             } else {
                                 _.unset(propertyObj, '@language');
                             }
-                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'],
-                                property, propertyObj));
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, propertyObj));
                         }
                         dvm.os.showDataPropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();

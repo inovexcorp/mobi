@@ -27,9 +27,9 @@
         .module('datatypePropertyBlock', [])
         .directive('datatypePropertyBlock', datatypePropertyBlock);
 
-        datatypePropertyBlock.$inject = ['ontologyStateService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService'];
+        datatypePropertyBlock.$inject = ['ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function datatypePropertyBlock(ontologyStateService, responseObj, prefixes, ontologyUtilsManagerService) {
+        function datatypePropertyBlock(ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,9 +38,9 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
+                    dvm.dataProperties = _.keys(dvm.os.listItem.dataProperties.iris);
 
                     dvm.openAddDataPropOverlay = function() {
                         dvm.os.editingProperty = false;
@@ -53,8 +53,7 @@
                     }
 
                     dvm.editDataProp = function(property, index) {
-                        var propertyObj = dvm.os.listItem.selected[dvm.ro.getItemIri(property)][index];
-                        var type = _.find(dvm.os.listItem.dataPropertyRange, datatype => dvm.ro.getItemIri(datatype) === propertyObj['@type']);
+                        var propertyObj = dvm.os.listItem.selected[property][index];
                         dvm.os.editingProperty = true;
                         dvm.os.propertySelect = property;
                         dvm.os.propertyValue = propertyObj['@value'];
@@ -63,7 +62,7 @@
                         if (dvm.os.propertyLanguage) {
                             dvm.os.propertyType = {'@id': prefixes.rdf + 'langString'};
                         } else {
-                            dvm.os.propertyType = type ? {'@id': dvm.ro.getItemIri(type)} : undefined;
+                            dvm.os.propertyType = propertyObj['@type'] ? {'@id': propertyObj['@type']} : undefined;
                         }
                         dvm.os.showDataPropertyOverlay = true;
                     }

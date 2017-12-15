@@ -27,9 +27,9 @@
         .module('datatypePropertyAxioms', [])
         .directive('datatypePropertyAxioms', datatypePropertyAxioms);
 
-        datatypePropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService', 'ontologyManagerService'];
+        datatypePropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'prefixes', 'ontologyUtilsManagerService', 'ontologyManagerService'];
 
-        function datatypePropertyAxioms(ontologyStateService, propertyManagerService, responseObj, prefixes, ontologyUtilsManagerService, ontologyManagerService) {
+        function datatypePropertyAxioms(ontologyStateService, propertyManagerService, prefixes, ontologyUtilsManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,24 +41,23 @@
                     var om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.pm = propertyManagerService;
-                    dvm.ro = responseObj;
                     dvm.ontoUtils = ontologyUtilsManagerService;
 
+                    dvm.getAxioms = function() {
+                        return _.map(dvm.pm.datatypeAxiomList, 'iri');
+                    }
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
                         dvm.index = index;
                         dvm.showRemoveOverlay = true;
                     }
-
                     dvm.updateHierarchy = function(axiom, values) {
-                        var localName = _.get(axiom, 'localName');
-                        if (localName === 'subPropertyOf' && values.length) {
-                            dvm.ontoUtils.setSuperProperties(dvm.os.listItem.selected['@id'], _.map(values, value => dvm.ro.getItemIri(value)), 'dataProperties');
-                        } else if (localName === 'domain' && values.length) {
+                        if (axiom === prefixes.rdfs + 'subPropertyOf' && values.length) {
+                            dvm.ontoUtils.setSuperProperties(dvm.os.listItem.selected['@id'], values, 'dataProperties');
+                        } else if (axiom === prefixes.rdfs + 'domain' && values.length) {
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         }
                     }
-
                     dvm.removeFromHierarchy = function(axiomObject) {
                         if (prefixes.rdfs + 'subPropertyOf' === dvm.key && !om.isBlankNodeId(axiomObject['@id'])) {
                             dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.dataProperties.hierarchy, dvm.os.listItem.selected['@id'], axiomObject['@id'], dvm.os.listItem.dataProperties.index);

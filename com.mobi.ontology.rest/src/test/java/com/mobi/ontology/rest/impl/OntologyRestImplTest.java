@@ -561,10 +561,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         }
     }
 
-    private JSONObject createJsonIRI(IRI iri) {
-        return new JSONObject()
-                .element("namespace", iri.getNamespace())
-                .element("localName", iri.getLocalName());
+    private String createJsonIRI(IRI iri) {
+        return iri.stringValue();
     }
 
     private void assertAnnotations(JSONObject responseObject, Set<AnnotationProperty> propSet, Set<Annotation> annSet) {
