@@ -15,8 +15,20 @@
             max-height: 300px;
             overflow-y: auto;
 
-            h4 {
-                margin-bottom: 0;
+            .md-list-item-inner {
+                width: 100%;
+
+                .md-list-item-text {
+                    width: calc(100% - 24px);
+
+                    h4 {
+                        margin-bottom: 0;
+                        @include textOverflow;
+                    }
+                    p {
+                        @include textOverflow;
+                    }
+                }
             }
         }
         .btn-container {
