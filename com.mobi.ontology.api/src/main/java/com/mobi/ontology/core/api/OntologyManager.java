@@ -61,11 +61,12 @@ public interface OntologyManager {
      * Creates a new Ontology Object using the provided File.
      *
      * @param file the File that contains the data to make up the Ontology.
+     * @param resolveImports Whether or not imports should be resolved when creating this ontology
      * @return an Ontology created with the provided File.
      * @throws MobiOntologyCreationException - if the ontology can't be created.
      * @throws FileNotFoundException            - if the file path is invalid.
      */
-    Ontology createOntology(File file) throws FileNotFoundException;
+    Ontology createOntology(File file, boolean resolveImports) throws FileNotFoundException;
 
     /**
      * Creates a new Ontology Object using the provided IRI.
@@ -80,19 +81,21 @@ public interface OntologyManager {
      * Creates a new Ontology Object using the provided InputStream.
      *
      * @param inputStream the InputStream which contains the ontology data.
+     * @param resolveImports Whether or not imports should be resolved when creating this ontology
      * @return an Ontology created with the provided InputStream.
      * @throws MobiOntologyCreationException - if the ontology can't be created.
      */
-    Ontology createOntology(InputStream inputStream);
+    Ontology createOntology(InputStream inputStream, boolean resolveImports);
 
     /**
      * Creates a new Ontology Object using the provided JSON-LD String.
      *
      * @param json the JSON-LD of the ontology you want to create.
+     * @param resolveImports Whether or not imports should be resolved when creating this ontology
      * @return an Ontology created with the provided JSON-LD String.
      * @throws MobiOntologyCreationException - if the ontology can't be created.
      */
-    Ontology createOntology(String json);
+    Ontology createOntology(String json, boolean resolveImports);
 
     /**
      * Creates a new Ontology Object using the provided Model.
