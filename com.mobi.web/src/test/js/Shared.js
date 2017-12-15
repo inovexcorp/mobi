@@ -723,6 +723,8 @@ function mockOntologyUtilsManager() {
             this.containsDerivedConcept = jasmine.createSpy('containsDerivedConcept');
             this.containsDerivedSemanticRelation = jasmine.createSpy('containsDerivedSemanticRelation');
             this.containsDerivedConceptScheme = jasmine.createSpy('containsDerivedConceptScheme');
+            this.updateVocabularyHierarchies = jasmine.createSpy('updateVocabularyHierarchies');
+            this.removeFromVocabularyHierarchies = jasmine.createSpy('removeFromVocabularyHierarchies');
             this.addIndividual = jasmine.createSpy('addIndividual');
             this.addConcept = jasmine.createSpy('addConcept');
             this.addConceptScheme = jasmine.createSpy('addConceptScheme');

@@ -183,7 +183,7 @@ public class OntologyRestImpl implements OntologyRest {
         CreateActivity createActivity = null;
         try {
             createActivity = provUtils.startCreateActivity(user);
-            Ontology ontology = ontologyManager.createOntology(fileInputStream);
+            Ontology ontology = ontologyManager.createOntology(fileInputStream, false);
             return uploadOntology(user, createActivity, ontology, title, description, keywords);
         } catch (MobiException ex) {
             provUtils.removeActivity(createActivity);
@@ -205,7 +205,7 @@ public class OntologyRestImpl implements OntologyRest {
         CreateActivity createActivity = null;
         try {
             createActivity = provUtils.startCreateActivity(user);
-            Ontology ontology = ontologyManager.createOntology(ontologyJson);
+            Ontology ontology = ontologyManager.createOntology(ontologyJson, false);
             return uploadOntology(user, createActivity, ontology, title, description, keywords);
         } catch (MobiException ex) {
             provUtils.removeActivity(createActivity);
@@ -330,7 +330,7 @@ public class OntologyRestImpl implements OntologyRest {
                 }
             }
 
-            Model changedOnt = ontologyManager.createOntology(fileInputStream).asModel(modelFactory);
+            Model changedOnt = ontologyManager.createOntology(fileInputStream, false).asModel(modelFactory);
             Model currentOnt = catalogManager.getCompiledResource(recordId, branchId, commitId);
 
             Difference diff = catalogManager.getDiff(currentOnt, changedOnt);
@@ -1585,14 +1585,6 @@ public class OntologyRestImpl implements OntologyRest {
         Model model = ontology.asModel(modelFactory);
         Resource commitId = versioningManager.commit(catalogId, record.getResource(), masterBranchId, user,
                 "The initial commit.", model, null);
-
-        // Cache
-        ontologyCache.getOntologyCache().ifPresent(cache -> {
-            String key = ontologyCache.generateKey(record.getResource().stringValue(),
-                    masterBranchId.stringValue(), commitId.stringValue());
-            log.trace("caching " + key);
-            cache.put(key, ontology);
-        });
 
         JSONObject response = new JSONObject()
                 .element("ontologyId", ontology.getOntologyId().getOntologyIdentifier().stringValue())
