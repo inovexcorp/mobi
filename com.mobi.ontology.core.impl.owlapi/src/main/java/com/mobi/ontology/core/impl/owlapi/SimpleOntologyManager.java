@@ -25,7 +25,6 @@ package com.mobi.ontology.core.impl.owlapi;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import org.apache.commons.io.IOUtils;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
@@ -52,6 +51,7 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -220,8 +220,8 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public Ontology createOntology(File file) throws FileNotFoundException {
-        return new SimpleOntology(file, this, sesameTransformer, bNodeService);
+    public Ontology createOntology(File file, boolean resolveImports) throws FileNotFoundException {
+        return new SimpleOntology(file, this, sesameTransformer, bNodeService, resolveImports);
     }
 
     @Override
@@ -230,13 +230,13 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public Ontology createOntology(InputStream inputStream) {
-        return new SimpleOntology(inputStream, this, sesameTransformer, bNodeService);
+    public Ontology createOntology(InputStream inputStream, boolean resolveImports) {
+        return new SimpleOntology(inputStream, this, sesameTransformer, bNodeService, resolveImports);
     }
 
     @Override
-    public Ontology createOntology(String json) {
-        return new SimpleOntology(json, this, sesameTransformer, bNodeService);
+    public Ontology createOntology(String json, boolean resolveImports) {
+        return new SimpleOntology(json, this, sesameTransformer, bNodeService, resolveImports);
     }
 
     @Override
