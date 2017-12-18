@@ -23,8 +23,11 @@ package com.mobi.platform.config.impl.application;
  * #L%
  */
 
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.mobi.platform.config.api.ontologies.platformconfig.Application;
 import com.mobi.platform.config.api.ontologies.platformconfig.ApplicationFactory;
 import com.mobi.rdf.api.Model;
@@ -47,6 +50,8 @@ import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import org.junit.Before;
+import org.junit.Test;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.repository.sail.SailRepository;
@@ -54,11 +59,6 @@ import org.openrdf.sail.memory.MemoryStore;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
 
 public class SimpleApplicationWrapperTest {
     private SimpleApplicationWrapper wrapper;
@@ -103,19 +103,6 @@ public class SimpleApplicationWrapperTest {
         Map<String, Object> props = new HashMap<>();
         props.put("id", "id");
         props.put("title", "Title");
-
-        wrapper.validateConfig(props);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void validateConfigWithExistingIdTest() {
-        // Setup:
-        Map<String, Object> props = new HashMap<>();
-        props.put("id", "id");
-        props.put("title", "Title");
-        RepositoryConnection conn = repo.getConnection();
-        conn.add(vf.createIRI(namespace + "id"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(Application.TYPE));
-        conn.close();
 
         wrapper.validateConfig(props);
     }
