@@ -87,11 +87,12 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
 
     @Activate
     protected void start(Map<String, Object> props) {
-        LOG.trace("Starting \"" + applicationId + "\" application...");
-        validateConfig(props);
         ApplicationConfig config = Configurable.createConfigurable(ApplicationConfig.class, props);
+        LOG.trace("Starting \"" + config.id() + "\" application...");
 
+        validateConfig(props);
         this.applicationId = config.id();
+
         Application application = appFactory.createNew(factory.createIRI(NAMESPACE + applicationId));
         application.setProperty(factory.createLiteral(config.title()), factory.createIRI(DCTERMS.TITLE.stringValue()));
         if (config.description() != null && !config.description().equals("")) {
