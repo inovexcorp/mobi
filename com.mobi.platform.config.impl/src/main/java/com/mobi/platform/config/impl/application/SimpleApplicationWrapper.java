@@ -35,7 +35,6 @@ import com.mobi.platform.config.api.application.ApplicationConfig;
 import com.mobi.platform.config.api.application.ApplicationWrapper;
 import com.mobi.platform.config.api.ontologies.platformconfig.Application;
 import com.mobi.platform.config.api.ontologies.platformconfig.ApplicationFactory;
-import com.mobi.platform.config.impl.server.MobiImpl;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
@@ -57,7 +56,7 @@ import java.util.Map;
 public class SimpleApplicationWrapper implements ApplicationWrapper {
     private static final String NAMESPACE = "http://mobi.com/applications#";
     protected static final String NAME = "com.mobi.platform.config.application";
-    private static final Logger LOG = LoggerFactory.getLogger(MobiImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleApplicationWrapper.class);
 
     protected Repository repository;
     protected ValueFactory factory;
