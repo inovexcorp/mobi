@@ -947,6 +947,14 @@ public class OntologyRestImpl implements OntologyRest {
         return new JSONObject().element("hierarchy", hierarchy).element("index", JSONObject.fromObject(index));
     }
 
+    /**
+     * Creates a Set of hierarchy items with their IRIs and lists of children based on the provided list of IRIs
+     * of entities without parents and map of IRIs to their Sets of children.
+     *
+     * @param topLevel a set of IRI strings of entities without parents
+     * @param results the results which contains a map of parents and their associated children.
+     * @return a Set of HierarchyNodes representing the top level entities and their children
+     */
     private Set<HierarchyNode> createHierarchy(Set<String> topLevel, Map<String, Set<String>> results) {
         Map<String, HierarchyNode> nodes = new HashMap<>();
         results.forEach((key, children) -> {
@@ -983,24 +991,6 @@ public class OntologyRestImpl implements OntologyRest {
             builder.append("}");
             return builder.toString();
         }
-    }
-
-    /**
-     * Creates an item to be stored in the hierarchy.
-     *
-     * @param itemIRI the base item's IRI.
-     * @param results the results which contains a map of parents and their associated children.
-     * @return a JSONObject representing an item in the hierarchy.
-     */
-    private JSONObject getHierarchyItem(String itemIRI, Map<String, Set<String>> results) {
-        JSONObject item = new JSONObject();
-        item.put("entityIRI", itemIRI);
-        if (results.containsKey(itemIRI) && results.get(itemIRI).size() > 0) {
-            JSONArray subClassIRIs = new JSONArray();
-            results.get(itemIRI).forEach(subClassIRI -> subClassIRIs.add(getHierarchyItem(subClassIRI, results)));
-            item.put("subEntities", subClassIRIs);
-        }
-        return item;
     }
 
     /**
