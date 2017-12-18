@@ -1542,7 +1542,7 @@ public class OntologyRestImpl implements OntologyRest {
         if (description != null) {
             builder.description(description);
         }
-        if (keywords != null && !keywords.isEmpty()) {
+        if (keywords != null) {
             builder.keywords(keywords);
         }
         Resource catalogId = catalogManager.getLocalCatalogIRI();
