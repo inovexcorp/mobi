@@ -30,7 +30,6 @@ import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
-import com.mobi.exception.MobiException;
 import com.mobi.platform.config.api.application.ApplicationConfig;
 import com.mobi.platform.config.api.application.ApplicationWrapper;
 import com.mobi.platform.config.api.ontologies.platformconfig.Application;
@@ -40,7 +39,6 @@ import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.exception.RepositoryException;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,8 +119,6 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
         LOG.trace("Stopping \"" + applicationId + "\" application...");
         try (RepositoryConnection conn = repository.getConnection()) {
             conn.remove(factory.createIRI(NAMESPACE + applicationId), null, null);
-        } catch (RepositoryException e) {
-            throw new MobiException("Error in repository connection", e);
         }
         LOG.debug("Application \"" + applicationId + "\" stopped.");
     }
@@ -148,15 +144,11 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
 
     @Override
     public Application getApplication() {
-        Application app;
         try (RepositoryConnection conn = repository.getConnection()) {
             Model appModel = modelFactory.createModel();
             conn.getStatements(factory.createIRI(NAMESPACE + applicationId), null, null).forEach(appModel::add);
-            app = appFactory.getExisting(factory.createIRI(NAMESPACE + applicationId), appModel).orElseThrow(() ->
+            return appFactory.getExisting(factory.createIRI(NAMESPACE + applicationId), appModel).orElseThrow(() ->
                     new IllegalStateException("Unable to retrieve application: " + NAMESPACE + applicationId));
-        } catch (RepositoryException e) {
-            throw new MobiException("Error in repository connection", e);
         }
-        return app;
     }
 }
