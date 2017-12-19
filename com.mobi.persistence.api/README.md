@@ -12,6 +12,7 @@ The Repository Sesame Impl provides Mobi Repositories via an OSGi Service backed
 | --------------- | ---------------- | ----------- |
 | memory | com.mobi.rdf.impl.sesame | com.mobi.service.repository.memory |
 | native | com.mobi.rdf.impl.sesame | com.mobi.service.repository.native |
+| sparql | com.mobi.rdf.impl.sesame | com.mobi.service.repository.sparql |
 
 ### Configuring Repository Services
 
@@ -19,8 +20,9 @@ Each repository serivce designates a configuration class for configuration prope
 
 | Repository Type | Configuration Class |
 | --------------- | ------------------- |
-| memory | MemoryRepositoryConfig |
+| memory | com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig |
 | native | com.mobi.repository.impl.sesame.native.NativeRepositoryConfig |
+| sparql | com.mobi.repository.impl.sesame.sparql.SPARQLRepositoryConfig |
 
 #### Memory Repository Configuration
 
@@ -31,7 +33,29 @@ Configuration file must begin with `com.mobi.service.repository.memory`. For exa
 # Note: dataDir is optional. This is only needed for persistence.
 id = test-repo
 title = "Test Repository"
-dataDir = /data/memory1
+dataDir = /data/test-repo
+```
+
+#### Native Repository Configuration
+
+Configuration file must begin with `com.mobi.service.repository.native`. For example `com.mobi.service.repository.native-test.cfg`.
+
+```
+# Native Repo Settings
+id = test-repo
+title = "Test Repository"
+dataDir = /data/test-repo
+```
+
+#### SPARQL Repository Configuration
+
+Configuration file must begin with `com.mobi.service.repository.sparql`. For example `com.mobi.service.repository.sparql-test.cfg`.
+
+```
+# SPARQL Repo Settings
+id = test-repo
+title = "Test Repository"
+endpointUrl = http://mydb.com/sparql
 ```
 
 ### Referencing Repository Services
@@ -46,6 +70,13 @@ and via Declarative Services via a Reference annotation:
 
 ```java
 @Reference(target = "(repositorytype=memory)")
+public void setRepository(Repository repository) { this.repository = repository; }
+```
+
+References can also be made targeting specific repositories by ID. For example:
+
+```java
+@Reference(target = "(id=system)")
 public void setRepository(Repository repository) { this.repository = repository; }
 ```
     
