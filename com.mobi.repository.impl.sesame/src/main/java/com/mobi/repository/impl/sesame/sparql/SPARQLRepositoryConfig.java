@@ -27,7 +27,8 @@ import aQute.bnd.annotation.metatype.Meta;
 import com.mobi.repository.config.RepositoryConfig;
 
 /**
- * A proxy class to access any SPARQL endpoint. The instance must be initialized prior to using it.
+ * Configuration for Repository objects accessed through a SPARQL 1.1 compliant endpoint. The instance must be
+ * initialized prior to using it.
  */
 public interface SPARQLRepositoryConfig extends RepositoryConfig {
 

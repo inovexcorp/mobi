@@ -32,7 +32,9 @@ import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.repository.api.DelegatingRepository;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.base.RepositoryWrapper;
+import com.mobi.repository.exception.RepositoryConfigException;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import org.apache.commons.validator.routines.UrlValidator;
 import org.openrdf.repository.sparql.SPARQLRepository;
 
 import java.util.Map;
@@ -68,6 +70,15 @@ public class SPARQLRepositoryWrapper extends RepositoryWrapper {
     @Override
     public void validateConfig(Map<String, Object> props) {
         super.validateConfig(props);
+        SPARQLRepositoryConfig config = Configurable.createConfigurable(SPARQLRepositoryConfig.class, props);
+
+        String[] schemes = {"http","https"};
+        UrlValidator urlValidator = new UrlValidator(schemes);
+        if (!urlValidator.isValid(config.endpointUrl())) {
+            throw new RepositoryConfigException(
+                    new IllegalArgumentException("Repository endpointUrl is not a valid URL.")
+            );
+        }
     }
 
     @Activate
