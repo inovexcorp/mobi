@@ -837,7 +837,6 @@
             self.openOntology = function(recordId, recordTitle) {
                 var branchId, commitId, ontology, inProgressCommit, ontologyId;
                 var start = Date.now();
-                console.log('Starting openOntology');
                 return self.getOntology(recordId)
                     .then(response => {
                         branchId = response.branchId;
@@ -855,7 +854,6 @@
                     .then(response => {
                         self.listItem = response;
                         self.setSelected(self.getActiveEntityIRI(), false);
-                        console.log('Finished openOntology after ' + (Date.now() - start));
                         return ontologyId;
                     }, $q.reject);
             }

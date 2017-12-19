@@ -89,8 +89,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1155,7 +1153,7 @@ public class OntologyRestImpl implements OntologyRest {
                 .stream()
                 .map(AnnotationProperty::getIRI)
                 .collect(Collectors.toSet()));
-        return new JSONObject().element("annotationProperties", iriListToJsonArray(iris));
+        return new JSONObject().element("annotationProperties", irisToJsonArray(iris));
     }
 
     /**
@@ -1172,7 +1170,7 @@ public class OntologyRestImpl implements OntologyRest {
                 .filter(iri -> model.contains(iri, valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
                         null))
                 .collect(Collectors.toSet());
-        return new JSONObject().element("classes", iriListToJsonArray(iris));
+        return new JSONObject().element("classes", irisToJsonArray(iris));
     }
 
     /**
@@ -1203,7 +1201,7 @@ public class OntologyRestImpl implements OntologyRest {
                 .stream()
                 .map(Entity::getIRI)
                 .collect(Collectors.toSet());
-        return new JSONObject().element("datatypes", iriListToJsonArray(iris));
+        return new JSONObject().element("datatypes", irisToJsonArray(iris));
     }
 
     /**
@@ -1217,7 +1215,7 @@ public class OntologyRestImpl implements OntologyRest {
                 .stream()
                 .map(Entity::getIRI)
                 .collect(Collectors.toSet());
-        return new JSONObject().element("objectProperties", iriListToJsonArray(iris));
+        return new JSONObject().element("objectProperties", irisToJsonArray(iris));
     }
 
     /**
@@ -1245,7 +1243,7 @@ public class OntologyRestImpl implements OntologyRest {
                 .stream()
                 .map(Entity::getIRI)
                 .collect(Collectors.toSet());
-        return new JSONObject().element("dataProperties", iriListToJsonArray(iris));
+        return new JSONObject().element("dataProperties", irisToJsonArray(iris));
     }
 
     /**
@@ -1275,7 +1273,7 @@ public class OntologyRestImpl implements OntologyRest {
                         valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
                 .map(Entity::getIRI)
                 .collect(Collectors.toSet());
-        return new JSONObject().element("namedIndividuals", iriListToJsonArray(iris));
+        return new JSONObject().element("namedIndividuals", irisToJsonArray(iris));
     }
 
     private JSONObject getDerivedConceptTypeArray(Ontology ontology) {
@@ -1291,7 +1289,7 @@ public class OntologyRestImpl implements OntologyRest {
     private JSONObject getDerivedConceptTypeArray(TupleQueryResult queryResult) {
         Set<IRI> iris = new HashSet<>();
         queryResult.forEach(r -> iris.add(valueFactory.createIRI(Bindings.requiredResource(r, "s").stringValue())));
-        return new JSONObject().element("derivedConcepts", iriListToJsonArray(iris));
+        return new JSONObject().element("derivedConcepts", irisToJsonArray(iris));
     }
 
     private JSONObject getDerivedConceptSchemeTypeArray(Ontology ontology) {
@@ -1308,7 +1306,7 @@ public class OntologyRestImpl implements OntologyRest {
         Set<IRI> iris = new HashSet<>();
         queryResult.forEach(r -> r.getBinding("s")
                 .ifPresent(b -> iris.add(valueFactory.createIRI(b.getValue().stringValue()))));
-        return new JSONObject().element("derivedConceptSchemes", iriListToJsonArray(iris));
+        return new JSONObject().element("derivedConceptSchemes", irisToJsonArray(iris));
     }
 
     private JSONObject getDerivedSemanticRelationArray(Ontology ontology) {
@@ -1325,7 +1323,7 @@ public class OntologyRestImpl implements OntologyRest {
         Set<IRI> iris = new HashSet<>();
         queryResult.forEach(r -> r.getBinding("s")
                 .ifPresent(b -> iris.add(valueFactory.createIRI(b.getValue().stringValue()))));
-        return new JSONObject().element("derivedSemanticRelations", iriListToJsonArray(iris));
+        return new JSONObject().element("derivedSemanticRelations", irisToJsonArray(iris));
     }
 
     /**
@@ -1334,7 +1332,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @param iris the Set of IRIs to turn into this JSONArray.
      * @return a JSONArray of the IRI strings.
      */
-    private JSONArray iriListToJsonArray(Set<IRI> iris) {
+    private JSONArray irisToJsonArray(Set<IRI> iris) {
         return JSONArray.fromObject(iris.stream().map(Value::stringValue).collect(Collectors.toSet()));
     }
 
