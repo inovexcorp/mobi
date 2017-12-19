@@ -29,11 +29,8 @@ import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.analytic.api.builder.AnalyticRecordConfig;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.apache.commons.lang3.StringUtils;
 import com.mobi.analytic.api.AnalyticManager;
+import com.mobi.analytic.api.builder.AnalyticRecordConfig;
 import com.mobi.analytic.ontologies.analytic.AnalyticRecord;
 import com.mobi.analytic.ontologies.analytic.Configuration;
 import com.mobi.analytic.rest.AnalyticRest;
@@ -50,10 +47,13 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rest.util.ErrorUtils;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -116,7 +116,7 @@ public class AnalyticRestImpl implements AnalyticRest {
 
     @Override
     public Response createAnalytic(ContainerRequestContext context, String typeIRI, String title, String description,
-                                   String keywords, String json) {
+                                   List<FormDataBodyPart> keywords, String json) {
         checkStringParam(title, "AnalyticRecord title is required");
         OrmFactory<? extends Configuration> factory = getConfigurationFactoryOfType(typeIRI);
         User activeUser = getActiveUser(context, engineManager);
@@ -129,8 +129,8 @@ public class AnalyticRestImpl implements AnalyticRest {
             if (description != null) {
                 builder.description(description);
             }
-            if (keywords != null && !keywords.isEmpty()) {
-                builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
+            if (keywords != null) {
+                builder.keywords(keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet()));
             }
             AnalyticRecord newRecord = analyticManager.createAnalytic(builder.build());
             provUtils.endCreateActivity(createActivity, newRecord.getResource());

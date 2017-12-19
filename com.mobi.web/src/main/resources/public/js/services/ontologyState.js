@@ -331,7 +331,7 @@
              * @param {string} ontologyJson The JSON-LD representing the ontology.
              * @param {string} title The title for the OntologyRecord.
              * @param {string} description The description for the OntologyRecord.
-             * @param {string} keywords The keywords for the OntologyRecord.
+             * @param {string} keywords The array of keywords for the OntologyRecord.
              * @returns {Promise} A promise with the entityIRI, recordId, branchId, and commitId for the state of the newly created
              * ontology.
              */
@@ -367,7 +367,7 @@
              * @param {File} file The ontology file.
              * @param {string} title The record title.
              * @param {string} description The record description.
-             * @param {string} keywords The record list of keywords separated by commas.
+             * @param {string} keywords The array of keywords for the record.
              * @returns {Promise} A promise with the ontology record ID or error message.
              */
             self.uploadThenGet = function(file, title, description, keywords) {
@@ -455,9 +455,8 @@
             }
             self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                 upToDate = true, title) {
-                var deferred = $q.defer();
                 var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title);
-                $q.all([
+                return $q.all([
                     om.getOntologyStuff(recordId, branchId, commitId),
                     cm.getRecordBranches(recordId, catalogId)
                 ]).then(response => {
@@ -507,9 +506,8 @@
                     _.pullAllWith(listItem.annotations.iris, _.concat(om.ontologyProperties, listItem.dataProperties.iris, listItem.objectProperties.iris, angular.copy(om.conceptRelationshipList), angular.copy(om.schemeRelationshipList)), compareIriObjs);
                     listItem.failedImports = _.get(response[0], 'failedImports', []);
                     listItem.branches = response[1].data;
-                    deferred.resolve(listItem);
-                }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
-                return deferred.promise;
+                    return listItem;
+                },  $q.reject);
             }
             self.getIndividualsParentPath = function(listItem) {
                 var result = [];

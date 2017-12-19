@@ -69,13 +69,16 @@ public interface MappingRest {
                          @QueryParam("searchText") String searchText);
 
     /**
-     * Uploads a mapping sent as form data or a JSON-LD string into a data store
-     * with a UUID local name.
+     * Uploads a mapping sent as form data or a JSON-LD string into a data store with a UUID local name and creates
+     * a new MappingRecord in the catalog.
      *
+     * @param title The required title for the new MappingRecord
+     * @param description The optional description for the new MappingRecord
+     * @param keywords The optional list of keywords strings for the new MappingRecord
      * @param fileInputStream an InputStream of a mapping file passed as form data
      * @param fileDetail information about the file being uploaded, including the name
      * @param jsonld a mapping serialized as JSON-LD
-     * @return a response with the mapping id
+     * @return a Response with the MappingRecord Resource ID
      */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)

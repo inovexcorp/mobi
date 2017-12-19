@@ -66,7 +66,7 @@
                             util.setDctermsValue(dvm.ontology, 'description', dvm.description);
                         }
                         ontoUtils.addLanguageToNewEntity(dvm.ontology, dvm.language);
-                        dvm.os.createOntology(dvm.ontology, dvm.title, dvm.description, _.join(_.map(dvm.keywords, _.trim), ','))
+                        dvm.os.createOntology(dvm.ontology, dvm.title, dvm.description, _.map(dvm.keywords, _.trim))
                             .then(response => sm.createOntologyState(response.recordId, response.branchId, response.commitId), $q.reject)
                             .then(() => dvm.os.showNewTab = false, onError);
                     }
