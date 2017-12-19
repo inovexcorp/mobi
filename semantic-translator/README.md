@@ -1,10 +1,11 @@
 # Semantic Translation
 The purpose of the bundles in this suite of modules is to abstract away the
-extraction of "meaning" from semi-structured data.  Namely, things like
-JSON or XML files that have inherent meaning in them.  Algorithms can
-be written to automatically generate an ontology to represent files in these
-kinds of formats to reduce the effort necessary to ingest data into the
-Mobi platform.
+extraction of "meaning" from semi-structured data.  Basically, an automated way
+to convert semi-structured data into RDF, without the need to pre-build an ontology
+to model the data within even.  Namely, things like JSON or XML files that have 
+inherent meaning in them.  Algorithms can be written to automatically generate 
+an ontology to represent files in these kinds of formats to reduce the effort 
+necessary to ingest data into the Mobi platform.
 
 ## Stacking Approach
 For hierarchical structures such as XML or JSON, a common approach to
