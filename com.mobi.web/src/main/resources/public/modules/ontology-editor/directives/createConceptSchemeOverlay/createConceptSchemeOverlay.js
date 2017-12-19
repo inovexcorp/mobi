@@ -43,7 +43,9 @@
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
+                    dvm.conceptIRIs = dvm.om.getConceptIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConcepts);
                     dvm.concepts = [];
+                    dvm.selectedConcepts = [];
                     dvm.prefix = dvm.os.getDefaultPrefix();
                     dvm.scheme = {
                         '@id': dvm.prefix,
@@ -67,9 +69,9 @@
                     }
 
                     dvm.create = function() {
-                        if (dvm.concepts.length) {
-                            dvm.scheme[prefixes.skos + 'hasTopConcept'] = dvm.concepts;
-                            _.forEach(dvm.concepts, concept => {
+                        if (dvm.selectedConcepts.length) {
+                            dvm.scheme[prefixes.skos + 'hasTopConcept'] = dvm.selectedConcepts;
+                            _.forEach(dvm.selectedConcepts, concept => {
                                 dvm.os.addEntityToHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, concept['@id'], dvm.os.listItem.conceptSchemes.index, dvm.scheme['@id']);
                             });
                         }
@@ -85,6 +87,9 @@
                         // hide the overlay
                         dvm.os.showCreateConceptSchemeOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
+                    }
+                    dvm.getConcepts = function(searchText) {
+                        dvm.concepts = dvm.ontoUtils.getSelectList(dvm.conceptIRIs, searchText);
                     }
                 }
             }

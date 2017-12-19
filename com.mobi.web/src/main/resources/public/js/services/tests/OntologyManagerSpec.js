@@ -86,6 +86,8 @@ describe('Ontology Manager service', function() {
         };
         this.conceptId = 'conceptId';
         this.schemeId = 'schemeId';
+        this.derivedConceptType = ['derivedConcept'];
+        this.derivedConceptSchemeType = ['derivedConceptScheme'];
         this.importedClassId = 'importedClassId';
         this.importedDataPropertyId = 'importedDataPropertyId';
         this.importedDataPropertyId = 'importedObjectPropertyId';
@@ -133,9 +135,17 @@ describe('Ontology Manager service', function() {
             '@id': this.conceptId,
             '@type': [prefixes.skos + 'Concept']
         };
+        this.derivedConceptObj = {
+            '@id': this.conceptId,
+            '@type': [this.derivedConceptType]
+        };
         this.schemeObj = {
             '@id': this.schemeId,
             '@type': [prefixes.skos + 'ConceptScheme']
+        };
+        this.derivedConceptSchemeObj = {
+            '@id': this.schemeId,
+            '@type': [this.derivedConceptSchemeType]
         };
         this.ontology = [this.ontologyObj, this.classObj, this.dataPropertyObj];
         this.importedOntObj = {
@@ -1755,10 +1765,13 @@ describe('Ontology Manager service', function() {
     });
     describe('isConcept should return', function() {
         it('true if the entity contains the concept type', function() {
-            expect(ontologyManagerSvc.isConcept(this.conceptObj)).toBe(true);
+            expect(ontologyManagerSvc.isConcept(this.conceptObj)).toEqual(true);
+        });
+        it('true if the entity contains a derived concept type', function() {
+            expect(ontologyManagerSvc.isConcept(this.derivedConceptObj, [this.derivedConceptType])).toEqual(true);
         });
         it('false if the entity does not contain the concept type', function() {
-            expect(ontologyManagerSvc.isConcept({})).toBe(false);
+            expect(ontologyManagerSvc.isConcept({})).toEqual(false);
         });
     });
     describe('hasConcepts should return', function() {
@@ -1770,6 +1783,9 @@ describe('Ontology Manager service', function() {
         });
         it('true if there are any concept entities in only the imported ontology', function() {
             expect(ontologyManagerSvc.hasConcepts([[this.ontologyObj], [this.importedConceptObj, this.importedOntObj]])).toBe(true);
+        });
+        it('true if there are any derived concept entities in the ontology', function() {
+            expect(ontologyManagerSvc.hasConcepts([[this.derivedConceptObj]], [this.derivedConceptType])).toEqual(true);
         });
         it('false if there are not any concept entities in the ontology', function() {
             expect(ontologyManagerSvc.hasConcepts([[this.ontologyObj], [this.importedOntObj]])).toBe(false);
@@ -1785,6 +1801,9 @@ describe('Ontology Manager service', function() {
         it('correct concept objects if there are any in only the imported ontology', function() {
             expect(ontologyManagerSvc.getConcepts([[this.ontologyObj], [this.importedConceptObj, this.importedOntObj]])).toEqual([this.importedConceptObj]);
         });
+        it('correct concept objects if there are any derived concepts', function() {
+            expect(ontologyManagerSvc.getConcepts([[this.derivedConceptObj]], [this.derivedConceptType])).toEqual([this.derivedConceptObj]);
+        });
         it('undefined if there are no concepts in the ontology', function() {
             expect(ontologyManagerSvc.getConcepts([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
         });
@@ -1799,6 +1818,9 @@ describe('Ontology Manager service', function() {
         it('conceptId if there are concepts in only the imported ontology', function() {
             expect(ontologyManagerSvc.getConceptIRIs([[this.ontologyObj], [this.importedOntObj, this.importedConceptObj]])).toEqual([this.importedConceptId]);
         });
+        it('conceptId if there are derived concepts', function() {
+            expect(ontologyManagerSvc.getConceptIRIs([[this.derivedConceptObj]], [this.derivedConceptType])).toEqual([this.conceptId]);
+        });
         it('[] if there are no concepts in the ontology', function() {
             expect(ontologyManagerSvc.getConceptIRIs([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
         });
@@ -1806,6 +1828,9 @@ describe('Ontology Manager service', function() {
     describe('isConceptScheme should return', function() {
         it('true if the entity contains the concept scheme type', function() {
             expect(ontologyManagerSvc.isConceptScheme(this.schemeObj)).toBe(true);
+        });
+        it('true if the entity contains a derived concept scheme type', function() {
+            expect(ontologyManagerSvc.isConceptScheme(this.derivedConceptSchemeObj, [this.derivedConceptSchemeType])).toEqual(true);
         });
         it('false if the entity does not contain the concept scheme type', function() {
             expect(ontologyManagerSvc.isConceptScheme({})).toBe(false);
@@ -1821,6 +1846,9 @@ describe('Ontology Manager service', function() {
         it('true if there are any concept scheme entities in only the imported ontology', function() {
             expect(ontologyManagerSvc.hasConceptSchemes([[this.ontologyObj], [this.importedSchemeObj, this.importedOntObj]])).toBe(true);
         });
+        it('true if there are any derived concept scheme entities in the ontology', function() {
+            expect(ontologyManagerSvc.hasConceptSchemes([[this.derivedConceptSchemeObj]], [this.derivedConceptSchemeType])).toEqual(true);
+        });
         it('false if there are not any concept scheme entities in the ontology', function() {
             expect(ontologyManagerSvc.hasConceptSchemes([[this.ontologyObj], [this.importedOntObj]])).toBe(false);
         });
@@ -1835,6 +1863,9 @@ describe('Ontology Manager service', function() {
         it('correct concept scheme objects if there are any in only the imported ontology', function() {
             expect(ontologyManagerSvc.getConceptSchemes([[this.ontologyObj], [this.importedSchemeObj, this.importedOntObj]])).toEqual([this.importedSchemeObj]);
         });
+        it('correct concept scheme objects if there are any derived concept schemes', function() {
+            expect(ontologyManagerSvc.getConceptSchemes([[this.derivedConceptSchemeObj]], [this.derivedConceptSchemeType])).toEqual([this.derivedConceptSchemeObj]);
+        });
         it('undefined if there are no concept schemes in the ontology', function() {
             expect(ontologyManagerSvc.getConceptSchemes([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
         });
@@ -1848,6 +1879,9 @@ describe('Ontology Manager service', function() {
         });
         it('schemeId if there are concept schemes in only the imported ontology', function() {
             expect(ontologyManagerSvc.getConceptSchemeIRIs([[this.ontologyObj], [this.importedOntObj, this.importedSchemeObj]])).toEqual([this.importedSchemeId]);
+        });
+        it('schemeId if there are derived concepts', function() {
+            expect(ontologyManagerSvc.getConceptSchemeIRIs([[this.derivedConceptSchemeObj]], [this.derivedConceptSchemeType])).toEqual([this.schemeId]);
         });
         it('[] if there are no concept schemes in the ontology', function() {
             expect(ontologyManagerSvc.getConceptSchemeIRIs([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);

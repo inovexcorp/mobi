@@ -74,8 +74,9 @@
                     var axiom = prefixes.skos + 'hasTopConcept';
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.util = utilService;
+                    dvm.concepts = [];
                     dvm.values = [];
-                    dvm.conceptList = getConceptList();
+                    dvm.conceptIRIs = getConceptIRIs();
 
                     dvm.addTopConcept = function() {
                         state.listItem.selected[axiom] = _.union(_.get(state.listItem.selected, axiom, []), dvm.values);
@@ -84,8 +85,11 @@
                         dvm.ontoUtils.saveCurrentChanges();
                         dvm.onSubmit({relationship: {namespace: prefixes.skos, localName: 'hasTopConcept'}, values: dvm.values})
                     }
+                    dvm.getConcepts = function(searchText) {
+                        dvm.concepts = dvm.ontoUtils.getSelectList(dvm.conceptIRIs, searchText);
+                    }
 
-                    function getConceptList() {
+                    function getConceptIRIs() {
                         var all = om.getConceptIRIs(state.getOntologiesArray(), state.listItem.derivedConcepts);
                         var set = _.map(_.get(state.listItem.selected, axiom), '@id');
                         return _.difference(all, set);
