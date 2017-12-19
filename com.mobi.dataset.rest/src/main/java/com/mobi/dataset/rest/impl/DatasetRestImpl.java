@@ -58,7 +58,6 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
 import net.sf.json.JSONArray;
-import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.openrdf.rio.RDFFormat;
@@ -66,7 +65,6 @@ import org.openrdf.rio.RDFParseException;
 import org.openrdf.rio.Rio;
 
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -171,7 +169,7 @@ public class DatasetRestImpl implements DatasetRest {
 
     @Override
     public Response createDatasetRecord(ContainerRequestContext context, String title, String repositoryId,
-                                        String datasetIRI, String description, String keywords,
+                                        String datasetIRI, String description, List<FormDataBodyPart> keywords,
                                         List<FormDataBodyPart> ontologies) {
         checkStringParam(title, "Title is required");
         checkStringParam(repositoryId, "Repository id is required");
@@ -187,8 +185,8 @@ public class DatasetRestImpl implements DatasetRest {
             if (description != null && !description.isEmpty()) {
                 builder.description(description);
             }
-            if (keywords != null && !keywords.isEmpty()) {
-                builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
+            if (keywords != null) {
+                builder.keywords(keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet()));
             }
             if (ontologies != null) {
                 ontologies.forEach(formDataBodyPart -> builder.ontology(

@@ -149,7 +149,7 @@ describe('New Ontology Tab directive', function() {
                 ontologyStateSvc.createOntology.and.returnValue($q.reject(this.errorMessage));
                 this.controller.create();
                 scope.$apply();
-                expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(this.controller.ontology, this.controller.title, this.controller.description, 'one,two');
+                expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(this.controller.ontology, this.controller.title, this.controller.description, ['one', 'two']);
                 expect(stateManagerSvc.createOntologyState).not.toHaveBeenCalled();
                 expect(this.controller.error).toBe(this.errorMessage);
             });
@@ -157,7 +157,7 @@ describe('New Ontology Tab directive', function() {
                 stateManagerSvc.createOntologyState.and.returnValue($q.reject(this.errorMessage));
                 this.controller.create();
                 scope.$apply();
-                expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(this.controller.ontology, this.controller.title, this.controller.description, 'one,two');
+                expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(this.controller.ontology, this.controller.title, this.controller.description, ['one', 'two']);
                 expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
                 expect(this.controller.error).toBe(this.errorMessage);
             });
@@ -168,7 +168,7 @@ describe('New Ontology Tab directive', function() {
                 expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(this.controller.ontology, 'description', this.controller.description);
                 expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.ontology, this.controller.language);
                 expect(_.has(this.controller.ontology, prefixes.owl + 'imports')).toBe(false);
-                expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(this.controller.ontology, this.controller.title, this.controller.description, 'one,two');
+                expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(this.controller.ontology, this.controller.title, this.controller.description, ['one', 'two']);
                 expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
                 expect(ontologyStateSvc.showNewTab).toBe(false);
             });

@@ -63,7 +63,7 @@ describe('Ontology State Service', function() {
         this.format = 'jsonld';
         this.title = 'title';
         this.description = 'description';
-        this.keywords = 'keyword1,keyword2';
+        this.keywords = ['keyword1', 'keyword2'];
         this.inProgressCommit = {
             additions: ['test'],
             deletions: ['test']

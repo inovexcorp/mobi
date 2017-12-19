@@ -734,7 +734,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         fd.field("title", "title");
         fd.field("description", "description");
-        fd.field("keywords", "keyword1,keyword2");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
@@ -759,7 +760,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         fd.field("description", "description");
-        fd.field("keywords", "keyword1,keyword2");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
@@ -773,7 +775,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("title", "title");
         fd.field("description", "description");
-        fd.field("keywords", "keyword1,keyword2");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
@@ -792,7 +795,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 MediaType.APPLICATION_OCTET_STREAM_TYPE);
         fd.field("title", "title");
         fd.field("description", "description");
-        fd.field("keywords", "keyword1,keyword2");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
@@ -812,7 +816,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         fd.field("title", "title");
         fd.field("description", "description");
-        fd.field("keywords", "keyword1,keyword2");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
@@ -827,8 +832,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     public void testUploadOntologyJson() {
         JSONObject ontologyJson = new JSONObject().element("@id", "http://mobi.com/ontology");
 
-        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
-                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(ontologyJson));
+        Response response = target().path("ontologies").queryParam("title", "title")
+                .queryParam("description", "description").queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
+                .request().post(Entity.json(ontologyJson));
 
         assertEquals(response.getStatus(), 201);
         assertGetUserFromContext();
@@ -850,15 +856,18 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         JSONObject entity = new JSONObject().element("@id", "http://mobi.com/entity");
 
         Response response = target().path("ontologies").queryParam("description", "description")
-                .queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
+                .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
+                .request().post(Entity.json(entity));
         assertEquals(response.getStatus(), 400);
         verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
     public void testUploadOntologyJsonWithoutJson() {
-        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
-                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(""));
+        Response response = target().path("ontologies").queryParam("title", "title")
+                .queryParam("description", "description").queryParam("keywords", "keyword1")
+                .queryParam("keywords", "keyword2")
+                .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
         verify(provUtils, times(0)).startCreateActivity(user);
     }
@@ -883,8 +892,10 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(results.getPage()).thenReturn(Collections.singletonList(record));
         JSONObject ontologyJson = new JSONObject().element("@id", "http://mobi.com/ontology");
 
-        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
-                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(ontologyJson));
+        Response response = target().path("ontologies").queryParam("title", "title")
+                .queryParam("description", "description")
+                .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
+                .request().post(Entity.json(ontologyJson));
         assertEquals(response.getStatus(), 400);
         verify(provUtils).startCreateActivity(user);
         verify(provUtils).removeActivity(createActivity);

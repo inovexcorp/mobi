@@ -78,6 +78,7 @@ import com.mobi.rest.util.jaxb.Links;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
 import org.slf4j.Logger;
@@ -257,7 +258,7 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     public Response createRecord(ContainerRequestContext context, String catalogId, String typeIRI, String title,
-                                 String identifierIRI, String description, String keywords) {
+                                 String identifierIRI, String description, List<FormDataBodyPart> keywords) {
         checkStringParam(title, "Record title is required");
         Map<String, OrmFactory<? extends Record>> recordFactories = getRecordFactories();
         if (typeIRI == null || !recordFactories.keySet().contains(typeIRI)) {
@@ -274,8 +275,8 @@ public class CatalogRestImpl implements CatalogRest {
             if (description != null) {
                 builder.description(description);
             }
-            if (keywords != null && !keywords.isEmpty()) {
-                builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
+            if (keywords != null) {
+                builder.keywords(keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet()));
             }
 
             Record newRecord = catalogManager.createRecord(builder.build(), recordFactories.get(typeIRI));
