@@ -64,6 +64,7 @@ describe('Top Concept Overlay directive', function() {
 
     it('should initialize with the correct value for filteredConcepts', function() {
         expect(this.controller.filteredConcepts).toEqual(['concept1']);
+        expect(ontologyManagerSvc.getConceptIRIs).toHaveBeenCalledWith(jasmine.any(Array), ontologyStateSvc.listItem.derivedConcepts);
     });
     describe('controller bound variables', function() {
         it('onSubmit to be called in parent scope', function() {
@@ -127,8 +128,14 @@ describe('Top Concept Overlay directive', function() {
         });
         it('should get filtered concepts', function() {
             ontoUtils.getSelectList.and.returnValue(['list']);
-            this.controller.getValues('search');
+            this.controller.getConcepts('search');
             expect(this.controller.filteredConcepts).toEqual(['list']);
+            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['concept1'], 'search');
+        });
+        it('should set the list of concepts', function() {
+            ontoUtils.getSelectList.and.returnValue(['concept']);
+            this.controller.getConcepts('search');
+            expect(this.controller.filteredConcepts).toEqual(['concept']);
             expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['concept1'], 'search');
         });
     });

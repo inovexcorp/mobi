@@ -85,7 +85,7 @@
                         dvm.ontoUtils.saveCurrentChanges();
                         dvm.onSubmit({relationship: prefixes.skos + 'hasTopConcept', values: dvm.values})
                     }
-                    dvm.getValues = function(searchText) {
+                    dvm.getConcepts = function(searchText) {
                         dvm.filteredConcepts = dvm.ontoUtils.getSelectList(concepts, searchText);
                     }
 

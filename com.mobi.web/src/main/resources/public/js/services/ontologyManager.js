@@ -1453,6 +1453,7 @@
              * Checks if the provided entity is an skos:Concept entity. Returns a boolean.
              *
              * @param {Object} entity The entity you want to check.
+             * @param {string[]} derivedConcepts A list of IRIs of classes that are subclasses of skos:Concept
              * @returns {boolean} Returns true if it is an skos:Concept entity, otherwise returns false.
              */
             self.isConcept = function(entity, derivedConcepts = []) {
@@ -1468,6 +1469,7 @@
              * Checks if the provided ontologies contain any skos:Concept entities. Returns a boolean.
              *
              * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @param {string[]} derivedConcepts A list of IRIs of classes that are subclasses of skos:Concept
              * @returns {boolean} Returns true if there are any skos:Concept entities in the ontologies, otherwise
              * returns false.
              */
@@ -1485,6 +1487,7 @@
              * Returns an Object[].
              *
              * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @param {string[]} derivedConcepts A list of IRIs of classes that are subclasses of skos:Concept
              * @returns {Object[]} An array of all skos:Concept entities within the ontologies.
              */
             self.getConcepts = function(ontologies, derivedConcepts) {
@@ -1505,6 +1508,7 @@
              * Returns an string[].
              *
              * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @param {string[]} derivedConcepts A list of IRIs of classes that are subclasses of skos:Concept
              * @returns {string[]} An array of all skos:Concept entity IRI strings within the ontologies.
              */
             self.getConceptIRIs = function(ontologies, derivedConcepts) {
@@ -1519,6 +1523,7 @@
              * Checks if the provided entity is an skos:ConceptScheme entity. Returns a boolean.
              *
              * @param {Object} entity The entity you want to check.
+             * @param {string[]} derivedConceptSchemes A list of IRIs of classes that are subclasses of skos:ConceptScheme
              * @returns {boolean} Returns true if it is an skos:ConceptScheme entity, otherwise returns false.
              */
             self.isConceptScheme = function(entity, derivedConceptSchemes = []) {
@@ -1534,6 +1539,7 @@
              * Checks if the provided ontologies contain any skos:ConceptScheme entities. Returns a boolean.
              *
              * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @param {string[]} derivedConceptSchemes A list of IRIs of classes that are subclasses of skos:ConceptScheme
              * @returns {boolean} Returns true if there are any skos:ConceptScheme entities in the ontologies, otherwise
              * returns false.
              */
@@ -1551,13 +1557,14 @@
              * Returns an Object[].
              *
              * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @param {string[]} derivedConceptSchemes A list of IRIs of classes that are subclasses of skos:ConceptScheme
              * @returns {Object[]} An array of all skos:ConceptScheme entities within the ontologies.
              */
-            self.getConceptSchemes = function(ontologies) {
+            self.getConceptSchemes = function(ontologies, derivedConceptSchemes) {
                 var conceptSchemes = [];
                 _.forEach(ontologies, ont => {
                     conceptSchemes.push.apply(conceptSchemes,
-                        _.filter(ont, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity)));
+                        _.filter(ont, entity => self.isConceptScheme(entity, derivedConceptSchemes) && !self.isBlankNode(entity)));
                 });
                 return conceptSchemes;
             }
@@ -1571,10 +1578,11 @@
              * nodes. Returns a string[].
              *
              * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @param {string[]} derivedConceptSchemes A list of IRIs of classes that are subclasses of skos:ConceptScheme
              * @returns {string[]} An array of all skos:ConceptScheme entity IRI strings within the ontology.
              */
-            self.getConceptSchemeIRIs = function(ontologies) {
-                return _.map(self.getConceptSchemes(ontologies), '@id');
+            self.getConceptSchemeIRIs = function(ontologies, derivedConceptSchemes) {
+                return _.map(self.getConceptSchemes(ontologies, derivedConceptSchemes), '@id');
             }
         }
 })();
