@@ -98,7 +98,7 @@
                                         ${project.basedir}/src/main/resources/ontologies/semantic-translation-ont.trig
                                     </ontologyFile>
                                     <outputPackage>com.mobi.semantic.translator.ontology</outputPackage>
-                                    <ontologyName>MeaningExtraction</ontologyName>
+                                    <ontologyName>SemanticTranslation</ontologyName>
                                 </ontology>
                             </generates>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>
