@@ -509,7 +509,7 @@
                     listItem.failedImports = _.get(response[0], 'failedImports', []);
                     listItem.branches = response[1].data;
                     return listItem;
-                }, error => _.has(error, 'statusText') ? util.rejectError(response) : $q.reject(error));
+                },  $q.reject);
             }
 
             function addIri(iriObj, iri, ontologyId) {
