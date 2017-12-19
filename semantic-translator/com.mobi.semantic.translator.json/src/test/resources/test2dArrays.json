@@ -1,0 +1,10 @@
+{
+  "id": "123",
+  "2dArray": [
+    [ { "subArrayExample":"subArrayExample_value", "subArrayExample_again":1 }],
+    [ {}, {} ],
+    [
+      { "subsubArray": [{"subsubArrayValue": "subsubArrayExample_value"}] }
+    ]
+  ]
+}
