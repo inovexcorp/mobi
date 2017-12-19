@@ -38,7 +38,7 @@
         <module>com.mobi.semantic.translator.json</module>
     </modules>
 
-    <artifactId>semantic-translator</artifactId>
+    <artifactId>semantic-translation</artifactId>
 
 
 </project>
