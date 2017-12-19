@@ -23,8 +23,6 @@ package com.mobi.semantic.translator.json;
  * #L%
          */
 
-import com.mobi.semantic.translator.expression.DefaultIriExpressionProcessor;
-import com.mobi.meaning.extraction.ontology.*;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
@@ -32,9 +30,24 @@ import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactoryService;
 import com.mobi.rdf.core.impl.sesame.ValueFactoryService;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.*;
+import com.mobi.rdf.orm.conversion.impl.BigIntegerValueConverter;
+import com.mobi.rdf.orm.conversion.impl.BooleanValueConverter;
+import com.mobi.rdf.orm.conversion.impl.CalendarValueConverter;
+import com.mobi.rdf.orm.conversion.impl.DateValueConverter;
+import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
+import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
+import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
+import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
+import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
+import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
+import com.mobi.rdf.orm.conversion.impl.LongValueConverter;
+import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
+import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
+import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
+import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 import com.mobi.rdf.orm.impl.OrmFactoryRegistryImpl;
 import com.mobi.rdf.orm.impl.ThingFactory;
+import com.mobi.semantic.translator.expression.DefaultIriExpressionProcessor;
 import com.mobi.semantic.translator.ontology.ExtractedClassFactory;
 import com.mobi.semantic.translator.ontology.ExtractedDatatypePropertyFactory;
 import com.mobi.semantic.translator.ontology.ExtractedObjectPropertyFactory;
