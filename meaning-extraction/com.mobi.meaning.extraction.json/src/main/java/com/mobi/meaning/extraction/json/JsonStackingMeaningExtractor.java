@@ -1,5 +1,28 @@
 package com.mobi.meaning.extraction.json;
 
+/*-
+ * #%L
+ * meaning.extraction.json
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.fasterxml.jackson.core.JsonFactory;
@@ -7,14 +30,18 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.mobi.meaning.extraction.MeaningExtractionException;
-import com.mobi.meaning.extraction.expression.DefaultIriExpressionProcessor;
+import com.mobi.meaning.extraction.expression.IriExpressionProcessor;
 import com.mobi.meaning.extraction.ontology.ExtractedClass;
 import com.mobi.meaning.extraction.ontology.ExtractedDatatypeProperty;
-import com.mobi.meaning.extraction.ontology.ExtractedObjectProperty;
 import com.mobi.meaning.extraction.ontology.ExtractedOntology;
 import com.mobi.meaning.extraction.stack.AbstractStackingMeaningExtractor;
 import com.mobi.meaning.extraction.stack.StackingMeaningExtractor;
-import com.mobi.rdf.api.*;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.Value;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.orm.OrmFactoryRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,51 +148,24 @@ public class JsonStackingMeaningExtractor extends AbstractStackingMeaningExtract
         item.getProperties().add((IRI) datatypeProperty.getResource(), value);
     }
 
-    private IRI xsdString = null;
-
-    private IRI xsdString() {
-        if (xsdString == null) {
-            xsdString = valueFactory.createIRI("http://www.w3.org/2001/XMLSchema#", "string");
-        }
-        return xsdString;
-    }
-
-    private IRI xsdInt = null;
-
-    private IRI xsdInt() {
-        if (xsdInt == null) {
-            xsdInt = valueFactory.createIRI("http://www.w3.org/2001/XMLSchema#", "int");
-        }
-        return xsdInt;
-    }
-
-    private IRI xsdFloat = null;
-
-    private IRI xsdFloat() {
-        if (xsdFloat == null) {
-            xsdFloat = valueFactory.createIRI("http://www.w3.org/2001/XMLSchema#", "float");
-        }
-        return xsdFloat;
-    }
-
-    private IRI xsdBoolean = null;
-
-    private IRI xsdBoolean() {
-        if (xsdBoolean == null) {
-            xsdBoolean = valueFactory.createIRI("http://www.w3.org/2001/XMLSchema#", "boolean");
-        }
-        return xsdBoolean;
-    }
 
     @Reference
-    @Override
     public void setValueFactory(ValueFactory valueFactory) {
-        super.setValueFactory(valueFactory);
+        super.valueFactory = valueFactory;
     }
 
     @Reference
-    @Override
     public void setModelFactory(ModelFactory modelFactory) {
-        super.setModelFactory(modelFactory);
+        super.modelFactory = modelFactory;
+    }
+
+    @Reference
+    public void setExpressionProcessor(IriExpressionProcessor expressionProcessor) {
+        super.expressionProcessor = expressionProcessor;
+    }
+
+    @Reference
+    public void setOrmFactoryRegistry(OrmFactoryRegistry ormFactoryRegistry) {
+        super.ormFactoryRegistry = ormFactoryRegistry;
     }
 }
