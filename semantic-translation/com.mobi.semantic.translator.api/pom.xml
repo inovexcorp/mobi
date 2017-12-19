@@ -95,9 +95,9 @@
                             <generates>
                                 <ontology>
                                     <ontologyFile>
-                                        ${project.basedir}/src/main/resources/ontologies/meaning-extraction-ont.trig
+                                        ${project.basedir}/src/main/resources/ontologies/semantic-translation-ont.trig
                                     </ontologyFile>
-                                    <outputPackage>com.mobi.meaning.extraction.ontology</outputPackage>
+                                    <outputPackage>com.mobi.semantic.translator.ontology</outputPackage>
                                     <ontologyName>MeaningExtraction</ontologyName>
                                 </ontology>
                             </generates>

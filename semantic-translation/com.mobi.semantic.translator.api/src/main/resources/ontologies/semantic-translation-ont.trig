@@ -3,10 +3,10 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
 @prefix dct: <http://purl.org/dc/terms/>.
-@prefix : <urn://mobi.com/ontologies/MeaningExtraction#> .
+@prefix : <urn://mobi.com/ontologies/SemanticTranslation#> .
 
-<urn://mobi.com/ontologies/MeaningExtraction> a owl:Ontology ;
-    owl:versionIRI <urn://mobi.com/ontologies/MeaningExtraction#1.0> ;
+<urn://mobi.com/ontologies/SemanticTranslation> a owl:Ontology ;
+    owl:versionIRI <urn://mobi.com/ontologies/SemanticTranslation#1.0> ;
     rdfs:label "Mobi Extraction Ontology"@en ;
     rdfs:comment "Ontology extension for generating ontologies ."@en ;
     dct:creator [foaf:name "Ben Gould"] ;
