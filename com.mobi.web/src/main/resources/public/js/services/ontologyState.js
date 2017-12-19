@@ -836,7 +836,6 @@
              */
             self.openOntology = function(recordId, recordTitle) {
                 var branchId, commitId, ontology, inProgressCommit, ontologyId;
-                var start = Date.now();
                 return self.getOntology(recordId)
                     .then(response => {
                         branchId = response.branchId;

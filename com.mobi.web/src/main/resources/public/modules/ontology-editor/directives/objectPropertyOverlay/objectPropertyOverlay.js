@@ -43,7 +43,7 @@
                     dvm.util = utilService;
                     dvm.individuals = angular.copy(dvm.os.listItem.individuals.iris);
                     delete dvm.individuals[dvm.os.getActiveEntityIRI()];
-                    dvm.valueSelect = {'@id': dvm.os.propertyValue};
+                    dvm.valueSelect = dvm.os.propertyValue ? {'@id': dvm.os.propertyValue} : undefined;
 
                     dvm.addProperty = function(select, value) {
                         if (select) {
