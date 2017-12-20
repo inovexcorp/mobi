@@ -1,14 +1,12 @@
-@Version("2.0.0.${build}")
-
-package com.mobi.catalog.rest;
+package com.mobi.repository.impl.sesame.sparql;
 
 /*-
  * #%L
- * com.mobi.catalog.rest
+ * com.mobi.repository.impl.sesame
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,20 @@ package com.mobi.catalog.rest;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import aQute.bnd.annotation.metatype.Meta;
+import com.mobi.repository.config.RepositoryConfig;
+
+/**
+ * Configuration for Repository objects accessed through a SPARQL 1.1 compliant endpoint. The instance must be
+ * initialized prior to using it.
+ */
+public interface SPARQLRepositoryConfig extends RepositoryConfig {
+
+    /**
+     * The SPARQL endpoint URL.
+     *
+     * @return The String representing the SPARQL endpoint URL.
+     */
+    @Meta.AD
+    String endpointUrl();
+}

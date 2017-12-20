@@ -89,12 +89,12 @@ describe('Upload Ontology Overlay directive', function() {
                 beforeEach(function() {
                     this.controller.title = 'title';
                     this.controller.description = 'description';
-                    this.controller.keywords = ['keywords'];
+                    this.controller.keywords = [' keywords '];
                     this.controller.index = 0;
                 });
                 it('less than controller.files.length', function() {
                     this.controller.submit();
-                    expect(ontologyManagerSvc.uploadFile).toHaveBeenCalledWith({name: 'file1'}, 'title', 'description', 'keywords', 'upload-0');
+                    expect(ontologyManagerSvc.uploadFile).toHaveBeenCalledWith({name: 'file1'}, 'title', 'description', ['keywords'], 'upload-0');
                     expect(this.controller.index).toBe(1);
                     expect(this.controller.title).toBe('file2');
                     expect(this.controller.description).toBe('');
@@ -104,7 +104,7 @@ describe('Upload Ontology Overlay directive', function() {
                 it('equal to controller.files.length', function() {
                     this.controller.total = 1;
                     this.controller.submit();
-                    expect(ontologyManagerSvc.uploadFile).toHaveBeenCalledWith({name: 'file1'}, 'title', 'description', 'keywords', 'upload-0');
+                    expect(ontologyManagerSvc.uploadFile).toHaveBeenCalledWith({name: 'file1'}, 'title', 'description', ['keywords'], 'upload-0');
                     expect(scope.closeOverlay).toHaveBeenCalled();
                     expect(ontologyStateSvc.uploadList).toEqual([{promise: jasmine.any(Object), id: 'upload-0', title: 'title', error: undefined}]);
                 });

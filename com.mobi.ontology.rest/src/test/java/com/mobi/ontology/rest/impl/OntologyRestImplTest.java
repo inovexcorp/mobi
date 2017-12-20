@@ -461,8 +461,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
 
         when(ontologyManager.createOntologyRecord(any(OntologyRecordConfig.class))).thenReturn(record);
-        when(ontologyManager.createOntology(any(FileInputStream.class))).thenReturn(ontology);
-        when(ontologyManager.createOntology(anyString())).thenReturn(ontology);
+        when(ontologyManager.createOntology(any(FileInputStream.class), anyBoolean())).thenReturn(ontology);
+        when(ontologyManager.createOntology(anyString(), anyBoolean())).thenReturn(ontology);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
         when(ontologyManager.deleteOntology(eq(recordId))).thenReturn(record);
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
@@ -734,14 +734,15 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         fd.field("title", "title");
         fd.field("description", "description");
-        fd.field("keywords", "keyword1,keyword2");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), 201);
         assertGetUserFromContext();
-        verify(ontologyManager).createOntology(any(FileInputStream.class));
+        verify(ontologyManager).createOntology(any(FileInputStream.class), eq(false));
         verify(ontology, atLeastOnce()).getOntologyId();
         verify(ontologyId).getOntologyIdentifier();
         verify(ontologyId).getOntologyIRI();
@@ -749,7 +750,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).createOntologyRecord(any(OntologyRecordConfig.class));
         verify(catalogManager).addRecord(catalogId, record);
         verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
-        verify(mockCache).put(anyString(), any(Ontology.class));
+        verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
         verify(provUtils).startCreateActivity(user);
         verify(provUtils).endCreateActivity(createActivity, record.getResource());
     }
@@ -759,7 +760,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         fd.field("description", "description");
-        fd.field("keywords", "keyword1,keyword2");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
@@ -773,7 +775,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("title", "title");
         fd.field("description", "description");
-        fd.field("keywords", "keyword1,keyword2");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
@@ -784,7 +787,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testUploadInvalidOntologyFile() {
-        when(ontologyManager.createOntology(any(FileInputStream.class)))
+        when(ontologyManager.createOntology(any(FileInputStream.class), anyBoolean()))
                 .thenThrow(new MobiOntologyException("Error"));
 
         FormDataMultiPart fd = new FormDataMultiPart();
@@ -792,7 +795,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 MediaType.APPLICATION_OCTET_STREAM_TYPE);
         fd.field("title", "title");
         fd.field("description", "description");
-        fd.field("keywords", "keyword1,keyword2");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
@@ -812,7 +816,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         fd.field("title", "title");
         fd.field("description", "description");
-        fd.field("keywords", "keyword1,keyword2");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
@@ -827,12 +832,13 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     public void testUploadOntologyJson() {
         JSONObject ontologyJson = new JSONObject().element("@id", "http://mobi.com/ontology");
 
-        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
-                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(ontologyJson));
+        Response response = target().path("ontologies").queryParam("title", "title")
+                .queryParam("description", "description").queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
+                .request().post(Entity.json(ontologyJson));
 
         assertEquals(response.getStatus(), 201);
         assertGetUserFromContext();
-        verify(ontologyManager).createOntology(ontologyJson.toString());
+        verify(ontologyManager).createOntology(ontologyJson.toString(), false);
         verify(ontology, atLeastOnce()).getOntologyId();
         verify(ontologyId).getOntologyIdentifier();
         verify(ontologyId).getOntologyIRI();
@@ -840,7 +846,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).createOntologyRecord(any(OntologyRecordConfig.class));
         verify(catalogManager).addRecord(catalogId, record);
         verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
-        verify(mockCache).put(anyString(), any(Ontology.class));
+        verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
         verify(provUtils).startCreateActivity(user);
         verify(provUtils).endCreateActivity(createActivity, record.getResource());
     }
@@ -850,22 +856,25 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         JSONObject entity = new JSONObject().element("@id", "http://mobi.com/entity");
 
         Response response = target().path("ontologies").queryParam("description", "description")
-                .queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
+                .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
+                .request().post(Entity.json(entity));
         assertEquals(response.getStatus(), 400);
         verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
     public void testUploadOntologyJsonWithoutJson() {
-        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
-                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(""));
+        Response response = target().path("ontologies").queryParam("title", "title")
+                .queryParam("description", "description").queryParam("keywords", "keyword1")
+                .queryParam("keywords", "keyword2")
+                .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
         verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
     public void testUploadInvalidOntologyJson() {
-        when(ontologyManager.createOntology(anyString())).thenThrow(new MobiOntologyException("Error"));
+        when(ontologyManager.createOntology(anyString(), anyBoolean())).thenThrow(new MobiOntologyException("Error"));
         JSONObject entity = new JSONObject().element("@id", "http://mobi.com/entity");
 
         Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
@@ -883,8 +892,10 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(results.getPage()).thenReturn(Collections.singletonList(record));
         JSONObject ontologyJson = new JSONObject().element("@id", "http://mobi.com/ontology");
 
-        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
-                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(ontologyJson));
+        Response response = target().path("ontologies").queryParam("title", "title")
+                .queryParam("description", "description")
+                .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
+                .request().post(Entity.json(ontologyJson));
         assertEquals(response.getStatus(), 400);
         verify(provUtils).startCreateActivity(user);
         verify(provUtils).removeActivity(createActivity);
@@ -4235,7 +4246,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
-        verify(ontologyManager).createOntology(any(FileInputStream.class));
+        verify(ontologyManager).createOntology(any(FileInputStream.class), eq(false));
         verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
         verify(catalogManager).getDiff(any(Model.class), any(Model.class));
         verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
@@ -4259,7 +4270,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
         verify(catalogManager, times(0)).getMasterBranch(eq(catalogId), eq(recordId));
-        verify(ontologyManager, times(0)).createOntology(any(FileInputStream.class));
+        verify(ontologyManager, times(0)).createOntology(any(FileInputStream.class), eq(false));
         verify(catalogManager, times(0)).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
         verify(catalogManager, times(0)).getDiff(any(Model.class), any(Model.class));
         verify(catalogManager, times(1)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
@@ -4284,7 +4295,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
         verify(catalogManager).getHeadCommit(eq(catalogId), eq(recordId), eq(branchId));
-        verify(ontologyManager).createOntology(any(FileInputStream.class));
+        verify(ontologyManager).createOntology(any(FileInputStream.class), eq(false));
         verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
         verify(catalogManager).getDiff(any(Model.class), any(Model.class));
         verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));

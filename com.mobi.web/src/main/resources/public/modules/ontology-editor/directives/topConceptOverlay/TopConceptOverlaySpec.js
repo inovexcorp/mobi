@@ -43,6 +43,8 @@ describe('Top Concept Overlay directive', function() {
             prefixes = _prefixes_;
         });
 
+        ontologyManagerSvc.getConceptIRIs.and.returnValue(['concept1', 'concept2']);
+        ontologyStateSvc.listItem.selected[prefixes.skos + 'hasTopConcept'] = [{'@id': 'concept2'}];
         scope.onSubmit = jasmine.createSpy('onSubmit');
         scope.closeOverlay = jasmine.createSpy('closeOverlay');
         this.element = $compile(angular.element('<top-concept-overlay on-submit="onSubmit()" close-overlay="closeOverlay()"></top-concept-overlay>'))(scope);
@@ -60,6 +62,10 @@ describe('Top Concept Overlay directive', function() {
         this.element.remove();
     });
 
+    it('initializes with the correct values', function() {
+        expect(this.controller.conceptIRIs).toEqual(['concept1']);
+        expect(ontologyManagerSvc.getConceptIRIs).toHaveBeenCalledWith(jasmine.any(Array), ontologyStateSvc.listItem.derivedConcepts);
+    });
     describe('controller bound variables', function() {
         it('onSubmit to be called in parent scope', function() {
             this.controller.onSubmit();
@@ -112,12 +118,19 @@ describe('Top Concept Overlay directive', function() {
     });
     describe('controller methods', function() {
         it('should add a top concept', function() {
+            ontologyStateSvc.listItem.selected = {'@id': 'selected'};
             this.controller.values = [{}];
             this.controller.addTopConcept();
             expect(ontologyStateSvc.listItem.selected[prefixes.skos + 'hasTopConcept']).toEqual(this.controller.values);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
             expect(scope.closeOverlay).toHaveBeenCalled();
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+        });
+        it('should set the list of concepts', function() {
+            ontoUtils.getSelectList.and.returnValue(['concept']);
+            this.controller.getConcepts('search');
+            expect(this.controller.concepts).toEqual(['concept']);
+            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(this.controller.conceptIRIs, 'search');
         });
     });
 });
