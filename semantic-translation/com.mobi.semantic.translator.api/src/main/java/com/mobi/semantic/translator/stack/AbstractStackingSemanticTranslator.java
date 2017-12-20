@@ -23,6 +23,10 @@ package com.mobi.semantic.translator.stack;
  * #L%
          */
 
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.Thing;
 import com.mobi.semantic.translator.AbstractSemanticTranslator;
 import com.mobi.semantic.translator.SemanticTranslationException;
 import com.mobi.semantic.translator.SemanticTranslator;
@@ -33,10 +37,6 @@ import com.mobi.semantic.translator.ontology.ExtractedClass;
 import com.mobi.semantic.translator.ontology.ExtractedDatatypeProperty;
 import com.mobi.semantic.translator.ontology.ExtractedObjectProperty;
 import com.mobi.semantic.translator.ontology.ExtractedOntology;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.Thing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +44,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Optional;
 import java.util.Stack;
 import java.util.stream.Collectors;
@@ -64,7 +66,7 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
 
     private final String suffix;
 
-    private final Stack<T> stack;
+    private final Deque<T> stack;
 
     private IRI domainIri = null;
 
@@ -85,7 +87,7 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
         this.delimiter = delimiter;
         this.prefix = prefix;
         this.suffix = suffix;
-        this.stack = new Stack<>();
+        this.stack = new ArrayDeque<>();
     }
 
     @Override
@@ -96,17 +98,17 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
 
     @Override
     public Optional<T> popStack() {
-        return stack.isEmpty() ? Optional.empty() : Optional.of(stack.pop());
+        return stack.isEmpty() ? Optional.empty() : Optional.of(stack.removeLast());
     }
 
     @Override
     public Optional<T> peekStack() {
-        return stack.isEmpty() ? Optional.empty() : Optional.of(stack.peek());
+        return stack.isEmpty() ? Optional.empty() : Optional.of(stack.getLast());
     }
 
     @Override
     public String getCurrentLocation() {
-        return stack.stream().map(StackItem::getIdentifier).collect(Collectors.joining(delimiter, prefix, suffix));
+        return stack.stream().map(StackItem::getIdentifier).sequential().collect(Collectors.joining(delimiter, prefix, suffix));
     }
 
     @Override
@@ -121,7 +123,6 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
     private <T extends Thing> OrmFactory<T> factory(Class<T> clazz) throws SemanticTranslationException {
         return ormFactoryRegistry.getFactoryOfType(clazz).orElseThrow(() -> new SemanticTranslationException("ORM services not initialized correctly!"));
     }
-
 
     protected ExtractedDatatypeProperty getOrCreateDatatypeProperty(ExtractedOntology managedOntology, IRI domain,
                                                                     IRI range, String name, String address) throws SemanticTranslationException {
@@ -205,6 +206,9 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
         return this.expressionProcessor.processExpression(expression, new DefaultClassIriExpressionContext(managedOntology, name, address));
     }
 
+    protected Deque<T> getStack() {
+        return stack;
+    }
 
     private IRI getDomainIri() {
         if (domainIri == null) {

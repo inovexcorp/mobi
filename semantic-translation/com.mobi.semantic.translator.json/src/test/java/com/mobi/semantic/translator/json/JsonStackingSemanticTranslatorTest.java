@@ -134,6 +134,12 @@ public class JsonStackingSemanticTranslatorTest {
 
     private ExtractedOntology ontology;
 
+    private static void registerOrmFactory(OrmFactory<?> factory) throws Exception {
+        Method m = OFR.getClass().getDeclaredMethod("addFactory", OrmFactory.class);
+        m.setAccessible(true);
+        m.invoke(OFR, factory);
+    }
+
     @Before
     public void initExtractor() {
         this.extractor = new JsonStackingSemanticTranslator();
@@ -149,17 +155,10 @@ public class JsonStackingSemanticTranslatorTest {
     @Test
     public void basicTest() throws Exception {
         final Model output = this.extractor.translate(Paths.get("src/test/resources/test.json"), this.ontology);
-        this.ontology.getModel().stream().forEach(System.out::println);
+        this.ontology.getModel().forEach(System.out::println);
         System.out.println("\n\n\n");
         Assert.assertNotNull(output);
         Assert.assertFalse(output.isEmpty());
         output.forEach(System.out::println);
     }
-
-    private static void registerOrmFactory(OrmFactory<?> factory) throws Exception {
-        Method m = OFR.getClass().getDeclaredMethod("addFactory", OrmFactory.class);
-        m.setAccessible(true);
-        m.invoke(OFR, factory);
-    }
-
 }

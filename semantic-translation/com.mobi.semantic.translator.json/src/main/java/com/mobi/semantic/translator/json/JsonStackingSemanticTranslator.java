@@ -29,6 +29,12 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.Value;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.semantic.translator.SemanticTranslationException;
 import com.mobi.semantic.translator.expression.IriExpressionProcessor;
 import com.mobi.semantic.translator.ontology.ExtractedClass;
@@ -36,12 +42,7 @@ import com.mobi.semantic.translator.ontology.ExtractedDatatypeProperty;
 import com.mobi.semantic.translator.ontology.ExtractedOntology;
 import com.mobi.semantic.translator.stack.AbstractStackingSemanticTranslator;
 import com.mobi.semantic.translator.stack.StackingSemanticTranslator;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.orm.OrmFactoryRegistry;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,35 +75,44 @@ public class JsonStackingSemanticTranslator extends AbstractStackingSemanticTran
         return result;
     }
 
+    private String currentName(final String jsonCurrentName) {
+        String name = null;
+        if (StringUtils.isNotBlank(jsonCurrentName)) {
+            name = jsonCurrentName;
+        } else {
+            name = peekStack().map(item -> item.isArray() ? item.getIdentifier() : "root").orElse("root");
+        }
+        return name;
+    }
+
+    private Optional<JsonStackItem> peekForLastNonArray() {
+        return getStack().stream().filter(item -> !item.isArray()).findFirst();
+    }
+
     public void parseToken(Model result, ExtractedOntology managedOntology, JsonToken token, JsonParser jsonParser) throws IOException, SemanticTranslationException {
-        final String address = getCurrentLocation();
         final Optional<JsonStackItem> top = peekStack();
+        final Optional<JsonStackItem> nonArrayTop = peekForLastNonArray();
         final String jsonCurrentName = jsonParser.getCurrentName();
         switch (token) {
             case END_OBJECT:
                 LOG.debug("Ending {}", getCurrentLocation());
                 final JsonStackItem endItem = popStack().orElseThrow(() -> new SemanticTranslationException("Got a null object from the stack on an object end!"));
-                final ExtractedClass extractedClass = getOrCreateClass(managedOntology, endItem.getClassIri(), endItem.getIdentifier(), address);
-                createInstance(result, managedOntology, endItem, extractedClass, peekStack());
+                final ExtractedClass extractedClass = getOrCreateClass(managedOntology, endItem.getClassIri(), endItem.getIdentifier(), getCurrentLocation());
+                createInstance(result, managedOntology, endItem, extractedClass, peekForLastNonArray());
                 break;
             case START_ARRAY:
-//                JsonStackItem startArr = pushStack(new JsonStackItem(jsonCurrentName != null ? jsonCurrentName : "rootArray", top.isPresent()));
-//                startArr.setArray(true);
-//                if(top.isPresent()){
-//                    startArr.setClassIri(top.get().getClassIri());
-//                }else{
-//                    //TODO
-//                }
+                JsonStackItem startArr = pushStack(new JsonStackItem(jsonCurrentName != null ? jsonCurrentName : "rootArray", top.isPresent()));
+                startArr.setArray(true);
                 break;
             case END_ARRAY:
-//                final JsonStackItem endArr = popStack().orElseThrow(() -> new SemanticTranslationException("Got a null object from the stack on an array end!"));
-//                if (!endArr.isArray()) {
-//                    throw new SemanticTranslationException("Mismatch on start/end array!");
-//                }
+                final JsonStackItem endArr = popStack().orElseThrow(() -> new SemanticTranslationException("Got a null object from the stack on an array end!"));
+                if (!endArr.isArray()) {
+                    throw new SemanticTranslationException("Mismatch on start/end array!");
+                }
                 break;
             case START_OBJECT:
                 JsonStackItem item = pushStack(new JsonStackItem(
-                        jsonParser.getCurrentName() != null ? jsonParser.getCurrentName() : top.isPresent() ? "unknown" : "root",
+                        currentName(jsonCurrentName),
                         !top.isPresent()));
                 item.setClassIri(generateClassIri(managedOntology, item.getIdentifier(), getCurrentLocation()));
                 LOG.debug("Starting object {}", getCurrentLocation());
@@ -111,22 +121,26 @@ public class JsonStackingSemanticTranslator extends AbstractStackingSemanticTran
             case VALUE_TRUE:
             case VALUE_FALSE:
                 if (top.isPresent()) {
-                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsBoolean()), xsdBoolean());
+                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsBoolean()),
+                            xsdBoolean());
                 }
                 break;
             case VALUE_NUMBER_FLOAT:
                 if (top.isPresent()) {
-                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsDouble()), xsdFloat());
+                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsDouble()),
+                            xsdFloat());
                 }
                 break;
             case VALUE_NUMBER_INT:
                 if (top.isPresent()) {
-                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsInt()), xsdInt());
+                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsInt()),
+                            xsdInt());
                 }
                 break;
             case VALUE_STRING:
                 if (top.isPresent()) {
-                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsString()), xsdString());
+                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsString()),
+                            xsdString());
                 }
                 break;
             case VALUE_NULL:
@@ -141,10 +155,25 @@ public class JsonStackingSemanticTranslator extends AbstractStackingSemanticTran
         }
     }
 
+    private String getDatatypePropertyName(JsonStackItem currentItem) throws SemanticTranslationException {
+        String name = currentItem.getIdentifier();
+        if (name == null && peekStack().map(JsonStackItem::isArray).orElse(false)) {
+            name = peekStack().orElseThrow(() -> new SemanticTranslationException(""))
+                    .getIdentifier();
+        }
+        return name;
+    }
+
+    private IRI getDatatypeDomain(JsonStackItem item) throws SemanticTranslationException {
+        return item.isArray() ? peekForLastNonArray()
+                .orElseThrow(() -> new SemanticTranslationException("DatatypeProperty discovered without a corresponding class")).getClassIri()
+                : item.getClassIri();
+    }
+
     private void addDatatypeProperty(ExtractedOntology managedOntology, JsonStackItem item, Value value, IRI range)
             throws SemanticTranslationException {
-        ExtractedDatatypeProperty datatypeProperty = getOrCreateDatatypeProperty(managedOntology, item.getClassIri(),
-                range, item.getIdentifier(), getCurrentLocation());
+        ExtractedDatatypeProperty datatypeProperty = getOrCreateDatatypeProperty(managedOntology,
+                getDatatypeDomain(item), range, getDatatypePropertyName(item), getCurrentLocation());
         item.getProperties().add((IRI) datatypeProperty.getResource(), value);
     }
 

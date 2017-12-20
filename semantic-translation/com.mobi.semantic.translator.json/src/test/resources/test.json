@@ -9,9 +9,12 @@
   "emptyObject": {},
   "anotherEmpty": {
   },
-  "array": [
+  "arrayEntity": [
     {},
-    {"test":"one"},
-    {"test":"two", "different":"value", "anotherDifferent": "value again"}
+    {"test":"testOne"},
+    {"test":"testTwo", "different":"differentValue", "anotherDifferent": "anotherDifferentValue"}
+  ],
+  "arrayProperty": [
+    "arrOne" , "arrTwo"
   ]
 }
