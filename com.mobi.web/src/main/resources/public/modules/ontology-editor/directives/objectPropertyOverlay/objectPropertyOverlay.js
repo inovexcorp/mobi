@@ -43,23 +43,23 @@
                     dvm.util = utilService;
                     dvm.individuals = angular.copy(dvm.os.listItem.individuals.iris);
                     delete dvm.individuals[dvm.os.getActiveEntityIRI()];
-                    dvm.valueSelect = dvm.os.propertyValue ? {'@id': dvm.os.propertyValue} : undefined;
 
                     dvm.addProperty = function(select, value) {
+                        var valueObj = {'@id': value};
                         if (select) {
                             if (_.has(dvm.os.listItem.selected, select)) {
-                                dvm.os.listItem.selected[select].push(value);
+                                dvm.os.listItem.selected[select].push(valueObj);
                             } else {
-                                dvm.os.listItem.selected[select] = [value];
+                                dvm.os.listItem.selected[select] = [valueObj];
                             }
                         }
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, value));
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, valueObj));
                         dvm.os.showObjectPropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
 
                         var types = dvm.os.listItem.selected['@type'];
                         if (dvm.ontoUtils.containsDerivedConcept(types) || dvm.ontoUtils.containsDerivedConceptScheme(types)) {
-                            dvm.ontoUtils.updateVocabularyHierarchies(select, [value]);
+                            dvm.ontoUtils.updateVocabularyHierarchies(select, [valueObj]);
                         }
                     }
                     dvm.getValues = function(searchText) {

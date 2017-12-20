@@ -24,16 +24,16 @@
     'use strict';
 
     angular
-        .module('objectSelect', [])
-        .directive('objectSelect', objectSelect);
+        .module('iriSelect', [])
+        .directive('iriSelect', iriSelect);
 
-        objectSelect.$inject = ['ontologyManagerService', 'settingsManagerService', 'ontologyStateService', 'ontologyUtilsManagerService'];
+        iriSelect.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
 
-        function objectSelect(ontologyManagerService, settingsManagerService, ontologyStateService, ontologyUtilsManagerService) {
+        function iriSelect(ontologyStateService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/objectSelect/objectSelect.html',
+                templateUrl: 'modules/ontology-editor/directives/iriSelect/iriSelect.html',
                 scope: {
                     displayText: '<',
                     mutedText: '<',
@@ -50,29 +50,13 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     var os = ontologyStateService;
-                    var om = ontologyManagerService;
                     $scope.multiSelect = angular.isDefined($scope.multiSelect) ? $scope.multiSelect : true;
 
                     dvm.ontoUtils = ontologyUtilsManagerService;
-                    dvm.tooltipDisplay = settingsManagerService.getTooltipDisplay();
                     dvm.values = [];
 
                     dvm.getOntologyIri = function(iri) {
                         return _.get(dvm.selectList, "['" + iri + "']", os.listItem.ontologyId);
-                    }
-                    dvm.getTooltipDisplay = function(iri) {
-                        var result = iri;
-                        if (dvm.getOntologyIri(iri) === os.listItem.ontologyId) {
-                            var selectedObject = os.getEntityByRecordId(os.listItem.ontologyRecord.recordId, iri);
-                            if (dvm.tooltipDisplay === 'comment') {
-                                result = om.getEntityDescription(selectedObject) || iri;
-                            } else if (dvm.tooltipDisplay === 'label') {
-                                result = om.getEntityName(selectedObject) || iri;
-                            } else if (_.has(selectedObject, '@id')) {
-                                result = selectedObject['@id'];
-                            }
-                        }
-                        return result;
                     }
                     dvm.getValues = function(searchText) {
                         dvm.values = dvm.ontoUtils.getSelectList(_.keys(dvm.selectList), searchText, dvm.ontoUtils.getDropDownText);

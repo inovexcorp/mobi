@@ -129,11 +129,11 @@ describe('Create Property Overlay directive', function() {
         it('with a text-area', function() {
             expect(this.element.find('text-area').length).toBe(1);
         });
-        it('with a object-select for domain', function() {
-            expect(this.element.querySelectorAll('object-select[display-text="\'Domain\'"]').length).toBe(0);
+        it('with a iri-select for domain', function() {
+            expect(this.element.querySelectorAll('iri-select[display-text="\'Domain\'"]').length).toBe(0);
             ontologyManagerSvc.isObjectProperty.and.returnValue(true);
             scope.$apply();
-            expect(this.element.querySelectorAll('object-select[display-text="\'Domain\'"]').length).toBe(1);
+            expect(this.element.querySelectorAll('iri-select[display-text="\'Domain\'"]').length).toBe(1);
         });
         it('with a .btn-container', function() {
             expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
@@ -173,18 +173,18 @@ describe('Create Property Overlay directive', function() {
             expect(button.attr('disabled')).toBeFalsy();
         });
         it('depending on whether the property is a datatype property', function() {
-            expect(this.element.querySelectorAll('object-select.range-datatype').length).toBe(0);
+            expect(this.element.querySelectorAll('iri-select.range-datatype').length).toBe(0);
 
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
             scope.$digest();
-            expect(this.element.querySelectorAll('object-select.range-datatype').length).toBe(1);
+            expect(this.element.querySelectorAll('iri-select.range-datatype').length).toBe(1);
         });
         it('depending on whether the property is a object property', function() {
-            expect(this.element.querySelectorAll('object-select.range-object').length).toBe(0);
+            expect(this.element.querySelectorAll('iri-select.range-object').length).toBe(0);
 
             ontologyManagerSvc.isObjectProperty.and.returnValue(true);
             scope.$digest();
-            expect(this.element.querySelectorAll('object-select.range-object').length).toBe(1);
+            expect(this.element.querySelectorAll('iri-select.range-object').length).toBe(1);
         });
         it('depending on whether the property IRI already exists in the ontology.', function() {
             ontoUtils.checkIri.and.returnValue(true);
@@ -225,16 +225,16 @@ describe('Create Property Overlay directive', function() {
                 this.controller.property['@id'] = 'property-iri';
                 this.controller.property['@type'] = [];
                 this.controller.property[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
-                this.controller.property[prefixes.rdfs + 'range'] = [];
-                this.controller.property[prefixes.rdfs + 'domain'] = [];
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
                 ontologyStateSvc.getOntologiesArray.and.returnValue([]);
             });
-            it('and unsets the correct properties', function() {
+            it('and sets the domains and ranges', function() {
+                this.controller.domains = ['domain'];
+                this.controller.ranges = ['range'];
                 this.controller.create();
                 expect(_.has(this.controller.property, prefixes.dcterms + 'description')).toBe(false);
-                expect(_.has(this.controller.property, prefixes.rdfs + 'range')).toBe(false);
-                expect(_.has(this.controller.property, prefixes.rdfs + 'domain')).toBe(false);
+                expect(this.controller.property[prefixes.rdfs + 'domain']).toEqual([{'@id': 'domain'}]);
+                expect(this.controller.property[prefixes.rdfs + 'range']).toEqual([{'@id': 'range'}]);
                 expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.property, this.controller.language);
                 expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(this.controller.property);
                 expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.property);
@@ -419,6 +419,8 @@ describe('Create Property Overlay directive', function() {
         });
         describe('typeChange should reset the correct variables', function() {
             beforeEach(function() {
+                this.controller.domains = ['domain'];
+                this.controller.ranges = ['range'];
                 this.controller.values = [{prop: 'value'}];
                 _.forEach(this.controller.characteristics, function(obj) {
                     obj.checked = true;
@@ -431,6 +433,8 @@ describe('Create Property Overlay directive', function() {
                 _.forEach(this.controller.characteristics, function(obj) {
                     expect(obj.checked).toBe(false);
                 });
+                expect(this.controller.domains).toEqual([]);
+                expect(this.controller.ranges).toEqual([]);
             });
             it('if the property is a DatatypeProperty', function() {
                 ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
@@ -439,6 +443,8 @@ describe('Create Property Overlay directive', function() {
                 _.forEach(_.filter(this.controller.characteristics, 'objectOnly'), function(obj) {
                     expect(obj.checked).toBe(false);
                 });
+                expect(this.controller.domains).toEqual(['domain']);
+                expect(this.controller.ranges).toEqual([]);
             });
             it('if the property is an ObjectProperty', function() {
                 this.controller.typeChange();
@@ -446,6 +452,8 @@ describe('Create Property Overlay directive', function() {
                 _.forEach(this.controller.characteristics, function(obj) {
                     expect(obj.checked).toBe(true);
                 });
+                expect(this.controller.domains).toEqual(['domain']);
+                expect(this.controller.ranges).toEqual([]);
             });
         });
     });

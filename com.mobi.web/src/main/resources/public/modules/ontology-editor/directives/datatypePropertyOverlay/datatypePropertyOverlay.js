@@ -49,7 +49,7 @@
                             if (language && dvm.isStringType()) {
                                 valueObj['@language'] = language;
                             } else if (type) {
-                                valueObj['@type'] = type['@id'];
+                                valueObj['@type'] = type;
                             }
                             if (_.has(dvm.os.listItem.selected, select)) {
                                 dvm.os.listItem.selected[select].push(valueObj);
@@ -68,7 +68,7 @@
                             dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, propertyObj));
                             propertyObj['@value'] = value;
                             if (type && !(language && dvm.isStringType())) {
-                                propertyObj['@type'] = type['@id'];
+                                propertyObj['@type'] = type;
                             } else {
                                 _.unset(propertyObj, '@type');
                             }
@@ -84,7 +84,7 @@
                     }
 
                     dvm.isStringType = function() {
-                        return prefixes.rdf + 'langString' === _.get(dvm.os.propertyType, '@id', '');
+                        return prefixes.rdf + 'langString' === dvm.os.propertyType;
                     }
                 }
             }

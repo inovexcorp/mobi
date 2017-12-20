@@ -59,11 +59,7 @@
                         dvm.os.propertyValue = propertyObj['@value'];
                         dvm.os.propertyIndex = index;
                         dvm.os.propertyLanguage = _.get(propertyObj, '@language');
-                        if (dvm.os.propertyLanguage) {
-                            dvm.os.propertyType = {'@id': prefixes.rdf + 'langString'};
-                        } else {
-                            dvm.os.propertyType = propertyObj['@type'] ? {'@id': propertyObj['@type']} : undefined;
-                        }
+                        dvm.os.propertyType = dvm.os.propertyLanguage ? prefixes.rdf + 'langString' : _.get(propertyObj, '@type');
                         dvm.os.showDataPropertyOverlay = true;
                     }
 

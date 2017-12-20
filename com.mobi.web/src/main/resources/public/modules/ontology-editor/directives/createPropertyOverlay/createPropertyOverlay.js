@@ -69,7 +69,9 @@
                         [prefixes.dcterms + 'description']: [{
                             '@value': ''
                         }]
-                    }
+                    };
+                    dvm.domains = [];
+                    dvm.ranges = [];
 
                     dvm.nameChanged = function() {
                         if (!dvm.iriHasChanged) {
@@ -90,11 +92,12 @@
                                 dvm.property['@type'].push(obj.typeIRI);
                             }
                         });
-                        _.forEach(['domain', 'range'], function(axiom) {
-                            if (_.isEqual(dvm.property[prefixes.rdfs + axiom], [])) {
-                                _.unset(dvm.property, prefixes.rdfs + axiom);
-                            }
-                        });
+                        if (dvm.domains.length) {
+                            dvm.property[prefixes.rdfs + 'domain'] = _.map(dvm.domains, iri => ({'@id': iri}));
+                        }
+                        if (dvm.ranges.length) {
+                            dvm.property[prefixes.rdfs + 'range'] = _.map(dvm.ranges, iri => ({'@id': iri}));
+                        }
                         dvm.ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
                         dvm.os.updatePropertyIcon(dvm.property);
                         // add the entity to the ontology
@@ -126,6 +129,7 @@
                     dvm.typeChange = function() {
                         dvm.values = [];
                         if (dvm.om.isAnnotation(dvm.property)) {
+                            dvm.domains = [];
                             _.forEach(dvm.characteristics, obj => {
                                 obj.checked = false;
                             });
@@ -134,6 +138,7 @@
                                 obj.checked = false;
                             });
                         }
+                        dvm.ranges = [];
                     }
                     dvm.characteristicsFilter = function(obj) {
                         return !obj.objectOnly || dvm.om.isObjectProperty(dvm.property);

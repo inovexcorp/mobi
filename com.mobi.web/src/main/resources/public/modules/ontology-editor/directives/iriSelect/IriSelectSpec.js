@@ -20,24 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Object Select directive', function() {
-    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, ontoUtilsSvc;
+describe('IRI Select directive', function() {
+    var $compile, scope, ontologyStateSvc, ontoUtilsSvc;
 
     beforeEach(function() {
         module('templates');
-        module('objectSelect');
-        mockOntologyManager();
-        mockSettingsManager();
+        module('iriSelect');
         mockOntologyState();
         mockOntologyUtilsManager();
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _settingsManagerService_, _ontologyStateService_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyManagerSvc = _ontologyManagerService_;
-            settingsManagerService = _settingsManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             ontoUtilsSvc = _ontologyUtilsManagerService_;
         });
@@ -49,18 +45,17 @@ describe('Object Select directive', function() {
         scope.isRequiredWhen = false;
         scope.multiSelect = false;
         scope.onChange = jasmine.createSpy('onChange');
-        scope.bindModel = [];
+        scope.bindModel = undefined;
 
-        this.element = $compile(angular.element('<object-select multi-select="multiSelect" on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" multi-select="multiSelect"></object-select>'))(scope);
+        this.element = $compile(angular.element('<iri-select multi-select="multiSelect" on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" multi-select="multiSelect"></iri-select>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('objectSelect');
+        this.controller = this.element.controller('iriSelect');
     });
 
     afterEach(function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        ontologyManagerSvc = null;
         ontoUtilsSvc = null;
         this.element.remove();
     });
@@ -101,9 +96,9 @@ describe('Object Select directive', function() {
     });
     describe('controller bound variable', function() {
         it('bindModel should be two way bound', function() {
-            this.controller.bindModel = ['new'];
+            this.controller.bindModel = 'new';
             scope.$digest();
-            expect(scope.bindModel).toEqual(['new']);
+            expect(scope.bindModel).toEqual('new');
         });
         it('selectList should be one way bound', function() {
             this.controller.selectList = {test: 'ontology'};
@@ -114,7 +109,7 @@ describe('Object Select directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('object-select')).toBe(true);
+            expect(this.element.hasClass('iri-select')).toBe(true);
             expect(this.element.hasClass('form-group')).toBe(true);
         });
         it('with custom-labels', function() {
@@ -146,50 +141,6 @@ describe('Object Select directive', function() {
             });
             it('should return ontologyId if iri is not set on selectList', function() {
                 expect(this.controller.getOntologyIri('test')).toEqual('ontologyId');
-            });
-        });
-        describe('getTooltipDisplay', function() {
-            beforeEach(function() {
-                ontologyStateSvc.getEntityByRecordId.and.returnValue({});
-                spyOn(this.controller, 'getOntologyIri').and.returnValue(ontologyStateSvc.listItem.ontologyId);
-            });
-            it('should return @id when tooltipDisplay is empty', function() {
-                ontologyStateSvc.getEntityByRecordId.and.returnValue({'@id': 'iri'});
-                expect(this.controller.getTooltipDisplay('iri')).toBe('iri');
-            });
-            describe('for comment', function() {
-                beforeEach(function() {
-                    this.controller.tooltipDisplay = 'comment';
-                });
-                it('when getEntityDescription is undefined', function() {
-                    ontologyManagerSvc.getEntityDescription.and.returnValue(undefined);
-                    var result = this.controller.getTooltipDisplay('iri');
-                    expect(ontologyManagerSvc.getEntityDescription).toHaveBeenCalledWith({}); // The value of getEntity
-                    expect(result).toEqual('iri'); // The value of getItemIri
-                });
-                it('when getEntityDescription is defined', function() {
-                    ontologyManagerSvc.getEntityDescription.and.returnValue('new');
-                    var result = this.controller.getTooltipDisplay('iri');
-                    expect(ontologyManagerSvc.getEntityDescription).toHaveBeenCalledWith({}); // The value of getEntity
-                    expect(result).toEqual('new'); // The value of getEntityDescription
-                });
-            });
-            describe('for label', function() {
-                beforeEach(function() {
-                    this.controller.tooltipDisplay = 'label';
-                });
-                it('when getEntityName is undefined', function() {
-                    ontologyManagerSvc.getEntityName.and.returnValue(undefined);
-                    var result = this.controller.getTooltipDisplay('iri');
-                    expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({}); // The value of getEntity
-                    expect(result).toEqual('iri'); // The value of getItemIri
-                });
-                it('when getEntityName is defined', function() {
-                    ontologyManagerSvc.getEntityName.and.returnValue('new');
-                    var result = this.controller.getTooltipDisplay('iri');
-                    expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({}); // The value of getEntity
-                    expect(result).toEqual('new'); // The value of getEntityName
-                });
             });
         });
         it('getValues should set the correct value', function() {

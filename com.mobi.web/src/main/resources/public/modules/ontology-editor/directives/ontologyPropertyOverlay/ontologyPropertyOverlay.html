@@ -43,8 +43,7 @@
         <div ng-if="dvm.isAnnotationProperty()">
             <text-area ng-model="dvm.os.ontologyPropertyValue" display-text="'Value'" required="required"></text-area>
             <language-select ng-model="dvm.os.ontologyPropertyLanguage"></language-select>
-            <!--<object-select ng-model="dvm.os.ontologyPropertyType" display-text="'Type'" multi-select="false"
-                           select-list="dvm.os.listItem.dataPropertyRange"></object-select>-->
+            <!--<iri-select ng-model="dvm.os.ontologyPropertyType" display-text="'Type'" multi-select="false" select-list="dvm.os.listItem.dataPropertyRange"></iri-select>-->
         </div>
         <div class="btn-container clearfix">
             <button ng-if="!dvm.os.editingOntologyProperty" class="btn btn-primary pull-right" ng-click="dvm.addProperty()" ng-disabled="dvm.propertyForm.$invalid">Add</button>

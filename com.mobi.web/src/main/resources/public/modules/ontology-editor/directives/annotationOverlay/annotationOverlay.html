@@ -40,8 +40,7 @@
             <radio-button display-text="'True'" value="'true'" ng-model="dvm.os.annotationValue"></radio-button>
             <radio-button display-text="'False'" value="'false'" ng-model="dvm.os.annotationValue"></radio-button>
         </div>
-        <!--<object-select ng-model="dvm.os.annotationType" display-text="'Type'" multi-select="false"
-                       select-list="dvm.os.listItem.dataPropertyRange"></object-select>-->
+        <!--<iri-select ng-model="dvm.os.annotationType" display-text="'Type'" multi-select="false" select-list="dvm.os.listItem.dataPropertyRange"></iri-select>-->
         <div class="btn-container clearfix">
             <button class="btn btn-primary pull-right" ng-if="!dvm.os.editingAnnotation" ng-click="dvm.addAnnotation()"
                     ng-disabled="dvm.annotationForm.$invalid || dvm.os.annotationSelect === undefined || dvm.os.annotationValue === ''">Add</button>

@@ -116,7 +116,7 @@ describe('Datatype Property Block directive', function() {
                 expect(ontologyStateSvc.propertySelect).toEqual(propertyIRI);
                 expect(ontologyStateSvc.propertyValue).toBe('value');
                 expect(ontologyStateSvc.propertyIndex).toBe(0);
-                expect(ontologyStateSvc.propertyType).toEqual({'@id': prefixes.rdf + 'langString'});
+                expect(ontologyStateSvc.propertyType).toEqual(prefixes.rdf + 'langString');
                 expect(ontologyStateSvc.propertyLanguage).toBe('lang');
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(true);
             });
@@ -130,7 +130,7 @@ describe('Datatype Property Block directive', function() {
                 expect(ontologyStateSvc.propertySelect).toEqual(propertyIRI);
                 expect(ontologyStateSvc.propertyValue).toBe('value');
                 expect(ontologyStateSvc.propertyIndex).toBe(0);
-                expect(ontologyStateSvc.propertyType).toEqual({'@id': 'type'});
+                expect(ontologyStateSvc.propertyType).toEqual('type');
                 expect(ontologyStateSvc.propertyLanguage).toBeUndefined();
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(true);
             });

@@ -40,8 +40,7 @@
         <text-area ng-model="dvm.os.propertyValue" display-text="'Value'"></text-area>
 
         <!-- datatype -->
-        <object-select ng-model="dvm.os.propertyType" display-text="'Type'" select-list="dvm.os.listItem.dataPropertyRange"
-                       multi-select="false"></object-select>
+        <iri-select ng-model="dvm.os.propertyType" display-text="'Type'" select-list="dvm.os.listItem.dataPropertyRange" multi-select="false"></iri-select>
 
         <!-- language -->
         <language-select ng-if="dvm.isStringType()" ng-model="dvm.os.propertyLanguage" required></language-select>
