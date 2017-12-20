@@ -121,25 +121,25 @@ public class JsonStackingSemanticTranslator extends AbstractStackingSemanticTran
             case VALUE_TRUE:
             case VALUE_FALSE:
                 if (top.isPresent()) {
-                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsBoolean()),
+                    addDatatypeProperty(managedOntology, getPropertyName(jsonCurrentName), top.get(), valueFactory.createLiteral(jsonParser.getValueAsBoolean()),
                             xsdBoolean());
                 }
                 break;
             case VALUE_NUMBER_FLOAT:
                 if (top.isPresent()) {
-                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsDouble()),
+                    addDatatypeProperty(managedOntology, getPropertyName(jsonCurrentName), top.get(), valueFactory.createLiteral(jsonParser.getValueAsDouble()),
                             xsdFloat());
                 }
                 break;
             case VALUE_NUMBER_INT:
                 if (top.isPresent()) {
-                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsInt()),
+                    addDatatypeProperty(managedOntology, getPropertyName(jsonCurrentName), top.get(), valueFactory.createLiteral(jsonParser.getValueAsInt()),
                             xsdInt());
                 }
                 break;
             case VALUE_STRING:
                 if (top.isPresent()) {
-                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsString()),
+                    addDatatypeProperty(managedOntology, getPropertyName(jsonCurrentName), top.get(), valueFactory.createLiteral(jsonParser.getValueAsString()),
                             xsdString());
                 }
                 break;
@@ -155,13 +155,13 @@ public class JsonStackingSemanticTranslator extends AbstractStackingSemanticTran
         }
     }
 
-    private String getDatatypePropertyName(JsonStackItem currentItem) throws SemanticTranslationException {
-        String name = currentItem.getIdentifier();
-        if (name == null && peekStack().map(JsonStackItem::isArray).orElse(false)) {
-            name = peekStack().orElseThrow(() -> new SemanticTranslationException(""))
+    private String getPropertyName(String currentName) throws SemanticTranslationException {
+        if (StringUtils.isNotBlank(currentName)) {
+            return currentName;
+        } else {
+            return peekStack().orElseThrow(() -> new SemanticTranslationException("DatatypeProperty discovered without a corresponding name"))
                     .getIdentifier();
         }
-        return name;
     }
 
     private IRI getDatatypeDomain(JsonStackItem item) throws SemanticTranslationException {
@@ -170,10 +170,10 @@ public class JsonStackingSemanticTranslator extends AbstractStackingSemanticTran
                 : item.getClassIri();
     }
 
-    private void addDatatypeProperty(ExtractedOntology managedOntology, JsonStackItem item, Value value, IRI range)
+    private void addDatatypeProperty(ExtractedOntology managedOntology, String propertyName, JsonStackItem item, Value value, IRI range)
             throws SemanticTranslationException {
         ExtractedDatatypeProperty datatypeProperty = getOrCreateDatatypeProperty(managedOntology,
-                getDatatypeDomain(item), range, getDatatypePropertyName(item), getCurrentLocation());
+                getDatatypeDomain(item), range, propertyName, getCurrentLocation());
         item.getProperties().add((IRI) datatypeProperty.getResource(), value);
     }
 
