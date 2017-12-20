@@ -160,5 +160,18 @@ public class JsonStackingSemanticTranslatorTest {
         Assert.assertNotNull(output);
         Assert.assertFalse(output.isEmpty());
         output.forEach(System.out::println);
+
+        Assert.assertEquals(8, EXTRACTED_DATATYPE_PROPERTY_FACTORY.getAllExisting(ontology.getModel()).size());
+        Assert.assertEquals(4, EXTRACTED_OBJECT_PROPERTY_FACTORY.getAllExisting(ontology.getModel()).size());
+    }
+
+    @Test
+    public void twoDimensionalArraysTest() throws Exception {
+        final Model output = this.extractor.translate(Paths.get("src/test/resources/test2dArrays.json"), this.ontology);
+        this.ontology.getModel().forEach(System.out::println);
+        System.out.println("\n\n\n");
+        Assert.assertNotNull(output);
+        Assert.assertFalse(output.isEmpty());
+        output.forEach(System.out::println);
     }
 }
