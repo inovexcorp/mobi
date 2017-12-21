@@ -1,4 +1,4 @@
-package com.mobi.semantic.translator.json;
+package com.mobi.semantic.translator.stack.impl.json;
 
         /*-
          * #%L
