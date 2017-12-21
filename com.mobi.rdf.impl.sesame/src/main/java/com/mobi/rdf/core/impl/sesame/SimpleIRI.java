@@ -25,7 +25,7 @@ package com.mobi.rdf.core.impl.sesame;
 
 import com.mobi.rdf.api.IRI;
 
-public class SimpleIRI extends org.openrdf.model.impl.SimpleIRI implements IRI {
+public class SimpleIRI extends org.eclipse.rdf4j.model.impl.SimpleIRI implements IRI {
     private static final long serialVersionUID = 2569239388718344294L;
 
     protected SimpleIRI() {

@@ -3,21 +3,6 @@ package com.mobi.etl.service.delimited
 import com.mobi.etl.api.config.delimited.ExcelConfig
 import com.mobi.etl.api.config.delimited.SVConfig
 import com.mobi.etl.api.exception.MobiETLException
-import com.mobi.etl.api.ontologies.delimited.ClassMapping
-import com.mobi.etl.api.ontologies.delimited.ClassMappingFactory
-import com.mobi.etl.api.ontologies.delimited.DataMappingFactory
-import com.mobi.etl.api.ontologies.delimited.MappingFactory
-import com.mobi.etl.api.ontologies.delimited.ObjectMappingFactory
-import com.mobi.etl.api.ontologies.delimited.PropertyFactory
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter
 import com.mobi.etl.api.ontologies.delimited.*
 import com.mobi.ontology.core.api.Ontology
 import com.mobi.ontology.core.api.OntologyManager
@@ -29,11 +14,10 @@ import com.mobi.rdf.core.utils.Values
 import com.mobi.rdf.orm.conversion.impl.*
 import com.mobi.rdf.orm.impl.ThingFactory
 import com.mobi.vocabularies.xsd.XSD
-import org.openrdf.rio.RDFFormat
-import org.openrdf.rio.Rio
+import org.eclipse.rdf4j.rio.RDFFormat
+import org.eclipse.rdf4j.rio.Rio
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
-
 /*-
  * #%L
  * com.mobi.etl.delimited

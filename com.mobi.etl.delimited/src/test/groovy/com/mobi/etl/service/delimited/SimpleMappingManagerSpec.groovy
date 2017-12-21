@@ -36,8 +36,8 @@ import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
 import com.mobi.rdf.core.utils.Values
 import com.mobi.rdf.orm.conversion.impl.*
-import org.openrdf.rio.RDFFormat
-import org.openrdf.rio.Rio
+import org.eclipse.rdf4j.rio.RDFFormat
+import org.eclipse.rdf4j.rio.Rio
 import spock.lang.Specification
 
 import java.nio.file.Paths

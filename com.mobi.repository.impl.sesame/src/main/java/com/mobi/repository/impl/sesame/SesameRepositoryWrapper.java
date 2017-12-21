@@ -33,24 +33,24 @@ import java.util.Optional;
 
 public class SesameRepositoryWrapper implements Repository {
 
-    org.openrdf.repository.Repository sesameRepository;
+    org.eclipse.rdf4j.repository.Repository sesameRepository;
     RepositoryConfig config;
 
     public SesameRepositoryWrapper() {
     }
 
-    public SesameRepositoryWrapper(org.openrdf.repository.Repository repository) {
+    public SesameRepositoryWrapper(org.eclipse.rdf4j.repository.Repository repository) {
         setDelegate(repository);
     }
 
-    protected void setDelegate(org.openrdf.repository.Repository repository) {
+    protected void setDelegate(org.eclipse.rdf4j.repository.Repository repository) {
         this.sesameRepository = repository;
     }
 
     public RepositoryConnection getConnection() throws RepositoryException {
         try {
             return new SesameRepositoryConnectionWrapper(sesameRepository.getConnection());
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -74,7 +74,7 @@ public class SesameRepositoryWrapper implements Repository {
     public void initialize() throws RepositoryException {
         try {
             sesameRepository.initialize();
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -87,7 +87,7 @@ public class SesameRepositoryWrapper implements Repository {
     public void shutDown() throws RepositoryException {
         try {
             sesameRepository.shutDown();
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }

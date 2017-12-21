@@ -25,7 +25,7 @@ package com.mobi.rdf.core.impl.sesame;
 
 import com.mobi.rdf.api.Namespace;
 
-public class SimpleNamespace extends org.openrdf.model.impl.SimpleNamespace implements Namespace {
+public class SimpleNamespace extends org.eclipse.rdf4j.model.impl.SimpleNamespace implements Namespace {
 
     public SimpleNamespace(String prefix, String name) {
         super(prefix, name);

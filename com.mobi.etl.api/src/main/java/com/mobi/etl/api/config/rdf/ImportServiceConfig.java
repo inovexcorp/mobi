@@ -24,7 +24,7 @@ package com.mobi.etl.api.config.rdf;
  */
 
 import com.mobi.rdf.api.Resource;
-import org.openrdf.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFFormat;
 
 public class ImportServiceConfig {
     private String repository;

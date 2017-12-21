@@ -22,32 +22,17 @@
  */
 package com.mobi.repository.impl.sesame
 
-import com.mobi.query.GraphQueryResult
-import com.mobi.query.TupleQueryResult
-import com.mobi.query.api.Binding
-import com.mobi.query.api.BindingSet
-import com.mobi.query.api.GraphQuery
-import com.mobi.query.api.TupleQuery
-import com.mobi.query.api.Update
-import com.mobi.query.exception.MalformedQueryException
-import com.mobi.rdf.api.Statement
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
 import com.mobi.persistence.utils.RepositoryResults
 import com.mobi.query.GraphQueryResult
 import com.mobi.query.TupleQueryResult
-import com.mobi.query.api.Binding
-import com.mobi.query.api.BindingSet
-import com.mobi.query.api.BooleanQuery
-import com.mobi.query.api.GraphQuery
-import com.mobi.query.api.TupleQuery
-import com.mobi.query.api.Update
+import com.mobi.query.api.*
 import com.mobi.query.exception.MalformedQueryException
 import com.mobi.rdf.api.Statement
 import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
 import com.mobi.repository.api.RepositoryConnection
-import org.openrdf.repository.sail.SailRepository
-import org.openrdf.sail.memory.MemoryStore
+import org.eclipse.rdf4j.repository.sail.SailRepository
+import org.eclipse.rdf4j.sail.memory.MemoryStore
 import spock.lang.Specification
 
 class SesameRepositoryConnectionWrapperSpec extends Specification {

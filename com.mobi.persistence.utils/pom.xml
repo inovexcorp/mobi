@@ -39,9 +39,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-runtime-osgi</artifactId>
-            <version>${openrdf.version}</version>
+            <groupId>org.eclipse.rdf4j</groupId>
+            <artifactId>rdf4j-runtime-osgi</artifactId>
+            <version>${rdf4j.version}</version>
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>

@@ -22,8 +22,8 @@
  */
 package com.mobi.rdf.core.impl.sesame
 
-import org.openrdf.model.vocabulary.RDF
-import org.openrdf.model.vocabulary.XMLSchema
+import org.eclipse.rdf4j.model.vocabulary.RDF
+import org.eclipse.rdf4j.model.vocabulary.XMLSchema
 import spock.lang.Specification
 
 import java.time.OffsetDateTime

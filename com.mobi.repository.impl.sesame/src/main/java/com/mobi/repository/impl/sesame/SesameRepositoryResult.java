@@ -29,10 +29,10 @@ import com.mobi.repository.exception.RepositoryException;
 
 public class SesameRepositoryResult<T, U> extends RepositoryResult<T> {
 
-    private org.openrdf.repository.RepositoryResult<U> sesameResults;
+    private org.eclipse.rdf4j.repository.RepositoryResult<U> sesameResults;
     private SesameMobiValueFactory<T, U> factory;
 
-    public SesameRepositoryResult(org.openrdf.repository.RepositoryResult<U> results, SesameMobiValueFactory<T, U> factory) {
+    public SesameRepositoryResult(org.eclipse.rdf4j.repository.RepositoryResult<U> results, SesameMobiValueFactory<T, U> factory) {
         this.sesameResults = results;
         this.factory = factory;
     }
@@ -45,7 +45,7 @@ public class SesameRepositoryResult<T, U> extends RepositoryResult<T> {
                 close();
             }
             return hasNext;
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -54,7 +54,7 @@ public class SesameRepositoryResult<T, U> extends RepositoryResult<T> {
     public T next() {
         try {
             return factory.asMobiObject(sesameResults.next());
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }

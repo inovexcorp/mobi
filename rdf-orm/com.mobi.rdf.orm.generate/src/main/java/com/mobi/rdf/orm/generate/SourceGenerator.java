@@ -25,7 +25,17 @@ package com.mobi.rdf.orm.generate;
 
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.rdf.api.Literal;
+import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.Value;
+import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.AbstractOrmFactory;
+import com.mobi.rdf.orm.OrmException;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.Thing;
+import com.mobi.rdf.orm.conversion.ValueConverter;
+import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
+import com.mobi.rdf.orm.generate.ontology.MOBI;
+import com.mobi.rdf.orm.impl.ThingImpl;
 import com.sun.codemodel.ClassType;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
@@ -44,25 +54,15 @@ import com.sun.codemodel.JOp;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 import org.apache.commons.lang3.StringUtils;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.orm.OrmException;
-import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.Thing;
-import com.mobi.rdf.orm.conversion.ValueConverter;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.generate.ontology.MOBI;
-import com.mobi.rdf.orm.impl.ThingImpl;
-import org.openrdf.model.IRI;
-import org.openrdf.model.Model;
-import org.openrdf.model.Resource;
-import org.openrdf.model.impl.LinkedHashModel;
-import org.openrdf.model.impl.SimpleValueFactory;
-import org.openrdf.model.vocabulary.OWL;
-import org.openrdf.model.vocabulary.RDF;
-import org.openrdf.model.vocabulary.RDFS;
-import org.openrdf.model.vocabulary.XMLSchema;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.eclipse.rdf4j.model.vocabulary.XMLSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,7 +142,7 @@ public class SourceGenerator {
         checkingModel.filter(null, OWL.IMPORTS, null).stream().forEach(stmt -> {
             boolean contains = false;
             for (ReferenceOntology refOnt : referenceOntologies) {
-                Optional<org.openrdf.model.Resource> resource = refOnt.getOntologyModel().filter(null, RDF.TYPE, OWL.ONTOLOGY).stream().filter(ontStmt -> ontStmt.getSubject().equals(stmt.getObject())).map(ontStmt -> ontStmt.getSubject()).findFirst();
+                Optional<org.eclipse.rdf4j.model.Resource> resource = refOnt.getOntologyModel().filter(null, RDF.TYPE, OWL.ONTOLOGY).stream().filter(ontStmt -> ontStmt.getSubject().equals(stmt.getObject())).map(ontStmt -> ontStmt.getSubject()).findFirst();
                 if (resource.isPresent()) {
                     contains = true;
                     break;
@@ -660,7 +660,7 @@ public class SourceGenerator {
      * @return The JClass representing the type of parameter the property specifies
      */
     private JClass identifyType(final IRI property) {
-        final Set<org.openrdf.model.Value> objects = this.metaModel.filter(property, RDFS.RANGE, null).objects();
+        final Set<org.eclipse.rdf4j.model.Value> objects = this.metaModel.filter(property, RDFS.RANGE, null).objects();
         if (objects.size() == 1) {
             final IRI rangeIri = (IRI) objects.iterator().next();
             //TODO - think about moving the searching through our ontology and references to the end of this logic.
@@ -745,7 +745,7 @@ public class SourceGenerator {
         interfaces.forEach((iri, clazz) -> {
             if (iri != null) {
                 model.filter(iri, RDFS.SUBCLASSOF, null).forEach(stmt -> {
-                    org.openrdf.model.Value value = stmt.getObject();
+                    org.eclipse.rdf4j.model.Value value = stmt.getObject();
                     if (value instanceof IRI) {
                         final IRI extending = (IRI) stmt.getObject();
                         if (!extending.equals(OWL.THING)) {
@@ -769,7 +769,7 @@ public class SourceGenerator {
                                 });
                             }
                         }
-                    } else if (value instanceof org.openrdf.model.Resource) {
+                    } else if (value instanceof org.eclipse.rdf4j.model.Resource) {
                         // TODO - handle blank nodes somehow
                         LOG.warn("Blank nodes remain unhandled");
                     } else {

@@ -25,7 +25,7 @@ package com.mobi.persistence.utils;
 
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import org.openrdf.model.Statement;
+import org.eclipse.rdf4j.model.Statement;
 
 import java.util.Iterator;
 

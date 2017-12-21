@@ -6,8 +6,8 @@ import com.mobi.rdf.api.Literal
 import com.mobi.rdf.core.impl.sesame.SimpleBNode
 import com.mobi.rdf.core.impl.sesame.SimpleIRI
 import com.mobi.rdf.core.impl.sesame.SimpleLiteral
-import org.openrdf.model.ValueFactory
-import org.openrdf.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.model.ValueFactory
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import spock.lang.Specification
 
 class ValuesSpec extends Specification {
@@ -43,7 +43,7 @@ class ValuesSpec extends Specification {
         def sesameResource = Values.sesameResource(resource)
 
         expect:
-        sesameResource instanceof org.openrdf.model.IRI
+        sesameResource instanceof org.eclipse.rdf4j.model.IRI
     }
 
     def "sesameResource(BNode) returns a Sesame BNode"() {
@@ -52,7 +52,7 @@ class ValuesSpec extends Specification {
         def sesameResource = Values.sesameResource(resource)
 
         expect:
-        sesameResource instanceof org.openrdf.model.BNode
+        sesameResource instanceof org.eclipse.rdf4j.model.BNode
     }
 
     def "sesameResource(null) returns null"() {
@@ -95,7 +95,7 @@ class ValuesSpec extends Specification {
         def sesameIRI = Values.sesameIRI(iri)
 
         expect:
-        sesameIRI instanceof org.openrdf.model.IRI
+        sesameIRI instanceof org.eclipse.rdf4j.model.IRI
     }
 
     def "sesameIRI(null) returns null"() {
@@ -129,7 +129,7 @@ class ValuesSpec extends Specification {
         def sesameValue = Values.sesameValue(value)
 
         expect:
-        sesameValue instanceof org.openrdf.model.IRI
+        sesameValue instanceof org.eclipse.rdf4j.model.IRI
     }
 
     def "sesameValue(BNode) returns a Sesame BNode"() {
@@ -138,7 +138,7 @@ class ValuesSpec extends Specification {
         def sesameValue = Values.sesameValue(value)
 
         expect:
-        sesameValue instanceof org.openrdf.model.BNode
+        sesameValue instanceof org.eclipse.rdf4j.model.BNode
     }
 
     def "sesameValue(Literal) returns a Sesame Literal"() {
@@ -147,7 +147,7 @@ class ValuesSpec extends Specification {
         def sesameValue = Values.sesameValue(value)
 
         expect:
-        sesameValue instanceof org.openrdf.model.Literal
+        sesameValue instanceof org.eclipse.rdf4j.model.Literal
     }
 
     def "sesameValue(null) returns a Sesame Literal"() {
@@ -200,7 +200,7 @@ class ValuesSpec extends Specification {
 
         expect:
         sesameResources.length == 1
-        sesameResources[0] instanceof org.openrdf.model.IRI
+        sesameResources[0] instanceof org.eclipse.rdf4j.model.IRI
     }
 
     def "sesameResources(c1, c2) returns a Sesame Resource[]"() {
@@ -211,8 +211,8 @@ class ValuesSpec extends Specification {
 
         expect:
         sesameResources.length == 2
-        sesameResources[0] instanceof org.openrdf.model.IRI
-        sesameResources[1] instanceof org.openrdf.model.IRI
+        sesameResources[0] instanceof org.eclipse.rdf4j.model.IRI
+        sesameResources[1] instanceof org.eclipse.rdf4j.model.IRI
     }
 
     def "sesameResources() returns empty Resource[]"() {

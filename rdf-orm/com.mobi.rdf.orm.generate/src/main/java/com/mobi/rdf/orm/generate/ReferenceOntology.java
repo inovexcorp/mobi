@@ -23,12 +23,11 @@ package com.mobi.rdf.orm.generate;
  * #L%
  */
 
-import org.apache.commons.lang3.StringUtils;
-import org.openrdf.model.IRI;
-import org.openrdf.model.Model;
-import org.openrdf.model.vocabulary.OWL;
-import org.openrdf.model.vocabulary.RDF;
-import org.openrdf.model.vocabulary.RDFS;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 
 import java.io.IOException;
 import java.util.List;

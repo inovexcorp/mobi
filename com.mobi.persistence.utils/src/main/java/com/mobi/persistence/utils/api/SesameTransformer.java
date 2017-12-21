@@ -31,23 +31,23 @@ import com.mobi.rdf.api.Value;
 
 public interface SesameTransformer {
 
-    org.openrdf.model.Model sesameModel(Model model);
+    org.eclipse.rdf4j.model.Model sesameModel(Model model);
 
-    Model mobiModel(org.openrdf.model.Model model);
+    Model mobiModel(org.eclipse.rdf4j.model.Model model);
 
-    org.openrdf.model.Statement sesameStatement(Statement statement);
+    org.eclipse.rdf4j.model.Statement sesameStatement(Statement statement);
 
-    Statement mobiStatement(org.openrdf.model.Statement statement);
+    Statement mobiStatement(org.eclipse.rdf4j.model.Statement statement);
 
-    org.openrdf.model.Resource sesameResource(Resource resource);
+    org.eclipse.rdf4j.model.Resource sesameResource(Resource resource);
 
-    Resource mobiResource(org.openrdf.model.Resource resource);
+    Resource mobiResource(org.eclipse.rdf4j.model.Resource resource);
 
-    org.openrdf.model.IRI sesameIRI(IRI iri);
+    org.eclipse.rdf4j.model.IRI sesameIRI(IRI iri);
 
-    IRI mobiIRI(org.openrdf.model.IRI sesameURI);
+    IRI mobiIRI(org.eclipse.rdf4j.model.IRI sesameURI);
 
-    org.openrdf.model.Value sesameValue(Value value);
+    org.eclipse.rdf4j.model.Value sesameValue(Value value);
 
-    Value mobiValue(org.openrdf.model.Value value);
+    Value mobiValue(org.eclipse.rdf4j.model.Value value);
 }

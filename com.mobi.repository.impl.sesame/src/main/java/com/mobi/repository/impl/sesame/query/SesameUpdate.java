@@ -24,14 +24,13 @@ package com.mobi.repository.impl.sesame.query;
  */
 
 import com.mobi.query.api.Update;
-import com.mobi.query.api.Update;
-import org.openrdf.query.UpdateExecutionException;
+import org.eclipse.rdf4j.query.UpdateExecutionException;
 
 public class SesameUpdate extends SesameOperation implements Update {
 
-    private org.openrdf.query.Update sesameUpdate;
+    private org.eclipse.rdf4j.query.Update sesameUpdate;
 
-    public SesameUpdate(org.openrdf.query.Update sesameUpdate) {
+    public SesameUpdate(org.eclipse.rdf4j.query.Update sesameUpdate) {
         super(sesameUpdate);
         this.sesameUpdate = sesameUpdate;
     }
@@ -41,7 +40,7 @@ public class SesameUpdate extends SesameOperation implements Update {
     public void execute() throws UpdateExecutionException {
         try {
             sesameUpdate.execute();
-        } catch (org.openrdf.query.UpdateExecutionException e) {
+        } catch (org.eclipse.rdf4j.query.UpdateExecutionException e) {
             throw new UpdateExecutionException(e);
         }
     }

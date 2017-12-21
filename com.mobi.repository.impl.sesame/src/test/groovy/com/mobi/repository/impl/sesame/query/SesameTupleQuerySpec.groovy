@@ -23,15 +23,12 @@
 package com.mobi.repository.impl.sesame.query
 
 import com.mobi.query.TupleQueryResult
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper
-import com.mobi.query.TupleQueryResult
 import com.mobi.query.api.TupleQuery
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
 import com.mobi.repository.api.RepositoryConnection
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper
-import org.openrdf.repository.sail.SailRepository
-import org.openrdf.sail.memory.MemoryStore
+import org.eclipse.rdf4j.repository.sail.SailRepository
+import org.eclipse.rdf4j.sail.memory.MemoryStore
 import spock.lang.Specification
 
 import static org.junit.Assert.assertFalse

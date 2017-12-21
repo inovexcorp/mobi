@@ -30,14 +30,12 @@ import static com.mobi.rest.util.RestUtils.modelToSkolemizedJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.explorable.dataset.rest.ExplorableDatasetRest;
-import net.sf.json.JSONArray;
-import org.apache.commons.io.IOUtils;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.exception.MobiException;
+import com.mobi.explorable.dataset.rest.ExplorableDatasetRest;
 import com.mobi.explorable.dataset.rest.jaxb.ClassDetails;
 import com.mobi.explorable.dataset.rest.jaxb.InstanceDetails;
 import com.mobi.explorable.dataset.rest.jaxb.PropertyDetails;
@@ -72,9 +70,11 @@ import com.mobi.repository.base.RepositoryResult;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
-import org.openrdf.model.vocabulary.OWL;
-import org.openrdf.model.vocabulary.RDF;
-import org.openrdf.model.vocabulary.RDFS;
+import net.sf.json.JSONArray;
+import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +87,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 

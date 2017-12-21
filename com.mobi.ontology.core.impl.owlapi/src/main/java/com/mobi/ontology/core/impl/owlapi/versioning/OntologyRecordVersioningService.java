@@ -49,7 +49,7 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.io.IOUtils;
-import org.openrdf.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
 
 import java.io.IOException;
 import java.util.List;
