@@ -23,17 +23,36 @@ package com.mobi.semantic.translator.expression.context;
  * #L%
  */
 
-import com.mobi.semantic.translator.expression.IriExpressionProcessor;
-import com.mobi.rdf.api.Value;
-
 import java.util.Optional;
 
+/**
+ * This interface describes what the required context for generating the {@link com.mobi.rdf.api.IRI} of an instance
+ * of an {@link com.mobi.semantic.translator.ontology.ExtractedClass}.
+ */
 public interface InstanceIriExpressionContext extends IriExpressionContext {
 
+    /**
+     * @return The {@link com.mobi.rdf.api.IRI} of the class this instance will be of
+     */
     String classIri();
 
+    /**
+     * Get the first value of a given predicate ({@link com.mobi.rdf.api.IRI} as a string) in the properties associated
+     * with the instance.
+     *
+     * @param predicate The {@link String} representation of an {@link com.mobi.rdf.api.IRI}
+     * @return The {@link Optional} wrapping the {@link String} representation of the first value for the specified
+     * predicate
+     */
     Optional<String> propertyValue(String predicate);
 
+    /**
+     * Get the first value of a given predicate ({@link com.mobi.rdf.api.IRI} as a string) in the properties associated
+     * with the instance.  Default to a random UUID if the property doesn't exist.
+     *
+     * @param predicate The {@link String} representation of an {@link com.mobi.rdf.api.IRI}
+     * @return The {@link String} representation of the first value for the specified, or a UUID if one isn't present
+     */
     String propertyValueOrUUID(String predicate);
 
 }

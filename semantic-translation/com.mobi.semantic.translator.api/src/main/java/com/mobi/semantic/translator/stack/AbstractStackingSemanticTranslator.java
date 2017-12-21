@@ -50,6 +50,12 @@ import java.util.Deque;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * This abstract implementation of the {@link StackingSemanticTranslator} provides some boiler plate code so that
+ * implementors won't need to rewrite the stacking logic over and over.
+ *
+ * @param <T> The type of {@link StackItem} your implementation will use.
+ */
 public abstract class AbstractStackingSemanticTranslator<T extends StackItem> extends AbstractSemanticTranslator implements SemanticTranslator, StackingSemanticTranslator<T> {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractStackingSemanticTranslator.class);

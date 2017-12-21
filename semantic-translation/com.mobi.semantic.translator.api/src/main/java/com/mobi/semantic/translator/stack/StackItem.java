@@ -27,14 +27,33 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Value;
 import org.springframework.util.MultiValueMap;
 
+/**
+ * This interface describes the basic necessities that an item you'll place on the stack of a
+ * {@link StackingSemanticTranslator}.  It will provide specific types of data necessary for generating ontological
+ * structures from the content and structure of your input data.  Each item on the stack should represent a layer in
+ * your data structure, and most likely be a class in your generated ontology.
+ */
 public interface StackItem {
 
+    /**
+     * @return The key that represents this item on the stack
+     */
     String getIdentifier();
 
+    /**
+     * @return The IRI that will represent this item as a class in your generated ontology
+     */
     IRI getClassIri();
 
+    /**
+     * @return A {@link MultiValueMap} that will populate the instance represented by this item with DatatypeProperties
+     * in the resulting {@link com.mobi.rdf.api.Model}
+     */
     MultiValueMap<IRI, Value> getProperties();
 
+    /**
+     * @return Whether or not this item is a root element of the entity
+     */
     boolean isRoot();
 
 }

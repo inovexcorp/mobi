@@ -25,11 +25,12 @@ package com.mobi.semantic.translator.expression.context.impl;
 
 import com.mobi.semantic.translator.expression.context.ClassIriExpressionContext;
 import com.mobi.semantic.translator.ontology.ExtractedOntology;
-import com.mobi.semantic.translator.expression.context.ClassIriExpressionContext;
-import com.mobi.semantic.translator.ontology.ExtractedOntology;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * The default implementation of the {@link ClassIriExpressionContext}.
+ */
 public class DefaultClassIriExpressionContext extends AbstractIriExpressionContext implements ClassIriExpressionContext {
 
     private final String name;

@@ -25,11 +25,14 @@ package com.mobi.semantic.translator.expression.context.impl;
 
 import com.mobi.semantic.translator.expression.context.IriExpressionContext;
 import com.mobi.semantic.translator.ontology.ExtractedOntology;
-import com.mobi.rdf.api.IRI;
 
-import javax.validation.constraints.NotNull;
 import java.util.UUID;
+import javax.validation.constraints.NotNull;
 
+/**
+ * This abstract implementation of the {@link IriExpressionContext} provides the boilerplate code for the default
+ * {@link IriExpressionContext}s.
+ */
 public class AbstractIriExpressionContext implements IriExpressionContext {
 
     protected final ExtractedOntology ontology;

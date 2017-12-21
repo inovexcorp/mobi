@@ -23,16 +23,27 @@ package com.mobi.semantic.translator.expression.context;
  * #L%
  */
 
-import com.mobi.semantic.translator.ontology.ExtractedOntology;
 import com.mobi.rdf.api.IRI;
 import com.mobi.semantic.translator.ontology.ExtractedOntology;
 
+/**
+ * This interface describes the base information that is required for a {@link IRI} to be generated in general.
+ */
 public interface IriExpressionContext {
 
+    /**
+     * @return The {@link ExtractedOntology} you're working with
+     */
     ExtractedOntology getOntology();
 
+    /**
+     * @return The {@link IRI} of the ontology, represented as a {@link String}
+     */
     String getOntologyIri();
 
+    /**
+     * @return A random UUID value as a {@link String}
+     */
     String uuid();
 
 }

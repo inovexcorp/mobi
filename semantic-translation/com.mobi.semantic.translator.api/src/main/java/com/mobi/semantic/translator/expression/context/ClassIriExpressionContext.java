@@ -23,10 +23,20 @@ package com.mobi.semantic.translator.expression.context;
  * #L%
  */
 
+/**
+ * This interface describes the context that is required for the generation of a
+ * {@link com.mobi.semantic.translator.ontology.ExtractedClass} IRI.
+ */
 public interface ClassIriExpressionContext extends IriExpressionContext {
 
+    /**
+     * @return The name of the class
+     */
     String getName();
 
+    /**
+     * @return Comments to associate with the class
+     */
     String getComment();
 
 }

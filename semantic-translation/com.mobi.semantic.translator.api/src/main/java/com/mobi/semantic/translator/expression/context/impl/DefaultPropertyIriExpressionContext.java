@@ -23,14 +23,15 @@ package com.mobi.semantic.translator.expression.context.impl;
  * #L%
  */
 
-import com.mobi.semantic.translator.expression.context.PropertyIriExpressionContext;
-import com.mobi.semantic.translator.ontology.ExtractedOntology;
 import com.mobi.rdf.api.IRI;
 import com.mobi.semantic.translator.expression.context.PropertyIriExpressionContext;
 import com.mobi.semantic.translator.ontology.ExtractedOntology;
 
 import javax.validation.constraints.NotNull;
 
+/**
+ * The default implementation of the {@link PropertyIriExpressionContext}.
+ */
 public class DefaultPropertyIriExpressionContext extends AbstractIriExpressionContext implements PropertyIriExpressionContext {
 
     private final String name;

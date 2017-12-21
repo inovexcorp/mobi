@@ -23,10 +23,6 @@ package com.mobi.semantic.translator.expression.context.impl;
  * #L%
  */
 
-import com.mobi.semantic.translator.expression.DefaultIriExpressionProcessor;
-import com.mobi.semantic.translator.expression.context.InstanceIriExpressionContext;
-import com.mobi.semantic.translator.ontology.ExtractedClass;
-import com.mobi.semantic.translator.ontology.ExtractedOntology;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
@@ -38,6 +34,9 @@ import org.springframework.util.MultiValueMap;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * The default implementation of the {@link InstanceIriExpressionContext}.
+ */
 public class DefaultInstanceIriExpressionContext extends AbstractIriExpressionContext implements InstanceIriExpressionContext {
 
     private final ExtractedClass instanceClass;

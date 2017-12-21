@@ -25,14 +25,30 @@ package com.mobi.semantic.translator.expression.context;
 
 import com.mobi.rdf.api.IRI;
 
+/**
+ * This interface describes the information necessary to generate an IRI for a
+ * {@link com.mobi.semantic.translator.ontology.ExtractedProperty}.
+ */
 public interface PropertyIriExpressionContext extends IriExpressionContext {
 
+    /**
+     * @return The name of the property
+     */
     String getName();
 
+    /**
+     * @return Comments associated with the property
+     */
     String getComment();
 
+    /**
+     * @return The {@link IRI} representing the domain of the property
+     */
     IRI getDomain();
 
+    /**
+     * @return The {@link IRI} representing the range of the property
+     */
     IRI getRange();
 
 }
