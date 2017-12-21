@@ -1,5 +1,28 @@
 package com.mobi.rdf.orm.test;
 
+/*-
+ * #%L
+ * rdf-orm-test
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactoryService;
@@ -15,11 +38,13 @@ import org.junit.Assert;
 import org.junit.Before;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,22 +59,19 @@ public class OrmEnabledTestCase {
 
     protected static final OrmFactoryRegistryImpl OFR = new OrmFactoryRegistryImpl();
 
-    protected ValueConverterRegistry valueConverterRegistry;
+    protected static final ValueConverterRegistry valueConverterRegistry = new DefaultValueConverterRegistry();
 
     protected final List<ValueConverter<?>> valueConverters = new ArrayList<>();
 
     protected final List<OrmFactory<?>> ormFactories = new ArrayList<>();
 
-
-    public OrmEnabledTestCase() {
-        loadValueConverters();
-        loadOrmFactories();
+    protected OrmEnabledTestCase() {
+        loadComponents("valueConverters.conf", ValueConverter.class, valueConverters);
+        loadComponents("ormFactories.conf", OrmFactory.class, ormFactories);
     }
 
     @Before
     public void configureOrmStuff() throws Exception {
-        valueConverterRegistry = new DefaultValueConverterRegistry();
-
         valueConverters.forEach(valueConverterRegistry::registerValueConverter);
         ormFactories.stream().peek(factory -> {
             if (AbstractOrmFactory.class.isAssignableFrom(factory.getClass())) {
@@ -60,9 +82,28 @@ public class OrmEnabledTestCase {
         }).peek(valueConverterRegistry::registerValueConverter).forEach(this::registerOrmFactory);
     }
 
-    private Set<Class<?>> loadSpecifiedClasses(final File target) throws IOException, ClassNotFoundException {
+    @SuppressWarnings("unchecked")
+    private <T> void loadComponents(final String fileName, Class<T> type, List coll) {
+        try {
+            Enumeration<URL> locs = ClassLoader.getSystemClassLoader().getResources(fileName);
+            while (locs.hasMoreElements()) {
+                for (Class<?> clazz : loadSpecifiedClasses(locs.nextElement().openStream())) {
+                    if (type.isAssignableFrom(clazz)) {
+                        if (coll.stream().map(Object::getClass).noneMatch(clazz::equals)) {
+                            coll.add(clazz.getConstructor().newInstance());
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.fail("Failed initializing test: " + e.getMessage());
+        }
+    }
+
+    private Set<Class<?>> loadSpecifiedClasses(final InputStream is) throws IOException, ClassNotFoundException {
         final Set<Class<?>> set = new HashSet<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(target))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
             set.addAll(br.lines().filter(StringUtils::isNotBlank).map(name -> {
                 try {
                     return getClass().getClassLoader().loadClass(name);
@@ -75,29 +116,6 @@ public class OrmEnabledTestCase {
         return set;
     }
 
-    private void loadValueConverters() {
-        try {
-            for (Class<?> clazz : loadSpecifiedClasses(new File("src/test/resources/valueConverters.conf")))
-                if (ValueConverter.class.isAssignableFrom(clazz)) {
-                    valueConverters.add(((ValueConverter) clazz.getConstructor().newInstance()));
-                }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail("Failed initializing test: " + e.getMessage());
-        }
-    }
-
-    private void loadOrmFactories() {
-        try {
-            for (Class<?> clazz : loadSpecifiedClasses(new File("src/test/resources/ormFactories.conf")))
-                if (OrmFactory.class.isAssignableFrom(clazz)) {
-                    ormFactories.add(((OrmFactory) clazz.getConstructor().newInstance()));
-                }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail("Failed initializing test: " + e.getMessage());
-        }
-    }
 
     private void registerOrmFactory(OrmFactory<?> factory) throws RuntimeException {
         try {
