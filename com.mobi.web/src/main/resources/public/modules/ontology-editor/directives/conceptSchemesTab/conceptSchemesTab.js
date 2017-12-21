@@ -27,9 +27,9 @@
         .module('conceptSchemesTab', [])
         .directive('conceptSchemesTab', conceptSchemesTab);
 
-        conceptSchemesTab.$inject = ['ontologyStateService', 'ontologyManagerService'];
+        conceptSchemesTab.$inject = ['ontologyStateService', 'ontologyManagerService', 'propertyManagerService'];
 
-        function conceptSchemesTab(ontologyStateService, ontologyManagerService) {
+        function conceptSchemesTab(ontologyStateService, ontologyManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,15 +38,17 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
-                    dvm.om = ontologyManagerService;
+                    var pm = propertyManagerService;
+                    var os = ontologyStateService;
+                    var om = ontologyManagerService;
                     dvm.relationshipList = [];
 
-                    $scope.$watch('dvm.sm.listItem.selected', function(newValue) {
-                        if (dvm.om.isConcept(dvm.sm.listItem.selected, dvm.sm.listItem.derivedConcepts)) {
-                            dvm.relationshipList = dvm.om.conceptRelationshipList;
-                        } else if (dvm.om.isConceptScheme(dvm.sm.listItem.selected, dvm.sm.listItem.derivedConceptSchemes)) {
-                            dvm.relationshipList = dvm.om.schemeRelationshipList;
+                    $scope.$watch('os.listItem.selected', function(newValue) {
+                        if (om.isConcept(os.listItem.selected, os.listItem.derivedConcepts)) {
+                            var schemeRelationships = _.filter(pm.conceptSchemeRelationshipList, iri => _.includes(os.listItem.iriList, iri));
+                            dvm.relationshipList = _.concat(os.listItem.derivedSemanticRelations, schemeRelationships);
+                        } else if (om.isConceptScheme(os.listItem.selected, os.listItem.derivedConceptSchemes)) {
+                            dvm.relationshipList = pm.schemeRelationshipList;
                         }
                     });
                 }]

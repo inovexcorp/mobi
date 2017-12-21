@@ -72,79 +72,7 @@
              * associated with that record.
              */
             self.ontologyRecords = [];
-            var xsdDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => {
-                return {
-                    'namespace': prefixes.xsd,
-                    'localName': item
-                }
-            });
-            var rdfDatatypes = _.map(['langString'], item => {
-                return {
-                    namespace: prefixes.rdf,
-                    localName: item
-                }
-            });
-            self.defaultDatatypes = _.concat(xsdDatatypes, rdfDatatypes);
-            /**
-             * @ngdoc property
-             * @name ontologyProperties
-             * @propertyOf ontologyManager.service:ontologyManagerService
-             * @type {Object[]}
-             *
-             * @description
-             * `ontologyProperties` holds an array of the property types available to be added to the ontology entity
-             * within the ontology.
-             */
-            self.ontologyProperties = _.map(['priorVersion', 'backwardCompatibleWith', 'incompatibleWith'], item => {
-                return {
-                    'namespace': prefixes.owl,
-                    'localName': item
-                }
-            });
-            /**
-             * @ngdoc property
-             * @name conceptRelationshipList
-             * @propertyOf ontologyManager.service:ontologyManagerService
-             * @type {Object[]}
-             *
-             * @description
-             * `conceptRelationshipList` holds an array of the relationships that skos:Concepts can have with other
-             * entities.
-             */
-            var conceptListRelationships = _.map(['broaderTransitive', 'broader', 'broadMatch', 'narrowerTransitive',
-                'narrower', 'narrowMatch', 'related', 'relatedMatch', 'mappingRelation', 'closeMatch', 'exactMatch'], item => ({
-                    namespace: prefixes.skos,
-                    localName: item,
-                    values: 'conceptList'
-                }));
-            self.conceptRelationshipList = _.concat(
-                conceptListRelationships,
-                [{
-                    namespace: prefixes.skos,
-                    localName: 'topConceptOf',
-                    values: 'schemeList'
-                },
-                {
-                    namespace: prefixes.skos,
-                    localName: 'inScheme',
-                    values: 'schemeList'
-                }]
-            );
-            /**
-             * @ngdoc property
-             * @name schemeRelationshipList
-             * @propertyOf ontologyManager.service:ontologyManagerService
-             * @type {Object[]}
-             *
-             * @description
-             * `schemeRelationshipList` holds an array of the relationships that skos:ConceptSchemes can have with other
-             * entities.
-             */
-            self.schemeRelationshipList = [{
-                namespace: prefixes.skos,
-                localName: 'hasTopConcept',
-                values: 'conceptList'
-            }];
+
             /**
              * @ngdoc method
              * @name reset
@@ -614,6 +542,42 @@
                 var config = { params: { branchId, commitId } };
                 return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/annotation-property-hierarchies', config)
                     .then(response => response.data, util.rejectError);
+            }
+            /**
+             * @ngdoc method
+             * @name createAnnotation
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the POST /mobirest/ontologies/{recordId}/annotations endpoint and creates a new AnnotationProperty
+             * in the ontology. If the annotation already exists in the provided list of annotation IRIs, returns a
+             * rejected promise.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string[]} annotationIRIs A list of annotation IRI strings
+             * @param {string} iri The IRI for the new AnnotationProperty
+             * @return {Promise} A promise with the JSON-LD of the new AnnotationProperty if successful; otherwise
+             *      rejects with an error message
+             */
+            self.createAnnotation = function(recordId, annotationIRIs, iri) {
+                var annotationJSON = {'@id': iri, '@type': [prefixes.owl + 'AnnotationProperty']};
+                if (_.indexOf(annotationIRIs, iri) === -1) {
+                    var config = {
+                        params: {
+                            annotationjson: annotationJSON
+                        }
+                    };
+                    return $http.post(prefix + '/' + encodeURIComponent(recordId) + '/annotations', null, config)
+                        .then(response => {
+                            if (_.get(response, 'status') === 200) {
+                                return annotationJSON;
+                            } else {
+                                return util.rejectError(response);
+                            }
+                        }, util.rejectError);
+                } else {
+                    return $q.reject('This ontology already has an OWL Annotation declared with that IRI.');
+                }
             }
             /**
              * @ngdoc method

@@ -28,6 +28,7 @@ describe('Concept Schemes Tab directive', function() {
         module('conceptSchemesTab');
         mockOntologyManager();
         mockOntologyState();
+        mockPropertyManager();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

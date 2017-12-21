@@ -26,22 +26,19 @@ describe('Annotation Overlay directive', function() {
     beforeEach(function() {
         module('templates');
         module('annotationOverlay');
-        injectRegexConstant();
-        injectHighlightFilter();
-        injectTrustedFilter();
         mockOntologyState();
-        mockResponseObj();
         mockPropertyManager();
         mockUtil();
         mockPrefixes();
         mockOntologyUtilsManager();
+        injectHighlightFilter();
+        injectTrustedFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_, _ontologyUtilsManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _ontologyUtilsManagerService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             propertyManagerSvc = _propertyManagerService_;
-            resObj = _responseObj_;
             ontoUtils = _ontologyUtilsManagerService_;
             prefixes = _prefixes_;
         });
@@ -110,30 +107,23 @@ describe('Annotation Overlay directive', function() {
     });
     describe('controller methods', function() {
         it('disableProp should test whether an annotation is owl:deprecated and whether it has been set already', function() {
-            resObj.getItemIri.and.returnValue('test');
-            expect(this.controller.disableProp({})).toBe(false);
-
-            resObj.getItemIri.and.returnValue(prefixes.owl + 'deprecated');
-            expect(this.controller.disableProp({})).toBe(false);
+            expect(this.controller.disableProp('test')).toBe(false);
+            expect(this.controller.disableProp(prefixes.owl + 'deprecated')).toBe(false);
 
             ontologyStateSvc.listItem.selected[prefixes.owl + 'deprecated'] = [];
-            expect(this.controller.disableProp({})).toBe(true);
+            expect(this.controller.disableProp(prefixes.owl + 'deprecated')).toBe(true);
         });
         it('addAnnotation should call the appropriate manager functions', function() {
             this.controller.addAnnotation();
-            expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationSelect);
-            expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationType);
-            expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue, resObj.getItemIri(ontologyStateSvc.annotationType), ontologyStateSvc.annotationLanguage);
+            expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });
         it('editAnnotation should call the appropriate manager functions', function() {
             this.controller.editAnnotation();
-            expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationSelect);
-            expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationType);
             expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-            expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue, ontologyStateSvc.annotationIndex, resObj.getItemIri(ontologyStateSvc.annotationType), ontologyStateSvc.annotationLanguage);
+            expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
