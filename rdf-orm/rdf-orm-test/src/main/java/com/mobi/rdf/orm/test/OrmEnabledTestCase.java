@@ -36,6 +36,8 @@ import com.mobi.rdf.orm.impl.OrmFactoryRegistryImpl;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -59,6 +61,8 @@ import java.util.stream.Collectors;
  */
 public abstract class OrmEnabledTestCase {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(OrmEnabledTestCase.class);
+
     protected static final ModelFactory MF = new LinkedHashModelFactoryService();
 
     protected static final ValueFactory VF = new ValueFactoryService();
@@ -79,8 +83,8 @@ public abstract class OrmEnabledTestCase {
     static {
         loadComponents("valueConverters.conf", ValueConverter.class, valueConverters);
         loadComponents("ormFactories.conf", OrmFactory.class, ormFactories);
-        System.out.println("Discovered the following configuration locations");
-        confLocations.stream().map(URL::toString).map(OrmEnabledTestCase::tab).forEach(System.out::println);
+        LOGGER.info("Discovered the following configuration locations");
+        confLocations.stream().map(URL::toString).map(OrmEnabledTestCase::tab).forEach(LOGGER::info);
     }
 
     /**
