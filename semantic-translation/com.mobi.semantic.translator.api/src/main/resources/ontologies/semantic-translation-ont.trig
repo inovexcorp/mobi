@@ -10,7 +10,7 @@
     rdfs:label "Mobi Extraction Ontology"@en ;
     rdfs:comment "Ontology extension for generating ontologies ."@en ;
     dct:creator [foaf:name "Ben Gould"] ;
-    foaf:maker [foaf:name "Mobi"; foaf:homepage <http://mobi.com>] ;
+    foaf:maker [foaf:name "Mobi"; foaf:homepage <http://mobi.inovexcorp.com>] ;
     dct:modified "2017-12-01"^^xsd:date .
 
 ##########################################
