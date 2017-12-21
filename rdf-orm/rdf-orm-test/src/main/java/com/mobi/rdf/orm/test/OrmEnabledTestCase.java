@@ -1,3 +1,5 @@
+package com.mobi.rdf.orm.test;
+
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactoryService;
@@ -16,13 +18,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-;
 
 public class OrmEnabledTestCase {
 
@@ -33,13 +34,21 @@ public class OrmEnabledTestCase {
 
     protected static final OrmFactoryRegistryImpl OFR = new OrmFactoryRegistryImpl();
 
-    protected List<ValueConverter<?>> valueConverters = new ArrayList<>();
+    protected ValueConverterRegistry valueConverterRegistry;
 
-    protected List<OrmFactory<?>> ormFactories = new ArrayList<>();
+    protected final List<ValueConverter<?>> valueConverters = new ArrayList<>();
+
+    protected final List<OrmFactory<?>> ormFactories = new ArrayList<>();
+
+
+    public OrmEnabledTestCase() {
+        loadValueConverters();
+        loadOrmFactories();
+    }
 
     @Before
     public void configureOrmStuff() throws Exception {
-        final ValueConverterRegistry valueConverterRegistry = new DefaultValueConverterRegistry();
+        valueConverterRegistry = new DefaultValueConverterRegistry();
 
         valueConverters.forEach(valueConverterRegistry::registerValueConverter);
         ormFactories.stream().peek(factory -> {
@@ -48,13 +57,7 @@ public class OrmEnabledTestCase {
                 ((AbstractOrmFactory) factory).setValueConverterRegistry(valueConverterRegistry);
                 ((AbstractOrmFactory) factory).setValueFactory(VF);
             }
-        }).peek(valueConverterRegistry::registerValueConverter).forEach();
-    }
-
-
-    public OrmEnabledTestCase() {
-        loadValueConverters();
-        loadOrmFactories();
+        }).peek(valueConverterRegistry::registerValueConverter).forEach(this::registerOrmFactory);
     }
 
     private Set<Class<?>> loadSpecifiedClasses(final File target) throws IOException, ClassNotFoundException {
@@ -96,8 +99,14 @@ public class OrmEnabledTestCase {
         }
     }
 
-    private registerOrmFactory(){
-        ((OrmFactoryRegistryImpl)OFR).addFac
+    private void registerOrmFactory(OrmFactory<?> factory) throws RuntimeException {
+        try {
+            Method m = OrmFactoryRegistryImpl.class.getDeclaredMethod("addFactory", OrmFactory.class);
+            m.setAccessible(true);
+            m.invoke(OFR, factory);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
