@@ -125,30 +125,36 @@ public class DefaultIriExpressionProcessorTest {
     }
 
     @Before
-    public void initProcessor(){
+    public void initProcessor() {
         this.processor = new DefaultIriExpressionProcessor();
         this.processor.setValueFactory(VF);
     }
 
     @Test
     public void testClassIriExpression() throws Exception {
-        ExtractedOntology ont = EXTRACTED_ONTOLOGY_FACTORY.createNew(VF.createIRI("urn://sample.ontology"));
+        ExtractedOntology ont = EXTRACTED_ONTOLOGY_FACTORY.createNew(VF.createIRI(ONT_URI));
         ClassIriExpressionContext context = new DefaultClassIriExpressionContext(ont, "test-ontology",
                 "simple-test-ontology-for-iri-expressions");
         IRI result = processor.processExpression("getOntologyIri().concat('#').concat(getName()).concat('/').concat(getComment())", context);
-        Assert.assertEquals("urn://sample.ontology#test-ontology/simple-test-ontology-for-iri-expressions", result.stringValue());
+        Assert.assertEquals(ONT_URI + "#test-ontology/simple-test-ontology-for-iri-expressions", result.stringValue());
     }
 
     @Test
     public void testPropertyIriExpression() throws Exception {
-        ExtractedOntology ont = EXTRACTED_ONTOLOGY_FACTORY.createNew(VF.createIRI("urn://sample.ontology"));
+        ExtractedOntology ont = EXTRACTED_ONTOLOGY_FACTORY.createNew(VF.createIRI(ONT_URI));
         PropertyIriExpressionContext context = new DefaultPropertyIriExpressionContext(ont, "test-ontology",
                 "simple-test-ontology-for-iri-expressions", VF.createIRI("urn://domain"), VF.createIRI("urn://range"));
         IRI result = processor.processExpression("getOntologyIri().concat('#').concat(getName()).concat('/').concat(getComment())", context);
-        Assert.assertEquals("urn://sample.ontology#test-ontology/simple-test-ontology-for-iri-expressions", result.stringValue());
+        Assert.assertEquals(ONT_URI + "#test-ontology/simple-test-ontology-for-iri-expressions", result.stringValue());
         Assert.assertEquals("urn://domain", processor.processExpression("getDomain()", context).stringValue());
         Assert.assertEquals("urn://range", processor.processExpression("getRange()", context).stringValue());
+    }
 
+    @Test
+    public void testBadExpression() throws Exception {
+        ExtractedOntology ont = EXTRACTED_ONTOLOGY_FACTORY.createNew(VF.createIRI(ONT_URI));
+        PropertyIriExpressionContext context = new DefaultPropertyIriExpressionContext(ont, "test-ontology",
+                "simple-test-ontology-for-iri-expressions", VF.createIRI("urn://domain"), VF.createIRI("urn://range"));
         try {
             processor.processExpression("getNoSuchMethod()", context);
             Assert.fail("Exception should have been thrown when hitting a non-existent method");
