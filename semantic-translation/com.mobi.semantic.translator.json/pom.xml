@@ -33,6 +33,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>semantic.translator.json</artifactId>
+    <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
     <dependencies>
