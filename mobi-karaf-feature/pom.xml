@@ -292,6 +292,16 @@
             <artifactId>sparql.cli</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>semantic.translator.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>semantic.translator.json</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
