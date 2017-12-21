@@ -26,7 +26,7 @@ package com.mobi.semantic.translator.expression.context;
 import com.mobi.rdf.api.IRI;
 
 /**
- * This interface describes the information necessary to generate an IRI for a
+ * This interface describes the context required for generating the {@link IRI} for a
  * {@link com.mobi.semantic.translator.ontology.ExtractedProperty}.
  */
 public interface PropertyIriExpressionContext extends IriExpressionContext {
