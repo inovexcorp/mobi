@@ -33,7 +33,7 @@ import java.nio.file.Path;
  * This interface describes an object that will take a given file and produce semantic data representing the content.
  * The core concept behind this interface is to leverage the structure of the file (think XML or JSON) to infer an
  * ontology and generate data representing the content of the file in the ontology that is generated.  This interface
- * supports both pointing to the raw file on the file system (assuming the name of the file is the ID of the entitiy
+ * supports both pointing to the raw file on the file system (assuming the name of the file is the ID of the entity
  * being modeled), and reading the raw content via an {@link InputStream}.
  */
 public interface SemanticTranslator {
