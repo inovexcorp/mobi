@@ -51,12 +51,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * This base test class will allow developers writing unit tests making use of ORM-based structures to work with the
- * ORM system outside of OSGi (i.e. in their JUnit environment).  Basically it will scan the classpath for any
- * <b>ormFactories.conf</b> and <b>valueConverters.conf</b> files, and will load the specified components in and
- * configure the environment so that your OrmFactories and ValueConverters intialize as they would in the OSGi system.
+ * This abstract test-class will provide the boiler-plate logic to more easily initialize the backing configuration
+ * of an ORM-enabled set of classes you intend to test.  Basically, it will scan the classpath for any
+ * <b>ormFactories.conf</b> and <b>valueConverters.conf</b> files, and will load the specified components from each
+ * instance of the files (any file with the specific name).  It will then inject them with the necessary backing services,
+ * and neatly provide normal layers for accessing the structures as you would in the OSGi runtime.
  */
-public class OrmEnabledTestCase {
+public abstract class OrmEnabledTestCase {
 
     protected static final ModelFactory MF = new LinkedHashModelFactoryService();
 
@@ -78,6 +79,11 @@ public class OrmEnabledTestCase {
         loadComponents("ormFactories.conf", OrmFactory.class, ormFactories);
     }
 
+    /**
+     * Before the test-case class actually starts up, wire together the configured components.
+     *
+     * @throws Exception If there is an issue configuring the various injected objects
+     */
     @BeforeClass
     public static void configureOrmStuff() throws Exception {
         valueConverters.forEach(valueConverterRegistry::registerValueConverter);
@@ -93,7 +99,9 @@ public class OrmEnabledTestCase {
     @SuppressWarnings("unchecked")
     private static <T> void loadComponents(final String fileName, Class<T> type, List coll) {
         try {
+            // Find every occurrence of files with the required name.
             final Enumeration<URL> resources = ClassLoader.getSystemClassLoader().getResources(fileName);
+            // Iterate over them.
             while (resources.hasMoreElements()) {
                 final URL resource = resources.nextElement();
                 for (final Class<?> clazz : loadSpecifiedClasses(resource.openStream())) {
@@ -104,6 +112,7 @@ public class OrmEnabledTestCase {
                             coll.add(clazz.getConstructor().newInstance());
                         }
                     } else {
+                        // Fail if we find a class of the incorrect type in the list.
                         throw new RuntimeException("Class '" + clazz.getName() + "' specified in '"
                                 + resource.toString() + "' isn't of correct type: " + type.getName());
                     }
@@ -118,21 +127,25 @@ public class OrmEnabledTestCase {
     private static Set<Class<?>> loadSpecifiedClasses(final InputStream is) throws IOException, ClassNotFoundException {
         final Set<Class<?>> set = new HashSet<>();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
+            // For each non-blank line.
             set.addAll(br.lines().filter(StringUtils::isNotBlank).map(name -> {
+                // Map to the class.
                 try {
                     return ClassLoader.getSystemClassLoader().loadClass(name);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            }).collect(Collectors.toSet()));
+            })
+                    // Collect to a set of classes specified in this file.
+                    .collect(Collectors.toSet()));
 
         }
         return set;
     }
 
-
     private static void registerOrmFactory(OrmFactory<?> factory) throws RuntimeException {
         try {
+            // Reflectively register an OrmFactory in our factory registry.
             Method m = OrmFactoryRegistryImpl.class.getDeclaredMethod("addFactory", OrmFactory.class);
             m.setAccessible(true);
             m.invoke(OFR, factory);
@@ -140,6 +153,4 @@ public class OrmEnabledTestCase {
             throw new RuntimeException(e);
         }
     }
-
-
 }
