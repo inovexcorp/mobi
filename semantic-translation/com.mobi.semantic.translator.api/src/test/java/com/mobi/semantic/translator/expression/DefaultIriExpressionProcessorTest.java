@@ -56,6 +56,7 @@ import com.mobi.semantic.translator.ontology.ExtractedObjectPropertyFactory;
 import com.mobi.semantic.translator.ontology.ExtractedOntology;
 import com.mobi.semantic.translator.ontology.ExtractedOntologyFactory;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -76,6 +77,9 @@ public class DefaultIriExpressionProcessorTest {
     private static final ExtractedClassFactory EXTRACTED_CLASS_FACTORY = new ExtractedClassFactory();
     private static final ExtractedDatatypePropertyFactory EXTRACTED_DATATYPE_PROPERTY_FACTORY = new ExtractedDatatypePropertyFactory();
     private static final ExtractedObjectPropertyFactory EXTRACTED_OBJECT_PROPERTY_FACTORY = new ExtractedObjectPropertyFactory();
+
+    DefaultIriExpressionProcessor processor;
+
 
     @BeforeClass
     public static void beforeClass() {
@@ -121,10 +125,14 @@ public class DefaultIriExpressionProcessorTest {
         valueConverterRegistry.registerValueConverter(EXTRACTED_CLASS_FACTORY);
     }
 
+    @Before
+    public void initProcessor(){
+        this.processor = new DefaultIriExpressionProcessor();
+        this.processor.setValueFactory(VF);
+    }
+
     @Test
     public void testClassIriExpression() throws Exception {
-        DefaultIriExpressionProcessor processor = new DefaultIriExpressionProcessor();
-        processor.setValueFactory(VF);
         ExtractedOntology ont = EXTRACTED_ONTOLOGY_FACTORY.createNew(VF.createIRI("urn://sample.ontology"));
         ClassIriExpressionContext context = new DefaultClassIriExpressionContext(ont, "test-ontology",
                 "simple-test-ontology-for-iri-expressions");
@@ -134,8 +142,6 @@ public class DefaultIriExpressionProcessorTest {
 
     @Test
     public void testPropertyIriExpression() throws Exception {
-        DefaultIriExpressionProcessor processor = new DefaultIriExpressionProcessor();
-        processor.setValueFactory(VF);
         ExtractedOntology ont = EXTRACTED_ONTOLOGY_FACTORY.createNew(VF.createIRI("urn://sample.ontology"));
         PropertyIriExpressionContext context = new DefaultPropertyIriExpressionContext(ont, "test-ontology",
                 "simple-test-ontology-for-iri-expressions", VF.createIRI("urn://domain"), VF.createIRI("urn://range"));
