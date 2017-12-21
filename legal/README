@@ -1,0 +1,14 @@
+Mobi is covered under the license found in the file `LICENSE.TXT` in the root directory. All licensed third party libraries are listed in the files `THIRD-PARTY.txt` and `THIRD-PARTY-ETC.txt` in this directory. The license for each of those libraries are in the following files:
+
+* The Apache Software License, Version 2.0 - `apache_v2.0.txt`
+* Revised BSD License - `revised_bsd_asm.txt`, `revised_bsd_curvesapi.txt`, `revised_bsd_hamcrest.txt`, `revised_bsd_jline.txt`, `revised_bsd_jsonldjava.txt`, and `revised_bsd_openrdf.txt`
+* Common Development and Distribution License, Version 1.1 - `cddl_v1.1.txt`
+* Creative Commons Attribution License, Version 2.5 - `creative_v2.5.txt`
+* Eclipse Distribution License, Version 1.1 - `eclipse_dist_v1.1.txt`
+* Eclipse Public License, Version 1.0 - `eclipse_v1.0.txt`
+* GNU General Public License, Version 2 with Classpath Exception - `gpl_v2_cpe.txt`
+* GNU Lesser General Public License, Version 2.1 - `lgpl_v2.1.txt`
+* GNU Lesser General Public License, Version 3.0 - `lgpl_v3.0.txt`
+* ISC License - `isc_logkit.txt`
+* MIT License - `mit_angularjs.txt`, `mit_angularuuid.txt`, `mit_bootstrap.txt`, `mit_codemirror.txt`, `mit_handsontable.txt`, `mit_lodash.txt`, `mit_mockito.txt`, `mit_nghandsontable.txt`, `mit_slf4j.txt`, `mit_uicodemirror.txt`, `mit_uirouter.txt`, and `mit_uiselect.txt`
+* Mozilla Public License, Version 1.1 - `mpl_v1.1.txt`
