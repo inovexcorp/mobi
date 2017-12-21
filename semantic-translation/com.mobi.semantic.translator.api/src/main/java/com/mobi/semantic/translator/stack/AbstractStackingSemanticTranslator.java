@@ -37,6 +37,7 @@ import com.mobi.semantic.translator.ontology.ExtractedClass;
 import com.mobi.semantic.translator.ontology.ExtractedDatatypeProperty;
 import com.mobi.semantic.translator.ontology.ExtractedObjectProperty;
 import com.mobi.semantic.translator.ontology.ExtractedOntology;
+import com.mobi.semantic.translator.ontology.ExtractedProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +48,6 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Optional;
-import java.util.Stack;
 import java.util.stream.Collectors;
 
 public abstract class AbstractStackingSemanticTranslator<T extends StackItem> extends AbstractSemanticTranslator implements SemanticTranslator, StackingSemanticTranslator<T> {
@@ -126,32 +126,23 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
 
     protected ExtractedDatatypeProperty getOrCreateDatatypeProperty(ExtractedOntology managedOntology, IRI domain,
                                                                     IRI range, String name, String address) throws SemanticTranslationException {
-        OrmFactory<ExtractedDatatypeProperty> factory = factory(ExtractedDatatypeProperty.class);
-        final String expression = managedOntology.getSpelPropertyUri().orElse(DEFAULT_PROPERTY_IRI_EXPRESSION);
-        final IRI iri = this.expressionProcessor.processExpression(expression, new DefaultPropertyIriExpressionContext(managedOntology, name, address, domain, range));
-        ExtractedDatatypeProperty prop = factory.getExisting(iri, managedOntology.getModel())
-                .orElseGet(() -> {
-                    LOG.debug("Creating new data type property {}", iri);
-                    ExtractedDatatypeProperty val = factory.createNew(iri, managedOntology.getModel());
-                    val.addProperty(valueFactory.createLiteral(name), getLabelIri());
-                    return val;
-                });
-        // Add domain/range/comment.
-        prop.addProperty(domain, getDomainIri());
-        prop.addProperty(range, getRangeIri());
-        prop.addProperty(valueFactory.createLiteral(address), getCommentIri());
-        return prop;
+        return getOrCreateProperty(ExtractedDatatypeProperty.class, managedOntology, domain, range, name, address);
     }
 
     protected ExtractedObjectProperty getOrCreateObjectProperty(ExtractedOntology managedOntology, IRI domain,
                                                                 IRI range, String name, String address) throws SemanticTranslationException {
-        OrmFactory<ExtractedObjectProperty> factory = factory(ExtractedObjectProperty.class);
+        return getOrCreateProperty(ExtractedObjectProperty.class, managedOntology, domain, range, name, address);
+    }
+
+    private <T extends ExtractedProperty> T getOrCreateProperty(Class<T> type, ExtractedOntology managedOntology, IRI domain,
+                                                                IRI range, String name, String address) throws SemanticTranslationException {
+        final OrmFactory<T> factory = factory(type);
         final String expression = managedOntology.getSpelPropertyUri().orElse(DEFAULT_PROPERTY_IRI_EXPRESSION);
         final IRI iri = this.expressionProcessor.processExpression(expression, new DefaultPropertyIriExpressionContext(managedOntology, name, address, domain, range));
-        ExtractedObjectProperty prop = factory.getExisting(iri, managedOntology.getModel())
+        final T prop = factory.getExisting(iri, managedOntology.getModel())
                 .orElseGet(() -> {
-                    LOG.debug("Creating new object property {}", iri);
-                    ExtractedObjectProperty val = factory.createNew(iri, managedOntology.getModel());
+                    LOG.debug("Creating new data type property {}", iri);
+                    T val = factory.createNew(iri, managedOntology.getModel());
                     val.addProperty(valueFactory.createLiteral(name), getLabelIri());
                     return val;
                 });
