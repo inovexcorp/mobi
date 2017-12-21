@@ -58,7 +58,7 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
 
     private static final String DEFAULT_CLASS_IRI_EXPRESSION = "getOntologyIri().concat('#').concat(getName())";
 
-    private static final String DEFAULT_INSTANCE_IRI_EXPRESSION = "classIri().concat('/').concat(uuid())";
+    private static final String DEFAULT_INSTANCE_IRI_EXPRESSION = "classIri().replace('#','/').concat('/').concat(uuid())";
 
     private final String delimiter;
 
