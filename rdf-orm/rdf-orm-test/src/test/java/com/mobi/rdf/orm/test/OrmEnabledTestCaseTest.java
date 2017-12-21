@@ -41,9 +41,10 @@ public class OrmEnabledTestCaseTest extends OrmEnabledTestCase {
 
     @Test
     public void test() throws Exception {
-        Assert.assertFalse(this.valueConverters.isEmpty());
-        Assert.assertFalse(this.ormFactories.isEmpty());
-        Assert.assertTrue(OFR.getFactoryOfType(Thing.class).get() instanceof ThingFactory);
+        Assert.assertFalse(OrmEnabledTestCaseTest.valueConverters.isEmpty());
+        Assert.assertFalse(OrmEnabledTestCaseTest.ormFactories.isEmpty());
+        Assert.assertTrue(OFR.getFactoryOfType(Thing.class)
+                .orElseThrow(()->new RuntimeException("Thing factory not registered")) instanceof ThingFactory);
         Assert.assertTrue(ormFactories.get(0).getType().equals(Thing.class));
 
         ThingFactory test = ThingFactory.class.cast(OFR.getFactoryOfType(Thing.class).orElse(null));
@@ -56,8 +57,8 @@ public class OrmEnabledTestCaseTest extends OrmEnabledTestCase {
         Assert.assertEquals(MF, modelFactory);
         Assert.assertNotNull(valueConverterRegistry);
         Assert.assertEquals(OrmEnabledTestCase.valueConverterRegistry, valueConverterRegistry);
-        Assert.assertEquals(14, this.valueConverters.size());
-        Assert.assertEquals(1, this.ormFactories.size());
+        Assert.assertEquals(14, OrmEnabledTestCaseTest.valueConverters.size());
+        Assert.assertEquals(1, OrmEnabledTestCaseTest.ormFactories.size());
     }
 
     @SuppressWarnings("unchecked")

@@ -35,7 +35,6 @@ import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
 import com.mobi.rdf.orm.impl.OrmFactoryRegistryImpl;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.io.BufferedReader;
@@ -94,13 +93,19 @@ public class OrmEnabledTestCase {
     @SuppressWarnings("unchecked")
     private static <T> void loadComponents(final String fileName, Class<T> type, List coll) {
         try {
-            Enumeration<URL> locs = ClassLoader.getSystemClassLoader().getResources(fileName);
-            while (locs.hasMoreElements()) {
-                for (Class<?> clazz : loadSpecifiedClasses(locs.nextElement().openStream())) {
+            final Enumeration<URL> resources = ClassLoader.getSystemClassLoader().getResources(fileName);
+            while (resources.hasMoreElements()) {
+                final URL resource = resources.nextElement();
+                for (final Class<?> clazz : loadSpecifiedClasses(resource.openStream())) {
+                    // If the specific class is of the correct type.
                     if (type.isAssignableFrom(clazz)) {
+                        // If the collection doesn't have an instance of this class yet...
                         if (coll.stream().map(Object::getClass).noneMatch(clazz::equals)) {
                             coll.add(clazz.getConstructor().newInstance());
                         }
+                    } else {
+                        throw new RuntimeException("Class '" + clazz.getName() + "' specified in '"
+                                + resource.toString() + "' isn't of correct type: " + type.getName());
                     }
                 }
             }
