@@ -23,11 +23,11 @@ package com.mobi.semantic.translator;
  * #L%
  */
 
-import com.mobi.semantic.translator.expression.IriExpressionProcessor;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
+import com.mobi.semantic.translator.expression.IriExpressionProcessor;
 
 /**
  * This abstract base for the {@link SemanticTranslator} interface provides hooks to provide some base functionality to
@@ -36,6 +36,10 @@ import com.mobi.rdf.orm.OrmFactoryRegistry;
 public abstract class AbstractSemanticTranslator implements SemanticTranslator {
 
     private static final String XSD_PREFIX = "http://www.w3.org/2001/XMLSchema#";
+
+    private static final String RDFS_PREFIX = "http://www.w3.org/2000/01/rdf-schema#";
+
+    private static final String RDF_PREFIX = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 
     protected ValueFactory valueFactory;
 
@@ -52,6 +56,16 @@ public abstract class AbstractSemanticTranslator implements SemanticTranslator {
     private IRI xsdFloat = null;
 
     private IRI xsdBoolean = null;
+
+    private IRI domainIri = null;
+
+    private IRI rangeIri = null;
+
+    private IRI labelIri = null;
+
+    private IRI commentIri = null;
+
+    private IRI rdfType = null;
 
     protected IRI xsdString() {
         if (xsdString == null) {
@@ -82,6 +96,41 @@ public abstract class AbstractSemanticTranslator implements SemanticTranslator {
             xsdBoolean = valueFactory.createIRI(XSD_PREFIX, "boolean");
         }
         return xsdBoolean;
+    }
+
+    protected IRI getDomainIri() {
+        if (domainIri == null) {
+            domainIri = valueFactory.createIRI(RDFS_PREFIX, "domain");
+        }
+        return domainIri;
+    }
+
+    protected IRI getRangeIri() {
+        if (rangeIri == null) {
+            rangeIri = valueFactory.createIRI(RDFS_PREFIX, "range");
+        }
+        return rangeIri;
+    }
+
+    protected IRI getLabelIri() {
+        if (labelIri == null) {
+            labelIri = valueFactory.createIRI(RDFS_PREFIX, "label");
+        }
+        return labelIri;
+    }
+
+    protected IRI getCommentIri() {
+        if (commentIri == null) {
+            commentIri = valueFactory.createIRI(RDFS_PREFIX, "comment");
+        }
+        return commentIri;
+    }
+
+    protected IRI getRdfType() {
+        if (rdfType == null) {
+            rdfType = valueFactory.createIRI(RDF_PREFIX, "type");
+        }
+        return rdfType;
     }
 
 }

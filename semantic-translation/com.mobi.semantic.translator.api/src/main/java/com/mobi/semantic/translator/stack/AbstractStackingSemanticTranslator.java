@@ -74,17 +74,6 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
 
     private final Deque<T> stack;
 
-    private IRI domainIri = null;
-
-    private IRI rangeIri = null;
-
-    private IRI labelIri = null;
-
-    private IRI commentIri = null;
-
-    private IRI rdfType = null;
-
-
     protected AbstractStackingSemanticTranslator() {
         this("|", "{", "}");
     }
@@ -207,38 +196,5 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
         return stack;
     }
 
-    private IRI getDomainIri() {
-        if (domainIri == null) {
-            domainIri = valueFactory.createIRI("http://www.w3.org/2000/01/rdf-schema#", "domain");
-        }
-        return domainIri;
-    }
 
-    private IRI getRangeIri() {
-        if (rangeIri == null) {
-            rangeIri = valueFactory.createIRI("http://www.w3.org/2000/01/rdf-schema#", "range");
-        }
-        return rangeIri;
-    }
-
-    private IRI getLabelIri() {
-        if (labelIri == null) {
-            labelIri = valueFactory.createIRI("http://www.w3.org/2000/01/rdf-schema#", "label");
-        }
-        return labelIri;
-    }
-
-    private IRI getCommentIri() {
-        if (commentIri == null) {
-            commentIri = valueFactory.createIRI("http://www.w3.org/2000/01/rdf-schema#", "comment");
-        }
-        return commentIri;
-    }
-
-    private IRI getRdfType() {
-        if (rdfType == null) {
-            rdfType = valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "type");
-        }
-        return rdfType;
-    }
 }
