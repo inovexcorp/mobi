@@ -49,6 +49,11 @@ public class DefaultIriExpressionProcessor implements IriExpressionProcessor {
 
     private ValueFactory valueFactory;
 
+    @Reference
+    public void setValueFactory(ValueFactory valueFactory) {
+        this.valueFactory = valueFactory;
+    }
+
     @Override
     public IRI processExpression(String expression, IriExpressionContext context) throws SemanticTranslationException {
         try {
@@ -59,10 +64,5 @@ public class DefaultIriExpressionProcessor implements IriExpressionProcessor {
         } catch (SpelEvaluationException | SpelParseException | IllegalArgumentException e) {
             throw new SemanticTranslationException("Issue processing IRI expression for expression '" + expression + "' with context of type: " + context.getClass().getName(), e);
         }
-    }
-
-    @Reference
-    public void setValueFactory(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
     }
 }

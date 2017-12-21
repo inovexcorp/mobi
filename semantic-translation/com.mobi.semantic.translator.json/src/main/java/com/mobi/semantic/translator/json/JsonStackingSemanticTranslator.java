@@ -57,6 +57,26 @@ public class JsonStackingSemanticTranslator extends AbstractStackingSemanticTran
 
     private static final JsonFactory JSON_FACTORY = new JsonFactory();
 
+    @Reference
+    public void setValueFactory(ValueFactory valueFactory) {
+        super.valueFactory = valueFactory;
+    }
+
+    @Reference
+    public void setModelFactory(ModelFactory modelFactory) {
+        super.modelFactory = modelFactory;
+    }
+
+    @Reference
+    public void setExpressionProcessor(IriExpressionProcessor expressionProcessor) {
+        super.expressionProcessor = expressionProcessor;
+    }
+
+    @Reference
+    public void setOrmFactoryRegistry(OrmFactoryRegistry ormFactoryRegistry) {
+        super.ormFactoryRegistry = ormFactoryRegistry;
+    }
+
     @Override
     public Model translate(InputStream dataStream, String entityIdentifier, ExtractedOntology managedOntology) throws SemanticTranslationException {
         final Model result = modelFactory.createModel();
@@ -89,7 +109,7 @@ public class JsonStackingSemanticTranslator extends AbstractStackingSemanticTran
         return getStack().stream().filter(item -> !item.isArray()).findFirst();
     }
 
-    public void parseToken(Model result, ExtractedOntology managedOntology, JsonToken token, JsonParser jsonParser) throws IOException, SemanticTranslationException {
+    private void parseToken(Model result, ExtractedOntology managedOntology, JsonToken token, JsonParser jsonParser) throws IOException, SemanticTranslationException {
         final Optional<JsonStackItem> top = peekStack();
         final Optional<JsonStackItem> nonArrayTop = peekForLastNonArray();
         final String jsonCurrentName = jsonParser.getCurrentName();
@@ -175,26 +195,5 @@ public class JsonStackingSemanticTranslator extends AbstractStackingSemanticTran
         ExtractedDatatypeProperty datatypeProperty = getOrCreateDatatypeProperty(managedOntology,
                 getDatatypeDomain(item), range, propertyName, getCurrentLocation());
         item.getProperties().add((IRI) datatypeProperty.getResource(), value);
-    }
-
-
-    @Reference
-    public void setValueFactory(ValueFactory valueFactory) {
-        super.valueFactory = valueFactory;
-    }
-
-    @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        super.modelFactory = modelFactory;
-    }
-
-    @Reference
-    public void setExpressionProcessor(IriExpressionProcessor expressionProcessor) {
-        super.expressionProcessor = expressionProcessor;
-    }
-
-    @Reference
-    public void setOrmFactoryRegistry(OrmFactoryRegistry ormFactoryRegistry) {
-        super.ormFactoryRegistry = ormFactoryRegistry;
     }
 }
