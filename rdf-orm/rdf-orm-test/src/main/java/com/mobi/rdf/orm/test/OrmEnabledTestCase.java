@@ -71,12 +71,16 @@ public abstract class OrmEnabledTestCase {
 
     protected static final List<OrmFactory<?>> ormFactories = new ArrayList<>();
 
+    protected static final Set<URL> confLocations = new HashSet<>();
+
     /**
      * Static constructor loads and processes the specified configuration files.
      */
     static {
         loadComponents("valueConverters.conf", ValueConverter.class, valueConverters);
         loadComponents("ormFactories.conf", OrmFactory.class, ormFactories);
+        System.out.println("Discovered the following configuration locations");
+        confLocations.stream().map(URL::toString).map(OrmEnabledTestCase::tab).forEach(System.out::println);
     }
 
     /**
@@ -104,6 +108,7 @@ public abstract class OrmEnabledTestCase {
             // Iterate over them.
             while (resources.hasMoreElements()) {
                 final URL resource = resources.nextElement();
+                confLocations.add(resource);
                 for (final Class<?> clazz : loadSpecifiedClasses(resource.openStream())) {
                     // If the specific class is of the correct type.
                     if (type.isAssignableFrom(clazz)) {
@@ -152,5 +157,9 @@ public abstract class OrmEnabledTestCase {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static String tab(String in) {
+        return String.format("\t%s", in);
     }
 }
