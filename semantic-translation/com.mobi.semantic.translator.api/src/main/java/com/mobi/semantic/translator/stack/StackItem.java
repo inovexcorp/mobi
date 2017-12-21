@@ -28,10 +28,10 @@ import com.mobi.rdf.api.Value;
 import org.springframework.util.MultiValueMap;
 
 /**
- * This interface describes the basic necessities that an item you'll place on the stack of a
- * {@link StackingSemanticTranslator}.  It will provide specific types of data necessary for generating ontological
- * structures from the content and structure of your input data.  Each item on the stack should represent a layer in
- * your data structure, and most likely be a class in your generated ontology.
+ * This interface describes the minimum fields for an item you'll place on the stack of a
+ * {@link StackingSemanticTranslator} implementation.  It will provide specific types of data necessary for generating
+ * ontological structures from the content and structure of your input data.  Each item on the stack should represent a
+ * layer in your data structure, and most likely be a class in your generated ontology.
  */
 public interface StackItem {
 

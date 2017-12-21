@@ -26,7 +26,7 @@ package com.mobi.semantic.translator.expression.context;
 import java.util.Optional;
 
 /**
- * This interface describes the context required for generating the {@link com.mobi.rdf.api.IRI} of an instance
+ * This interface describes the context that is required for generating the {@link com.mobi.rdf.api.IRI} of an instance
  * of an {@link com.mobi.semantic.translator.ontology.ExtractedClass}.
  */
 public interface InstanceIriExpressionContext extends IriExpressionContext {
