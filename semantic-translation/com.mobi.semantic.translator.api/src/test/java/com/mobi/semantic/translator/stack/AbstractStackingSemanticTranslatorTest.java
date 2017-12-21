@@ -52,6 +52,4 @@ public class AbstractStackingSemanticTranslatorTest {
                 .orElse(null).getIdentifier());
         Assert.assertEquals("{root|first}", testing.getCurrentLocation());
     }
-
-
 }

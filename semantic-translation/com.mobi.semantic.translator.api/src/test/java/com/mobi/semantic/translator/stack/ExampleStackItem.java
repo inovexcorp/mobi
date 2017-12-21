@@ -29,5 +29,3 @@ public class ExampleStackItem extends AbstractStackItem implements StackItem {
         super(id,false);
     }
 }
-
-

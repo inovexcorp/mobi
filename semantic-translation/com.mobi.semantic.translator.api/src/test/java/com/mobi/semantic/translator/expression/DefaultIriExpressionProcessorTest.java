@@ -78,8 +78,7 @@ public class DefaultIriExpressionProcessorTest {
     private static final ExtractedDatatypePropertyFactory EXTRACTED_DATATYPE_PROPERTY_FACTORY = new ExtractedDatatypePropertyFactory();
     private static final ExtractedObjectPropertyFactory EXTRACTED_OBJECT_PROPERTY_FACTORY = new ExtractedObjectPropertyFactory();
 
-    DefaultIriExpressionProcessor processor;
-
+    private DefaultIriExpressionProcessor processor;
 
     @BeforeClass
     public static void beforeClass() {
@@ -158,6 +157,4 @@ public class DefaultIriExpressionProcessorTest {
             Assert.assertNotNull(e.getCause());
         }
     }
-
-
 }
