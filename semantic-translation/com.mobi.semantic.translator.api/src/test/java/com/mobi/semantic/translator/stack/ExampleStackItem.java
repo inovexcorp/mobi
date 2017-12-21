@@ -26,6 +26,6 @@ package com.mobi.semantic.translator.stack;
 public class ExampleStackItem extends AbstractStackItem implements StackItem {
 
     public ExampleStackItem(String id) {
-        super(id,false);
+        super(id, false);
     }
 }
