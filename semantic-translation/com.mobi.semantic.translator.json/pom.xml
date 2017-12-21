@@ -33,7 +33,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>semantic.translator.json</artifactId>
-
+    <packaging>bundle</packaging>
 
     <dependencies>
         <dependency>
@@ -66,5 +66,27 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>Mobi JSON Semantic Translation</Bundle-Name>
+                        <Bundle-Version>${project.version}</Bundle-Version>
+                        <Export-Package>
+                            com.mobi.semantic.translator.json; provide:=true
+                        </Export-Package>
+                        <build>${maven.build.timestamp}</build>
+                        <_snapshot>${maven.build.timestamp}</_snapshot>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
