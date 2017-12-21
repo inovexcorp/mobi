@@ -36,6 +36,7 @@ import com.mobi.rdf.orm.impl.OrmFactoryRegistryImpl;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -50,8 +51,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * This base test class will allow developers writing unit tests making use of ORM-based structures to work with the
+ * ORM system outside of OSGi (i.e. in their JUnit environment).  Basically it will scan the classpath for any
+ * <b>ormFactories.conf</b> and <b>valueConverters.conf</b> files, and will load the specified components in and
+ * configure the environment so that your OrmFactories and ValueConverters intialize as they would in the OSGi system.
+ */
 public class OrmEnabledTestCase {
-
 
     protected static final ModelFactory MF = new LinkedHashModelFactoryService();
 
@@ -61,17 +67,20 @@ public class OrmEnabledTestCase {
 
     protected static final ValueConverterRegistry valueConverterRegistry = new DefaultValueConverterRegistry();
 
-    protected final List<ValueConverter<?>> valueConverters = new ArrayList<>();
+    protected static final List<ValueConverter<?>> valueConverters = new ArrayList<>();
 
-    protected final List<OrmFactory<?>> ormFactories = new ArrayList<>();
+    protected static final List<OrmFactory<?>> ormFactories = new ArrayList<>();
 
-    protected OrmEnabledTestCase() {
+    /**
+     * Static constructor loads and processes the specified configuration files.
+     */
+    static {
         loadComponents("valueConverters.conf", ValueConverter.class, valueConverters);
         loadComponents("ormFactories.conf", OrmFactory.class, ormFactories);
     }
 
-    @Before
-    public void configureOrmStuff() throws Exception {
+    @BeforeClass
+    public static void configureOrmStuff() throws Exception {
         valueConverters.forEach(valueConverterRegistry::registerValueConverter);
         ormFactories.stream().peek(factory -> {
             if (AbstractOrmFactory.class.isAssignableFrom(factory.getClass())) {
@@ -79,11 +88,11 @@ public class OrmEnabledTestCase {
                 ((AbstractOrmFactory) factory).setValueConverterRegistry(valueConverterRegistry);
                 ((AbstractOrmFactory) factory).setValueFactory(VF);
             }
-        }).peek(valueConverterRegistry::registerValueConverter).forEach(this::registerOrmFactory);
+        }).peek(valueConverterRegistry::registerValueConverter).forEach(OrmEnabledTestCase::registerOrmFactory);
     }
 
     @SuppressWarnings("unchecked")
-    private <T> void loadComponents(final String fileName, Class<T> type, List coll) {
+    private static <T> void loadComponents(final String fileName, Class<T> type, List coll) {
         try {
             Enumeration<URL> locs = ClassLoader.getSystemClassLoader().getResources(fileName);
             while (locs.hasMoreElements()) {
@@ -101,12 +110,12 @@ public class OrmEnabledTestCase {
         }
     }
 
-    private Set<Class<?>> loadSpecifiedClasses(final InputStream is) throws IOException, ClassNotFoundException {
+    private static Set<Class<?>> loadSpecifiedClasses(final InputStream is) throws IOException, ClassNotFoundException {
         final Set<Class<?>> set = new HashSet<>();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
             set.addAll(br.lines().filter(StringUtils::isNotBlank).map(name -> {
                 try {
-                    return getClass().getClassLoader().loadClass(name);
+                    return ClassLoader.getSystemClassLoader().loadClass(name);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -117,7 +126,7 @@ public class OrmEnabledTestCase {
     }
 
 
-    private void registerOrmFactory(OrmFactory<?> factory) throws RuntimeException {
+    private static void registerOrmFactory(OrmFactory<?> factory) throws RuntimeException {
         try {
             Method m = OrmFactoryRegistryImpl.class.getDeclaredMethod("addFactory", OrmFactory.class);
             m.setAccessible(true);
