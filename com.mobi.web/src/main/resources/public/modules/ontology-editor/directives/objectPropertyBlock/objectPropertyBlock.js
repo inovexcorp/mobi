@@ -27,9 +27,9 @@
         .module('objectPropertyBlock', [])
         .directive('objectPropertyBlock', objectPropertyBlock);
 
-        objectPropertyBlock.$inject = ['ontologyStateService', 'responseObj', 'ontologyUtilsManagerService'];
+        objectPropertyBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
 
-        function objectPropertyBlock(ontologyStateService, responseObj, ontologyUtilsManagerService) {
+        function objectPropertyBlock(ontologyStateService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,9 +38,9 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
+                    dvm.objectProperties = _.keys(dvm.os.listItem.objectProperties.iris);
 
                     dvm.openAddObjectPropOverlay = function() {
                         dvm.os.editingProperty = false;

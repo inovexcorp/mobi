@@ -27,9 +27,9 @@
         .module('ontologyPropertiesBlock', [])
         .directive('ontologyPropertiesBlock', ontologyPropertiesBlock);
 
-        ontologyPropertiesBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'responseObj', 'ontologyUtilsManagerService'];
+        ontologyPropertiesBlock.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyUtilsManagerService'];
 
-        function ontologyPropertiesBlock(ontologyStateService, ontologyManagerService, responseObj, ontologyUtilsManagerService) {
+        function ontologyPropertiesBlock(ontologyStateService, propertyManagerService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,18 +38,16 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    dvm.ro = responseObj;
+                    var pm = propertyManagerService;
                     dvm.os = ontologyStateService;
-                    dvm.om = ontologyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
-                    dvm.properties = _.union(dvm.om.ontologyProperties, dvm.os.listItem.annotations.iris);
+                    dvm.properties = _.union(pm.ontologyProperties, _.keys(dvm.os.listItem.annotations.iris));
 
                     dvm.openAddOverlay = function() {
                         dvm.os.editingOntologyProperty = false;
                         dvm.os.ontologyProperty = undefined;
                         dvm.os.ontologyPropertyIRI = '';
                         dvm.os.ontologyPropertyValue = '';
-                        // dvm.os.ontologyPropertyType = undefined;
                         dvm.os.ontologyPropertyLanguage = 'en';
                         dvm.os.showOntologyPropertyOverlay = true;
                     }
@@ -59,19 +57,18 @@
                         dvm.showRemoveOverlay = true;
                     }
                     dvm.editClicked = function(property, index) {
-                        var propertyObj = dvm.os.listItem.selected[dvm.ro.getItemIri(property)][index];
+                        var propertyObj = dvm.os.listItem.selected[property][index];
                         dvm.os.editingOntologyProperty = true;
                         dvm.os.ontologyProperty = property;
                         dvm.os.ontologyPropertyIRI = _.get(propertyObj, '@id');
                         dvm.os.ontologyPropertyValue = _.get(propertyObj, '@value');
-                        // dvm.os.ontologyPropertyType = _.get(dvm.os.listItem.selected[dvm.ro.getItemIri(property)][index], '@type');
                         dvm.os.ontologyPropertyIndex = index;
                         dvm.os.ontologyPropertyLanguage = _.get(propertyObj, '@language');
                         dvm.os.showOntologyPropertyOverlay = true;
                     }
 
                     $scope.$watch('dvm.os.listItem.selected', () => {
-                        dvm.properties = _.union(dvm.om.ontologyProperties, dvm.os.listItem.annotations.iris);
+                        dvm.properties = _.union(pm.ontologyProperties, _.keys(dvm.os.listItem.annotations.iris));
                     });
                 }]
             }

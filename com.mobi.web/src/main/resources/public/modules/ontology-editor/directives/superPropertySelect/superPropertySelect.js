@@ -38,11 +38,9 @@
          * @name superPropertySelect.directive:superPropertySelect
          * @scope
          * @restrict E
-         * @requires responseObj.service:responseObj
          * @requires ontologyState.service:ontologyStateService
          * @requires util.service:utilService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires prefixes.service:prefixes
          *
          * @description
          * HTML contents in the super property select which provides a link to show a dropdown select of
@@ -50,8 +48,9 @@
          */
         .directive('superPropertySelect', superPropertySelect);
 
-        superPropertySelect.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];
-        function superPropertySelect(responseObj, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes) {
+        superPropertySelect.$inject = ['ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
+
+        function superPropertySelect(ontologyStateService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -64,24 +63,21 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                     dvm.ontoUtils = ontologyUtilsManagerService;
-                     dvm.ro = responseObj;
-                     dvm.os = ontologyStateService;
-                     dvm.util = utilService;
-                     dvm.isShown = false;
-                     dvm.array = [];
+                    var os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
+                    dvm.util = utilService;
+                    dvm.isShown = false;
+                    dvm.array = [];
 
                     dvm.show = function() {
                         dvm.isShown = true;
                     }
-
                     dvm.hide = function() {
                         dvm.isShown = false;
                         dvm.values = [];
                     }
-
                     dvm.getValues = function(searchText) {
-                        dvm.array =  dvm.ontoUtils.getSelectList(dvm.os.listItem[dvm.key].iris, searchText, dvm.ontoUtils.getDropDownText);
+                        dvm.array =  dvm.ontoUtils.getSelectList(_.keys(os.listItem[dvm.key].iris), searchText, dvm.ontoUtils.getDropDownText);
                     }
                 }
             }

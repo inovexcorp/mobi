@@ -27,9 +27,9 @@
         .module('createIndividualOverlay', [])
         .directive('createIndividualOverlay', createIndividualOverlay);
 
-        createIndividualOverlay.$inject = ['$filter', 'ontologyStateService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService'];
+        createIndividualOverlay.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createIndividualOverlay($filter, ontologyStateService, responseObj, prefixes, ontologyUtilsManagerService) {
+        function createIndividualOverlay($filter, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,12 +38,10 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
-                    dvm.prefixes = prefixes;
-                    dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefix = dvm.os.getDefaultPrefix();
+                    dvm.classes = _.keys(dvm.os.listItem.classes.iris);
 
                     dvm.individual = {
                         '@id': dvm.prefix,
@@ -60,8 +58,8 @@
                         dvm.individual['@id'] = iriBegin + iriThen + iriEnd;
                         dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
-                    dvm.getItemOntologyIri = function(item) {
-                        return _.get(item, 'ontologyId', dvm.os.listItem.ontologyId);
+                    dvm.getClassOntologyIri = function(iri) {
+                        return _.get(dvm.os.listItem.classes.iris, "['" + iri + "']", dvm.os.listItem.ontologyId);
                     }
                     dvm.create = function() {
                         // update relevant lists
