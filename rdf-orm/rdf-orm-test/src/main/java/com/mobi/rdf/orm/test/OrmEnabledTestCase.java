@@ -144,9 +144,8 @@ public abstract class OrmEnabledTestCase {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            })
-                    // Collect to a set of classes specified in this file.
-                    .collect(Collectors.toSet()));
+                //Collect all the items into a set.
+            }).collect(Collectors.toSet()));
 
         }
         return set;
