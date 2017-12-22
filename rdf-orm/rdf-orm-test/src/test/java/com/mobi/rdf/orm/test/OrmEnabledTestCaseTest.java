@@ -44,7 +44,7 @@ public class OrmEnabledTestCaseTest extends OrmEnabledTestCase {
         Assert.assertFalse(OrmEnabledTestCaseTest.valueConverters.isEmpty());
         Assert.assertFalse(OrmEnabledTestCaseTest.ormFactories.isEmpty());
         Assert.assertTrue(OFR.getFactoryOfType(Thing.class)
-                .orElseThrow(()->new RuntimeException("Thing factory not registered")) instanceof ThingFactory);
+                .orElseThrow(() -> new RuntimeException("Thing factory not registered")) instanceof ThingFactory);
         Assert.assertTrue(ormFactories.get(0).getType().equals(Thing.class));
 
         ThingFactory test = ThingFactory.class.cast(OFR.getFactoryOfType(Thing.class).orElse(null));
