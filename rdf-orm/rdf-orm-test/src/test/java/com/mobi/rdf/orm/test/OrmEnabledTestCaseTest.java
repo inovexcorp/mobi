@@ -23,13 +23,17 @@ package com.mobi.rdf.orm.test;
  * #L%
  */
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.AbstractOrmFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.impl.ThingFactory;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
@@ -41,24 +45,24 @@ public class OrmEnabledTestCaseTest extends OrmEnabledTestCase {
 
     @Test
     public void test() throws Exception {
-        Assert.assertFalse(OrmEnabledTestCaseTest.valueConverters.isEmpty());
-        Assert.assertFalse(OrmEnabledTestCaseTest.ormFactories.isEmpty());
-        Assert.assertTrue(OFR.getFactoryOfType(Thing.class)
+        assertFalse(OrmEnabledTestCaseTest.valueConverters.isEmpty());
+        assertFalse(OrmEnabledTestCaseTest.ormFactories.isEmpty());
+        assertTrue(OFR.getFactoryOfType(Thing.class)
                 .orElseThrow(() -> new RuntimeException("Thing factory not registered")) instanceof ThingFactory);
-        Assert.assertTrue(ormFactories.get(0).getType().equals(Thing.class));
+        assertTrue(ormFactories.get(0).getType().equals(Thing.class));
 
         ThingFactory test = ThingFactory.class.cast(OFR.getFactoryOfType(Thing.class).orElse(null));
         ValueFactory valueFactory = getReference(AbstractOrmFactory.class.getDeclaredField("valueFactory"), test, ValueFactory.class);
         ModelFactory modelFactory = getReference(AbstractOrmFactory.class.getDeclaredField("modelFactory"), test, ModelFactory.class);
         ValueConverterRegistry valueConverterRegistry = getReference(AbstractOrmFactory.class.getDeclaredField("valueConverterRegistry"), test, ValueConverterRegistry.class);
-        Assert.assertNotNull(valueFactory);
-        Assert.assertEquals(VF, valueFactory);
-        Assert.assertNotNull(modelFactory);
-        Assert.assertEquals(MF, modelFactory);
-        Assert.assertNotNull(valueConverterRegistry);
-        Assert.assertEquals(OrmEnabledTestCase.valueConverterRegistry, valueConverterRegistry);
-        Assert.assertEquals(14, OrmEnabledTestCaseTest.valueConverters.size());
-        Assert.assertEquals(1, OrmEnabledTestCaseTest.ormFactories.size());
+        assertNotNull(valueFactory);
+        assertEquals(VF, valueFactory);
+        assertNotNull(modelFactory);
+        assertEquals(MF, modelFactory);
+        assertNotNull(valueConverterRegistry);
+        assertEquals(OrmEnabledTestCase.valueConverterRegistry, valueConverterRegistry);
+        assertEquals(14, OrmEnabledTestCaseTest.valueConverters.size());
+        assertEquals(1, OrmEnabledTestCaseTest.ormFactories.size());
     }
 
     @SuppressWarnings("unchecked")
