@@ -1,7 +1,7 @@
 package com.mobi.rdf.orm.test;
 
-/*-
- * #%L
+        /*-
+         * #%L
  * rdf-orm-test
  * $Id:$
  * $HeadURL:$
@@ -21,7 +21,7 @@ package com.mobi.rdf.orm.test;
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
- */
+         */
 
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
@@ -29,13 +29,13 @@ import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactoryService;
 import com.mobi.rdf.core.impl.sesame.ValueFactoryService;
 import com.mobi.rdf.orm.AbstractOrmFactory;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.conversion.ValueConverter;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
 import com.mobi.rdf.orm.impl.OrmFactoryRegistryImpl;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
 /**
  * This abstract test-class will provide the boiler-plate logic to more easily initialize the backing configuration
  * of an ORM-enabled set of classes you intend to test.  Basically, it will scan the classpath for any
- * <b>ormFactories.conf</b> and <b>valueConverters.conf</b> files, and will load the specified components from each
+ * <b>ORM_FACTORIES.conf</b> and <b>VALUE_CONVERTERS.conf</b> files, and will load the specified components from each
  * instance of the files (any file with the specific name).  It will then inject them with the necessary backing services,
  * and neatly provide normal layers for accessing the structures as you would in the OSGi runtime.
  */
@@ -63,45 +63,49 @@ public abstract class OrmEnabledTestCase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OrmEnabledTestCase.class);
 
-    protected static final ModelFactory MF = new LinkedHashModelFactoryService();
+    protected static final ModelFactory MODEL_FACTORY = new LinkedHashModelFactoryService();
 
-    protected static final ValueFactory VF = new ValueFactoryService();
+    protected static final ValueFactory VALUE_FACTORY = new ValueFactoryService();
 
-    protected static final OrmFactoryRegistryImpl OFR = new OrmFactoryRegistryImpl();
+    protected static final OrmFactoryRegistryImpl ORM_FACTORY_REGISTRY = new OrmFactoryRegistryImpl();
 
-    protected static final ValueConverterRegistry valueConverterRegistry = new DefaultValueConverterRegistry();
+    protected static final ValueConverterRegistry VALUE_CONVERTER_REGISTRY = new DefaultValueConverterRegistry();
 
-    protected static final List<ValueConverter<?>> valueConverters = new ArrayList<>();
+    protected static final List<ValueConverter<?>> VALUE_CONVERTERS = new ArrayList<>();
 
-    protected static final List<OrmFactory<?>> ormFactories = new ArrayList<>();
+    protected static final List<OrmFactory<?>> ORM_FACTORIES = new ArrayList<>();
 
-    protected static final Set<URL> confLocations = new HashSet<>();
+    protected static final Set<URL> CONF_LOCATIONS = new HashSet<>();
 
     /**
      * Static constructor loads and processes the specified configuration files.
      */
     static {
-        loadComponents("valueConverters.conf", ValueConverter.class, valueConverters);
-        loadComponents("ormFactories.conf", OrmFactory.class, ormFactories);
+        loadComponents("valueConverters.conf", ValueConverter.class, VALUE_CONVERTERS);
+        loadComponents("ormFactories.conf", OrmFactory.class, ORM_FACTORIES);
         LOGGER.info("Discovered the following configuration locations");
-        confLocations.stream().map(URL::toString).map(OrmEnabledTestCase::tab).forEach(LOGGER::info);
+        CONF_LOCATIONS.stream().map(URL::toString).map(OrmEnabledTestCase::tab).forEach(LOGGER::info);
+
+        VALUE_CONVERTERS.forEach(VALUE_CONVERTER_REGISTRY::registerValueConverter);
+        ORM_FACTORIES.stream().peek(factory -> {
+            if (AbstractOrmFactory.class.isAssignableFrom(factory.getClass())) {
+                ((AbstractOrmFactory) factory).setModelFactory(MODEL_FACTORY);
+                ((AbstractOrmFactory) factory).setValueConverterRegistry(VALUE_CONVERTER_REGISTRY);
+                ((AbstractOrmFactory) factory).setValueFactory(VALUE_FACTORY);
+            }
+        }).peek(VALUE_CONVERTER_REGISTRY::registerValueConverter).forEach(OrmEnabledTestCase::registerOrmFactory);
     }
 
-    /**
-     * Before the test-case class actually starts up, wire together the configured components.
-     *
-     * @throws Exception If there is an issue configuring the various injected objects
-     */
-    @BeforeClass
-    public static void configureOrmStuff() throws Exception {
-        valueConverters.forEach(valueConverterRegistry::registerValueConverter);
-        ormFactories.stream().peek(factory -> {
-            if (AbstractOrmFactory.class.isAssignableFrom(factory.getClass())) {
-                ((AbstractOrmFactory) factory).setModelFactory(MF);
-                ((AbstractOrmFactory) factory).setValueConverterRegistry(valueConverterRegistry);
-                ((AbstractOrmFactory) factory).setValueFactory(VF);
-            }
-        }).peek(valueConverterRegistry::registerValueConverter).forEach(OrmEnabledTestCase::registerOrmFactory);
+    public static OrmFactoryRegistry getOrmFactoryRegistry() {
+        return ORM_FACTORY_REGISTRY;
+    }
+
+    public static ValueFactory getValueFactory() {
+        return VALUE_FACTORY;
+    }
+
+    public static ValueConverterRegistry getValueConverterRegistry() {
+        return VALUE_CONVERTER_REGISTRY;
     }
 
     @SuppressWarnings("unchecked")
@@ -112,7 +116,7 @@ public abstract class OrmEnabledTestCase {
             // Iterate over them.
             while (resources.hasMoreElements()) {
                 final URL resource = resources.nextElement();
-                confLocations.add(resource);
+                CONF_LOCATIONS.add(resource);
                 for (final Class<?> clazz : loadSpecifiedClasses(resource.openStream())) {
                     // If the specific class is of the correct type.
                     if (type.isAssignableFrom(clazz)) {
@@ -156,7 +160,7 @@ public abstract class OrmEnabledTestCase {
             // Reflectively register an OrmFactory in our factory registry.
             Method m = OrmFactoryRegistryImpl.class.getDeclaredMethod("addFactory", OrmFactory.class);
             m.setAccessible(true);
-            m.invoke(OFR, factory);
+            m.invoke(ORM_FACTORY_REGISTRY, factory);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
