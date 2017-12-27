@@ -87,13 +87,10 @@ public abstract class OrmEnabledTestCase {
         CONF_LOCATIONS.stream().map(URL::toString).map(OrmEnabledTestCase::tab).forEach(LOGGER::info);
 
         VALUE_CONVERTERS.forEach(VALUE_CONVERTER_REGISTRY::registerValueConverter);
-        ORM_FACTORIES.stream().peek(factory -> {
-            if (AbstractOrmFactory.class.isAssignableFrom(factory.getClass())) {
-                ((AbstractOrmFactory) factory).setModelFactory(MODEL_FACTORY);
-                ((AbstractOrmFactory) factory).setValueConverterRegistry(VALUE_CONVERTER_REGISTRY);
-                ((AbstractOrmFactory) factory).setValueFactory(VALUE_FACTORY);
-            }
-        }).peek(VALUE_CONVERTER_REGISTRY::registerValueConverter).forEach(OrmEnabledTestCase::registerOrmFactory);
+        ORM_FACTORIES.stream()
+                .peek(OrmEnabledTestCase::initOrmFactory)
+                .peek(VALUE_CONVERTER_REGISTRY::registerValueConverter)
+                .forEach(OrmEnabledTestCase::registerOrmFactory);
     }
 
     public static OrmFactoryRegistry getOrmFactoryRegistry() {
@@ -134,6 +131,17 @@ public abstract class OrmEnabledTestCase {
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Failed initializing test: " + e.getMessage());
+        }
+    }
+
+    private static void initOrmFactory(OrmFactory<?> factory) {
+        if (AbstractOrmFactory.class.isAssignableFrom(factory.getClass())) {
+            ((AbstractOrmFactory) factory).setModelFactory(MODEL_FACTORY);
+            ((AbstractOrmFactory) factory).setValueConverterRegistry(VALUE_CONVERTER_REGISTRY);
+            ((AbstractOrmFactory) factory).setValueFactory(VALUE_FACTORY);
+        } else {
+            throw new RuntimeException("OrmFactory '" + factory.getClass().getName() +
+                    "' isn't an AbstractOrmFactory, so it can't be initialized by an ormFactories.conf file");
         }
     }
 
