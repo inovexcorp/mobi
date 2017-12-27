@@ -61,10 +61,14 @@ public class OrmEnabledTestCaseTest extends OrmEnabledTestCase {
                 .orElseThrow(() -> new RuntimeException("Thing factory not registered")) instanceof ThingFactory);
         assertTrue(ORM_FACTORIES.get(0).getType().equals(Thing.class));
 
-        ThingFactory test = ThingFactory.class.cast(ORM_FACTORY_REGISTRY.getFactoryOfType(Thing.class).orElse(null));
-        ValueFactory valueFactory = getReference(AbstractOrmFactory.class.getDeclaredField("valueFactory"), test, ValueFactory.class);
-        ModelFactory modelFactory = getReference(AbstractOrmFactory.class.getDeclaredField("modelFactory"), test, ModelFactory.class);
-        ValueConverterRegistry valueConverterRegistry = getReference(AbstractOrmFactory.class.getDeclaredField("valueConverterRegistry"), test, ValueConverterRegistry.class);
+        ThingFactory test = ThingFactory.class.cast(
+                ORM_FACTORY_REGISTRY.getFactoryOfType(Thing.class).orElse(null));
+        ValueFactory valueFactory = getReference(AbstractOrmFactory.class.getDeclaredField("valueFactory"),
+                test, ValueFactory.class);
+        ModelFactory modelFactory = getReference(AbstractOrmFactory.class.getDeclaredField("modelFactory"),
+                test, ModelFactory.class);
+        ValueConverterRegistry valueConverterRegistry = getReference(AbstractOrmFactory.class
+                .getDeclaredField("valueConverterRegistry"), test, ValueConverterRegistry.class);
         assertNotNull(valueFactory);
         assertEquals(VALUE_FACTORY, valueFactory);
         assertNotNull(modelFactory);
