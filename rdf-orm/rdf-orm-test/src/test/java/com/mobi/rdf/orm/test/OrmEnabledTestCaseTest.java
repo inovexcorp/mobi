@@ -52,9 +52,12 @@ public class OrmEnabledTestCaseTest extends OrmEnabledTestCase {
         assertTrue(ormFactories.get(0).getType().equals(Thing.class));
 
         ThingFactory test = ThingFactory.class.cast(OFR.getFactoryOfType(Thing.class).orElse(null));
-        ValueFactory valueFactory = getReference(AbstractOrmFactory.class.getDeclaredField("valueFactory"), test, ValueFactory.class);
-        ModelFactory modelFactory = getReference(AbstractOrmFactory.class.getDeclaredField("modelFactory"), test, ModelFactory.class);
-        ValueConverterRegistry valueConverterRegistry = getReference(AbstractOrmFactory.class.getDeclaredField("valueConverterRegistry"), test, ValueConverterRegistry.class);
+        ValueFactory valueFactory = getReference(AbstractOrmFactory.class.getDeclaredField("valueFactory"),
+                test, ValueFactory.class);
+        ModelFactory modelFactory = getReference(AbstractOrmFactory.class.getDeclaredField("modelFactory"),
+                test, ModelFactory.class);
+        ValueConverterRegistry valueConverterRegistry = getReference(AbstractOrmFactory.class
+                .getDeclaredField("valueConverterRegistry"), test, ValueConverterRegistry.class);
         assertNotNull(valueFactory);
         assertEquals(VF, valueFactory);
         assertNotNull(modelFactory);
