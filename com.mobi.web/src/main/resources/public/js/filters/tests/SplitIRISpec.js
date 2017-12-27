@@ -33,7 +33,6 @@ describe('Split IRI filter', function() {
 
     afterEach(function() {
         $filter = null;
-        responseObj = null;
     });
 
     it('returns an object with empty string values if iri is falsey or an object', function() {

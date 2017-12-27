@@ -28,10 +28,10 @@
             <custom-label>Classes</custom-label>
             <ui-select multiple ng-model="dvm.values">
                 <ui-select-match placeholder="Select classes">
-                    <span title="{{dvm.ro.getItemIri($item)}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
+                    <span title="{{$item}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
                 </ui-select-match>
-                <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.util.getItemNamespace" repeat="{'@id': dvm.ro.getItemIri(value)} as value in dvm.array">
-                    <div title="{{dvm.ro.getItemIri(value)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(value) | highlight: $select.search | trusted"></div>
+                <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.array">
+                    <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getDropDownText(iri) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
         </div>
