@@ -23,9 +23,9 @@ package com.mobi.semantic.translator.stack;
  * #L%
  */
 
+import com.mobi.rdf.api.Model;
 import com.mobi.semantic.translator.SemanticTranslationException;
 import com.mobi.semantic.translator.ontology.ExtractedOntology;
-import com.mobi.rdf.api.Model;
 
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -38,7 +38,8 @@ public class ExampleStackingSemanticTranslator extends AbstractStackingSemanticT
     }
 
     @Override
-    public Model translate(InputStream dataStream, String entityIdentifier, ExtractedOntology managedOntology) throws SemanticTranslationException {
+    public Model translate(InputStream dataStream, String entityIdentifier, ExtractedOntology managedOntology)
+            throws SemanticTranslationException {
         throw new SemanticTranslationException("Not implemented in this test object");
     }
 }

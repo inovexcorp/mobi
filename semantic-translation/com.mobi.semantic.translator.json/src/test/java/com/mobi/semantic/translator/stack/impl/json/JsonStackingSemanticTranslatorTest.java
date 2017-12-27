@@ -78,8 +78,10 @@ public class JsonStackingSemanticTranslatorTest {
 
     private static final ExtractedOntologyFactory EXTRACTED_ONTOLOGY_FACTORY = new ExtractedOntologyFactory();
     private static final ExtractedClassFactory EXTRACTED_CLASS_FACTORY = new ExtractedClassFactory();
-    private static final ExtractedDatatypePropertyFactory EXTRACTED_DATATYPE_PROPERTY_FACTORY = new ExtractedDatatypePropertyFactory();
-    private static final ExtractedObjectPropertyFactory EXTRACTED_OBJECT_PROPERTY_FACTORY = new ExtractedObjectPropertyFactory();
+    private static final ExtractedDatatypePropertyFactory EXTRACTED_DATATYPE_PROPERTY_FACTORY =
+            new ExtractedDatatypePropertyFactory();
+    private static final ExtractedObjectPropertyFactory EXTRACTED_OBJECT_PROPERTY_FACTORY =
+            new ExtractedObjectPropertyFactory();
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -162,14 +164,17 @@ public class JsonStackingSemanticTranslatorTest {
         Assert.assertFalse(output.isEmpty());
 
 
-        Assert.assertEquals(8, EXTRACTED_DATATYPE_PROPERTY_FACTORY.getAllExisting(ontology.getModel()).size());
-        Assert.assertEquals(4, EXTRACTED_OBJECT_PROPERTY_FACTORY.getAllExisting(ontology.getModel()).size());
+        Assert.assertEquals(8,
+                EXTRACTED_DATATYPE_PROPERTY_FACTORY.getAllExisting(ontology.getModel()).size());
+        Assert.assertEquals(4,
+                EXTRACTED_OBJECT_PROPERTY_FACTORY.getAllExisting(ontology.getModel()).size());
     }
 
     @Test
     public void twoDimensionalArraysTest() throws Exception {
         //TODO - Work with 2D Arrays...
-        final Model output = this.extractor.translate(Paths.get("src/test/resources/test2dArrays.json"), this.ontology);
+        final Model output = this.extractor.translate(
+                Paths.get("src/test/resources/test2dArrays.json"), this.ontology);
         //this.ontology.getModel().forEach(System.out::println);
         //System.out.println("\n\n\n");
         //output.forEach(System.out::println);
