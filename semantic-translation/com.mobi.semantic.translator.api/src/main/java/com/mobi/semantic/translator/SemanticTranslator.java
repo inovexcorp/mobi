@@ -59,7 +59,8 @@ public interface SemanticTranslator {
      * @return The {@link Model} containing the data representing in the content represented by the managed ontology
      * @throws SemanticTranslationException If there is an issue translating the content
      */
-    Model translate(InputStream dataStream, String entityIdentifier, ExtractedOntology managedOntology) throws SemanticTranslationException;
+    Model translate(InputStream dataStream, String entityIdentifier, ExtractedOntology managedOntology)
+            throws SemanticTranslationException;
 
 
 }

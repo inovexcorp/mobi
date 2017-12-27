@@ -61,7 +61,8 @@ public class DefaultInstanceIriExpressionContext extends AbstractIriExpressionCo
     @Override
     public Optional<String> propertyValue(String predicate) {
         IRI predicateIri = valueFactory.createIRI(predicate);
-        return properties.containsKey(predicateIri) ? Optional.ofNullable(properties.getFirst(predicateIri).stringValue())
+        return properties.containsKey(predicateIri)
+                ? Optional.ofNullable(properties.getFirst(predicateIri).stringValue())
                 : Optional.empty();
     }
 

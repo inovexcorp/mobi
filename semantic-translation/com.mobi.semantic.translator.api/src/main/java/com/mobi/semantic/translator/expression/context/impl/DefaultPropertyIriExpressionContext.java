@@ -42,8 +42,8 @@ public class DefaultPropertyIriExpressionContext extends AbstractIriExpressionCo
 
     private final IRI range;
 
-    public DefaultPropertyIriExpressionContext(@NotNull ExtractedOntology ontology, @NotNull String name, @NotNull String comment,
-                                               @NotNull IRI domain, @NotNull IRI range) {
+    public DefaultPropertyIriExpressionContext(@NotNull ExtractedOntology ontology, @NotNull String name,
+                                               @NotNull String comment, @NotNull IRI domain, @NotNull IRI range) {
         super(ontology);
         this.name = name;
         this.comment = comment;

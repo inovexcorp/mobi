@@ -31,13 +31,15 @@ import javax.validation.constraints.NotNull;
 /**
  * The default implementation of the {@link ClassIriExpressionContext}.
  */
-public class DefaultClassIriExpressionContext extends AbstractIriExpressionContext implements ClassIriExpressionContext {
+public class DefaultClassIriExpressionContext extends AbstractIriExpressionContext
+        implements ClassIriExpressionContext {
 
     private final String name;
 
     private final String comment;
 
-    public DefaultClassIriExpressionContext(@NotNull ExtractedOntology ontology, @NotNull String name, @NotNull String comment) {
+    public DefaultClassIriExpressionContext(@NotNull ExtractedOntology ontology, @NotNull String name,
+                                            @NotNull String comment) {
         super(ontology);
         this.name = name;
         this.comment = comment;

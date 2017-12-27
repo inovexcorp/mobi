@@ -24,12 +24,11 @@ package com.mobi.semantic.translator.expression;
  */
 
 import aQute.bnd.annotation.component.Component;
-
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.semantic.translator.SemanticTranslationException;
-import com.mobi.semantic.translator.expression.context.IriExpressionContext;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.semantic.translator.SemanticTranslationException;
+import com.mobi.semantic.translator.expression.context.IriExpressionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.expression.Expression;
@@ -62,7 +61,8 @@ public class DefaultIriExpressionProcessor implements IriExpressionProcessor {
             LOG.debug("IRI expression resulted in '{}' with context of type {}", result, context.getClass().getName());
             return valueFactory.createIRI(result);
         } catch (SpelEvaluationException | SpelParseException | IllegalArgumentException e) {
-            throw new SemanticTranslationException("Issue processing IRI expression for expression '" + expression + "' with context of type: " + context.getClass().getName(), e);
+            throw new SemanticTranslationException("Issue processing IRI expression for expression '"
+                    + expression + "' with context of type: " + context.getClass().getName(), e);
         }
     }
 }

@@ -56,7 +56,8 @@ import java.util.stream.Collectors;
  *
  * @param <T> The type of {@link StackItem} your implementation will use.
  */
-public abstract class AbstractStackingSemanticTranslator<T extends StackItem> extends AbstractSemanticTranslator implements SemanticTranslator, StackingSemanticTranslator<T> {
+public abstract class AbstractStackingSemanticTranslator<T extends StackItem> extends AbstractSemanticTranslator
+        implements SemanticTranslator, StackingSemanticTranslator<T> {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractStackingSemanticTranslator.class);
 
@@ -103,7 +104,8 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
 
     @Override
     public String getCurrentLocation() {
-        return stack.stream().map(StackItem::getIdentifier).sequential().collect(Collectors.joining(delimiter, prefix, suffix));
+        return stack.stream().map(StackItem::getIdentifier).sequential()
+                .collect(Collectors.joining(delimiter, prefix, suffix));
     }
 
     @Override
@@ -116,24 +118,29 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
     }
 
     private <T extends Thing> OrmFactory<T> factory(Class<T> clazz) throws SemanticTranslationException {
-        return ormFactoryRegistry.getFactoryOfType(clazz).orElseThrow(() -> new SemanticTranslationException("ORM services not initialized correctly!"));
+        return ormFactoryRegistry.getFactoryOfType(clazz)
+                .orElseThrow(() -> new SemanticTranslationException("ORM services not initialized correctly!"));
     }
 
     protected ExtractedDatatypeProperty getOrCreateDatatypeProperty(ExtractedOntology managedOntology, IRI domain,
-                                                                    IRI range, String name, String address) throws SemanticTranslationException {
+                                                                    IRI range, String name, String address)
+            throws SemanticTranslationException {
         return getOrCreateProperty(ExtractedDatatypeProperty.class, managedOntology, domain, range, name, address);
     }
 
     protected ExtractedObjectProperty getOrCreateObjectProperty(ExtractedOntology managedOntology, IRI domain,
-                                                                IRI range, String name, String address) throws SemanticTranslationException {
+                                                                IRI range, String name, String address)
+            throws SemanticTranslationException {
         return getOrCreateProperty(ExtractedObjectProperty.class, managedOntology, domain, range, name, address);
     }
 
     private <T extends ExtractedProperty> T getOrCreateProperty(Class<T> type, ExtractedOntology managedOntology, IRI domain,
-                                                                IRI range, String name, String address) throws SemanticTranslationException {
+                                                                IRI range, String name, String address)
+            throws SemanticTranslationException {
         final OrmFactory<T> factory = factory(type);
         final String expression = managedOntology.getSpelPropertyUri().orElse(DEFAULT_PROPERTY_IRI_EXPRESSION);
-        final IRI iri = this.expressionProcessor.processExpression(expression, new DefaultPropertyIriExpressionContext(managedOntology, name, address, domain, range));
+        final IRI iri = this.expressionProcessor.processExpression(expression,
+                new DefaultPropertyIriExpressionContext(managedOntology, name, address, domain, range));
         final T prop = factory.getExisting(iri, managedOntology.getModel())
                 .orElseGet(() -> {
                     LOG.debug("Creating new data type property {}", iri);
@@ -174,7 +181,8 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
         );
         if (parentOpt.isPresent()) {
             T parent = parentOpt.get();
-            ExtractedObjectProperty objectProperty = getOrCreateObjectProperty(managedOntology, parent.getClassIri(), stackItem.getClassIri(), stackItem.getIdentifier(), getCurrentLocation());
+            ExtractedObjectProperty objectProperty = getOrCreateObjectProperty(managedOntology,
+                    parent.getClassIri(), stackItem.getClassIri(), stackItem.getIdentifier(), getCurrentLocation());
             parent.getProperties().add((IRI) objectProperty.getResource(), instance);
         }
         return instance;
@@ -184,12 +192,15 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
             throws SemanticTranslationException {
         final String expression = instanceClass.getSpelInstanceUri().orElse(DEFAULT_INSTANCE_IRI_EXPRESSION);
         return this.expressionProcessor.processExpression(expression,
-                new DefaultInstanceIriExpressionContext(managedOntology, instanceClass, stackItem.getProperties(), this.valueFactory));
+                new DefaultInstanceIriExpressionContext(managedOntology, instanceClass,
+                        stackItem.getProperties(), this.valueFactory));
     }
 
-    protected IRI generateClassIri(ExtractedOntology managedOntology, final String name, final String address) throws SemanticTranslationException {
+    protected IRI generateClassIri(final ExtractedOntology managedOntology, final String name, final String address)
+            throws SemanticTranslationException {
         final String expression = managedOntology.getSpelClassUri().orElse(DEFAULT_CLASS_IRI_EXPRESSION);
-        return this.expressionProcessor.processExpression(expression, new DefaultClassIriExpressionContext(managedOntology, name, address));
+        return this.expressionProcessor.processExpression(expression,
+                new DefaultClassIriExpressionContext(managedOntology, name, address));
     }
 
     protected Deque<T> getStack() {
