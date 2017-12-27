@@ -37,11 +37,11 @@
          * @ngdoc filter
          * @name splitIRI.filter:splitIRI
          * @kind function
-         * 
+         *
          * @description
          * Splits an IRI string based on the last valid delimiter (#, /, or :) it finds
-         * and returns the beginning, delimiter, and ending in a JSON object. The JSON 
-         * object looks like this: 
+         * and returns the beginning, delimiter, and ending in a JSON object. The JSON
+         * object looks like this:
          * ```
          * {
          *     begin: 'http://mobi.com/ontologies',

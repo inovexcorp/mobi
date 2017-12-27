@@ -27,9 +27,9 @@
         .module('annotationBlock', [])
         .directive('annotationBlock', annotationBlock);
 
-        annotationBlock.$inject = ['ontologyStateService', 'responseObj', 'ontologyUtilsManagerService'];
+        annotationBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
 
-        function annotationBlock(ontologyStateService, responseObj, ontologyUtilsManagerService) {
+        function annotationBlock(ontologyStateService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,9 +38,9 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
+                    dvm.annotations = _.keys(dvm.os.listItem.annotations.iris);
 
                     dvm.openAddOverlay = function() {
                         dvm.os.editingAnnotation = false;
@@ -57,12 +57,12 @@
                         dvm.showRemoveOverlay = true;
                     }
                     dvm.editClicked = function(annotation, index) {
-                        var annotationObj = dvm.os.listItem.selected[dvm.ro.getItemIri(annotation)][index];
+                        var annotationObj = dvm.os.listItem.selected[annotation][index];
                         dvm.os.editingAnnotation = true;
                         dvm.os.annotationSelect = annotation;
                         dvm.os.annotationValue = annotationObj['@value'];
                         dvm.os.annotationIndex = index;
-                        dvm.os.annotationType = _.find(dvm.os.listItem.dataPropertyRange, datatype => dvm.ro.getItemIri(datatype) === annotationObj['@type']);
+                        dvm.os.annotationType = _.get(annotationObj, '@type');
                         dvm.os.annotationLanguage = _.get(annotationObj, '@language');
                         dvm.os.showAnnotationOverlay = true;
                     }

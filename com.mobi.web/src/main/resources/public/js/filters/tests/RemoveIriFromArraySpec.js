@@ -21,24 +21,18 @@
  * #L%
  */
 describe('Remove IRI From Array filter', function() {
-    var $filter, responseObjSvc;
+    var $filter;
 
     beforeEach(function() {
-        module('responseObj');
         module('removeIriFromArray');
 
-        inject(function(_$filter_, _responseObj_) {
+        inject(function(_$filter_) {
             $filter = _$filter_;
-            responseObjSvc = _responseObj_;
-            spyOn(responseObjSvc, 'getItemIri').and.callFake(function(obj) {
-                return _.get(obj, 'iri', '');
-            });
         });
     });
 
     afterEach(function() {
         $filter = null;
-        responseObjSvc = null;
     });
 
     it('returns an array with the passed value if not an array and item is falsey', function() {
@@ -73,22 +67,22 @@ describe('Remove IRI From Array filter', function() {
         var result,
             tests = [
             {
-                arr: [{iri: 'test'}],
+                arr: ['test'],
                 item: 'test',
                 result: []
             },
             {
-                arr: [{iri: 'test'}],
+                arr: ['test'],
                 item: 'iri',
-                result: [{iri: 'test'}]
+                result: ['test']
             },
             {
-                arr: [{iri: 'test'}],
+                arr: ['test'],
                 item: [{'@id': 'test'}],
                 result: []
             },
             {
-                arr: [{iri: 'test'}, {iri: 'test1'}],
+                arr: ['test', 'test1'],
                 item: [{'@id': 'test'}, {'@id': 'test1'}],
                 result: []
             }

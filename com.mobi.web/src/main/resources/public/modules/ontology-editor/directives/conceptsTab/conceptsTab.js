@@ -27,9 +27,9 @@
         .module('conceptsTab', [])
         .directive('conceptsTab', conceptsTab);
 
-        conceptsTab.$inject = ['ontologyStateService', 'responseObj', 'prefixes'];
+        conceptsTab.$inject = ['ontologyStateService', 'propertyManagerService'];
 
-        function conceptsTab(ontologyStateService, responseObj, prefixes) {
+        function conceptsTab(ontologyStateService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,19 +38,11 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var pm = propertyManagerService;
                     dvm.os = ontologyStateService;
-                    var schemeRelationships = _.filter([{
-                        namespace: prefixes.skos,
-                        localName: 'topConceptOf',
-                        values: 'schemeList'
-                    },
-                    {
-                        namespace: prefixes.skos,
-                        localName: 'inScheme',
-                        values: 'schemeList'
-                    }], obj => _.includes(dvm.os.listItem.iriList, responseObj.getItemIri(obj)));
 
-                    dvm.relationshipList = _.concat(_.map(dvm.os.listItem.derivedSemanticRelations, obj => _.set(obj, 'values', 'conceptList')), schemeRelationships);
+                    var schemeRelationships = _.filter(pm.conceptSchemeRelationshipList, iri => _.includes(dvm.os.listItem.iriList, iri));
+                    dvm.relationshipList = _.concat(dvm.os.listItem.derivedSemanticRelations, schemeRelationships);
                 }
             }
         }

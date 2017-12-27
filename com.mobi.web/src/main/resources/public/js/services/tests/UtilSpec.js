@@ -215,16 +215,6 @@ describe('Util service', function() {
         utilSvc.setDctermsValue(entity, prop, value);
         expect(entity).toEqual(expected);
     });
-    describe('getItemNamespace returns', function() {
-        it('item.namespace value when present', function() {
-            var result = utilSvc.getItemNamespace({namespace: 'namespace'});
-            expect(result).toEqual('namespace');
-        });
-        it("'No namespace' when item.namespace is not present", function() {
-            var result = utilSvc.getItemNamespace({});
-            expect(result).toEqual('No namespace');
-        });
-    });
     describe('should get a dcterms property id value from an entity', function() {
         it('if it contains the property', function() {
             var prop = 'prop',
@@ -252,6 +242,11 @@ describe('Util service', function() {
     });
     it('should get the namespace of an iri', function() {
         var result = utilSvc.getIRINamespace('iri');
+        expect(splitIRIFilter).toHaveBeenCalledWith('iri');
+        expect(_.isString(result)).toBe(true);
+    });
+    it('should get the localname of an iri', function() {
+        var result = utilSvc.getIRILocalName('iri');
         expect(splitIRIFilter).toHaveBeenCalledWith('iri');
         expect(_.isString(result)).toBe(true);
     });

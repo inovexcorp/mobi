@@ -27,7 +27,6 @@
         /**
          * @ngdoc overview
          * @name inArray
-         * @requires responseObj
          *
          * @description
          * The `inArray` module only provides the `inArray` filter which filters an array by the
