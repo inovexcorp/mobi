@@ -1,21 +1,32 @@
 package com.mobi.rdf.orm.generate.plugin;
 
 
+import com.mobi.rdf.orm.generate.GraphReadingUtility;
+import com.mobi.rdf.orm.generate.ReferenceOntology;
+import com.mobi.rdf.orm.generate.SourceGenerator;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileSystemException;
+import org.apache.commons.vfs2.FileSystemManager;
+import org.apache.commons.vfs2.VFS;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import com.mobi.rdf.orm.generate.GraphReadingUtility;
-import com.mobi.rdf.orm.generate.ReferenceOntology;
-import com.mobi.rdf.orm.generate.SourceGenerator;
 import org.openrdf.model.Model;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.RDFParseException;
+import org.openrdf.rio.Rio;
+import org.openrdf.rio.UnsupportedRDFormatException;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /*-
  * #%L
@@ -49,6 +60,8 @@ import java.util.List;
 @Mojo(name = "generate-orm")
 public class OrmGenerationMojo extends AbstractMojo {
 
+    private FileSystemManager fileSystemManager;
+
     /**
      * List of ontologies to generate.
      */
@@ -72,55 +85,84 @@ public class OrmGenerationMojo extends AbstractMojo {
      */
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+        // Initialize fileSystemManager.
+        try {
+            fileSystemManager = VFS.getManager();
+        } catch (FileSystemException e) {
+            throw new MojoExecutionException("Issue initializing VFS system to fetch ontologies!", e);
+        }
+
         // Load the reference ontology data.
         final List<ReferenceOntology> referenceOntologies = gatherReferenceOntologies();
         // Generate each of the generation ontologies.
         for (final Ontology generate : generates) {
-            final File file = new File(generate.getOntologyFile());
-            // Check that the file exists!
-            if (file.isFile()) {
-                try {
-                    // Read the ontology file into our Model.
-                    final Model ontology = GraphReadingUtility.readOntology(file, generate.getOntologyFile());
-                    // If the destination package already exists, remove the previous version.
-                    FileUtils.deleteQuietly(new File(outputLocation + (outputLocation.endsWith(File.separator) ? "" : File.separator) + generate.getOutputPackage().replace('.', File.separatorChar)));
-                    // Generate the source in the targeted output package.
-                    SourceGenerator.toSource(ontology, generate.getOutputPackage(), generate.getOntologyName(), outputLocation, referenceOntologies);
-                } catch (Exception e) {
-                    // Catch an exception during source generation and throw MojoFailureException.
-                    throw new MojoFailureException(String.format("Issue generating source from ontology specified: {%s} {%s} {%s}",
-                            generate.getOntologyFile(), generate.getOutputPackage(), outputLocation), e);
+            try {
+                final FileObject fileObject = fileSystemManager.resolveFile(generate.getOntologyFile());
+                // Check that the file exists!
+                if (fileObject.isFile()) {
+                    try {
+                        // Read the ontology file into our Model.
+                        final Model ontology = readOntology(fileObject, generate.getOntologyFile());
+                        // If the destination package already exists, remove the previous version.
+                        FileUtils.deleteQuietly(new File(outputLocation + (outputLocation.endsWith(File.separator) ? "" : File.separator) + generate.getOutputPackage().replace('.', File.separatorChar)));
+                        // Generate the source in the targeted output package.
+                        SourceGenerator.toSource(ontology, generate.getOutputPackage(), generate.getOntologyName(), outputLocation, referenceOntologies);
+                    } catch (Exception e) {
+                        // Catch an exception during source generation and throw MojoFailureException.
+                        throw new MojoFailureException(String.format("Issue generating source from ontology specified: {%s} {%s} {%s}",
+                                generate.getOntologyFile(), generate.getOutputPackage(), outputLocation), e);
+                    }
+                } else {
+                    // Throw an exception if that ontology file doesn't exist
+                    String msg = "Issue generating source from ontology specified. No ontology found at specified location: "
+                            + generate.getOntologyFile();
+                    throw new MojoExecutionException(msg);
                 }
-            } else {
-                // Throw an exception if that ontology file doesn't exist
-                String msg = "Issue generating source from ontology specified. No ontology found at specified location: "
-                        + generate.getOntologyFile();
-                throw new MojoExecutionException(msg);
+            } catch (IOException e) {
+                throw new MojoExecutionException("Issue fetching configured ontology", e);
             }
         }
     }
 
+    private static Model readOntology(final FileObject fileObject, final String baseUri)
+            throws RDFParseException, RDFHandlerException, UnsupportedRDFormatException, IOException {
+        try (final InputStream is = fileObject.getContent().getInputStream()) {
+            final Optional<RDFFormat> format = Rio.getParserFormatForFileName(fileObject.getName().getBaseName());
+            if (format.isPresent()) {
+                return GraphReadingUtility.readOntology(format.get(), is, baseUri);
+            } else {
+                throw new IOException("Could not identify format of file containing ontology: " + fileObject.getName());
+            }
+        }
+    }
+
+    private Model readOntology(final String fileLocation, final String baseUri)
+            throws RDFParseException, RDFHandlerException, UnsupportedRDFormatException, IOException {
+        return readOntology(fileSystemManager.resolveFile(fileLocation), baseUri);
+    }
+
     /**
      * Gather the configured reference ontologies.
+     *
      * @return The {@link List} of {@link ReferenceOntology} objects representing your data
      * @throws MojoExecutionException If there is an issue reading one of the reference ontologies
      */
     private List<ReferenceOntology> gatherReferenceOntologies() throws MojoExecutionException {
-        final List<ReferenceOntology> referenceOntologies = new ArrayList<>(references != null ? references.size(): 0);
-        if(references != null) {
+        final List<ReferenceOntology> referenceOntologies = new ArrayList<>(references != null ? references.size() : 0);
+        if (references != null) {
             for (final Ontology ont : references) {
                 try {
-                    referenceOntologies.add(new ReferenceOntology(ont.getOutputPackage(), ont.getOntologyName(), GraphReadingUtility.readOntology(new File(ont.getOntologyFile()), "")));
-                }catch(IOException e){
+                    referenceOntologies.add(new ReferenceOntology(ont.getOutputPackage(), ont.getOntologyName(), readOntology(ont.getOntologyFile(), "")));
+                } catch (IOException e) {
                     throw new MojoExecutionException("Issue reading referenced ontology: " + ont.getOntologyFile(), e);
                 }
             }
         }
-        for(final ReferenceOntology ont : referenceOntologies){
+        for (final ReferenceOntology ont : referenceOntologies) {
             try {
                 ont.generateSource(referenceOntologies);
-            }catch(Exception e){
-                throw new MojoExecutionException("Issue generating referenced code model: "+e.getMessage(), e);
+            } catch (Exception e) {
+                throw new MojoExecutionException("Issue generating referenced code model: " + e.getMessage(), e);
             }
         }
         return referenceOntologies;
