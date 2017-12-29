@@ -1,4 +1,4 @@
-# Semantic Translation
+# Semantic Document Translation
 The purpose of the bundles in this suite of modules is to abstract away the
 extraction of "meaning" from semi-structured data.  Basically, an automated way
 to convert semi-structured data into RDF, without the need to pre-build an ontology

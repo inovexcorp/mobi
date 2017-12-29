@@ -34,11 +34,10 @@
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <modules>
-        <module>com.mobi.semantic.translator.api</module>
-        <module>com.mobi.semantic.translator.json</module>
+        <module>com.mobi.document.translator.api</module>
+        <module>com.mobi.document.translator.json</module>
     </modules>
 
-    <artifactId>semantic-translation</artifactId>
-
+    <artifactId>document-translation</artifactId>
 
 </project>
