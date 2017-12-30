@@ -164,7 +164,7 @@ public class RDFImportServiceImpl implements RDFImportService {
             parserConfig.addNonFatalError(BasicParserSettings.NORMALIZE_DATATYPE_VALUES);
         }
         parser.setParserConfig(parserConfig);
-        BatchInserter inserter = new BatchInserter(conn, transformer);
+        BatchInserter inserter = new BatchInserter(conn, transformer, config.getBatchSize());
         if (config.getLogOutput()) {
             inserter.setLogger(LOGGER);
         }
