@@ -47,7 +47,7 @@ describe('Top Concept Overlay directive', function() {
         ontologyStateSvc.listItem.selected[prefixes.skos + 'hasTopConcept'] = [{'@id': 'concept2'}];
         scope.onSubmit = jasmine.createSpy('onSubmit');
         scope.closeOverlay = jasmine.createSpy('closeOverlay');
-        this.element = $compile(angular.element('<top-concept-overlay on-submit="onSubmit()" close-overlay="closeOverlay()"></top-concept-overlay>'))(scope);
+        this.element = $compile(angular.element('<top-concept-overlay on-submit="onSubmit(relationship, values)" close-overlay="closeOverlay()"></top-concept-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('topConceptOverlay');
     });
@@ -62,8 +62,8 @@ describe('Top Concept Overlay directive', function() {
         this.element.remove();
     });
 
-    it('initializes with the correct values', function() {
-        expect(this.controller.conceptIRIs).toEqual(['concept1']);
+    it('should initialize with the correct value for filteredConcepts', function() {
+        expect(this.controller.filteredConcepts).toEqual(['concept1']);
         expect(ontologyManagerSvc.getConceptIRIs).toHaveBeenCalledWith(jasmine.any(Array), ontologyStateSvc.listItem.derivedConcepts);
     });
     describe('controller bound variables', function() {
@@ -118,19 +118,25 @@ describe('Top Concept Overlay directive', function() {
     });
     describe('controller methods', function() {
         it('should add a top concept', function() {
-            ontologyStateSvc.listItem.selected = {'@id': 'selected'};
             this.controller.values = [{}];
             this.controller.addTopConcept();
-            expect(ontologyStateSvc.listItem.selected[prefixes.skos + 'hasTopConcept']).toEqual(this.controller.values);
+            expect(ontologyStateSvc.listItem.selected[prefixes.skos + 'hasTopConcept']).toEqual([{'@id': 'concept2'}, {}]);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
             expect(scope.closeOverlay).toHaveBeenCalled();
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+            expect(scope.onSubmit).toHaveBeenCalledWith(prefixes.skos + 'hasTopConcept', this.controller.values);
+        });
+        it('should get filtered concepts', function() {
+            ontoUtils.getSelectList.and.returnValue(['list']);
+            this.controller.getConcepts('search');
+            expect(this.controller.filteredConcepts).toEqual(['list']);
+            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['concept1'], 'search');
         });
         it('should set the list of concepts', function() {
             ontoUtils.getSelectList.and.returnValue(['concept']);
             this.controller.getConcepts('search');
-            expect(this.controller.concepts).toEqual(['concept']);
-            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(this.controller.conceptIRIs, 'search');
+            expect(this.controller.filteredConcepts).toEqual(['concept']);
+            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['concept1'], 'search');
         });
     });
 });

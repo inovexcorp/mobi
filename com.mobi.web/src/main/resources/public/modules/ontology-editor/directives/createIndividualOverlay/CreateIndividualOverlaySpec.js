@@ -21,27 +21,23 @@
  * #L%
  */
 describe('Create Individual Overlay directive', function() {
-    var $compile, scope, ontologyStateSvc, resObj, prefixes, splitIRI, ontoUtils;
+    var $compile, scope, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
         module('createIndividualOverlay');
-        injectCamelCaseFilter();
-        injectSplitIRIFilter();
-        injectTrustedFilter();
-        injectHighlightFilter();
         mockOntologyState();
-        mockResponseObj();
         mockPrefixes();
         mockOntologyUtilsManager();
+        injectCamelCaseFilter();
+        injectTrustedFilter();
+        injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_, _splitIRIFilter_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
-            resObj = _responseObj_;
-            splitIRIFilter = _splitIRIFilter_;
             ontoUtils = _ontologyUtilsManagerService_;
         });
 
@@ -56,9 +52,7 @@ describe('Create Individual Overlay directive', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        resObj = null;
         prefixes = null;
-        splitIRI = null;
         ontoUtils = null;
         this.element.remove();
     });
@@ -152,36 +146,24 @@ describe('Create Individual Overlay directive', function() {
             expect(this.controller.individual['@id']).toBe('begin' + 'then' + 'end');
             expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
-        describe('should get an ontology IRI', function() {
-            it('if the item has an id set', function() {
-                expect(this.controller.getItemOntologyIri({ontologyId: 'ontology'})).toBe('ontology');
+        describe('should get an class\'s ontology IRI', function() {
+            beforeEach(function() {
+                ontologyStateSvc.listItem.classes.iris = {classA: 'ontology'};
             });
-            it('if the item does not have an id set', function() {
-                expect(this.controller.getItemOntologyIri({})).toBe(ontologyStateSvc.listItem.ontologyId);
+            it('if it is set', function() {
+                expect(this.controller.getClassOntologyIri('classA')).toBe('ontology');
+            });
+            it('if it is not set', function() {
+                expect(this.controller.getClassOntologyIri('classB')).toBe(ontologyStateSvc.listItem.ontologyId);
             });
         });
         describe('should create an individual', function() {
             beforeEach(function() {
-                this.split = {begin: 'begin', then: 'then', end: 'end'};
                 ontologyStateSvc.listItem = {
-                    ontologyRecord: {},
-                    ontology: [{}],
-                    individuals: { iris: [] },
-                    classesWithIndividuals: [],
-                    individualsParentPath: [],
-                    classesAndIndividuals: {},
-                    classes: {
-                        hierarchy: [],
-                        index: {}
-                    },
-                    concepts: {
-                        hierarchy: [],
-                        flat: []
-                    }
+                    ontologyRecord: {recordId: 'recordId'}
                 };
                 ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
                 ontologyStateSvc.getPathsTo.and.returnValue([['ClassA']]);
-                splitIRIFilter.and.returnValue(this.split);
                 this.controller.individual = {'@id': 'id', '@type': ['ClassA']};
                 ontologyStateSvc.flattenHierarchy.and.returnValue(['ClassA']);
             });

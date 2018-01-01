@@ -51,6 +51,8 @@
         <bundle start-level="80">mvn:commons-lang/commons-lang/${commons-lang.version}</bundle>
         <bundle start-level="80">mvn:commons-beanutils/commons-beanutils/${commons-beanutils.version}</bundle>
         <bundle start-level="80">mvn:commons-collections/commons-collections/${commons-collections.version}</bundle>
+        <bundle start-level="80">mvn:commons-validator/commons-validator/${commons-validator.version}</bundle>
+        <bundle start-level="80">mvn:commons-digester/commons-digester/1.8.1</bundle>
         <bundle start-level="80">mvn:org.openrdf.sesame/sesame-runtime-osgi/${openrdf.version}</bundle>
 
         <!-- ETL Dependencies -->
