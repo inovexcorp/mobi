@@ -88,7 +88,6 @@
         <dependency>
             <groupId>com.inovexcorp.mobi</groupId>
             <artifactId>jsonld-java</artifactId>
-            <!--<version>0.7.0</version>-->
             <version>0.8.3</version>
         </dependency>
         <dependency>
@@ -99,7 +98,7 @@
 
         <!-- Owlapi dependencies -->
         <dependency>
-            <groupId>net.sourceforge.owlapi</groupId>
+            <groupId>com.inovexcorp.mobi</groupId>
             <artifactId>owlapi-distribution</artifactId>
             <exclusions>
                 <exclusion>
