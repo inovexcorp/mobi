@@ -6,27 +6,34 @@ select ?parent ?child
 where {
     ?parent rdf:type/rdfs:subClassOf* skos:Concept .
     optional {
-        ?child skos:broaderTransitive ?parent ;
+        {
+            ?child skos:broaderTransitive ?parent ;
                rdf:type/rdfs:subClassOf* skos:Concept .
-    }
-    optional {
-        ?child skos:broader ?parent ;
+        }
+    	UNION
+        {
+            ?child skos:broader ?parent ;
                rdf:type/rdfs:subClassOf* skos:Concept .
-    }
-    optional {
-        ?child skos:broadMatch ?parent ;
+        }
+        UNION
+        {
+            ?child skos:broadMatch ?parent ;
                rdf:type/rdfs:subClassOf* skos:Concept .
-    }
-    optional {
-        ?child ^skos:narrowerTransitive ?parent ;
+        }
+    	UNION
+        {
+            ?child ^skos:narrowerTransitive ?parent ;
                rdf:type/rdfs:subClassOf* skos:Concept .
-    }
-    optional {
-        ?child ^skos:narrower ?parent ;
+        }
+        UNION
+        {
+            ?child ^skos:narrower ?parent ;
                rdf:type/rdfs:subClassOf* skos:Concept .
-    }
-    optional {
-        ?child ^skos:narrowMatch ?parent ;
+        }
+        UNION
+        {
+            ?child ^skos:narrowMatch ?parent ;
                rdf:type/rdfs:subClassOf* skos:Concept .
+        }
     }
 }

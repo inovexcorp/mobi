@@ -102,7 +102,7 @@
                 }
                 function setUsername(iri) {
                     if (iri) {
-                        um.getUsername(iri).then(username => dvm.username = username, util.createErrorToast);
+                        dvm.username = _.get(_.find(um.users, {iri}), 'username', '(None)');
                     } else {
                         dvm.username = '(None)';
                     }
