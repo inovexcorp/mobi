@@ -28,7 +28,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>mobi-parent</artifactId>
-    <version>1.11.15</version>
+    <version>1.11.16-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
