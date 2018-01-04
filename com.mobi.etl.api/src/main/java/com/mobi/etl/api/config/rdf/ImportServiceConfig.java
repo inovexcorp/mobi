@@ -33,6 +33,7 @@ public class ImportServiceConfig {
     private boolean logOutput = false;
     private boolean printOutput = false;
     private RDFFormat format;
+    private long batchSize = 10000;
 
     protected ImportServiceConfig(Builder builder) {
         this.repository = builder.repository;
@@ -41,6 +42,7 @@ public class ImportServiceConfig {
         this.logOutput = builder.logOutput;
         this.printOutput = builder.printOutput;
         this.format = builder.format;
+        this.batchSize = builder.batchSize;
     }
 
     public Resource getDataset() {
@@ -67,6 +69,10 @@ public class ImportServiceConfig {
         return format;
     }
 
+    public long getBatchSize() {
+        return batchSize;
+    }
+
     public static class Builder {
         private String repository;
         private Resource dataset;
@@ -74,6 +80,7 @@ public class ImportServiceConfig {
         private boolean logOutput = false;
         private boolean printOutput = false;
         private RDFFormat format;
+        private long batchSize = 10000;
 
         public Builder() {}
 
@@ -141,6 +148,17 @@ public class ImportServiceConfig {
          */
         public Builder format(RDFFormat format) {
             this.format = format;
+            return this;
+        }
+
+        /**
+         * The triple transaction size used for importing data.
+         *
+         * @param batchSize The triple transaction size used for importing data
+         * @return The Builder
+         */
+        public Builder batchSize(long batchSize) {
+            this.batchSize = batchSize;
             return this;
         }
 
