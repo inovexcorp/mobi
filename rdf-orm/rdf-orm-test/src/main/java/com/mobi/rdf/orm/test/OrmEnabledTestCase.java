@@ -156,10 +156,10 @@ public abstract class OrmEnabledTestCase {
      */
     public static void injectOrmFactoryReferencesIntoService(Object serviceObject) {
         Class<?> serviceClazz = serviceObject.getClass();
+        // Stream over every method in the service class.
         Arrays.stream(serviceClazz.getDeclaredMethods())
                 // Determine if an ORM Factory reference.
                 .filter(OrmEnabledTestCase::determineIfOrmFactoryReference)
-
                 // For each ORM factory reference.
                 .forEach(method -> injectApplicableOrmFactory(method, serviceObject, serviceClazz));
 
