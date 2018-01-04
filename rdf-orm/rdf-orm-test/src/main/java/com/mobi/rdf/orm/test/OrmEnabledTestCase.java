@@ -172,9 +172,12 @@ public abstract class OrmEnabledTestCase {
                 .findFirst().orElseThrow(() -> new OrmTestCaseException("Missing factory for injection into " +
                         "specified service!  Requires type '" + method.getParameterTypes()[0].getName() + "'"));
         try {
+            // Make sure the method can be accessed reflectively.
             method.setAccessible(true);
+            // Invoke the method with our target OrmFactory.
             method.invoke(serviceObject, targetFactory);
         } catch (Exception e) {
+            // If an exception occurs, throw our OrmTestCaseException to halt the test.
             throw new OrmTestCaseException("Issue injecting factory '" + targetFactory.getClass().getName()
                     + "' into service '" + serviceClazz.getName()
                     + "' using method '" + method.getName() + "'", e);
