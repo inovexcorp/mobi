@@ -28,10 +28,19 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.impl.ThingFactory;
 
-public class FakeService {
+/**
+ * This is an example of a service that will have a {@link ThingFactory} reference we can test the auto-injection
+ * with.
+ */
+class FakeService {
 
     private OrmFactory<Thing> thingOrmFactory;
 
+    /**
+     * Reference method we should find to inject our {@link ThingFactory} into.
+     *
+     * @param factory Our target {@link OrmFactory}
+     */
     @Reference
     void setFactory(ThingFactory factory) {
         this.thingOrmFactory = factory;

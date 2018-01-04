@@ -40,7 +40,11 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
-public class FakeThing implements Thing, OrmFactory<FakeThing> {
+/**
+ * This is a test domain object that will provide both a {@link Thing} and {@link OrmFactory} implementation
+ * for itself.  This generally will not ever happen, but it is useful here just for testing purposes...
+ */
+class FakeThing implements Thing, OrmFactory<FakeThing> {
 
     //Factory stuff.
 

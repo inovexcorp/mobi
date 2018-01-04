@@ -25,10 +25,18 @@ package com.mobi.rdf.orm.test;
 
 import jdk.nashorn.internal.ir.annotations.Reference;
 
-public class BadService {
+/**
+ * This is simply an example of a service that we'll use in our test case that will <b>not</b>
+ * have a OrmFactory registered for it.
+ */
+class BadService {
 
     private FakeThing factory;
 
+    /**
+     * The bad reference...
+     * @param thing A type of thing we don't have a factory for in our conf files
+     */
     @Reference
     public void setFakeThing(FakeThing thing) {
         this.factory = thing;
