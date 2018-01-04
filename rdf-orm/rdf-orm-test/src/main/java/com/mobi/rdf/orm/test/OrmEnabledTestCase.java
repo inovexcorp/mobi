@@ -30,6 +30,7 @@ import com.mobi.rdf.core.impl.sesame.ValueFactoryService;
 import com.mobi.rdf.orm.AbstractOrmFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
+import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConverter;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
@@ -46,9 +47,11 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -101,8 +104,49 @@ public abstract class OrmEnabledTestCase {
         return VALUE_FACTORY;
     }
 
+    public static ModelFactory getModelFactory() {
+        return MODEL_FACTORY;
+    }
+
     public static ValueConverterRegistry getValueConverterRegistry() {
         return VALUE_CONVERTER_REGISTRY;
+    }
+
+    public static <T extends Thing> OrmFactory<T> getRequiredOrmFactory(Class<T> thingType) {
+        return ORM_FACTORY_REGISTRY.getFactoryOfType(thingType)
+                // Or else throw a runtime exception.
+                .orElseThrow(() -> new RuntimeException("Missing required ORM Factory for thing " + thingType.getName()));
+    }
+
+    public static <T extends Thing, F> F getRequiredOrmFactoryAs(Class<T> thingType, Class<F> factoryType) {
+        return factoryType.cast(getRequiredOrmFactory(thingType));
+    }
+
+    public static void injectOrmFactoryReferencesIntoService(Object serviceObject) {
+        Class<?> serviceClazz = serviceObject.getClass();
+        Arrays.stream(serviceClazz.getDeclaredMethods()).filter(method -> {
+            boolean includeMethod = false;
+            if (method.getReturnType() == void.class && method.getParameters().length == 1) {
+                if (OrmFactory.class.isAssignableFrom(method.getParameterTypes()[0])) {
+                    includeMethod = true;
+                }
+            }
+            return includeMethod;
+        }).forEach(method -> {
+            // Find the matching ORM Factory.
+            Optional<OrmFactory<?>> opt = ORM_FACTORIES.stream()
+                    .filter(factory -> method.getParameterTypes()[0].isAssignableFrom(factory.getClass()))
+                    .findFirst();
+            opt.ifPresent(factory -> {
+                try {
+                    method.invoke(serviceObject, factory);
+                } catch (Exception e) {
+                    throw new RuntimeException("Issue injecting factory '" + factory.getClass().getName()
+                            + "' into service '" + serviceClazz.getName()
+                            + "' using method '" + method.getName() + "'");
+                }
+            });
+        });
     }
 
     @SuppressWarnings("unchecked")

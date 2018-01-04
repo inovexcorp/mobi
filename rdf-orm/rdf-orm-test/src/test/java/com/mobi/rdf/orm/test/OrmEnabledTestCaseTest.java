@@ -79,6 +79,14 @@ public class OrmEnabledTestCaseTest extends OrmEnabledTestCase {
         assertEquals(1, OrmEnabledTestCaseTest.ORM_FACTORIES.size());
     }
 
+    @Test
+    public void testInjectIntoService() {
+        FakeService service = new FakeService();
+        OrmEnabledTestCase.injectOrmFactoryReferencesIntoService(service);
+        assertTrue(service.getThingOrmFactory() != null);
+        assertEquals(OrmEnabledTestCase.getRequiredOrmFactory(Thing.class), service.getThingOrmFactory());
+    }
+
     @SuppressWarnings("unchecked")
     private <T> T getReference(Field f, AbstractOrmFactory factory, Class<T> type) throws Exception {
         f.setAccessible(true);
