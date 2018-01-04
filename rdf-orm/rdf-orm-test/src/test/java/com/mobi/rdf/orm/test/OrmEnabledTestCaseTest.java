@@ -46,7 +46,7 @@ import java.lang.reflect.Field;
 public class OrmEnabledTestCaseTest extends OrmEnabledTestCase {
 
     @Test
-    public void testAccessors(){
+    public void testAccessors() {
         assertNotNull(OrmEnabledTestCase.getModelFactory());
         assertNotNull(OrmEnabledTestCase.getValueConverterRegistry());
         assertNotNull(OrmEnabledTestCase.getValueFactory());
