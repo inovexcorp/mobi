@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
@@ -80,11 +81,42 @@ public class OrmEnabledTestCaseTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testGetRequiredFactory() {
+        OrmFactory<Thing> thingOrmFactory = OrmEnabledTestCase.getRequiredOrmFactory(Thing.class);
+        assertNotNull(thingOrmFactory);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testMissingGetRequiredFactory() {
+        OrmEnabledTestCase.getRequiredOrmFactory(FakeThing.class);
+        fail("Should have thrown an exception since FakeThing isn't in our configured factories");
+    }
+
+    @Test
+    public void testGetRequiredFactoryAs() {
+        ThingFactory factory = OrmEnabledTestCase.getRequiredOrmFactoryAs(Thing.class, ThingFactory.class);
+        assertNotNull(factory);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testMissingGetRequiredFactoryAs() {
+        OrmEnabledTestCase.getRequiredOrmFactoryAs(FakeThing.class, FakeThing.class);
+        fail("FakeThing factory isn't in the configured stack... Should have thrown an exception");
+    }
+
+    @Test
     public void testInjectIntoService() {
         FakeService service = new FakeService();
         OrmEnabledTestCase.injectOrmFactoryReferencesIntoService(service);
         assertTrue(service.getThingOrmFactory() != null);
         assertEquals(OrmEnabledTestCase.getRequiredOrmFactory(Thing.class), service.getThingOrmFactory());
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testMissingInjectIntoService() {
+        BadService service = new BadService();
+        OrmEnabledTestCase.injectOrmFactoryReferencesIntoService(service);
+        fail("Expecting an error injecting a missing factory into the bad service");
     }
 
     @SuppressWarnings("unchecked")

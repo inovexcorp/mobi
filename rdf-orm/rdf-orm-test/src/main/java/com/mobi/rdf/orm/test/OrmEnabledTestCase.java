@@ -146,6 +146,10 @@ public abstract class OrmEnabledTestCase {
                             + "' using method '" + method.getName() + "'");
                 }
             });
+            if (!opt.isPresent()) {
+                throw new RuntimeException("Missing factory for injection into specified service!  Requires" +
+                        "type '" + method.getParameterTypes()[0].getName() + "'");
+            }
         });
     }
 
