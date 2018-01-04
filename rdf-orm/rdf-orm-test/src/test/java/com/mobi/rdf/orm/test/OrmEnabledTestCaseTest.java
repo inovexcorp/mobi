@@ -46,6 +46,14 @@ import java.lang.reflect.Field;
 public class OrmEnabledTestCaseTest extends OrmEnabledTestCase {
 
     @Test
+    public void testAccessors(){
+        assertNotNull(OrmEnabledTestCase.getModelFactory());
+        assertNotNull(OrmEnabledTestCase.getValueConverterRegistry());
+        assertNotNull(OrmEnabledTestCase.getValueFactory());
+        assertNotNull(OrmEnabledTestCase.getOrmFactoryRegistry());
+    }
+
+    @Test
     public void exampleSubTest() throws Exception {
         OrmFactory<Thing> thingOrmFactory = getOrmFactoryRegistry().getFactoryOfType(Thing.class)
                 .orElseThrow(() -> new Exception("No Thing Factory Configured"));
