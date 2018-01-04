@@ -214,11 +214,13 @@ public abstract class OrmEnabledTestCase {
     }
 
     private static void initOrmFactory(OrmFactory<?> factory) {
+        // If the given factory is an AbstractOrmFactory, we know how to initialize it.
         if (AbstractOrmFactory.class.isAssignableFrom(factory.getClass())) {
             ((AbstractOrmFactory) factory).setModelFactory(MODEL_FACTORY);
             ((AbstractOrmFactory) factory).setValueConverterRegistry(VALUE_CONVERTER_REGISTRY);
             ((AbstractOrmFactory) factory).setValueFactory(VALUE_FACTORY);
         } else {
+            // Otherwise, it won't work in this framework.
             throw new OrmTestCaseException("OrmFactory '" + factory.getClass().getName() +
                     "' isn't an AbstractOrmFactory, so it can't be initialized by an ormFactories.conf file");
         }
