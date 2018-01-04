@@ -1466,9 +1466,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 })
                 .reduce(false, (iri1, iri2) -> iri1 || iri2);
         return isHeadCommit || isParent;
-        /*return Stream.of(headCommitIRI, baseCommitIRI, auxiliaryCommitIRI)
-                .map(iri -> conn.contains(null, iri, commitId))
-                .reduce(false, (iri1, iri2) -> iri1 || iri2);*/
     }
 
     /**

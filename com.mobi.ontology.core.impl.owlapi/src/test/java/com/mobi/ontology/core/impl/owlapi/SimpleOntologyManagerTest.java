@@ -81,6 +81,7 @@ import com.mobi.repository.impl.core.SimpleRepositoryManager;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -857,26 +858,27 @@ public class SimpleOntologyManagerTest {
     }
 
     private void verifyGetConceptRelationships(TupleQueryResult result) {
-        Set<String> parents = Stream.of("https://mobi.com/vocabulary#Concept1",
+        Map<String, Boolean> parentMap = new HashMap<>();
+        Stream.of("https://mobi.com/vocabulary#Concept1",
                 "https://mobi.com/vocabulary#Concept2","https://mobi.com/vocabulary#Concept3",
-                "https://mobi.com/vocabulary#Concept4")
-                .collect(Collectors.toSet());
-        Map<String, String> children = new HashMap<>();
-        children.put("https://mobi.com/vocabulary#Concept1", "https://mobi.com/vocabulary#Concept2");
+                "https://mobi.com/vocabulary#Concept4").forEach(parent -> parentMap.put(parent, false));
+        Map<String, Set<String>> children = new HashMap<>();
+        children.put("https://mobi.com/vocabulary#Concept1", Stream.of("https://mobi.com/vocabulary#Concept2", "https://mobi.com/vocabulary#Concept3").collect(Collectors.toSet()));
 
         assertTrue(result.hasNext());
         result.forEach(b -> {
             String parent = Bindings.requiredResource(b, "parent").stringValue();
-            assertTrue(parents.contains(parent));
-            parents.remove(parent);
+            assertTrue(parentMap.keySet().contains(parent));
+            parentMap.put(parent, true);
             Optional<Binding> child = b.getBinding("child");
             if (child.isPresent()) {
-                assertEquals(children.get(parent), child.get().getValue().stringValue());
-                children.remove(parent);
+                String childStr = child.get().getValue().stringValue();
+                assertTrue(children.get(parent).contains(childStr));
+                children.get(parent).remove(childStr);
             }
         });
-        assertEquals(0, parents.size());
-        assertEquals(0, children.size());
+        parentMap.values().forEach(Assert::assertTrue);
+        children.values().forEach(set -> assertEquals(0, set.size()));
     }
 
     @Test
