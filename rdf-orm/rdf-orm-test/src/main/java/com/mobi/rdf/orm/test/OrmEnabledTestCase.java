@@ -51,7 +51,6 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -134,23 +133,19 @@ public abstract class OrmEnabledTestCase {
             return includeMethod;
         }).forEach(method -> {
             // Find the matching ORM Factory.
-            Optional<OrmFactory<?>> opt = ORM_FACTORIES.stream()
+            OrmFactory<?> targetFactory = ORM_FACTORIES.stream()
                     .filter(factory -> method.getParameterTypes()[0].isAssignableFrom(factory.getClass()))
-                    .findFirst();
-            opt.ifPresent(factory -> {
-                try {
-                    method.invoke(serviceObject, factory);
-                } catch (Exception e) {
-                    throw new RuntimeException("Issue injecting factory '" + factory.getClass().getName()
-                            + "' into service '" + serviceClazz.getName()
-                            + "' using method '" + method.getName() + "'");
-                }
-            });
-            if (!opt.isPresent()) {
-                throw new RuntimeException("Missing factory for injection into specified service!  Requires" +
-                        "type '" + method.getParameterTypes()[0].getName() + "'");
+                    .findFirst().orElseThrow(() -> new RuntimeException("Missing factory for injection into " +
+                            "specified service!  Requires type '" + method.getParameterTypes()[0].getName() + "'"));
+            try {
+                method.invoke(serviceObject, targetFactory);
+            } catch (Exception e) {
+                throw new RuntimeException("Issue injecting factory '" + targetFactory.getClass().getName()
+                        + "' into service '" + serviceClazz.getName()
+                        + "' using method '" + method.getName() + "'");
             }
         });
+
     }
 
     @SuppressWarnings("unchecked")
