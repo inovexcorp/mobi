@@ -142,7 +142,7 @@ public abstract class OrmEnabledTestCase {
             } catch (Exception e) {
                 throw new RuntimeException("Issue injecting factory '" + targetFactory.getClass().getName()
                         + "' into service '" + serviceClazz.getName()
-                        + "' using method '" + method.getName() + "'");
+                        + "' using method '" + method.getName() + "'", e);
             }
         });
 
