@@ -95,57 +95,86 @@ public abstract class OrmEnabledTestCase {
                 .forEach(OrmEnabledTestCase::registerOrmFactory);
     }
 
+    /**
+     * @return An {@link OrmFactoryRegistry}
+     */
     public static OrmFactoryRegistry getOrmFactoryRegistry() {
         return ORM_FACTORY_REGISTRY;
     }
 
+    /**
+     * @return A {@link ValueFactory}
+     */
     public static ValueFactory getValueFactory() {
         return VALUE_FACTORY;
     }
 
+    /**
+     * @return A {@link ModelFactory}
+     */
     public static ModelFactory getModelFactory() {
         return MODEL_FACTORY;
     }
 
+    /**
+     * @return A {@link ValueConverterRegistry}
+     */
     public static ValueConverterRegistry getValueConverterRegistry() {
         return VALUE_CONVERTER_REGISTRY;
     }
 
+    /**
+     * Get a required {@link OrmFactory} that works with your type of {@link Thing}.
+     *
+     * @param thingType The class of the type of {@link Thing} you need an {@link OrmFactory} for
+     * @param <T>       The type of {@link Thing} the factory should work with
+     * @return The {@link OrmFactory} for your {@link Thing}
+     */
     public static <T extends Thing> OrmFactory<T> getRequiredOrmFactory(Class<T> thingType) {
         return ORM_FACTORY_REGISTRY.getFactoryOfType(thingType)
                 // Or else throw a runtime exception.
                 .orElseThrow(() -> new RuntimeException("Missing required ORM Factory for thing " + thingType.getName()));
     }
 
+    /**
+     * Get a required {@link OrmFactory} as a different type -- Think the implementation class.
+     *
+     * @param thingType   The type of {@link Thing} the factory creates
+     * @param factoryType The implementation class of the factory (or a different class you want to cast it to)
+     * @param <T>         The type of thing
+     * @param <F>         The factory class
+     * @return The {@link OrmFactory} of your type, casted to the factoryType
+     */
     public static <T extends Thing, F> F getRequiredOrmFactoryAs(Class<T> thingType, Class<F> factoryType) {
         return factoryType.cast(getRequiredOrmFactory(thingType));
     }
 
+    /**
+     * Inject the {@link OrmFactory}s that a particular service instance requires into it.
+     *
+     * @param serviceObject The instance of a service you are testing
+     */
     public static void injectOrmFactoryReferencesIntoService(Object serviceObject) {
         Class<?> serviceClazz = serviceObject.getClass();
-        Arrays.stream(serviceClazz.getDeclaredMethods()).filter(method -> {
-            boolean includeMethod = false;
-            if (method.getReturnType() == void.class && method.getParameters().length == 1) {
-                if (OrmFactory.class.isAssignableFrom(method.getParameterTypes()[0])) {
-                    includeMethod = true;
-                }
-            }
-            return includeMethod;
-        }).forEach(method -> {
-            // Find the matching ORM Factory.
-            OrmFactory<?> targetFactory = ORM_FACTORIES.stream()
-                    .filter(factory -> method.getParameterTypes()[0].isAssignableFrom(factory.getClass()))
-                    .findFirst().orElseThrow(() -> new RuntimeException("Missing factory for injection into " +
-                            "specified service!  Requires type '" + method.getParameterTypes()[0].getName() + "'"));
-            try {
-                method.setAccessible(true);
-                method.invoke(serviceObject, targetFactory);
-            } catch (Exception e) {
-                throw new RuntimeException("Issue injecting factory '" + targetFactory.getClass().getName()
-                        + "' into service '" + serviceClazz.getName()
-                        + "' using method '" + method.getName() + "'", e);
-            }
-        });
+        Arrays.stream(serviceClazz.getDeclaredMethods())
+                // Determine if an ORM Factory reference.
+                .filter(OrmEnabledTestCase::determineIfOrmFactoryReference)
+                // For each ORM factory reference.
+                .forEach(method -> {
+                    // Find the matching ORM Factory.
+                    OrmFactory<?> targetFactory = ORM_FACTORIES.stream()
+                            .filter(factory -> method.getParameterTypes()[0].isAssignableFrom(factory.getClass()))
+                            .findFirst().orElseThrow(() -> new RuntimeException("Missing factory for injection into " +
+                                    "specified service!  Requires type '" + method.getParameterTypes()[0].getName() + "'"));
+                    try {
+                        method.setAccessible(true);
+                        method.invoke(serviceObject, targetFactory);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Issue injecting factory '" + targetFactory.getClass().getName()
+                                + "' into service '" + serviceClazz.getName()
+                                + "' using method '" + method.getName() + "'", e);
+                    }
+                });
 
     }
 
@@ -216,6 +245,18 @@ public abstract class OrmEnabledTestCase {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static boolean determineIfOrmFactoryReference(final Method method) {
+        boolean includeMethod = false;
+        // Return type is void, one parameter, and OrmFactory is assignable from the parameter type.
+        if (method.getReturnType() == void.class
+                && method.getParameters().length == 1
+                && OrmFactory.class.isAssignableFrom(method.getParameterTypes()[0])) {
+            // Include the method in the injection analysis process.
+            includeMethod = true;
+        }
+        return includeMethod;
     }
 
     private static String tab(String in) {
