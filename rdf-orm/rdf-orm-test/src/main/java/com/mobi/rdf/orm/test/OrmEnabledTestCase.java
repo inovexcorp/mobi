@@ -133,7 +133,7 @@ public abstract class OrmEnabledTestCase {
     public static <T extends Thing> OrmFactory<T> getRequiredOrmFactory(Class<T> thingType) {
         return ORM_FACTORY_REGISTRY.getFactoryOfType(thingType)
                 // Or else throw a runtime exception.
-                .orElseThrow(() -> new RuntimeException("Missing required ORM Factory for thing " + thingType.getName()));
+                .orElseThrow(() -> new OrmTestCaseException("Missing required ORM Factory for thing " + thingType.getName()));
     }
 
     /**
@@ -159,23 +159,26 @@ public abstract class OrmEnabledTestCase {
         Arrays.stream(serviceClazz.getDeclaredMethods())
                 // Determine if an ORM Factory reference.
                 .filter(OrmEnabledTestCase::determineIfOrmFactoryReference)
-                // For each ORM factory reference.
-                .forEach(method -> {
-                    // Find the matching ORM Factory.
-                    OrmFactory<?> targetFactory = ORM_FACTORIES.stream()
-                            .filter(factory -> method.getParameterTypes()[0].isAssignableFrom(factory.getClass()))
-                            .findFirst().orElseThrow(() -> new RuntimeException("Missing factory for injection into " +
-                                    "specified service!  Requires type '" + method.getParameterTypes()[0].getName() + "'"));
-                    try {
-                        method.setAccessible(true);
-                        method.invoke(serviceObject, targetFactory);
-                    } catch (Exception e) {
-                        throw new RuntimeException("Issue injecting factory '" + targetFactory.getClass().getName()
-                                + "' into service '" + serviceClazz.getName()
-                                + "' using method '" + method.getName() + "'", e);
-                    }
-                });
 
+                // For each ORM factory reference.
+                .forEach(method -> injectApplicableOrmFactory(method, serviceObject, serviceClazz));
+
+    }
+
+    private static void injectApplicableOrmFactory(final Method method, final Object serviceObject, Class<?> serviceClazz) {
+        // Find the matching ORM Factory.
+        OrmFactory<?> targetFactory = ORM_FACTORIES.stream()
+                .filter(factory -> method.getParameterTypes()[0].isAssignableFrom(factory.getClass()))
+                .findFirst().orElseThrow(() -> new OrmTestCaseException("Missing factory for injection into " +
+                        "specified service!  Requires type '" + method.getParameterTypes()[0].getName() + "'"));
+        try {
+            method.setAccessible(true);
+            method.invoke(serviceObject, targetFactory);
+        } catch (Exception e) {
+            throw new OrmTestCaseException("Issue injecting factory '" + targetFactory.getClass().getName()
+                    + "' into service '" + serviceClazz.getName()
+                    + "' using method '" + method.getName() + "'", e);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -196,7 +199,7 @@ public abstract class OrmEnabledTestCase {
                         }
                     } else {
                         // Fail if we find a class of the incorrect type in the list.
-                        throw new RuntimeException("Class '" + clazz.getName() + "' specified in '"
+                        throw new OrmTestCaseException("Class '" + clazz.getName() + "' specified in '"
                                 + resource.toString() + "' isn't of correct type: " + type.getName());
                     }
                 }
@@ -213,7 +216,7 @@ public abstract class OrmEnabledTestCase {
             ((AbstractOrmFactory) factory).setValueConverterRegistry(VALUE_CONVERTER_REGISTRY);
             ((AbstractOrmFactory) factory).setValueFactory(VALUE_FACTORY);
         } else {
-            throw new RuntimeException("OrmFactory '" + factory.getClass().getName() +
+            throw new OrmTestCaseException("OrmFactory '" + factory.getClass().getName() +
                     "' isn't an AbstractOrmFactory, so it can't be initialized by an ormFactories.conf file");
         }
     }
@@ -227,7 +230,7 @@ public abstract class OrmEnabledTestCase {
                 try {
                     return ClassLoader.getSystemClassLoader().loadClass(name);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    throw new OrmTestCaseException("Issue loading class specified in conf file", e);
                 }
                 //Collect all the items into a set.
             }).collect(Collectors.toSet()));
@@ -236,14 +239,14 @@ public abstract class OrmEnabledTestCase {
         return set;
     }
 
-    private static void registerOrmFactory(OrmFactory<?> factory) throws RuntimeException {
+    private static void registerOrmFactory(OrmFactory<?> factory) throws OrmTestCaseException {
         try {
             // Reflectively register an OrmFactory in our factory registry.
             Method m = OrmFactoryRegistryImpl.class.getDeclaredMethod("addFactory", OrmFactory.class);
             m.setAccessible(true);
             m.invoke(ORM_FACTORY_REGISTRY, factory);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new OrmTestCaseException("Issue registering OrmFactory", e);
         }
     }
 
