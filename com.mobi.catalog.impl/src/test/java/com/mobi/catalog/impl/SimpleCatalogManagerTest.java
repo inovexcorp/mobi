@@ -367,6 +367,21 @@ public class SimpleCatalogManagerTest {
     }
 
     @Test
+    public void test() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(vf.createIRI("urn:test"), vf.createIRI("urn:prop"), vf.createLiteral("test"), vf.createIRI("urn:test"));
+            assertTrue(conn.contains(vf.createIRI("urn:test"), vf.createIRI("urn:prop"), vf.createLiteral("test"), vf.createIRI("urn:test")));
+            conn.begin();
+            conn.remove(vf.createIRI("urn:test"), vf.createIRI("urn:prop"), vf.createLiteral("test"), vf.createIRI("urn:test"));
+//            conn.clear(vf.createIRI("urn:test"));
+//            conn.remove((Resource) null, null, null, vf.createIRI("urn:test"));
+            assertFalse(conn.contains(null, vf.createIRI("urn:prop"), vf.createLiteral("test")));
+            conn.commit();
+            assertFalse(conn.contains(null, vf.createIRI("urn:prop"), vf.createLiteral("test")));
+        }
+    }
+
+    @Test
     public void testGetRepositoryId() throws Exception {
         assertEquals("system", manager.getRepositoryId());
     }

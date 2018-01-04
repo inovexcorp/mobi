@@ -869,11 +869,14 @@ public class SimpleCatalogManager implements CatalogManager {
         removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
         Optional<Resource> headCommit = branch.getHead_resource();
         if (headCommit.isPresent()) {
+            // Explicitly remove this so algorithm works for head commit
+            conn.remove(branch.getResource(), vf.createIRI(Branch.head_IRI), headCommit.get());
             List<Resource> chain = utils.getCommitChain(headCommit.get(), false, conn);
             IRI commitIRI = vf.createIRI(Tag.commit_IRI);
             Set<Resource> deltaIRIs = new HashSet<>();
+            List<Resource> deletedCommits = new ArrayList<>();
             for (Resource commitId : chain) {
-                if (!commitIsReferenced(commitId, conn)) {
+                if (!commitIsReferenced(commitId, deletedCommits, conn)) {
                     // Get Additions/Deletions Graphs
                     Revision revision = utils.getRevision(commitId, conn);
                     revision.getAdditions().ifPresent(deltaIRIs::add);
@@ -891,6 +894,7 @@ public class SimpleCatalogManager implements CatalogManager {
                             .subjects();
                     tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId, VersionedRecord.version_IRI,
                             conn));
+                    deletedCommits.add(commitId);
                 } else {
                     break;
                 }
@@ -1447,13 +1451,24 @@ public class SimpleCatalogManager implements CatalogManager {
                 });
     }
 
-    private boolean commitIsReferenced(Resource commitId, RepositoryConnection conn) {
+    private boolean commitIsReferenced(Resource commitId, List<Resource> deletedCommits, RepositoryConnection conn) {
         IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
         IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
         IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
-        return Stream.of(headCommitIRI, baseCommitIRI, auxiliaryCommitIRI)
-                .map(iri -> conn.contains(null, iri, commitId))
+
+        boolean isHeadCommit = conn.contains(null, headCommitIRI, commitId);
+        boolean isParent = Stream.of(baseCommitIRI, auxiliaryCommitIRI)
+                .map(iri -> {
+                    List<Resource> temp = new ArrayList<>();
+                    conn.getStatements(null, iri, commitId).forEach(statement -> temp.add(statement.getSubject()));
+                    temp.removeAll(deletedCommits);
+                    return temp.size() > 0;
+                })
                 .reduce(false, (iri1, iri2) -> iri1 || iri2);
+        return isHeadCommit || isParent;
+        /*return Stream.of(headCommitIRI, baseCommitIRI, auxiliaryCommitIRI)
+                .map(iri -> conn.contains(null, iri, commitId))
+                .reduce(false, (iri1, iri2) -> iri1 || iri2);*/
     }
 
     /**
