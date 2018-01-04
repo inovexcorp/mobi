@@ -10,7 +10,7 @@ public class FakeService {
     private OrmFactory<Thing> thingOrmFactory;
 
     @Reference
-    protected void setFactory(ThingFactory factory) {
+    void setFactory(ThingFactory factory) {
         this.thingOrmFactory = factory;
     }
 
