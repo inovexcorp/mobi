@@ -124,7 +124,7 @@
 
             <!-- OWLAPI Dependencies -->
             <dependency>
-                <groupId>com.inovexcorp.mobi</groupId>
+                <groupId>net.sourceforge.owlapi</groupId>
                 <artifactId>owlapi-distribution</artifactId>
                 <version>${owlapi.version}</version>
             </dependency>

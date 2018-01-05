@@ -98,7 +98,7 @@
 
         <!-- Owlapi dependencies -->
         <dependency>
-            <groupId>com.inovexcorp.mobi</groupId>
+            <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlapi-distribution</artifactId>
             <exclusions>
                 <exclusion>
