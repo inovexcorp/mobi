@@ -94,7 +94,6 @@
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>rdf-orm-test</artifactId>
-            <version>${project.version}</version>
         </dependency>
     </dependencies>
 
