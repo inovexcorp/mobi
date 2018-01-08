@@ -21,11 +21,10 @@
  * #L%
  */
 describe('Update Refs service', function() {
-    var updateRefsSvc, responseObjSvc;
+    var updateRefsSvc;
 
     beforeEach(function() {
         module('updateRefs');
-        mockResponseObj();
 
         module(function($provide) {
             $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {
@@ -37,22 +36,13 @@ describe('Update Refs service', function() {
             }));
         });
 
-        inject(function(updateRefsService, _responseObj_) {
+        inject(function(updateRefsService) {
             updateRefsSvc = updateRefsService;
-            responseObjSvc = _responseObj_;
-        });
-
-        responseObjSvc.getItemIri.and.callFake(function(obj) {
-            return _.get(obj, 'iri', '');
-        });
-        responseObjSvc.validateItem.and.callFake(function(obj) {
-            return typeof obj === 'object';
         });
     });
 
     afterEach(function() {
         updateRefsSvc = null;
-        responseObjSvc = null;
     });
 
     it('should replace all instances of a key in an object with the new key', function() {
@@ -71,7 +61,10 @@ describe('Update Refs service', function() {
                         namespace: 'test/',
                         localName: '0'
                     }
-                ]
+                ],
+                test: {
+                    'test/0': 'something'
+                }
             },
             result = {
                 'aaa/1': 0,
@@ -84,11 +77,14 @@ describe('Update Refs service', function() {
                 refs: ['aaa/1'],
                 items: [
                     {
-                        iri: 'test/0',
-                        namespace: 'aaa/',
-                        localName: '1'
+                        iri: 'aaa/1',
+                        namespace: 'test/',
+                        localName: '0'
                     }
-                ]
+                ],
+                test: {
+                    'aaa/1': 'something'
+                }
             };
         updateRefsSvc.update(obj, 'test/0', 'aaa/1');
         expect(obj).toEqual(result);
@@ -132,9 +128,9 @@ describe('Update Refs service', function() {
                 refs: ['aaa/1'],
                 items: [
                     {
-                        iri: 'test/0',
-                        namespace: 'aaa/',
-                        localName: '1'
+                        iri: 'aaa/1',
+                        namespace: 'test/',
+                        localName: '0'
                     }
                 ]
             };

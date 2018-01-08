@@ -31,13 +31,13 @@
                 <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
                        ng-model="dvm.concept[dvm.prefixes.skos + 'prefLabel'][0]['@value']" focus-me />
             </div>
-            <div ng-if="dvm.om.hasConceptSchemes(dvm.os.getOntologiesArray())" class="form-group">
+            <div ng-if="dvm.schemeIRIs.length" class="form-group">
                 <custom-label muted-text="'(Optional)'">Top Concept of Scheme(s)</custom-label>
-                <ui-select multiple ng-model="dvm.schemes">
+                <ui-select multiple ng-model="dvm.selectedSchemes">
                     <ui-select-match placeholder="Select Concept Scheme(s)">
                         <span title="{{$item}}">{{dvm.ontoUtils.getLabelForIRI($item)}}</span>
                     </ui-select-match>
-                    <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.om.getConceptSchemeIRIs(dvm.os.getOntologiesArray()) | filter:$select.search | orderBy:dvm.ontoUtils.getLabelForIRI track by iri">
+                    <ui-select-choices refresh="dvm.getSchemes($select.search)" refresh-delay="300" group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.schemes">
                         <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getLabelForIRI(iri) | highlight: $select.search | trusted"></div>
                     </ui-select-choices>
                 </ui-select>

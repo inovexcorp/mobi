@@ -50,6 +50,7 @@ describe('Create Concept Overlay directive', function() {
 
         this.iri = 'iri#';
         ontologyStateSvc.getDefaultPrefix.and.returnValue(this.iri);
+        ontologyManagerSvc.getConceptSchemeIRIs.and.returnValue(['scheme1']);
         this.element = $compile(angular.element('<create-concept-overlay></create-concept-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('createConceptOverlay');
@@ -72,6 +73,8 @@ describe('Create Concept Overlay directive', function() {
         expect(this.controller.prefix).toBe(this.iri);
         expect(this.controller.concept['@id']).toBe(this.controller.prefix);
         expect(this.controller.concept['@type']).toEqual([prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept']);
+        expect(this.controller.schemeIRIs).toEqual(['scheme1']);
+        expect(ontologyManagerSvc.getConceptSchemeIRIs).toHaveBeenCalledWith(jasmine.any(Array), ontologyStateSvc.listItem.derivedConceptSchemes);
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
@@ -107,7 +110,7 @@ describe('Create Concept Overlay directive', function() {
         it('depending on whether there are concept schemes', function() {
             expect(this.element.find('ui-select').length).toBe(1);
 
-            ontologyManagerSvc.hasConceptSchemes.and.returnValue(false);
+            this.controller.schemeIRIs = [];
             scope.$digest();
             expect(this.element.find('ui-select').length).toBe(0);
         });
@@ -165,7 +168,7 @@ describe('Create Concept Overlay directive', function() {
                 scheme2: {'@id': 'scheme2', mobi: {}}
             };
             this.schemes.scheme1[prefixes.skos + 'hasTopConcept'] = [{'@id': 'test'}];
-            this.controller.schemes = _.values(this.schemes);
+            this.controller.selectedSchemes = _.values(this.schemes);
             var self = this;
             ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, schemeId) {
                 return _.get(self.schemes, schemeId);
@@ -176,7 +179,7 @@ describe('Create Concept Overlay directive', function() {
             this.controller.create();
             expect(this.schemes.scheme1[prefixes.skos + 'hasTopConcept'].length).toBe(2);
             expect(this.schemes.scheme2[prefixes.skos + 'hasTopConcept'].length).toBe(1);
-            this.controller.schemes.forEach(function(scheme) {
+            this.controller.selectedSchemes.forEach(function(scheme) {
                 expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, 'concept', ontologyStateSvc.listItem.conceptSchemes.index, scheme['@id']);
                 json['@id'] = scheme['@id'];
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, json);
@@ -191,6 +194,12 @@ describe('Create Concept Overlay directive', function() {
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.concept['@id']);
             expect(ontologyStateSvc.showCreateConceptOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+        });
+        it('should set the list of schemes', function() {
+            ontoUtils.getSelectList.and.returnValue(['scheme']);
+            this.controller.getSchemes('search');
+            expect(this.controller.schemes).toEqual(['scheme']);
+            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(this.controller.schemeIRIs, 'search');
         });
     });
     it('should call create when the button is clicked', function() {

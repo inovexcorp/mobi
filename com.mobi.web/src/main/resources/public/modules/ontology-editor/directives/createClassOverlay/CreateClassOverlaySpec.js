@@ -21,26 +21,23 @@
  * #L%
  */
 describe('Create Class Overlay directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, prefixes, ontoUtils, splitIRI;
+    var $compile, scope, $q, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
         module('createClassOverlay');
-        injectRegexConstant();
-        injectCamelCaseFilter();
-        injectSplitIRIFilter();
         mockOntologyState();
         mockPrefixes();
         mockOntologyUtilsManager();
+        injectCamelCaseFilter();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_, _splitIRIFilter_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
             ontoUtils = _ontologyUtilsManagerService_;
-            splitIRI = _splitIRIFilter_;
         });
 
         this.iri = 'iri#';
@@ -57,7 +54,6 @@ describe('Create Class Overlay directive', function() {
         ontologyStateSvc = null;
         prefixes = null;
         ontoUtils = null;
-        splitIRI = null;
         this.element.remove();
     });
 
@@ -163,7 +159,6 @@ describe('Create Class Overlay directive', function() {
                 this.controller.clazz = {'@id': 'class-iri'};
                 this.controller.clazz[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
                 this.controller.clazz[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
-                splitIRI.and.returnValue({begin: 'begin', then: '/', end: 'end'});
             });
             it('is empty', function() {
                 this.controller.create();
@@ -172,7 +167,7 @@ describe('Create Class Overlay directive', function() {
                 expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
                 expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
-                expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, {namespace: 'begin/', localName: 'end'});
+                expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz['@id']);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.clazz);
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.classes.flat).toEqual([{prop: 'entity'}]);
@@ -194,7 +189,7 @@ describe('Create Class Overlay directive', function() {
                     expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
                     expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
-                    expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, {namespace: 'begin/', localName: 'end'});
+                    expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz['@id']);
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.clazz);
                     expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.clazz['@id']);
@@ -212,7 +207,7 @@ describe('Create Class Overlay directive', function() {
                     expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
                     expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
-                    expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, {namespace: 'begin/', localName: 'end'});
+                    expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz['@id']);
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.clazz);
                     expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.clazz['@id']);
