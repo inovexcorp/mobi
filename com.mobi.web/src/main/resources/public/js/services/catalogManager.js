@@ -294,9 +294,7 @@
                 if (_.has(recordConfig, 'description')) {
                     fd.append('description', recordConfig.description);
                 }
-                if (_.get(recordConfig, 'keywords', []).length > 0) {
-                    fd.append('keywords', _.join(recordConfig.keywords, ','));
-                }
+                _.forEach(_.get(recordConfig, 'keywords', []), word => fd.append('keywords', word));
                 return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records', fd, config)
                     .then(response => response.data, util.rejectError);
             }

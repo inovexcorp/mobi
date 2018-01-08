@@ -21,28 +21,24 @@
  * #L%
  */
 describe('Concepts Tab directive', function() {
-    var $compile, scope, ontologyStateSvc, resObj, prefixes;
+    var $compile, scope, ontologyStateSvc, propertyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('conceptsTab');
         mockOntologyState();
-        mockResponseObj();
-        mockPrefixes();
+        mockPropertyManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            resObj = _responseObj_;
-            prefixes = _prefixes_;
+            propertyManagerSvc = _propertyManagerService_;
         });
 
-        ontologyStateSvc.listItem.iriList = [prefixes.skos + 'topConceptOf'];
-        ontologyStateSvc.listItem.derivedSemanticRelations = [{ localName: 'end', namespace: 'begin/'}];
-        resObj.getItemIri.and.callFake(function(obj) {
-            return obj.namespace + obj.localName;
-        });
+        propertyManagerSvc.conceptSchemeRelationshipList = ['topConceptOf', 'inScheme'];
+        ontologyStateSvc.listItem.iriList = ['topConceptOf'];
+        ontologyStateSvc.listItem.derivedSemanticRelations = ['derived'];
         this.element = $compile(angular.element('<concepts-tab></concepts-tab>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('conceptsTab');
@@ -52,16 +48,12 @@ describe('Concepts Tab directive', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        resObj = null;
-        prefixes = null;
+        propertyManagerSvc = null;
         this.element.remove();
     });
 
     it('initializes with the correct list of relationships', function() {
-        expect(this.controller.relationshipList).toEqual([
-            {localName: 'end', namespace: 'begin/', values: 'conceptList'},
-            {localName: 'topConceptOf', namespace: prefixes.skos, values: 'schemeList'}
-        ]);
+        expect(this.controller.relationshipList).toEqual(['derived', 'topConceptOf']);
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {

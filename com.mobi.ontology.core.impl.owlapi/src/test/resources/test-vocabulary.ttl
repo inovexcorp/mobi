@@ -63,6 +63,7 @@
 
 ###  https://mobi.com/vocabulary#Concept3
 :Concept3 rdf:type owl:NamedIndividual , :SubOfConcept ;
+        skos:broader :Concept1 ;
         skos:prefLabel "Concept 3"^^xsd:string .
 
 ###  https://mobi.com/vocabulary#Concept4

@@ -26,8 +26,10 @@ package com.mobi.analytic.rest;
 import com.mobi.analytic.ontologies.analytic.Configuration;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -66,8 +68,8 @@ public interface AnalyticRest {
      * @param typeIRI     The required IRI of the type of the new Configuration. Must be a valid IRI for a
      *                    Configuration or one of its subclasses.
      * @param title       The required title for the new AnalyticRecord.
-     * @param description The optional description for the new Record.
-     * @param keywords    The optional comma separated list of keywords for the new Record.
+     * @param description The optional description for the new AnalyticRecord.
+     * @param keywords    The optional list of keywords strings for the new AnalyticRecord.
      * @param json        The JSON of key value pairs which will be added to the new Configuration.
      * @return A Response with a JSON object containing the IRI strings of the AnalyticRecord and Configuration.
      */
@@ -80,7 +82,7 @@ public interface AnalyticRest {
                             @FormDataParam("type") String typeIRI,
                             @FormDataParam("title") String title,
                             @FormDataParam("description") String description,
-                            @FormDataParam("keywords") String keywords,
+                            @FormDataParam("keywords") List<FormDataBodyPart> keywords,
                             @FormDataParam("json") String json);
 
 

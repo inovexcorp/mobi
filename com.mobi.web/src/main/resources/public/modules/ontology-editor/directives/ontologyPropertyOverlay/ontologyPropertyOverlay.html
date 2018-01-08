@@ -26,8 +26,8 @@
         <div class="form-group">
             <custom-label>Property</custom-label>
             <ui-select ng-model="dvm.os.ontologyProperty" ng-disabled="dvm.os.editingOntologyProperty" autofocus>
-                <ui-select-match placeholder="Select a property">{{dvm.ro.getItemIri($select.selected)}}</ui-select-match>
-                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="property in dvm.properties | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
+                <ui-select-match placeholder="Select a property">{{$select.selected}}</ui-select-match>
+                <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="property in dvm.properties | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
                     <div ng-bind-html="dvm.ontoUtils.getDropDownText(property) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
@@ -43,8 +43,7 @@
         <div ng-if="dvm.isAnnotationProperty()">
             <text-area ng-model="dvm.os.ontologyPropertyValue" display-text="'Value'" required="required"></text-area>
             <language-select ng-model="dvm.os.ontologyPropertyLanguage"></language-select>
-            <!--<object-select ng-model="dvm.os.ontologyPropertyType" display-text="'Type'" multi-select="false"
-                           select-list="dvm.os.listItem.dataPropertyRange"></object-select>-->
+            <!--<iri-select ng-model="dvm.os.ontologyPropertyType" display-text="'Type'" multi-select="false" select-list="dvm.os.listItem.dataPropertyRange"></iri-select>-->
         </div>
         <div class="btn-container clearfix">
             <button ng-if="!dvm.os.editingOntologyProperty" class="btn btn-primary pull-right" ng-click="dvm.addProperty()" ng-disabled="dvm.propertyForm.$invalid">Add</button>

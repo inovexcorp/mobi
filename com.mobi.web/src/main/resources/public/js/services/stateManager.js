@@ -32,13 +32,14 @@
         function stateManagerService($http, $q, $httpParamSerializer, uuid, prefixes, utilService, REST_PREFIX) {
             var self = this;
             var prefix = REST_PREFIX + 'states';
+            var util = utilService;
 
             self.states = [];
 
             self.getStates = function(stateConfig) {
                 var params = $httpParamSerializer(stateConfig);
                 return $http.get(prefix + '?' + params)
-                    .then(response => $q.resolve(_.get(response, 'data', [])), onError);
+                    .then(response => _.get(response, 'data', []), util.rejectError);
             }
 
             self.createState = function(stateJson, application) {
@@ -52,12 +53,12 @@
                     config.params = {application};
                 }
                 return $http.post(prefix, angular.toJson(stateJson), config)
-                    .then(response => self.states.push({id: response.data, model: [stateJson]}), onError);
+                    .then(response => self.states.push({id: response.data, model: [stateJson]}), util.rejectError);
             }
 
             self.getState = function(stateId) {
                 return $http.get(prefix + '/' + encodeURIComponent(stateId))
-                    .then(response => $q.resolve(_.get(response, 'data', {})), onError);
+                    .then(response => _.get(response, 'data', {}), util.rejectError);
             }
 
             self.updateState = function(stateId, stateJson) {
@@ -67,17 +68,17 @@
                             _.set(state, 'model', [stateJson]);
                             return false;
                         }
-                    }), onError);
+                    }), util.rejectError);
             }
 
             self.deleteState = function(stateId) {
                 return $http.delete(prefix + '/' + encodeURIComponent(stateId))
-                    .then(() => _.remove(self.states, {id: stateId}), onError);
+                    .then(() => _.remove(self.states, {id: stateId}), util.rejectError);
             }
 
             self.initialize = function() {
                 self.getStates()
-                    .then(states => self.states = states, () => utilService.createErrorToast('Problem getting states'));
+                    .then(states => self.states = states, () => util.createErrorToast('Problem getting states'));
             }
 
             self.createOntologyState = function(recordId, branchId, commitId) {
@@ -109,10 +110,6 @@
                     [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
                     [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
                 }
-            }
-
-            function onError(response) {
-                return $q.reject(response.statusText);
             }
         }
 })();

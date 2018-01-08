@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology State Service', function() {
-    var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, httpSvc, $document, responseObj;
+    var ontologyStateSvc, $q, scope, util, stateManagerSvc, propertyManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, httpSvc, $document, splitIRI;
     var listItem;
 
     beforeEach(function() {
@@ -32,11 +32,11 @@ describe('Ontology State Service', function() {
         mockStateManager();
         mockUtil();
         mockCatalogManager();
-        injectRemoveMobiFilter();
         mockPrefixes();
         mockManchesterConverter();
         mockHttpService();
-        mockResponseObj();
+        injectRemoveMobiFilter();
+        injectSplitIRIFilter();
 
         module(function($provide) {
             $provide.service('$document', function() {
@@ -44,12 +44,12 @@ describe('Ontology State Service', function() {
             });
         });
 
-        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_, _$document_, _responseObj_) {
+        inject(function(ontologyStateService, _updateRefsService_, _propertyManagerService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_, _$document_, _splitIRIFilter_) {
             ontologyStateSvc = ontologyStateService;
             updateRefsSvc = _updateRefsService_;
+            propertyManagerSvc = _propertyManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
             catalogManagerSvc = _catalogManagerService_;
-            responseObj = _responseObj_
             $q = _$q_;
             scope = _$rootScope_;
             util = _utilService_;
@@ -57,13 +57,16 @@ describe('Ontology State Service', function() {
             prefixes = _prefixes_;
             httpSvc = _httpService_;
             $document = _$document_;
+            splitIRI = _splitIRIFilter_;
         });
+
+        splitIRI.and.returnValue({begin: 'begin'});
 
         this.error = 'error';
         this.format = 'jsonld';
         this.title = 'title';
         this.description = 'description';
-        this.keywords = 'keyword1,keyword2';
+        this.keywords = ['keyword1', 'keyword2'];
         this.inProgressCommit = {
             additions: ['test'],
             deletions: ['test']
@@ -153,16 +156,10 @@ describe('Ontology State Service', function() {
             'node3b': ['node2c', 'node1b'],
             'node3c': ['node2a']
         };
-        ontologyManagerSvc.defaultDatatypes = _.concat(_.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], function(item) {
-            return {
-                'namespace': prefixes.xsd,
-                'localName': item
-            }
+        propertyManagerSvc.defaultDatatypes = _.concat(_.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], function(item) {
+            return prefixes.xsd + item;
         }), _.map(['langString'], function(item) {
-            return {
-                namespace: prefixes.rdf,
-                localName: item
-            }
+            return prefixes.rdf + item;
         }));
         this.ontologyObj = {
             '@id': this.ontologyId,
@@ -241,13 +238,14 @@ describe('Ontology State Service', function() {
         scope = null;
         util = null;
         stateManagerSvc = null;
+        propertyManagerSvc = null;
         ontologyManagerSvc = null;
         updateRefsSvc = null;
         prefixes = null;
         catalogManagerSvc = null;
         httpSvc = null;
         $document = null;
-        responseObj = null;
+        splitIRI = null;
         listItem = null;
     });
 
@@ -1039,9 +1037,9 @@ describe('Ontology State Service', function() {
     describe('setVocabularyStuff sets the appropriate state variables on', function() {
         beforeEach(function() {
             this.response = {
-                derivedConcepts: [{localName: 'derivedConcept'}],
-                derivedConceptSchemes: [{localName: 'derivedConceptScheme'}],
-                derivedSemanticRelations: [{localName: 'derivedSemanticRelation'}],
+                derivedConcepts: ['derivedConcept'],
+                derivedConceptSchemes: ['derivedConceptScheme'],
+                derivedSemanticRelations: ['derivedSemanticRelation'],
                 concepts: {
                     index: {0: 'derivedConcept'},
                     hierarchy: ['derivedConcept']
@@ -1053,9 +1051,6 @@ describe('Ontology State Service', function() {
             };
             spyOn(ontologyStateSvc, 'flattenHierarchy').and.callFake(function(arr) {
                 return arr;
-            });
-            responseObj.getItemIri.and.callFake(function(obj) {
-                return obj.localName;
             });
         });
         describe('the current listItem when getVocabularyStuff', function() {
@@ -1075,7 +1070,7 @@ describe('Ontology State Service', function() {
                 expect(ontologyManagerSvc.getVocabularyStuff).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.vocabularySpinnerId);
                 expect(ontologyStateSvc.listItem.derivedConcepts).toEqual(['derivedConcept']);
                 expect(ontologyStateSvc.listItem.derivedConceptSchemes).toEqual(['derivedConceptScheme']);
-                expect(ontologyStateSvc.listItem.derivedSemanticRelations).toEqual([{localName: 'derivedSemanticRelation'}]);
+                expect(ontologyStateSvc.listItem.derivedSemanticRelations).toEqual(['derivedSemanticRelation']);
                 expect(ontologyStateSvc.listItem.concepts.hierarchy).toEqual(this.response.concepts.hierarchy);
                 expect(ontologyStateSvc.listItem.concepts.index).toEqual(this.response.concepts.index);
                 expect(ontologyStateSvc.listItem.concepts.flat).toEqual(this.response.concepts.hierarchy);
@@ -1386,24 +1381,24 @@ describe('Ontology State Service', function() {
             this.individualId2 = 'individualId2';
             ontologyManagerSvc.getOntologyStuff.and.returnValue($q.when({
                 iriList: {
-                    annotationProperties: [{localName: this.annotationId, namespace: this.annotationId}],
-                    classes: [{localName: this.classId, namespace: this.classId}],
-                    datatypes: [{localName: this.datatypeId, namespace: this.datatypeId}],
-                    objectProperties: [{localName: this.objectPropertyId, namespace: this.objectPropertyId}],
-                    dataProperties: [{localName: this.dataPropertyId, namespace: this.dataPropertyId}],
-                    namedIndividuals: [{localName: this.individualId, namespace: this.individualId}],
-                    derivedConcepts: [{localName: this.conceptId, namespace: this.conceptId}],
-                    derivedConceptSchemes: [{localName: this.conceptSchemeId, namespace: this.conceptSchemeId}],
-                    derivedSemanticRelations: [{localName: this.semanticRelationId, namespace: this.semanticRelationId}]
+                    annotationProperties: [this.annotationId],
+                    classes: [this.classId],
+                    datatypes: [this.datatypeId],
+                    objectProperties: [this.objectPropertyId],
+                    dataProperties: [this.dataPropertyId],
+                    namedIndividuals: [this.individualId],
+                    derivedConcepts: [this.conceptId],
+                    derivedConceptSchemes: [this.conceptSchemeId],
+                    derivedSemanticRelations: [this.semanticRelationId]
                 },
                 importedIRIs: [{
                     id: this.ontologyId,
-                    annotationProperties: [{localName: this.annotationId2, namespace: this.annotationId2}],
-                    classes: [{localName: this.classId2, namespace: this.classId2}],
-                    dataProperties: [{localName: this.dataPropertyId2, namespace: this.dataPropertyId2}],
-                    objectProperties: [{localName: this.objectPropertyId2, namespace: this.objectPropertyId2}],
-                    namedIndividuals: [{localName: this.individualId2, namespace: this.individualId2}],
-                    datatypes: [{localName: this.datatypeId2, namespace: this.datatypeId2}]
+                    annotationProperties: [this.annotationId2],
+                    classes: [this.classId2],
+                    dataProperties: [this.dataPropertyId2],
+                    objectProperties: [this.objectPropertyId2],
+                    namedIndividuals: [this.individualId2],
+                    datatypes: [this.datatypeId2]
                 }],
                 importedOntologies: [{ontology: [], ontologyId: 'importId', id: 'id'}],
                 classHierarchy: {hierarchy: [], index: {}},
@@ -1425,39 +1420,34 @@ describe('Ontology State Service', function() {
         it('when all promises resolve', function() {
             ontologyStateSvc.createOntologyListItem(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.inProgressCommit, false)
                 .then(function(response) {
-                    expect(_.get(response, 'annotations.iris')).toEqual([{
-                        localName: this.annotationId2, namespace: this.annotationId2, ontologyId: this.ontologyId
-                    }, {
-                        localName: this.annotationId, namespace: this.annotationId
-                    }]);
-                    expect(_.get(response, 'classes.iris')).toEqual([
-                        { localName: this.classId, namespace: this.classId },
-                        { localName: this.classId2, namespace: this.classId2, ontologyId: this.ontologyId }
-                    ]);
+                    var expectedIriObj = {};
+                    expectedIriObj[this.annotationId] = this.ontologyId;
+                    expectedIriObj[this.annotationId2] = this.ontologyId;
+                    expect(_.get(response, 'annotations.iris')).toEqual(expectedIriObj);
+                    expectedIriObj = {};
+                    expectedIriObj[this.classId] = this.ontologyId;
+                    expectedIriObj[this.classId2] = this.ontologyId;
+                    expect(_.get(response, 'classes.iris')).toEqual(expectedIriObj);
                     expect(response.isVocabulary).toEqual(true);
-                    expect(_.get(response, 'dataProperties.iris')).toEqual([{
-                        localName: this.dataPropertyId2, namespace: this.dataPropertyId2, ontologyId: this.ontologyId
-                    }, {
-                        localName: this.dataPropertyId, namespace: this.dataPropertyId
-                    }]);
-                    expect(_.get(response, 'objectProperties.iris')).toEqual([{
-                        localName: this.objectPropertyId2, namespace: this.objectPropertyId2, ontologyId: this.ontologyId
-                    }, {
-                        localName: this.objectPropertyId, namespace: this.objectPropertyId
-                    }]);
-                    expect(_.get(response, 'individuals.iris')).toEqual([{
-                        localName: this.individualId2, namespace: this.individualId2, ontologyId: this.ontologyId
-                    }, {
-                        localName: this.individualId, namespace: this.individualId
-                    }]);
-                    expect(_.get(response, 'dataPropertyRange')).toEqual(_.concat([{
-                        localName: this.datatypeId2, namespace: this.datatypeId2, ontologyId: this.ontologyId
-                    }, {
-                        localName: this.datatypeId, namespace: this.datatypeId
-                    }], ontologyManagerSvc.defaultDatatypes));
+                    expectedIriObj = {};
+                    expectedIriObj[this.dataPropertyId] = this.ontologyId;
+                    expectedIriObj[this.dataPropertyId2] = this.ontologyId;
+                    expect(_.get(response, 'dataProperties.iris')).toEqual(expectedIriObj);
+                    expectedIriObj = {};
+                    expectedIriObj[this.objectPropertyId] = this.ontologyId;
+                    expectedIriObj[this.objectPropertyId2] = this.ontologyId;
+                    expect(_.get(response, 'objectProperties.iris')).toEqual(expectedIriObj);
+                    expectedIriObj = {};
+                    expectedIriObj[this.individualId] = this.ontologyId;
+                    expectedIriObj[this.individualId2] = this.ontologyId;
+                    expect(_.get(response, 'individuals.iris')).toEqual(expectedIriObj);
+                    expectedIriObj = {};
+                    expectedIriObj[this.datatypeId] = this.ontologyId;
+                    expectedIriObj[this.datatypeId2] = this.ontologyId;
+                    expect(_.get(response, 'dataPropertyRange')).toEqual(expectedIriObj);
                     expect(_.get(response, 'derivedConcepts')).toEqual([this.conceptId]);
                     expect(_.get(response, 'derivedConceptSchemes')).toEqual([this.conceptSchemeId]);
-                    expect(_.get(response, 'derivedSemanticRelations')).toEqual([{localName: this.semanticRelationId, namespace: this.semanticRelationId}]);
+                    expect(_.get(response, 'derivedSemanticRelations')).toEqual([this.semanticRelationId]);
                     expect(_.get(response, 'classes.hierarchy')).toEqual([]);
                     expect(_.get(response, 'classes.index')).toEqual({});
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classes.hierarchy, this.recordId, response);
@@ -2928,88 +2918,88 @@ describe('Ontology State Service', function() {
     });
     describe('should add an IRI to classes.iris and update isVocabulary', function() {
         beforeEach(function () {
-            this.listItem = {isVocabulary: false, classes: {iris: []}};
-            this.iriObj = {id: 'iriObj'};
+            this.iri = 'iri';
+            this.listItem = {ontologyId: 'ontology', isVocabulary: false, classes: {iris: {}}};
+            this.expectedIriObj = {};
         });
         it('unless the IRI is already in the list', function() {
-            this.listItem.classes.iris.push(this.iriObj);
-            ontologyStateSvc.addToClassIRIs(this.listItem, this.iriObj);
-            expect(responseObj.getItemIri).not.toHaveBeenCalled();
-            expect(this.listItem.classes.iris).toEqual([this.iriObj]);
+            this.listItem.classes.iris[this.iri] = 'ontology';
+            this.expectedIriObj[this.iri] = 'ontology';
+            ontologyStateSvc.addToClassIRIs(this.listItem, this.iri);
+            expect(this.listItem.classes.iris).toEqual(this.expectedIriObj);
         });
-        describe('if the IRI does not exist in the list', function () {
+        describe('if the IRI does not exist in the list', function() {
             it('and IRI is skos:Concept', function() {
-                responseObj.getItemIri.and.returnValue(prefixes.skos + 'Concept');
-                ontologyStateSvc.addToClassIRIs(this.listItem, this.iriObj);
-                expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+                this.iri = prefixes.skos + 'Concept';
+                this.expectedIriObj[this.iri] = 'ontology';
+                ontologyStateSvc.addToClassIRIs(this.listItem, this.iri);
                 expect(this.listItem.isVocabulary).toEqual(true);
-                expect(this.listItem.classes.iris).toContain(this.iriObj);
+                expect(this.listItem.classes.iris).toEqual(this.expectedIriObj);
             });
             it('and IRI is skos:ConceptScheme', function() {
-                responseObj.getItemIri.and.returnValue(prefixes.skos + 'ConceptScheme');
-                ontologyStateSvc.addToClassIRIs(this.listItem, this.iriObj);
-                expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+                this.iri = prefixes.skos + 'ConceptScheme';
+                this.expectedIriObj[this.iri] = 'ontology';
+                ontologyStateSvc.addToClassIRIs(this.listItem, this.iri);
                 expect(this.listItem.isVocabulary).toEqual(true);
-                expect(this.listItem.classes.iris).toContain(this.iriObj);
+                expect(this.listItem.classes.iris).toEqual(this.expectedIriObj);
             });
-            it('unless IRI is not skos:Concept', function () {
-                ontologyStateSvc.addToClassIRIs(this.listItem, this.iriObj);
-                expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+            it('unless IRI is not skos:Concept', function() {
+                this.expectedIriObj[this.iri] = 'ontology';
+                ontologyStateSvc.addToClassIRIs(this.listItem, this.iri);
                 expect(this.listItem.isVocabulary).toEqual(false);
-                expect(this.listItem.classes.iris).toContain(this.iriObj);
+                expect(this.listItem.classes.iris).toEqual(this.expectedIriObj);
             });
         });
     });
     describe('should remove an IRI from classes.iris and update isVocabulary', function() {
-        beforeEach(function () {
-            this.iriObj = {id: 'iriObj'};
-            this.listItem = {isVocabulary: true, classes: {iris: [this.iriObj]}};
+        beforeEach(function() {
+            this.iri = 'iri';
+            this.listItem = {ontologyId: 'ontology', isVocabulary: true, classes: {iris: {}}};
+            this.listItem.classes.iris[this.iri] = 'ontology';
+            this.expectedIriObj = {};
         });
         describe('if IRI is skos:Concept and classIRIs', function() {
             beforeEach(function() {
-                this.iriObj = {localName: 'Concept', namespace: prefixes.skos};
-                this.listItem.classes.iris = [this.iriObj];
-                responseObj.getItemIri.and.returnValue(prefixes.skos + 'Concept');
+                this.iri = prefixes.skos + 'Concept';
+                this.listItem.classes.iris = {};
+                this.listItem.classes.iris[this.iri] = 'ontology';
             });
             it('has skos:ConceptScheme', function() {
-                this.listItem.classes.iris.push({localName: 'ConceptScheme', namespace: prefixes.skos});
-                ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iriObj);
-                expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+                this.expectedIriObj[prefixes.skos + 'ConceptScheme'] = 'ontology';
+                this.listItem.classes.iris[prefixes.skos + 'ConceptScheme'] = 'ontology';
+                ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iri);
                 expect(this.listItem.isVocabulary).toEqual(true);
-                expect(this.listItem.classes.iris).toEqual([{localName: 'ConceptScheme', namespace: prefixes.skos}]);
+                expect(this.listItem.classes.iris).toEqual(this.expectedIriObj);
             });
             it('does not have skos:ConceptScheme', function() {
-                ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iriObj);
-                expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+                ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iri);
                 expect(this.listItem.isVocabulary).toEqual(false);
-                expect(this.listItem.classes.iris).toEqual([]);
+                expect(this.listItem.classes.iris).toEqual(this.expectedIriObj);
             });
         });
         describe('if IRI is skos:ConceptScheme and classIRIs', function() {
             beforeEach(function() {
-                this.iriObj = {localName: 'ConceptScheme', namespace: prefixes.skos};
-                this.listItem.classes.iris = [this.iriObj];
-                responseObj.getItemIri.and.returnValue(prefixes.skos + 'ConceptScheme');
+                this.iri = prefixes.skos + 'ConceptScheme';
+                this.listItem.classes.iris = {};
+                this.listItem.classes.iris[this.iri] = 'ontology';
             });
             it('has skos:Concept', function() {
-                this.listItem.classes.iris.push({localName: 'Concept', namespace: prefixes.skos});
-                ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iriObj);
-                expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+                this.expectedIriObj[prefixes.skos + 'Concept'] = 'ontology';
+                this.listItem.classes.iris[prefixes.skos + 'Concept'] = 'ontology';
+                ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iri);
                 expect(this.listItem.isVocabulary).toEqual(true);
-                expect(this.listItem.classes.iris).toEqual([{localName: 'Concept', namespace: prefixes.skos}]);
+                expect(this.listItem.classes.iris).toEqual(this.expectedIriObj);
             });
             it('does not have skos:Concept', function() {
-                ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iriObj);
-                expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+                ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iri);
                 expect(this.listItem.isVocabulary).toEqual(false);
-                expect(this.listItem.classes.iris).toEqual([]);
+                expect(this.listItem.classes.iris).toEqual(this.expectedIriObj);
             });
         });
         it('unless IRI is not skos:Concept', function () {
-            ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iriObj);
-            expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+            ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iri);
             expect(this.listItem.isVocabulary).toEqual(true);
-            expect(this.listItem.classes.iris).toEqual([]);
+            expect(this.listItem.classes.iris).toEqual(this.expectedIriObj);
         });
     });
     describe('addErrorToUploadItem should add the message to the correct message when', function() {

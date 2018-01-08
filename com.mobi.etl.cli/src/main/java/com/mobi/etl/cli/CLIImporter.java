@@ -77,6 +77,10 @@ public class CLIImporter implements Action {
             + "error on a line.")
     private boolean continueOnError = false;
 
+    @Option( name = "-b", aliases = "--batchSize", description = "The number representing the triple transaction size " +
+            "for importing.")
+    private long batchSize = 10000;
+
     // Implementation
 
     @Override
@@ -94,7 +98,8 @@ public class CLIImporter implements Action {
             ImportServiceConfig.Builder builder = new ImportServiceConfig.Builder()
                     .continueOnError(continueOnError)
                     .logOutput(true)
-                    .printOutput(true);
+                    .printOutput(true)
+                    .batchSize(batchSize);
             if (repositoryId != null) {
                 LOGGER.info("Importing RDF into repository " + repositoryId);
                 builder.repository(repositoryId);

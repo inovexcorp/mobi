@@ -38,7 +38,6 @@
          * @ngdoc service
          * @name updateRefs.service:updateRefsService
          * @requires $filter
-         * @requires responseObj.responseObj
          *
          * @description
          * `updateRefsService` is a service that provides functionality to uypdate references
@@ -46,9 +45,9 @@
          */
         .service('updateRefsService', updateRefsService);
 
-    updateRefsService.$inject = ['$filter', 'responseObj'];
+    updateRefsService.$inject = ['$filter'];
 
-    function updateRefsService($filter, responseObj) {
+    function updateRefsService($filter) {
         var self = this;
         var exclude = [
                 '$$hashKey'
@@ -87,11 +86,6 @@
                             // checks to see if it contains the old value
                             if (item === old) {
                                 obj[key][index] = fresh;
-                            }
-                            // not a string, so update it
-                            else if (responseObj.validateItem(item) && responseObj.getItemIri(item) === old) {
-                                obj[key][index].localName = freshSplit.end;
-                                obj[key][index].namespace = freshSplit.begin + freshSplit.then;
                             }
                             // not a string, so update it
                             else if (typeof item !== 'string') {

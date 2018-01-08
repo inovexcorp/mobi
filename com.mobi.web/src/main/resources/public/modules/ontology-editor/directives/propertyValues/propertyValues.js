@@ -27,9 +27,9 @@
         .module('propertyValues', [])
         .directive('propertyValues', propertyValues);
 
-        propertyValues.$inject = ['responseObj', 'ontologyUtilsManagerService', 'ontologyStateService', 'ontologyManagerService'];
+        propertyValues.$inject = ['ontologyUtilsManagerService', 'ontologyStateService', 'ontologyManagerService'];
 
-        function propertyValues(responseObj, ontologyUtilsManagerService, ontologyStateService, ontologyManagerService) {
+        function propertyValues(ontologyUtilsManagerService, ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -43,7 +43,6 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.ro = responseObj;
                     dvm.om = ontologyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.os = ontologyStateService;

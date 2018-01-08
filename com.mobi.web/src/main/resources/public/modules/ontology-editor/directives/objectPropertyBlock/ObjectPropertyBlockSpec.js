@@ -26,14 +26,11 @@ describe('Object Property Block directive', function() {
     beforeEach(function() {
         module('templates');
         module('objectPropertyBlock');
-        injectBeautifyFilter();
-        injectSplitIRIFilter();
-        injectShowPropertiesFilter();
         mockOntologyState();
-        mockResponseObj();
         mockOntologyUtilsManager();
+        injectShowPropertiesFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
