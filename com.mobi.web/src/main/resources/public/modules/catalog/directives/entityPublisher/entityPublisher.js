@@ -38,14 +38,14 @@
          * @name entityPublisher.directive:entityPublisher
          * @scope
          * @restrict E
-         * @requires $filter
+         * @requires userManager.service:userManagerService
          * @requires utilService.service:utilService
          *
          * @description
          * `entityPublisher` is a directive which creates a div with a display of a JSON-LD object's
          * dcterms:publisher property value. Retrieves the username of the publisher using the
-         * {@link userManager.service:userManagerService userManagerService}. Updates automatically. The
-         * directive is replaced by the contents of its template.
+         * {@link userManager.service:userManagerService userManagerService}. The directive is replaced
+         * by the contents of its template.
          *
          * @param {Object} entity A JSON-LD object
          */
@@ -63,21 +63,15 @@
             },
             controller: ['$scope', function($scope) {
                 var dvm = this;
-                dvm.util = utilService;
-                dvm.um = userManagerService;
-                dvm.username = '(None)';
+                var util = utilService;
+                var um = userManagerService;
 
-                setUsername(dvm.util.getDctermsId($scope.entity, 'publisher'));
-                $scope.$watch(() => dvm.util.getDctermsId($scope.entity, 'publisher'), function(newValue, oldValue) {
-                    setUsername(newValue);
-                });
-
-                function setUsername(iri) {
+                dvm.getUsername = function() {
+                    var iri = util.getDctermsId($scope.entity, 'publisher');
                     if (iri) {
-                        dvm.um.getUsername(iri).then(username => dvm.username = username, dvm.util.createErrorToast);
-                    } else {
-                        dvm.username = '(None)';
+                        return _.get(_.find(um.users, {iri}), 'username', '(None)');
                     }
+                    return '(None)';
                 }
             }],
             templateUrl: 'modules/catalog/directives/entityPublisher/entityPublisher.html'

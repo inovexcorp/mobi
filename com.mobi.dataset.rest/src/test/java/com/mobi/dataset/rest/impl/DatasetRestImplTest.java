@@ -357,7 +357,8 @@ public class DatasetRestImplTest extends MobiRestTestNg {
                 .field("datasetIRI", "http://example.com/dataset")
                 .field("repositoryId", "system")
                 .field("description", "description")
-                .field("keywords", "test,demo")
+                .field("keywords", "test")
+                .field("keywords", "demo")
                 .field("ontologies", ontologyRecordIRI.stringValue());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));

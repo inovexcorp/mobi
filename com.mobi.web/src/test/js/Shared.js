@@ -209,10 +209,6 @@ function mockOntologyManager() {
     module(function($provide) {
         $provide.service('ontologyManagerService', function($q) {
             this.ontologyRecords = [];
-            this.ontologyProperties = [];
-            this.conceptRelationshipList = [];
-            this.schemeRelationshipList = [];
-            this.defaultDatatypes = [];
             this.reset = jasmine.createSpy('reset');
             this.initialize = jasmine.createSpy('initialize');
             this.getAllOntologyRecords = jasmine.createSpy('getAllOntologyRecords').and.returnValue($q.when([]));
@@ -575,36 +571,36 @@ function mockOntologyState() {
                     commitId: ''
                 },
                 merge: false,
-                dataPropertyRange: [],
+                dataPropertyRange: {},
                 derivedConcepts: [],
                 derivedConceptSchemes: [],
                 derivedSemanticRelations: [],
                 classes: {
-                    iris: [],
+                    iris: {},
                     hierarchy: [],
                     index: {},
                     flat: []
                 },
                 objectProperties: {
-                    iris: [],
+                    iris: {},
                     hierarchy: [],
                     index: {},
                     flat: []
                 },
                 dataProperties: {
-                    iris: [],
+                    iris: {},
                     hierarchy: [],
                     index: {},
                     flat: []
                 },
                 annotations: {
-                    iris: [],
+                    iris: {},
                     hierarchy: [],
                     index: {},
                     flat: []
                 },
                 individuals: {
-                    iris: [],
+                    iris: {},
                     flat: []
                 },
                 concepts: {
@@ -753,24 +749,18 @@ function mockOntologyUtilsManager() {
     });
 }
 
-function mockResponseObj() {
-    module(function($provide) {
-        $provide.service('responseObj', function() {
-            this.getItemIri = jasmine.createSpy('getItemIri').and.callFake(function(obj) {
-                return (obj && obj.localName) ? obj.localName : obj;
-            });
-            this.validateItem = jasmine.createSpy('validateItem').and.returnValue(true);
-            this.createItemFromIri = jasmine.createSpy('createItemFromIri');
-        });
-    });
-}
-
 function mockPropertyManager() {
     module(function($provide) {
         $provide.service('propertyManagerService', function($q) {
             this.defaultAnnotations = [];
             this.owlAnnotations = [];
             this.skosAnnotations = [];
+            this.ontologyProperties = [];
+            this.conceptSchemeRelationshipList = [];
+            this.conceptRelationshipList = [];
+            this.schemeRelationshipList = [];
+            this.defaultDatatypes = [];
+            this.getValuesKey = jasmine.createSpy('getValuesKey').and.returnValue('');
             this.getDefaultAnnotations = jasmine.createSpy('getDefaultAnnotations').and.returnValue([]);
             this.remove = jasmine.createSpy('remove');
             this.add = jasmine.createSpy('add');
@@ -980,7 +970,8 @@ function mockUtil() {
             this.createErrorToast = jasmine.createSpy('createErrorToast');
             this.createSuccessToast = jasmine.createSpy('createSuccessToast');
             this.createJson = jasmine.createSpy('createJson').and.returnValue({});
-            this.getIRINamespace = jasmine.createSpy('getIRINamespace').and.returnValue({});
+            this.getIRINamespace = jasmine.createSpy('getIRINamespace').and.returnValue('');
+            this.getIRILocalName = jasmine.createSpy('getIRILocalName').and.returnValue('');
             this.getDate = jasmine.createSpy('getDate').and.returnValue(new Date());
             this.condenseCommitId = jasmine.createSpy('condenseCommitId');
             this.paginatedConfigToParams = jasmine.createSpy('paginatedConfigToParams').and.returnValue({});

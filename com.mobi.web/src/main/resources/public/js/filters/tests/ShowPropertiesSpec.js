@@ -21,15 +21,13 @@
  * #L%
  */
 describe('Show Properties filter', function() {
-    var $filter, responseObj;
+    var $filter;
 
     beforeEach(function() {
         module('showProperties');
-        mockResponseObj();
 
-        inject(function(_$filter_, _responseObj_) {
+        inject(function(_$filter_) {
             $filter = _$filter_;
-            responseObj = _responseObj_;
         });
 
         this.entity = {'prop1': '', 'prop2': ''};
@@ -38,7 +36,6 @@ describe('Show Properties filter', function() {
 
     afterEach(function() {
         $filter = null;
-        responseObj = null;
     });
 
     describe('returns an empty array', function() {
@@ -48,24 +45,12 @@ describe('Show Properties filter', function() {
                 expect(result).toEqual([]);
             });
         });
-        it('if no property can be validated', function() {
-            responseObj.validateItem.and.returnValue(false);
-            var result = $filter('showProperties')(this.entity, this.properties)
-            expect(result).toEqual([]);
-        });
         it('if entity does not have the property', function() {
-            responseObj.getItemIri.and.callFake(function(property) {
-                return property;
-            });
             var result = $filter('showProperties')(this.entity, ['prop3', 'prop4']);
             expect(result).toEqual([]);
         });
     });
     it('returns an array of items that are validated', function() {
-        responseObj.validateItem.and.returnValue(true);
-        responseObj.getItemIri.and.callFake(function(property) {
-            return property;
-        });
         var result = $filter('showProperties')(this.entity, this.properties);
         expect(result.length).toBe(2);
 
