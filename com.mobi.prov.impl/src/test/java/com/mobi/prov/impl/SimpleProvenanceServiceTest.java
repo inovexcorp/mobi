@@ -28,56 +28,22 @@ import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Mockito.when;
 
+import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
-import com.mobi.ontologies.provo.EntityFactory;
+import com.mobi.ontologies.provo.Entity;
 import com.mobi.persistence.utils.ReadOnlyRepositoryConnection;
 import com.mobi.prov.api.builder.ActivityConfig;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
+import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Test;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
-import com.mobi.ontologies.dcterms._Thing;
-import com.mobi.ontologies.provo.Activity;
-import com.mobi.ontologies.provo.ActivityFactory;
-import com.mobi.ontologies.provo.Entity;
-import com.mobi.ontologies.provo.EntityFactory;
-import com.mobi.persistence.utils.ReadOnlyRepositoryConnection;
-import com.mobi.prov.api.builder.ActivityConfig;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.repository.sail.SailRepository;
@@ -86,16 +52,13 @@ import org.openrdf.sail.memory.MemoryStore;
 import java.util.Collections;
 import java.util.Optional;
 
-public class SimpleProvenanceServiceTest {
+public class SimpleProvenanceServiceTest extends OrmEnabledTestCase {
 
     private Repository repo;
     private SimpleProvenanceService service;
-    private ValueFactory vf = SimpleValueFactory.getInstance();
-    private ModelFactory mf = LinkedHashModelFactory.getInstance();
-    private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
-    private UserFactory userFactory;
-    private ActivityFactory activityFactory;
-    private EntityFactory entityFactory;
+    private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+    private OrmFactory<Activity> activityFactory = getRequiredOrmFactory(Activity.class);
+    private OrmFactory<Entity> entityFactory = getRequiredOrmFactory(Entity.class);
 
     private IRI activityIRI;
 
@@ -107,44 +70,16 @@ public class SimpleProvenanceServiceTest {
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
-        userFactory = new UserFactory();
-        userFactory.setModelFactory(mf);
-        userFactory.setValueFactory(vf);
-        userFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(userFactory);
-
-        activityFactory = new ActivityFactory();
-        activityFactory.setModelFactory(mf);
-        activityFactory.setValueFactory(vf);
-        activityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(activityFactory);
-
-        entityFactory = new EntityFactory();
-        entityFactory.setModelFactory(mf);
-        entityFactory.setValueFactory(vf);
-        entityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(entityFactory);
-
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
-
-        activityIRI = vf.createIRI("http://test.com/activity");
+        activityIRI = VALUE_FACTORY.createIRI("http://test.com/activity");
 
         MockitoAnnotations.initMocks(this);
         when(registry.getFactoriesOfType(Activity.class)).thenReturn(Collections.singletonList(activityFactory));
 
         service = new SimpleProvenanceService();
+        injectOrmFactoryReferencesIntoService(service);
         service.setRepo(repo);
-        service.setVf(vf);
-        service.setMf(mf);
-        service.setActivityFactory(activityFactory);
+        service.setVf(VALUE_FACTORY);
+        service.setMf(MODEL_FACTORY);
         service.setFactoryRegistry(registry);
     }
 
@@ -157,10 +92,10 @@ public class SimpleProvenanceServiceTest {
     @Test
     public void createActivityTest() throws Exception {
         // Setup:
-        User user = userFactory.createNew(vf.createIRI("http://test.com/user"));
-        Entity generated = entityFactory.createNew(vf.createIRI("http://test.com/generated"));
-        Entity invalidated = entityFactory.createNew(vf.createIRI("http://test.com/invalidated"));
-        Entity used = entityFactory.createNew(vf.createIRI("http://test.com/used"));
+        User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
+        Entity generated = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/generated"));
+        Entity invalidated = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/invalidated"));
+        Entity used = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/used"));
         ActivityConfig config = new ActivityConfig.Builder(Collections.singleton(Activity.class), user)
                 .generatedEntity(generated)
                 .invalidatedEntity(invalidated)
@@ -204,9 +139,9 @@ public class SimpleProvenanceServiceTest {
     public void getActivityTest() throws Exception {
         // Setup:
         Activity activity = activityFactory.createNew(activityIRI);
-        Entity generated = entityFactory.createNew(vf.createIRI("http://test.com/generated"), activity.getModel());
-        Entity invalidated = entityFactory.createNew(vf.createIRI("http://test.com/invalidated"), activity.getModel());
-        Entity used = entityFactory.createNew(vf.createIRI("http://test.com/used"), activity.getModel());
+        Entity generated = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/generated"), activity.getModel());
+        Entity invalidated = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/invalidated"), activity.getModel());
+        Entity used = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/used"), activity.getModel());
         activity.setGenerated(Collections.singleton(generated));
         activity.setInvalidated(Collections.singleton(invalidated));
         activity.setUsed(Collections.singleton(used));
@@ -228,21 +163,21 @@ public class SimpleProvenanceServiceTest {
     @Test
     public void updateActivityTest() throws Exception {
         // Setup:
-        IRI titleIRI = vf.createIRI(_Thing.title_IRI);
+        IRI titleIRI = VALUE_FACTORY.createIRI(_Thing.title_IRI);
         Activity activity = activityFactory.createNew(activityIRI);
-        Entity generated = entityFactory.createNew(vf.createIRI("http://test.com/generated"), activity.getModel());
-        Entity invalidated = entityFactory.createNew(vf.createIRI("http://test.com/invalidated"), activity.getModel());
-        Entity used = entityFactory.createNew(vf.createIRI("http://test.com/used"), activity.getModel());
+        Entity generated = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/generated"), activity.getModel());
+        Entity invalidated = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/invalidated"), activity.getModel());
+        Entity used = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/used"), activity.getModel());
         activity.setGenerated(Collections.singleton(generated));
         activity.setInvalidated(Collections.singleton(invalidated));
         activity.setUsed(Collections.singleton(used));
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(activity.getModel());
         }
-        activity.addProperty(vf.createLiteral("Activity"), titleIRI);
-        generated.addProperty(vf.createLiteral("Generated"), titleIRI);
-        invalidated.addProperty(vf.createLiteral("Invalidated"), titleIRI);
-        used.addProperty(vf.createLiteral("Used"), titleIRI);
+        activity.addProperty(VALUE_FACTORY.createLiteral("Activity"), titleIRI);
+        generated.addProperty(VALUE_FACTORY.createLiteral("Generated"), titleIRI);
+        invalidated.addProperty(VALUE_FACTORY.createLiteral("Invalidated"), titleIRI);
+        used.addProperty(VALUE_FACTORY.createLiteral("Used"), titleIRI);
 
         service.updateActivity(activity);
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -252,14 +187,14 @@ public class SimpleProvenanceServiceTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void updateActivityThatDoesNotExistTest() {
-        service.updateActivity(activityFactory.createNew(vf.createIRI("http://test.com/missing")));
+        service.updateActivity(activityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/missing")));
     }
 
     @Test(expected = IllegalStateException.class)
     public void updateActivityThatIsNotAnActivityTest() {
         // Setup:
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(activityIRI, vf.createIRI(_Thing.title_IRI), vf.createLiteral("Title"));
+            conn.add(activityIRI, VALUE_FACTORY.createIRI(_Thing.title_IRI), VALUE_FACTORY.createLiteral("Title"));
         }
 
         service.updateActivity(activityFactory.createNew(activityIRI));
@@ -269,13 +204,13 @@ public class SimpleProvenanceServiceTest {
     public void deleteActivityTest() throws Exception {
         // Setup:
         Activity toRemove = activityFactory.createNew(activityIRI);
-        Activity other = activityFactory.createNew(vf.createIRI("http://test.com/other"));
-        Entity generated1 = entityFactory.createNew(vf.createIRI("http://test.com/generated/1"));
-        Entity invalidated1 = entityFactory.createNew(vf.createIRI("http://test.com/invalidated/1"));
-        Entity used1 = entityFactory.createNew(vf.createIRI("http://test.com/used/1"));
-        Entity generated2 = entityFactory.createNew(vf.createIRI("http://test.com/generated/2"));
-        Entity invalidated2 = entityFactory.createNew(vf.createIRI("http://test.com/invalidated/2"));
-        Entity used2 = entityFactory.createNew(vf.createIRI("http://test.com/used/2"));
+        Activity other = activityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/other"));
+        Entity generated1 = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/generated/1"));
+        Entity invalidated1 = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/invalidated/1"));
+        Entity used1 = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/used/1"));
+        Entity generated2 = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/generated/2"));
+        Entity invalidated2 = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/invalidated/2"));
+        Entity used2 = entityFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/used/2"));
         toRemove.setGenerated(Collections.singleton(generated1));
         toRemove.setInvalidated(Collections.singleton(invalidated1));
         toRemove.setUsed(Collections.singleton(used1));
