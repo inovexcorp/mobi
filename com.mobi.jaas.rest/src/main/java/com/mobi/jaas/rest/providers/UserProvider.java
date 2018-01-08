@@ -88,6 +88,7 @@ public class UserProvider implements MessageBodyWriter<User>, MessageBodyReader<
                         MultivaluedMap<String, Object> multivaluedMap, OutputStream outputStream)
             throws IOException, WebApplicationException {
         JSONObject object = new JSONObject();
+        object.put("iri", user.getResource().stringValue());
         object.put("username", user.getUsername().map(Value::stringValue).orElse(""));
         object.put("firstName", user.getFirstName().stream().findFirst().map(Value::stringValue).orElse(""));
         object.put("lastName", user.getLastName().stream().findFirst().map(Value::stringValue).orElse(""));

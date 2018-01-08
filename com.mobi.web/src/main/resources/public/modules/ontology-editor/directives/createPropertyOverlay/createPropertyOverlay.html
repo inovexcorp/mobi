@@ -41,12 +41,9 @@
             <div ng-if="dvm.om.isObjectProperty(dvm.property) || dvm.om.isDataTypeProperty(dvm.property)">
                 <p class="identifier"><strong>Characteristics</strong></p>
                 <checkbox ng-repeat="obj in dvm.characteristics | filter:dvm.characteristicsFilter" ng-model="obj.checked" display-text="obj.displayText"></checkbox>
-                <object-select ng-model="dvm.property[dvm.prefixes.rdfs + 'domain']" display-text="'Domain'"
-                               muted-text="'(Optional)'" select-list="dvm.os.listItem.classes.iris"></object-select>
-                <object-select ng-if="dvm.om.isObjectProperty(dvm.property)" class="range-object" ng-model="dvm.property[dvm.prefixes.rdfs + 'range']"
-                               display-text="'Range'" muted-text="'(Optional)'" select-list="dvm.os.listItem.classes.iris"></object-select>
-                <object-select ng-if="dvm.om.isDataTypeProperty(dvm.property)" class="range-datatype" ng-model="dvm.property[dvm.prefixes.rdfs + 'range']"
-                               display-text="'Range'" muted-text="'(Optional)'" select-list="dvm.os.listItem.dataPropertyRange"></object-select>
+                <iri-select ng-model="dvm.domains" display-text="'Domain'" muted-text="'(Optional)'" select-list="dvm.os.listItem.classes.iris"></iri-select>
+                <iri-select ng-if="dvm.om.isObjectProperty(dvm.property)" class="range-object" ng-model="dvm.ranges" display-text="'Range'" muted-text="'(Optional)'" select-list="dvm.os.listItem.classes.iris"></iri-select>
+                <iri-select ng-if="dvm.om.isDataTypeProperty(dvm.property)" class="range-datatype" ng-model="dvm.ranges" display-text="'Range'" muted-text="'(Optional)'" select-list="dvm.os.listItem.dataPropertyRange"></iri-select>
                 <super-property-select values="dvm.values" key="dvm.getKey()"></super-property-select>
             </div>
             <div class="btn-container clearfix">

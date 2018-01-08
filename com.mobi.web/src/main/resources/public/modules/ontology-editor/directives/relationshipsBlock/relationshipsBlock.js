@@ -42,7 +42,6 @@
          * @requires ontologyState.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          * @requires prefixes.service:prefixes
-         * @requires responseObj.service:responseObj
          *
          * @description
          * HTML contents in the relationships block with provides the users with a display of SKOS relationships
@@ -52,9 +51,9 @@
          */
         .directive('relationshipsBlock', relationshipsBlock);
 
-        relationshipsBlock.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'prefixes', 'responseObj'];
+        relationshipsBlock.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'prefixes'];
 
-        function relationshipsBlock(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes, responseObj) {
+        function relationshipsBlock(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -66,7 +65,6 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var ro = responseObj;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
@@ -79,7 +77,7 @@
                         dvm.showRemoveOverlay = true;
                     }
                     dvm.updateHierarchy = function(relationship, values) {
-                        dvm.ontoUtils.updateVocabularyHierarchies(ro.getItemIri(relationship), values);
+                        dvm.ontoUtils.updateVocabularyHierarchies(relationship, values);
                     }
                     dvm.removeFromHierarchy = function(axiomObject) {
                         dvm.ontoUtils.removeFromVocabularyHierarchies(dvm.key, axiomObject);

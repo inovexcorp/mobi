@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Relationships Block directive', function() {
-    var $compile, scope, ontologyStateSvc, resObj, prefixes, ontologyManagerSvc, ontoUtils;
+    var $compile, scope, ontologyStateSvc, prefixes, ontologyManagerSvc, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -29,15 +29,13 @@ describe('Relationships Block directive', function() {
         injectShowPropertiesFilter();
         mockOntologyState();
         mockPrefixes();
-        mockResponseObj();
         mockOntologyUtilsManager();
         mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_, _ontologyManagerService_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyManagerService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            resObj = _responseObj_;
             prefixes = _prefixes_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontoUtils = _ontologyUtilsManagerService_;
@@ -61,7 +59,6 @@ describe('Relationships Block directive', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        resObj = null;
         prefixes = null;
         ontologyManagerSvc = null;
         ontoUtils = null;
@@ -175,9 +172,7 @@ describe('Relationships Block directive', function() {
             expect(this.controller.showRemoveOverlay).toBe(true);
         });
         it('updateHierarchy should call proper methods', function() {
-            resObj.getItemIri.and.returnValue('test');
-            this.controller.updateHierarchy({}, []);
-            expect(resObj.getItemIri).toHaveBeenCalledWith({});
+            this.controller.updateHierarchy('test', []);
             expect(ontoUtils.updateVocabularyHierarchies).toHaveBeenCalledWith('test', []);
         });
         it('removeFromHierarchy should call the proper methods', function() {

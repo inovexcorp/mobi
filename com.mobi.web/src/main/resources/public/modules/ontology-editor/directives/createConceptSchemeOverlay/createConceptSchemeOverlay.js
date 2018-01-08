@@ -43,7 +43,9 @@
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
+                    dvm.conceptIRIs = dvm.om.getConceptIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConcepts);
                     dvm.concepts = [];
+                    dvm.selectedConcepts = [];
                     dvm.prefix = dvm.os.getDefaultPrefix();
                     dvm.scheme = {
                         '@id': dvm.prefix,
@@ -67,8 +69,8 @@
                     }
 
                     dvm.create = function() {
-                        if (dvm.concepts.length) {
-                            dvm.scheme[prefixes.skos + 'hasTopConcept'] = dvm.concepts;
+                        if (dvm.selectedConcepts.length) {
+                            dvm.scheme[prefixes.skos + 'hasTopConcept'] = dvm.selectedConcepts;
                         }
                         dvm.ontoUtils.addLanguageToNewEntity(dvm.scheme, dvm.language);
                         // add the entity to the ontology
@@ -79,7 +81,7 @@
                         hierarchy.push({'entityIRI': dvm.scheme['@id']});
                         // dvm.ontoUtils.addConceptScheme(dvm.scheme);
                         // Add top concepts to hierarchy if they exist
-                        _.forEach(dvm.concepts, concept => {
+                        _.forEach(dvm.selectedConcepts, concept => {
                             dvm.os.addEntityToHierarchy(hierarchy, concept['@id'], index, dvm.scheme['@id']);
                         });
                         dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
@@ -92,6 +94,9 @@
                         // hide the overlay
                         dvm.os.showCreateConceptSchemeOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
+                    }
+                    dvm.getConcepts = function(searchText) {
+                        dvm.concepts = dvm.ontoUtils.getSelectList(dvm.conceptIRIs, searchText);
                     }
                 }
             }

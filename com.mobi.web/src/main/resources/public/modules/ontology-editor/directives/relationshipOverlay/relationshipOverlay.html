@@ -27,10 +27,10 @@
             <custom-label>Relationship</custom-label>
             <ui-select ng-model="dvm.relationship" on-select="dvm.values = []" autofocus>
                 <ui-select-match placeholder="Select Relationship">
-                    <span>{{dvm.ro.getItemIri($select.selected)}}</span>
+                    <span>{{$select.selected}}</span>
                 </ui-select-match>
-                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="relationship in relationshipList | filter:$select.search | orderBy:'localName' track by relationship.localName">
-                    <div title="{{dvm.ro.getItemIri(relationship)}}" ng-bind-html="relationship.localName | highlight: $select.search | trusted"></div>
+                <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="relationship in relationshipList | filter:$select.search | orderBy:dvm.util.getIRILocalName">
+                    <div title="{{relationship}}" ng-bind-html="dvm.util.getIRILocalName(relationship) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
         </div>
@@ -40,7 +40,7 @@
                 <ui-select-match placeholder="Select Value(s)">
                     <span title="{{$item}}">{{dvm.ontoUtils.getLabelForIRI($item)}}</span>
                 </ui-select-match>
-                <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.array track by iri">
+                <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.array">
                     <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getLabelForIRI(iri) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>

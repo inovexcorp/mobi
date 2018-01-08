@@ -26,11 +26,9 @@ describe('Super Class Select directive', function() {
     beforeEach(function() {
         module('templates');
         module('superClassSelect');
-        mockResponseObj();
         mockOntologyState();
         mockUtil();
         mockOntologyUtilsManager();
-        mockPrefixes();
         injectTrustedFilter();
         injectHighlightFilter();
 
@@ -130,10 +128,10 @@ describe('Super Class Select directive', function() {
             expect(this.controller.values).toEqual([]);
         });
         it('getValues should call the correct method', function() {
-            ontologyStateSvc.listItem = { classes: { iris: [] } };
+            ontologyStateSvc.listItem.classes.iris = { classA: 'ontologyId' };
             ontoUtils.getSelectList.and.returnValue(['list']);
             this.controller.getValues('text');
-            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.iris, 'text', ontoUtils.getDropDownText);
+            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['classA'], 'text', ontoUtils.getDropDownText);
             expect(this.controller.array).toEqual(['list']);
         });
     });
