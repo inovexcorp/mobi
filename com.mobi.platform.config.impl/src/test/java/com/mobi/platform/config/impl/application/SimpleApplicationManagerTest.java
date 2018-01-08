@@ -23,21 +23,19 @@ package com.mobi.platform.config.impl.application;
  * #L%
  */
 
-import com.mobi.platform.config.api.application.ApplicationWrapper;
-import com.mobi.platform.config.api.ontologies.platformconfig.Application;
-import org.junit.Before;
-import org.junit.Test;
-import com.mobi.platform.config.api.application.ApplicationWrapper;
-import com.mobi.platform.config.api.ontologies.platformconfig.Application;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import java.util.Optional;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
+
+import com.mobi.platform.config.api.application.ApplicationWrapper;
+import com.mobi.platform.config.api.ontologies.platformconfig.Application;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.util.Optional;
 
 public class SimpleApplicationManagerTest {
     private SimpleApplicationManager manager;
@@ -45,10 +43,10 @@ public class SimpleApplicationManagerTest {
     private static final String ID = "id";
 
     @Mock
-    ApplicationWrapper applicationWrapper;
+    private ApplicationWrapper applicationWrapper;
 
     @Mock
-    Application application;
+    private Application application;
 
     @Before
     public void setUp() throws Exception {

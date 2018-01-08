@@ -42,35 +42,20 @@ import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
-import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
-import com.mobi.catalog.api.ontologies.mcat.DistributionFactory;
 import com.mobi.catalog.api.ontologies.mcat.GraphRevision;
-import com.mobi.catalog.api.ontologies.mcat.GraphRevisionFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
-import com.mobi.catalog.api.ontologies.mcat.RevisionFactory;
 import com.mobi.catalog.api.ontologies.mcat.Tag;
-import com.mobi.catalog.api.ontologies.mcat.TagFactory;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
-import com.mobi.catalog.api.ontologies.mcat.UnversionedRecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.UserBranch;
-import com.mobi.catalog.api.ontologies.mcat.UserBranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Version;
-import com.mobi.catalog.api.ontologies.mcat.VersionFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
@@ -78,26 +63,10 @@ import com.mobi.ontologies.provo.InstantaneousEvent;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DateValueConverter;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
-import com.mobi.rdf.orm.impl.ThingFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.config.RepositoryConfig;
@@ -125,54 +94,50 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class SimpleCatalogManagerTest {
+public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
     private Repository repo;
     private SimpleCatalogManager manager;
-    private ValueFactory vf = SimpleValueFactory.getInstance();
-    private ModelFactory mf = LinkedHashModelFactory.getInstance();
-    private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
-    private CatalogFactory catalogFactory = new CatalogFactory();
-    private RecordFactory recordFactory = new RecordFactory();
-    private UnversionedRecordFactory unversionedRecordFactory = new UnversionedRecordFactory();
-    private VersionedRecordFactory versionedRecordFactory = new VersionedRecordFactory();
-    private VersionedRDFRecordFactory versionedRDFRecordFactory = new VersionedRDFRecordFactory();
-    private DistributionFactory distributionFactory = new DistributionFactory();
-    private BranchFactory branchFactory = new BranchFactory();
-    private InProgressCommitFactory inProgressCommitFactory = new InProgressCommitFactory();
-    private CommitFactory commitFactory = new CommitFactory();
-    private RevisionFactory revisionFactory = new RevisionFactory();
-    private ThingFactory thingFactory = new ThingFactory();
-    private VersionFactory versionFactory = new VersionFactory();
-    private TagFactory tagFactory = new TagFactory();
-    private UserBranchFactory userBranchFactory = new UserBranchFactory();
-    private UserFactory userFactory = new UserFactory();
-    private GraphRevisionFactory graphRevisionFactory = new GraphRevisionFactory();
+    private OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
+    private OrmFactory<Record> recordFactory = getRequiredOrmFactory(Record.class);
+    private OrmFactory<UnversionedRecord> unversionedRecordFactory = getRequiredOrmFactory(UnversionedRecord.class);
+    private OrmFactory<VersionedRecord> versionedRecordFactory = getRequiredOrmFactory(VersionedRecord.class);
+    private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
+    private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
+    private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
+    private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+    private OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
+    private OrmFactory<Version> versionFactory = getRequiredOrmFactory(Version.class);
+    private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
+    private OrmFactory<UserBranch> userBranchFactory = getRequiredOrmFactory(UserBranch.class);
+    private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+    private OrmFactory<GraphRevision> graphRevisionFactory = getRequiredOrmFactory(GraphRevision.class);
 
     private IRI distributedCatalogId;
     private IRI localCatalogId;
-    private final IRI typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
-    private final IRI titleIRI = vf.createIRI(_Thing.title_IRI);
-    private final IRI descriptionIRI = vf.createIRI(_Thing.description_IRI);
-    private final IRI modifiedIRI = vf.createIRI(_Thing.modified_IRI);
-    private final IRI issuedIRI = vf.createIRI(_Thing.issued_IRI);
-    private final IRI EMPTY_IRI = vf.createIRI("http://mobi.com/test#empty");
-    private final IRI NEW_IRI = vf.createIRI("http://mobi.com/test#new");
-    private final IRI USER_IRI = vf.createIRI("http://mobi.com/test#user");
-    private final IRI RECORD_IRI = vf.createIRI("http://mobi.com/test/records#record");
-    private final IRI UNVERSIONED_RECORD_IRI = vf.createIRI("http://mobi.com/test/records#unversioned-record");
-    private final IRI VERSIONED_RECORD_IRI = vf.createIRI("http://mobi.com/test/records#versioned-record");
-    private final IRI VERSIONED_RDF_RECORD_IRI = vf.createIRI("http://mobi.com/test/records#versioned-rdf-record");
-    private final IRI DISTRIBUTION_IRI = vf.createIRI("http://mobi.com/test/distributions#distribution");
-    private final IRI LATEST_VERSION_IRI = vf.createIRI("http://mobi.com/test/versions#latest-version");
-    private final IRI VERSION_IRI = vf.createIRI("http://mobi.com/test/versions#version");
-    private final IRI TAG_IRI = vf.createIRI("http://mobi.com/test/versions#tag");
-    private final IRI LATEST_TAG_IRI = vf.createIRI("http://mobi.com/test/versions#latest-tag");
-    private final IRI MASTER_BRANCH_IRI = vf.createIRI("http://mobi.com/test/branches#master");
-    private final IRI BRANCH_IRI = vf.createIRI("http://mobi.com/test/branches#branch");
-    private final IRI USER_BRANCH_IRI = vf.createIRI("http://mobi.com/test/branches#user-branch");
-    private final IRI COMMIT_IRI = vf.createIRI("http://mobi.com/test/commits#commit");
-    private final IRI IN_PROGRESS_COMMIT_IRI = vf.createIRI("http://mobi.com/test/commits#in-progress-commit");
+    private final IRI typeIRI = VALUE_FACTORY.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
+    private final IRI titleIRI = VALUE_FACTORY.createIRI(_Thing.title_IRI);
+    private final IRI descriptionIRI = VALUE_FACTORY.createIRI(_Thing.description_IRI);
+    private final IRI modifiedIRI = VALUE_FACTORY.createIRI(_Thing.modified_IRI);
+    private final IRI issuedIRI = VALUE_FACTORY.createIRI(_Thing.issued_IRI);
+    private final IRI EMPTY_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test#empty");
+    private final IRI NEW_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test#new");
+    private final IRI USER_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test#user");
+    private final IRI RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#record");
+    private final IRI UNVERSIONED_RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#unversioned-record");
+    private final IRI VERSIONED_RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-record");
+    private final IRI VERSIONED_RDF_RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record");
+    private final IRI DISTRIBUTION_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/distributions#distribution");
+    private final IRI LATEST_VERSION_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#latest-version");
+    private final IRI VERSION_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#version");
+    private final IRI TAG_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#tag");
+    private final IRI LATEST_TAG_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#latest-tag");
+    private final IRI MASTER_BRANCH_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#master");
+    private final IRI BRANCH_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch");
+    private final IRI USER_BRANCH_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#user-branch");
+    private final IRI COMMIT_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commit");
+    private final IRI IN_PROGRESS_COMMIT_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#in-progress-commit");
 
     private static final String COMMITS = "http://mobi.com/test/commits#";
     private static final String ADDITIONS = "https://mobi.com/additions#";
@@ -200,131 +165,12 @@ public class SimpleCatalogManagerTest {
         repo = repositoryWrapper;
         repo.initialize();
 
-        catalogFactory.setModelFactory(mf);
-        catalogFactory.setValueFactory(vf);
-        catalogFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(catalogFactory);
-
-        recordFactory.setModelFactory(mf);
-        recordFactory.setValueFactory(vf);
-        recordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(recordFactory);
-
-        unversionedRecordFactory.setModelFactory(mf);
-        unversionedRecordFactory.setValueFactory(vf);
-        unversionedRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(unversionedRecordFactory);
-
-        versionedRecordFactory.setModelFactory(mf);
-        versionedRecordFactory.setValueFactory(vf);
-        versionedRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(versionedRecordFactory);
-
-        versionedRDFRecordFactory.setModelFactory(mf);
-        versionedRDFRecordFactory.setValueFactory(vf);
-        versionedRDFRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(versionedRDFRecordFactory);
-
-        commitFactory.setModelFactory(mf);
-        commitFactory.setValueFactory(vf);
-        commitFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(commitFactory);
-
-        inProgressCommitFactory.setModelFactory(mf);
-        inProgressCommitFactory.setValueFactory(vf);
-        inProgressCommitFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(inProgressCommitFactory);
-
-        revisionFactory.setModelFactory(mf);
-        revisionFactory.setValueFactory(vf);
-        revisionFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(revisionFactory);
-
-        branchFactory.setModelFactory(mf);
-        branchFactory.setValueFactory(vf);
-        branchFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(branchFactory);
-
-        distributionFactory.setModelFactory(mf);
-        distributionFactory.setValueFactory(vf);
-        distributionFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(distributionFactory);
-
-        versionFactory.setModelFactory(mf);
-        versionFactory.setValueFactory(vf);
-        versionFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(versionFactory);
-
-        tagFactory.setModelFactory(mf);
-        tagFactory.setValueFactory(vf);
-        tagFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(tagFactory);
-
-        userFactory.setModelFactory(mf);
-        userFactory.setValueFactory(vf);
-        userFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(userFactory);
-
-        userBranchFactory.setModelFactory(mf);
-        userBranchFactory.setValueFactory(vf);
-        userBranchFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(userBranchFactory);
-
-        thingFactory.setModelFactory(mf);
-        thingFactory.setValueFactory(vf);
-        thingFactory.setValueConverterRegistry(vcr);
-
-        graphRevisionFactory.setModelFactory(mf);
-        graphRevisionFactory.setValueFactory(vf);
-        graphRevisionFactory.setValueConverterRegistry(vcr);
-
-        vcr.registerValueConverter(catalogFactory);
-        vcr.registerValueConverter(recordFactory);
-        vcr.registerValueConverter(unversionedRecordFactory);
-        vcr.registerValueConverter(versionedRecordFactory);
-        vcr.registerValueConverter(versionedRDFRecordFactory);
-        vcr.registerValueConverter(distributionFactory);
-        vcr.registerValueConverter(branchFactory);
-        vcr.registerValueConverter(inProgressCommitFactory);
-        vcr.registerValueConverter(commitFactory);
-        vcr.registerValueConverter(revisionFactory);
-        vcr.registerValueConverter(versionFactory);
-        vcr.registerValueConverter(tagFactory);
-        vcr.registerValueConverter(thingFactory);
-        vcr.registerValueConverter(userFactory);
-        vcr.registerValueConverter(versionedRDFRecordFactory);
-        vcr.registerValueConverter(userBranchFactory);
-        vcr.registerValueConverter(graphRevisionFactory);
-        vcr.registerValueConverter(thingFactory);
-
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
-        vcr.registerValueConverter(new DateValueConverter());
-
         MockitoAnnotations.initMocks(this);
         manager = new SimpleCatalogManager();
+        injectOrmFactoryReferencesIntoService(manager);
         manager.setRepository(repo);
-        manager.setValueFactory(vf);
-        manager.setModelFactory(mf);
-        manager.setCatalogFactory(catalogFactory);
-        manager.setRecordFactory(recordFactory);
-        manager.setDistributionFactory(distributionFactory);
-        manager.setBranchFactory(branchFactory);
-        manager.setInProgressCommitFactory(inProgressCommitFactory);
-        manager.setCommitFactory(commitFactory);
-        manager.setRevisionFactory(revisionFactory);
-        manager.setVersionedRDFRecordFactory(versionedRDFRecordFactory);
-        manager.setVersionFactory(versionFactory);
-        manager.setTagFactory(tagFactory);
-        manager.setUnversionedRecordFactory(unversionedRecordFactory);
-        manager.setVersionedRecordFactory(versionedRecordFactory);
+        manager.setValueFactory(VALUE_FACTORY);
+        manager.setModelFactory(MODEL_FACTORY);
         manager.setUtils(utilsService);
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
@@ -340,8 +186,8 @@ public class SimpleCatalogManagerTest {
 
         manager.start(props);
 
-        distributedCatalogId = vf.createIRI("http://mobi.com/test/catalogs#catalog-distributed");
-        localCatalogId = vf.createIRI("http://mobi.com/test/catalogs#catalog-local");
+        distributedCatalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-distributed");
+        localCatalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-local");
 
         when(utilsService.getExpectedObject(any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
                 i.getArgumentAt(1, OrmFactory.class).createNew(i.getArgumentAt(0, Resource.class)));
@@ -477,10 +323,10 @@ public class SimpleCatalogManagerTest {
         // then
         verify(utilsService, atLeastOnce()).getRecord(eq(distributedCatalogId), any(Resource.class), eq(recordFactory), any(RepositoryConnection.class));
         assertEquals(RECORD_IRI, resources1.getPage().iterator().next().getResource());
-        assertEquals(vf.createIRI(RECORDS + "quad-versioned-rdf-record"), resources2.getPage().iterator().next().getResource());
+        assertEquals(VALUE_FACTORY.createIRI(RECORDS + "quad-versioned-rdf-record"), resources2.getPage().iterator().next().getResource());
         assertEquals(UNVERSIONED_RECORD_IRI, resources3.getPage().iterator().next().getResource());
         assertEquals(VERSIONED_RECORD_IRI, resources4.getPage().iterator().next().getResource());
-        assertEquals(vf.createIRI(RECORDS + "quad-versioned-rdf-record"), resources5.getPage().iterator().next().getResource());
+        assertEquals(VALUE_FACTORY.createIRI(RECORDS + "quad-versioned-rdf-record"), resources5.getPage().iterator().next().getResource());
         assertEquals(resources6.getPage().iterator().next().getResource().stringValue(), "http://mobi.com/test/records#versioned-record-missing-version");
     }
 
@@ -571,7 +417,7 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetRecordIds() throws Exception {
         Set<Resource> results = manager.getRecordIds(distributedCatalogId);
-        verify(utilsService).validateResource(eq(distributedCatalogId), eq(vf.createIRI(Catalog.TYPE)), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(distributedCatalogId), eq(VALUE_FACTORY.createIRI(Catalog.TYPE)), any(RepositoryConnection.class));
         assertEquals(TOTAL_SIZE, results.size());
         assertTrue(results.contains(RECORD_IRI));
         assertTrue(results.contains(UNVERSIONED_RECORD_IRI));
@@ -585,7 +431,7 @@ public class SimpleCatalogManagerTest {
     public void testAddRecord() throws Exception {
         // Setup:
         Record record = recordFactory.createNew(NEW_IRI);
-        record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
+        record.setProperty(USER_IRI, VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
@@ -598,7 +444,7 @@ public class SimpleCatalogManagerTest {
     public void testAddUnversionedRecord() throws Exception {
         // Setup:
         UnversionedRecord record = unversionedRecordFactory.createNew(NEW_IRI);
-        record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
+        record.setProperty(USER_IRI, VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
@@ -611,7 +457,7 @@ public class SimpleCatalogManagerTest {
     public void testAddVersionedRecord() throws Exception {
         // Setup:
         VersionedRecord record = versionedRecordFactory.createNew(NEW_IRI);
-        record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
+        record.setProperty(USER_IRI, VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
@@ -624,7 +470,7 @@ public class SimpleCatalogManagerTest {
     public void testAddVersionedRDFRecord() throws Exception {
         // Setup:
         VersionedRDFRecord record = versionedRDFRecordFactory.createNew(NEW_IRI);
-        record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
+        record.setProperty(USER_IRI, VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
@@ -653,10 +499,10 @@ public class SimpleCatalogManagerTest {
     public void testUpdateRecord() throws Exception {
         // Setup:
         Record record = recordFactory.createNew(RECORD_IRI);
-        record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
+        record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
 
         manager.updateRecord(distributedCatalogId, record);
-        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(RECORD_IRI), eq(vf.createIRI(Record.TYPE)), any(RepositoryConnection.class));
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(RECORD_IRI), eq(VALUE_FACTORY.createIRI(Record.TYPE)), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
     }
 
@@ -664,10 +510,10 @@ public class SimpleCatalogManagerTest {
     public void testUpdateUnversionedRecord() throws Exception {
         // Setup:
         UnversionedRecord record = unversionedRecordFactory.createNew(UNVERSIONED_RECORD_IRI);
-        record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
+        record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
 
         manager.updateRecord(distributedCatalogId, record);
-        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(vf.createIRI(Record.TYPE)), any(RepositoryConnection.class));
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(VALUE_FACTORY.createIRI(Record.TYPE)), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
     }
 
@@ -675,10 +521,10 @@ public class SimpleCatalogManagerTest {
     public void testUpdateVersionedRecord() throws Exception {
         // Setup:
         VersionedRecord record = versionedRecordFactory.createNew(VERSIONED_RECORD_IRI);
-        record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
+        record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
 
         manager.updateRecord(distributedCatalogId, record);
-        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(vf.createIRI(Record.TYPE)), any(RepositoryConnection.class));
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VALUE_FACTORY.createIRI(Record.TYPE)), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
     }
 
@@ -686,10 +532,10 @@ public class SimpleCatalogManagerTest {
     public void testUpdateVersionedRDFRecord() throws Exception {
         // Setup:
         VersionedRDFRecord record = versionedRDFRecordFactory.createNew(VERSIONED_RDF_RECORD_IRI);
-        record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
+        record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
 
         manager.updateRecord(distributedCatalogId, record);
-        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(vf.createIRI(Record.TYPE)), any(RepositoryConnection.class));
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(VALUE_FACTORY.createIRI(Record.TYPE)), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
     }
 
@@ -900,7 +746,7 @@ public class SimpleCatalogManagerTest {
     public void testUpdateUnversionedDistribution() throws Exception {
         // Setup:
         Distribution dist = distributionFactory.createNew(DISTRIBUTION_IRI);
-        dist.getModel().add(DISTRIBUTION_IRI, titleIRI, vf.createLiteral("New Title"));
+        dist.getModel().add(DISTRIBUTION_IRI, titleIRI, VALUE_FACTORY.createLiteral("New Title"));
 
         manager.updateUnversionedDistribution(distributedCatalogId, UNVERSIONED_RECORD_IRI, dist);
         verify(utilsService).validateUnversionedDistribution(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
@@ -912,7 +758,7 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testRemoveUnversionedDistribution() throws Exception {
         // Setup:
-        IRI distributionIRI = vf.createIRI(UnversionedRecord.unversionedDistribution_IRI);
+        IRI distributionIRI = VALUE_FACTORY.createIRI(UnversionedRecord.unversionedDistribution_IRI);
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(conn.getStatements(UNVERSIONED_RECORD_IRI, distributionIRI, DISTRIBUTION_IRI, UNVERSIONED_RECORD_IRI).hasNext());
 
@@ -1013,7 +859,7 @@ public class SimpleCatalogManagerTest {
     public void testUpdateVersion() throws Exception {
         // Setup:
         Version version = versionFactory.createNew(VERSION_IRI);
-        version.getModel().add(VERSION_IRI, titleIRI, vf.createLiteral("New Title"));
+        version.getModel().add(VERSION_IRI, titleIRI, VALUE_FACTORY.createLiteral("New Title"));
 
         manager.updateVersion(distributedCatalogId, VERSIONED_RECORD_IRI, version);
         verify(utilsService).validateVersion(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VERSION_IRI), any(RepositoryConnection.class));
@@ -1024,7 +870,7 @@ public class SimpleCatalogManagerTest {
     public void testUpdateTag() throws Exception {
         // Setup:
         Tag tag = tagFactory.createNew(TAG_IRI);
-        tag.getModel().add(TAG_IRI, titleIRI, vf.createLiteral("New Title"));
+        tag.getModel().add(TAG_IRI, titleIRI, VALUE_FACTORY.createLiteral("New Title"));
 
         manager.updateVersion(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, tag);
         verify(utilsService).validateVersion(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(TAG_IRI), any(RepositoryConnection.class));
@@ -1036,8 +882,8 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testRemoveVersion() throws Exception {
         // Setup:
-        IRI versionIRI = vf.createIRI(VersionedRecord.version_IRI);
-        IRI latestIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
+        IRI versionIRI = VALUE_FACTORY.createIRI(VersionedRecord.version_IRI);
+        IRI latestIRI = VALUE_FACTORY.createIRI(VersionedRecord.latestVersion_IRI);
         Version version = versionFactory.createNew(LATEST_VERSION_IRI);
         version.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(DISTRIBUTION_IRI)));
         doReturn(version).when(utilsService).getVersion(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(LATEST_VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
@@ -1209,7 +1055,7 @@ public class SimpleCatalogManagerTest {
     public void testUpdateVersionedDistribution() throws Exception {
         // Setup:
         Distribution dist = distributionFactory.createNew(DISTRIBUTION_IRI);
-        dist.getModel().add(DISTRIBUTION_IRI, titleIRI, vf.createLiteral("New Title"));
+        dist.getModel().add(DISTRIBUTION_IRI, titleIRI, VALUE_FACTORY.createLiteral("New Title"));
 
         manager.updateVersionedDistribution(distributedCatalogId, VERSIONED_RECORD_IRI, VERSION_IRI, dist);
         verify(utilsService).validateVersionedDistribution(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VERSION_IRI), eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
@@ -1221,7 +1067,7 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testRemoveVersionedDistribution() throws Exception {
         // Setup:
-        IRI distributionIRI = vf.createIRI(Version.versionedDistribution_IRI);
+        IRI distributionIRI = VALUE_FACTORY.createIRI(Version.versionedDistribution_IRI);
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(conn.getStatements(VERSION_IRI, distributionIRI, DISTRIBUTION_IRI, VERSION_IRI).hasNext());
 
@@ -1332,7 +1178,7 @@ public class SimpleCatalogManagerTest {
     public void testUpdateBranch() throws Exception {
         // Setup:
         Branch branch = branchFactory.createNew(BRANCH_IRI);
-        branch.getModel().add(BRANCH_IRI, titleIRI, vf.createLiteral("New Title"));
+        branch.getModel().add(BRANCH_IRI, titleIRI, VALUE_FACTORY.createLiteral("New Title"));
 
         manager.updateBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, branch);
         verify(utilsService).validateBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), any(RepositoryConnection.class));
@@ -1343,7 +1189,7 @@ public class SimpleCatalogManagerTest {
     public void testUpdateUserBranch() throws Exception {
         // Setup:
         UserBranch branch = userBranchFactory.createNew(USER_BRANCH_IRI);
-        branch.getModel().add(USER_BRANCH_IRI, titleIRI, vf.createLiteral("New Title"));
+        branch.getModel().add(USER_BRANCH_IRI, titleIRI, VALUE_FACTORY.createLiteral("New Title"));
 
         manager.updateBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, branch);
         verify(utilsService).validateBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(USER_BRANCH_IRI), any(RepositoryConnection.class));
@@ -1382,13 +1228,13 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testRemoveBranch() throws Exception {
         // Setup:
-        Resource commitIdToRemove = vf.createIRI(COMMITS + "conflict2");
-        IRI additionsToRemove = vf.createIRI(ADDITIONS + "conflict2");
-        IRI deletionsToRemove = vf.createIRI(DELETIONS + "conflict2");
-        Resource revisionToRemove = vf.createIRI(REVISIONS + "conflict2");
-        Resource commitIdToKeep = vf.createIRI(COMMITS + "conflict0");
-        Resource additionsToKeep = vf.createIRI(ADDITIONS + "conflict0");
-        Resource deletionsToKeep = vf.createIRI(DELETIONS + "conflict0");
+        Resource commitIdToRemove = VALUE_FACTORY.createIRI(COMMITS + "conflict2");
+        IRI additionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "conflict2");
+        IRI deletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "conflict2");
+        Resource revisionToRemove = VALUE_FACTORY.createIRI(REVISIONS + "conflict2");
+        Resource commitIdToKeep = VALUE_FACTORY.createIRI(COMMITS + "conflict0");
+        Resource additionsToKeep = VALUE_FACTORY.createIRI(ADDITIONS + "conflict0");
+        Resource deletionsToKeep = VALUE_FACTORY.createIRI(DELETIONS + "conflict0");
 
         Branch branch = branchFactory.createNew(BRANCH_IRI);
         branch.setHead(commitFactory.createNew(commitIdToRemove));
@@ -1401,9 +1247,9 @@ public class SimpleCatalogManagerTest {
         revision.setDeletions(deletionsToRemove);
         doReturn(revision).when(utilsService).getRevision(eq(commitIdToRemove), any(RepositoryConnection.class));
 
-        IRI headIRI = vf.createIRI(Branch.head_IRI);
-        IRI versionIRI = vf.createIRI(VersionedRecord.version_IRI);
-        IRI branchIRI = vf.createIRI(VersionedRDFRecord.branch_IRI);
+        IRI headIRI = VALUE_FACTORY.createIRI(Branch.head_IRI);
+        IRI versionIRI = VALUE_FACTORY.createIRI(VersionedRecord.version_IRI);
+        IRI branchIRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
             assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, versionIRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
@@ -1430,16 +1276,16 @@ public class SimpleCatalogManagerTest {
     public void testRemoveBranchWithQuads() throws Exception {
         // TODO: This does not test if a chain of commits is properly removed. Requires real utilsService.
         // Setup:
-        IRI record = vf.createIRI(RECORDS + "quad-versioned-rdf-record");
-        IRI branchToRemove = vf.createIRI(BRANCHES + "quad-branch");
-        Resource commit0 = vf.createIRI(COMMITS + "quad-test0");
-        Resource commit1 = vf.createIRI(COMMITS + "quad-test1");
-        Resource commit2 = vf.createIRI(COMMITS + "quad-test2");
-        IRI additionsToRemove = vf.createIRI(ADDITIONS + "quad-test2");
-        IRI deletionsToRemove = vf.createIRI(DELETIONS + "quad-test2");
-        IRI graphAdditionsToRemove = vf.createIRI(ADDITIONS + "quad-test2%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1");
-        IRI graphDeletionsToRemove = vf.createIRI(DELETIONS + "quad-test2%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1");
-        Resource revisionToRemove = vf.createIRI(REVISIONS + "quad-test2");
+        IRI record = VALUE_FACTORY.createIRI(RECORDS + "quad-versioned-rdf-record");
+        IRI branchToRemove = VALUE_FACTORY.createIRI(BRANCHES + "quad-branch");
+        Resource commit0 = VALUE_FACTORY.createIRI(COMMITS + "quad-test0");
+        Resource commit1 = VALUE_FACTORY.createIRI(COMMITS + "quad-test1");
+        Resource commit2 = VALUE_FACTORY.createIRI(COMMITS + "quad-test2");
+        IRI additionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "quad-test2");
+        IRI deletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "quad-test2");
+        IRI graphAdditionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "quad-test2%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1");
+        IRI graphDeletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "quad-test2%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1");
+        Resource revisionToRemove = VALUE_FACTORY.createIRI(REVISIONS + "quad-test2");
 
         Branch branch = branchFactory.createNew(branchToRemove);
         branch.setHead(commitFactory.createNew(commit2));
@@ -1448,8 +1294,8 @@ public class SimpleCatalogManagerTest {
         doReturn(Stream.of(commit2, commit1, commit0).collect(Collectors.toList()))
                 .when(utilsService).getCommitChain(eq(commit2), eq(false), any(RepositoryConnection.class));
 
-        GraphRevision graphRevision = graphRevisionFactory.createNew(vf.createBNode());
-        graphRevision.setRevisionedGraph(vf.createIRI(GRAPHS + "quad-graph1"));
+        GraphRevision graphRevision = graphRevisionFactory.createNew(VALUE_FACTORY.createBNode());
+        graphRevision.setRevisionedGraph(VALUE_FACTORY.createIRI(GRAPHS + "quad-graph1"));
         graphRevision.setAdditions(graphAdditionsToRemove);
         graphRevision.setDeletions(graphDeletionsToRemove);
 
@@ -1463,8 +1309,8 @@ public class SimpleCatalogManagerTest {
 
         doReturn(revision).when(utilsService).getRevision(eq(commit2), any(RepositoryConnection.class));
 
-        IRI headIRI = vf.createIRI(Branch.head_IRI);
-        IRI branchIRI = vf.createIRI(VersionedRDFRecord.branch_IRI);
+        IRI headIRI = VALUE_FACTORY.createIRI(Branch.head_IRI);
+        IRI branchIRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(conn.getStatements(record, branchIRI, branchToRemove, record).hasNext());
             // Remove the head statement so that commit logic works
@@ -1488,7 +1334,7 @@ public class SimpleCatalogManagerTest {
         // Setup:
         Branch branch = branchFactory.createNew(BRANCH_IRI);
         doReturn(branch).when(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        IRI branchIRI = vf.createIRI(VersionedRDFRecord.branch_IRI);
+        IRI branchIRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
 
@@ -1583,18 +1429,18 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testCreateCommit() throws Exception {
         // Setup:
-        IRI provGenerated = vf.createIRI(Activity.generated_IRI);
-        IRI provAtTime = vf.createIRI(InstantaneousEvent.atTime_IRI);
-        IRI provWasAssociatedWith = vf.createIRI(Activity.wasAssociatedWith_IRI);
-        IRI revisionId = vf.createIRI("http://mobi.com/revisions#test");
-        Resource generation = vf.createIRI("http://mobi.com/test");
-        Resource generation2 = vf.createIRI("http://mobi.com/test2");
+        IRI provGenerated = VALUE_FACTORY.createIRI(Activity.generated_IRI);
+        IRI provAtTime = VALUE_FACTORY.createIRI(InstantaneousEvent.atTime_IRI);
+        IRI provWasAssociatedWith = VALUE_FACTORY.createIRI(Activity.wasAssociatedWith_IRI);
+        IRI revisionId = VALUE_FACTORY.createIRI("http://mobi.com/revisions#test");
+        Resource generation = VALUE_FACTORY.createIRI("http://mobi.com/test");
+        Resource generation2 = VALUE_FACTORY.createIRI("http://mobi.com/test2");
         Commit base = commitFactory.createNew(COMMIT_IRI);
         base.setProperty(generation, provGenerated);
         Commit auxiliary = commitFactory.createNew(COMMIT_IRI);
         auxiliary.setProperty(generation2, provGenerated);
         InProgressCommit inProgressCommit = inProgressCommitFactory.createNew(IN_PROGRESS_COMMIT_IRI);
-        inProgressCommit.setProperty(vf.createIRI("http://mobi.com/user"), provWasAssociatedWith);
+        inProgressCommit.setProperty(VALUE_FACTORY.createIRI("http://mobi.com/user"), provWasAssociatedWith);
         inProgressCommit.setProperty(revisionId, provGenerated);
         Revision revision = revisionFactory.createNew(revisionId);
         inProgressCommit.getModel().addAll(revision.getModel());
@@ -1632,10 +1478,10 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testCreateInProgressCommit() throws Exception {
         // Setup:
-        IRI provWasDerivedFrom = vf.createIRI(Entity.wasDerivedFrom_IRI);
-        IRI provGenerated = vf.createIRI(Activity.generated_IRI);
-        IRI provWasAssociatedWith = vf.createIRI(Activity.wasAssociatedWith_IRI);
-        IRI provWasInformedBy = vf.createIRI(Activity.wasInformedBy_IRI);
+        IRI provWasDerivedFrom = VALUE_FACTORY.createIRI(Entity.wasDerivedFrom_IRI);
+        IRI provGenerated = VALUE_FACTORY.createIRI(Activity.generated_IRI);
+        IRI provWasAssociatedWith = VALUE_FACTORY.createIRI(Activity.wasAssociatedWith_IRI);
+        IRI provWasInformedBy = VALUE_FACTORY.createIRI(Activity.wasInformedBy_IRI);
         User user = userFactory.createNew(USER_IRI);
 
         InProgressCommit result = manager.createInProgressCommit(user);
@@ -1663,8 +1509,8 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testUpdateInProgressCommit() throws Exception {
         // Setup:
-        Model additions = mf.createModel();
-        Model deletions = mf.createModel();
+        Model additions = MODEL_FACTORY.createModel();
+        Model deletions = MODEL_FACTORY.createModel();
 
         manager.updateInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, IN_PROGRESS_COMMIT_IRI, additions, deletions);
         verify(utilsService).validateInProgressCommit(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(IN_PROGRESS_COMMIT_IRI), any(RepositoryConnection.class));
@@ -1677,8 +1523,8 @@ public class SimpleCatalogManagerTest {
     public void testUpdateInProgressCommitWithUser() throws Exception {
         // Setup:
         User user = userFactory.createNew(USER_IRI);
-        Model additions = mf.createModel();
-        Model deletions = mf.createModel();
+        Model additions = MODEL_FACTORY.createModel();
+        Model deletions = MODEL_FACTORY.createModel();
         InProgressCommit commit = inProgressCommitFactory.createNew(IN_PROGRESS_COMMIT_IRI);
         doReturn(commit).when(utilsService).getInProgressCommit(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
 
@@ -1695,7 +1541,7 @@ public class SimpleCatalogManagerTest {
         // Setup:
         User user = userFactory.createNew(USER_IRI);
         InProgressCommit commit = inProgressCommitFactory.createNew(NEW_IRI);
-        commit.setProperty(user.getResource(), vf.createIRI(Activity.wasAssociatedWith_IRI));
+        commit.setProperty(user.getResource(), VALUE_FACTORY.createIRI(Activity.wasAssociatedWith_IRI));
         doReturn(Optional.empty()).when(utilsService).getInProgressCommitIRI(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
 
         manager.addInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, commit);
@@ -1721,7 +1567,7 @@ public class SimpleCatalogManagerTest {
     public void testAddInProgressCommitWhenYouAlreadyHaveOne() {
         // Setup:
         InProgressCommit commit = inProgressCommitFactory.createNew(NEW_IRI);
-        commit.setProperty(USER_IRI, vf.createIRI(Activity.wasAssociatedWith_IRI));
+        commit.setProperty(USER_IRI, VALUE_FACTORY.createIRI(Activity.wasAssociatedWith_IRI));
         doReturn(Optional.of(NEW_IRI)).when(utilsService).getInProgressCommitIRI(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("User " + USER_IRI + " already has an InProgressCommit for Record " + VERSIONED_RDF_RECORD_IRI);
@@ -1733,7 +1579,7 @@ public class SimpleCatalogManagerTest {
     @Test(expected = IllegalArgumentException.class)
     public void testAddInProgressCommitWithTakenResource() {
         InProgressCommit commit = inProgressCommitFactory.createNew(IN_PROGRESS_COMMIT_IRI);
-        commit.setProperty(USER_IRI, vf.createIRI(Activity.wasAssociatedWith_IRI));
+        commit.setProperty(USER_IRI, VALUE_FACTORY.createIRI(Activity.wasAssociatedWith_IRI));
         doReturn(Optional.empty()).when(utilsService).getInProgressCommitIRI(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
 
         manager.addInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, commit);
@@ -1746,8 +1592,8 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetCommitThatIsNotTheHead() throws Exception {
         // Setup:
-        Resource headId = vf.createIRI(COMMITS + "test4a");
-        Resource commitId = vf.createIRI(COMMITS + "test0");
+        Resource headId = VALUE_FACTORY.createIRI(COMMITS + "test4a");
+        Resource commitId = VALUE_FACTORY.createIRI(COMMITS + "test0");
         Branch branch = branchFactory.createNew(MASTER_BRANCH_IRI);
         Commit commit = commitFactory.createNew(commitId);
         doReturn(headId).when(utilsService).getHeadCommitIRI(branch);
@@ -1767,7 +1613,7 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetCommitThatIsTheHead() throws Exception {
         // Setup:
-        Resource commitId = vf.createIRI(COMMITS + "test4a");
+        Resource commitId = VALUE_FACTORY.createIRI(COMMITS + "test4a");
         Branch branch = branchFactory.createNew(MASTER_BRANCH_IRI);
         Commit commit = commitFactory.createNew(commitId);
         doReturn(commitId).when(utilsService).getHeadCommitIRI(branch);
@@ -1787,7 +1633,7 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetCommitThatDoesNotBelongToBranch() {
         // Setup:
-        Resource headId = vf.createIRI(COMMITS + "test4a");
+        Resource headId = VALUE_FACTORY.createIRI(COMMITS + "test4a");
         Branch branch = branchFactory.createNew(MASTER_BRANCH_IRI);
         doReturn(headId).when(utilsService).getHeadCommitIRI(branch);
         doReturn(branch).when(utilsService).getExpectedObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
@@ -1804,7 +1650,7 @@ public class SimpleCatalogManagerTest {
     @Test
     public void getHeadCommit() throws Exception {
         // Setup:
-        Resource commitId = vf.createIRI(COMMITS + "test4a");
+        Resource commitId = VALUE_FACTORY.createIRI(COMMITS + "test4a");
         Branch branch = branchFactory.createNew(BRANCH_IRI);
         Commit commit = commitFactory.createNew(commitId);
         doReturn(commitId).when(utilsService).getHeadCommitIRI(branch);
@@ -1905,10 +1751,10 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetCommitDifference() throws Exception {
         // Setup:
-        Model addModel = mf.createModel(Collections.singleton(
-                vf.createStatement(vf.createIRI("http://mobi.com/test/add"), titleIRI, vf.createLiteral("Add"))));
-        Model delModel = mf.createModel(Collections.singleton(
-                vf.createStatement(vf.createIRI("http://mobi.com/test/delete"), titleIRI, vf.createLiteral("Delete"))));
+        Model addModel = MODEL_FACTORY.createModel(Collections.singleton(
+                VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/add"), titleIRI, VALUE_FACTORY.createLiteral("Add"))));
+        Model delModel = MODEL_FACTORY.createModel(Collections.singleton(
+                VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/delete"), titleIRI, VALUE_FACTORY.createLiteral("Delete"))));
         Difference expect = new Difference.Builder().additions(addModel).deletions(delModel).build();
         doReturn(expect).when(utilsService).getCommitDifference(eq(COMMIT_IRI), any(RepositoryConnection.class));
 
@@ -1952,8 +1798,8 @@ public class SimpleCatalogManagerTest {
     public void testApplyInProgressCommit() throws Exception {
         // Setup:
         Difference diff = new Difference.Builder().build();
-        Model entity = mf.createModel();
-        Model expected = mf.createModel();
+        Model entity = MODEL_FACTORY.createModel();
+        Model expected = MODEL_FACTORY.createModel();
         doReturn(diff).when(utilsService).getCommitDifference(eq(IN_PROGRESS_COMMIT_IRI), any(RepositoryConnection.class));
         doReturn(expected).when(utilsService).applyDifference(entity, diff);
 
@@ -1969,9 +1815,9 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetCompiledResourceWithUnmergedPast() throws Exception {
         // Setup:
-        Resource commitId = vf.createIRI(COMMITS + "test0");
-        Model expected = mf.createModel();
-        expected.add(vf.createIRI("http://mobi.com/test/ontology"), typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+        Resource commitId = VALUE_FACTORY.createIRI(COMMITS + "test0");
+        Model expected = MODEL_FACTORY.createModel();
+        expected.add(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
         doReturn(expected).when(utilsService).getCompiledResource(eq(commitId), any(RepositoryConnection.class));
 
         Model result = manager.getCompiledResource(commitId);
@@ -1983,9 +1829,9 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetCompiledResourceWithPathAndUnmergedPast() throws Exception {
         // Setup:
-        Resource commitId = vf.createIRI(COMMITS + "test0");
-        Model expected = mf.createModel();
-        expected.add(vf.createIRI("http://mobi.com/test/ontology"), typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+        Resource commitId = VALUE_FACTORY.createIRI(COMMITS + "test0");
+        Model expected = MODEL_FACTORY.createModel();
+        expected.add(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
         doReturn(expected).when(utilsService).getCompiledResource(eq(commitId), any(RepositoryConnection.class));
 
         Model result = manager.getCompiledResource(RECORD_IRI, BRANCH_IRI, commitId);
@@ -1999,12 +1845,12 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetDifference() throws Exception {
         // Setup:
-        Resource sourceId = vf.createIRI(COMMITS + "test4a");
-        Resource targetId = vf.createIRI(COMMITS + "test1");
+        Resource sourceId = VALUE_FACTORY.createIRI(COMMITS + "test4a");
+        Resource targetId = VALUE_FACTORY.createIRI(COMMITS + "test1");
 
         Difference sourceDiff = new Difference.Builder()
-                .additions(mf.createModel())
-                .deletions(mf.createModel())
+                .additions(MODEL_FACTORY.createModel())
+                .deletions(MODEL_FACTORY.createModel())
                 .build();
         doReturn(sourceDiff).when(utilsService).getCommitDifference(eq(Collections.singletonList(sourceId)), any(RepositoryConnection.class));
         doReturn(Stream.of(targetId, sourceId).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(sourceId), any(Boolean.class), any(RepositoryConnection.class));
@@ -2022,8 +1868,8 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetDifferenceDisconnectedNodes() throws Exception {
         // Setup
-        Resource sourceId = vf.createIRI(COMMITS + "test4a");
-        Resource targetId = vf.createIRI(COMMITS + "test1");
+        Resource sourceId = VALUE_FACTORY.createIRI(COMMITS + "test4a");
+        Resource targetId = VALUE_FACTORY.createIRI(COMMITS + "test1");
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("No common parent between Commit " + sourceId + " and " + targetId);
 
@@ -2036,26 +1882,26 @@ public class SimpleCatalogManagerTest {
     public void testGetConflictsClassDeletion() throws Exception {
         // Setup:
         // Class deletion
-        IRI sub = vf.createIRI("http://test.com#sub");
-        Resource leftId = vf.createIRI(COMMITS + "conflict1");
-        Resource rightId = vf.createIRI(COMMITS + "conflict2");
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2");
 
-        Model leftModel = mf.createModel();
-        leftModel.add(sub, typeIRI, vf.createIRI("http://test.com#Type"));
+        Model leftModel = MODEL_FACTORY.createModel();
+        leftModel.add(sub, typeIRI, VALUE_FACTORY.createIRI("http://test.com#Type"));
         Difference leftDiff = new Difference.Builder()
-                .additions(mf.createModel())
+                .additions(MODEL_FACTORY.createModel())
                 .deletions(leftModel)
                 .build();
 
-        Model rightModel = mf.createModel();
-        rightModel.add(sub, typeIRI, vf.createIRI("http://test.com#Type"));
+        Model rightModel = MODEL_FACTORY.createModel();
+        rightModel.add(sub, typeIRI, VALUE_FACTORY.createIRI("http://test.com#Type"));
         Difference rightDiff = new Difference.Builder()
                 .additions(rightModel)
-                .deletions(mf.createModel())
+                .deletions(MODEL_FACTORY.createModel())
                 .build();
 
-        Model originalModel = mf.createModel();
-        originalModel.add(sub, descriptionIRI, vf.createLiteral("Description"));
+        Model originalModel = MODEL_FACTORY.createModel();
+        originalModel.add(sub, descriptionIRI, VALUE_FACTORY.createLiteral("Description"));
         setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
@@ -2085,30 +1931,30 @@ public class SimpleCatalogManagerTest {
     public void testGetConflictsSamePropertyAltered() throws Exception {
         // Setup:
         // Both altered same title
-        IRI sub = vf.createIRI("http://test.com#sub");
-        Resource leftId = vf.createIRI(COMMITS + "conflict1-2");
-        Resource rightId = vf.createIRI(COMMITS + "conflict2-2");
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-2");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-2");
 
-        Model leftAdds = mf.createModel();
-        Model leftDels = mf.createModel();
-        leftAdds.add(sub, titleIRI, vf.createLiteral("Title Left"));
-        leftDels.add(sub, titleIRI, vf.createLiteral("Title"));
+        Model leftAdds = MODEL_FACTORY.createModel();
+        Model leftDels = MODEL_FACTORY.createModel();
+        leftAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Left"));
+        leftDels.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
         Difference leftDiff = new Difference.Builder()
                 .additions(leftAdds)
                 .deletions(leftDels)
                 .build();
 
-        Model rightAdds = mf.createModel();
-        Model rightDels = mf.createModel();
-        rightAdds.add(sub, titleIRI, vf.createLiteral("Title Right"));
-        rightDels.add(sub, titleIRI, vf.createLiteral("Title"));
+        Model rightAdds = MODEL_FACTORY.createModel();
+        Model rightDels = MODEL_FACTORY.createModel();
+        rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Right"));
+        rightDels.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
         Difference rightDiff = new Difference.Builder()
                 .additions(rightAdds)
                 .deletions(rightDels)
                 .build();
 
-        Model originalModel = mf.createModel();
-        originalModel.add(sub, titleIRI, vf.createLiteral("Title"));
+        Model originalModel = MODEL_FACTORY.createModel();
+        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
         setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         doReturn(Collections.singletonList(leftDiff)).when(utilsService).getCommitChain(eq(leftId), eq(false), any(RepositoryConnection.class));
@@ -2141,24 +1987,24 @@ public class SimpleCatalogManagerTest {
     public void testGetConflictsChainAddsAndRemovesStatement() throws Exception {
         // Setup:
         // Second chain has two commits which adds then removes something
-        IRI sub = vf.createIRI("http://test.com#sub");
-        Resource leftId = vf.createIRI(COMMITS + "conflict1-3");
-        Resource rightId = vf.createIRI(COMMITS + "conflict3-3");
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-3");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict3-3");
 
         Difference leftDiff = new Difference.Builder()
-                .additions(mf.createModel())
-                .deletions(mf.createModel())
+                .additions(MODEL_FACTORY.createModel())
+                .deletions(MODEL_FACTORY.createModel())
                 .build();
 
-        Model rightAdds = mf.createModel();
-        rightAdds.add(sub, titleIRI, vf.createLiteral("Title Right"));
+        Model rightAdds = MODEL_FACTORY.createModel();
+        rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Right"));
         Difference rightDiff = new Difference.Builder()
                 .additions(rightAdds)
-                .deletions(mf.createModel())
+                .deletions(MODEL_FACTORY.createModel())
                 .build();
 
-        Model originalModel = mf.createModel();
-        originalModel.add(sub, titleIRI, vf.createLiteral("Title"));
+        Model originalModel = MODEL_FACTORY.createModel();
+        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
         setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
@@ -2175,28 +2021,28 @@ public class SimpleCatalogManagerTest {
     public void testGetConflictsPropertyChangeOnSingleBranch() throws Exception {
         // Setup:
         // Change a property on one branch
-        IRI sub = vf.createIRI("http://test.com#sub");
-        Resource leftId = vf.createIRI(COMMITS + "conflict1-4");
-        Resource rightId = vf.createIRI(COMMITS + "conflict2-4");
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-4");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-4");
 
-        Model leftAdds = mf.createModel();
-        leftAdds.add(sub, descriptionIRI, vf.createLiteral("Description"));
+        Model leftAdds = MODEL_FACTORY.createModel();
+        leftAdds.add(sub, descriptionIRI, VALUE_FACTORY.createLiteral("Description"));
         Difference leftDiff = new Difference.Builder()
                 .additions(leftAdds)
-                .deletions(mf.createModel())
+                .deletions(MODEL_FACTORY.createModel())
                 .build();
 
-        Model rightAdds = mf.createModel();
-        Model rightDels = mf.createModel();
-        rightAdds.add(sub, titleIRI, vf.createLiteral("Title Right"));
-        rightDels.add(sub, titleIRI, vf.createLiteral("Title"));
+        Model rightAdds = MODEL_FACTORY.createModel();
+        Model rightDels = MODEL_FACTORY.createModel();
+        rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Right"));
+        rightDels.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
         Difference rightDiff = new Difference.Builder()
                 .additions(rightAdds)
                 .deletions(rightDels)
                 .build();
 
-        Model originalModel = mf.createModel();
-        originalModel.add(sub, titleIRI, vf.createLiteral("Title"));
+        Model originalModel = MODEL_FACTORY.createModel();
+        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
         setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
@@ -2213,28 +2059,28 @@ public class SimpleCatalogManagerTest {
     public void testGetConflictsOneRemovesOtherAddsToProperty() throws Exception {
         // Setup:
         // One branch removes property while other adds another to it
-        IRI sub = vf.createIRI("http://test.com#sub");
-        Resource leftId = vf.createIRI(COMMITS + "conflict1-5");
-        Resource rightId = vf.createIRI(COMMITS + "conflict2-5");
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-5");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-5");
 
-        Model leftAdds = mf.createModel();
-        leftAdds.add(sub, titleIRI, vf.createLiteral("Title Left"));
+        Model leftAdds = MODEL_FACTORY.createModel();
+        leftAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Left"));
         Difference leftDiff = new Difference.Builder()
                 .additions(leftAdds)
-                .deletions(mf.createModel())
+                .deletions(MODEL_FACTORY.createModel())
                 .build();
 
-        Model rightAdds = mf.createModel();
-        Model rightDels = mf.createModel();
-        rightAdds.add(sub, titleIRI, vf.createLiteral("Title Right"));
-        rightDels.add(sub, titleIRI, vf.createLiteral("Title"));
+        Model rightAdds = MODEL_FACTORY.createModel();
+        Model rightDels = MODEL_FACTORY.createModel();
+        rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Right"));
+        rightDels.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
         Difference rightDiff = new Difference.Builder()
                 .additions(rightAdds)
                 .deletions(rightDels)
                 .build();
 
-        Model originalModel = mf.createModel();
-        originalModel.add(sub, titleIRI, vf.createLiteral("Title"));
+        Model originalModel = MODEL_FACTORY.createModel();
+        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
         setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
@@ -2264,21 +2110,21 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetConflictsWithOnlyOneCommit() throws Exception {
         // Setup:
-        IRI sub = vf.createIRI("http://test.com#sub");
-        Resource leftId = vf.createIRI(COMMITS + "conflict1-4");
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-4");
 
-        Model leftAdds = mf.createModel();
-        leftAdds.add(sub, descriptionIRI, vf.createLiteral("Title Left"));
+        Model leftAdds = MODEL_FACTORY.createModel();
+        leftAdds.add(sub, descriptionIRI, VALUE_FACTORY.createLiteral("Title Left"));
         Difference leftDiff = new Difference.Builder()
                 .additions(leftAdds)
-                .deletions(mf.createModel())
+                .deletions(MODEL_FACTORY.createModel())
                 .build();
 
-        Model rightAdds = mf.createModel();
-        rightAdds.add(sub, titleIRI, vf.createLiteral("Description"));
+        Model rightAdds = MODEL_FACTORY.createModel();
+        rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Description"));
         Difference rightDiff = new Difference.Builder()
                 .additions(rightAdds)
-                .deletions(mf.createModel())
+                .deletions(MODEL_FACTORY.createModel())
                 .build();
 
         setUpConflictTest(leftId, COMMIT_IRI, leftDiff, rightDiff, leftAdds);
@@ -2297,7 +2143,7 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetConflictsDisconnectedNodes() throws Exception {
         // Setup:
-        IRI commitId = vf.createIRI(COMMITS + "new");
+        IRI commitId = VALUE_FACTORY.createIRI(COMMITS + "new");
         doReturn(Collections.singletonList(COMMIT_IRI)).when(utilsService).getCommitChain(eq(COMMIT_IRI), eq(true), any(RepositoryConnection.class));
         doReturn(Collections.singletonList(commitId)).when(utilsService).getCommitChain(eq(commitId), eq(true), any(RepositoryConnection.class));
         thrown.expect(IllegalArgumentException.class);
@@ -2312,13 +2158,13 @@ public class SimpleCatalogManagerTest {
     public void testGetDiff() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Model original = RepositoryResults.asModel(conn.getStatements(null, null, null, vf.createIRI("http://mobi.com/test/diff1")), mf);
-            Model changed = RepositoryResults.asModel(conn.getStatements(null, null, null, vf.createIRI("http://mobi.com/test/diff2")), mf);
-            Model additions = mf.createModel();
-            conn.getStatements(null, null, null, vf.createIRI("http://mobi.com/test/diff/additions"))
+            Model original = RepositoryResults.asModel(conn.getStatements(null, null, null, VALUE_FACTORY.createIRI("http://mobi.com/test/diff1")), MODEL_FACTORY);
+            Model changed = RepositoryResults.asModel(conn.getStatements(null, null, null, VALUE_FACTORY.createIRI("http://mobi.com/test/diff2")), MODEL_FACTORY);
+            Model additions = MODEL_FACTORY.createModel();
+            conn.getStatements(null, null, null, VALUE_FACTORY.createIRI("http://mobi.com/test/diff/additions"))
                     .forEach(additions::add);
-            Model deletions = mf.createModel();
-            conn.getStatements(null, null, null, vf.createIRI("http://mobi.com/test/diff/deletions"))
+            Model deletions = MODEL_FACTORY.createModel();
+            conn.getStatements(null, null, null, VALUE_FACTORY.createIRI("http://mobi.com/test/diff/deletions"))
                     .forEach(deletions::add);
 
             Difference diff = manager.getDiff(original, changed);
@@ -2335,13 +2181,13 @@ public class SimpleCatalogManagerTest {
     public void testGetDiffOppositeOfPrevious() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Model changed = RepositoryResults.asModel(conn.getStatements(null, null, null, vf.createIRI("http://mobi.com/test/diff1")), mf);
-            Model original = RepositoryResults.asModel(conn.getStatements(null, null, null, vf.createIRI("http://mobi.com/test/diff2")), mf);
-            Model deletions = mf.createModel();
-            conn.getStatements(null, null, null, vf.createIRI("http://mobi.com/test/diff/additions"))
+            Model changed = RepositoryResults.asModel(conn.getStatements(null, null, null, VALUE_FACTORY.createIRI("http://mobi.com/test/diff1")), MODEL_FACTORY);
+            Model original = RepositoryResults.asModel(conn.getStatements(null, null, null, VALUE_FACTORY.createIRI("http://mobi.com/test/diff2")), MODEL_FACTORY);
+            Model deletions = MODEL_FACTORY.createModel();
+            conn.getStatements(null, null, null, VALUE_FACTORY.createIRI("http://mobi.com/test/diff/additions"))
                     .forEach(deletions::add);
-            Model additions = mf.createModel();
-            conn.getStatements(null, null, null, vf.createIRI("http://mobi.com/test/diff/deletions"))
+            Model additions = MODEL_FACTORY.createModel();
+            conn.getStatements(null, null, null, VALUE_FACTORY.createIRI("http://mobi.com/test/diff/deletions"))
                     .forEach(additions::add);
 
             Difference diff = manager.getDiff(original, changed);
@@ -2358,7 +2204,7 @@ public class SimpleCatalogManagerTest {
     public void testGetDiffOfSameModel() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Model original = RepositoryResults.asModel(conn.getStatements(null, null, null, vf.createIRI("http://mobi.com/test/diff2")), mf);
+            Model original = RepositoryResults.asModel(conn.getStatements(null, null, null, VALUE_FACTORY.createIRI("http://mobi.com/test/diff2")), MODEL_FACTORY);
 
             Difference diff = manager.getDiff(original, original);
             assertEquals(0, diff.getAdditions().size());
@@ -2376,7 +2222,7 @@ public class SimpleCatalogManagerTest {
             } else if (commits.get(0).equals(leftId)) {
                 return leftDiff;
             } else {
-                return mf.createModel();
+                return MODEL_FACTORY.createModel();
             }
         }).when(utilsService).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
         doReturn(originalModel).when(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));

@@ -96,6 +96,11 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>rdf-orm-test</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
