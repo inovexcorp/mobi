@@ -294,12 +294,12 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>semantic.translator.api</artifactId>
+            <artifactId>document.translator.api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>semantic.translator.json</artifactId>
+            <artifactId>document.translator.json</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
