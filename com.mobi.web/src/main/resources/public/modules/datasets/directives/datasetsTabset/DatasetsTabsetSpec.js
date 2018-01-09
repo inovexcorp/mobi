@@ -83,6 +83,20 @@ describe('Datasets Tabset directive', function() {
             scope.$digest();
             expect(this.element.find('new-dataset-overlay').length).toBe(1);
         });
+        it('depending on whether a dataset is being edited', function() {
+            expect(this.element.find('edit-dataset-overlay').length).toBe(0);
+
+            datasetStateSvc.showEditOverlay = true;
+            scope.$digest();
+            expect(this.element.find('edit-dataset-overlay').length).toBe(1);
+        });
+        it('depending on whether data is being uploaded to a dataset', function() {
+            expect(this.element.find('upload-data-overlay').length).toBe(0);
+
+            datasetStateSvc.showUploadOverlay = true;
+            scope.$digest();
+            expect(this.element.find('upload-data-overlay').length).toBe(1);
+        });
     });
     it('should set the correct state when the new dataset button is clicked', function() {
         var button = angular.element(this.element.querySelectorAll('.actions button')[0]);

@@ -40,14 +40,17 @@
          *
          * @description
          * `spinner` is a directive that creates a spinning icon with a transparent background that fills
-         * the containing the element.
+         * the containing the element. Spinner size is controller by the scope variable `small`.
          */
         .directive('spinner', spinner);
 
         function spinner() {
             return {
                 restrict: 'E',
-                template: '<div class="spinner"><div class="icon-wrapper"><i class="fa fa-4x fa-spin fa-spinner"></i></div></div>'
+                scope: {
+                    small: '<?'
+                },
+                template: '<div class="spinner"><div class="icon-wrapper"><i class="fa fa-spin fa-spinner" ng-class="{\'fa-4x\': !small}"></i></div></div>'
             };
         }
 })();
