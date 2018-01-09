@@ -122,6 +122,29 @@
             self.openedDatasetId = '';
 
             /**
+             * @ngdoc property
+             * @name showNewOverlay
+             * @propertyOf datasetState.service:datasetStateService
+             * @type {boolean}
+             *
+             * @description
+             * `showNewOverlay` determines whether or not the
+             * {@link newDatasetOverlay.directive:newDatasetOverlay newDatasetOverlay} should be shown.
+             */
+            self.showNewOverlay = false;
+            /**
+             * @ngdoc property
+             * @name showEditOverlay
+             * @propertyOf datasetState.service:datasetStateService
+             * @type {boolean}
+             *
+             * @description
+             * `showEditOverlay` determines whether or not the
+             * {@link editDatasetOverlay.directive:editDatasetOverlay editDatasetOverlay} should be shown.
+             */
+            self.showEditOverlay = false;
+
+            /**
              * @ngdoc method
              * @name reset
              * @methodOf datasetState.service:datasetStateService
