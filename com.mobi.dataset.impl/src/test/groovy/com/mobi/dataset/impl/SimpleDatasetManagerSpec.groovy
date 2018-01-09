@@ -22,23 +22,23 @@
  */
 package com.mobi.dataset.impl
 
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService
+
 import com.mobi.catalog.api.CatalogManager
 import com.mobi.catalog.api.PaginatedSearchResults
 import com.mobi.dataset.api.builder.DatasetRecordConfig
 import com.mobi.dataset.api.builder.OntologyIdentifier
 import com.mobi.dataset.ontology.dataset.Dataset
-import com.mobi.dataset.ontology.dataset.DatasetFactory
 import com.mobi.dataset.ontology.dataset.DatasetRecord
 import com.mobi.dataset.ontology.dataset.DatasetRecordFactory
 import com.mobi.dataset.pagination.DatasetPaginatedSearchParams
 import com.mobi.ontologies.rdfs.Resource
 import com.mobi.rdf.api.IRI
 import com.mobi.rdf.api.Model
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
 import com.mobi.rdf.core.utils.Values
-import com.mobi.rdf.orm.conversion.impl.*
-import com.mobi.rdf.orm.impl.ThingFactory
 import com.mobi.repository.api.Repository
 import com.mobi.repository.api.RepositoryConnection
 import com.mobi.repository.api.RepositoryManager
@@ -57,12 +57,10 @@ class SimpleDatasetManagerSpec extends Specification {
 
     // Services
     @Shared
-    vf = SimpleValueFactory.getInstance()
-    def mf = LinkedHashModelFactory.getInstance()
-    def dsFactory = new DatasetFactory()
-    def dsRecFactory = new DatasetRecordFactory()
-    def thingFactory = new ThingFactory()
-    def vcr = new DefaultValueConverterRegistry()
+    def vf = getValueFactory()
+    def mf = getModelFactory()
+    def dsFactory = getRequiredOrmFactory(Dataset.class)
+    def dsRecFactory = getRequiredOrmFactory(DatasetRecord.class)
 
     // Mocks
     def catalogManagerMock = Mock(CatalogManager)
@@ -172,36 +170,12 @@ class SimpleDatasetManagerSpec extends Specification {
         repos << [ "system": systemRepo ]
         repos << [ "test": testRepo ]
 
-        dsFactory.setValueFactory(vf)
-        dsFactory.setModelFactory(mf)
-        dsFactory.setValueConverterRegistry(vcr)
-        dsRecFactory.setValueFactory(vf)
-        dsRecFactory.setModelFactory(mf)
-        dsRecFactory.setValueConverterRegistry(vcr)
-        thingFactory.setModelFactory(mf)
-        thingFactory.setValueFactory(vf)
-        thingFactory.setValueConverterRegistry(vcr)
-
-        vcr.registerValueConverter(dsFactory)
-        vcr.registerValueConverter(dsRecFactory)
-        vcr.registerValueConverter(thingFactory)
-        vcr.registerValueConverter(new ResourceValueConverter())
-        vcr.registerValueConverter(new IRIValueConverter())
-        vcr.registerValueConverter(new DoubleValueConverter())
-        vcr.registerValueConverter(new IntegerValueConverter())
-        vcr.registerValueConverter(new FloatValueConverter())
-        vcr.registerValueConverter(new ShortValueConverter())
-        vcr.registerValueConverter(new StringValueConverter())
-        vcr.registerValueConverter(new ValueValueConverter())
-        vcr.registerValueConverter(new LiteralValueConverter())
-
         datasetIRI = datasetsInFile[1]
         dataset = dsFactory.createNew(datasetIRI)
         record = dsRecFactory.createNew(recordIRI)
         
         // Set Services
-        service.setDatasetRecordFactory(dsRecFactory)
-        service.setDatasetFactory(dsFactory)
+        injectOrmFactoryReferencesIntoService(service)
 
         service.setCatalogManager(catalogManagerMock)
         service.setRepository(repositoryMock)

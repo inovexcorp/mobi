@@ -38,37 +38,19 @@ import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.core.utils.Values;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
@@ -88,23 +70,18 @@ import java.io.InputStream;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class OntologyRecordVersioningServiceTest {
+public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
     private Repository repo;
     private OntologyRecordVersioningService service;
-    private ValueFactory vf = SimpleValueFactory.getInstance();
-    private ModelFactory mf = LinkedHashModelFactory.getInstance();
-    private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
-    private UserFactory userFactory = new UserFactory();
-    private OntologyRecordFactory ontologyRecordFactory = new OntologyRecordFactory();
-    private BranchFactory branchFactory = new BranchFactory();
-    private CommitFactory commitFactory = new CommitFactory();
-    private InProgressCommitFactory inProgressCommitFactory = new InProgressCommitFactory();
+    private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
+    private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
 
-    private final IRI originalIRI = vf.createIRI("http://test.com/ontology");
-    private final IRI newIRI = vf.createIRI("http://test.com/ontology/new");
-    private final IRI usedIRI = vf.createIRI("http://test.com/ontology/used");
-    private final IRI typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
-    private final IRI ontologyIRI = vf.createIRI(OWL.ONTOLOGY.stringValue());
+    private final IRI originalIRI = VALUE_FACTORY.createIRI("http://test.com/ontology");
+    private final IRI newIRI = VALUE_FACTORY.createIRI("http://test.com/ontology/new");
+    private final IRI usedIRI = VALUE_FACTORY.createIRI("http://test.com/ontology/used");
+    private final IRI typeIRI = VALUE_FACTORY.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
+    private final IRI ontologyIRI = VALUE_FACTORY.createIRI(OWL.ONTOLOGY.stringValue());
 
     private User user;
     private OntologyRecord record;
@@ -135,56 +112,23 @@ public class OntologyRecordVersioningServiceTest {
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
-        userFactory.setModelFactory(mf);
-        userFactory.setValueFactory(vf);
-        userFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(userFactory);
-
-        ontologyRecordFactory.setModelFactory(mf);
-        ontologyRecordFactory.setValueFactory(vf);
-        ontologyRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(ontologyRecordFactory);
-
-        branchFactory.setModelFactory(mf);
-        branchFactory.setValueFactory(vf);
-        branchFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(branchFactory);
-
-        commitFactory.setModelFactory(mf);
-        commitFactory.setValueFactory(vf);
-        commitFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(commitFactory);
-
-        inProgressCommitFactory.setModelFactory(mf);
-        inProgressCommitFactory.setValueFactory(vf);
-        inProgressCommitFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(inProgressCommitFactory);
-
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
-
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream testData = getClass().getResourceAsStream("/testData.trig");
             conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
         }
 
-        user = userFactory.createNew(vf.createIRI("http://mobi.com/test/users#user"));
-        inProgressCommit = inProgressCommitFactory.createNew(vf.createIRI("http://mobi.com/test/commits#in-progress-commit"));
-        commit = commitFactory.createNew(vf.createIRI("http://mobi.com/test/commits#commit"));
-        branch = branchFactory.createNew(vf.createIRI("http://mobi.com/test/branches#branch"));
+        OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+        OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
+        user = userFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/users#user"));
+        inProgressCommit = inProgressCommitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#in-progress-commit"));
+        commit = commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commit"));
+        branch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch"));
         branch.setHead(commit);
-        record = ontologyRecordFactory.createNew(vf.createIRI("http://mobi.com/test/records#ontology-record"));
+        record = ontologyRecordFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#ontology-record"));
         record.setOntologyIRI(originalIRI);
-        additions = Stream.of(vf.createStatement(newIRI, typeIRI, ontologyIRI));
-        additionsUsed = Stream.of(vf.createStatement(usedIRI, typeIRI, ontologyIRI));
-        additionsNoIRI = Stream.of(vf.createStatement(originalIRI, vf.createIRI(_Thing.title_IRI), vf.createLiteral("Title")));
+        additions = Stream.of(VALUE_FACTORY.createStatement(newIRI, typeIRI, ontologyIRI));
+        additionsUsed = Stream.of(VALUE_FACTORY.createStatement(usedIRI, typeIRI, ontologyIRI));
+        additionsNoIRI = Stream.of(VALUE_FACTORY.createStatement(originalIRI, VALUE_FACTORY.createIRI(_Thing.title_IRI), VALUE_FACTORY.createLiteral("Title")));
 
         MockitoAnnotations.initMocks(this);
 
@@ -194,7 +138,7 @@ public class OntologyRecordVersioningServiceTest {
         when(catalogUtils.getAdditions(eq(commit), any(RepositoryConnection.class))).thenReturn(additions);
         when(catalogUtils.getObject(any(com.mobi.rdf.api.Resource.class), eq(ontologyRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
         when(catalogUtils.applyDifference(any(Model.class), any(Difference.class))).thenAnswer(i -> i.getArgumentAt(1, Difference.class).getAdditions());
-        when(catalogUtils.getCompiledResource(any(com.mobi.rdf.api.Resource.class), any(RepositoryConnection.class))).thenReturn(mf.createModel());
+        when(catalogUtils.getCompiledResource(any(com.mobi.rdf.api.Resource.class), any(RepositoryConnection.class))).thenReturn(MODEL_FACTORY.createModel());
 
         when(ontologyManager.ontologyIriExists(usedIRI)).thenReturn(true);
 
@@ -202,15 +146,13 @@ public class OntologyRecordVersioningServiceTest {
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
 
         service = new OntologyRecordVersioningService();
-        service.setOntologyRecordFactory(ontologyRecordFactory);
-        service.setBranchFactory(branchFactory);
+        injectOrmFactoryReferencesIntoService(service);
         service.setCatalogUtils(catalogUtils);
-        service.setCommitFactory(commitFactory);
         service.setCatalogManager(catalogManager);
         service.setOntologyManager(ontologyManager);
         service.setOntologyCache(ontologyCache);
-        service.setMf(mf);
-        service.setVf(vf);
+        service.setMf(MODEL_FACTORY);
+        service.setVf(VALUE_FACTORY);
     }
 
     @Test
@@ -253,7 +195,7 @@ public class OntologyRecordVersioningServiceTest {
     @Test
     public void getBranchHeadCommitNotSetTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertEquals(null, service.getBranchHeadCommit(branchFactory.createNew(vf.createIRI("http://mobi.com/test/branches#new-branch")), conn));
+            assertEquals(null, service.getBranchHeadCommit(branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#new-branch")), conn));
             verify(catalogUtils, times(0)).getObject(commit.getResource(), commitFactory, conn);
         }
     }
@@ -278,7 +220,7 @@ public class OntologyRecordVersioningServiceTest {
     public void addCommitToOtherBranchWithCommitTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Branch newBranch = branchFactory.createNew(vf.createIRI("http://mobi.com/test/branches#new"));
+            Branch newBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#new"));
 
             service.addCommit(newBranch, commit, conn);
             verify(catalogUtils).addCommit(newBranch, commit, conn);
@@ -311,7 +253,7 @@ public class OntologyRecordVersioningServiceTest {
     public void addCommitToMasterWithCommitWithBaseAndNewOntologyIRITest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            commit.setBaseCommit(commitFactory.createNew(vf.createIRI("http://mobi.com/test/commits#new")));
+            commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
 
             service.addCommit(branch, commit, conn);
             verify(catalogUtils).addCommit(branch, commit, conn);
@@ -330,8 +272,8 @@ public class OntologyRecordVersioningServiceTest {
     public void addCommitToMasterOfRecordWithoutIRIWithCommitWithBaseTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            commit.setBaseCommit(commitFactory.createNew(vf.createIRI("http://mobi.com/test/commits#new")));
-            OntologyRecord newRecord = ontologyRecordFactory.createNew(vf.createIRI("http://mobi.com/test/records#new"));
+            commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
+            OntologyRecord newRecord = ontologyRecordFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#new"));
             when(catalogUtils.getObject(any(com.mobi.rdf.api.Resource.class), eq(ontologyRecordFactory), eq(conn))).thenReturn(newRecord);
 
             service.addCommit(branch, commit, conn);
@@ -349,7 +291,7 @@ public class OntologyRecordVersioningServiceTest {
     @Test
     public void addCommitToMasterWithCommitWithBaseAndUsedOntologyIRITest() throws Exception {
         // Setup:
-        commit.setBaseCommit(commitFactory.createNew(vf.createIRI("http://mobi.com/test/commits#new")));
+        commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
         when(catalogUtils.getAdditions(eq(commit), any(RepositoryConnection.class))).thenReturn(additionsUsed);
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Ontology already exists with IRI " + usedIRI);
@@ -372,7 +314,7 @@ public class OntologyRecordVersioningServiceTest {
     public void addCommitToMasterWithCommitWithBaseAndNoIRITest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            commit.setBaseCommit(commitFactory.createNew(vf.createIRI("http://mobi.com/test/commits#new")));
+            commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
             when(catalogUtils.getAdditions(commit, conn)).thenReturn(additionsNoIRI);
 
             service.addCommit(branch, commit, conn);
@@ -393,9 +335,9 @@ public class OntologyRecordVersioningServiceTest {
     public void addCommitToOtherBranchWithChangesTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Branch newBranch = branchFactory.createNew(vf.createIRI("http://mobi.com/test/branches#new"));
-            Model additions = mf.createModel();
-            Model deletions = mf.createModel();
+            Branch newBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#new"));
+            Model additions = MODEL_FACTORY.createModel();
+            Model deletions = MODEL_FACTORY.createModel();
 
             service.addCommit(newBranch, user, "Message", additions, deletions, commit, null, conn);
             verify(catalogManager).createInProgressCommit(user);
@@ -418,8 +360,8 @@ public class OntologyRecordVersioningServiceTest {
     public void addCommitToMasterWithChangesAndNoBaseTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Model additions = mf.createModel();
-            Model deletions = mf.createModel();
+            Model additions = MODEL_FACTORY.createModel();
+            Model deletions = MODEL_FACTORY.createModel();
 
             service.addCommit(branch, user, "Message", additions, deletions, null, null, conn);
             verify(catalogManager).createInProgressCommit(user);
@@ -442,8 +384,8 @@ public class OntologyRecordVersioningServiceTest {
     public void addCommitToMasterWithChangesAndBaseAndNoAuxTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Model additionsModel = mf.createModel(additions.collect(Collectors.toSet()));
-            Model deletions = mf.createModel();
+            Model additionsModel = MODEL_FACTORY.createModel(additions.collect(Collectors.toSet()));
+            Model deletions = MODEL_FACTORY.createModel();
 
             service.addCommit(branch, user, "Message", additionsModel, deletions, commit, null, conn);
             verify(catalogManager).createInProgressCommit(user);
@@ -467,8 +409,8 @@ public class OntologyRecordVersioningServiceTest {
     public void addCommitToMasterWithChangesAndBaseAndAuxTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Model additionsModel = mf.createModel(additions.collect(Collectors.toSet()));
-            Model deletions = mf.createModel();
+            Model additionsModel = MODEL_FACTORY.createModel(additions.collect(Collectors.toSet()));
+            Model deletions = MODEL_FACTORY.createModel();
 
             service.addCommit(branch, user, "Message", additionsModel, deletions, commit, commit, conn);
             verify(catalogManager).createInProgressCommit(user);
@@ -492,10 +434,10 @@ public class OntologyRecordVersioningServiceTest {
     public void addCommitToMasterOfRecordWithoutIRIWithChangesAndBaseTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            OntologyRecord newRecord = ontologyRecordFactory.createNew(vf.createIRI("http://mobi.com/test/records#new"));
+            OntologyRecord newRecord = ontologyRecordFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#new"));
             when(catalogUtils.getObject(any(com.mobi.rdf.api.Resource.class), eq(ontologyRecordFactory), eq(conn))).thenReturn(newRecord);
-            Model additionsModel = mf.createModel(additions.collect(Collectors.toSet()));
-            Model deletions = mf.createModel();
+            Model additionsModel = MODEL_FACTORY.createModel(additions.collect(Collectors.toSet()));
+            Model deletions = MODEL_FACTORY.createModel();
 
             service.addCommit(branch, user, "Message", additionsModel, deletions, commit, null, conn);
             verify(catalogManager).createInProgressCommit(user);
@@ -517,8 +459,8 @@ public class OntologyRecordVersioningServiceTest {
     @Test
     public void addCommitToMasterWithChangesWithBaseAndUsedOntologyIRITest() throws Exception {
         // Setup:
-        Model additionsModel = mf.createModel(additionsUsed.collect(Collectors.toSet()));
-        Model deletions = mf.createModel();
+        Model additionsModel = MODEL_FACTORY.createModel(additionsUsed.collect(Collectors.toSet()));
+        Model deletions = MODEL_FACTORY.createModel();
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Ontology already exists with IRI " + usedIRI);
 
@@ -545,8 +487,8 @@ public class OntologyRecordVersioningServiceTest {
     public void addCommitToMasterWithChangesWithBaseAndNoIRITest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Model additionsModel = mf.createModel(additionsNoIRI.collect(Collectors.toSet()));
-            Model deletions = mf.createModel();
+            Model additionsModel = MODEL_FACTORY.createModel(additionsNoIRI.collect(Collectors.toSet()));
+            Model deletions = MODEL_FACTORY.createModel();
 
             service.addCommit(branch, user, "Message", additionsModel, deletions, commit, null, conn);
             verify(catalogManager).createInProgressCommit(user);

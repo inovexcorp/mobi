@@ -23,6 +23,9 @@ package com.mobi.prov.rest.impl;
  * #L%
  */
 
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -37,28 +40,14 @@ import static org.testng.Assert.fail;
 
 import com.mobi.exception.MobiException;
 import com.mobi.ontologies.provo.Activity;
-import com.mobi.ontologies.provo.ActivityFactory;
-import com.mobi.ontologies.provo.EntityFactory;
+import com.mobi.ontologies.provo.Entity;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ProvenanceService;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.core.utils.Values;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
@@ -101,10 +90,8 @@ public class ProvRestImplTest extends MobiRestTestNg {
     private ProvRestImpl rest;
 
     private ValueFactory vf;
-    private ModelFactory mf;
-    private ValueConverterRegistry vcr;
-    private ActivityFactory activityFactory;
-    private EntityFactory entityFactory;
+    private OrmFactory<Activity> activityFactory;
+    private OrmFactory<Entity> entityFactory;
     private Repository repo;
 
     private String provData;
@@ -128,31 +115,10 @@ public class ProvRestImplTest extends MobiRestTestNg {
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
-        vf = SimpleValueFactory.getInstance();
-        mf = LinkedHashModelFactory.getInstance();
-        vcr = new DefaultValueConverterRegistry();
+        vf = getValueFactory();
 
-        activityFactory = new ActivityFactory();
-        activityFactory.setValueFactory(vf);
-        activityFactory.setModelFactory(mf);
-        activityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(activityFactory);
-
-        entityFactory = new EntityFactory();
-        entityFactory.setValueFactory(vf);
-        entityFactory.setModelFactory(mf);
-        entityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(entityFactory);
-
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
+        activityFactory = getRequiredOrmFactory(Activity.class);
+        entityFactory = getRequiredOrmFactory(Entity.class);
 
         provData = IOUtils.toString(getClass().getResourceAsStream("/prov-data.ttl"));
         activityIRIs = IntStream.range(0, 10)
@@ -187,7 +153,7 @@ public class ProvRestImplTest extends MobiRestTestNg {
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.of(repo));
 
         rest = new ProvRestImpl();
-        rest.setMf(mf);
+        rest.setMf(getModelFactory());
         rest.setVf(vf);
         rest.setProvService(provService);
         rest.setTransformer(transformer);

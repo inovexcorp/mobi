@@ -23,6 +23,11 @@ package com.mobi.catalog.rest.impl;
  * #L%
  */
 
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getOrmFactoryRegistry;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
 import static com.mobi.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -46,65 +51,35 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
 import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
-import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
-import com.mobi.catalog.api.ontologies.mcat.DistributionFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.Tag;
-import com.mobi.catalog.api.ontologies.mcat.TagFactory;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
-import com.mobi.catalog.api.ontologies.mcat.UnversionedRecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.UserBranch;
-import com.mobi.catalog.api.ontologies.mcat.UserBranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Version;
-import com.mobi.catalog.api.ontologies.mcat.VersionFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.etl.api.ontologies.delimited.MappingRecord;
-import com.mobi.etl.api.ontologies.delimited.MappingRecordFactory;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
-import com.mobi.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.prov.api.ontologies.mobiprov.DeleteActivityFactory;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
@@ -137,25 +112,18 @@ import javax.ws.rs.core.Response;
 
 public class CatalogRestImplTest extends MobiRestTestNg {
     private CatalogRestImpl rest;
-    private CatalogFactory catalogFactory;
-    private RecordFactory recordFactory;
-    private UnversionedRecordFactory unversionedRecordFactory;
-    private VersionedRecordFactory versionedRecordFactory;
-    private VersionedRDFRecordFactory versionedRDFRecordFactory;
-    private MappingRecordFactory mappingRecordFactory;
-    private DistributionFactory distributionFactory;
-    private VersionFactory versionFactory;
-    private TagFactory tagFactory;
-    private CommitFactory commitFactory;
-    private InProgressCommitFactory inProgressCommitFactory;
-    private BranchFactory branchFactory;
-    private UserBranchFactory userBranchFactory;
-    private UserFactory userFactory;
-    private CreateActivityFactory createActivityFactory;
-    private DeleteActivityFactory deleteActivityFactory;
     private ValueFactory vf;
     private ModelFactory mf;
-    private ValueConverterRegistry vcr;
+    private OrmFactory<Record> recordFactory;
+    private OrmFactory<UnversionedRecord> unversionedRecordFactory;
+    private OrmFactory<VersionedRecord> versionedRecordFactory;
+    private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory;
+    private OrmFactory<MappingRecord> mappingRecordFactory;
+    private OrmFactory<Distribution> distributionFactory;
+    private OrmFactory<Version> versionFactory;
+    private OrmFactory<Tag> tagFactory;
+    private OrmFactory<Branch> branchFactory;
+    private OrmFactory<UserBranch> userBranchFactory;
     private Catalog localCatalog;
     private Catalog distributedCatalog;
     private Record testRecord;
@@ -192,9 +160,6 @@ public class CatalogRestImplTest extends MobiRestTestNg {
     private static final String CONFLICT_IRI = "http://mobi.com/conflicts/test";
 
     @Mock
-    private OrmFactoryRegistry factoryRegistry;
-
-    @Mock
     private CatalogManager catalogManager;
 
     @Mock
@@ -223,115 +188,25 @@ public class CatalogRestImplTest extends MobiRestTestNg {
 
     @Override
     protected Application configureApp() throws Exception {
-        vf = SimpleValueFactory.getInstance();
-        mf = LinkedHashModelFactory.getInstance();
-        vcr = new DefaultValueConverterRegistry();
+        vf = getValueFactory();
+        mf = getModelFactory();
 
-        catalogFactory = new CatalogFactory();
-        catalogFactory.setModelFactory(mf);
-        catalogFactory.setValueFactory(vf);
-        catalogFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(catalogFactory);
-
-        recordFactory = new RecordFactory();
-        recordFactory.setModelFactory(mf);
-        recordFactory.setValueFactory(vf);
-        recordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(recordFactory);
-
-        unversionedRecordFactory = new UnversionedRecordFactory();
-        unversionedRecordFactory.setModelFactory(mf);
-        unversionedRecordFactory.setValueFactory(vf);
-        unversionedRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(unversionedRecordFactory);
-
-        versionedRecordFactory = new VersionedRecordFactory();
-        versionedRecordFactory.setModelFactory(mf);
-        versionedRecordFactory.setValueFactory(vf);
-        versionedRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(versionedRecordFactory);
-
-        versionedRDFRecordFactory = new VersionedRDFRecordFactory();
-        versionedRDFRecordFactory.setModelFactory(mf);
-        versionedRDFRecordFactory.setValueFactory(vf);
-        versionedRDFRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(versionedRDFRecordFactory);
-
-        mappingRecordFactory = new MappingRecordFactory();
-        mappingRecordFactory.setModelFactory(mf);
-        mappingRecordFactory.setValueFactory(vf);
-        mappingRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(mappingRecordFactory);
-
-        distributionFactory = new DistributionFactory();
-        distributionFactory.setModelFactory(mf);
-        distributionFactory.setValueFactory(vf);
-        distributionFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(distributionFactory);
-
-        versionFactory = new VersionFactory();
-        versionFactory.setModelFactory(mf);
-        versionFactory.setValueFactory(vf);
-        versionFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(versionFactory);
-
-        tagFactory = new TagFactory();
-        tagFactory.setModelFactory(mf);
-        tagFactory.setValueFactory(vf);
-        tagFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(tagFactory);
-
-        commitFactory = new CommitFactory();
-        commitFactory.setModelFactory(mf);
-        commitFactory.setValueFactory(vf);
-        commitFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(commitFactory);
-
-        inProgressCommitFactory = new InProgressCommitFactory();
-        inProgressCommitFactory.setModelFactory(mf);
-        inProgressCommitFactory.setValueFactory(vf);
-        inProgressCommitFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(inProgressCommitFactory);
-
-        branchFactory = new BranchFactory();
-        branchFactory.setModelFactory(mf);
-        branchFactory.setValueFactory(vf);
-        branchFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(branchFactory);
-
-        userBranchFactory = new UserBranchFactory();
-        userBranchFactory.setModelFactory(mf);
-        userBranchFactory.setValueFactory(vf);
-        userBranchFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(userBranchFactory);
-
-        userFactory = new UserFactory();
-        userFactory.setModelFactory(mf);
-        userFactory.setValueFactory(vf);
-        userFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(userFactory);
-
-        createActivityFactory = new CreateActivityFactory();
-        createActivityFactory.setModelFactory(mf);
-        createActivityFactory.setValueFactory(vf);
-        createActivityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(createActivityFactory);
-
-        deleteActivityFactory = new DeleteActivityFactory();
-        deleteActivityFactory.setModelFactory(mf);
-        deleteActivityFactory.setValueFactory(vf);
-        deleteActivityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(deleteActivityFactory);
-
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
+        OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
+        recordFactory = getRequiredOrmFactory(Record.class);
+        unversionedRecordFactory = getRequiredOrmFactory(UnversionedRecord.class);
+        versionedRecordFactory = getRequiredOrmFactory(VersionedRecord.class);
+        versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
+        mappingRecordFactory = getRequiredOrmFactory(MappingRecord.class);
+        distributionFactory = getRequiredOrmFactory(Distribution.class);
+        versionFactory = getRequiredOrmFactory(Version.class);
+        tagFactory = getRequiredOrmFactory(Tag.class);
+        branchFactory = getRequiredOrmFactory(Branch.class);
+        userBranchFactory = getRequiredOrmFactory(UserBranch.class);
+        OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+        OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
+        OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+        OrmFactory<CreateActivity> createActivityFactory = getRequiredOrmFactory(CreateActivity.class);
+        OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
 
         localCatalog = catalogFactory.createNew(vf.createIRI(LOCAL_IRI));
         distributedCatalog = catalogFactory.createNew(vf.createIRI(DISTRIBUTED_IRI));
@@ -373,23 +248,15 @@ public class CatalogRestImplTest extends MobiRestTestNg {
                 vf.createLiteral("Title"));
 
         MockitoAnnotations.initMocks(this);
-        when(factoryRegistry.getFactoriesOfType(Record.class)).thenReturn(Stream.of(recordFactory, unversionedRecordFactory, versionedRecordFactory, versionedRDFRecordFactory, mappingRecordFactory).collect(Collectors.toList()));
-        when(factoryRegistry.getFactoriesOfType(VersionedRDFRecord.class)).thenReturn(Stream.of(versionedRDFRecordFactory, mappingRecordFactory).collect(Collectors.toList()));
-        when(factoryRegistry.getFactoriesOfType(Version.class)).thenReturn(Stream.of(versionFactory, tagFactory).collect(Collectors.toList()));
-        when(factoryRegistry.getFactoriesOfType(Branch.class)).thenReturn(Stream.of(branchFactory, userBranchFactory).collect(Collectors.toList()));
-        when(factoryRegistry.getFactoryOfType(Record.class)).thenReturn(Optional.of(recordFactory));
-        when(factoryRegistry.getFactoryOfType(Version.class)).thenReturn(Optional.of(versionFactory));
-        when(factoryRegistry.getFactoryOfType(Branch.class)).thenReturn(Optional.of(branchFactory));
         when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
+
         rest = new CatalogRestImpl();
+        injectOrmFactoryReferencesIntoService(rest);
         rest.setVf(vf);
         rest.setEngineManager(engineManager);
         rest.setTransformer(transformer);
         rest.setCatalogManager(catalogManager);
-        rest.setDistributionFactory(distributionFactory);
-        rest.setCommitFactory(commitFactory);
-        rest.setInProgressCommitFactory(inProgressCommitFactory);
-        rest.setFactoryRegistry(factoryRegistry);
+        rest.setFactoryRegistry(getOrmFactoryRegistry());
         rest.setVersioningManager(versioningManager);
         rest.setbNodeService(bNodeService);
         rest.setProvUtils(provUtils);

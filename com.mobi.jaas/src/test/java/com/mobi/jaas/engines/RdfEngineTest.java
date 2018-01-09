@@ -33,34 +33,16 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.GroupConfig;
 import com.mobi.jaas.api.engines.UserConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
-import com.mobi.jaas.api.ontologies.usermanagement.GroupFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
-import com.mobi.jaas.api.ontologies.usermanagement.RoleFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.ontologies.foaf.Agent;
-import com.mobi.ontologies.foaf.AgentFactory;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
-import com.mobi.rdf.orm.impl.ThingFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
@@ -91,17 +73,11 @@ import java.util.stream.Stream;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(RdfEngine.class)
-public class RdfEngineTest {
+public class RdfEngineTest extends OrmEnabledTestCase {
     private Repository repo;
     private RdfEngine engine;
-    private ValueFactory vf = SimpleValueFactory.getInstance();
-    private ModelFactory mf = LinkedHashModelFactory.getInstance();
-    private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
-    private UserFactory userFactory = new UserFactory();
-    private GroupFactory groupFactory = new GroupFactory();
-    private RoleFactory roleFactory = new RoleFactory();
-    private AgentFactory agentFactory = new AgentFactory();
-    private ThingFactory thingFactory = new ThingFactory();
+    private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+    private OrmFactory<Group> groupFactory = getRequiredOrmFactory(Group.class);
 
     private String username = "tester";
     private String userId = "http://mobi.com/users/" + DigestUtils.sha1Hex(username);
@@ -117,78 +93,46 @@ public class RdfEngineTest {
     private Map<String, Object> options = new HashMap<>();
 
     @Mock
-    BundleContext bundleContext;
+    private BundleContext bundleContext;
 
     @Mock
-    Encryption encryption;
+    private Encryption encryption;
 
     @Mock
-    EncryptionSupport encryptionSupport;
+    private EncryptionSupport encryptionSupport;
 
     @Before
     public void setUp() throws Exception {
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
-
-        userFactory.setModelFactory(mf);
-        userFactory.setValueFactory(vf);
-        userFactory.setValueConverterRegistry(vcr);
-        groupFactory.setModelFactory(mf);
-        groupFactory.setValueFactory(vf);
-        groupFactory.setValueConverterRegistry(vcr);
-        roleFactory.setModelFactory(mf);
-        roleFactory.setValueFactory(vf);
-        roleFactory.setValueConverterRegistry(vcr);
-        agentFactory.setModelFactory(mf);
-        agentFactory.setValueFactory(vf);
-        agentFactory.setValueConverterRegistry(vcr);
-        thingFactory.setModelFactory(mf);
-        thingFactory.setValueFactory(vf);
-        thingFactory.setValueConverterRegistry(vcr);
-
-        vcr.registerValueConverter(userFactory);
-        vcr.registerValueConverter(groupFactory);
-        vcr.registerValueConverter(roleFactory);
-        vcr.registerValueConverter(agentFactory);
-        vcr.registerValueConverter(thingFactory);
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
-
+        
         engine = new RdfEngine();
+        injectOrmFactoryReferencesIntoService(engine);
         engine.setRepository(repo);
-        engine.setValueFactory(vf);
-        engine.setModelFactory(mf);
-        engine.setUserFactory(userFactory);
-        engine.setGroupFactory(groupFactory);
-        engine.setRoleFactory(roleFactory);
-        engine.setThingFactory(thingFactory);
+        engine.setValueFactory(VALUE_FACTORY);
+        engine.setModelFactory(MODEL_FACTORY);
 
         if (!setUp) {
-            Role userRole = roleFactory.createNew(vf.createIRI(userRoleId));
-            Role adminRole = roleFactory.createNew(vf.createIRI(adminRoleId));
+            OrmFactory<Role> roleFactory = getRequiredOrmFactory(Role.class);
+
+            Role userRole = roleFactory.createNew(VALUE_FACTORY.createIRI(userRoleId));
+            Role adminRole = roleFactory.createNew(VALUE_FACTORY.createIRI(adminRoleId));
             Set<Role> roles = Stream.of(userRole).collect(Collectors.toSet());
-            User testUser = userFactory.createNew(vf.createIRI(userId));
-            testUser.setPassword(vf.createLiteral(password));
+            User testUser = userFactory.createNew(VALUE_FACTORY.createIRI(userId));
+            testUser.setPassword(VALUE_FACTORY.createLiteral(password));
             testUser.setHasUserRole(roles);
             roles.add(adminRole);
             Set<Agent> members = Stream.of(testUser).collect(Collectors.toSet());
-            Group testGroup1 = groupFactory.createNew(vf.createIRI(groupId1));
-            Group testGroup2 = groupFactory.createNew(vf.createIRI(groupId2));
+            Group testGroup1 = groupFactory.createNew(VALUE_FACTORY.createIRI(groupId1));
+            Group testGroup2 = groupFactory.createNew(VALUE_FACTORY.createIRI(groupId2));
             testGroup1.setHasGroupRole(roles);
-            testGroup2.setHasGroupRole(Collections.singleton(roleFactory.createNew(vf.createIRI(adminRoleId))));
+            testGroup2.setHasGroupRole(Collections.singleton(roleFactory.createNew(VALUE_FACTORY.createIRI(adminRoleId))));
             testGroup1.setMember(members);
             testGroup2.setMember(members);
             RepositoryConnection conn = repo.getConnection();
-            conn.add(testUser.getModel(), vf.createIRI(context));
-            conn.add(testGroup1.getModel(), vf.createIRI(context));
-            conn.add(testGroup2.getModel(), vf.createIRI(context));
+            conn.add(testUser.getModel(), VALUE_FACTORY.createIRI(context));
+            conn.add(testGroup1.getModel(), VALUE_FACTORY.createIRI(context));
+            conn.add(testGroup2.getModel(), VALUE_FACTORY.createIRI(context));
             conn.close();
             setUp = true;
         }
@@ -222,7 +166,7 @@ public class RdfEngineTest {
 
         assertTrue(roleOptional.isPresent());
         Role role = roleOptional.get();
-        assertEquals(role.getResource(), (vf.createIRI(userRoleId)));
+        assertEquals(role.getResource(), (VALUE_FACTORY.createIRI(userRoleId)));
     }
 
     @Test
@@ -258,9 +202,9 @@ public class RdfEngineTest {
 
     @Test
     public void testStoreUser() throws Exception {
-        Resource newUserId = vf.createIRI("http://mobi.com/users/newuser");
+        Resource newUserId = VALUE_FACTORY.createIRI("http://mobi.com/users/newuser");
         User newUser = userFactory.createNew(newUserId);
-        newUser.setUsername(vf.createLiteral("newuser"));
+        newUser.setUsername(VALUE_FACTORY.createLiteral("newuser"));
         engine.storeUser(newUser);
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(newUserId, null, null);
@@ -270,14 +214,14 @@ public class RdfEngineTest {
 
     @Test(expected = MobiException.class)
     public void testStoreUserWithNoUsername() {
-        Resource newUserId = vf.createIRI("http://mobi.com/users/newuser");
+        Resource newUserId = VALUE_FACTORY.createIRI("http://mobi.com/users/newuser");
         User newUser = userFactory.createNew(newUserId);
         engine.storeUser(newUser);
     }
 
     @Test(expected = MobiException.class)
     public void testStoreUserThatAlreadyExists() {
-        User user = userFactory.createNew(vf.createIRI(userId));
+        User user = userFactory.createNew(VALUE_FACTORY.createIRI(userId));
         engine.storeUser(user);
     }
 
@@ -309,24 +253,24 @@ public class RdfEngineTest {
 
     @Test
     public void testUpdateUser() throws Exception {
-        User newUser = userFactory.createNew(vf.createIRI(userId));
-        newUser.setPassword(vf.createLiteral("123"));
-        newUser.setUsername(vf.createLiteral("user"));
+        User newUser = userFactory.createNew(VALUE_FACTORY.createIRI(userId));
+        newUser.setPassword(VALUE_FACTORY.createLiteral("123"));
+        newUser.setUsername(VALUE_FACTORY.createLiteral("user"));
         engine.updateUser(newUser);
-        Model userModel = mf.createModel();
+        Model userModel = MODEL_FACTORY.createModel();
         RepositoryConnection connection = repo.getConnection();
-        RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(userId), null, null);
+        RepositoryResult<Statement> statements = connection.getStatements(VALUE_FACTORY.createIRI(userId), null, null);
         statements.forEach(userModel::add);
         connection.close();
         assertFalse(userModel.isEmpty());
-        User savedUser = userFactory.getExisting(vf.createIRI(userId), userModel).get();
+        User savedUser = userFactory.getExisting(VALUE_FACTORY.createIRI(userId), userModel).get();
         assertTrue(savedUser.getPassword().isPresent() && savedUser.getPassword().get().stringValue().equals("123"));
         assertTrue(savedUser.getUsername().isPresent() && savedUser.getUsername().get().stringValue().equals("user"));
     }
 
     @Test(expected = MobiException.class)
     public void testUpdateUserThatDoesNotExist() {
-        User newUser = userFactory.createNew(vf.createIRI("http://mobi.com/users/error"));
+        User newUser = userFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/users/error"));
         engine.updateUser(newUser);
     }
 
@@ -334,9 +278,9 @@ public class RdfEngineTest {
     public void testDeleteUser() throws Exception {
         engine.deleteUser(username);
         RepositoryConnection connection = repo.getConnection();
-        RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(userId), null, null);
+        RepositoryResult<Statement> statements = connection.getStatements(VALUE_FACTORY.createIRI(userId), null, null);
         assertTrue(!statements.hasNext());
-        statements = connection.getStatements(null, null, vf.createIRI(userId));
+        statements = connection.getStatements(null, null, VALUE_FACTORY.createIRI(userId));
         assertTrue(!statements.hasNext());
         connection.close();
     }
@@ -363,17 +307,17 @@ public class RdfEngineTest {
         assertEquals(group.getResource().stringValue(), groupId1);
         assertEquals(group.getMember_resource().size(), members.size());
         assertEquals(group.getHasGroupRole_resource().size(), roles.size());
-        assertTrue(group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).isPresent()
-                && group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).get().stringValue().equals(groupName1));
-        assertTrue(group.getProperty(vf.createIRI(DCTERMS.DESCRIPTION.stringValue())).isPresent()
-                && group.getProperty(vf.createIRI(DCTERMS.DESCRIPTION.stringValue())).get().stringValue().equals("Test"));
+        assertTrue(group.getProperty(VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue())).isPresent()
+                && group.getProperty(VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue())).get().stringValue().equals(groupName1));
+        assertTrue(group.getProperty(VALUE_FACTORY.createIRI(DCTERMS.DESCRIPTION.stringValue())).isPresent()
+                && group.getProperty(VALUE_FACTORY.createIRI(DCTERMS.DESCRIPTION.stringValue())).get().stringValue().equals("Test"));
     }
 
     @Test
     public void testStoreGroup() throws Exception {
-        Resource newGroupId = vf.createIRI("http://mobi.com/users/newgroup");
+        Resource newGroupId = VALUE_FACTORY.createIRI("http://mobi.com/users/newgroup");
         Group newGroup = groupFactory.createNew(newGroupId);
-        newGroup.setProperty(vf.createLiteral("newgroup"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        newGroup.setProperty(VALUE_FACTORY.createLiteral("newgroup"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()));
         engine.storeGroup(newGroup);
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(newGroupId, null, null);
@@ -383,14 +327,14 @@ public class RdfEngineTest {
 
     @Test(expected = MobiException.class)
     public void testStoreGroupWithNoTitle() {
-        Resource newGroupId = vf.createIRI("http://mobi.com/users/newgroup");
+        Resource newGroupId = VALUE_FACTORY.createIRI("http://mobi.com/users/newgroup");
         Group newGroup = groupFactory.createNew(newGroupId);
         engine.storeGroup(newGroup);
     }
 
     @Test(expected = MobiException.class)
     public void testStoreGroupThatAlreadyExists() {
-        Group group= groupFactory.createNew(vf.createIRI(groupId1));
+        Group group= groupFactory.createNew(VALUE_FACTORY.createIRI(groupId1));
         engine.storeGroup(group);
     }
 
@@ -420,21 +364,21 @@ public class RdfEngineTest {
 
     @Test
     public void testUpdateGroup() throws Exception {
-        Group newGroup = groupFactory.createNew(vf.createIRI(groupId1));
+        Group newGroup = groupFactory.createNew(VALUE_FACTORY.createIRI(groupId1));
         engine.updateGroup(newGroup);
-        Model groupModel = mf.createModel();
+        Model groupModel = MODEL_FACTORY.createModel();
         RepositoryConnection connection = repo.getConnection();
-        RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(groupId1), null, null);
+        RepositoryResult<Statement> statements = connection.getStatements(VALUE_FACTORY.createIRI(groupId1), null, null);
         statements.forEach(groupModel::add);
         connection.close();
         assertFalse(groupModel.isEmpty());
-        Group savedGroup = groupFactory.getExisting(vf.createIRI(groupId1), groupModel).get();
+        Group savedGroup = groupFactory.getExisting(VALUE_FACTORY.createIRI(groupId1), groupModel).get();
         assertTrue(savedGroup.getMember().isEmpty());
     }
 
     @Test(expected = MobiException.class)
     public void testUpdateGroupThatDoesNotExist() {
-        Group newGroup = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/error"));
+        Group newGroup = groupFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/groups/error"));
         engine.updateGroup(newGroup);
     }
 
@@ -442,7 +386,7 @@ public class RdfEngineTest {
     public void testDeleteGroup() throws Exception {
         engine.deleteGroup(groupName1);
         RepositoryConnection connection = repo.getConnection();
-        RepositoryResult<Statement> statements = connection.getStatements(vf.createIRI(groupId1), null, null);
+        RepositoryResult<Statement> statements = connection.getStatements(VALUE_FACTORY.createIRI(groupId1), null, null);
         assertTrue(!statements.hasNext());
         connection.close();
     }
@@ -459,8 +403,8 @@ public class RdfEngineTest {
         Set<Resource> roleIds = roles.stream()
                 .map(Thing::getResource)
                 .collect(Collectors.toSet());
-        assertTrue(roleIds.contains(vf.createIRI(userRoleId)));
-        assertTrue(roleIds.contains(vf.createIRI(adminRoleId)));
+        assertTrue(roleIds.contains(VALUE_FACTORY.createIRI(userRoleId)));
+        assertTrue(roleIds.contains(VALUE_FACTORY.createIRI(adminRoleId)));
     }
 
     @Test(expected = MobiException.class)

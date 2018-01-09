@@ -34,39 +34,18 @@ import static org.mockito.Mockito.when;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.versioning.VersioningService;
-import com.mobi.etl.api.ontologies.delimited.MappingRecordFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.core.utils.Values;
-import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
@@ -83,24 +62,14 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public class SimpleVersioningManagerTest {
+public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
     private Repository repo;
     private SimpleVersioningManager manager;
-    private ValueFactory vf = SimpleValueFactory.getInstance();
-    private ModelFactory mf = LinkedHashModelFactory.getInstance();
-    private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
-    private UserFactory userFactory = new UserFactory();
-    private VersionedRDFRecordFactory versionedRDFRecordFactory = new VersionedRDFRecordFactory();
-    private OntologyRecordFactory ontologyRecordFactory = new OntologyRecordFactory();
-    private MappingRecordFactory mappingRecordFactory = new MappingRecordFactory();
-    private BranchFactory branchFactory = new BranchFactory();
-    private CommitFactory commitFactory = new CommitFactory();
-    private InProgressCommitFactory inProgressCommitFactory = new InProgressCommitFactory();
+    private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
+    private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
 
-    private final IRI CATALOG_IRI = vf.createIRI("http://test.com#catalog");
+    private final IRI CATALOG_IRI = VALUE_FACTORY.createIRI("http://test.com#catalog");
     private User user;
     private VersionedRDFRecord record;
     private OntologyRecord ontologyRecord;
@@ -116,9 +85,6 @@ public class SimpleVersioningManagerTest {
     private VersioningService<OntologyRecord> ontologyService;
 
     @Mock
-    private OrmFactoryRegistry registry;
-
-    @Mock
     private CatalogUtilsService catalogUtils;
 
     @Mock
@@ -132,70 +98,28 @@ public class SimpleVersioningManagerTest {
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
-        userFactory.setModelFactory(mf);
-        userFactory.setValueFactory(vf);
-        userFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(userFactory);
-
-        versionedRDFRecordFactory.setModelFactory(mf);
-        versionedRDFRecordFactory.setValueFactory(vf);
-        versionedRDFRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(versionedRDFRecordFactory);
-
-        ontologyRecordFactory.setModelFactory(mf);
-        ontologyRecordFactory.setValueFactory(vf);
-        ontologyRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(ontologyRecordFactory);
-
-        mappingRecordFactory.setModelFactory(mf);
-        mappingRecordFactory.setValueFactory(vf);
-        mappingRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(mappingRecordFactory);
-
-        branchFactory.setModelFactory(mf);
-        branchFactory.setValueFactory(vf);
-        branchFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(branchFactory);
-
-        commitFactory.setModelFactory(mf);
-        commitFactory.setValueFactory(vf);
-        commitFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(commitFactory);
-
-        inProgressCommitFactory.setModelFactory(mf);
-        inProgressCommitFactory.setValueFactory(vf);
-        inProgressCommitFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(inProgressCommitFactory);
-
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
-
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream testData = getClass().getResourceAsStream("/testVersioningData.trig");
             conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
         }
 
-        user = userFactory.createNew(vf.createIRI("http://test.com#user"));
-        IRI titleIRI = vf.createIRI(DCTERMS.TITLE.stringValue());
-        record = versionedRDFRecordFactory.createNew(vf.createIRI("http://mobi.com/test/records#versioned-rdf-record"));
-        ontologyRecord = ontologyRecordFactory.createNew(vf.createIRI("http://mobi.com/test/records#ontology-record"));
-        sourceBranch = branchFactory.createNew(vf.createIRI("http://test.com#source-branch"));
-        sourceBranch.addProperty(vf.createLiteral("Source"), titleIRI);
-        targetBranch = branchFactory.createNew(vf.createIRI("http://test.com#target-branch"));
-        targetBranch.addProperty(vf.createLiteral("Target"), titleIRI);
-        commit = commitFactory.createNew(vf.createIRI("http://test.com#commit"));
-        inProgressCommit = inProgressCommitFactory.createNew(vf.createIRI("http://test.com#in-progress-commit"));
+        OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+        OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+        OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+        OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
+
+        user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#user"));
+        IRI titleIRI = VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue());
+        record = versionedRDFRecordFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record"));
+        ontologyRecord = ontologyRecordFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#ontology-record"));
+        sourceBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#source-branch"));
+        sourceBranch.addProperty(VALUE_FACTORY.createLiteral("Source"), titleIRI);
+        targetBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#target-branch"));
+        targetBranch.addProperty(VALUE_FACTORY.createLiteral("Target"), titleIRI);
+        commit = commitFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#commit"));
+        inProgressCommit = inProgressCommitFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#in-progress-commit"));
 
         MockitoAnnotations.initMocks(this);
-
-        when(registry.getSortedFactoriesOfType(VersionedRDFRecord.class)).thenReturn(Stream.of(mappingRecordFactory, ontologyRecordFactory, versionedRDFRecordFactory).collect(Collectors.toList()));
 
         when(catalogUtils.getRecord(any(Resource.class), eq(record.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
         when(catalogUtils.getRecord(any(Resource.class), eq(ontologyRecord.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class))).thenReturn(ontologyRecord);
@@ -225,8 +149,8 @@ public class SimpleVersioningManagerTest {
         manager.setRepositoryManager(repositoryManager);
         manager.setCatalogManager(catalogManager);
         manager.setCatalogUtils(catalogUtils);
-        manager.setVf(vf);
-        manager.setFactoryRegistry(registry);
+        manager.setVf(VALUE_FACTORY);
+        manager.setFactoryRegistry(ORM_FACTORY_REGISTRY);
         manager.addVersioningService(baseService);
         manager.addVersioningService(ontologyService);
     }
@@ -280,8 +204,8 @@ public class SimpleVersioningManagerTest {
     @Test
     public void commitWithChangesToVersionedRDFRecordTest() throws Exception {
         // Setup:
-        Model additions = mf.createModel();
-        Model deletions = mf.createModel();
+        Model additions = MODEL_FACTORY.createModel();
+        Model deletions = MODEL_FACTORY.createModel();
 
         Resource result = manager.commit(CATALOG_IRI, record.getResource(), targetBranch.getResource(), user, "Message", additions, deletions);
         assertEquals(commit.getResource(), result);
@@ -294,8 +218,8 @@ public class SimpleVersioningManagerTest {
     @Test
     public void commitWithChangesToOntologyRecordTest() throws Exception {
         // Setup:
-        Model additions = mf.createModel();
-        Model deletions = mf.createModel();
+        Model additions = MODEL_FACTORY.createModel();
+        Model deletions = MODEL_FACTORY.createModel();
 
         Resource result = manager.commit(CATALOG_IRI, ontologyRecord.getResource(), targetBranch.getResource(), user, "Message", additions, deletions);
         assertEquals(commit.getResource(), result);
@@ -309,8 +233,8 @@ public class SimpleVersioningManagerTest {
     public void commitWithChangesToOntologyRecordWithoutServiceTest() throws Exception {
         // Setup:
         manager.removeVersioningService(ontologyService);
-        Model additions = mf.createModel();
-        Model deletions = mf.createModel();
+        Model additions = MODEL_FACTORY.createModel();
+        Model deletions = MODEL_FACTORY.createModel();
 
         Resource result = manager.commit(CATALOG_IRI, ontologyRecord.getResource(), targetBranch.getResource(), user, "Message", additions, deletions);
         assertEquals(commit.getResource(), result);
@@ -325,8 +249,8 @@ public class SimpleVersioningManagerTest {
     @Test
     public void mergeWithVersionedRDFRecordTest() throws Exception {
         // Setup:
-        Model additions = mf.createModel();
-        Model deletions = mf.createModel();
+        Model additions = MODEL_FACTORY.createModel();
+        Model deletions = MODEL_FACTORY.createModel();
 
         Resource result = manager.merge(CATALOG_IRI, record.getResource(), sourceBranch.getResource(), targetBranch.getResource(), user, additions, deletions);
         assertEquals(commit.getResource(), result);
@@ -341,8 +265,8 @@ public class SimpleVersioningManagerTest {
     @Test
     public void mergeWithOntologyRecordTest() throws Exception {
         // Setup:
-        Model additions = mf.createModel();
-        Model deletions = mf.createModel();
+        Model additions = MODEL_FACTORY.createModel();
+        Model deletions = MODEL_FACTORY.createModel();
 
         Resource result = manager.merge(CATALOG_IRI, ontologyRecord.getResource(), sourceBranch.getResource(), targetBranch.getResource(), user, additions, deletions);
         assertEquals(commit.getResource(), result);
@@ -358,8 +282,8 @@ public class SimpleVersioningManagerTest {
     public void mergeWithOntologyRecordWithoutServiceTest() throws Exception {
         // Setup:
         manager.removeVersioningService(ontologyService);
-        Model additions = mf.createModel();
-        Model deletions = mf.createModel();
+        Model additions = MODEL_FACTORY.createModel();
+        Model deletions = MODEL_FACTORY.createModel();
 
         Resource result = manager.merge(CATALOG_IRI, ontologyRecord.getResource(), sourceBranch.getResource(), targetBranch.getResource(), user, additions, deletions);
         assertEquals(commit.getResource(), result);

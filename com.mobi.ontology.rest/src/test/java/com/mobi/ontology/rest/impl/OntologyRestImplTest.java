@@ -23,6 +23,9 @@ package com.mobi.ontology.rest.impl;
  * #L%
  */
 
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rest.util.RestUtils.encode;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 import static org.mockito.Matchers.any;
@@ -45,18 +48,13 @@ import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
-import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.NamedIndividual;
 import com.mobi.ontology.core.api.Ontology;
@@ -81,9 +79,7 @@ import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
-import com.mobi.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.prov.api.ontologies.mobiprov.DeleteActivityFactory;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.BindingSet;
 import com.mobi.query.exception.QueryEvaluationException;
@@ -94,20 +90,8 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.core.utils.Values;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.core.SimpleRepositoryManager;
@@ -197,7 +181,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     private ModelFactory mf;
     private ValueFactory vf;
-    private OntologyRecordFactory ontologyRecordFactory;
+    private OrmFactory<OntologyRecord> ontologyRecordFactory;
     private CreateActivity createActivity;
     private DeleteActivity deleteActivity;
     private IRI catalogId;
@@ -251,67 +235,16 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         RepositoryManager repoManager = new SimpleRepositoryManager();
 
-        ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
-        mf = LinkedHashModelFactory.getInstance();
-        vf = SimpleValueFactory.getInstance();
+        mf = getModelFactory();
+        vf = getValueFactory();
 
-        CatalogFactory catalogFactory = new CatalogFactory();
-        catalogFactory.setModelFactory(mf);
-        catalogFactory.setValueFactory(vf);
-        catalogFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(catalogFactory);
-
-        CommitFactory commitFactory = new CommitFactory();
-        commitFactory.setModelFactory(mf);
-        commitFactory.setValueFactory(vf);
-        commitFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(commitFactory);
-
-        BranchFactory branchFactory = new BranchFactory();
-        branchFactory.setModelFactory(mf);
-        branchFactory.setValueFactory(vf);
-        branchFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(branchFactory);
-
-        ontologyRecordFactory = new OntologyRecordFactory();
-        ontologyRecordFactory.setModelFactory(mf);
-        ontologyRecordFactory.setValueFactory(vf);
-        ontologyRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(ontologyRecordFactory);
-
-        InProgressCommitFactory inProgressCommitFactory = new InProgressCommitFactory();
-        inProgressCommitFactory.setModelFactory(mf);
-        inProgressCommitFactory.setValueFactory(vf);
-        inProgressCommitFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(inProgressCommitFactory);
-
-        UserFactory userFactory = new UserFactory();
-        userFactory.setModelFactory(mf);
-        userFactory.setValueFactory(vf);
-        userFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(userFactory);
-
-        CreateActivityFactory createActivityFactory = new CreateActivityFactory();
-        createActivityFactory.setModelFactory(mf);
-        createActivityFactory.setValueFactory(vf);
-        createActivityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(createActivityFactory);
-
-        DeleteActivityFactory deleteActivityFactory = new DeleteActivityFactory();
-        deleteActivityFactory.setModelFactory(mf);
-        deleteActivityFactory.setValueFactory(vf);
-        deleteActivityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(deleteActivityFactory);
-
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
+        ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
+        OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+        OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+        OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
+        OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+        OrmFactory<CreateActivity> createActivityFactory = getRequiredOrmFactory(CreateActivity.class);
+        OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
 
         OntologyRestImpl rest = new OntologyRestImpl();
         rest.setModelFactory(mf);

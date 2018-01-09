@@ -22,20 +22,22 @@
  */
 package com.mobi.etl.service.delimited
 
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService
+
 import com.mobi.catalog.api.CatalogManager
 import com.mobi.etl.api.config.delimited.MappingRecordConfig
 import com.mobi.etl.api.delimited.MappingId
 import com.mobi.etl.api.delimited.MappingWrapper
-import com.mobi.etl.api.ontologies.delimited.*
+import com.mobi.etl.api.ontologies.delimited.Mapping
+import com.mobi.etl.api.ontologies.delimited.MappingRecord
 import com.mobi.exception.MobiException
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory
+import com.mobi.jaas.api.ontologies.usermanagement.User
 import com.mobi.ontologies.rdfs.Resource
 import com.mobi.persistence.utils.api.SesameTransformer
 import com.mobi.rdf.api.Model
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
 import com.mobi.rdf.core.utils.Values
-import com.mobi.rdf.orm.conversion.impl.*
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
 import spock.lang.Specification
@@ -45,15 +47,9 @@ import java.nio.file.Paths
 class SimpleMappingManagerSpec extends Specification {
 
     def service = new SimpleMappingManager()
-    def vf = SimpleValueFactory.getInstance()
-    def mf = LinkedHashModelFactory.getInstance()
-    def vcr = new DefaultValueConverterRegistry()
-    def userFactory = new UserFactory()
-    def mappingRecordFactory = new MappingRecordFactory()
-    def mappingFactory = new MappingFactory()
-    def classMappingFactory = new ClassMappingFactory()
-    def dataMappingFactory = new DataMappingFactory()
-    def propertyFactory = new PropertyFactory()
+    def vf = getValueFactory()
+    def userFactory = getRequiredOrmFactory(User.class)
+    def mappingRecordFactory = getRequiredOrmFactory(MappingRecord.class)
     def builder = new SimpleMappingId.Builder(vf)
 
     def catalogManager = Mock(CatalogManager)
@@ -67,47 +63,9 @@ class SimpleMappingManagerSpec extends Specification {
     def versionIRI = vf.createIRI("http://test.com/mapping/1.0")
 
     def setup() {
-        userFactory.setValueFactory(vf)
-        userFactory.setModelFactory(mf)
-        userFactory.setValueConverterRegistry(vcr)
-        vcr.registerValueConverter(userFactory)
-        mappingRecordFactory.setValueFactory(vf)
-        mappingRecordFactory.setModelFactory(mf)
-        mappingRecordFactory.setValueConverterRegistry(vcr)
-        vcr.registerValueConverter(mappingRecordFactory)
-        mappingFactory.setValueFactory(vf)
-        mappingFactory.setModelFactory(mf)
-        mappingFactory.setValueConverterRegistry(vcr)
-        vcr.registerValueConverter(mappingFactory)
-        classMappingFactory.setValueFactory(vf)
-        classMappingFactory.setModelFactory(mf)
-        classMappingFactory.setValueConverterRegistry(vcr)
-        vcr.registerValueConverter(classMappingFactory)
-        dataMappingFactory.setValueFactory(vf)
-        dataMappingFactory.setModelFactory(mf)
-        dataMappingFactory.setValueConverterRegistry(vcr)
-        vcr.registerValueConverter(dataMappingFactory)
-        propertyFactory.setValueFactory(vf)
-        propertyFactory.setModelFactory(mf)
-        propertyFactory.setValueConverterRegistry(vcr)
-        vcr.registerValueConverter(propertyFactory)
-
-        vcr.registerValueConverter(new ResourceValueConverter())
-        vcr.registerValueConverter(new IRIValueConverter())
-        vcr.registerValueConverter(new DoubleValueConverter())
-        vcr.registerValueConverter(new IntegerValueConverter())
-        vcr.registerValueConverter(new FloatValueConverter())
-        vcr.registerValueConverter(new ShortValueConverter())
-        vcr.registerValueConverter(new StringValueConverter())
-        vcr.registerValueConverter(new ValueValueConverter())
-        vcr.registerValueConverter(new LiteralValueConverter())
-
+        injectOrmFactoryReferencesIntoService(service)
         service.setValueFactory(vf)
         service.setCatalogManager(catalogManager)
-        service.setMappingRecordFactory(mappingRecordFactory)
-        service.setMappingFactory(mappingFactory)
-        service.setMappingFactory(mappingFactory)
-        service.setClassMappingFactory(classMappingFactory)
         service.setSesameTransformer(transformer)
 
         mappingWrapper.getId() >> mappingId

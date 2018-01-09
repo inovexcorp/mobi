@@ -23,6 +23,8 @@ package com.mobi.jaas.rest.impl;
  * #L%
  */
 
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -38,36 +40,18 @@ import static org.testng.Assert.fail;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.engines.UserConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
-import com.mobi.jaas.api.ontologies.usermanagement.GroupFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
-import com.mobi.jaas.api.ontologies.usermanagement.RoleFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.jaas.rest.providers.GroupProvider;
 import com.mobi.jaas.rest.providers.GroupSetProvider;
 import com.mobi.jaas.rest.providers.RoleProvider;
 import com.mobi.jaas.rest.providers.RoleSetProvider;
 import com.mobi.jaas.rest.providers.UserProvider;
-import com.mobi.ontologies.foaf.AgentFactory;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
-import com.mobi.rdf.orm.impl.ThingFactory;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
@@ -96,19 +80,15 @@ import javax.ws.rs.core.Response;
 
 public class UserRestImplTest extends MobiRestTestNg {
     private UserRestImpl rest;
+    private ValueFactory vf;
     private UserProvider userProvider;
     private RoleProvider roleProvider;
     private RoleSetProvider roleSetProvider;
     private GroupProvider groupProvider;
     private GroupSetProvider groupSetProvider;
-    private UserFactory userFactory;
-    private GroupFactory groupFactory;
-    private RoleFactory roleFactory;
-    private AgentFactory agentFactory;
-    private ThingFactory thingFactory;
-    private ValueFactory vf;
-    private ModelFactory mf;
-    private ValueConverterRegistry vcr;
+    private OrmFactory<User> userFactory;
+    private OrmFactory<Role> roleFactory;
+    private OrmFactory<Thing> thingFactory;
     private User user;
     private Group group;
     private Role role;
@@ -125,55 +105,23 @@ public class UserRestImplTest extends MobiRestTestNg {
 
     @Override
     protected Application configureApp() throws Exception {
+        vf = getValueFactory();
+        OrmFactory<Group> groupFactory = getRequiredOrmFactory(Group.class);
+        userFactory = getRequiredOrmFactory(User.class);
+        roleFactory = getRequiredOrmFactory(Role.class);
+        thingFactory = getRequiredOrmFactory(Thing.class);
+
         userProvider = new UserProvider();
         roleProvider = new RoleProvider();
         roleSetProvider = new RoleSetProvider();
         groupProvider = new GroupProvider();
         groupSetProvider = new GroupSetProvider();
-        userFactory = new UserFactory();
-        groupFactory = new GroupFactory();
-        roleFactory = new RoleFactory();
-        agentFactory = new AgentFactory();
-        thingFactory = new ThingFactory();
-        vf = SimpleValueFactory.getInstance();
-        mf = LinkedHashModelFactory.getInstance();
-        vcr = new DefaultValueConverterRegistry();
         roleProvider.setFactory(vf);
         roleSetProvider.setFactory(vf);
         roleSetProvider.setRoleProvider(roleProvider);
         groupProvider.setFactory(vf);
         groupSetProvider.setFactory(vf);
         groupSetProvider.setGroupProvider(groupProvider);
-        userFactory.setModelFactory(mf);
-        userFactory.setValueFactory(vf);
-        userFactory.setValueConverterRegistry(vcr);
-        groupFactory.setModelFactory(mf);
-        groupFactory.setValueFactory(vf);
-        groupFactory.setValueConverterRegistry(vcr);
-        roleFactory.setModelFactory(mf);
-        roleFactory.setValueFactory(vf);
-        roleFactory.setValueConverterRegistry(vcr);
-        agentFactory.setValueFactory(vf);
-        agentFactory.setModelFactory(mf);
-        agentFactory.setValueConverterRegistry(vcr);
-        thingFactory.setValueFactory(vf);
-        thingFactory.setModelFactory(mf);
-        thingFactory.setValueConverterRegistry(vcr);
-
-        vcr.registerValueConverter(userFactory);
-        vcr.registerValueConverter(groupFactory);
-        vcr.registerValueConverter(roleFactory);
-        vcr.registerValueConverter(agentFactory);
-        vcr.registerValueConverter(thingFactory);
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
 
         email = thingFactory.createNew(vf.createIRI("mailto:example@example.com"));
 
@@ -199,6 +147,7 @@ public class UserRestImplTest extends MobiRestTestNg {
         groupProvider.setRdfEngine(rdfEngine);
         userProvider.setEngineManager(engineManager);
         userProvider.setRdfEngine(rdfEngine);
+
         rest = spy(new UserRestImpl());
         rest.setEngineManager(engineManager);
         rest.setRdfEngine(rdfEngine);
