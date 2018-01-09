@@ -1,0 +1,39 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="upload-data-overlay overlay">
+    <form name="dvm.form" class="clearfix content" novalidate autocomplete="off">
+        <h1>Upload Data to {{dvm.datasetTitle}}</h1>
+        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+        <div class="form-group">
+        <custom-label>RDF File</custom-label>
+            <file-input ng-model="dvm.fileObj" accept=".ttl,.xml,.jsonld,.rdf,.trig,.json,.n3,.nq,.nt" required></file-input>
+        </div>
+        <div ng-if="dvm.importing" class="importing-indicator">
+            <span targeted-spinner="dvm.uploadId" small></span> <span class="text-muted">Importing Data</span>
+        </div>
+        <div class="btn-container clearfix">
+            <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid || dvm.importing" ng-click="dvm.upload()">Submit</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.cancel()">Cancel</button>
+        </div>
+    </form>
+</div>
