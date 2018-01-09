@@ -308,7 +308,7 @@
                         if (activeKey !== 'project' && activeKey !== 'individuals' && entityIRI) {
                             os.setEntityUsages(entityIRI);
                         }
-                        os.listItem.isSaved = os.isCommittable(os.listItem.ontologyRecord.recordId);
+                        os.listItem.isSaved = os.isCommittable(os.listItem);
                         return $q.when();
                     }, errorMessage => {
                         util.createErrorToast(errorMessage);

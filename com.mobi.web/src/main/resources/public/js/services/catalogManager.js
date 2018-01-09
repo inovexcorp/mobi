@@ -37,10 +37,9 @@
         /**
          * @ngdoc service
          * @name catalogManager.service:catalogManagerService
-         * @requires $http
-         * @requires $q
+         * @requires httpService.service:httpService
          * @requires prefixes.service:prefixes
-         * @requires ontologyManager.service:ontologyManagerService
+         * @requires util.service:utilService
          *
          * @description
          * `catalogManagerService` is a service that provides access to the Mobi catalog REST
@@ -49,9 +48,9 @@
          */
         .service('catalogManagerService', catalogManagerService);
 
-        catalogManagerService.$inject = ['$window', '$http', 'httpService', '$q', 'prefixes', 'utilService', 'REST_PREFIX'];
+        catalogManagerService.$inject = ['$http', '$httpParamSerializer', 'httpService', '$q', 'prefixes', 'utilService', 'REST_PREFIX'];
 
-        function catalogManagerService($window, $http, httpService, $q, prefixes, utilService, REST_PREFIX) {
+        function catalogManagerService($http, $httpParamSerializer, httpService, $q, prefixes, utilService, REST_PREFIX) {
             var self = this,
                 util = utilService,
                 prefix = REST_PREFIX + 'catalogs';
@@ -1194,7 +1193,12 @@
              * @param {String} format The RDF format to return the compiled resource in
              */
             self.downloadResource = function(commitId, branchId, recordId, catalogId, applyInProgressCommit, format = 'jsonld', fileName = 'resource') {
-                $window.location = prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=' + applyInProgressCommit + '&format=' + format + '&fileName=' + fileName;
+                var params = $httpParamSerializer({
+                    applyInProgressCommit: !!applyInProgressCommit,
+                    format: format || 'jsonld',
+                    fileName: fileName || 'resource'
+                });
+                util.startDownload(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?' + params);
             }
 
             /**

@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Catalog Manager service', function() {
-    var catalogManagerSvc, scope, $httpBackend, prefixes, utilSvc, $q, windowSvc, httpSvc;
+    var catalogManagerSvc, scope, $httpBackend, prefixes, utilSvc, $q, httpSvc, $httpParamSerializer;
 
     beforeEach(function() {
         module('catalogManager');
@@ -30,22 +30,15 @@ describe('Catalog Manager service', function() {
         mockHttpService();
         injectRestPathConstant();
 
-        module(function($provide) {
-            $provide.service('$window', function() {
-                this.location = '';
-            });
-        });
-
-        inject(function(catalogManagerService, _$rootScope_, _prefixes_, _utilService_, _$httpBackend_, _httpService_, _$httpParamSerializer_, _$q_, _$window_) {
+        inject(function(catalogManagerService, _$rootScope_, _$httpBackend_, _prefixes_, _utilService_, _$q_, _httpService_, _$httpParamSerializer_) {
             catalogManagerSvc = catalogManagerService;
             scope = _$rootScope_;
+            $httpBackend = _$httpBackend_;
             prefixes = _prefixes_;
             utilSvc = _utilService_;
-            $httpBackend = _$httpBackend_;
+            $q = _$q_;
             httpSvc = _httpService_;
             $httpParamSerializer = _$httpParamSerializer_;
-            $q = _$q_;
-            windowSvc = _$window_;
         });
 
         this.catalogId = 'http://mobi.com/catalogs/local';
@@ -66,8 +59,8 @@ describe('Catalog Manager service', function() {
         prefixes = null;
         utilSvc = null;
         $q = null;
-        windowSvc = null;
         httpSvc = null;
+        $httpParamSerializer = null;
     });
 
     describe('should set the correct initial state', function() {
@@ -1682,14 +1675,22 @@ describe('Catalog Manager service', function() {
     describe('should download the compiled resource from a Branch Commit', function() {
         beforeEach(function() {
             this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/commits/' + encodeURIComponent(this.commitId) + '/resource';
+            this.params = {
+                applyInProgressCommit: true,
+                fileName: 'resource',
+                format: 'jsonld'
+            };
         });
         it('with a format', function() {
+            this.params.format = 'turtle';
+            var params = $httpParamSerializer(this.params);
             catalogManagerSvc.downloadResource(this.commitId, this.branchId, this.recordId, this.catalogId, true, 'turtle');
-            expect(windowSvc.location).toBe(this.url + '?applyInProgressCommit=true&format=turtle&fileName=resource');
+            expect(utilSvc.startDownload).toHaveBeenCalledWith(this.url + '?' + params);
         });
         it('without a format', function() {
+            var params = $httpParamSerializer(this.params);
             catalogManagerSvc.downloadResource(this.commitId, this.branchId, this.recordId, this.catalogId, true);
-            expect(windowSvc.location).toBe(this.url + '?applyInProgressCommit=true&format=jsonld&fileName=resource');
+            expect(utilSvc.startDownload).toHaveBeenCalledWith(this.url + '?' + params);
         });
     });
     describe('should create a new InProgressCommit for the logged-in User', function() {

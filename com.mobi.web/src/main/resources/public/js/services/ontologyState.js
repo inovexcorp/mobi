@@ -1016,12 +1016,10 @@
                 _.unset(activePage, 'usages');
                 self.listItem.selected = undefined;
             }
-            self.hasChanges = function(recordId) {
-                var listItem = self.getListItemByRecordId(recordId);
+            self.hasChanges = function(listItem) {
                 return !!_.get(listItem, 'additions', []).length || !!_.get(listItem, 'deletions', []).length;
             }
-            self.isCommittable = function(recordId) {
-                var listItem = self.getListItemByRecordId(recordId);
+            self.isCommittable = function(listItem) {
                 return !!_.get(listItem, 'inProgressCommit.additions', []).length || !!_.get(listItem, 'inProgressCommit.deletions', []).length;
             }
             self.addEntityToHierarchy = function(hierarchy, entityIRI, indexObject, parentIRI) {

@@ -37,13 +37,10 @@
         /**
          * @ngdoc service
          * @name ontologyManager.service:ontologyManagerService
-         * @requires $http
-         * @requires $q
          * @requires prefixes.service:prefixes
          * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
-         * @requires $httpParamSerializer
-         * @requires httpService
+         * @requires httpService.service:httpService
          *
          * @description
          * `ontologyManagerService` is a service that provides access to the Mobi ontology REST
@@ -52,9 +49,9 @@
          */
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$http', '$q', '$window', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
+        ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
 
-        function ontologyManagerService($http, $q, $window, prefixes, catalogManagerService, utilService, $httpParamSerializer, httpService, REST_PREFIX) {
+        function ontologyManagerService($http, $q, prefixes, catalogManagerService, utilService, $httpParamSerializer, httpService, REST_PREFIX) {
             var self = this;
             var prefix = REST_PREFIX + 'ontologies';
             var cm = catalogManagerService;
@@ -293,10 +290,10 @@
                 var params = $httpParamSerializer({
                     branchId,
                     commitId,
-                    rdfFormat,
-                    fileName
+                    rdfFormat: rdfFormat || 'jsonld',
+                    fileName: fileName || 'ontology'
                 });
-                $window.location = prefix + '/' + encodeURIComponent(recordId) + '?' + params;
+                util.startDownload(prefix + '/' + encodeURIComponent(recordId) + '?' + params);
             }
             /**
              * @ngdoc method

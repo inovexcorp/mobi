@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Util service', function() {
-    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, uuid, $filter, $httpBackend, $q, scope, regex, httpSvc;
+    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, uuid, $filter, $httpBackend, $q, scope, regex, httpSvc, windowSvc;
 
     beforeEach(function() {
         module('util');
@@ -36,9 +36,12 @@ describe('Util service', function() {
             $provide.service('uuid', function() {
                 this.v4 = jasmine.createSpy('v4').and.returnValue('');
             });
+            $provide.service('$window', function() {
+                this.location = '';
+            });
         });
 
-        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_, _uuid_, _$filter_, _$httpBackend_, _$q_, _$rootScope_, _REGEX_, _httpService_) {
+        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_, _uuid_, _$filter_, _$httpBackend_, _$q_, _$rootScope_, _REGEX_, _httpService_, _$window_) {
             utilSvc = utilService;
             prefixes = _prefixes_;
             toastr = _toastr_;
@@ -51,6 +54,7 @@ describe('Util service', function() {
             uuid = _uuid_;
             regex = _REGEX_;
             httpSvc = _httpService_;
+            windowSvc = _$window_;
         });
 
         this.properties = [
@@ -81,6 +85,7 @@ describe('Util service', function() {
         scope = null;
         regex = null;
         httpSvc = null;
+        windowSvc = null;
     });
 
     describe('should get the beautified version of an IRI', function() {
@@ -467,5 +472,10 @@ describe('Util service', function() {
             expect(utilSvc.getPattern(this.properties[id])).toBe(regex.INTEGER);
         }, this);
         expect(utilSvc.getPattern(this.properties[9])).toBe(regex.ANYTHING);
+    });
+    it('should start a download at the provided URL', function() {
+        utilSvc.startDownload('url');
+        expect(scope.isDownloading).toEqual(true);
+        expect(windowSvc.location).toEqual('url');
     });
 });

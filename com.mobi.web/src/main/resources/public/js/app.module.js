@@ -168,16 +168,17 @@
             // We have to invoke the service at least once
         });
 
-        beforeUnload.$inject = ['$window', 'ontologyManagerService', 'ontologyStateService', 'mapperStateService'];
+        beforeUnload.$inject = ['$window', '$rootScope', 'ontologyStateService', 'mapperStateService'];
 
-        function beforeUnload($window, ontologyManagerService, ontologyStateService, mapperStateService) {
+        function beforeUnload($window, $rootScope, ontologyStateService, mapperStateService) {
             $window.onbeforeunload = function(e) {
-                var ontologyHasChanges = _.some(ontologyManagerService.list, listItem => {
-                    return ontologyStateService.hasChanges(_.get(listItem, 'recordId'));
-                });
-                var mappingHasChanges = mapperStateService.isMappingChanged();
-                if (ontologyHasChanges || mappingHasChanges) {
-                    return true;
+                if ($rootScope.isDownloading) {
+                    $rootScope.isDownloading = false;
+                    return undefined;
+                } else {
+                    var ontologyHasChanges = _.some(ontologyStateService.list, ontologyStateService.hasChanges);
+                    var mappingHasChanges = mapperStateService.isMappingChanged();
+                    return ontologyHasChanges || mappingHasChanges;
                 }
             }
         }

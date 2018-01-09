@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology State Service', function() {
+fdescribe('Ontology State Service', function() {
     var ontologyStateSvc, $q, scope, util, stateManagerSvc, propertyManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, httpSvc, $document, splitIRI;
     var listItem;
 
@@ -2003,36 +2003,24 @@ describe('Ontology State Service', function() {
     });
     describe('hasChanges returns the proper value', function() {
         it('when the listItem has additions', function() {
-            spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue({additions: ['test']});
-            expect(ontologyStateSvc.hasChanges(this.recordId)).toBe(true);
-            expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
+            expect(ontologyStateSvc.hasChanges({additions: ['test']})).toBe(true);
         });
         it('when the listItem has deletions', function() {
-            spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue({deletions: ['test']});
-            expect(ontologyStateSvc.hasChanges(this.recordId)).toBe(true);
-            expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
+            expect(ontologyStateSvc.hasChanges({deletions: ['test']})).toBe(true);
         });
         it('when the listItem has neither additions nor deletions', function() {
-            spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue({});
-            expect(ontologyStateSvc.hasChanges(this.recordId)).toBe(false);
-            expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
+            expect(ontologyStateSvc.hasChanges({})).toBe(false);
         });
     });
     describe('isCommittable returns the proper value', function() {
         it('when the listItem has additions', function() {
-            spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue({inProgressCommit: {additions: ['test']}});
-            expect(ontologyStateSvc.isCommittable(this.recordId)).toBe(true);
-            expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
+            expect(ontologyStateSvc.isCommittable({inProgressCommit: {additions: ['test']}})).toBe(true);
         });
         it('when the listItem has deletions', function() {
-            spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue({inProgressCommit: {deletions: ['test']}});
-            expect(ontologyStateSvc.isCommittable(this.recordId)).toBe(true);
-            expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
+            expect(ontologyStateSvc.isCommittable({inProgressCommit: {deletions: ['test']}})).toBe(true);
         });
         it('when the listItem has neither additions nor deletions', function() {
-            spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue({});
-            expect(ontologyStateSvc.isCommittable(this.recordId)).toBe(false);
-            expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
+            expect(ontologyStateSvc.isCommittable({})).toBe(false);
         });
     });
     describe('addEntityToHierarchy', function() {

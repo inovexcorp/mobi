@@ -37,9 +37,7 @@
         /**
          * @ngdoc service
          * @name delimitedManager.service:delimitedManagerService
-         * @requires $http
-         * @requires $q
-         * @requires $window
+         * @requires util.service:utilService
          *
          * @description
          * `delimitedManagerService` is a service that provides access to the Mobi CSV REST
@@ -48,9 +46,9 @@
          */
         .service('delimitedManagerService', delimitedManagerService);
 
-        delimitedManagerService.$inject = ['$http', '$httpParamSerializer', '$q', '$window', 'utilService', 'REST_PREFIX'];
+        delimitedManagerService.$inject = ['$http', '$httpParamSerializer', '$q', 'utilService', 'REST_PREFIX'];
 
-        function delimitedManagerService($http, $httpParamSerializer, $q, $window, utilService, REST_PREFIX) {
+        function delimitedManagerService($http, $httpParamSerializer, $q, utilService, REST_PREFIX) {
             var self = this,
                 util = utilService,
                 prefix = REST_PREFIX + 'delimited-files';
@@ -239,13 +237,12 @@
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
-             * Opens the current window to the location of GET /mobirest/delimited-files/{fileName}/map which
-             * will start a file download of the complete mapped delimited data in the specified format
+             * Calls the GET /mobirest/delimited-files/{fileName}/map endpoint using the `window.location` variable
+             * which will start a file download of the complete mapped delimited data in the specified format
              * of an uploaded delimited file using a saved Mapping identified by the passed IRI. Uses
              * {@link delimitedManager.delimitedManager#separator separator},
              * {@link delimitedManager.delimitedManager#containsHeaders containsHeaders}, and
-             * {@link delimitedManager.delimitedManager#fileName fileName} to create the URL to set the window
-             * location to.
+             * {@link delimitedManager.delimitedManager#fileName fileName} to create the URL.
              *
              * @param {string} mappingRecordIRI the IRI of a saved MappingRecord
              * @param {string} format the RDF format for the mapped data
@@ -261,7 +258,7 @@
                 if (fileName) {
                     params.fileName = fileName;
                 }
-                $window.location = prefix + '/' + encodeURIComponent(self.fileName) + '/map?' + $httpParamSerializer(params);
+                util.startDownload(prefix + '/' + encodeURIComponent(self.fileName) + '/map?' + $httpParamSerializer(params));
             }
 
             /**

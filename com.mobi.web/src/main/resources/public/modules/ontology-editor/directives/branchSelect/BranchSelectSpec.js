@@ -81,6 +81,24 @@ describe('Branch Select directive', function() {
         it('with a ui-select', function() {
             expect(this.element.find('ui-select').length).toBe(1);
         });
+        it('depending on whether the current ontology has changes', function() {
+            var select = this.element.find('ui-select');
+            expect(select.attr('disabled')).toBeTruthy();
+
+            ontologyStateSvc.hasChanges.and.returnValue(false);
+            scope.$digest();
+            expect(select.attr('disabled')).toBeFalsy();
+        });
+        it('depending on whether the current ontology is committable', function() {
+            ontologyStateSvc.hasChanges.and.returnValue(false);
+            scope.$digest();
+            var select = this.element.find('ui-select');
+            expect(select.attr('disabled')).toBeFalsy();
+
+            ontologyStateSvc.isCommittable.and.returnValue(true);
+            scope.$digest();
+            expect(select.attr('disabled')).toBeTruthy();
+        });
         it('depending on whether a branch is being deleted', function() {
             expect(this.element.find('confirmation-overlay').length).toBe(0);
 
