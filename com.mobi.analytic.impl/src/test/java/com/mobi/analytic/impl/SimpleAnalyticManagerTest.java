@@ -34,15 +34,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.analytic.api.builder.AnalyticRecordConfig;
-import com.mobi.analytic.ontologies.analytic.AnalyticRecordFactory;
-import com.mobi.analytic.ontologies.analytic.Configuration;
-import com.mobi.analytic.ontologies.analytic.ConfigurationFactory;
-import com.mobi.analytic.pagination.AnalyticPaginatedSearchParams;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 import com.mobi.analytic.api.configuration.ConfigurationService;
 import com.mobi.analytic.ontologies.analytic.AnalyticRecord;
+import com.mobi.analytic.ontologies.analytic.Configuration;
+import com.mobi.analytic.pagination.AnalyticPaginatedSearchParams;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.PaginatedSearchParams;
@@ -51,26 +46,16 @@ import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.core.utils.Values;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.repository.sail.SailRepository;
@@ -82,23 +67,20 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.Optional;
 
-public class SimpleAnalyticManagerTest {
+public class SimpleAnalyticManagerTest extends OrmEnabledTestCase {
 
     private SimpleAnalyticManager manager;
     private Repository repository;
-    private ValueFactory vf = SimpleValueFactory.getInstance();
-    private ModelFactory mf = LinkedHashModelFactory.getInstance();
-    private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
-    private AnalyticRecordFactory analyticRecordFactory = new AnalyticRecordFactory();
+    private OrmFactory<AnalyticRecord> analyticRecordFactory = getRequiredOrmFactory(AnalyticRecord.class);
     private AnalyticRecord record;
-    private ConfigurationFactory configurationFactory = new ConfigurationFactory();
+    private OrmFactory<Configuration> configurationFactory = getRequiredOrmFactory(Configuration.class);
     private Configuration config;
 
-    private final IRI CATALOG_IRI = vf.createIRI("https://mobi.com/test/catalogs#1");
-    private final IRI RECORD_IRI = vf.createIRI("https://mobi.com/test/records#1");
-    private final IRI CONFIG_IRI = vf.createIRI("https://mobi.com/test/configs#1");
-    private final Literal NEW_LITERAL = vf.createLiteral("new");
-    private final IRI TITLE_IRI = vf.createIRI(_Thing.title_IRI);
+    private final IRI CATALOG_IRI = VALUE_FACTORY.createIRI("https://mobi.com/test/catalogs#1");
+    private final IRI RECORD_IRI = VALUE_FACTORY.createIRI("https://mobi.com/test/records#1");
+    private final IRI CONFIG_IRI = VALUE_FACTORY.createIRI("https://mobi.com/test/configs#1");
+    private final Literal NEW_LITERAL = VALUE_FACTORY.createLiteral("new");
+    private final IRI TITLE_IRI = VALUE_FACTORY.createIRI(_Thing.title_IRI);
 
     @Mock
     private CatalogManager catalogManager;
@@ -122,26 +104,6 @@ public class SimpleAnalyticManagerTest {
             conn.add(Values.mobiModel(Rio.parse(data, "", RDFFormat.TRIG)));
         }
 
-        analyticRecordFactory.setModelFactory(mf);
-        analyticRecordFactory.setValueFactory(vf);
-        analyticRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(analyticRecordFactory);
-
-        configurationFactory.setModelFactory(mf);
-        configurationFactory.setValueFactory(vf);
-        configurationFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(configurationFactory);
-
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
-
         record = analyticRecordFactory.createNew(RECORD_IRI);
         config = configurationFactory.createNew(CONFIG_IRI);
         config.setProperty(NEW_LITERAL, TITLE_IRI);
@@ -159,13 +121,13 @@ public class SimpleAnalyticManagerTest {
         when(baseService.getTypeIRI()).thenReturn(Configuration.TYPE);
 
         manager = new SimpleAnalyticManager();
+        injectOrmFactoryReferencesIntoService(manager);
         manager.setRepository(repository);
-        manager.setAnalyticRecordFactory(analyticRecordFactory);
         manager.setCatalogManager(catalogManager);
         manager.setCatalogUtils(catalogUtils);
-        manager.setValueFactory(vf);
+        manager.setValueFactory(VALUE_FACTORY);
         manager.addConfigurationService(baseService);
-        manager.setModelFactory(mf);
+        manager.setModelFactory(MODEL_FACTORY);
     }
 
     @After
@@ -175,7 +137,7 @@ public class SimpleAnalyticManagerTest {
 
     @Test
     public void testGetAnalyticRecords() {
-        PaginatedSearchResults<AnalyticRecord> results = manager.getAnalyticRecords(new AnalyticPaginatedSearchParams(vf));
+        PaginatedSearchResults<AnalyticRecord> results = manager.getAnalyticRecords(new AnalyticPaginatedSearchParams(VALUE_FACTORY));
         verify(catalogManager).findRecord(eq(CATALOG_IRI), any(PaginatedSearchParams.class));
         assertEquals(results.getPage().size(), 1);
         assertEquals(results.getPageNumber(), 1);
@@ -193,7 +155,7 @@ public class SimpleAnalyticManagerTest {
     @Test
     public void testCreateAnalytic() {
         // Setup:
-        IRI configurationId = vf.createIRI("https://mobi.com/test/configs#2");
+        IRI configurationId = VALUE_FACTORY.createIRI("https://mobi.com/test/configs#2");
         Configuration configuration = configurationFactory.createNew(configurationId);
         AnalyticRecordConfig config = new AnalyticRecordConfig.AnalyticRecordBuilder("title", Collections.emptySet(), configuration).build();
 

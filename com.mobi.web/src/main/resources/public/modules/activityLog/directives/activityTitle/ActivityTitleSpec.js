@@ -51,7 +51,6 @@ describe('Activity Title directive', function() {
             this.element = $compile(angular.element('<activity-title activity="activity" entities="entities"></activity-title>'))(scope);
             scope.$apply();
             this.controller = this.element.controller('activityTitle');
-            this.isolatedScope = this.element.isolateScope();
         }
     });
 
@@ -69,6 +68,7 @@ describe('Activity Title directive', function() {
     describe('in isolated scope', function() {
         beforeEach(function() {
             this.compile();
+            this.isolatedScope = this.element.isolateScope();
         });
         it('activity is one way bound', function() {
             this.isolatedScope.activity = {};
@@ -82,30 +82,23 @@ describe('Activity Title directive', function() {
         });
     });
     describe('should initialize with the correct value for', function() {
-        beforeEach(function() {
-            this.compile();
-        });
         describe('username', function() {
             it('if the activity does not have the wasAssociatedWith property', function() {
-                expect(userManagerSvc.getUsername).not.toHaveBeenCalled();
+                this.compile();
+                expect(this.controller.username).toBe('(None)');
             });
             describe('if the activity has the wasAssociatedWith property', function() {
                 beforeEach(function() {
                     this.iri = 'iri';
                     utilSvc.getPropertyId.and.returnValue(this.iri);
                 });
-                it('unless an error occurs', function() {
-                    userManagerSvc.getUsername.and.returnValue($q.reject('Error message'));
+                it('and the user was not found', function() {
                     this.compile();
-                    expect(userManagerSvc.getUsername).toHaveBeenCalledWith(this.iri);
-                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
                     expect(this.controller.username).toBe('(None)');
                 });
-                it('successfully', function() {
-                    userManagerSvc.getUsername.and.returnValue($q.when('username'));
+                it('and the user was found', function() {
+                    userManagerSvc.users = [{iri: this.iri, username: 'username'}];
                     this.compile();
-                    expect(userManagerSvc.getUsername).toHaveBeenCalledWith(this.iri);
-                    expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                     expect(this.controller.username).toBe('username');
                 });
             });
@@ -122,6 +115,7 @@ describe('Activity Title directive', function() {
                 expect(this.controller.word).toEqual('word1');
             });
             it('unsupported type', function() {
+                this.compile();
                 expect(this.controller.word).toEqual('affected');
             });
         });
@@ -142,6 +136,7 @@ describe('Activity Title directive', function() {
                 expect(this.controller.entities).toEqual('entity and entity1');
             });
             it('unsupported type', function() {
+                this.compile();
                 expect(this.controller.entities).toEqual('(None)');
             });
         });

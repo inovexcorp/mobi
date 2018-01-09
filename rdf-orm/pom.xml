@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.11.13-SNAPSHOT</version>
+        <version>1.11.19-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -41,6 +41,7 @@
         <module>com.mobi.rdf.orm.generate</module>
         <module>rdf-orm-maven-plugin</module>
         <module>com.mobi.rdf.orm.cli</module>
+        <module>rdf-orm-test</module>
     </modules>
 
     <dependencyManagement>
