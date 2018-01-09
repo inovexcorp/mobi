@@ -25,9 +25,11 @@ package com.mobi.ontology.rest;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import java.io.InputStream;
+import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -57,7 +59,7 @@ public interface OntologyRest {
      * @param fileInputStream the ontology file to upload.
      * @param title           the title for the OntologyRecord.
      * @param description     the description for the OntologyRecord.
-     * @param keywords        the comma separated list of keywords associated with the OntologyRecord.
+     * @param keywords        the optional list of keyword strings for the OntologyRecord.
      * @return CREATED with record ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
      *      SERVER ERROR if there is a problem creating the OntologyRecord.
      */
@@ -70,7 +72,7 @@ public interface OntologyRest {
                         @FormDataParam("file") InputStream fileInputStream,
                         @FormDataParam("title") String title,
                         @FormDataParam("description") String description,
-                        @FormDataParam("keywords") String keywords);
+                        @FormDataParam("keywords") List<FormDataBodyPart> keywords);
 
     /**
      * Ingests/uploads the JSON-LD of an ontology to a data store and creates and stores an OntologyRecord using the
@@ -80,7 +82,7 @@ public interface OntologyRest {
      * @param context      the context of the request.
      * @param title        the title for the OntologyRecord.
      * @param description  the description for the OntologyRecord.
-     * @param keywords     the comma separated list of keywords associated with the OntologyRecord.
+     * @param keywords     the optional list of keyword strings for the OntologyRecord.
      * @param ontologyJson the ontology JSON-LD to upload.
      * @return OK with record ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
      *      SERVER ERROR if there is a problem creating the OntologyRecord.
@@ -93,7 +95,7 @@ public interface OntologyRest {
     Response uploadOntologyJson(@Context ContainerRequestContext context,
                                 @QueryParam("title") String title,
                                 @QueryParam("description") String description,
-                                @QueryParam("keywords") String keywords,
+                                @QueryParam("keywords") List<String> keywords,
                                 String ontologyJson);
 
     /**

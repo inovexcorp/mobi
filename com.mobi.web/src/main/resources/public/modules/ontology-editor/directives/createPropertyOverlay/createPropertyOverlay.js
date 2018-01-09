@@ -27,9 +27,9 @@
         .module('createPropertyOverlay', [])
         .directive('createPropertyOverlay', createPropertyOverlay);
 
-        createPropertyOverlay.$inject = ['$filter', 'REGEX', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService', 'responseObj'];
+        createPropertyOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createPropertyOverlay($filter, REGEX, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService, responseObj) {
+        function createPropertyOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,7 +40,6 @@
                     var dvm = this;
                     var setAsObject = false;
                     var setAsDatatype = false;
-                    var ro = responseObj;
 
                     dvm.characteristics = [
                         {
@@ -57,7 +56,6 @@
                         }
                     ];
                     dvm.prefixes = prefixes;
-                    dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
@@ -71,7 +69,9 @@
                         [prefixes.dcterms + 'description']: [{
                             '@value': ''
                         }]
-                    }
+                    };
+                    dvm.domains = [];
+                    dvm.ranges = [];
 
                     dvm.nameChanged = function() {
                         if (!dvm.iriHasChanged) {
@@ -92,11 +92,12 @@
                                 dvm.property['@type'].push(obj.typeIRI);
                             }
                         });
-                        _.forEach(['domain', 'range'], function(axiom) {
-                            if (_.isEqual(dvm.property[prefixes.rdfs + axiom], [])) {
-                                _.unset(dvm.property, prefixes.rdfs + axiom);
-                            }
-                        });
+                        if (dvm.domains.length) {
+                            dvm.property[prefixes.rdfs + 'domain'] = _.map(dvm.domains, iri => ({'@id': iri}));
+                        }
+                        if (dvm.ranges.length) {
+                            dvm.property[prefixes.rdfs + 'range'] = _.map(dvm.ranges, iri => ({'@id': iri}));
+                        }
                         dvm.ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
                         dvm.os.updatePropertyIcon(dvm.property);
                         // add the entity to the ontology
@@ -128,6 +129,7 @@
                     dvm.typeChange = function() {
                         dvm.values = [];
                         if (dvm.om.isAnnotation(dvm.property)) {
+                            dvm.domains = [];
                             _.forEach(dvm.characteristics, obj => {
                                 obj.checked = false;
                             });
@@ -136,18 +138,19 @@
                                 obj.checked = false;
                             });
                         }
+                        dvm.ranges = [];
                     }
                     dvm.characteristicsFilter = function(obj) {
                         return !obj.objectOnly || dvm.om.isObjectProperty(dvm.property);
                     }
 
                     function commonUpdate(key, setThisOpened) {
-                        dvm.os.listItem[key].iris.push(ro.createItemFromIri(dvm.property['@id']));
+                        dvm.os.listItem[key].iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
                         if (dvm.values.length) {
                             dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
                             dvm.ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), key);
-                            if (dvm.ontoUtils.containsDerivedSemanticRelation(_.map(dvm.values, obj => ro.createItemFromIri(obj['@id'])))) {
-                                dvm.os.listItem.derivedSemanticRelations.push(ro.createItemFromIri(dvm.property['@id']));
+                            if (dvm.ontoUtils.containsDerivedSemanticRelation(_.map(dvm.values, '@id'))) {
+                                dvm.os.listItem.derivedSemanticRelations.push(dvm.property['@id']);
                             }
                         } else {
                             dvm.os.listItem[key].hierarchy.push({'entityIRI': dvm.property['@id']});

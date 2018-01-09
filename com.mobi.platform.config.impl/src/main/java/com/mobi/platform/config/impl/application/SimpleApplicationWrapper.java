@@ -30,8 +30,6 @@ import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
-import com.mobi.exception.MobiException;
-import com.mobi.platform.config.api.ontologies.platformconfig.Application;
 import com.mobi.platform.config.api.application.ApplicationConfig;
 import com.mobi.platform.config.api.application.ApplicationWrapper;
 import com.mobi.platform.config.api.ontologies.platformconfig.Application;
@@ -41,8 +39,9 @@ import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.exception.RepositoryException;
 import org.openrdf.model.vocabulary.DCTERMS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -55,6 +54,8 @@ import java.util.Map;
 public class SimpleApplicationWrapper implements ApplicationWrapper {
     private static final String NAMESPACE = "http://mobi.com/applications#";
     protected static final String NAME = "com.mobi.platform.config.application";
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleApplicationWrapper.class);
+
     protected Repository repository;
     protected ValueFactory factory;
     protected ModelFactory modelFactory;
@@ -84,10 +85,12 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
 
     @Activate
     protected void start(Map<String, Object> props) {
-        validateConfig(props);
         ApplicationConfig config = Configurable.createConfigurable(ApplicationConfig.class, props);
+        LOG.trace("Starting \"" + config.id() + "\" application...");
 
-        applicationId = config.id();
+        validateConfig(props);
+        this.applicationId = config.id();
+
         Application application = appFactory.createNew(factory.createIRI(NAMESPACE + applicationId));
         application.setProperty(factory.createLiteral(config.title()), factory.createIRI(DCTERMS.TITLE.stringValue()));
         if (config.description() != null && !config.description().equals("")) {
@@ -96,10 +99,13 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
         }
 
         try (RepositoryConnection conn = repository.getConnection()) {
+            if (conn.contains(application.getResource(), null, null)) {
+                LOG.warn("Replacing existing application \"" + applicationId + "\".");
+                conn.remove(application.getResource(), null, null);
+            }
             conn.add(application.getModel());
-        } catch (RepositoryException e) {
-            throw new MobiException("Error in repository connection", e);
         }
+        LOG.debug("Application \"" + applicationId + "\" started.");
     }
 
     @Modified
@@ -110,11 +116,11 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
 
     @Deactivate
     protected void stop() {
+        LOG.trace("Stopping \"" + applicationId + "\" application...");
         try (RepositoryConnection conn = repository.getConnection()) {
             conn.remove(factory.createIRI(NAMESPACE + applicationId), null, null);
-        } catch (RepositoryException e) {
-            throw new MobiException("Error in repository connection", e);
         }
+        LOG.debug("Application \"" + applicationId + "\" stopped.");
     }
 
     @Override
@@ -129,13 +135,6 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
         if (config.title().equals("")) {
             throw new IllegalArgumentException("Application property \"title\" cannot be empty");
         }
-        try (RepositoryConnection conn = repository.getConnection()) {
-            if (conn.getStatements(factory.createIRI(NAMESPACE + config.id()), null, null).hasNext()) {
-                throw new IllegalArgumentException("Application property \"id\" has already been used");
-            }
-        } catch (RepositoryException e) {
-            throw new MobiException("Error in repository connection", e);
-        }
     }
 
     @Override
@@ -145,15 +144,11 @@ public class SimpleApplicationWrapper implements ApplicationWrapper {
 
     @Override
     public Application getApplication() {
-        Application app;
         try (RepositoryConnection conn = repository.getConnection()) {
             Model appModel = modelFactory.createModel();
             conn.getStatements(factory.createIRI(NAMESPACE + applicationId), null, null).forEach(appModel::add);
-            app = appFactory.getExisting(factory.createIRI(NAMESPACE + applicationId), appModel).orElseThrow(() ->
+            return appFactory.getExisting(factory.createIRI(NAMESPACE + applicationId), appModel).orElseThrow(() ->
                     new IllegalStateException("Unable to retrieve application: " + NAMESPACE + applicationId));
-        } catch (RepositoryException e) {
-            throw new MobiException("Error in repository connection", e);
         }
-        return app;
     }
 }

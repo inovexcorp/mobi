@@ -27,112 +27,151 @@
         .module('propertyManager', [])
         .service('propertyManagerService', propertyManagerService);
 
-        propertyManagerService.$inject = ['$filter', '$q', '$http', 'prefixes', 'REST_PREFIX'];
+        propertyManagerService.$inject = ['prefixes'];
 
-        function propertyManagerService($filter, $q, $http, prefixes, REST_PREFIX) {
+        function propertyManagerService(prefixes) {
             var self = this;
-            var prefix = REST_PREFIX + 'ontologies/';
 
-            var rdfsAnnotations = _.map(['comment', 'label', 'seeAlso', 'isDefinedBy'], item => {
-                return {
-                    namespace: prefixes.rdfs,
-                    localName: item
-                }
-            });
-            var dcAnnotations = _.map(['description', 'title'], item => {
-                return {
-                    namespace: prefixes.dcterms,
-                    localName: item
-                }
-            });
+            var rdfsAnnotations = _.map(['comment', 'label', 'seeAlso', 'isDefinedBy'], item => prefixes.rdfs + item);
+            var dcAnnotations = _.map(['description', 'title'], item => prefixes.dcterms + item);
+            /**
+             * @ngdoc property
+             * @name defaultAnnotations
+             * @propertyOf propertyManager.service:propertyManagerService
+             * @type {string[]}
+             *
+             * @description
+             * `defaultAnnotations` holds an array of annotations that are available by default.
+             */
             self.defaultAnnotations = _.concat(rdfsAnnotations, dcAnnotations);
+            /**
+             * @ngdoc property
+             * @name owlAnnotations
+             * @propertyOf propertyManager.service:propertyManagerService
+             * @type {string[]}
+             *
+             * @description
+             * `owlAnnotations` holds an array of OWL annotations.
+             */
+            self.owlAnnotations = [prefixes.owl + 'deprecated'];
+            /**
+             * @ngdoc property
+             * @name skosAnnotations
+             * @propertyOf propertyManager.service:propertyManagerService
+             * @type {string[]}
+             *
+             * @description
+             * `skosAnnotations` holds an array of SKOS annotations.
+             */
+            self.skosAnnotations = _.map(['altLabel', 'changeNote', 'definition', 'editorialNote', 'example', 'hiddenLabel', 'historyNote', 'note', 'prefLabel', 'scopeNote'], item => prefixes.skos + item);
 
-            self.owlAnnotations = [{namespace: prefixes.owl, localName: 'deprecated'}];
-            self.skosAnnotations = _.map(['altLabel', 'changeNote', 'definition', 'editorialNote', 'example',
-                'hiddenLabel', 'historyNote', 'note', 'prefLabel', 'scopeNote'], item => {
-                return {
-                    namespace: prefixes.skos,
-                    localName: item
-                }
-            });
-
+            var xsdDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => prefixes.xsd + item);
+            var rdfDatatypes = _.map(['langString'], item => prefixes.rdf + item);
+            /**
+             * @ngdoc property
+             * @name defaultDatatypes
+             * @propertyOf propertyManager.service:propertyManagerService
+             * @type {string[]}
+             *
+             * @description
+             * `defaultDatatypes` holds an array of datatypes that are available by default.
+             */
+            self.defaultDatatypes = _.concat(xsdDatatypes, rdfDatatypes);
+            /**
+             * @ngdoc property
+             * @name ontologyProperties
+             * @propertyOf propertyManager.service:propertyManagerService
+             * @type {string[]}
+             *
+             * @description
+             * `ontologyProperties` holds an array of the property types available to be added to the ontology entity
+             * within an ontology.
+             */
+            self.ontologyProperties = _.map(['priorVersion', 'backwardCompatibleWith', 'incompatibleWith'], item => prefixes.owl + item);
+            /**
+             * @ngdoc property
+             * @name ontologyProperties
+             * @propertyOf propertyManager.service:propertyManagerService
+             * @type {string[]}
+             *
+             * @description
+             * `conceptSchemeRelationshipList` holds an array of the relationships that skos:Concepts can have with
+             * skos:ConceptSchemes.
+             */
+            self.conceptSchemeRelationshipList = _.map(['topConceptOf', 'inScheme'], item => prefixes.skos + item);
+            /**
+             * @ngdoc property
+             * @name conceptRelationshipList
+             * @propertyOf propertyManager.service:propertyManagerService
+             * @type {string[]}
+             *
+             * @description
+             * `conceptRelationshipList` holds an array of the relationships that skos:Concepts can have with other
+             * skos:Concepts.
+             */
+            self.conceptRelationshipList = _.map(['broaderTransitive', 'broader', 'broadMatch', 'narrowerTransitive', 'narrower', 'narrowMatch', 'related', 'relatedMatch', 'mappingRelation', 'closeMatch', 'exactMatch'], item => prefixes.skos + item);
+            /**
+             * @ngdoc property
+             * @name schemeRelationshipList
+             * @propertyOf propertyManager.service:propertyManagerService
+             * @type {string[]}
+             *
+             * @description
+             * `schemeRelationshipList` holds an array of the relationships that skos:ConceptSchemes can have with other
+             * entities.
+             */
+            self.schemeRelationshipList = [prefixes.skos + 'hasTopConcept'];
+            /**
+             * @ngdoc property
+             * @name classAxiomList
+             * @propertyOf propertyManager.service:propertyManagerService
+             * @type {Object[]}
+             *
+             * @description
+             * `classAxiomList` holds an array of objects representing supported axioms on owl:Classes with the
+             * key name for the list of values from a {@link ontologyState.service:ontologyStateService list item}.
+             */
             self.classAxiomList = [
-                {
-                    namespace: prefixes.rdfs,
-                    localName: 'subClassOf',
-                    valuesKey: 'classes'
-                },
-                {
-                    namespace: prefixes.owl,
-                    localName: 'disjointWith',
-                    valuesKey: 'classes'
-                },
-                {
-                    namespace: prefixes.owl,
-                    localName: 'equivalentClass',
-                    valuesKey: 'classes'
-                }
+                {iri: prefixes.rdfs + 'subClassOf', valuesKey: 'classes'},
+                {iri: prefixes.owl + 'disjointWith', valuesKey: 'classes'},
+                {iri: prefixes.owl + 'equivalentClass', valuesKey: 'classes'}
             ];
-
+            /**
+             * @ngdoc property
+             * @name datatypeAxiomList
+             * @propertyOf propertyManager.service:propertyManagerService
+             * @type {Object[]}
+             *
+             * @description
+             * `datatypeAxiomList` holds an array of objects representing supported axioms on owl:DatatypeProperties
+             * with the key name for the list of values from a
+             * {@link ontologyState.service:ontologyStateService list item}.
+             */
             self.datatypeAxiomList = [
-                {
-                    namespace: prefixes.rdfs,
-                    localName: 'domain',
-                    valuesKey: 'classes'
-                },
-                {
-                    namespace: prefixes.rdfs,
-                    localName: 'range',
-                    valuesKey: 'dataPropertyRange'
-                },
-                {
-                    namespace: prefixes.owl,
-                    localName: 'equivalentProperty',
-                    valuesKey: 'dataProperties'
-                },
-                {
-                    namespace: prefixes.rdfs,
-                    localName: 'subPropertyOf',
-                    valuesKey: 'dataProperties'
-                },
-                {
-                    namespace: prefixes.owl,
-                    localName: 'disjointWith',
-                    valuesKey: 'dataProperties'
-                }
+                {iri: prefixes.rdfs + 'domain', valuesKey: 'classes'},
+                {iri: prefixes.rdfs + 'range', valuesKey: 'dataPropertyRange'},
+                {iri: prefixes.owl + 'equivalentProperty', valuesKey: 'dataProperties'},
+                {iri: prefixes.rdfs + 'subPropertyOf', valuesKey: 'dataProperties'},
+                {iri: prefixes.owl + 'disjointWith', valuesKey: 'dataProperties'}
             ];
-
+            /**
+             * @ngdoc property
+             * @name objectAxiomList
+             * @propertyOf propertyManager.service:propertyManagerService
+             * @type {Object[]}
+             *
+             * @description
+             * `objectAxiomList` holds an array of objects representing supported axioms on owl:ObjectProperties
+             * with the key name for the list of values from a
+             * {@link ontologyState.service:ontologyStateService list item}.
+             */
             self.objectAxiomList = [
-                {
-                    namespace: prefixes.rdfs,
-                    localName: 'domain',
-                    valuesKey: 'classes'
-                },
-                {
-                    namespace: prefixes.rdfs,
-                    localName: 'range',
-                    valuesKey: 'classes'
-                },
-                {
-                    namespace: prefixes.owl,
-                    localName: 'equivalentProperty',
-                    valuesKey: 'objectProperties'
-                },
-                {
-                    namespace: prefixes.rdfs,
-                    localName: 'subPropertyOf',
-                    valuesKey: 'objectProperties'
-                },
-                {
-                    namespace: prefixes.owl,
-                    localName: 'inverseOf',
-                    valuesKey: 'objectProperties'
-                },
-                {
-                    namespace: prefixes.owl,
-                    localName: 'disjointWith',
-                    valuesKey: 'objectProperties'
-                }
+                {iri: prefixes.rdfs + 'domain', valuesKey: 'classes'},
+                {iri: prefixes.rdfs + 'range', valuesKey: 'classes'},
+                {iri: prefixes.owl + 'equivalentProperty', valuesKey: 'objectProperties'},
+                {iri: prefixes.rdfs + 'subPropertyOf', valuesKey: 'objectProperties'},
+                {iri: prefixes.owl + 'inverseOf', valuesKey: 'objectProperties'},
+                {iri: prefixes.owl + 'disjointWith', valuesKey: 'objectProperties'}
             ];
 
             self.remove = function(entity, key, index) {
@@ -141,7 +180,6 @@
                     delete entity[key];
                 }
             }
-
             self.add = function(entity, prop, value, type, language) {
                 if (prop) {
                     var annotation = {'@value': value};
@@ -158,7 +196,6 @@
                     }
                 }
             }
-
             self.edit = function(entity, prop, value, index, type, language) {
                 if (prop) {
                     var annotation = entity[prop][index];
@@ -174,29 +211,6 @@
                         _.unset(annotation, '@language');
                     }
                 }
-            }
-
-            self.create = function(recordId, annotationIRIs, iri) {
-                var deferred = $q.defer();
-                var annotationJSON = {'@id': iri, '@type': [prefixes.owl + 'AnnotationProperty']};
-                if (_.indexOf(annotationIRIs, iri) === -1) {
-                    var config = {
-                        params: {
-                            annotationjson: annotationJSON
-                        }
-                    }
-                    $http.post(prefix + encodeURIComponent(recordId) + '/annotations', null, config)
-                        .then(response => {
-                            if (_.get(response, 'status') === 200) {
-                                deferred.resolve(annotationJSON);
-                            } else {
-                                deferred.reject(_.get(response, 'statusText'));
-                            }
-                        }, response => deferred.reject(_.get(response, 'statusText')));
-                } else {
-                    deferred.reject('This ontology already has an OWL Annotation declared with that IRI.');
-                }
-                return deferred.promise;
             }
         }
 })();

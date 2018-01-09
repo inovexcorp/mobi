@@ -155,9 +155,7 @@
                 if (_.has(recordConfig, 'description')) {
                     fd.append('description', recordConfig.description);
                 }
-                if (_.get(recordConfig, 'keywords', []).length > 0) {
-                    fd.append('keywords', _.join(recordConfig.keywords, ','));
-                }
+                _.forEach(_.get(recordConfig, 'keywords', []), word => fd.append('keywords', word));
                 _.forEach(_.get(recordConfig, 'ontologies', []), id => fd.append('ontologies', id));
                 return $http.post(prefix, fd, config)
                     .then(response => self.getDatasetRecord(response.data), $q.reject)

@@ -26,11 +26,9 @@ describe('Super Property Select directive', function() {
     beforeEach(function() {
         module('templates');
         module('superPropertySelect');
-        mockResponseObj();
         mockOntologyState();
         mockUtil();
         mockOntologyUtilsManager();
-        mockPrefixes();
         injectTrustedFilter();
         injectHighlightFilter();
 
@@ -139,10 +137,10 @@ describe('Super Property Select directive', function() {
             expect(this.controller.values).toEqual([]);
         });
         it('getValues should call the correct method', function() {
-            ontologyStateSvc.listItem = { key: { iris: [] } };
+            ontologyStateSvc.listItem = { key: { iris: {iri: 'ontologyId'} } };
             ontoUtils.getSelectList.and.returnValue(['list']);
             this.controller.getValues('text');
-            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(ontologyStateSvc.listItem.key.iris, 'text', ontoUtils.getDropDownText);
+            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['iri'], 'text', ontoUtils.getDropDownText);
             expect(this.controller.array).toEqual(['list']);
         });
     });
