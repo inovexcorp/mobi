@@ -1545,7 +1545,8 @@ public class OntologyRestImpl implements OntologyRest {
             semaphore.acquire();
             record.getOntologyIRI().ifPresent(this::testOntologyIRIUniqueness);
             catalogManager.addRecord(catalogId, record);
-            masterBranchId = record.getMasterBranch_resource().get();
+            masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
+                    new IllegalStateException("OntologyRecord must have a master Branch"));
             Model model = ontology.asModel(modelFactory);
             commitId = versioningManager.commit(catalogId, record.getResource(), masterBranchId, user,
                     "The initial commit.", model, null);
