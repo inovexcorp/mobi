@@ -23,6 +23,10 @@ package com.mobi.analytic.rest.impl;
  * #L%
  */
 
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getOrmFactoryRegistry;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -36,60 +40,38 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import com.mobi.analytic.api.AnalyticManager;
 import com.mobi.analytic.api.builder.AnalyticRecordConfig;
-import com.mobi.analytic.ontologies.analytic.AnalyticRecordFactory;
+import com.mobi.analytic.ontologies.analytic.AnalyticRecord;
 import com.mobi.analytic.ontologies.analytic.Configuration;
-import com.mobi.analytic.ontologies.analytic.ConfigurationFactory;
 import com.mobi.analytic.ontologies.analytic.TableConfiguration;
-import com.mobi.analytic.ontologies.analytic.TableConfigurationFactory;
+import com.mobi.catalog.api.CatalogProvUtils;
+import com.mobi.exception.MobiException;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
+import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.core.utils.Values;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.Thing;
+import com.mobi.repository.exception.RepositoryException;
+import com.mobi.rest.util.MobiRestTestNg;
+import com.mobi.rest.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import com.mobi.analytic.api.AnalyticManager;
-import com.mobi.analytic.ontologies.analytic.AnalyticRecord;
-import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.exception.MobiException;
-import com.mobi.jaas.api.engines.EngineManager;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
-import com.mobi.prov.api.ontologies.mobiprov.CreateActivityFactory;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.rdf.core.utils.Values;
-import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.rdf.orm.Thing;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
-import com.mobi.repository.exception.RepositoryException;
-import com.mobi.rest.util.MobiRestTestNg;
-import com.mobi.rest.util.UsernameTestFilter;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
@@ -97,14 +79,8 @@ import javax.ws.rs.core.Response;
 
 public class AnalyticRestImplTest extends MobiRestTestNg {
     private AnalyticRestImpl rest;
-    private ValueFactory vf;
-    private ModelFactory mf;
-    private ValueConverterRegistry vcr;
-    private ConfigurationFactory configurationFactory;
-    private TableConfigurationFactory tableConfigurationFactory;
-    private AnalyticRecordFactory analyticRecordFactory;
-    private UserFactory userFactory;
-    private CreateActivityFactory createActivityFactory;
+    private OrmFactory<Configuration> configurationFactory;
+    private OrmFactory<TableConfiguration> tableConfigurationFactory;
     private AnalyticRecord record;
     private User user;
     private CreateActivity activity;
@@ -125,9 +101,6 @@ public class AnalyticRestImplTest extends MobiRestTestNg {
     private EngineManager engineManager;
 
     @Mock
-    private OrmFactoryRegistry factoryRegistry;
-
-    @Mock
     private CatalogProvUtils provUtils;
 
     @Mock
@@ -135,49 +108,13 @@ public class AnalyticRestImplTest extends MobiRestTestNg {
 
     @Override
     protected Application configureApp() throws Exception {
-        vf = SimpleValueFactory.getInstance();
-        mf = LinkedHashModelFactory.getInstance();
-        vcr = new DefaultValueConverterRegistry();
+        ValueFactory vf = getValueFactory();
 
-        configurationFactory = new ConfigurationFactory();
-        configurationFactory.setModelFactory(mf);
-        configurationFactory.setValueFactory(vf);
-        configurationFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(configurationFactory);
-
-        tableConfigurationFactory = new TableConfigurationFactory();
-        tableConfigurationFactory.setModelFactory(mf);
-        tableConfigurationFactory.setValueFactory(vf);
-        tableConfigurationFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(tableConfigurationFactory);
-
-        analyticRecordFactory = new AnalyticRecordFactory();
-        analyticRecordFactory.setModelFactory(mf);
-        analyticRecordFactory.setValueFactory(vf);
-        analyticRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(analyticRecordFactory);
-
-        userFactory = new UserFactory();
-        userFactory.setModelFactory(mf);
-        userFactory.setValueFactory(vf);
-        userFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(userFactory);
-
-        createActivityFactory = new CreateActivityFactory();
-        createActivityFactory.setModelFactory(mf);
-        createActivityFactory.setValueFactory(vf);
-        createActivityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(createActivityFactory);
-
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
+        OrmFactory<AnalyticRecord> analyticRecordFactory = getRequiredOrmFactory(AnalyticRecord.class);
+        OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+        OrmFactory<CreateActivity> createActivityFactory = getRequiredOrmFactory(CreateActivity.class);
+        configurationFactory = getRequiredOrmFactory(Configuration.class);
+        tableConfigurationFactory = getRequiredOrmFactory(TableConfiguration.class);
 
         recordId = vf.createIRI(RECORD_IRI);
         record = analyticRecordFactory.createNew(recordId);
@@ -187,15 +124,14 @@ public class AnalyticRestImplTest extends MobiRestTestNg {
         tableConfig = tableConfigurationFactory.createNew(vf.createIRI(TABLE_CONFIG_IRI));
 
         MockitoAnnotations.initMocks(this);
-        when(factoryRegistry.getFactoriesOfType(Configuration.class)).thenReturn(Stream.of(configurationFactory, tableConfigurationFactory).collect(Collectors.toList()));
 
         rest = new AnalyticRestImpl();
         rest.setAnalyticManager(analyticManager);
         rest.setEngineManager(engineManager);
-        rest.setFactoryRegistry(factoryRegistry);
+        rest.setFactoryRegistry(getOrmFactoryRegistry());
         rest.setProvUtils(provUtils);
         rest.setValueFactory(vf);
-        rest.setModelFactory(mf);
+        rest.setModelFactory(getModelFactory());
         rest.setSesameTransformer(transformer);
 
         return new ResourceConfig()

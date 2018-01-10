@@ -40,15 +40,11 @@ import static org.mockito.Mockito.when;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
-import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.api.BNodeService;
@@ -57,23 +53,10 @@ import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.core.utils.Values;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
@@ -105,7 +88,7 @@ import javax.cache.Cache;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
-public class SimpleOntologyManagerTest {
+public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     @Mock
     private CatalogManager catalogManager;
@@ -132,13 +115,9 @@ public class SimpleOntologyManagerTest {
     private BNodeService bNodeService;
 
     private SimpleOntologyManager manager;
-    private ValueFactory vf = SimpleValueFactory.getInstance();
-    private ModelFactory mf = LinkedHashModelFactory.getInstance();
-    private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
-    private OntologyRecordFactory ontologyRecordFactory = new OntologyRecordFactory();
-    private CommitFactory commitFactory = new CommitFactory();
-    private BranchFactory branchFactory = new BranchFactory();
-    private CatalogFactory catalogFactory = new CatalogFactory();
+    private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
+    private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+    private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private IRI missingIRI;
     private IRI recordIRI;
     private IRI branchIRI;
@@ -155,49 +134,20 @@ public class SimpleOntologyManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        missingIRI = vf.createIRI("http://mobi.com/missing");
-        recordIRI = vf.createIRI("http://mobi.com/record");
-        branchIRI = vf.createIRI("http://mobi.com/branch");
-        commitIRI = vf.createIRI("http://mobi.com/commit");
-        catalogIRI = vf.createIRI("http://mobi.com/catalog");
-        ontologyIRI = vf.createIRI("http://mobi.com/ontology");
-        versionIRI = vf.createIRI("http://mobi.com/ontology/1.0");
+        missingIRI = VALUE_FACTORY.createIRI("http://mobi.com/missing");
+        recordIRI = VALUE_FACTORY.createIRI("http://mobi.com/record");
+        branchIRI = VALUE_FACTORY.createIRI("http://mobi.com/branch");
+        commitIRI = VALUE_FACTORY.createIRI("http://mobi.com/commit");
+        catalogIRI = VALUE_FACTORY.createIRI("http://mobi.com/catalog");
+        ontologyIRI = VALUE_FACTORY.createIRI("http://mobi.com/ontology");
+        versionIRI = VALUE_FACTORY.createIRI("http://mobi.com/ontology/1.0");
         owlOntologyIRI = org.semanticweb.owlapi.model.IRI.create("http://mobi.com/ontology");
         owlVersionIRI = org.semanticweb.owlapi.model.IRI.create("http://mobi.com/ontology/1.0");
-
-        ontologyRecordFactory.setModelFactory(mf);
-        ontologyRecordFactory.setValueFactory(vf);
-        ontologyRecordFactory.setValueConverterRegistry(vcr);
-
-        commitFactory.setModelFactory(mf);
-        commitFactory.setValueFactory(vf);
-        commitFactory.setValueConverterRegistry(vcr);
-
-        branchFactory.setModelFactory(mf);
-        branchFactory.setValueFactory(vf);
-        branchFactory.setValueConverterRegistry(vcr);
-
-        catalogFactory.setModelFactory(mf);
-        catalogFactory.setValueFactory(vf);
-        catalogFactory.setValueConverterRegistry(vcr);
-
-        vcr.registerValueConverter(ontologyRecordFactory);
-        vcr.registerValueConverter(commitFactory);
-        vcr.registerValueConverter(branchFactory);
-        vcr.registerValueConverter(catalogFactory);
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
 
         record = ontologyRecordFactory.createNew(recordIRI);
         MockitoAnnotations.initMocks(this);
 
+        OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
         Catalog catalog = catalogFactory.createNew(catalogIRI);
         when(catalogManager.getRepositoryId()).thenReturn("system");
         when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogIRI);
@@ -212,11 +162,11 @@ public class SimpleOntologyManagerTest {
         when(sesameTransformer.sesameModel(any(Model.class))).thenReturn(new org.openrdf.model.impl.LinkedHashModel());
 
         InputStream testOntology = getClass().getResourceAsStream("/test-ontology.ttl");
-        when(ontology.asModel(mf)).thenReturn(Values.mobiModel(Rio.parse(testOntology, "", RDFFormat.TURTLE)));
+        when(ontology.asModel(MODEL_FACTORY)).thenReturn(Values.mobiModel(Rio.parse(testOntology, "", RDFFormat.TURTLE)));
         when(ontology.getImportsClosure()).thenReturn(Collections.singleton(ontology));
 
         InputStream testVocabulary = getClass().getResourceAsStream("/test-vocabulary.ttl");
-        when(vocabulary.asModel(mf)).thenReturn(Values.mobiModel(Rio.parse(testVocabulary, "", RDFFormat.TURTLE)));
+        when(vocabulary.asModel(MODEL_FACTORY)).thenReturn(Values.mobiModel(Rio.parse(testVocabulary, "", RDFFormat.TURTLE)));
         when(vocabulary.getImportsClosure()).thenReturn(Collections.singleton(vocabulary));
 
         PowerMockito.mockStatic(SimpleOntologyValues.class);
@@ -237,24 +187,23 @@ public class SimpleOntologyManagerTest {
             conn.begin();
             InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
             conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
-            conn.add(ontology.asModel(mf));
+            conn.add(ontology.asModel(MODEL_FACTORY));
             conn.commit();
         }
         vocabRepo = repoManager.createMemoryRepository();
         vocabRepo.initialize();
         try (RepositoryConnection conn = vocabRepo.getConnection()) {
-            conn.add(vocabulary.asModel(mf));
+            conn.add(vocabulary.asModel(MODEL_FACTORY));
         }
         when(mockRepoManager.createMemoryRepository()).thenReturn(repoManager.createMemoryRepository());
         when(mockRepoManager.getRepository("system")).thenReturn(Optional.of(repo));
 
         manager = Mockito.spy(new SimpleOntologyManager());
-        manager.setValueFactory(vf);
-        manager.setModelFactory(mf);
+        injectOrmFactoryReferencesIntoService(manager);
+        manager.setValueFactory(VALUE_FACTORY);
+        manager.setModelFactory(MODEL_FACTORY);
         manager.setSesameTransformer(sesameTransformer);
         manager.setCatalogManager(catalogManager);
-        manager.setOntologyRecordFactory(ontologyRecordFactory);
-        manager.setBranchFactory(branchFactory);
         manager.setRepositoryManager(mockRepoManager);
         manager.setOntologyCache(ontologyCache);
         manager.setbNodeService(bNodeService);
@@ -268,7 +217,7 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testCreateOntologyRecordWithOntologyIRI() throws Exception {
-        IRI ontologyIRI = vf.createIRI("http://test.com/ontology");
+        IRI ontologyIRI = VALUE_FACTORY.createIRI("http://test.com/ontology");
         OntologyRecordConfig config = new OntologyRecordConfig.OntologyRecordBuilder("title", Collections.emptySet())
                 .ontologyIRI(ontologyIRI).build();
 
@@ -308,7 +257,7 @@ public class SimpleOntologyManagerTest {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(mf.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
 
         Optional<Ontology> result = manager.retrieveOntologyByIRI(ontologyIRI);
         assertTrue(result.isPresent());
@@ -326,7 +275,7 @@ public class SimpleOntologyManagerTest {
         branch.setHead(commitFactory.createNew(commitIRI));
         String key = ontologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
         when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(mf.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
         when(mockCache.containsKey(key)).thenReturn(true);
         when(mockCache.get(key)).thenReturn(ontology);
 
@@ -379,7 +328,7 @@ public class SimpleOntologyManagerTest {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(mf.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI);
         assertTrue(optionalOntology.isPresent());
@@ -397,7 +346,7 @@ public class SimpleOntologyManagerTest {
         branch.setHead(commitFactory.createNew(commitIRI));
         String key = ontologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
         when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(mf.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
         when(mockCache.containsKey(key)).thenReturn(true);
         when(mockCache.get(key)).thenReturn(ontology);
 
@@ -459,7 +408,7 @@ public class SimpleOntologyManagerTest {
         Branch branch = branchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(mf.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI);
         assertTrue(optionalOntology.isPresent());
@@ -477,7 +426,7 @@ public class SimpleOntologyManagerTest {
         branch.setHead(commitFactory.createNew(commitIRI));
         String key = ontologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
         when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.of(branch));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(mf.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
         when(mockCache.containsKey(key)).thenReturn(true);
         when(mockCache.get(key)).thenReturn(ontology);
 
@@ -528,7 +477,7 @@ public class SimpleOntologyManagerTest {
         // Setup:
         Commit commit = commitFactory.createNew(commitIRI);
         when(catalogManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI)).thenReturn(Optional.of(commit));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(mf.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
         assertTrue(optionalOntology.isPresent());
@@ -545,7 +494,7 @@ public class SimpleOntologyManagerTest {
         Commit commit = commitFactory.createNew(commitIRI);
         String key = ontologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
         when(catalogManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI)).thenReturn(Optional.of(commit));
-        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(mf.createModel());
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
         when(mockCache.containsKey(key)).thenReturn(true);
         when(mockCache.get(key)).thenReturn(ontology);
 
@@ -568,7 +517,7 @@ public class SimpleOntologyManagerTest {
     @Test
     public void testDeleteOntology() throws Exception {
         // Setup:
-        IRI ontologyIRI = vf.createIRI("http://test.com/test-ontology");
+        IRI ontologyIRI = VALUE_FACTORY.createIRI("http://test.com/test-ontology");
         record.setOntologyIRI(ontologyIRI);
 
         OntologyRecord result = manager.deleteOntology(recordIRI);
@@ -785,13 +734,13 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testGetEntityUsages() throws Exception {
-        verifyGetEntityUsages(manager.getEntityUsages(ontology, vf.createIRI("http://mobi.com/ontology#Class1a")));
+        verifyGetEntityUsages(manager.getEntityUsages(ontology, VALUE_FACTORY.createIRI("http://mobi.com/ontology#Class1a")));
     }
 
     @Test
     public void testGetEntityUsagesWithConnection() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            verifyGetEntityUsages(manager.getEntityUsages(vf.createIRI("http://mobi.com/ontology#Class1a"), conn));
+            verifyGetEntityUsages(manager.getEntityUsages(VALUE_FACTORY.createIRI("http://mobi.com/ontology#Class1a"), conn));
         }
     }
 
@@ -822,25 +771,25 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testConstructEntityUsages() throws Exception {
-        Resource class1a = vf.createIRI("http://mobi.com/ontology#Class1a");
+        Resource class1a = VALUE_FACTORY.createIRI("http://mobi.com/ontology#Class1a");
         verifyConstructEntityUsages(manager.constructEntityUsages(ontology, class1a), class1a);
     }
 
     @Test
     public void testConstructEntityUsagesWithConnection() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            Resource class1a = vf.createIRI("http://mobi.com/ontology#Class1a");
+            Resource class1a = VALUE_FACTORY.createIRI("http://mobi.com/ontology#Class1a");
             verifyConstructEntityUsages(manager.constructEntityUsages(class1a, conn), class1a);
         }
     }
 
     private void verifyConstructEntityUsages(Model result, Resource class1a) throws Exception {
-        Resource class1b = vf.createIRI("http://mobi.com/ontology#Class1b");
-        IRI subClassOf = vf.createIRI("http://www.w3.org/2000/01/rdf-schema#subClassOf");
-        Resource individual1a = vf.createIRI("http://mobi.com/ontology#Individual1a");
-        IRI type = vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
-        Model expected = mf.createModel(Stream.of(vf.createStatement(class1b, subClassOf,
-                class1a), vf.createStatement(individual1a, type, class1a)).collect(Collectors.toSet()));
+        Resource class1b = VALUE_FACTORY.createIRI("http://mobi.com/ontology#Class1b");
+        IRI subClassOf = VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#subClassOf");
+        Resource individual1a = VALUE_FACTORY.createIRI("http://mobi.com/ontology#Individual1a");
+        IRI type = VALUE_FACTORY.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+        Model expected = MODEL_FACTORY.createModel(Stream.of(VALUE_FACTORY.createStatement(class1b, subClassOf,
+                class1a), VALUE_FACTORY.createStatement(individual1a, type, class1a)).collect(Collectors.toSet()));
 
         assertTrue(result.equals(expected));
     }
