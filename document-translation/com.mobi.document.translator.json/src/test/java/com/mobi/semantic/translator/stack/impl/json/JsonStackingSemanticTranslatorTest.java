@@ -79,12 +79,9 @@ public class JsonStackingSemanticTranslatorTest extends OrmEnabledTestCase {
 
     @Test
     public void twoDimensionalArraysTest() throws Exception {
-        //TODO - Work with 2D Arrays...
+        //TODO - Work with 2D Arrays... Ensure changes behave consistently.
         final Model output = this.extractor.translate(
                 Paths.get("src/test/resources/test2dArrays.json"), this.ontology);
-//        this.ontology.getModel().forEach(System.out::println);
-        //System.out.println("\n\n\n");
-//        output.forEach(System.out::println);
         Assert.assertNotNull(output);
         Assert.assertFalse(output.isEmpty());
 
