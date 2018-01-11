@@ -15,7 +15,7 @@
 	<parent>
 		<artifactId>mobi-itests</artifactId>
 		<groupId>com.mobi</groupId>
-		<version>1.11.19</version>
+		<version>1.11.20-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
