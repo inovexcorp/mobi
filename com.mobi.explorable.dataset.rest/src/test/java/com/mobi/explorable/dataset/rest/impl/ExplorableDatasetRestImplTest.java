@@ -197,7 +197,7 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         when(dataProperty.getIRI()).thenReturn(dataPropertyId);
         when(objectProperty.getIRI()).thenReturn(objectPropertyId);
         when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
-        when(ontologyManager.getSubClassesFor(any(IRI.class), any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(Collections.singletonList("s"), Collections.singletonList(i.getArgumentAt(0, IRI.class).stringValue()), 1, vf));
+        when(ontologyManager.getSubClassesFor(any(IRI.class), any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(Collections.singletonList("s"), Collections.singletonList(CLASS_ID_STR_2), 1, vf));
 
         rest = new ExplorableDatasetRestImpl();
         injectOrmFactoryReferencesIntoService(rest);
@@ -451,8 +451,8 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
                 + encode(CLASS_ID_STR) + "/instance-details").queryParam("infer", true).request().get();
         assertEquals(response.getStatus(), 200);
         JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
-        assertEquals(responseArray.size(), 13);
-        assertEquals(response.getHeaders().get("X-Total-Count").get(0), "13");
+        assertEquals(responseArray.size(), 17);
+        assertEquals(response.getHeaders().get("X-Total-Count").get(0), "17");
         verify(datasetManager).getDatasetRecord(recordId);
         verify(ontologyManager).getSubClassesFor(eq(classId), any(RepositoryConnection.class));
     }

@@ -364,17 +364,15 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
      * @return A Set containing the list of inferred classes.
      */
     private Set<IRI> getInferredClasses(Resource recordId, IRI classIRI) {
+        DatasetRecord record = datasetManager.getDatasetRecord(recordId).orElseThrow(() ->
+                ErrorUtils.sendError("The Dataset Record could not be found.", Response.Status.BAD_REQUEST));
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
-            DatasetRecord record = datasetManager.getDatasetRecord(recordId).orElseThrow(() ->
-                    ErrorUtils.sendError("The Dataset Record could not be found.", Response.Status.BAD_REQUEST));
             Model recordModel = record.getModel();
             conn.begin();
-            record.getOntology().forEach(value -> getOntology(recordModel, value).ifPresent(ontology -> {
-                Set<Ontology> imports = ontology.getImportsClosure();
-                imports.forEach(ont -> conn.add(ont.asModel(modelFactory)));
-            }));
+            record.getOntology().forEach(value -> getOntology(recordModel, value).ifPresent(ontology ->
+                    ontology.getImportsClosure().forEach(ont -> conn.add(ont.asModel(modelFactory)))));
             conn.commit();
             Set<IRI> iris = new HashSet<>();
             iris.add(classIRI);
