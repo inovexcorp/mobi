@@ -29,6 +29,7 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
 import static com.mobi.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -60,8 +61,11 @@ import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.RepositoryManager;
+import com.mobi.repository.impl.core.SimpleRepositoryManager;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import com.mobi.rest.util.MobiRestTestNg;
+import com.mobi.repository.impl.sesame.query.TestQueryResult;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -153,6 +157,8 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
     protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
+        RepositoryManager repoManager = new SimpleRepositoryManager();
+
         vf = getValueFactory();
         mf = getModelFactory();
 
@@ -191,6 +197,7 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         when(dataProperty.getIRI()).thenReturn(dataPropertyId);
         when(objectProperty.getIRI()).thenReturn(objectPropertyId);
         when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
+        when(ontologyManager.getSubClassesFor(any(IRI.class), any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(Collections.singletonList("s"), Collections.singletonList(i.getArgumentAt(0, IRI.class).stringValue()), 1, vf));
 
         rest = new ExplorableDatasetRestImpl();
         injectOrmFactoryReferencesIntoService(rest);
@@ -201,6 +208,7 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         rest.setModelFactory(mf);
         rest.setOntologyManager(ontologyManager);
         rest.setBNodeService(bNodeService);
+        rest.setRepositoryManager(repoManager);
 
         return new ResourceConfig().register(rest);
     }
@@ -434,6 +442,28 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
     public void getInstanceDetailsWithOffsetThatIsTooLargeTest() {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/instance-details").queryParam("offset", 14).request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getInstanceDetailsWithInferTest() {
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/instance-details").queryParam("infer", true).request().get();
+        assertEquals(response.getStatus(), 200);
+        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(responseArray.size(), 13);
+        assertEquals(response.getHeaders().get("X-Total-Count").get(0), "13");
+        verify(datasetManager).getDatasetRecord(recordId);
+        verify(ontologyManager).getSubClassesFor(eq(classId), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void getInstanceDetailsWithInferWithEmptyRecordTest() {
+        //Setup:
+        when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.empty());
+
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/instance-details").queryParam("infer", true).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
