@@ -5,4 +5,8 @@
     p.identifier {
         margin: 0;
     }
+    .form-body {
+        max-height: 500px;
+        overflow-y: auto;
+    }
 }
