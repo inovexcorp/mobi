@@ -12,12 +12,12 @@ package com.mobi.document.translator.cli;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -70,17 +70,17 @@ public class DocumentTranslationCLI implements Action {
     @Completion(FileCompleter.class)
     private File documentFile;
 
-    @Argument(index = 1, name = "Ontology IRI", required = true,
-            description = "The IRI of the ontology you want to generate")
-    private String ontologyIriString;
-
-    @Argument(index = 2, name = "Output Location", required = true,
+    @Argument(index = 1, name = "Output Location", required = true,
             description = "The directory where we'll write the output zip file containing the ontology and data")
     @Completion(FileCompleter.class)
     private File outputDirectory;
 
+    @Argument(index = 2, name = "Ontology IRI", required = true,
+            description = "The IRI of the ontology you want to generate")
+    private String ontologyIriString;
+
     @Argument(index = 3, name = "Document Type",
-            description = "The type of document -- If you don't want to use the file extension")
+            description = "The type of document (If you don't want to use the file extension)")
     private String type;
 
     @Reference
