@@ -1,5 +1,28 @@
 package com.mobi.document.translator.cli;
 
+/*-
+ * #%L
+ * com.mobi.document.translation.cli
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -9,7 +32,6 @@ import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.semantic.translator.SemanticTranslationException;
 import com.mobi.semantic.translator.SemanticTranslator;
 import com.mobi.semantic.translator.ontology.ExtractedOntology;
-import com.mobi.semantic.translator.stack.impl.json.JsonStackingSemanticTranslator;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.karaf.shell.api.action.Action;
@@ -18,6 +40,8 @@ import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Completion;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -35,6 +59,11 @@ import java.util.zip.ZipOutputStream;
 @Service
 public class DocumentTranslationCLI implements Action {
 
+    /**
+     * Logging utility.
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(DocumentTranslationCLI.class);
+
     @Argument(index = 0, name = "Document", required = true, description = "The document file to translate")
     @Completion(FileCompleter.class)
     private File documentFile;
@@ -45,6 +74,7 @@ public class DocumentTranslationCLI implements Action {
 
     @Argument(index = 2, name = "Output Location", required = true,
             description = "The directory where we'll write the output zip file containing the ontology and data")
+    @Completion(FileCompleter.class)
     private File outputDirectory;
 
     @Argument(index = 3, name = "Document Type",
@@ -110,9 +140,10 @@ public class DocumentTranslationCLI implements Action {
     private SemanticTranslator getTranslatorForType(DocumentType type) throws IOException
 
     {
+        LOGGER.info("Translating for type '{}' -- We have {} translators registered", type.name(), this.translators.size());
         switch (type) {
             case JSON:
-                return translators.stream().filter(translator -> translator instanceof JsonStackingSemanticTranslator)
+                return translators.stream()
                         .findFirst()
                         .orElseThrow(() -> new UnsupportedOperationException("No JSON translator was found in the system"));
             default:

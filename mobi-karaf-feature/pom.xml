@@ -299,7 +299,7 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>document.translation.cli</artifactId>
+            <artifactId>document.translator.cli</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

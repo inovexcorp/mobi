@@ -1,5 +1,5 @@
 
-Lists of 319 third-party dependencies.
+Lists of 317 third-party dependencies.
      (Public Domain) AOP alliance (aopalliance:aopalliance:1.0 - http://aopalliance.sourceforge.net)
      (The Apache Software License, Version 2.0) avalon-framework (avalon-framework:avalon-framework:4.1.3 - no url defined)
      (The Apache Software License, Version 2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.1.0 - http://bnd.bndtools.org/)
@@ -149,6 +149,7 @@ Lists of 319 third-party dependencies.
      (The Apache Software License, Version 2.0) Apache ServiceMix :: Bundles :: json-lib (org.apache.servicemix.bundles:org.apache.servicemix.bundles.json-lib:2.4_1 - http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.json-lib/)
      (The Apache Software License, Version 2.0) Apache ServiceMix :: Bundles :: not-yet-commons-ssl (org.apache.servicemix.bundles:org.apache.servicemix.bundles.not-yet-commons-ssl:0.3.11_1 - http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.not-yet-commons-ssl/)
      (The Apache Software License, Version 2.0) Apache ServiceMix :: Bundles :: poi (org.apache.servicemix.bundles:org.apache.servicemix.bundles.poi:3.14_1 - http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.poi/)
+     (The Apache Software License, Version 2.0) Apache ServiceMix :: Bundles :: spring-expression (org.apache.servicemix.bundles:org.apache.servicemix.bundles.spring-expression:5.0.2.RELEASE_1 - http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.spring-expression/)
      (The Apache Software License, Version 2.0) Apache Mina SSHD :: Core (org.apache.sshd:sshd-core:0.14.0 - http://www.apache.org/sshd/sshd-core/)
      (The Apache Software License, Version 2.0) GPars (org.codehaus.gpars:gpars:1.2.1 - http://gpars.codehaus.org)
      (The Apache Software License, Version 2.0) Groovy (org.codehaus.groovy:groovy-all:2.4.1 - http://groovy.codehaus.org/)
@@ -309,10 +310,7 @@ Lists of 319 third-party dependencies.
      (The Apache Software License, Version 2.0) Spring Beans (org.springframework:spring-beans:4.1.4.RELEASE - https://github.com/spring-projects/spring-framework)
      (The Apache Software License, Version 2.0) Spring Context (org.springframework:spring-context:4.1.4.RELEASE - https://github.com/spring-projects/spring-framework)
      (The Apache Software License, Version 2.0) Spring Core (org.springframework:spring-core:4.1.4.RELEASE - https://github.com/spring-projects/spring-framework)
-     (The Apache Software License, Version 2.0) Spring Core (org.springframework:spring-core:5.0.2.RELEASE - https://github.com/spring-projects/spring-framework)
      (The Apache Software License, Version 2.0) Spring Expression Language (SpEL) (org.springframework:spring-expression:4.1.4.RELEASE - https://github.com/spring-projects/spring-framework)
-     (The Apache Software License, Version 2.0) Spring Expression Language (SpEL) (org.springframework:spring-expression:5.0.2.RELEASE - https://github.com/spring-projects/spring-framework)
-     (The Apache Software License, Version 2.0) Spring Commons Logging Bridge (org.springframework:spring-jcl:5.0.2.RELEASE - https://github.com/spring-projects/spring-framework)
      (The Apache Software License, Version 2.0) Spring Web (org.springframework:spring-web:4.1.4.RELEASE - https://github.com/spring-projects/spring-framework)
      (The Apache Software License, Version 2.0) Spring Web MVC (org.springframework:spring-webmvc:4.1.4.RELEASE - https://github.com/spring-projects/spring-framework)
      (Apache 2.0) testng (org.testng:testng:6.10 - http://testng.org)
