@@ -1,7 +1,7 @@
 package com.mobi.semantic.translator.stack;
 
-        /*-
-         * #%L
+/*-
+ * #%L
  * meaning.extraction.api
  * $Id:$
  * $HeadURL:$
@@ -21,7 +21,7 @@ package com.mobi.semantic.translator.stack;
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
-         */
+ */
 
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -75,11 +75,12 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
 
     private final Deque<T> stack;
 
-    protected AbstractStackingSemanticTranslator() {
-        this("|", "{", "}");
+    protected AbstractStackingSemanticTranslator(String... supportedTypes) {
+        this("|", "{", "}", supportedTypes);
     }
 
-    protected AbstractStackingSemanticTranslator(String delimiter, String prefix, String suffix) {
+    protected AbstractStackingSemanticTranslator(String delimiter, String prefix, String suffix, String... supportedTypes) {
+        super(supportedTypes);
         this.delimiter = delimiter;
         this.prefix = prefix;
         this.suffix = suffix;

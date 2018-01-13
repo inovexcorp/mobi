@@ -59,6 +59,10 @@ public class JsonStackingSemanticTranslator extends AbstractStackingSemanticTran
 
     private static final JsonFactory JSON_FACTORY = new JsonFactory();
 
+    public JsonStackingSemanticTranslator() {
+        super("json", "application/json");
+    }
+
     @Reference
     public void setValueFactory(ValueFactory valueFactory) {
         super.valueFactory = valueFactory;

@@ -39,12 +39,17 @@ import java.nio.file.Path;
 public interface SemanticTranslator {
 
     /**
+     * @return The array of document extension/types this service supports.
+     */
+    String[] getSupportedTypes();
+
+    /**
      * Read the raw file from the file system and populate the provided ORM based {@link ExtractedOntology} object
      * with the inferred structures from the file.
      *
      * @param rawFile         The {@link Path} to the file on the file system
      * @param managedOntology The {@link ExtractedOntology} structure to populate with the inferred ontological structures
-     * @return  {@link Model} containing the data representing in the content represented by the managed ontology
+     * @return {@link Model} containing the data representing in the content represented by the managed ontology
      * @throws SemanticTranslationException If there is an issue translating the data in the specified file
      */
     Model translate(Path rawFile, ExtractedOntology managedOntology) throws SemanticTranslationException;

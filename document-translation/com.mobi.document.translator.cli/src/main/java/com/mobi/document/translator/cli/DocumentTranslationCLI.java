@@ -31,6 +31,7 @@ import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.semantic.translator.SemanticTranslationException;
 import com.mobi.semantic.translator.SemanticTranslator;
 import com.mobi.semantic.translator.ontology.ExtractedOntology;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.karaf.shell.api.action.Action;
@@ -49,6 +50,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
@@ -118,14 +120,16 @@ public class DocumentTranslationCLI implements Action {
         return null;
     }
 
-    private SemanticTranslator getTranslatorForType(DocumentType type) throws IOException
-
-    {
+    private SemanticTranslator getTranslatorForType(DocumentType type) {
         LOGGER.info("Translating for type '{}' -- We have {} translators registered", type.name(), this.translators.size());
         switch (type) {
             case JSON:
                 return translators.stream()
+                        // If any of the supported types contains the type extensions.
+                        .filter(translator -> CollectionUtils.containsAny(Arrays.asList(translator.getSupportedTypes()), Arrays.asList(type.getExtensions())))
+                        // Find the first matching the above filter predicate.
                         .findFirst()
+                        // Or else throw an exception.
                         .orElseThrow(() -> new UnsupportedOperationException("No JSON translator was found in the system"));
             default:
                 throw new UnsupportedOperationException("CLI doesn't yet support document type: " + type);

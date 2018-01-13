@@ -67,6 +67,17 @@ public abstract class AbstractSemanticTranslator implements SemanticTranslator {
 
     private IRI rdfType = null;
 
+    protected final String[] supportedTypes;
+
+    protected AbstractSemanticTranslator(String... supportedTypes) {
+        this.supportedTypes = supportedTypes;
+    }
+
+    @Override
+    public String[] getSupportedTypes() {
+        return supportedTypes;
+    }
+
     protected IRI xsdString() {
         if (xsdString == null) {
             xsdString = valueFactory.createIRI(XSD_PREFIX, "string");
