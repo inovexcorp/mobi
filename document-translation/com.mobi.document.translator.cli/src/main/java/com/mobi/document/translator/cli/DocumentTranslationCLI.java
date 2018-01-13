@@ -126,7 +126,8 @@ public class DocumentTranslationCLI implements Action {
             case JSON:
                 return translators.stream()
                         // If any of the supported types contains the type extensions.
-                        .filter(translator -> CollectionUtils.containsAny(Arrays.asList(translator.getSupportedTypes()), Arrays.asList(type.getExtensions())))
+                        .filter(translator -> CollectionUtils.containsAny(Arrays.asList(translator.getSupportedTypes()),
+                                Arrays.asList(type.getExtensions())))
                         // Find the first matching the above filter predicate.
                         .findFirst()
                         // Or else throw an exception.
@@ -140,7 +141,8 @@ public class DocumentTranslationCLI implements Action {
         FileUtils.forceMkdir(loc);
     }
 
-    private static Optional<DocumentType> identifyType(final String extension, final String type) throws SemanticTranslationException {
+    private static Optional<DocumentType> identifyType(final String extension, final String type)
+            throws SemanticTranslationException {
         DocumentType documentType = null;
         if (type != null) {
             documentType = DocumentType.getTypeFromFileExtension(type)
