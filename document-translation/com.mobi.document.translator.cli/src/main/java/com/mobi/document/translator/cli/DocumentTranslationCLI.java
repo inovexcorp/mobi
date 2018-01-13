@@ -23,7 +23,6 @@ package com.mobi.document.translator.cli;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
@@ -38,6 +37,7 @@ import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Completion;
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
 import org.slf4j.Logger;
@@ -49,7 +49,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -81,37 +81,18 @@ public class DocumentTranslationCLI implements Action {
             description = "The type of document -- If you don't want to use the file extension")
     private String type;
 
-    private Collection<SemanticTranslator> translators = new ArrayList<>();
+    @Reference
+    private List<SemanticTranslator> translators = new ArrayList<>();
 
+    @Reference
     private OrmFactoryRegistry ormFactoryRegistry;
 
+    @Reference
     private ValueFactory valueFactory;
 
+    @Reference
     private ModelFactory modelFactory;
 
-    @Reference
-    void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
-    }
-
-    @Reference
-    void setValueFactory(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
-    }
-
-    @Reference
-    void setOrmFactoryRegistry(OrmFactoryRegistry registry) {
-        this.ormFactoryRegistry = registry;
-    }
-
-    @Reference(dynamic = true, multiple = true, unbind = "unregisterTranslator")
-    void registerTranslator(SemanticTranslator translator) {
-        this.translators.add(translator);
-    }
-
-    void unregisterTranslator(SemanticTranslator translator) {
-        this.translators.remove(translator);
-    }
 
     @Override
     public Object execute() throws Exception {

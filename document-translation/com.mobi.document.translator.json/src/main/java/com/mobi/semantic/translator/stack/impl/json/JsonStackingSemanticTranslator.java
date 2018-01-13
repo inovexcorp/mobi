@@ -36,6 +36,7 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.semantic.translator.SemanticTranslationException;
+import com.mobi.semantic.translator.SemanticTranslator;
 import com.mobi.semantic.translator.expression.IriExpressionProcessor;
 import com.mobi.semantic.translator.ontology.ExtractedClass;
 import com.mobi.semantic.translator.ontology.ExtractedDatatypeProperty;
@@ -50,7 +51,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
-@Component
+@Component(immediate = true, provide = {SemanticTranslator.class, StackingSemanticTranslator.class})
 public class JsonStackingSemanticTranslator extends AbstractStackingSemanticTranslator<JsonStackItem>
         implements StackingSemanticTranslator<JsonStackItem> {
 
