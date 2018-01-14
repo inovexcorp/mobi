@@ -78,10 +78,10 @@
                         <Bundle-Name>Mobi Document Translator API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.semantic.translator,
-                            com.mobi.semantic.translator.expression,
-                            com.mobi.semantic.translator.ontology,
-                            com.mobi.semantic.translator.stack
+                            com.mobi.document.translator,
+                            com.mobi.document.translator.expression,
+                            com.mobi.document.translator.ontology,
+                            com.mobi.document.translator.stack
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
