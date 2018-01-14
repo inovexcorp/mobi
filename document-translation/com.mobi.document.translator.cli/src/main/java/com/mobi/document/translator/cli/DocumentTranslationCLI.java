@@ -95,7 +95,6 @@ public class DocumentTranslationCLI implements Action {
     @Reference
     private ModelFactory modelFactory;
 
-
     @Override
     public Object execute() throws Exception {
         validateOutputLocation(outputDirectory);
