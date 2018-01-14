@@ -1,0 +1,15 @@
+<root rootAttr="value">
+    <string_element>I'm a string</string_element>
+    <int_element>100</int_element>
+    <double_element>3.141592</double_element>
+    <attr_element val="ATTRIBUTE value" age="-1" />
+    <!-- This is a simple comment about the current element -->
+    <object>
+        <obj_id>123</obj_id>
+        <obj_name>Mobi</obj_name>
+        <obj_child child_attr="child attribute value">
+            <!-- Comment about the obj_child -->
+            <child_name>MatOnto</child_name>
+        </obj_child>
+    </object>
+</root>
