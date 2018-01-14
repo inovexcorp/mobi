@@ -141,6 +141,7 @@
         <bundle start-level="80">mvn:com.mobi/analytic.impl/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/document.translator.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/document.translator.json/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.mobi/document.translator.xml/${project.version}</bundle>
     </feature>
     <feature name="mobi-cli" description="Mobi CLI Bundles" version="${project.version}">
         <feature prerequisite="true">mobi-core</feature>

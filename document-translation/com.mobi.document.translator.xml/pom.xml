@@ -68,7 +68,7 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>Mobi JSON Document Translator</Bundle-Name>
+                        <Bundle-Name>Mobi XML Document Translator</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
                             com.mobi.document.translator; provide:=true
