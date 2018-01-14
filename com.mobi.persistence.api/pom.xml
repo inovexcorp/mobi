@@ -65,7 +65,8 @@
                         <Bundle-Name>Mobi Persistence API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.rdf*,
+                            com.mobi.rdf.api,
+                            com.mobi.rdf.base,
                             com.mobi.repository*,
                             com.mobi.query*
                         </Export-Package>

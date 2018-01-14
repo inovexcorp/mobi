@@ -6,6 +6,7 @@ import com.mobi.document.translator.SemanticTranslationException;
 import com.mobi.document.translator.SemanticTranslator;
 import com.mobi.document.translator.expression.IriExpressionProcessor;
 import com.mobi.document.translator.ontology.ExtractedClass;
+import com.mobi.document.translator.ontology.ExtractedDatatypeProperty;
 import com.mobi.document.translator.ontology.ExtractedOntology;
 import com.mobi.document.translator.stack.AbstractStackingSemanticTranslator;
 import com.mobi.document.translator.stack.StackingSemanticTranslator;
@@ -15,6 +16,7 @@ import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import org.apache.commons.io.input.XmlStreamReader;
+import org.apache.commons.lang.StringUtils;
 import org.openrdf.model.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,16 +95,33 @@ public class XmlStackingSemanticTranslator extends AbstractStackingSemanticTrans
                                 .orElseThrow(() -> new SemanticTranslationException("Element ending without a " +
                                         "corresponding stack item."));
                         String val = stringBuffer.toString();
-                        LOG.debug("Ending '{}' - Value: '{}'", reader.getLocalName(), val);
-                        final ExtractedClass clazz = getOrCreateClass(managedOntology,
-                                offItem.getClassIri(), offItem.getIdentifier(), address);
-                        final IRI instanceIri = createInstance(resultsModel, managedOntology, offItem, clazz, peekStack());
-                        LOG.debug("Created instance of '{}' - '{}'", clazz.getResource(), instanceIri);
+                        LOG.trace("Ending '{}' - Value: '{}'", reader.getLocalName(), val);
                         stringBuffer.setLength(0);
                         if (offItem.isRoot()) {
                             rootComments.forEach(comment -> {
                                 addComment(offItem, comment);
                             });
+                        }
+                        if (offItem.getProperties().isEmpty()) {
+                            if (StringUtils.isNotBlank(val)) {
+                                Optional<XmlStackItem> optParent = peekStack();
+                                if (optParent.isPresent()) {
+                                    final XmlStackItem parent = optParent.get();
+                                    final ExtractedDatatypeProperty datatypeProperty = getOrCreateDatatypeProperty(
+                                            managedOntology, parent.getClassIri(), xsdString(),
+                                            offItem.getIdentifier(), getCurrentLocation());
+                                    parent.getProperties().add((IRI) datatypeProperty.getResource(),
+                                            valueFactory.createLiteral(val));
+                                } else {
+                                    //TODO
+                                    LOG.warn("Datatype Property not attached to object...");
+                                }
+                            }
+                        } else {
+                            final ExtractedClass clazz = getOrCreateClass(managedOntology,
+                                    offItem.getClassIri(), offItem.getIdentifier(), address);
+                            final IRI instanceIri = createInstance(resultsModel, managedOntology, offItem, clazz, peekStack());
+                            LOG.debug("Created instance of '{}' - '{}'", clazz.getResource(), instanceIri);
                         }
                         break;
                     case XMLStreamConstants.CHARACTERS:

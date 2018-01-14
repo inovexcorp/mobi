@@ -1,3 +1,4 @@
+<!-- This comment should be on the root element -->
 <root rootAttr="value">
     <string_element>I'm a string</string_element>
     <int_element>100</int_element>
