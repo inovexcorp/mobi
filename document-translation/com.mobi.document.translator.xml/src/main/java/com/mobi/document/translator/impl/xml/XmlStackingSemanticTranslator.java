@@ -32,6 +32,8 @@ import java.util.Optional;
 public class XmlStackingSemanticTranslator extends AbstractStackingSemanticTranslator<XmlStackItem>
         implements StackingSemanticTranslator<XmlStackItem>, SemanticTranslator {
 
+    private static final String ATTRIBUTE_PROPERTY_NAME_TEMPLATE = "_%s-attr-%s";
+
     private static final Logger LOG = LoggerFactory.getLogger(XmlStackingSemanticTranslator.class);
 
     private static final XMLInputFactory XML_INPUT_FACTORY = XMLInputFactory.newFactory();
@@ -73,11 +75,19 @@ public class XmlStackingSemanticTranslator extends AbstractStackingSemanticTrans
                 final String address = getCurrentLocation();
                 switch (event) {
                     case XMLStreamConstants.START_ELEMENT:
-                        final XmlStackItem item = pushStack(new XmlStackItem(reader.getLocalName(), !peekStack().isPresent()));
+                        final XmlStackItem item = pushStack(new XmlStackItem(reader.getLocalName(),
+                                !peekStack().isPresent()));
                         LOG.debug("Thing: '{}' at: {}", item.getIdentifier(), getCurrentLocation());
                         item.setClassIri(generateClassIri(managedOntology, item.getIdentifier(), getCurrentLocation()));
                         for (int i = 0; i < reader.getAttributeCount(); i++) {
-                            LOG.debug("Attribute '{}': '{}'", reader.getAttributeName(i), reader.getAttributeValue(i));
+                            final String attributeProperty =
+                                    String.format(ATTRIBUTE_PROPERTY_NAME_TEMPLATE, item.getIdentifier(),
+                                            reader.getAttributeName(i));
+                            final ExtractedDatatypeProperty attrProp =
+                                    getOrCreateDatatypeProperty(managedOntology, item.getClassIri(), xsdString(),
+                                            attributeProperty, getCurrentLocation());
+                            item.getProperties().add((IRI) attrProp.getResource(),
+                                    valueFactory.createLiteral(reader.getAttributeValue(i)));
                         }
                         break;
                     case XMLStreamConstants.COMMENT:
@@ -102,6 +112,7 @@ public class XmlStackingSemanticTranslator extends AbstractStackingSemanticTrans
                                 addComment(offItem, comment);
                             });
                         }
+
                         if (offItem.getProperties().isEmpty()) {
                             if (StringUtils.isNotBlank(val)) {
                                 Optional<XmlStackItem> optParent = peekStack();
@@ -120,6 +131,9 @@ public class XmlStackingSemanticTranslator extends AbstractStackingSemanticTrans
                         } else {
                             final ExtractedClass clazz = getOrCreateClass(managedOntology,
                                     offItem.getClassIri(), offItem.getIdentifier(), address);
+                            if (StringUtils.isNotBlank(val)) {
+                                offItem.getProperties().add(getRdfValue(), valueFactory.createLiteral(val));
+                            }
                             final IRI instanceIri = createInstance(resultsModel, managedOntology, offItem, clazz, peekStack());
                             LOG.debug("Created instance of '{}' - '{}'", clazz.getResource(), instanceIri);
                         }

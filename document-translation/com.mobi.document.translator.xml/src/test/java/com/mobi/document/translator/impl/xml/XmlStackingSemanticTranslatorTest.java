@@ -82,7 +82,7 @@ public class XmlStackingSemanticTranslatorTest extends OrmEnabledTestCase {
                 = getRequiredOrmFactory(ExtractedObjectProperty.class);
 
 
-        assertEquals(3, classOrmFactory.getAllExisting(ont.getModel()).size());
+        assertEquals(5, classOrmFactory.getAllExisting(ont.getModel()).size());
         ExtractedClass objChild = classOrmFactory.getExisting(
                 VALUE_FACTORY.createIRI("urn://test.ontology#obj_child"), ont.getModel())
                 .orElseThrow(() -> new Exception("Required obj_child class not defined"));
@@ -96,11 +96,11 @@ public class XmlStackingSemanticTranslatorTest extends OrmEnabledTestCase {
         long rootDatatypeProps = datatypePropertyOrmFactory.streamExisting(ont.getModel())
                 .filter(prop -> isOfDomain(prop, (IRI) root.getResource()))
                 .count();
-        assertEquals(3, rootDatatypeProps);
+        assertEquals(4, rootDatatypeProps);
         long rootObjProps = objectPropertyOrmFactory.streamExisting(ont.getModel())
                 .filter(prop -> isOfDomain(prop, (IRI) root.getResource()))
                 .count();
-        assertEquals(1, rootObjProps);
+        assertEquals(3, rootObjProps);
         long objDatatypeProps = datatypePropertyOrmFactory.streamExisting(ont.getModel())
                 .filter(prop -> isOfDomain(prop, (IRI) object.getResource()))
                 .count();

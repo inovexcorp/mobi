@@ -4,6 +4,7 @@
     <int_element>100</int_element>
     <double_element>3.141592</double_element>
     <attr_element val="ATTRIBUTE value" age="-1" />
+    <attr_content_element val="something dumb">WITH CONTENT</attr_content_element>
     <!-- This is a simple comment about the current element -->
     <object>
         <obj_id>123</obj_id>
