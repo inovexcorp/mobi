@@ -67,11 +67,11 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
 
     private static final String DEFAULT_INSTANCE_IRI_EXPRESSION = "classIri().replace('#','/').concat('/').concat(uuid())";
 
-    private final String delimiter;
+    protected final String delimiter;
 
-    private final String prefix;
+    protected final String prefix;
 
-    private final String suffix;
+    protected final String suffix;
 
     private final Deque<T> stack;
 

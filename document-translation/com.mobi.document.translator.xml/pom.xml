@@ -48,8 +48,8 @@
                         <Bundle-Name>Mobi JSON Document Translator</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.semantic.translator; provide:=true
-                            com.mobi.semantic.translator.stack; provide:=true
+                            com.mobi.document.translator; provide:=true
+                            com.mobi.document.translator.stack; provide:=true
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
