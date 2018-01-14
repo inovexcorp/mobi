@@ -95,15 +95,13 @@ public class DocumentTranslationCLI implements Action {
     @Reference
     private ModelFactory modelFactory;
 
-
     @Override
     public Object execute() throws Exception {
         validateOutputLocation(outputDirectory);
         final String extension = validateFile(this.documentFile);
-        final DocumentType documentType = identifyType(extension, this.type)
-                .orElseThrow(() -> new SemanticTranslationException("Could not identify supported type from file extension: "
-                        + extension));
-        final SemanticTranslator translator = getTranslatorForType(documentType);
+
+        final SemanticTranslator translator = getTranslatorForType(type != null ? type
+                : FilenameUtils.getExtension(documentFile.getName()));
         final IRI ontologyIri = valueFactory.createIRI(ontologyIriString);
         final ExtractedOntology ontology = ormFactoryRegistry.createNew(ontologyIri,
                 modelFactory.createModel(), ExtractedOntology.class);
@@ -120,37 +118,19 @@ public class DocumentTranslationCLI implements Action {
         return null;
     }
 
-    private SemanticTranslator getTranslatorForType(DocumentType type) {
-        LOGGER.info("Translating for type '{}' -- We have {} translators registered", type.name(), this.translators.size());
-        switch (type) {
-            case JSON:
-                return translators.stream()
-                        // If any of the supported types contains the type extensions.
-                        .filter(translator -> CollectionUtils.containsAny(Arrays.asList(translator.getSupportedTypes()),
-                                Arrays.asList(type.getExtensions())))
-                        // Find the first matching the above filter predicate.
-                        .findFirst()
-                        // Or else throw an exception.
-                        .orElseThrow(() -> new UnsupportedOperationException("No JSON translator was found in the system"));
-            default:
-                throw new UnsupportedOperationException("CLI doesn't yet support document type: " + type);
-        }
+    private SemanticTranslator getTranslatorForType(String type) {
+        LOGGER.info("Translating for type '{}' -- We have {} translators registered", type, this.translators.size());
+        return translators.stream()
+                // If any of the supported types contains the type extensions.
+                .filter(translator -> Arrays.asList(translator.getSupportedTypes()).contains(type))
+                // Find the first matching the above filter predicate.
+                .findFirst()
+                // Or else throw an exception.
+                .orElseThrow(() -> new UnsupportedOperationException("No JSON translator was found in the system"));
     }
 
     private static void validateOutputLocation(File loc) throws IOException {
         FileUtils.forceMkdir(loc);
-    }
-
-    private static Optional<DocumentType> identifyType(final String extension, final String type)
-            throws SemanticTranslationException {
-        DocumentType documentType = null;
-        if (type != null) {
-            documentType = DocumentType.getTypeFromFileExtension(type)
-                    .orElseThrow(() -> new SemanticTranslationException("Type '" + type + "' is unsupported"));
-        } else {
-            documentType = DocumentType.getTypeFromFileExtension(extension).orElse(null);
-        }
-        return Optional.ofNullable(documentType);
     }
 
     private static String validateFile(@Nonnull final File documentFile) throws IOException {

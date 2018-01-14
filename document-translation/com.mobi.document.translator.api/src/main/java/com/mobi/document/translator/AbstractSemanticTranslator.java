@@ -67,6 +67,8 @@ public abstract class AbstractSemanticTranslator implements SemanticTranslator {
 
     private IRI rdfType = null;
 
+    private IRI rdfValue = null;
+
     protected final String[] supportedTypes;
 
     protected AbstractSemanticTranslator(String... supportedTypes) {
@@ -144,4 +146,10 @@ public abstract class AbstractSemanticTranslator implements SemanticTranslator {
         return rdfType;
     }
 
+    protected IRI getRdfValue() {
+        if (rdfValue == null) {
+            rdfValue = valueFactory.createIRI(RDF_PREFIX, "value");
+        }
+        return rdfValue;
+    }
 }
