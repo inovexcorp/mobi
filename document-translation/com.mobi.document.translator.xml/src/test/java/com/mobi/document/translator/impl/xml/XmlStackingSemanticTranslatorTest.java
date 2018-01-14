@@ -1,6 +1,7 @@
 package com.mobi.document.translator.impl.xml;
 
 import com.mobi.document.translator.AbstractSemanticTranslator;
+import com.mobi.document.translator.SemanticTranslationException;
 import com.mobi.document.translator.expression.DefaultIriExpressionProcessor;
 import com.mobi.document.translator.expression.IriExpressionProcessor;
 import com.mobi.document.translator.ontology.*;
@@ -40,6 +41,16 @@ public class XmlStackingSemanticTranslatorTest extends OrmEnabledTestCase {
         IriExpressionProcessor processor = new DefaultIriExpressionProcessor();
         ((DefaultIriExpressionProcessor) processor).setValueFactory(VALUE_FACTORY);
         xmlStackingSemanticTranslator.setExpressionProcessor(processor);
+    }
+
+    @Test(expected = SemanticTranslationException.class)
+    public void testNonXml() throws Exception {
+        final ExtractedOntology ont = getRequiredOrmFactory(ExtractedOntology.class)
+                .createNew(VALUE_FACTORY.createIRI(ONT_URI));
+        try (InputStream is = new FileInputStream(new File("src/test/resources/ormFactories.conf"))) {
+            xmlStackingSemanticTranslator.translate(is, "ormFactories.conf", ont);
+            fail("Translating non-xml should throw a semantic translation exception");
+        }
     }
 
     @Test

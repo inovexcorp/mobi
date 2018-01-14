@@ -124,7 +124,6 @@ public class XmlStackingSemanticTranslator extends AbstractStackingSemanticTrans
                                     parent.getProperties().add((IRI) datatypeProperty.getResource(),
                                             valueFactory.createLiteral(val));
                                 } else {
-                                    //TODO
                                     LOG.warn("Datatype Property not attached to object...");
                                 }
                             }
