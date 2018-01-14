@@ -36,6 +36,7 @@
     <modules>
         <module>com.mobi.document.translator.api</module>
         <module>com.mobi.document.translator.json</module>
+        <module>com.mobi.document.translator.xml</module>
         <module>com.mobi.document.translator.cli</module>
     </modules>
 
