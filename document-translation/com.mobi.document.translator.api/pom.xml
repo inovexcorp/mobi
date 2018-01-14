@@ -106,7 +106,7 @@
                                     <ontologyFile>
                                         ${project.basedir}/src/main/resources/ontologies/semantic-translation-ont.trig
                                     </ontologyFile>
-                                    <outputPackage>com.mobi.semantic.translator.ontology</outputPackage>
+                                    <outputPackage>com.mobi.document.translator.ontology</outputPackage>
                                     <ontologyName>SemanticTranslation</ontologyName>
                                 </ontology>
                             </generates>
