@@ -722,7 +722,6 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
      */
     private List<PropertyDetails> getClassProperties(DatasetRecord record, String classIRI) {
         List<PropertyDetails> details = new ArrayList<>();
-        List<String> iris = new ArrayList<>();
         Model recordModel = record.getModel();
         IRI classId = factory.createIRI(classIRI);
         record.getOntology().forEach(value -> getOntology(recordModel, value).ifPresent(ontology -> {
@@ -731,20 +730,20 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                 ontology.getAllClassDataProperties(classId).stream()
                         .map(dataProperty -> createPropertyDetails(dataProperty.getIRI(),
                                 ontology.getDataPropertyRange(dataProperty), "Data", restrictions))
-                        .forEach(detail -> updateDetails(details, detail, iris));
+                        .forEach(detail -> updateDetails(details, detail));
                 ontology.getAllClassObjectProperties(classId).stream()
                         .map(objectProperty -> createPropertyDetails(objectProperty.getIRI(),
                                 ontology.getObjectPropertyRange(objectProperty), "Object", restrictions))
-                        .forEach(detail -> updateDetails(details, detail, iris));
+                        .forEach(detail -> updateDetails(details, detail));
             } else {
                 ontology.getAllNoDomainDataProperties().stream()
                         .map(dataProperty -> createPropertyDetails(dataProperty.getIRI(),
                                 ontology.getDataPropertyRange(dataProperty), "Data"))
-                        .forEach(detail -> updateDetails(details, detail, iris));
+                        .forEach(detail -> updateDetails(details, detail));
                 ontology.getAllNoDomainObjectProperties().stream()
                         .map(objectProperty -> createPropertyDetails(objectProperty.getIRI(),
                                 ontology.getObjectPropertyRange(objectProperty), "Object"))
-                        .forEach(detail -> updateDetails(details, detail, iris));
+                        .forEach(detail -> updateDetails(details, detail));
             }
         }));
         return details;
@@ -755,10 +754,9 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
      *
      * @param details the list of details to update.
      * @param detail  the new detail that should be added to the list.
-     * @param iris    the list of property iris that have already been added to the details list.
      */
-    private void updateDetails(List<PropertyDetails> details, PropertyDetails detail, List<String> iris) {
-        int index = iris.indexOf(detail.getPropertyIRI());
+    private void updateDetails(List<PropertyDetails> details, PropertyDetails detail) {
+        int index = details.indexOf(detail);
         if (index != -1) {
             PropertyDetails found = details.get(index);
             Set<String> range = found.getRange();
@@ -766,7 +764,6 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             found.setRange(range);
         } else {
             details.add(detail);
-            iris.add(detail.getPropertyIRI());
         }
     }
 
