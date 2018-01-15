@@ -233,7 +233,7 @@ public abstract class OrmEnabledTestCase {
             set.addAll(br.lines().filter(StringUtils::isNotBlank).map(name -> {
                 // Map to the class.
                 try {
-                    return ClassLoader.getSystemClassLoader().loadClass(name);
+                    return OrmEnabledTestCase.class.getClassLoader().loadClass(name);
                 } catch (Exception e) {
                     throw new OrmTestCaseException("Issue loading class specified in conf file", e);
                 }

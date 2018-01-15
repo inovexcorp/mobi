@@ -99,7 +99,7 @@
                     dvm.getOptions = function(propertyIRI) {
                         var range = dvm.eu.getRange(propertyIRI, dvm.properties);
                         if (range) {
-                            return es.getClassInstanceDetails(dvm.ds.explore.recordId, range, {offset: 0}, true)
+                            return es.getClassInstanceDetails(dvm.ds.explore.recordId, range, {offset: 0, infer: true}, true)
                                 .then(response => {
                                     var options = _.filter(response.data, item => !_.some(dvm.instance[propertyIRI], {'@id': item.instanceIRI}));
                                     if (dvm.searchText[propertyIRI]) {

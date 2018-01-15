@@ -27,43 +27,22 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
 import com.mobi.analytic.ontologies.analytic.Column;
-import com.mobi.analytic.ontologies.analytic.ColumnFactory;
 import com.mobi.analytic.ontologies.analytic.TableConfiguration;
-import com.mobi.analytic.ontologies.analytic.TableConfigurationFactory;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import junit.framework.TestCase;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
-import com.mobi.dataset.ontology.dataset.DatasetRecordFactory;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class TableConfigurationServiceTest {
+public class TableConfigurationServiceTest extends OrmEnabledTestCase {
     private TableConfigurationService service;
-    private ValueFactory vf = SimpleValueFactory.getInstance();
-    private ModelFactory mf = LinkedHashModelFactory.getInstance();
-    private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
-    private TableConfigurationFactory tableConfigurationFactory = new TableConfigurationFactory();
-    private DatasetRecordFactory datasetRecordFactory = new DatasetRecordFactory();
-    private ColumnFactory columnFactory = new ColumnFactory();
+    private OrmFactory<Column> columnFactory = getRequiredOrmFactory(Column.class);
 
     private static final String DATASET = "https://mobi.com/test/datasets#1";
     private static final String ROW = "https://mobi.com/test/rows#1";
@@ -74,36 +53,9 @@ public class TableConfigurationServiceTest {
 
     @Before
     public void setUp() {
-        tableConfigurationFactory.setModelFactory(mf);
-        tableConfigurationFactory.setValueFactory(vf);
-        tableConfigurationFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(tableConfigurationFactory);
-
-        datasetRecordFactory.setModelFactory(mf);
-        datasetRecordFactory.setValueFactory(vf);
-        datasetRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(datasetRecordFactory);
-
-        columnFactory.setModelFactory(mf);
-        columnFactory.setValueFactory(vf);
-        columnFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(columnFactory);
-
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
-
         service = new TableConfigurationService();
-        service.setTableConfigurationFactory(tableConfigurationFactory);
-        service.setDatasetRecordFactory(datasetRecordFactory);
-        service.setValueFactory(vf);
-        service.setColumnFactory(columnFactory);
+        injectOrmFactoryReferencesIntoService(service);
+        service.setValueFactory(VALUE_FACTORY);
     }
 
     @Test
@@ -121,7 +73,7 @@ public class TableConfigurationServiceTest {
 
         TableConfiguration result = service.create(json.toString());
         assertEquals(1, result.getDatasetRecord_resource().size());
-        assertTrue(result.getDatasetRecord_resource().contains(vf.createIRI(DATASET)));
+        assertTrue(result.getDatasetRecord_resource().contains(VALUE_FACTORY.createIRI(DATASET)));
         assertTrue(result.getHasRow_resource().isPresent());
         assertEquals(ROW, result.getHasRow_resource().get().stringValue());
         assertEquals(2, result.getHasColumn_resource().size());
