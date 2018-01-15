@@ -30,6 +30,7 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReference
 import static com.mobi.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -196,7 +197,7 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
         when(dataProperty.getIRI()).thenReturn(dataPropertyId);
         when(objectProperty.getIRI()).thenReturn(objectPropertyId);
-        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
+        when(ontologyManager.retrieveOntology(ontologyRecordId, vf.createIRI(branchId), vf.createIRI(commitId))).thenReturn(Optional.of(ontology));
         when(ontologyManager.getSubClassesFor(any(IRI.class), any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(Collections.singletonList("s"), Collections.singletonList(CLASS_ID_STR_2), 1, vf));
 
         rest = new ExplorableDatasetRestImpl();
@@ -502,7 +503,7 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
     }
 
     @Test
-    public void getClassPropertyDetailsWhenNoPropertiesTest() throws Exception {
+    public void getClassPropertyDetailsWhenNoPropertiesTest() {
         //Setup:
         when(ontology.getAllNoDomainObjectProperties()).thenReturn(Collections.EMPTY_SET);
         when(ontology.getAllNoDomainDataProperties()).thenReturn(Collections.EMPTY_SET);
@@ -522,6 +523,42 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/property-details").request().get();
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getClassPropertyDetailsWithSamePropertyIRI() throws Exception {
+        //Setup:
+        String ontologyId = "https://mobi.com/ontologies/1";
+        String branchId = "https://mobi.com/branches/1";
+        String commitId = "https://mobi.com/commits/1";
+        OntologyIdentifier identifier = new OntologyIdentifier(ontologyId, branchId, commitId, vf, mf);
+        Set<Value> nodes = record.getOntology();
+        nodes.add(identifier.getNode());
+        record.setOntology(nodes);
+        record.getModel().addAll(identifier.getStatements());
+        Ontology ontology2 = mock(Ontology.class);
+        when(ontology2.containsClass(any(IRI.class))).thenReturn(true);
+        when(ontology2.getAllClassDataProperties(classId)).thenReturn(dataProperties);
+        when(ontology2.getAllClassObjectProperties(classId)).thenReturn(objectProperties);
+        when(ontology2.getDataPropertyRange(dataProperty)).thenReturn(Collections.EMPTY_SET);
+        when(ontology2.getObjectPropertyRange(objectProperty)).thenReturn(Collections.EMPTY_SET);
+        when(ontologyManager.retrieveOntology(vf.createIRI(ontologyId), vf.createIRI(branchId), vf.createIRI(commitId))).thenReturn(Optional.of(ontology2));
+        JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
+                .getResourceAsStream("/expected-class-property-details.json")));
+
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/property-details").request().get();
+        assertEquals(response.getStatus(), 200);
+        JSONArray details = JSONArray.fromObject(response.readEntity(String.class));
+        verify(ontology, times(0)).getAllNoDomainDataProperties();
+        verify(ontology, times(0)).getAllNoDomainObjectProperties();
+        verify(ontology2, times(0)).getAllNoDomainDataProperties();
+        verify(ontology2, times(0)).getAllNoDomainObjectProperties();
+        verify(ontology).getAllClassDataProperties(any(IRI.class));
+        verify(ontology).getAllClassObjectProperties(any(IRI.class));
+        verify(ontology2).getAllClassDataProperties(any(IRI.class));
+        verify(ontology2).getAllClassObjectProperties(any(IRI.class));
+        assertEquals(details, expected);
     }
 
     @Test

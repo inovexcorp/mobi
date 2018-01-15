@@ -727,26 +727,44 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         record.getOntology().forEach(value -> getOntology(recordModel, value).ifPresent(ontology -> {
             if (ontology.containsClass(classId)) {
                 Set<CardinalityRestriction> restrictions = ontology.getCardinalityProperties(classId);
-                details.addAll(ontology.getAllClassDataProperties(classId).stream()
+                ontology.getAllClassDataProperties(classId).stream()
                         .map(dataProperty -> createPropertyDetails(dataProperty.getIRI(),
                                 ontology.getDataPropertyRange(dataProperty), "Data", restrictions))
-                        .collect(Collectors.toSet()));
-                details.addAll(ontology.getAllClassObjectProperties(classId).stream()
+                        .forEach(detail -> updateDetails(details, detail));
+                ontology.getAllClassObjectProperties(classId).stream()
                         .map(objectProperty -> createPropertyDetails(objectProperty.getIRI(),
                                 ontology.getObjectPropertyRange(objectProperty), "Object", restrictions))
-                        .collect(Collectors.toSet()));
+                        .forEach(detail -> updateDetails(details, detail));
             } else {
-                details.addAll(ontology.getAllNoDomainDataProperties().stream()
+                ontology.getAllNoDomainDataProperties().stream()
                         .map(dataProperty -> createPropertyDetails(dataProperty.getIRI(),
                                 ontology.getDataPropertyRange(dataProperty), "Data"))
-                        .collect(Collectors.toSet()));
-                details.addAll(ontology.getAllNoDomainObjectProperties().stream()
+                        .forEach(detail -> updateDetails(details, detail));
+                ontology.getAllNoDomainObjectProperties().stream()
                         .map(objectProperty -> createPropertyDetails(objectProperty.getIRI(),
                                 ontology.getObjectPropertyRange(objectProperty), "Object"))
-                        .collect(Collectors.toSet()));
+                        .forEach(detail -> updateDetails(details, detail));
             }
         }));
         return details;
+    }
+
+    /**
+     * Updates the details list if the property has already been found before.
+     *
+     * @param details the list of details to update.
+     * @param detail  the new detail that should be added to the list.
+     */
+    private void updateDetails(List<PropertyDetails> details, PropertyDetails detail) {
+        int index = details.indexOf(detail);
+        if (index != -1) {
+            PropertyDetails found = details.get(index);
+            Set<String> range = found.getRange();
+            range.addAll(detail.getRange());
+            found.setRange(range);
+        } else {
+            details.add(detail);
+        }
     }
 
     /**
