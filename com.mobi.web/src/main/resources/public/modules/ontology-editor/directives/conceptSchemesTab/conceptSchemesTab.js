@@ -40,14 +40,14 @@
                     var dvm = this;
                     var pm = propertyManagerService;
                     var om = ontologyManagerService;
-                    dvm.os = ontologyStateService;
+                    var os = ontologyStateService;
                     dvm.relationshipList = [];
 
-                    $scope.$watch('dvm.os.listItem.selected', function(newValue) {
-                        if (om.isConcept(dvm.os.listItem.selected, dvm.os.listItem.derivedConcepts)) {
-                            var schemeRelationships = _.filter(pm.conceptSchemeRelationshipList, iri => _.includes(dvm.os.listItem.iriList, iri));
-                            dvm.relationshipList = _.concat(dvm.os.listItem.derivedSemanticRelations, schemeRelationships);
-                        } else if (om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)) {
+                    $scope.$watch(os.listItem.selected, function(newValue) {
+                        if (om.isConcept(os.listItem.selected, os.listItem.derivedConcepts)) {
+                            var schemeRelationships = _.filter(pm.conceptSchemeRelationshipList, iri => _.includes(os.listItem.iriList, iri));
+                            dvm.relationshipList = _.concat(os.listItem.derivedSemanticRelations, schemeRelationships);
+                        } else if (om.isConceptScheme(os.listItem.selected, os.listItem.derivedConceptSchemes)) {
                             dvm.relationshipList = pm.schemeRelationshipList;
                         }
                     });
