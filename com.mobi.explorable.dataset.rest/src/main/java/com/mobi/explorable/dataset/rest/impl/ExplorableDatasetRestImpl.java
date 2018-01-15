@@ -114,6 +114,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private static final String GET_CLASSES_TYPES;
     private static final String GET_CLASSES_DETAILS;
     private static final String GET_CLASSES_INSTANCES;
+    private static final String GET_ALL_CLASS_INSTANCES;
     private static final String GET_REIFIED_STATEMENTS;
     private static final String COUNT_BINDING = "c";
     private static final String TYPE_BINDING = "type";
@@ -148,6 +149,14 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         try {
             GET_CLASSES_INSTANCES = IOUtils.toString(
                     ExplorableDatasetRestImpl.class.getResourceAsStream("/get-classes-instances.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+        try {
+            GET_ALL_CLASS_INSTANCES = IOUtils.toString(
+                    ExplorableDatasetRestImpl.class.getResourceAsStream("/get-all-class-instances.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -233,11 +242,10 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         try {
             final List<InstanceDetails> instances = new ArrayList<>();
             if (infer) {
-                getInferredClasses(datasetRecordRsr, factory.createIRI(classIRI)).forEach(iri -> {
-                    TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_INSTANCES, CLASS_BINDING,
-                            iri);
-                    instances.addAll(getInstanceDetailsFromQueryResults(results));
-                });
+                String classes = getInferredClasses(datasetRecordRsr, factory.createIRI(classIRI));
+                String query = String.format(GET_ALL_CLASS_INSTANCES, classes);
+                TupleQueryResult results = getQueryResults(datasetRecordRsr, query, "", null);
+                instances.addAll(getInstanceDetailsFromQueryResults(results));
             } else {
                 TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_INSTANCES, CLASS_BINDING,
                         factory.createIRI(classIRI));
@@ -357,13 +365,13 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
 
     /**
      * Gets all of the inferred classes of the type specified contained within any of the Ontologies associated with the
-     * Dataset.
+     * Dataset in a format needed for the VALUES input in the query.
      *
      * @param recordId The ID of the DatasetRecord.
      * @param classIRI The ID of the class to get the inferred classes of.
      * @return A Set containing the list of inferred classes.
      */
-    private Set<IRI> getInferredClasses(Resource recordId, IRI classIRI) {
+    private String getInferredClasses(Resource recordId, IRI classIRI) {
         DatasetRecord record = datasetManager.getDatasetRecord(recordId).orElseThrow(() ->
                 ErrorUtils.sendError("The Dataset Record could not be found.", Response.Status.BAD_REQUEST));
         Repository repo = repositoryManager.createMemoryRepository();
@@ -374,11 +382,11 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             record.getOntology().forEach(value -> getOntology(recordModel, value).ifPresent(ontology ->
                     ontology.getImportsClosure().forEach(ont -> conn.add(ont.asModel(modelFactory)))));
             conn.commit();
-            Set<IRI> iris = new HashSet<>();
-            iris.add(classIRI);
+            StringBuilder builder = new StringBuilder();
+            builder.append(" <" + classIRI.stringValue() + "> ");
             ontologyManager.getSubClassesFor(classIRI, conn).forEach(r ->
-                    iris.add(factory.createIRI(Bindings.requiredResource(r, "s").stringValue())));
-            return iris;
+                    builder.append("<" + Bindings.requiredResource(r, "s").stringValue() + "> "));
+            return builder.toString();
         } finally {
             repo.shutDown();
         }
