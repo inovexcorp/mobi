@@ -31,6 +31,9 @@ import static com.mobi.rest.util.RestUtils.modelToSkolemizedJsonld;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.explorable.dataset.rest.ExplorableDatasetRest;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.RepositoryManager;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.IOUtils;
 import com.mobi.catalog.api.CatalogManager;
@@ -80,7 +83,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -104,10 +109,12 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private OntologyManager ontologyManager;
     private OntologyRecordFactory ontologyRecordFactory;
     private BNodeService bNodeService;
+    private RepositoryManager repositoryManager;
 
     private static final String GET_CLASSES_TYPES;
     private static final String GET_CLASSES_DETAILS;
     private static final String GET_CLASSES_INSTANCES;
+    private static final String GET_ALL_CLASS_INSTANCES;
     private static final String GET_REIFIED_STATEMENTS;
     private static final String COUNT_BINDING = "c";
     private static final String TYPE_BINDING = "type";
@@ -142,6 +149,14 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         try {
             GET_CLASSES_INSTANCES = IOUtils.toString(
                     ExplorableDatasetRestImpl.class.getResourceAsStream("/get-classes-instances.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+        try {
+            GET_ALL_CLASS_INSTANCES = IOUtils.toString(
+                    ExplorableDatasetRestImpl.class.getResourceAsStream("/get-all-class-instances.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -197,6 +212,11 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         this.bNodeService = bNodeService;
     }
 
+    @Reference
+    public void setRepositoryManager(RepositoryManager repositoryManager) {
+        this.repositoryManager = repositoryManager;
+    }
+
     @Override
     public Response getClassDetails(String recordIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
@@ -215,14 +235,22 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
 
     @Override
     public Response getInstanceDetails(UriInfo uriInfo, String recordIRI, String classIRI, int offset, int limit,
-                                       boolean asc) {
+                                       boolean asc, boolean infer) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(classIRI, "The Class IRI is required.");
         Resource datasetRecordRsr = factory.createIRI(recordIRI);
         try {
-            TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_INSTANCES, CLASS_BINDING,
-                    factory.createIRI(classIRI));
-            List<InstanceDetails> instances = getInstanceDetailsFromQueryResults(results);
+            final List<InstanceDetails> instances = new ArrayList<>();
+            if (infer) {
+                String classes = getInferredClasses(datasetRecordRsr, factory.createIRI(classIRI));
+                String query = String.format(GET_ALL_CLASS_INSTANCES, classes);
+                TupleQueryResult results = getQueryResults(datasetRecordRsr, query, "", null);
+                instances.addAll(getInstanceDetailsFromQueryResults(results));
+            } else {
+                TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_INSTANCES, CLASS_BINDING,
+                        factory.createIRI(classIRI));
+                instances.addAll(getInstanceDetailsFromQueryResults(results));
+            }
             Comparator<InstanceDetails> comparator = Comparator.comparing(InstanceDetails::getTitle);
             return createPagedResponse(uriInfo, instances, comparator, asc, limit, offset);
         } catch (MobiException e) {
@@ -332,6 +360,35 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Gets all of the inferred classes of the type specified contained within any of the Ontologies associated with the
+     * Dataset in a format needed for the VALUES input in the query.
+     *
+     * @param recordId The ID of the DatasetRecord.
+     * @param classIRI The ID of the class to get the inferred classes of.
+     * @return A Set containing the list of inferred classes.
+     */
+    private String getInferredClasses(Resource recordId, IRI classIRI) {
+        DatasetRecord record = datasetManager.getDatasetRecord(recordId).orElseThrow(() ->
+                ErrorUtils.sendError("The Dataset Record could not be found.", Response.Status.BAD_REQUEST));
+        Repository repo = repositoryManager.createMemoryRepository();
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Model recordModel = record.getModel();
+            conn.begin();
+            record.getOntology().forEach(value -> getOntology(recordModel, value).ifPresent(ontology ->
+                    ontology.getImportsClosure().forEach(ont -> conn.add(ont.asModel(modelFactory)))));
+            conn.commit();
+            StringBuilder builder = new StringBuilder();
+            builder.append(" <" + classIRI.stringValue() + "> ");
+            ontologyManager.getSubClassesFor(classIRI, conn).forEach(r ->
+                    builder.append("<" + Bindings.requiredResource(r, "s").stringValue() + "> "));
+            return builder.toString();
+        } finally {
+            repo.shutDown();
         }
     }
 
