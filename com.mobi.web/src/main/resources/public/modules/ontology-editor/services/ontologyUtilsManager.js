@@ -425,6 +425,7 @@
             }
             function deleteFromSchemeHierarchy(entityIRI, parentIRI) {
                 os.deleteEntityFromParentInHierarchy(os.listItem.conceptSchemes.hierarchy, entityIRI, parentIRI, os.listItem.conceptSchemes.index);
+                _.remove(os.listItem.conceptSchemes.hierarchy, {entityIRI});
                 if (_.get(os.listItem, 'editorTabStates.schemes.entityIRI') === entityIRI) {
                     _.unset(os.listItem, 'editorTabStates.schemes.entityIRI');
                 }
