@@ -58,6 +58,13 @@ describe('Targeted Spinner directive', function() {
         this.compile('<div targeted-spinner="" cancel-on-destroy></div>');
         expect(scope.cancelOnDestroy).toBe(true);
     });
+    it('should initialize with the correct value for small', function() {
+        this.compile('<div targeted-spinner=""></div>');
+        expect(scope.small).toBe(false);
+
+        this.compile('<div targeted-spinner="" cancel-on-destroy small></div>');
+        expect(scope.small).toBe(true);
+    });
     it('should clean up tracker when scope is destroyed', function() {
         this.compile('<div targeted-spinner="id" cancel-on-destroy></div>');
         scope.$destroy();

@@ -77,6 +77,7 @@ public interface ExplorableDatasetRest {
      * @param offset    The offset for a page of Dataset data
      * @param limit     The number of data to return in one page
      * @param asc       Whether or not the list should be sorted ascending or descending. Default is ascending.
+     * @param infer     Whether or not the list should include inferred instances.
      * @return A {@link Response} with a JSON object.
      */
     @GET
@@ -89,7 +90,8 @@ public interface ExplorableDatasetRest {
                                 @PathParam("classIRI") String classIRI,
                                 @QueryParam("offset") int offset,
                                 @QueryParam("limit") int limit,
-                                @DefaultValue("true") @QueryParam("ascending") boolean asc);
+                                @DefaultValue("true") @QueryParam("ascending") boolean asc,
+                                @DefaultValue("false") @QueryParam("infer") boolean infer);
 
     /**
      * Retrieves all the property details associated with a specific class found in the ontologies linked to a
