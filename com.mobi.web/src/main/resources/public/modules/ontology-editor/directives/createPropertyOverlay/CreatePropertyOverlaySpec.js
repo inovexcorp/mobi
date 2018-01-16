@@ -88,8 +88,11 @@ describe('Create Property Overlay directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('create-property-overlay')).toBe(true);
-            expect(this.element.hasClass('overlay')).toBe(true);
+            expect(this.element.hasClass('scrollable-overlay')).toBe(true);
             expect(this.element.querySelectorAll('.content').length).toBe(1);
+        });
+        it('with a .content-wrapper', function() {
+            expect(this.element.querySelectorAll('.content-wrapper').length).toBe(1);
         });
         it('with a form', function() {
             expect(this.element.find('form').length).toBe(1);

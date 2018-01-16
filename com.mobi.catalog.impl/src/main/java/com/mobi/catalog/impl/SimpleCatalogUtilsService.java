@@ -416,6 +416,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     private void updateCommit(Resource commitId, Revision revision, @Nullable Model additions,
                               @Nullable Model deletions, RepositoryConnection conn) {
+        if (additions != null && deletions != null) {
+            Model commonStatements = mf.createModel(additions);
+            commonStatements.retainAll(deletions);
+            additions.removeAll(commonStatements);
+            deletions.removeAll(commonStatements);
+        }
+
         // Map of revisionedGraph -> GraphRevision resources
         Map<Resource, Resource> knownGraphs = new HashMap<>();
         revision.getGraphRevision().forEach(graphRevision -> {
