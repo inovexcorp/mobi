@@ -1195,6 +1195,29 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void updateCommitWithCommitAndDuplicatesTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Commit commit = getThing(COMMIT_IRI, commitFactory, conn);
+            Resource additionId = getAdditionsResource(COMMIT_IRI);
+            Resource deletionId = getDeletionsResource(COMMIT_IRI);
+            Statement triple = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("https://mobi.com/test"), titleIRI, VALUE_FACTORY.createLiteral("Title"));
+            Statement existingDeleteStatement = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/delete"), titleIRI, VALUE_FACTORY.createLiteral("Delete"));
+            Statement existingAddStatement = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/add"), titleIRI, VALUE_FACTORY.createLiteral("Add"));
+            Model additions = MODEL_FACTORY.createModel(Stream.of(triple).collect(Collectors.toSet()));
+            Model deletions = MODEL_FACTORY.createModel(Stream.of(triple).collect(Collectors.toSet()));
+            Model expectedAdditions = MODEL_FACTORY.createModel(Stream.of(existingAddStatement).collect(Collectors.toSet()));
+            Model expectedDeletions = MODEL_FACTORY.createModel(Stream.of(existingDeleteStatement).collect(Collectors.toSet()));
+
+            service.updateCommit(commit, additions, deletions, conn);
+            conn.getStatements(null, null, null, additionId).forEach(statement ->
+                    assertTrue(expectedAdditions.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            conn.getStatements(null, null, null, deletionId).forEach(statement ->
+                    assertTrue(expectedDeletions.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+    }
+
+    @Test
     public void updateCommitWithCommitNullAdditionsTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
@@ -1343,6 +1366,28 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         Model deletions = MODEL_FACTORY.createModel(Stream.of(statement2, statement3, existingAddStatement).collect(Collectors.toSet()));
         Model expectedAdditions = MODEL_FACTORY.createModel(Stream.of(statement1).collect(Collectors.toSet()));
         Model expectedDeletions = MODEL_FACTORY.createModel(Stream.of(statement3).collect(Collectors.toSet()));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            service.updateCommit(COMMIT_IRI, additions, deletions, conn);
+            conn.getStatements(null, null, null, additionId).forEach(statement ->
+                    assertTrue(expectedAdditions.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            conn.getStatements(null, null, null, deletionId).forEach(statement ->
+                    assertTrue(expectedDeletions.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+    }
+
+    @Test
+    public void updateCommitWithResourceAndDuplicatesTest() {
+        // Setup:
+        Resource additionId = getAdditionsResource(COMMIT_IRI);
+        Resource deletionId = getDeletionsResource(COMMIT_IRI);
+        Statement triple = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("https://mobi.com/test"), titleIRI, VALUE_FACTORY.createLiteral("Title"));
+        Statement existingDeleteStatement = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/delete"), titleIRI, VALUE_FACTORY.createLiteral("Delete"));
+        Statement existingAddStatement = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/add"), titleIRI, VALUE_FACTORY.createLiteral("Add"));
+        Model additions = MODEL_FACTORY.createModel(Stream.of(triple).collect(Collectors.toSet()));
+        Model deletions = MODEL_FACTORY.createModel(Stream.of(triple).collect(Collectors.toSet()));
+        Model expectedAdditions = MODEL_FACTORY.createModel(Stream.of(existingAddStatement).collect(Collectors.toSet()));
+        Model expectedDeletions = MODEL_FACTORY.createModel(Stream.of(existingDeleteStatement).collect(Collectors.toSet()));
 
         try (RepositoryConnection conn = repo.getConnection()) {
             service.updateCommit(COMMIT_IRI, additions, deletions, conn);
