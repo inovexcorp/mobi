@@ -68,7 +68,7 @@
                     dvm.serializeFormat = angular.copy(dvm.dm.serializeFormat);
                     dvm.errorMessage = '';
                     dvm.editorOptions = {
-                        readOnly: 'nocursor',
+                        readOnly: true,
                         indentUnit: 2,
                         lineWrapping: true
                     };
