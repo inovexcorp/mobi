@@ -49,6 +49,7 @@
          * for the call that this spinner is associated with
          * @param {boolean} cancelOnDestroy Whether or not matched in progress HTTP calls should be canceled
          * when the parent scope is destroyed
+         * @param {boolean} small Whether or not the spinner should be a smaller size
          */
         .directive('targetedSpinner', targetedSpinner);
 
@@ -59,10 +60,11 @@
                 restrict: 'A',
                 link: function(scope, el, attrs) {
                     scope.cancelOnDestroy = 'cancelOnDestroy' in attrs;
+                    scope.small = 'small' in attrs;
                     scope.httpService = httpService;
                     scope.id = scope.$eval(attrs.targetedSpinner);
                     el.addClass('spinner-container');
-                    el.append($compile('<spinner ng-show="httpService.isPending(id)"></spinner>')(scope));
+                    el.append($compile('<spinner ng-show="httpService.isPending(id)" small="small"></spinner>')(scope));
 
                     scope.$on('$destroy', () => {
                         if (scope.cancelOnDestroy) {

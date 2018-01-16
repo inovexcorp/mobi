@@ -239,7 +239,7 @@ describe('Instance Form directive', function() {
                                 fail('Promise should have resolved');
                             });
                         scope.$apply();
-                        expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'string', {offset: 0}, true);
+                        expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'string', {offset: 0, infer: true}, true);
                     });
                     it('with filtering', function() {
                         exploreUtilsSvc.contains.and.callFake(function(string, part) {
@@ -253,7 +253,7 @@ describe('Instance Form directive', function() {
                                 fail('Promise should have resolved');
                             });
                         scope.$apply();
-                        expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'string', {offset: 0}, true);
+                        expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'string', {offset: 0, infer: true}, true);
                     });
                 });
                 it('rejected', function() {
@@ -265,7 +265,7 @@ describe('Instance Form directive', function() {
                             fail('Promise should have resolved');
                         });
                     scope.$apply();
-                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'string', {offset: 0}, true);
+                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'string', {offset: 0, infer: true}, true);
                     expect(util.createErrorToast).toHaveBeenCalledWith('error');
                 });
             });

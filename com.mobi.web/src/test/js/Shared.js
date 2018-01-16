@@ -1002,6 +1002,7 @@ function mockDatasetManager() {
             this.deleteDatasetRecord = jasmine.createSpy('deleteDatasetRecord').and.returnValue($q.when());
             this.clearDatasetRecord = jasmine.createSpy('clearDatasetRecord').and.returnValue($q.when());
             this.updateDatasetRecord = jasmine.createSpy('updateDatasetRecord').and.returnValue($q.when());
+            this.uploadData = jasmine.createSpy('uploadData').and.returnValue($q.when());
             this.initialize = jasmine.createSpy('initialize');
             this.getOntologyIdentifiers = jasmine.createSpy('getOntologyIdentifiers').and.returnValue([]);
             this.getRecordFromArray = jasmine.createSpy('getRecordFromArray').and.returnValue({});

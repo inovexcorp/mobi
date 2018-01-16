@@ -136,7 +136,7 @@
              * Makes a call to POST /mobirest/delimited-files to upload the passed File object to the repository.
              * Returns the resulting file name is a promise.
              *
-             * @param {object} file a File object to upload (should be a SV or Excel file)
+             * @param {File} file a File object to upload (should be a SV or Excel file)
              * @return {Promise} A Promise that resolves to the name of the uploaded delimited file; rejects with an
              * error message otherwise
              */
