@@ -1201,13 +1201,13 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             Commit commit = getThing(COMMIT_IRI, commitFactory, conn);
             Resource additionId = getAdditionsResource(COMMIT_IRI);
             Resource deletionId = getDeletionsResource(COMMIT_IRI);
-            Statement triple = vf.createStatement(vf.createIRI("https://mobi.com/test"), titleIRI, vf.createLiteral("Title"));
-            Statement existingDeleteStatement = vf.createStatement(vf.createIRI("http://mobi.com/test/delete"), titleIRI, vf.createLiteral("Delete"));
-            Statement existingAddStatement = vf.createStatement(vf.createIRI("http://mobi.com/test/add"), titleIRI, vf.createLiteral("Add"));
-            Model additions = mf.createModel(Stream.of(triple).collect(Collectors.toSet()));
-            Model deletions = mf.createModel(Stream.of(triple).collect(Collectors.toSet()));
-            Model expectedAdditions = mf.createModel(Stream.of(existingAddStatement).collect(Collectors.toSet()));
-            Model expectedDeletions = mf.createModel(Stream.of(existingDeleteStatement).collect(Collectors.toSet()));
+            Statement triple = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("https://mobi.com/test"), titleIRI, VALUE_FACTORY.createLiteral("Title"));
+            Statement existingDeleteStatement = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/delete"), titleIRI, VALUE_FACTORY.createLiteral("Delete"));
+            Statement existingAddStatement = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/add"), titleIRI, VALUE_FACTORY.createLiteral("Add"));
+            Model additions = MODEL_FACTORY.createModel(Stream.of(triple).collect(Collectors.toSet()));
+            Model deletions = MODEL_FACTORY.createModel(Stream.of(triple).collect(Collectors.toSet()));
+            Model expectedAdditions = MODEL_FACTORY.createModel(Stream.of(existingAddStatement).collect(Collectors.toSet()));
+            Model expectedDeletions = MODEL_FACTORY.createModel(Stream.of(existingDeleteStatement).collect(Collectors.toSet()));
 
             service.updateCommit(commit, additions, deletions, conn);
             conn.getStatements(null, null, null, additionId).forEach(statement ->
@@ -1381,13 +1381,13 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         // Setup:
         Resource additionId = getAdditionsResource(COMMIT_IRI);
         Resource deletionId = getDeletionsResource(COMMIT_IRI);
-        Statement triple = vf.createStatement(vf.createIRI("https://mobi.com/test"), titleIRI, vf.createLiteral("Title"));
-        Statement existingDeleteStatement = vf.createStatement(vf.createIRI("http://mobi.com/test/delete"), titleIRI, vf.createLiteral("Delete"));
-        Statement existingAddStatement = vf.createStatement(vf.createIRI("http://mobi.com/test/add"), titleIRI, vf.createLiteral("Add"));
-        Model additions = mf.createModel(Stream.of(triple).collect(Collectors.toSet()));
-        Model deletions = mf.createModel(Stream.of(triple).collect(Collectors.toSet()));
-        Model expectedAdditions = mf.createModel(Stream.of(existingAddStatement).collect(Collectors.toSet()));
-        Model expectedDeletions = mf.createModel(Stream.of(existingDeleteStatement).collect(Collectors.toSet()));
+        Statement triple = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("https://mobi.com/test"), titleIRI, VALUE_FACTORY.createLiteral("Title"));
+        Statement existingDeleteStatement = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/delete"), titleIRI, VALUE_FACTORY.createLiteral("Delete"));
+        Statement existingAddStatement = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/add"), titleIRI, VALUE_FACTORY.createLiteral("Add"));
+        Model additions = MODEL_FACTORY.createModel(Stream.of(triple).collect(Collectors.toSet()));
+        Model deletions = MODEL_FACTORY.createModel(Stream.of(triple).collect(Collectors.toSet()));
+        Model expectedAdditions = MODEL_FACTORY.createModel(Stream.of(existingAddStatement).collect(Collectors.toSet()));
+        Model expectedDeletions = MODEL_FACTORY.createModel(Stream.of(existingDeleteStatement).collect(Collectors.toSet()));
 
         try (RepositoryConnection conn = repo.getConnection()) {
             service.updateCommit(COMMIT_IRI, additions, deletions, conn);
@@ -1812,7 +1812,69 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         throw service.throwAlreadyExists(RECORD_IRI, recordFactory);
     }
 
-    /* throwDoesNotBelong */
+    @Test
+    public void testGetDifferenceChain() {
+        // Setup:
+        List<Resource> commitChain = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4a"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4b"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3")).collect(Collectors.toList());
+        Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3");
+        Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0");
+
+        // Expected list should have the first commit removed
+        List<Resource> expected = commitChain.subList(1, commitChain.size());
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            List<Resource> actual = service.getDifferenceChain(sourceId, targetId, conn);
+
+            assertEquals(expected, actual);
+        }
+    }
+
+    @Test
+    public void isDifferenceChainCommonParent() {
+        // Setup:
+        Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4b");
+        Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testLoner");
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage(String.format("No common parent between Commit %s and %s", sourceId.stringValue(), targetId.stringValue()));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            List<Resource> actual = service.getDifferenceChain(sourceId, targetId, conn);
+        }
+    }
+
+    @Test
+    public void doesDifferenceChainSourceCommitExist() {
+        // Setup:
+        Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#fake");
+        Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testLoner");
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage(String.format("Commit %s could not be found", sourceId.stringValue()));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            List<Resource> actual = service.getDifferenceChain(sourceId, targetId, conn);
+        }
+    }
+
+    @Test
+    public void doesDifferenceChainTargetCommitExist() {
+        // Setup:
+        Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4a");
+        Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#fake");
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage(String.format("Commit %s could not be found", targetId.stringValue()));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            List<Resource> actual = service.getDifferenceChain(sourceId, targetId, conn);
+        }
+    }
+
+
+        /* throwDoesNotBelong */
 
     @Test
     public void throwDoesNotBelongTest() {

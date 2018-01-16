@@ -36,7 +36,7 @@
                 templateUrl: 'modules/ontology-editor/directives/mergeForm/mergeForm.html',
                 scope: {},
                 bindToController: {
-                    branchTitle: '<',
+                    branch: '<',
                     isUserBranch: '<',
                     targetId: '=',
                     removeBranch: '='
@@ -50,8 +50,11 @@
                     dvm.util = utilService;
                     dvm.difference = undefined;
                     dvm.tabs = {
-                        changes: true
+                        changes: true,
+                        commits: false
                     };
+
+                    dvm.branchTitle = dvm.util.getDctermsValue(dvm.branch, 'title');
 
                     dvm.matchesCurrent = function(branch) {
                         return branch['@id'] !== dvm.os.listItem.ontologyRecord.branchId;
@@ -69,6 +72,8 @@
                             dvm.difference = undefined;
                         }
                     }
+
+                    dvm.changeTarget();
                 }]
             }
         }

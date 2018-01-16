@@ -41,13 +41,13 @@ describe('Merge Form directive', function() {
             catalogManagerSvc = _catalogManagerService_;
         });
 
-        scope.branchTitle = '';
+        scope.branch = {};
         scope.isUserBranch = false;
         scope.removeBranch = false;
         scope.targetId = '';
         ontologyStateSvc.listItem.ontologyRecord.branchId = 'branchId';
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
-        this.element = $compile(angular.element('<merge-form branch-title="branchTitle" is-user-branch="isUserBranch" target-id="targetId" remove-branch="removeBranch"></merge-form>'))(scope);
+        this.element = $compile(angular.element('<merge-form branch="branch" is-user-branch="isUserBranch" target-id="targetId" remove-branch="removeBranch"></merge-form>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('mergeForm');
     });
@@ -63,9 +63,9 @@ describe('Merge Form directive', function() {
 
     describe('controller bound variable', function() {
         it('branchTitle is one way bound', function() {
-            this.controller.branchTitle = 'test';
+            this.controller.branch = {key: 'test'};
             scope.$digest();
-            expect(scope.branchTitle).toEqual('');
+            expect(scope.branch).toEqual({});
         });
         it('isUserBranch is one way bound', function() {
             this.controller.isUserBranch = true;
@@ -109,7 +109,7 @@ describe('Merge Form directive', function() {
         it('depending on whether the branch is the master branch', function() {
             expect(this.element.find('checkbox').length).toEqual(1);
 
-            scope.branchTitle = 'MASTER';
+            this.controller.branchTitle = 'MASTER';
             scope.$digest();
             expect(this.element.find('checkbox').length).toEqual(0);
         });
@@ -120,8 +120,9 @@ describe('Merge Form directive', function() {
             scope.$digest();
             var tabset = this.element.find('tabset');
             expect(tabset.length).toEqual(1);
-            expect(tabset.find('tab').length).toEqual(1);
+            expect(tabset.find('tab').length).toEqual(2);
             expect(tabset.find('commit-changes-display').length).toEqual(1);
+            expect(tabset.find('commit-history-table').length).toEqual(1);
         });
         it('depending on whether the branch difference has additions and deletions', function() {
             this.controller.difference = {additions: [], deletions: []};

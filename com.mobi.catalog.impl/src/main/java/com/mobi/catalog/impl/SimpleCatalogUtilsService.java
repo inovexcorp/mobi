@@ -667,6 +667,27 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public List<Resource> getDifferenceChain(final Resource sourceCommitId, final Resource targetCommitId,
+                                             final RepositoryConnection conn) {
+        validateResource(sourceCommitId, commitFactory.getTypeIRI(), conn);
+        validateResource(targetCommitId, commitFactory.getTypeIRI(), conn);
+
+        final List<Resource> sourceCommits = getCommitChain(sourceCommitId, true, conn);
+        final List<Resource> targetCommits = getCommitChain(targetCommitId, true, conn);
+
+        final List<Resource> commonCommits = new ArrayList<>(sourceCommits);
+        commonCommits.retainAll(targetCommits);
+
+        if (commonCommits.size() == 0) {
+            throw new IllegalArgumentException("No common parent between Commit " + sourceCommitId + " and "
+                    + targetCommitId);
+        }
+        sourceCommits.removeAll(commonCommits);
+
+        return sourceCommits;
+    }
+
+    @Override
     public Difference getCommitDifference(List<Resource> commits, RepositoryConnection conn) {
         Difference difference = new Difference.Builder()
                 .additions(mf.createModel())

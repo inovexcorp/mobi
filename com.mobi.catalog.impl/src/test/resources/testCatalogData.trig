@@ -442,6 +442,25 @@ GRAPH additions:test5a {
     <http://mobi.com/test/class> a owl:Class .
 }
 
+GRAPH commits:testLoner {
+    commits:testLoner a mcat:Commit ;
+        dc:title "Commit Test Loner" ;
+        prov:atTime "2017-12-05T09:14:34:00Z"^^xsd:dateTime ;
+        prov:generated revisions:testLoner .
+
+    revisions:testLoner a mcat:Revision ;
+        mcat:additions additions:testLoner ;
+        mcat:deletions deletions:testLoner .
+}
+
+GRAPH additions:testLoner {
+    <http://mobi.com/test/ontology> dc:title "Test Loner Title" .
+}
+
+GRAPH deletions:testLoner {
+    <http://mobi.com/test/ontology> dc:title "Test Loner Title" .
+}
+
 # Conflict Scenario 1 - Class deletion (1 conflict)
 
 GRAPH commits:conflict0 {

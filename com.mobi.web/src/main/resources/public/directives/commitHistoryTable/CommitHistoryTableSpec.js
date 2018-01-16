@@ -54,7 +54,8 @@ describe('Commit History Table directive', function() {
         scope.recordId = 'recordId';
         scope.branch = {'@id': 'branchId'};
         scope.commitId = 'commitId';
-        this.element = $compile(angular.element('<commit-history-table commit-id="commitId" branch="branch" record-id="recordId"></commit-history-table>'))(scope);
+        scope.targetId = 'branchTarget';
+        this.element = $compile(angular.element('<commit-history-table commit-id="commitId" branch="branch" record-id="recordId" target-id="targetId"></commit-history-table>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('commitHistoryTable');
         this.isolatedScope = this.element.isolateScope();
@@ -99,6 +100,12 @@ describe('Commit History Table directive', function() {
             scope.$apply();
             expect(this.element.find('error-display').length).toBe(1);
         });
+        it('depending on whether there are commits', function() {
+            expect(this.element.find('info-message').length).toBe(1);
+            this.controller.commits = [{}];
+            scope.$apply();
+            expect(this.element.find('info-message').length).toBe(0);
+        });
         it('depending on whether the commit overlay should be shown', function() {
             expect(this.element.find('commit-info-overlay').length).toBe(0);
 
@@ -126,6 +133,12 @@ describe('Commit History Table directive', function() {
             scope.$digest();
             expect(scope.commitId).toEqual(original);
         });
+        it('targetId should be one way bound', function() {
+            var original = scope.targetId;
+            this.controller.targetId = 'new';
+            scope.$digest();
+            expect(scope.targetId).toEqual(original);
+        });
     });
     describe('controller methods', function() {
         describe('should get the list of commits for a branch', function() {
@@ -150,7 +163,7 @@ describe('Commit History Table directive', function() {
                         this.isolatedScope.graph = true;
                         this.controller.getCommits();
                         scope.$apply();
-                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, this.catalogId);
+                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, this.catalogId, scope.targetId);
                         expect(this.controller.error).toEqual('');
                         expect(this.controller.commits).toEqual(this.commits);
                         expect(this.controller.drawGraph).toHaveBeenCalled();
@@ -159,7 +172,7 @@ describe('Commit History Table directive', function() {
                         this.isolatedScope.graph = false;
                         this.controller.getCommits();
                         scope.$apply();
-                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, this.catalogId);
+                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, this.catalogId, scope.targetId);
                         expect(this.controller.error).toEqual('');
                         expect(this.controller.commits).toEqual(this.commits);
                         expect(this.controller.drawGraph).not.toHaveBeenCalled();
@@ -173,7 +186,7 @@ describe('Commit History Table directive', function() {
                         this.isolatedScope.graph = true;
                         this.controller.getCommits();
                         scope.$apply();
-                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, this.catalogId);
+                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, this.catalogId, scope.targetId);
                         expect(this.controller.error).toEqual(this.error);
                         expect(this.controller.commits).toEqual([]);
                         expect(this.controller.reset).toHaveBeenCalled();
@@ -182,7 +195,7 @@ describe('Commit History Table directive', function() {
                         this.isolatedScope.graph = false;
                         this.controller.getCommits();
                         scope.$apply();
-                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, this.catalogId);
+                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, this.catalogId, scope.targetId);
                         expect(this.controller.error).toEqual(this.error);
                         expect(this.controller.commits).toEqual([]);
                         expect(this.controller.reset).not.toHaveBeenCalled();

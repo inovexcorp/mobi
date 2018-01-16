@@ -67,7 +67,8 @@
                 bindToController: {
                     recordId: '<',
                     branch: '<',
-                    commitId: '<?'
+                    commitId: '<?',
+                    targetId: '<?'
                 },
                 templateUrl: 'directives/commitHistoryTable/commitHistoryTable.html',
                 link: function(scope, el, attrs, ctrl) {
@@ -101,7 +102,7 @@
                     dvm.deltaX = 5 + dvm.circleRadius;
                     dvm.deltaY = 37;
 
-                    $scope.$watchGroup(['dvm.branch', 'dvm.recordId', 'dvm.commitId'], newValues => dvm.getCommits());
+                    $scope.$watchGroup(['dvm.branch', 'dvm.recordId', 'dvm.commitId', 'dvm.targetId'], newValues => dvm.getCommits());
 
                     dvm.openCommitOverlay = function(commitId) {
                         cm.getBranchCommit(commitId, dvm.branch['@id'], dvm.recordId, catalogId)
@@ -114,7 +115,7 @@
                     }
                     dvm.getCommits = function() {
                         if (dvm.branch) {
-                            cm.getBranchCommits(dvm.branch['@id'], dvm.recordId, catalogId)
+                            cm.getBranchCommits(dvm.branch['@id'], dvm.recordId, catalogId, dvm.targetId)
                                 .then(commits => {
                                     dvm.commits = commits;
                                     dvm.error = '';

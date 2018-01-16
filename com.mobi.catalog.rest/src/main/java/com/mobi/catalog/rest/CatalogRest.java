@@ -757,7 +757,8 @@ public interface CatalogRest {
 
     /**
      * Gets a list of Commits associated with the Branch identified by the provided IDs which represents the Commit
-     * chain for that Branch. If a limit is passed which is greater than zero, will paginated the results.
+     * chain for that Branch. If a limit is passed which is greater than zero, will paginated the results. If a
+     * targetId is passed, then only commits between the HEAD commits of the branchId and targetId will be returned.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -765,6 +766,8 @@ public interface CatalogRest {
      *                 String begins with "_:".
      * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
+     * @param targetId The String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
      * @param offset An optional offset for the results.
      * @param limit An optional limit for the results.
      * @return A list of Commits for the identified Branch which represents the Commit chain.
@@ -778,6 +781,7 @@ public interface CatalogRest {
                             @PathParam("catalogId") String catalogId,
                             @PathParam("recordId") String recordId,
                             @PathParam("branchId") String branchId,
+                            @QueryParam("targetId") String targetId,
                             @QueryParam("offset") int offset,
                             @QueryParam("limit") int limit);
 
