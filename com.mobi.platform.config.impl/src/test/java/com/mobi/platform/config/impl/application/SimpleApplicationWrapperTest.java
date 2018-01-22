@@ -29,24 +29,9 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.mobi.platform.config.api.ontologies.platformconfig.Application;
-import com.mobi.platform.config.api.ontologies.platformconfig.ApplicationFactory;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
@@ -60,13 +45,9 @@ import org.openrdf.sail.memory.MemoryStore;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SimpleApplicationWrapperTest {
+public class SimpleApplicationWrapperTest extends OrmEnabledTestCase {
     private SimpleApplicationWrapper wrapper;
     private Repository repo;
-    private ValueFactory vf = SimpleValueFactory.getInstance();
-    private ModelFactory mf = LinkedHashModelFactory.getInstance();
-    private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
-    private ApplicationFactory applicationFactory = new ApplicationFactory();
 
     private String namespace = "http://mobi.com/applications#";
 
@@ -75,26 +56,11 @@ public class SimpleApplicationWrapperTest {
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
-        applicationFactory.setValueFactory(vf);
-        applicationFactory.setModelFactory(mf);
-        applicationFactory.setValueConverterRegistry(vcr);
-
-        vcr.registerValueConverter(applicationFactory);
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
-
         wrapper = new SimpleApplicationWrapper();
+        injectOrmFactoryReferencesIntoService(wrapper);
         wrapper.setRepository(repo);
-        wrapper.setFactory(vf);
-        wrapper.setModelFactory(mf);
-        wrapper.setAppFactory(applicationFactory);
+        wrapper.setFactory(VALUE_FACTORY);
+        wrapper.setModelFactory(MODEL_FACTORY);
     }
 
     @Test
@@ -148,15 +114,15 @@ public class SimpleApplicationWrapperTest {
         wrapper.start(props);
         assertEquals(props.get("id").toString(), wrapper.applicationId);
         RepositoryConnection conn = repo.getConnection();
-        Model appModel = mf.createModel();
-        Resource appIri = vf.createIRI(namespace + props.get("id"));
+        Model appModel = MODEL_FACTORY.createModel();
+        Resource appIri = VALUE_FACTORY.createIRI(namespace + props.get("id"));
         conn.getStatements(appIri, null, null).forEach(appModel::add);
         assertFalse(appModel.isEmpty());
-        assertTrue(appModel.contains(appIri, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(Application.TYPE)));
-        assertTrue(appModel.contains(appIri, vf.createIRI(DCTERMS.TITLE.stringValue()),
-                vf.createLiteral(props.get("title").toString())));
-        assertTrue(appModel.contains(appIri, vf.createIRI(DCTERMS.DESCRIPTION.stringValue()),
-                vf.createLiteral(props.get("description").toString())));
+        assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE)));
+        assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()),
+                VALUE_FACTORY.createLiteral(props.get("title").toString())));
+        assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(DCTERMS.DESCRIPTION.stringValue()),
+                VALUE_FACTORY.createLiteral(props.get("description").toString())));
         conn.close();
     }
 
@@ -165,10 +131,10 @@ public class SimpleApplicationWrapperTest {
         // Setup:
         wrapper.applicationId = "id";
         RepositoryConnection conn = repo.getConnection();
-        conn.add(vf.createIRI(namespace + "id"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(Application.TYPE));
+        conn.add(VALUE_FACTORY.createIRI(namespace + "id"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE));
 
         wrapper.stop();
-        assertFalse(conn.getStatements(vf.createIRI(namespace + "id"), null, null).hasNext());
+        assertFalse(conn.getStatements(VALUE_FACTORY.createIRI(namespace + "id"), null, null).hasNext());
         conn.close();
     }
 
@@ -177,24 +143,24 @@ public class SimpleApplicationWrapperTest {
         // Setup:
         wrapper.applicationId = "id";
         RepositoryConnection conn = repo.getConnection();
-        conn.add(vf.createIRI(namespace + "id"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(Application.TYPE));
+        conn.add(VALUE_FACTORY.createIRI(namespace + "id"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE));
         Map<String, Object> props = new HashMap<>();
         props.put("id", "new");
         props.put("title", "Title");
         props.put("description", "Description");
 
         wrapper.modified(props);
-        assertFalse(conn.getStatements(vf.createIRI(namespace + "id"), null, null).hasNext());
+        assertFalse(conn.getStatements(VALUE_FACTORY.createIRI(namespace + "id"), null, null).hasNext());
         assertEquals(props.get("id").toString(), wrapper.applicationId);
-        Resource appIri = vf.createIRI(namespace + props.get("id"));
-        Model appModel = mf.createModel();
+        Resource appIri = VALUE_FACTORY.createIRI(namespace + props.get("id"));
+        Model appModel = MODEL_FACTORY.createModel();
         conn.getStatements(appIri, null, null).forEach(appModel::add);
         assertFalse(appModel.isEmpty());
-        assertTrue(appModel.contains(appIri, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(Application.TYPE)));
-        assertTrue(appModel.contains(appIri, vf.createIRI(DCTERMS.TITLE.stringValue()),
-                vf.createLiteral(props.get("title").toString())));
-        assertTrue(appModel.contains(appIri, vf.createIRI(DCTERMS.DESCRIPTION.stringValue()),
-                vf.createLiteral(props.get("description").toString())));
+        assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE)));
+        assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()),
+                VALUE_FACTORY.createLiteral(props.get("title").toString())));
+        assertTrue(appModel.contains(appIri, VALUE_FACTORY.createIRI(DCTERMS.DESCRIPTION.stringValue()),
+                VALUE_FACTORY.createLiteral(props.get("description").toString())));
         conn.close();
     }
 
@@ -210,10 +176,10 @@ public class SimpleApplicationWrapperTest {
     public void getApplicationTest() throws Exception {
         wrapper.applicationId = "id";
         RepositoryConnection conn = repo.getConnection();
-        conn.add(vf.createIRI(namespace + "id"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(Application.TYPE));
+        conn.add(VALUE_FACTORY.createIRI(namespace + "id"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE));
 
         Application app = wrapper.getApplication();
         assertNotEquals(app, null);
-        assertTrue(app.getModel().contains(vf.createIRI(namespace + "id"), vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(Application.TYPE)));
+        assertTrue(app.getModel().contains(VALUE_FACTORY.createIRI(namespace + "id"), VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()), VALUE_FACTORY.createIRI(Application.TYPE)));
     }
 }

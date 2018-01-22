@@ -32,24 +32,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.etl.api.ontologies.etl.Workflow;
-import com.mobi.etl.api.ontologies.etl.WorkflowFactory;
 import com.mobi.etl.api.workflows.WorkflowConverter;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
@@ -73,17 +59,13 @@ import java.util.Set;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(WorkflowManagerImpl.class)
-public class WorkflowManagerImplTest {
+public class WorkflowManagerImplTest extends OrmEnabledTestCase {
     private WorkflowManagerImpl service;
 
     private Repository repo;
-    private ValueFactory vf = SimpleValueFactory.getInstance();
-    private ModelFactory mf = LinkedHashModelFactory.getInstance();
-    private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
-    private WorkflowFactory workflowFactory = new WorkflowFactory();
 
-    private final Resource WORKFLOW1_ID = vf.createIRI("http://test.com/workflow1");
-    private final Resource WORKFLOW2_ID = vf.createIRI("http://test.com/workflow2");
+    private final Resource WORKFLOW1_ID = VALUE_FACTORY.createIRI("http://test.com/workflow1");
+    private final Resource WORKFLOW2_ID = VALUE_FACTORY.createIRI("http://test.com/workflow2");
     private Workflow workflow1;
     private Workflow workflow2;
 
@@ -104,21 +86,7 @@ public class WorkflowManagerImplTest {
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
-        workflowFactory.setModelFactory(mf);
-        workflowFactory.setValueFactory(vf);
-        workflowFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(workflowFactory);
-
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
-
+        OrmFactory<Workflow> workflowFactory = getRequiredOrmFactory(Workflow.class);
         workflow1 = workflowFactory.createNew(WORKFLOW1_ID);
         workflow2 = workflowFactory.createNew(WORKFLOW2_ID);
 
@@ -128,11 +96,11 @@ public class WorkflowManagerImplTest {
         when(converterService.convert(any(Workflow.class), any(CamelContext.class))).thenReturn(routeBuilder);
 
         service = new WorkflowManagerImpl();
+        injectOrmFactoryReferencesIntoService(service);
         service.setConverterService(converterService);
-        service.setVf(vf);
-        service.setMf(mf);
+        service.setVf(VALUE_FACTORY);
+        service.setMf(MODEL_FACTORY);
         service.setRepository(repo);
-        service.setWorkflowFactory(workflowFactory);
 
         // Start out with workflow2
         try (RepositoryConnection conn = repo.getConnection()) {
