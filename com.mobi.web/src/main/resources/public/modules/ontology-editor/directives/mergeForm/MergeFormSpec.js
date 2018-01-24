@@ -62,7 +62,7 @@ describe('Merge Form directive', function() {
     });
 
     describe('controller bound variable', function() {
-        it('branchTitle is one way bound', function() {
+        it('branch is one way bound', function() {
             this.controller.branch = {key: 'test'};
             scope.$digest();
             expect(scope.branch).toEqual({});

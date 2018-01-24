@@ -1180,7 +1180,7 @@ public class SimpleCatalogManager implements CatalogManager {
             Resource targetHead = utils.getHeadCommitIRI(targetBranch);
 
             return utils.getDifferenceChain(sourceHead, targetHead, conn).stream()
-                    .map((res) -> utils.getExpectedObject(res, commitFactory, conn))
+                    .map(res -> utils.getExpectedObject(res, commitFactory, conn))
                     .collect(Collectors.toList());
         }
     }

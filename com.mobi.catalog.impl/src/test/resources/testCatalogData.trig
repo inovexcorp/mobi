@@ -458,7 +458,6 @@ GRAPH additions:testLoner {
 }
 
 GRAPH deletions:testLoner {
-    <http://mobi.com/test/ontology> dc:title "Test Loner Title" .
 }
 
 # Conflict Scenario 1 - Class deletion (1 conflict)

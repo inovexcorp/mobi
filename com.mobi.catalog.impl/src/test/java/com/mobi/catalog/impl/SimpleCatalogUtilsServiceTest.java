@@ -1835,7 +1835,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void isDifferenceChainCommonParent() {
+    public void testGetDifferenceChainCommonParent() {
         // Setup:
         Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4b");
         Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testLoner");

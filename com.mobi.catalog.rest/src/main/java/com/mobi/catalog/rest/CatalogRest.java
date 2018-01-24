@@ -757,7 +757,7 @@ public interface CatalogRest {
 
     /**
      * Gets a list of Commits associated with the Branch identified by the provided IDs which represents the Commit
-     * chain for that Branch. If a limit is passed which is greater than zero, will paginated the results. If a
+     * chain for that Branch. If a limit is passed which is greater than zero, will paginate the results. If a
      * targetId is passed, then only commits between the HEAD commits of the branchId and targetId will be returned.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins

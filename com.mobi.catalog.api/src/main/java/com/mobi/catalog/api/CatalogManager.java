@@ -749,11 +749,12 @@ public interface CatalogManager {
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
      * @param branchId The Resource identifying the Branch with the chain of Commit.
      * @param targetId The Resource identifying the target Branch
-     * @return List of Commits which make up the commit chain for the head Commit of the Branch.
+     * @return List of Commits between the HEAD of the source branch and the HEAD of the target branch
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
      *      Record does not belong to the Catalog, the Branch could not be found, or any of the Commits could not be
      *      found.
-     * @throws IllegalStateException Thrown if the Branch does not have a head Commit.
+     * @throws IllegalStateException Thrown if either Branch does not have a head Commit or if the commit history does
+     *      not have a common parent.
      */
     List<Commit> getCommitChain(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Resource targetId);
 
