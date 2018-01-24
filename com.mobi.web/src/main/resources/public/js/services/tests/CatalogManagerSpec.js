@@ -1370,32 +1370,32 @@ describe('Catalog Manager service', function() {
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response.statusText).toBe('Error Message');
+                    expect(response).toBe('Error Message');
                 });
             flushAndVerify($httpBackend);
-//            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
             $httpBackend.whenGET(this.url).respond(200, []);
             catalogManagerSvc.getBranchCommits(this.branchId, this.recordId, this.catalogId)
                 .then(function(response) {
-                    expect(response.data).toEqual([]);
+                    expect(response).toEqual([]);
                 }, function(response) {
                     fail('Promise should have resolved');
                 });
             flushAndVerify($httpBackend);
         });
-    });
-    it('successfully with target ID', function() {
-        var params = $httpParamSerializer({targetId: this.branchId})
-        $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
-        catalogManagerSvc.getBranchCommits(this.branchId, this.recordId, this.catalogId, this.branchId)
-            .then(function(response) {
-                expect(response.data).toEqual([]);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
-        flushAndVerify($httpBackend);
+        it('successfully with target ID', function() {
+            var params = $httpParamSerializer({targetId: this.branchId})
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getBranchCommits(this.branchId, this.recordId, this.catalogId, this.branchId)
+                .then(function(response) {
+                    expect(response).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
     });
     describe('should create a new commit on a Branch', function() {
         beforeEach(function() {

@@ -991,6 +991,7 @@
                 };
 
                 return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits', config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
