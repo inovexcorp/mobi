@@ -18,6 +18,10 @@
             top: 0;
             border: 1px solid #ccc;
             height: auto;
+
+			.CodeMirror-cursor {
+				display: none !important
+			}
         }
     }
     .select-container {
