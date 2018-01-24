@@ -21,21 +21,23 @@
  * #L%
  */
 describe('Merge Tab directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, catalogManagerSvc, util;
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, catalogManagerSvc, util;
 
     beforeEach(function() {
         module('templates');
         module('mergeTab');
         mockUtil();
         mockOntologyState();
+        mockOntologyManager();
         mockCatalogManager();
         mockPrefixes();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _catalogManagerService_, _utilService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _catalogManagerService_, _utilService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
+            ontologyManagerSvc = _ontologyManagerService_;
             catalogManagerSvc = _catalogManagerService_;
             util = _utilService_;
         });
@@ -61,6 +63,7 @@ describe('Merge Tab directive', function() {
         scope = null;
         $q = null;
         ontologyStateSvc = null;
+        ontologyManagerSvc = null;
         catalogManagerSvc = null;
         util = null;
         this.element.remove();
@@ -170,23 +173,23 @@ describe('Merge Tab directive', function() {
                         beforeEach(function() {
                             this.controller.checkbox = true;
                         });
-                        it('and deleteRecordBranch is resolved', function() {
-                            catalogManagerSvc.deleteRecordBranch.and.returnValue($q.when());
+                        it('and deleteOntology is resolved', function() {
+                            ontologyManagerSvc.deleteOntology.and.returnValue($q.when());
                             this.controller.merge();
                             scope.$apply();
                             expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, jasmine.any(Object));
                             expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.targetId, this.commitId);
-                            expect(catalogManagerSvc.deleteRecordBranch).toHaveBeenCalledWith(this.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
+                            expect(ontologyManagerSvc.deleteOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.branchId);
                             expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.branchId);
                             expect(util.createSuccessToast).toHaveBeenCalled();
                         });
-                        it('and deleteRecordBranch is rejected', function() {
-                            catalogManagerSvc.deleteRecordBranch.and.returnValue($q.reject(this.error));
+                        it('and deleteOntology is rejected', function() {
+                            ontologyManagerSvc.deleteOntology.and.returnValue($q.reject(this.error));
                             this.controller.merge();
                             scope.$apply();
                             expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, jasmine.any(Object));
                             expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.targetId, this.commitId);
-                            expect(catalogManagerSvc.deleteRecordBranch).toHaveBeenCalledWith(this.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
+                            expect(ontologyManagerSvc.deleteOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.branchId);
                             expect(this.controller.error).toEqual(this.error);
                         });
                     });

@@ -50,13 +50,13 @@ var jsFiles = function(prefix) {
     nodeJsFiles = function(prefix) {
         return [
             prefix + 'lodash/**/lodash.min.js',
-            prefix + 'codemirror/' + (prefix === nodeDir ? 'lib' : '**') + '/codemirror.js',
-            prefix + 'codemirror/**/sparql.js',
-            prefix + 'codemirror/**/turtle.js',
-            prefix + 'codemirror/**/xml.js',
-            prefix + 'codemirror/**/javascript.js',
-            prefix + 'codemirror/**/matchbrackets.js',
+            prefix + 'codemirror-minified/**/codemirror.js',
             prefix + 'codemirror-no-newlines/**/no-newlines.js',
+            prefix + 'codemirror-minified/**/sparql.js',
+            prefix + 'codemirror-minified/**/turtle.js',
+            prefix + 'codemirror-minified/**/xml.js',
+            prefix + 'codemirror-minified/**/javascript.js',
+            prefix + 'codemirror-minified/**/matchbrackets.js',
             prefix + 'angular/**/angular.min.js',
             prefix + 'angular-mocks/**/angular-mocks.js',
             prefix + 'angular-animate/**/angular-animate.js',
@@ -93,7 +93,7 @@ var jsFiles = function(prefix) {
             prefix + 'bootstrap/**/bootstrap.min.css',
             prefix + 'font-awesome/**/font-awesome.min.css',
             prefix + 'ui-select/**/select.min.css',
-            prefix + 'codemirror/**/codemirror.css',
+            prefix + 'codemirror-minified/**/codemirror.css',
             prefix + 'handsontable/**/handsontable.full.css',
             prefix + 'angular-toastr/**/angular-toastr.min.css'
         ]
@@ -107,6 +107,10 @@ var jsFiles = function(prefix) {
     bundledFiles = [
         dest + 'js/manchester.js',
         dest + 'js/sparql.js'
+    ],
+    minifiedFiles = [
+        dest + '**/vendor.js',
+        dest + '**/main.min.js'
     ];
 
 // Method to chunk array
@@ -149,31 +153,31 @@ gulp.task('cacheTemplates', function() {
 
 // Run jasmine tests in PhantomJS with minified source files
 gulp.task('test-minified', ['cacheTemplates'], function(done) {
-    return runKarma([dest + '**/*.js'], spec, true, done);
+    return runKarma(minifiedFiles, spec, true, done);
 });
 
 gulp.task('test-minified-1', ['cacheTemplates'], function(done) {
-    return runKarma([dest + '**/*.js'], tests[0], true, done);
+    return runKarma(minifiedFiles, tests[0], true, done);
 });
 
 gulp.task('test-minified-2', ['test-minified-1'], function(done) {
-    return runKarma([dest + '**/*.js'], tests[1], true, done);
+    return runKarma(minifiedFiles, tests[1], true, done);
 });
 
 gulp.task('test-minified-3', ['test-minified-2'], function(done) {
-    return runKarma([dest + '**/*.js'], tests[2], true, done);
+    return runKarma(minifiedFiles, tests[2], true, done);
 });
 
 gulp.task('test-minified-4', ['test-minified-3'], function(done) {
-    return runKarma([dest + '**/*.js'], tests[3], true, done);
+    return runKarma(minifiedFiles, tests[3], true, done);
 });
 
 gulp.task('test-minified-5', ['test-minified-4'], function(done) {
-    return runKarma([dest + '**/*.js'], tests[4], true, done);
+    return runKarma(minifiedFiles, tests[4], true, done);
 });
 
 gulp.task('test-minified-6', ['test-minified-5'], function(done) {
-    return runKarma([dest + '**/*.js'], tests[5], true, done);
+    return runKarma(minifiedFiles, tests[5], true, done);
 });
 
 // Run jasmine tests in PhantomJS with unminified source files
@@ -210,20 +214,26 @@ gulp.task('tdd', ['cacheTemplates'], function(done) {
     return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(src)), spec, false, done);
 });
 
-// Concatenate and minifies JS Files
+// Concatenate and minifies JS Files and bundles files
 gulp.task('minify-scripts', ['antlr4', 'sparqljs'], function() {
-    var nodeFiles = gulp.src(nodeJsFiles(nodeDir));
     var customFiles = gulp.src(jsFiles(src))
         .pipe(babel({
             presets: ['es2015']
         }));
     var bundledFileStream = gulp.src(bundledFiles)
 
-    return queue({ objectMode: true }, nodeFiles, customFiles, bundledFileStream)
+    return queue({ objectMode: true }, bundledFileStream, customFiles)
         .pipe(concat('main.js'))
         .pipe(ngAnnotate())
         .pipe(rename({suffix: '.min'}))
         .pipe(uglify())
+        .pipe(gulp.dest(dest + 'js'));
+});
+
+// Concatenates and minifies vendor JS files
+gulp.task('minify-vendor-scripts', function() {
+    return gulp.src(nodeJsFiles(nodeDir))
+        .pipe(concat('vendor.js'))
         .pipe(gulp.dest(dest + 'js'));
 });
 
@@ -239,9 +249,9 @@ gulp.task('minify-css', function() {
 });
 
 // Injects minified CSS and JS files
-gulp.task('inject-minified', ['minify-scripts', 'minify-css', 'html'], function() {
-    return injectFiles([dest + '**/*.js', dest + '**/*.css']);
-});
+gulp.task('inject-minified', ['minify-scripts', 'minify-vendor-scripts', 'minify-css', 'html'], function() {
+    return injectFiles(minifiedFiles.concat([dest + '**/*.css']));
+});;
 
 // Compresses images
 gulp.task('images', function() {
