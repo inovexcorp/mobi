@@ -28,7 +28,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>mobi-parent</artifactId>
-    <version>1.11.13-SNAPSHOT</version>
+    <version>1.11.26-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -371,6 +371,12 @@
                 <groupId>org.glassfish.jersey.test-framework.providers</groupId>
                 <artifactId>jersey-test-framework-provider-jdk-http</artifactId>
                 <version>2.25.1</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.mobi</groupId>
+                <artifactId>rdf-orm-test</artifactId>
+                <version>${project.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>

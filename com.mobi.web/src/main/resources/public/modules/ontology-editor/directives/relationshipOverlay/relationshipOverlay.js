@@ -74,8 +74,8 @@
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.array = [];
-                    dvm.conceptList = om.getConceptIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConcepts);
-                    dvm.schemeList = om.getConceptSchemeIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConceptSchemes);
+                    dvm.conceptList = _.without(om.getConceptIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConcepts), dvm.os.listItem.selected['@id']);
+                    dvm.schemeList = _.without(om.getConceptSchemeIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConceptSchemes), dvm.os.listItem.selected['@id']);
                     dvm.values = [];
 
                     dvm.addRelationship = function() {
