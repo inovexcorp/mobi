@@ -29,7 +29,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>root</artifactId>
-    <version>1.11.27</version>
+    <version>1.11.28-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
