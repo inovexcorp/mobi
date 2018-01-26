@@ -27,9 +27,9 @@
         .module('objectPropertyOverlay', [])
         .directive('objectPropertyOverlay', objectPropertyOverlay);
 
-        objectPropertyOverlay.$inject = ['ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
+        objectPropertyOverlay.$inject = ['ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'propertyManagerService'];
 
-        function objectPropertyOverlay(ontologyStateService, utilService, ontologyUtilsManagerService) {
+        function objectPropertyOverlay(ontologyStateService, utilService, ontologyUtilsManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,6 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var pm = propertyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
@@ -46,16 +47,14 @@
 
                     dvm.addProperty = function(select, value) {
                         var valueObj = {'@id': value};
-                        if (select) {
-                            if (_.has(dvm.os.listItem.selected, select)) {
-                                dvm.os.listItem.selected[select].push(valueObj);
-                            } else {
-                                dvm.os.listItem.selected[select] = [valueObj];
-                            }
+                        var added = pm.addId(dvm.os.listItem.selected, select, value);
+                        if (added) {
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, valueObj));
+                            dvm.ontoUtils.saveCurrentChanges();
+                        } else {
+                            dvm.util.createWarningToast('Duplicate property values not allowed');
                         }
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, valueObj));
                         dvm.os.showObjectPropertyOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
 
                         var types = dvm.os.listItem.selected['@type'];
                         if (dvm.ontoUtils.containsDerivedConcept(types) || dvm.ontoUtils.containsDerivedConceptScheme(types)) {

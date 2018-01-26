@@ -60,7 +60,9 @@
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/relationshipOverlay/relationshipOverlay.html',
                 scope: {
-                    relationshipList: '<',
+                    relationshipList: '<'
+                },
+                bindToController: {
                     onSubmit: '&?'
                 },
                 controllerAs: 'dvm',
@@ -77,10 +79,21 @@
                     dvm.values = [];
 
                     dvm.addRelationship = function() {
-                        dvm.os.listItem.selected[dvm.relationship] = _.union(_.get(dvm.os.listItem.selected, dvm.relationship, []), dvm.values);
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [dvm.relationship]: dvm.values});
+                        var addedValues = _.filter(dvm.values, value => pm.addId(dvm.os.listItem.selected, dvm.relationship, value));
+                        if (addedValues.length !== dvm.values.length) {
+                            dvm.util.createWarningToast('Duplicate property values not allowed');
+                        }
+                        if (addedValues.length) {
+                            var addedValueObjs = _.map(addedValues, value => ({'@id': value}));
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [dvm.relationship]: addedValueObjs});
+                            dvm.ontoUtils.saveCurrentChanges()
+                                .then(() => {
+                                    if (dvm.onSubmit) {
+                                        dvm.onSubmit({relationship: dvm.relationship, values: addedValueObjs})
+                                    }
+                                });
+                        }
                         dvm.os.showRelationshipOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
                     }
 
                     dvm.getValues = function(searchText) {
