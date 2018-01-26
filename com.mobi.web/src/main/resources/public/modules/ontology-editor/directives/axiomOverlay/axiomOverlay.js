@@ -97,7 +97,6 @@
                             }
                         } else if (dvm.tabs.list) {
                             values = dvm.values;
-                            // values = _.map(dvm.values, value => ({'@id': value}));
                         }
                         var addedValues = _.filter(values, value => pm.addId(dvm.os.listItem.selected, axiom, value));
                         if (addedValues.length !== values.length) {
@@ -124,7 +123,7 @@
                     }
 
                     dvm.getValues = function(searchText) {
-                        var valuesKey = dvm.axiom.valuesKey;
+                        var valuesKey = _.get(dvm.axiom, 'valuesKey');
                         if (!valuesKey) {
                             dvm.array = [];
                             return;
