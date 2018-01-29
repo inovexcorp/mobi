@@ -739,6 +739,10 @@ xacml1Func:rfc822Name-set-equals a :Function, owl:NamedIndividual .
         owl:cardinality "1"^^xsd:nonNegativeInteger ;
         owl:onProperty :attributeValue
     ], [
+        a owl:Restriction ;
+        owl:cardinality "1"^^xsd:nonNegativeInteger ;
+        owl:onProperty :matchFunction
+    ], [
         a owl:Class ;
         owl:disjointUnionOf (
             [
@@ -753,6 +757,12 @@ xacml1Func:rfc822Name-set-equals a :Function, owl:NamedIndividual .
             ]
         )
     ] .
+
+:matchFunction a owl:ObjectProperty, owl:FunctionalProperty ;
+    dct:title "match function"@en ;
+    dct:description "The Function to use when matching."@en ;
+    rdfs:domain :Match ;
+    rdfs:range :Function .
 
 :attributeValue a owl:ObjectProperty, owl:FunctionalProperty ;
     dct:title "attribute value"@en ;
