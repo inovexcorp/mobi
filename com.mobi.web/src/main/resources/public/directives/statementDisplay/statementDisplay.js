@@ -61,7 +61,9 @@
                         dvm.fullObject = dvm.object['@id'];
                         dvm.o = $filter('splitIRI')(dvm.fullObject).end || dvm.fullObject;
                     } else {
-                        dvm.o = _.get(dvm.object, '@value', dvm.object) + (_.has(dvm.object, '@language') ? ' [language: ' + dvm.object['@language'] + ']' : '');
+                        dvm.o = _.get(dvm.object, '@value', dvm.object)
+                            + (_.has(dvm.object, '@language') ? ' [language: ' + dvm.object['@language'] + ']' : '')
+                            + (_.has(dvm.object, '@type') ? ' [type: ' + $filter('prefixation')(dvm.object['@type']) + ']' : '');
                         dvm.fullObject = dvm.o;
                     }
                 },
