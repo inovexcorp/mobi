@@ -294,7 +294,7 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>rest.security</artifactId>
+            <artifactId>security.policy.api</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

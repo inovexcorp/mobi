@@ -89,12 +89,6 @@
         <bundle start-level="80">mvn:org.glassfish/javax.json/1.0.4</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.jsr303-api-1.1.0/2.9.0</bundle>
         <bundle start-level="80">mvn:org.eclipse.persistence/org.eclipse.persistence.moxy/${eclipse.persistence.version}</bundle>
-
-        <!-- XACML Security Dependencies -->
-        <bundle start-level="80">mvn:org.wso2.balana/org.wso2.balana/1.1.3</bundle>
-        <bundle start-level="80">mvn:org.wso2.balana/org.wso2.balana.utils/1.1.3</bundle>
-        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.xerces/2.9.1_5</bundle>
-        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.xmlresolver/1.2_5</bundle>
     </feature>
     <feature name="mobi-core" description="Mobi Core Platform Bundles" version="${project.version}">
         <feature prerequisite="true">jaas</feature>
@@ -141,7 +135,7 @@
         <bundle start-level="80">mvn:com.mobi/prov.impl/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/analytic.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/analytic.impl/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/rest.security/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.mobi/security.policy.api/${project.version}</bundle>
     </feature>
     <feature name="mobi-cli" description="Mobi CLI Bundles" version="${project.version}">
         <feature prerequisite="true">mobi-core</feature>
