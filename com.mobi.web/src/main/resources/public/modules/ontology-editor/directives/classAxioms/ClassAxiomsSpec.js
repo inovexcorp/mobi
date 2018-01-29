@@ -122,12 +122,23 @@ describe('Class Axioms directive', function() {
                 expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.setVocabularyStuff).not.toHaveBeenCalled();
             });
-            it('if the axiom is subClassOf', function() {
-                this.axiom = prefixes.rdfs + 'subClassOf';
-                this.controller.updateHierarchy(this.axiom, this.values);
-                expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('classId', this.values);
-                expect(ontoUtils.updateflatIndividualsHierarchy).toHaveBeenCalledWith(this.values);
-                expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
+            describe('if the axiom is subClassOf', function() {
+                beforeEach(function() {
+                    this.axiom = prefixes.rdfs + 'subClassOf';
+                });
+                it('and is present in the individual hierarchy', function () {
+                    ontologyStateSvc.listItem.individualsParentPath = [ontologyStateSvc.listItem.selected['@id']];
+                    this.controller.updateHierarchy(this.axiom, this.values);
+                    expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('classId', this.values);
+                    expect(ontoUtils.updateflatIndividualsHierarchy).toHaveBeenCalledWith(this.values);
+                    expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
+                });
+                it('and is not present in the individual hierarchy', function () {
+                    this.controller.updateHierarchy(this.axiom, this.values);
+                    expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('classId', this.values);
+                    expect(ontoUtils.updateflatIndividualsHierarchy).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
+                });
             });
         });
         describe('should remove a class from the hierarchy', function() {
