@@ -267,12 +267,16 @@
              */
             self.getOntology = function(recordId, rdfFormat = 'jsonld') {
                 var state = sm.getOntologyStateByRecordId(recordId);
-                var deferred = $q.defer();
                 if (!_.isEmpty(state)) {
                     var inProgressCommit = emptyInProgressCommit;
                     var branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "branch'][0]['@id']");
                     var commitId = _.get(state, "model[0]['" + prefixes.ontologyState + "commit'][0]['@id']");
-                    cm.getInProgressCommit(recordId, catalogId)
+                    var upToDate = false;
+                    return cm.getRecordBranch(branchId, recordId, catalogId)
+                        .then(branch => {
+                            upToDate = _.get(branch, "['" + prefixes.catalog + "head'][0]['@id']", '') === commitId;
+                            return cm.getInProgressCommit(recordId, catalogId);
+                        }, $q.reject)
                         .then(response => {
                             inProgressCommit = response;
                             return om.getOntology(recordId, branchId, commitId, rdfFormat);
@@ -282,15 +286,12 @@
                             }
                             return $q.reject();
                         })
-                        .then(ontology => deferred.resolve({ontology, recordId, branchId, commitId, inProgressCommit}), () => {
+                        .then(ontology => ({ontology, recordId, branchId, commitId, upToDate, inProgressCommit}), () =>
                             sm.deleteOntologyState(recordId, branchId, commitId)
                                 .then(() => self.getLatestOntology(recordId, rdfFormat), $q.reject)
-                                .then(deferred.resolve, deferred.reject);
-                        });
-                } else {
-                    self.getLatestOntology(recordId, rdfFormat).then(deferred.resolve, deferred.reject);
+                        );
                 }
-                return deferred.promise;
+                return self.getLatestOntology(recordId, rdfFormat);
             }
             /**
              * @ngdoc method
@@ -312,14 +313,11 @@
                 return cm.getRecordMasterBranch(recordId, catalogId)
                     .then(masterBranch => {
                         branchId = _.get(masterBranch, '@id', '');
-                        return cm.getRecordBranch(branchId, recordId, catalogId);
-                    }, $q.reject)
-                    .then(branch => {
-                        commitId = _.get(branch, "['" + prefixes.catalog + "head'][0]['@id']", '');
+                        commitId = _.get(masterBranch, "['" + prefixes.catalog + "head'][0]['@id']", '');
                         return sm.createOntologyState(recordId, branchId, commitId);
                     }, $q.reject)
                     .then(() => om.getOntology(recordId, branchId, commitId, rdfFormat), $q.reject)
-                    .then(ontology => {return {ontology, recordId, branchId, commitId, inProgressCommit: emptyInProgressCommit}}, $q.reject);
+                    .then(ontology => {return {ontology, recordId, branchId, commitId, upToDate: true, inProgressCommit: emptyInProgressCommit}}, $q.reject);
             }
             /**
              * @ngdoc method
@@ -373,7 +371,7 @@
              * @param {string} keywords The array of keywords for the record.
              * @returns {Promise} A promise with the ontology record ID or error message.
              */
-            self.uploadThenGet = function(file, title, description, keywords) {
+            /*self.uploadThenGet = function(file, title, description, keywords) {
                 var recordId;
                 return om.uploadFile(file, title, description, keywords)
                     .then(data => {
@@ -386,7 +384,7 @@
                         self.setSelected(self.getActiveEntityIRI(), false);
                         return recordId;
                     }, $q.reject);
-            }
+            }*/
             /**
              * @ngdoc method
              * @name uploadChanges
@@ -835,20 +833,11 @@
              * @returns {Promise} A promise with the ontology ID or error message.
              */
             self.openOntology = function(recordId, recordTitle) {
-                var branchId, commitId, ontology, inProgressCommit, ontologyId;
+                var ontologyId;
                 return self.getOntology(recordId)
                     .then(response => {
-                        branchId = response.branchId;
-                        commitId = response.commitId;
-                        ontology = response.ontology;
-                        inProgressCommit = response.inProgressCommit;
-                        return cm.getRecordBranch(branchId, recordId, catalogId);
-                    }, $q.reject)
-                    .then(branch => {
-                        var headId = _.get(branch, "['" + prefixes.catalog + "head'][0]['@id']", '');
-                        var upToDate = headId === commitId;
-                        ontologyId = om.getOntologyIRI(ontology);
-                        return self.addOntologyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, recordTitle, upToDate);
+                        ontologyId = om.getOntologyIRI(response.ontology);
+                        return self.addOntologyToList(ontologyId, recordId, response.branchId, response.commitId, response.ontology, response.inProgressCommit, recordTitle, response.upToDate);
                     }, $q.reject)
                     .then(response => {
                         self.listItem = response;

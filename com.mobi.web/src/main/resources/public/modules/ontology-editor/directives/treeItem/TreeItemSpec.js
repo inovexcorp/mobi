@@ -80,7 +80,7 @@ describe('Tree Item directive', function() {
             expect(scope.onClick).toHaveBeenCalled();
         });
     });
-    it('controller bound variable', function() {
+    describe('controller bound variable', function() {
         it('currentEntity should be two way bound', function() {
             this.controller.currentEntity = {id: 'new'};
             scope.$digest();

@@ -43,7 +43,7 @@
                     var os = ontologyStateService;
                     dvm.relationshipList = [];
 
-                    $scope.$watch(os.listItem.selected, function(newValue) {
+                    $scope.$watch(() => os.listItem.selected, function(newValue) {
                         if (om.isConcept(os.listItem.selected, os.listItem.derivedConcepts)) {
                             var schemeRelationships = _.filter(pm.conceptSchemeRelationshipList, iri => _.includes(os.listItem.iriList, iri));
                             dvm.relationshipList = _.concat(os.listItem.derivedSemanticRelations, schemeRelationships);

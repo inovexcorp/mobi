@@ -245,6 +245,14 @@ describe('Util service', function() {
         utilSvc.createErrorToast('Text');
         expect(toastr.error).toHaveBeenCalledWith('Text', 'Error', {timeOut: 3000});
     });
+    it('should create a success toast', function() {
+        utilSvc.createSuccessToast('Text');
+        expect(toastr.success).toHaveBeenCalledWith('Text', 'Success', {timeOut: 3000});
+    });
+    it('should create a warning toast', function() {
+        utilSvc.createWarningToast('Text');
+        expect(toastr.warning).toHaveBeenCalledWith('Text', 'Warning', {timeOut: 3000});
+    });
     it('should get the namespace of an iri', function() {
         var result = utilSvc.getIRINamespace('iri');
         expect(splitIRIFilter).toHaveBeenCalledWith('iri');

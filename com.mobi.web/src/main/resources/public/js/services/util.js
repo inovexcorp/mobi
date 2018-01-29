@@ -296,7 +296,7 @@
              * @methodOf util.service:utilService
              *
              * @description
-             * Creates an error toast with the passed error text that will not disappear until it is dismissed.
+             * Creates an error toast with the passed error text that will disappear after 3 seconds
              *
              * @param {string} text The text for the body of the error toast
              */
@@ -309,12 +309,25 @@
              * @methodOf util.service:utilService
              *
              * @description
-             * Creates a success toast with the passed success text that will not disappear until it is dismissed.
+             * Creates a success toast with the passed success text that will disappear after 3 seconds
              *
              * @param {string} text The text for the body of the success toast
              */
             self.createSuccessToast = function(text) {
                 toastr.success(text, 'Success', {timeOut: 3000});
+            }
+            /**
+             * @ngdoc method
+             * @name createWarningToast
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Creates a warning toast with the passed success text that will disappear after 3 seconds
+             *
+             * @param {string} text The text for the body of the warning toast
+             */
+            self.createWarningToast = function(text) {
+                toastr.warning(text, 'Warning', {timeOut: 3000});
             }
             /**
              * @ngdoc method

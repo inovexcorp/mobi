@@ -251,7 +251,7 @@
             }
             /**
              * @ngdoc method
-             * @name getOntology
+             * @name deleteOntology
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description

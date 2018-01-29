@@ -61,15 +61,17 @@ describe('Custom Header directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('main-header')).toBe(true);
             expect(this.element.querySelectorAll('.actions').length).toBe(1);
+            expect(this.element.querySelectorAll('.settings-container').length).toBe(1);
+            expect(this.element.querySelectorAll('.help-container').length).toBe(1);
         });
         it('for user management item', function(){
             userManagerSvc.isAdmin.and.returnValue(false);
             scope.$digest();
-            expect(this.element.find('li').length).toBe(1);
+            expect(this.element.find('li').length).toBe(4);
 
             userManagerSvc.isAdmin.and.returnValue(true);
             scope.$digest();
-            expect(this.element.find('li').length).toBe(3);
+            expect(this.element.find('li').length).toBe(6);
         });
     });
     it('should logout when the link is clicked', function() {
