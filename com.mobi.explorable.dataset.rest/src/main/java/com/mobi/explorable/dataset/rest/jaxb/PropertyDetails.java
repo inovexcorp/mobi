@@ -23,6 +23,8 @@ package com.mobi.explorable.dataset.rest.jaxb;
  * #L%
  */
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+
 import java.util.Set;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -68,5 +70,22 @@ public class PropertyDetails {
 
     public void setRestrictions(Set<RestrictionDetails> restrictions) {
         this.restrictions = restrictions;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (obj.getClass() != getClass()) {
+            return false;
+        }
+        PropertyDetails other = (PropertyDetails) obj;
+        return new EqualsBuilder()
+                .append(propertyIRI, other.propertyIRI)
+                .isEquals();
     }
 }

@@ -54,7 +54,9 @@
                     dvm.updateHierarchy = function(axiom, values) {
                         if (axiom === prefixes.rdfs + 'subClassOf' && values.length) {
                             dvm.ontoUtils.setSuperClasses(dvm.os.listItem.selected['@id'], values);
-                            dvm.ontoUtils.updateflatIndividualsHierarchy(values);
+                            if (_.includes(dvm.os.listItem.individualsParentPath, dvm.os.listItem.selected['@id'])) {
+                                dvm.ontoUtils.updateflatIndividualsHierarchy(values);
+                            }
                             dvm.os.setVocabularyStuff();
                         }
                     }

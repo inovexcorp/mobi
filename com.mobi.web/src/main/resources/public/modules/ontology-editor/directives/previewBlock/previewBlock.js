@@ -45,7 +45,7 @@
                         mode: dvm.activePage.mode,
                         lineNumbers: true,
                         lineWrapping: true,
-                        readOnly: 'nocursor'
+                        readOnly: true
                     };
 
                     function setMode(serialization) {

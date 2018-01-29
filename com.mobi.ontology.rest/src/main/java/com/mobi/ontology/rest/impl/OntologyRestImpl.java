@@ -97,6 +97,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
@@ -119,6 +120,11 @@ public class OntologyRestImpl implements OntologyRest {
     private RepositoryManager repositoryManager;
 
     private static final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
+
+    /**
+     * Semaphore for protecting ontology IRI uniqueness checks
+     */
+    private Semaphore semaphore = new Semaphore(1, true);
 
     @Reference
     void setModelFactory(ModelFactory modelFactory) {
@@ -1559,12 +1565,23 @@ public class OntologyRestImpl implements OntologyRest {
         }
         Resource catalogId = catalogManager.getLocalCatalogIRI();
         OntologyRecord record = ontologyManager.createOntologyRecord(builder.build());
-        record.getOntologyIRI().ifPresent(this::testOntologyIRIUniqueness);
-        catalogManager.addRecord(catalogId, record);
-        Resource masterBranchId = record.getMasterBranch_resource().get();
-        Model model = ontology.asModel(modelFactory);
-        Resource commitId = versioningManager.commit(catalogId, record.getResource(), masterBranchId, user,
-                "The initial commit.", model, null);
+        Resource masterBranchId;
+        Resource commitId;
+        try {
+            semaphore.acquire();
+            record.getOntologyIRI().ifPresent(this::testOntologyIRIUniqueness);
+            catalogManager.addRecord(catalogId, record);
+            masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
+                    new IllegalStateException("OntologyRecord must have a master Branch"));
+            Model model = ontology.asModel(modelFactory);
+            commitId = versioningManager.commit(catalogId, record.getResource(), masterBranchId, user,
+                    "The initial commit.", model, null);
+        } catch (InterruptedException e) {
+            throw ErrorUtils.sendError(e, "Issue checking adding new OntologyRecord",
+                    Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            semaphore.release();
+        }
 
         JSONObject response = new JSONObject()
                 .element("ontologyId", ontology.getOntologyId().getOntologyIdentifier().stringValue())
