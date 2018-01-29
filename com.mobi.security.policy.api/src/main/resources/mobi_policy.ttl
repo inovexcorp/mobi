@@ -155,6 +155,18 @@
     rdfs:domain :AttributeValue ;
     rdfs:range xsd:string .
 
+# Category
+
+:Category a owl:Class .
+
+<urn:oasis:names:tc:xacml:1.0:subject-category:access-subject> a :Category, owl:NamedIndividual .
+
+<urn:oasis:names:tc:xacml:3.0:attribute-category:environment> a :Category, owl:NamedIndividual .
+
+<urn:oasis:names:tc:xacml:3.0:attribute-category:resource> a :Category, owl:NamedIndividual .
+
+<urn:oasis:names:tc:xacml:3.0:attribute-category:acion> a :Category, owl:NamedIndividual .
+
 # CombiningAlgorithm
 
 :CombiningAlgorithm a owl:Class ;
@@ -914,11 +926,11 @@ xacml1Func:rfc822Name-set-equals a :Function, owl:NamedIndividual .
     rdfs:domain :Apply, :Condition ;
     rdfs:range :Expression .
 
-:category a owl:DatatypeProperty, owl:FunctionalProperty ;
+:category a owl:ObjectProperty, owl:FunctionalProperty ;
     dct:title "category"@en ;
     dct:description "The Category of an Attribute."@en ;
     rdfs:domain :AttributeDesignator, :AttributeSelector ;
-    rdfs:range xsd:anyURI .
+    rdfs:range :Category .
 
 :mustBePresent a owl:DatatypeProperty, owl:FunctionalProperty ;
     dct:title "must be present"@en ;
