@@ -166,17 +166,46 @@ describe('Property Manager service', function() {
             };
         });
         it('unless the property is undefined', function() {
-            propertyManagerSvc.add(this.entity, undefined, this.newValue['@value']);
+            expect(propertyManagerSvc.addValue(this.entity, undefined, this.newValue['@value'])).toEqual(false);
             expect(this.entity).toEqual({});
+        });
+        it('unless the value already exists', function() {
+            var existingValue = {'@value': 'existing'};
+            this.entity[this.prop] = [existingValue];
+            expect(propertyManagerSvc.addValue(this.entity, this.prop, existingValue['@value'])).toEqual(false);
+            expect(this.entity[this.prop]).toEqual([existingValue]);
         });
         it('with a language and type', function() {
             this.newValue['@type'] = 'type';
             this.newValue['@language'] = 'lang';
-            propertyManagerSvc.add(this.entity, this.prop, this.newValue['@value'], this.newValue['@type'], this.newValue['@language']);
+            expect(propertyManagerSvc.addValue(this.entity, this.prop, this.newValue['@value'], this.newValue['@type'], this.newValue['@language'])).toEqual(true);
             expect(this.entity[this.prop]).toEqual([this.newValue]);
         });
         it('without a language and type', function() {
-            propertyManagerSvc.add(this.entity, this.prop, this.newValue['@value']);
+            expect(propertyManagerSvc.addValue(this.entity, this.prop, this.newValue['@value'])).toEqual(true);
+            expect(this.entity[this.prop]).toEqual([this.newValue]);
+        });
+    });
+    describe('should add a property ID value', function() {
+        beforeEach(function() {
+            this.prop = 'prop';
+            this.entity = {};
+            this.newValue = {
+                '@id': 'id'
+            };
+        });
+        it('unless the property is undefined', function() {
+            expect(propertyManagerSvc.addId(this.entity, undefined, this.newValue['@id'])).toEqual(false);
+            expect(this.entity).toEqual({});
+        });
+        it('unless the value already exists', function() {
+            var existingValue = {'@id': 'existing'};
+            this.entity[this.prop] = [existingValue];
+            expect(propertyManagerSvc.addId(this.entity, this.prop, existingValue['@id'])).toEqual(false);
+            expect(this.entity[this.prop]).toEqual([existingValue]);
+        });
+        it('successfully', function() {
+            expect(propertyManagerSvc.addId(this.entity, this.prop, this.newValue['@id'])).toEqual(true);
             expect(this.entity[this.prop]).toEqual([this.newValue]);
         });
     });
@@ -195,17 +224,56 @@ describe('Property Manager service', function() {
             this.entity[this.prop] = [this.existingValue];
         });
         it('unless the property is undefined', function() {
-            propertyManagerSvc.edit(this.entity, undefined, this.newValue['@value'], 0);
+            expect(propertyManagerSvc.editValue(this.entity, undefined, 0, this.newValue['@value'])).toEqual(false);
             expect(this.entity[this.prop]).toEqual([this.existingValue]);
+        });
+        it('unless there is no value at the specified index', function() {
+            expect(propertyManagerSvc.editValue(this.entity, this.prop, 10, this.newValue['@value'])).toEqual(false);
+            expect(this.entity[this.prop]).toEqual([this.existingValue]);
+        });
+        it('unless the new value already exists', function() {
+            this.entity[this.prop].push(this.newValue);
+            expect(propertyManagerSvc.editValue(this.entity, this.prop, 0, this.newValue['@value'])).toEqual(false);
+            expect(this.entity[this.prop]).toEqual([this.existingValue, this.newValue]);
         });
         it('with a language and type', function() {
             this.newValue['@type'] = 'type';
             this.newValue['@language'] = 'lang';
-            propertyManagerSvc.edit(this.entity, this.prop, this.newValue['@value'], 0, this.newValue['@type'], this.newValue['@language']);
+            expect(propertyManagerSvc.editValue(this.entity, this.prop, 0, this.newValue['@value'], this.newValue['@type'], this.newValue['@language'])).toEqual(true);
             expect(this.entity[this.prop]).toEqual([this.newValue]);
         });
         it('without a language and type', function() {
-            propertyManagerSvc.edit(this.entity, this.prop, this.newValue['@value'], 0);
+            expect(propertyManagerSvc.editValue(this.entity, this.prop, 0, this.newValue['@value'])).toEqual(true);
+            expect(this.entity[this.prop]).toEqual([this.newValue]);
+        });
+    });
+    describe('should edit a property ID value', function() {
+        beforeEach(function() {
+            this.prop = 'prop';
+            this.entity = {};
+            this.newValue = {
+                '@id': 'id'
+            };
+            this.existingValue = {
+                '@id': 'existing'
+            };
+            this.entity[this.prop] = [this.existingValue];
+        });
+        it('unless the property is undefined', function() {
+            expect(propertyManagerSvc.editId(this.entity, undefined, 0, this.newValue['@id'])).toEqual(false);
+            expect(this.entity[this.prop]).toEqual([this.existingValue]);
+        });
+        it('unless there is no value at the specified index', function() {
+            expect(propertyManagerSvc.editId(this.entity, this.prop, 10, this.newValue['@id'])).toEqual(false);
+            expect(this.entity[this.prop]).toEqual([this.existingValue]);
+        });
+        it('unless the new value already exists', function() {
+            this.entity[this.prop].push(this.newValue);
+            expect(propertyManagerSvc.editId(this.entity, this.prop, 0, this.newValue['@id'])).toEqual(false);
+            expect(this.entity[this.prop]).toEqual([this.existingValue, this.newValue]);
+        });
+        it('successfully', function() {
+            expect(propertyManagerSvc.editId(this.entity, this.prop, 0, this.newValue['@id'])).toEqual(true);
             expect(this.entity[this.prop]).toEqual([this.newValue]);
         });
     });

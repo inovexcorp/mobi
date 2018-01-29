@@ -80,9 +80,6 @@ import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.BindingSet;
-import com.mobi.query.exception.QueryEvaluationException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
@@ -95,7 +92,7 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.core.SimpleRepositoryManager;
-import com.mobi.repository.impl.sesame.query.SesameBindingSet;
+import com.mobi.repository.impl.sesame.query.TestQueryResult;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
@@ -104,7 +101,6 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
-import org.eclipse.rdf4j.query.impl.ListBindingSet;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.WriterConfig;
@@ -407,40 +403,40 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         List<String> basicBinding = Collections.singletonList("s");
         List<String> basicValue = Collections.singletonList("https://mobi.com/values#Value1");
-        when(ontologyManager.getSubClassesFor(any(Ontology.class), any(IRI.class))).thenAnswer(i -> new TestQueryResult(basicBinding, basicValue, 1));
-        when(ontologyManager.getSubClassesFor(any(IRI.class), any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(basicBinding, basicValue, 1));
-        when(ontologyManager.getSubPropertiesFor(any(Ontology.class), eq(skosSemanticRelation))).thenAnswer(i -> new TestQueryResult(basicBinding, basicValue, 1));
-        when(ontologyManager.getSubPropertiesFor(eq(skosSemanticRelation), any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(basicBinding, basicValue, 1));
+        when(ontologyManager.getSubClassesFor(any(Ontology.class), any(IRI.class))).thenAnswer(i -> new TestQueryResult(basicBinding, basicValue, 1, vf));
+        when(ontologyManager.getSubClassesFor(any(IRI.class), any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(basicBinding, basicValue, 1, vf));
+        when(ontologyManager.getSubPropertiesFor(any(Ontology.class), eq(skosSemanticRelation))).thenAnswer(i -> new TestQueryResult(basicBinding, basicValue, 1, vf));
+        when(ontologyManager.getSubPropertiesFor(eq(skosSemanticRelation), any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(basicBinding, basicValue, 1, vf));
 
         List<String> individualBindings = Stream.of("parent", "individual").collect(Collectors.toList());
         List<String> individualValues = Stream.of("https://mobi.com#parent", "https://mobi.com#individual").collect(Collectors.toList());
-        when(ontologyManager.getClassesWithIndividuals(any(Ontology.class))).thenAnswer(i -> new TestQueryResult(individualBindings, individualValues, 1));
-        when(ontologyManager.getClassesWithIndividuals(any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(individualBindings, individualValues, 1));
+        when(ontologyManager.getClassesWithIndividuals(any(Ontology.class))).thenAnswer(i -> new TestQueryResult(individualBindings, individualValues, 1, vf));
+        when(ontologyManager.getClassesWithIndividuals(any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(individualBindings, individualValues, 1, vf));
 
         List<String> hierarchyBindings = Stream.of("parent", "child").collect(Collectors.toList());
         List<String> hierarchyValues = Stream.of("https://mobi.com#parent", "https://mobi.com#child").collect(Collectors.toList());
-        when(ontologyManager.getSubClassesOf(any(Ontology.class))).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1));
-        when(ontologyManager.getSubClassesOf(any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1));
-        when(ontologyManager.getSubObjectPropertiesOf(ontology)).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1));
-        when(ontologyManager.getSubObjectPropertiesOf(any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1));
-        when(ontologyManager.getSubDatatypePropertiesOf(ontology)).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1));
-        when(ontologyManager.getSubDatatypePropertiesOf(any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1));
-        when(ontologyManager.getSubAnnotationPropertiesOf(ontology)).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1));
-        when(ontologyManager.getSubAnnotationPropertiesOf(any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1));
-        when(ontologyManager.getConceptRelationships(ontology)).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1));
-        when(ontologyManager.getConceptRelationships(any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1));
-        when(ontologyManager.getConceptSchemeRelationships(ontology)).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1));
-        when(ontologyManager.getConceptSchemeRelationships(any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1));
+        when(ontologyManager.getSubClassesOf(any(Ontology.class))).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1, vf));
+        when(ontologyManager.getSubClassesOf(any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1, vf));
+        when(ontologyManager.getSubObjectPropertiesOf(ontology)).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1, vf));
+        when(ontologyManager.getSubObjectPropertiesOf(any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1, vf));
+        when(ontologyManager.getSubDatatypePropertiesOf(ontology)).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1, vf));
+        when(ontologyManager.getSubDatatypePropertiesOf(any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1, vf));
+        when(ontologyManager.getSubAnnotationPropertiesOf(ontology)).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1, vf));
+        when(ontologyManager.getSubAnnotationPropertiesOf(any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1, vf));
+        when(ontologyManager.getConceptRelationships(ontology)).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1, vf));
+        when(ontologyManager.getConceptRelationships(any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1, vf));
+        when(ontologyManager.getConceptSchemeRelationships(ontology)).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1, vf));
+        when(ontologyManager.getConceptSchemeRelationships(any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(hierarchyBindings, hierarchyValues, 1, vf));
 
         List<String> entityBindings = Stream.of("s", "p", "o").collect(Collectors.toList());
         List<String> entityValues = Stream.of("https://mobi.com#subject", "https://mobi.com#predicate", "https://mobi.com#object").collect(Collectors.toList());
-        when(ontologyManager.getEntityUsages(eq(ontology), any(Resource.class))).thenAnswer(i -> new TestQueryResult(entityBindings, entityValues, 1));
-        when(ontologyManager.getEntityUsages(any(Resource.class), any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(entityBindings, entityValues, 1));
+        when(ontologyManager.getEntityUsages(eq(ontology), any(Resource.class))).thenAnswer(i -> new TestQueryResult(entityBindings, entityValues, 1, vf));
+        when(ontologyManager.getEntityUsages(any(Resource.class), any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(entityBindings, entityValues, 1, vf));
 
         List<String> searchBindings = Stream.of("entity", "type").collect(Collectors.toList());
         List<String> searchValues = Stream.of("https://mobi.com#entity", "https://mobi.com#type").collect(Collectors.toList());
-        when(ontologyManager.getSearchResults(eq(ontology), anyString())).thenAnswer(i -> new TestQueryResult(searchBindings, searchValues, 1));
-        when(ontologyManager.getSearchResults(anyString(), any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(searchBindings, searchValues, 1));
+        when(ontologyManager.getSearchResults(eq(ontology), anyString())).thenAnswer(i -> new TestQueryResult(searchBindings, searchValues, 1, vf));
+        when(ontologyManager.getSearchResults(anyString(), any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(searchBindings, searchValues, 1, vf));
 
         when(ontologyManager.constructEntityUsages(eq(ontology), any(Resource.class))).thenReturn(constructs);
         when(ontologyManager.constructEntityUsages(any(Resource.class), any(RepositoryConnection.class))).thenReturn(constructs);
@@ -4057,7 +4053,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     @Test
     public void testGetSearchResultsWithNoMatches() {
         // Setup:
-        when(ontologyManager.getSearchResults(eq(ontology), anyString())).thenAnswer(i -> new TestQueryResult(Collections.EMPTY_LIST, Collections.EMPTY_LIST, 0));
+        when(ontologyManager.getSearchResults(eq(ontology), anyString())).thenAnswer(i -> new TestQueryResult(Collections.EMPTY_LIST, Collections.EMPTY_LIST, 0, vf));
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/search-results")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
@@ -4312,45 +4308,5 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .request().get();
 
         assertEquals(response.getStatus(), 400);
-    }
-
-    private class TestQueryResult extends TupleQueryResult {
-        private List<String> bindings;
-        private List<org.eclipse.rdf4j.model.Value> values;
-        private int size;
-
-        TestQueryResult(List<String> bindings, List<String> values, int size) {
-            if (bindings.size() != values.size()) {
-                throw new IllegalArgumentException("Bindings and values must be equal in size");
-            }
-            if (size < 0) {
-                throw new IllegalArgumentException("Size cannot be negative");
-            }
-            this.bindings = bindings;
-            this.size = size;
-            this.values = values.stream()
-                    .map(str -> Values.sesameValue(vf.createIRI(str)))
-                    .collect(Collectors.toList());
-        }
-
-        @Override
-        public List<String> getBindingNames() throws QueryEvaluationException {
-            return bindings;
-        }
-
-        @Override
-        public void close() {
-            this.size = 0;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return this.size-- > 0;
-        }
-
-        @Override
-        public BindingSet next() {
-            return new SesameBindingSet(new ListBindingSet(this.bindings, this.values));
-        }
     }
 }

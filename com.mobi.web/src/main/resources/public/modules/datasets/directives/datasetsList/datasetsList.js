@@ -40,6 +40,7 @@
          * @restrict E
          * @requires datasetState.service:datasetStateService
          * @requires datasetManager.service:datasetManagerService
+         * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
          * @requires prefixes.service:prefixes
          *
@@ -122,6 +123,10 @@
                                 dvm.showClearConfirm = false;
                                 dvm.error = '';
                             }, onError);
+                    }
+                    dvm.showUploadData = function(dataset) {
+                        dvm.state.selectedDataset = dataset;
+                        dvm.state.showUploadOverlay = true;
                     }
                     dvm.showEdit = function(dataset) {
                         dvm.state.selectedDataset = dataset;

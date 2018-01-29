@@ -27,9 +27,9 @@
         .module('datatypePropertyOverlay', [])
         .directive('datatypePropertyOverlay', datatypePropertyOverlay);
 
-        datatypePropertyOverlay.$inject = ['ontologyStateService', 'utilService', 'prefixes', 'ontologyUtilsManagerService'];
+        datatypePropertyOverlay.$inject = ['ontologyStateService', 'utilService', 'prefixes', 'ontologyUtilsManagerService', 'propertyManagerService'];
 
-        function datatypePropertyOverlay(ontologyStateService, utilService, prefixes, ontologyUtilsManagerService) {
+        function datatypePropertyOverlay(ontologyStateService, utilService, prefixes, ontologyUtilsManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,53 +38,47 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var pm = propertyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.dataProperties = _.keys(dvm.os.listItem.dataProperties.iris);
 
                     dvm.addProperty = function(select, value, type, language) {
-                        if (select) {
-                            var valueObj = {'@value': value};
-                            if (language && dvm.isStringType()) {
-                                valueObj['@language'] = language;
-                            } else if (type) {
-                                valueObj['@type'] = type;
-                            }
-                            if (_.has(dvm.os.listItem.selected, select)) {
-                                dvm.os.listItem.selected[select].push(valueObj);
-                            } else {
-                                dvm.os.listItem.selected[select] = [valueObj];
-                            }
+                        var lang = getLang(language);
+                        var realType = getType(lang, type);
+                        var added = pm.addValue(dvm.os.listItem.selected, select, value, realType, lang);
+                        if (added) {
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, pm.createValueObj(value, realType, lang)));
+                            dvm.ontoUtils.saveCurrentChanges();
+                        } else {
+                            dvm.util.createWarningToast('Duplicate property values not allowed');
                         }
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, valueObj));
                         dvm.os.showDataPropertyOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
                     }
-
                     dvm.editProperty = function(select, value, type, language) {
-                        if (select) {
-                            var propertyObj = dvm.os.listItem.selected[select][dvm.os.propertyIndex];
-                            dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, propertyObj));
-                            propertyObj['@value'] = value;
-                            if (type && !(language && dvm.isStringType())) {
-                                propertyObj['@type'] = type;
-                            } else {
-                                _.unset(propertyObj, '@type');
-                            }
-                            if (language && dvm.isStringType()) {
-                                propertyObj['@language'] = language;
-                            } else {
-                                _.unset(propertyObj, '@language');
-                            }
-                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, propertyObj));
+                        var oldObj = angular.copy(dvm.os.listItem.selected[select][dvm.os.propertyIndex]);
+                        var lang = getLang(language);
+                        var realType = getType(lang, type);
+                        var edited = pm.editValue(dvm.os.listItem.selected, select, dvm.os.propertyIndex, value, realType, lang);
+                        if (edited) {
+                            dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, oldObj));
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, pm.createValueObj(value, realType, lang)));
+                            dvm.ontoUtils.saveCurrentChanges();
+                        } else {
+                            dvm.util.createWarningToast('Duplicate property values not allowed');
                         }
                         dvm.os.showDataPropertyOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
                     }
 
-                    dvm.isStringType = function() {
+                    dvm.isLangString = function() {
                         return prefixes.rdf + 'langString' === dvm.os.propertyType;
+                    }
+                    function getType(language, type) {
+                        return language ? '' : type || prefixes.xsd + 'string';
+                    }
+                    function getLang(language) {
+                        return language && dvm.isLangString() ? language : '';
                     }
                 }
             }
