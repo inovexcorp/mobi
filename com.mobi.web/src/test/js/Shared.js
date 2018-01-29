@@ -209,10 +209,6 @@ function mockOntologyManager() {
     module(function($provide) {
         $provide.service('ontologyManagerService', function($q) {
             this.ontologyRecords = [];
-            this.ontologyProperties = [];
-            this.conceptRelationshipList = [];
-            this.schemeRelationshipList = [];
-            this.defaultDatatypes = [];
             this.reset = jasmine.createSpy('reset');
             this.initialize = jasmine.createSpy('initialize');
             this.getAllOntologyRecords = jasmine.createSpy('getAllOntologyRecords').and.returnValue($q.when([]));
@@ -585,36 +581,36 @@ function mockOntologyState() {
                         deletions: []
                     }
                 },
-                dataPropertyRange: [],
+                dataPropertyRange: {},
                 derivedConcepts: [],
                 derivedConceptSchemes: [],
                 derivedSemanticRelations: [],
                 classes: {
-                    iris: [],
+                    iris: {},
                     hierarchy: [],
                     index: {},
                     flat: []
                 },
                 objectProperties: {
-                    iris: [],
+                    iris: {},
                     hierarchy: [],
                     index: {},
                     flat: []
                 },
                 dataProperties: {
-                    iris: [],
+                    iris: {},
                     hierarchy: [],
                     index: {},
                     flat: []
                 },
                 annotations: {
-                    iris: [],
+                    iris: {},
                     hierarchy: [],
                     index: {},
                     flat: []
                 },
                 individuals: {
-                    iris: [],
+                    iris: {},
                     flat: []
                 },
                 concepts: {
@@ -763,28 +759,25 @@ function mockOntologyUtilsManager() {
     });
 }
 
-function mockResponseObj() {
-    module(function($provide) {
-        $provide.service('responseObj', function() {
-            this.getItemIri = jasmine.createSpy('getItemIri').and.callFake(function(obj) {
-                return (obj && obj.localName) ? obj.localName : obj;
-            });
-            this.validateItem = jasmine.createSpy('validateItem').and.returnValue(true);
-            this.createItemFromIri = jasmine.createSpy('createItemFromIri');
-        });
-    });
-}
-
 function mockPropertyManager() {
     module(function($provide) {
         $provide.service('propertyManagerService', function($q) {
             this.defaultAnnotations = [];
             this.owlAnnotations = [];
             this.skosAnnotations = [];
+            this.ontologyProperties = [];
+            this.conceptSchemeRelationshipList = [];
+            this.conceptRelationshipList = [];
+            this.schemeRelationshipList = [];
+            this.defaultDatatypes = [];
+            this.getValuesKey = jasmine.createSpy('getValuesKey').and.returnValue('');
             this.getDefaultAnnotations = jasmine.createSpy('getDefaultAnnotations').and.returnValue([]);
             this.remove = jasmine.createSpy('remove');
-            this.add = jasmine.createSpy('add');
-            this.edit = jasmine.createSpy('edit');
+            this.addValue = jasmine.createSpy('addValue');
+            this.addId = jasmine.createSpy('addId');
+            this.editValue = jasmine.createSpy('editValue');
+            this.editId = jasmine.createSpy('editId');
+            this.createValueObj = jasmine.createSpy('createValueObj').and.returnValue({});
             this.create = jasmine.createSpy('create').and.returnValue($q.resolve({}));
         });
     });
@@ -989,8 +982,10 @@ function mockUtil() {
             this.parseLinks = jasmine.createSpy('parseLinks').and.returnValue({});
             this.createErrorToast = jasmine.createSpy('createErrorToast');
             this.createSuccessToast = jasmine.createSpy('createSuccessToast');
+            this.createWarningToast = jasmine.createSpy('createWarningToast');
             this.createJson = jasmine.createSpy('createJson').and.returnValue({});
-            this.getIRINamespace = jasmine.createSpy('getIRINamespace').and.returnValue({});
+            this.getIRINamespace = jasmine.createSpy('getIRINamespace').and.returnValue('');
+            this.getIRILocalName = jasmine.createSpy('getIRILocalName').and.returnValue('');
             this.getDate = jasmine.createSpy('getDate').and.returnValue(new Date());
             this.condenseCommitId = jasmine.createSpy('condenseCommitId');
             this.paginatedConfigToParams = jasmine.createSpy('paginatedConfigToParams').and.returnValue({});
@@ -1020,6 +1015,7 @@ function mockDatasetManager() {
             this.deleteDatasetRecord = jasmine.createSpy('deleteDatasetRecord').and.returnValue($q.when());
             this.clearDatasetRecord = jasmine.createSpy('clearDatasetRecord').and.returnValue($q.when());
             this.updateDatasetRecord = jasmine.createSpy('updateDatasetRecord').and.returnValue($q.when());
+            this.uploadData = jasmine.createSpy('uploadData').and.returnValue($q.when());
             this.initialize = jasmine.createSpy('initialize');
             this.getOntologyIdentifiers = jasmine.createSpy('getOntologyIdentifiers').and.returnValue([]);
             this.getRecordFromArray = jasmine.createSpy('getRecordFromArray').and.returnValue({});

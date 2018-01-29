@@ -21,31 +21,30 @@
  * #L%
  */
 describe('Object Property Overlay directive', function() {
-    var $compile, scope, ontologyStateSvc, responseObj, ontoUtils;
+    var $compile, scope, ontologyStateSvc, ontoUtils, propertyManagerSvc, util;
 
     beforeEach(function() {
         module('templates');
         module('objectPropertyOverlay');
-        injectRegexConstant();
-        injectHighlightFilter();
-        injectTrustedFilter();
-        injectRemoveIriFromArrayFilter();
         mockOntologyState();
-        mockResponseObj();
         mockUtil();
         mockOntologyUtilsManager();
+        mockPropertyManager();
+        injectTrustedFilter();
+        injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_, _propertyManagerService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            responseObj = _responseObj_;
             ontoUtils = _ontologyUtilsManagerService_;
+            propertyManagerSvc = _propertyManagerService_;
+            util = _utilService_;
         });
 
-        ontologyStateSvc.listItem = {ontologyRecord: {recordId: 'recordId'}, individuals: {iris: [{}]}};
+        ontologyStateSvc.getActiveEntityIRI.and.returnValue('active');
+        ontologyStateSvc.listItem = {ontologyRecord: {recordId: 'recordId'}, individuals: {iris: {active: 'ontology', indiv: 'ontology'}}};
         ontologyStateSvc.propertyValue = 'indiv';
-        responseObj.getItemIri.and.returnValue('indiv');
         this.element = $compile(angular.element('<object-property-overlay></object-property-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('objectPropertyOverlay');
@@ -55,13 +54,14 @@ describe('Object Property Overlay directive', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        responseObj = null;
         ontoUtils = null;
+        propertyManagerSvc = null;
+        util = null
         this.element.remove();
     });
 
-    it('initializes with the correct selected value object', function() {
-        expect(this.controller.valueSelect).toEqual({});
+    it('initializes with the correct values', function() {
+        expect(this.controller.individuals).toEqual({indiv: 'ontology'});
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
@@ -69,7 +69,7 @@ describe('Object Property Overlay directive', function() {
             expect(this.element.hasClass('object-property-overlay')).toBe(true);
             expect(this.element.querySelectorAll('.content').length).toBe(1);
         });
-        ['h6', 'ui-select', 'object-select'].forEach(function(tag) {
+        ['h6', 'ui-select', 'iri-select'].forEach(function(tag) {
             it('with a ' + tag, function() {
                 expect(this.element.find(tag).length).toEqual(1);
             });
@@ -85,81 +85,60 @@ describe('Object Property Overlay directive', function() {
         describe('should add an object property', function() {
             beforeEach(function() {
                 ontologyStateSvc.listItem.selected = {'@type': []};
-                this.value = {'@id': 'value'};
+                this.value = 'value';
+                this.prop = 'prop';
+                propertyManagerSvc.addId.and.returnValue(true);
             });
-            describe('if the property is valid', function() {
-                beforeEach(function() {
-                    responseObj.getItemIri.and.returnValue('prop');
-                });
-                it('and the entity has the property', function() {
-                    ontologyStateSvc.listItem.selected.prop = [{'@id': 'original'}];
-                    this.controller.addProperty({}, this.value);
-                    expect(ontologyStateSvc.listItem.selected.prop.length).toBe(2);
-                    expect(ontologyStateSvc.listItem.selected.prop).toContain(this.value);
-                    expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                        jasmine.any(Object));
-                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                });
-                it('and the entity does not have the property', function() {
-                    this.controller.addProperty({}, this.value);
-                    expect(ontologyStateSvc.listItem.selected.prop).toEqual([this.value]);
-                    expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                        jasmine.any(Object));
-                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                });
-                describe('and the selected entity is', function() {
-                    it('a derived Concept or ConceptScheme', function() {
-                        ontoUtils.containsDerivedConcept.and.returnValue(true);
-                        this.controller.addProperty({}, this.value);
-                        expect(ontologyStateSvc.listItem.selected.prop).toEqual([this.value]);
-                        expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
-                        expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                            jasmine.any(Object));
-                        expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                        expect(ontoUtils.containsDerivedConcept).toHaveBeenCalledWith([]);
-                        expect(ontoUtils.updateVocabularyHierarchies).toHaveBeenCalledWith('prop', [this.value]);
-                    });
-                    it('a derived ConceptScheme', function() {
-                        ontoUtils.containsDerivedConceptScheme.and.returnValue(true);
-                        this.controller.addProperty({}, this.value);
-                        expect(ontologyStateSvc.listItem.selected.prop).toEqual([this.value]);
-                        expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
-                        expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                            jasmine.any(Object));
-                        expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                        expect(ontoUtils.containsDerivedConceptScheme).toHaveBeenCalledWith([]);
-                        expect(ontoUtils.updateVocabularyHierarchies).toHaveBeenCalledWith('prop', [this.value]);
-                    });
-                    it('not a derived Concept or ConceptScheme', function() {
-                        this.controller.addProperty({}, this.value);
-                        expect(ontologyStateSvc.listItem.selected.prop).toEqual([this.value]);
-                        expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
-                        expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                            jasmine.any(Object));
-                        expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                        expect(ontoUtils.containsDerivedConcept).toHaveBeenCalledWith([]);
-                        expect(ontoUtils.containsDerivedConceptScheme).toHaveBeenCalledWith([]);
-                        expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalled();
-                    });
-                });
-            });
-            it('unless the property is not valid', function() {
-                responseObj.getItemIri.and.returnValue('');
-                this.controller.addProperty({}, this.value);
-                expect(ontologyStateSvc.listItem.selected).toEqual({'@type': []});
+            it('unless it is a duplicate value', function() {
+                propertyManagerSvc.addId.and.returnValue(false);
+                this.controller.addProperty(this.prop, this.value);
+                expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value);
+                expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
+                expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
+                expect(util.createWarningToast).toHaveBeenCalled();
                 expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                    jasmine.any(Object));
-                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+            });
+            describe('if the selected entity is', function() {
+                it('a derived Concept or ConceptScheme', function() {
+                    ontoUtils.containsDerivedConcept.and.returnValue(true);
+                    this.controller.addProperty(this.prop, this.value);
+                    expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value);
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(util.createWarningToast).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
+                    expect(ontoUtils.containsDerivedConcept).toHaveBeenCalledWith([]);
+                    expect(ontoUtils.updateVocabularyHierarchies).toHaveBeenCalledWith(this.prop, [{'@id': this.value}]);
+                });
+                it('a derived ConceptScheme', function() {
+                    ontoUtils.containsDerivedConceptScheme.and.returnValue(true);
+                    this.controller.addProperty(this.prop, this.value);
+                    expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value);
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(util.createWarningToast).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
+                    expect(ontoUtils.containsDerivedConceptScheme).toHaveBeenCalledWith([]);
+                    expect(ontoUtils.updateVocabularyHierarchies).toHaveBeenCalledWith(this.prop, [{'@id': this.value}]);
+                });
+                it('not a derived Concept or ConceptScheme', function() {
+                    this.controller.addProperty(this.prop, this.value);
+                    expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value);
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(util.createWarningToast).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
+                    expect(ontoUtils.containsDerivedConcept).toHaveBeenCalledWith([]);
+                    expect(ontoUtils.containsDerivedConceptScheme).toHaveBeenCalledWith([]);
+                    expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalled();
+                });
             });
         });
         it('getValues should call the correct method', function() {
-            ontologyStateSvc.listItem = { objectProperties: { iris: [] } };
+            ontologyStateSvc.listItem = { objectProperties: { iris: {test: 'ontology'} } };
             ontoUtils.getSelectList.and.returnValue(['list']);
             this.controller.getValues('text');
-            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectProperties.iris, 'text', ontoUtils.getDropDownText);
+            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['test'], 'text', ontoUtils.getDropDownText);
             expect(this.controller.values).toEqual(['list']);
         });
     });

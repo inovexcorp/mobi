@@ -27,9 +27,9 @@
         .module('mergeTab', [])
         .directive('mergeTab', mergeTab);
 
-        mergeTab.$inject = ['$q', 'utilService', 'ontologyStateService', 'catalogManagerService', 'prefixes'];
+        mergeTab.$inject = ['$q', 'utilService', 'ontologyStateService', 'ontologyManagerService', 'catalogManagerService', 'prefixes'];
 
-        function mergeTab($q, utilService, ontologyStateService, catalogManagerService, prefixes) {
+        function mergeTab($q, utilService, ontologyStateService, ontologyManagerService, catalogManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,6 +39,7 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     var cm = catalogManagerService;
+                    var om = ontologyManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
 
                     dvm.os = ontologyStateService;
@@ -84,7 +85,7 @@
                             .then(commitId => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.merge.target['@id'], commitId), $q.reject)
                             .then(() => {
                                 if (dvm.os.listItem.merge.checkbox) {
-                                    cm.deleteRecordBranch(sourceId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
+                                    om.deleteOntology(dvm.os.listItem.ontologyRecord.recordId, sourceId)
                                         .then(() => {
                                             dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, sourceId);
                                             onSuccess();

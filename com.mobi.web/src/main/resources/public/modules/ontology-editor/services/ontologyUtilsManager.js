@@ -27,15 +27,14 @@
         .module('ontologyUtilsManager', [])
         .service('ontologyUtilsManagerService', ontologyUtilsManagerService);
 
-        ontologyUtilsManagerService.$inject = ['$q', '$filter', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'prefixes', 'utilService', 'responseObj'];
+        ontologyUtilsManagerService.$inject = ['$q', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'prefixes', 'utilService'];
 
-        function ontologyUtilsManagerService($q, $filter, ontologyManagerService, ontologyStateService, updateRefsService, prefixes, utilService, responseObj) {
+        function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateService, updateRefsService, prefixes, utilService) {
             var self = this;
             var om = ontologyManagerService;
             var os = ontologyStateService;
             var ur = updateRefsService;
             var util = utilService;
-            var ro = responseObj;
 
             var broaderRelations = [
                 prefixes.skos + 'broaderTransitive',
@@ -81,7 +80,7 @@
              * @return {boolean} True if the array contains a dervied skos:semanticRelation or skos:semanticRelation
              */
             self.containsDerivedSemanticRelation = function(arr) {
-                return !!_.intersectionBy(arr, _.concat(os.listItem.derivedSemanticRelations, [{namespace: prefixes.skos, localName: 'semanticRelation'}]), ro.getItemIri).length;
+                return !!_.intersection(arr, _.concat(os.listItem.derivedSemanticRelations, [prefixes.skos + 'semanticRelation'])).length;
             }
             /**
              * @ngdoc method
@@ -139,9 +138,9 @@
                 } else if (isVocabPropAndEntity(relationshipIRI, narrowerRelations, self.containsDerivedConcept) && shouldUpdateVocabHierarchy(targetEntity, narrowerRelations, broaderRelations, relationshipIRI, self.containsDerivedConcept)) {
                     deleteFromConceptHierarchy(targetEntity['@id'], os.listItem.selected['@id']);
                 } else if (isVocabPropAndEntity(relationshipIRI, conceptToScheme, self.containsDerivedConcept) && shouldUpdateVocabHierarchy(targetEntity, conceptToScheme, schemeToConcept, relationshipIRI, self.containsDerivedConceptScheme)) {
-                    deleteFromSchemeHierarchy(os.listItem.selected['@id']);
+                    deleteFromSchemeHierarchy(os.listItem.selected['@id'], targetEntity['@id']);
                 } else if (isVocabPropAndEntity(relationshipIRI, schemeToConcept, self.containsDerivedConceptScheme) && shouldUpdateVocabHierarchy(targetEntity, schemeToConcept, conceptToScheme, relationshipIRI, self.containsDerivedConcept)) {
-                    deleteFromSchemeHierarchy(targetEntity['@id']);
+                    deleteFromSchemeHierarchy(targetEntity['@id'], os.listItem.selected['@id']);
                 }
             }
 
@@ -159,8 +158,7 @@
 
             self.addIndividual = function(individual) {
                 // update relevant lists
-                var split = $filter('splitIRI')(individual['@id']);
-                _.get(os.listItem, 'individuals.iris').push({namespace: split.begin + split.then, localName: split.end});
+                _.get(os.listItem, 'individuals.iris')[individual['@id']] = os.listItem.ontologyId;
                 var classesWithIndividuals = _.get(os.listItem, 'classesWithIndividuals', []);
                 var individualsParentPath = _.get(os.listItem, 'individualsParentPath', []);
                 var paths = [];
@@ -203,8 +201,7 @@
 
             self.deleteClass = function() {
                 var entityIRI = os.getActiveEntityIRI();
-                var split = $filter('splitIRI')(entityIRI);
-                os.removeFromClassIRIs(os.listItem, {namespace:split.begin + split.then, localName: split.end});
+                os.removeFromClassIRIs(os.listItem, entityIRI);
                 _.pull(os.listItem.classesWithIndividuals, entityIRI);
                 os.deleteEntityFromHierarchy(os.listItem.classes.hierarchy, entityIRI, os.listItem.classes.index);
                 os.listItem.classes.flat = os.flattenHierarchy(os.listItem.classes.hierarchy, os.listItem.ontologyRecord.recordId);
@@ -221,8 +218,7 @@
             self.deleteObjectProperty = function() {
                 var entityIRI = os.getActiveEntityIRI();
                 var types = os.listItem.selected['@type'];
-                var split = $filter('splitIRI')(entityIRI);
-                _.remove(os.listItem.objectProperties.iris, {namespace: split.begin + split.then, localName: split.end});
+                delete os.listItem.objectProperties.iris[entityIRI];
                 os.deleteEntityFromHierarchy(os.listItem.objectProperties.hierarchy, entityIRI, os.listItem.objectProperties.index);
                 os.listItem.objectProperties.flat = os.flattenHierarchy(os.listItem.objectProperties.hierarchy, os.listItem.ontologyRecord.recordId);
                 self.commonDelete(entityIRI, true)
@@ -233,8 +229,7 @@
 
             self.deleteDataTypeProperty = function() {
                 var entityIRI = os.getActiveEntityIRI();
-                var split = $filter('splitIRI')(entityIRI);
-                _.remove(os.listItem.dataProperties.iris, {namespace: split.begin + split.then, localName: split.end});
+                delete os.listItem.dataProperties.iris[entityIRI];
                 os.deleteEntityFromHierarchy(os.listItem.dataProperties.hierarchy, entityIRI, os.listItem.dataProperties.index);
                 os.listItem.dataProperties.flat = os.flattenHierarchy(os.listItem.dataProperties.hierarchy, os.listItem.ontologyRecord.recordId);
                 self.commonDelete(entityIRI, true);
@@ -242,8 +237,7 @@
 
             self.deleteAnnotationProperty = function() {
                 var entityIRI = os.getActiveEntityIRI();
-                var split = $filter('splitIRI')(entityIRI);
-                _.remove(_.get(os.listItem, 'annotations.iris'), {namespace: split.begin + split.then, localName: split.end});
+                delete _.get(os.listItem, 'annotations.iris')[entityIRI];
                 os.deleteEntityFromHierarchy(os.listItem.annotations.hierarchy, entityIRI, os.listItem.annotations.index);
                 os.listItem.annotations.flat = os.flattenHierarchy(os.listItem.annotations.hierarchy, os.listItem.ontologyRecord.recordId);
                 self.commonDelete(entityIRI);
@@ -350,8 +344,8 @@
                 return os.getEntityNameByIndex(iri, os.listItem);
             }
 
-            self.getDropDownText = function(item) {
-                return os.getEntityNameByIndex(ro.getItemIri(item), os.listItem);
+            self.getDropDownText = function(iri) {
+                return os.getEntityNameByIndex(iri, os.listItem);
             }
 
             self.checkIri = function(iri) {
@@ -429,8 +423,9 @@
                 os.deleteEntityFromParentInHierarchy(os.listItem.concepts.hierarchy, entityIRI, parentIRI, os.listItem.concepts.index);
                 commonDeleteFromVocabHierarchy('concepts');
             }
-            function deleteFromSchemeHierarchy(entityIRI) {
-                os.deleteEntityFromHierarchy(os.listItem.conceptSchemes.hierarchy, entityIRI, os.listItem.conceptSchemes.index);
+            function deleteFromSchemeHierarchy(entityIRI, parentIRI) {
+                os.deleteEntityFromParentInHierarchy(os.listItem.conceptSchemes.hierarchy, entityIRI, parentIRI, os.listItem.conceptSchemes.index);
+                _.remove(os.listItem.conceptSchemes.hierarchy, {entityIRI});
                 if (_.get(os.listItem, 'editorTabStates.schemes.entityIRI') === entityIRI) {
                     _.unset(os.listItem, 'editorTabStates.schemes.entityIRI');
                 }
@@ -449,8 +444,7 @@
                 os.listItem.conceptSchemes.flat = os.flattenHierarchy(os.listItem.conceptSchemes.hierarchy, os.listItem.ontologyRecord.recordId);
             }
             function removeIndividual(entityIRI) {
-                var split = $filter('splitIRI')(entityIRI);
-                _.remove(_.get(os.listItem, 'individuals.iris'), {namespace: split.begin + split.then, localName: split.end});
+                delete _.get(os.listItem, 'individuals.iris')[entityIRI];
                 var indivTypes = os.listItem.selected['@type'];
                 var indivAndClasses = _.get(os.listItem, 'classesAndIndividuals');
 

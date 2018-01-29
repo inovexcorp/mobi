@@ -49,9 +49,9 @@
          */
         .service('datasetManagerService', datasetManagerService);
 
-        datasetManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'discoverStateService', 'catalogManagerService', 'REST_PREFIX'];
+        datasetManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'discoverStateService', 'catalogManagerService', 'httpService', 'REST_PREFIX'];
 
-        function datasetManagerService($http, $q, utilService, prefixes, discoverStateService, catalogManagerService, REST_PREFIX) {
+        function datasetManagerService($http, $q, utilService, prefixes, discoverStateService, catalogManagerService, httpService, REST_PREFIX) {
             var self = this,
                 util = utilService,
                 ds = discoverStateService,
@@ -155,9 +155,7 @@
                 if (_.has(recordConfig, 'description')) {
                     fd.append('description', recordConfig.description);
                 }
-                if (_.get(recordConfig, 'keywords', []).length > 0) {
-                    fd.append('keywords', _.join(recordConfig.keywords, ','));
-                }
+                _.forEach(_.get(recordConfig, 'keywords', []), word => fd.append('keywords', word));
                 _.forEach(_.get(recordConfig, 'ontologies', []), id => fd.append('ontologies', id));
                 return $http.post(prefix, fd, config)
                     .then(response => self.getDatasetRecord(response.data), $q.reject)
@@ -236,6 +234,35 @@
                         removeDataset(datasetRecordIRI);
                         self.datasetRecords.push(jsonld);
                     }, $q.reject);
+            }
+
+            /**
+             * @ngdoc method
+             * @name clearDatasetRecord
+             * @methodOf datasetManager.service:datasetManagerService
+             *
+             * @description
+             * Calls the POST /mobirest/datasets/{datasetRecordId}/data endpoint and uploads the data contained in the
+             * provided file to the Dataset associated with the identified DatasetRecord from Mobi. Returns a Promise
+             * indicating the success of the request.
+             *
+             * @param {string} datasetRecordIRI The IRI of the DatasetRecord whose Dataset will receive the data
+             * @param {File} file The RDF File object to upload
+             * @param {string} id The identifier for this request
+             * @return {Promise} A Promise that resolves if the upload was successful; rejects with an error message otherwise
+             */
+            self.uploadData = function(datasetRecordIRI, file, id = '') {
+                var fd = new FormData(),
+                    config = {
+                        transformRequest: angular.identity,
+                        headers: {
+                            'Content-Type': undefined
+                        }
+                    };
+                fd.append('file', file);
+                var url = prefix + '/' + encodeURIComponent(datasetRecordIRI) + '/data';
+                var promise = id ? httpService.post(url, fd, config, id) : $http.post(url, fd, config);
+                return promise.then(() => $q.when(), util.rejectError);
             }
 
             /**

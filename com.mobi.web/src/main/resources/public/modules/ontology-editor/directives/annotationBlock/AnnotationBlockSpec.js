@@ -21,31 +21,25 @@
  * #L%
  */
 describe('Annotation Block directive', function() {
-    var $compile, scope, ontologyStateSvc, ontologyManagerSvc;
+    var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('annotationBlock');
-        injectBeautifyFilter();
-        injectSplitIRIFilter();
-        injectShowPropertiesFilter();
         mockOntologyState();
-        mockOntologyManager();
-        mockResponseObj();
         mockOntologyUtilsManager();
+        injectShowPropertiesFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         ontologyStateSvc.listItem.selected = {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
-        ontologyManagerSvc.getAnnotationIRIs.and.returnValue(['prop1', 'prop2']);
         this.element = $compile(angular.element('<annotation-block></annotation-block>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('annotationBlock');
@@ -55,7 +49,6 @@ describe('Annotation Block directive', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        ontologyManagerSvc = null;
         this.element.remove();
     });
 
@@ -84,8 +77,9 @@ describe('Annotation Block directive', function() {
         it('should set the correct manager values when opening the Add Annotation Overlay', function() {
             this.controller.openAddOverlay();
             expect(ontologyStateSvc.editingAnnotation).toBe(false);
-            expect(ontologyStateSvc.annotationSelect).toEqual(undefined);
+            expect(ontologyStateSvc.annotationSelect).toBeUndefined();
             expect(ontologyStateSvc.annotationValue).toBe('');
+            expect(ontologyStateSvc.annotationType).toBeUndefined();
             expect(ontologyStateSvc.annotationIndex).toBe(0);
             expect(ontologyStateSvc.annotationLanguage).toBe('en');
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(true);
@@ -101,7 +95,6 @@ describe('Annotation Block directive', function() {
             ontologyStateSvc.listItem.selected = {
                 'prop1': [{'@value': 'value', '@type': 'type', '@language': 'language'}]
             };
-            ontologyStateSvc.listItem.dataPropertyRange = ['type'];
             this.controller.editClicked(annotationIRI, 0);
             expect(ontologyStateSvc.editingAnnotation).toBe(true);
             expect(ontologyStateSvc.annotationSelect).toEqual(annotationIRI);

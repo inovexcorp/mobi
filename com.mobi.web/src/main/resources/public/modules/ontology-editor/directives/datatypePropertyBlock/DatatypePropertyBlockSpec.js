@@ -26,15 +26,12 @@ describe('Datatype Property Block directive', function() {
     beforeEach(function() {
         module('templates');
         module('datatypePropertyBlock');
-        injectBeautifyFilter();
-        injectSplitIRIFilter();
-        injectShowPropertiesFilter();
         mockOntologyState();
-        mockResponseObj();
         mockPrefixes();
         mockOntologyUtilsManager();
+        injectShowPropertiesFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
@@ -92,17 +89,15 @@ describe('Datatype Property Block directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-        });
         it('should set the correct manager values when opening the Add Data Property Overlay', function() {
             this.controller.openAddDataPropOverlay();
-            expect(ontologyStateSvc.editingProperty).toBe(false);
+            expect(ontologyStateSvc.editingProperty).toEqual(false);
             expect(ontologyStateSvc.propertySelect).toBeUndefined();
-            expect(ontologyStateSvc.propertyValue).toBe('');
-            expect(ontologyStateSvc.propertyType).toBeUndefined();
-            expect(ontologyStateSvc.propertyIndex).toBe(0);
-            expect(ontologyStateSvc.propertyLanguage).toBe('en');
-            expect(ontologyStateSvc.showDataPropertyOverlay).toBe(true);
+            expect(ontologyStateSvc.propertyValue).toEqual('');
+            expect(ontologyStateSvc.propertyType).toEqual(prefixes.xsd + 'string');
+            expect(ontologyStateSvc.propertyIndex).toEqual(0);
+            expect(ontologyStateSvc.propertyLanguage).toEqual('en');
+            expect(ontologyStateSvc.showDataPropertyOverlay).toEqual(true);
         });
         it('should set the correct manager values when opening the Remove Data Property Overlay', function() {
             this.controller.showRemovePropertyOverlay('key', 1);
@@ -111,33 +106,31 @@ describe('Datatype Property Block directive', function() {
             expect(this.controller.showRemoveOverlay).toBe(true);
         });
         describe('should set the correct manager values when editing a data property', function() {
+            beforeEach(function() {
+                this.propertyIRI = 'prop1';
+                this.value = {'@value': 'value'};
+                ontologyStateSvc.listItem.selected = {};
+                ontologyStateSvc.listItem.selected[this.propertyIRI] = [this.value];
+            });
             it('when @language is present', function() {
-                var propertyIRI = 'prop1';
-                ontologyStateSvc.listItem.selected = {
-                    'prop1': [{'@value': 'value', '@language': 'lang'}]
-                };
-                ontologyStateSvc.listItem.dataPropertyRange = ['type'];
-                this.controller.editDataProp(propertyIRI, 0);
+                this.value['@language'] = 'lang';
+                this.controller.editDataProp(this.propertyIRI, 0);
                 expect(ontologyStateSvc.editingProperty).toBe(true);
-                expect(ontologyStateSvc.propertySelect).toEqual(propertyIRI);
+                expect(ontologyStateSvc.propertySelect).toEqual(this.propertyIRI);
                 expect(ontologyStateSvc.propertyValue).toBe('value');
                 expect(ontologyStateSvc.propertyIndex).toBe(0);
-                expect(ontologyStateSvc.propertyType).toEqual({'@id': prefixes.rdf + 'langString'});
+                expect(ontologyStateSvc.propertyType).toEqual(prefixes.rdf + 'langString');
                 expect(ontologyStateSvc.propertyLanguage).toBe('lang');
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(true);
             });
             it('when @language is missing', function() {
-                var propertyIRI = 'prop1';
-                ontologyStateSvc.listItem.selected = {
-                    'prop1': [{'@value': 'value', '@type': 'type'}]
-                };
-                ontologyStateSvc.listItem.dataPropertyRange = ['type'];
-                this.controller.editDataProp(propertyIRI, 0);
+                this.value['@type'] = 'type';
+                this.controller.editDataProp(this.propertyIRI, 0);
                 expect(ontologyStateSvc.editingProperty).toBe(true);
-                expect(ontologyStateSvc.propertySelect).toEqual(propertyIRI);
+                expect(ontologyStateSvc.propertySelect).toEqual(this.propertyIRI);
                 expect(ontologyStateSvc.propertyValue).toBe('value');
                 expect(ontologyStateSvc.propertyIndex).toBe(0);
-                expect(ontologyStateSvc.propertyType).toEqual({'@id': 'type'});
+                expect(ontologyStateSvc.propertyType).toEqual('type');
                 expect(ontologyStateSvc.propertyLanguage).toBeUndefined();
                 expect(ontologyStateSvc.showDataPropertyOverlay).toBe(true);
             });

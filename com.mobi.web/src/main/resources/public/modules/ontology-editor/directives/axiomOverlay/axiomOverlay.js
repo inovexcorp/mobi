@@ -27,9 +27,9 @@
         .module('axiomOverlay', [])
         .directive('axiomOverlay', axiomOverlay);
 
-        axiomOverlay.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes', 'manchesterConverterService', 'ontologyManagerService', '$filter'];
+        axiomOverlay.$inject = ['ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes', 'manchesterConverterService', 'ontologyManagerService', 'propertyManagerService', '$filter'];
 
-        function axiomOverlay(responseObj, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes, manchesterConverterService, ontologyManagerService, $filter) {
+        function axiomOverlay(ontologyStateService, utilService, ontologyUtilsManagerService, prefixes, manchesterConverterService, ontologyManagerService, propertyManagerService, $filter) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -45,8 +45,8 @@
                     var dvm = this;
                     var mc = manchesterConverterService;
                     var om = ontologyManagerService;
+                    var pm = propertyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
-                    dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.errorMessage = '';
@@ -68,8 +68,14 @@
                         localNames: _.keys(localNameMap)
                     };
 
+                    dvm.getIRINamespace = function(axiom) {
+                        return dvm.util.getIRINamespace(_.get(axiom, 'iri'));
+                    }
+                    dvm.getIRILocalName = function(axiom) {
+                        return dvm.util.getIRILocalName(_.get(axiom, 'iri'));
+                    }
                     dvm.addAxiom = function() {
-                        var axiom = dvm.ro.getItemIri(dvm.axiom);
+                        var axiom = dvm.axiom.iri;
                         var values;
                         // Collect values depending on current tab
                         if (dvm.tabs.editor) {
@@ -82,7 +88,7 @@
                                 return;
                             } else {
                                 var bnodeId = result.jsonld[0]['@id'];
-                                values = [{'@id': bnodeId}];
+                                values = [bnodeId];
                                 _.forEach(result.jsonld, obj => {
                                     dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, obj);
                                     dvm.os.addEntity(dvm.os.listItem, obj);
@@ -90,32 +96,39 @@
                                 dvm.os.listItem.blankNodes[bnodeId] = dvm.expression;
                             }
                         } else if (dvm.tabs.list) {
-                            values = _.map(dvm.values, value => ({'@id': dvm.ro.getItemIri(value)}));
+                            values = dvm.values;
                         }
-                        if (_.has(dvm.os.listItem.selected, axiom)) {
-                            dvm.os.listItem.selected[axiom] = _.union(dvm.os.listItem.selected[axiom], values);
-                        } else {
-                            dvm.os.listItem.selected[axiom] = values;
+                        var addedValues = _.filter(values, value => pm.addId(dvm.os.listItem.selected, axiom, value));
+                        if (addedValues.length !== values.length) {
+                            dvm.util.createWarningToast('Duplicate property values not allowed');
                         }
-                        if (axiom === prefixes.rdfs + 'range') {
-                            dvm.os.updatePropertyIcon(dvm.os.listItem.selected);
+                        if (addedValues.length) {
+                            if (axiom === prefixes.rdfs + 'range') {
+                                dvm.os.updatePropertyIcon(dvm.os.listItem.selected);
+                            }
+                            var valueObjs = _.map(addedValues, value => ({'@id': value}));
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [axiom]: valueObjs});
+                            dvm.ontoUtils.saveCurrentChanges()
+                                .then(() => {
+                                    if (dvm.onSubmit) {
+                                        var returnValues = [];
+                                        if (dvm.tabs.list) {
+                                            returnValues = _.intersection(values, addedValues);
+                                        }
+                                        dvm.onSubmit({axiom: axiom, values: returnValues});
+                                    }
+                                });
                         }
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [axiom]: values});
                         dvm.os.showAxiomOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges()
-                            .then(() => {
-                                if (dvm.onSubmit) {
-                                    dvm.onSubmit({axiom: dvm.axiom, values: dvm.values})
-                                }
-                            });
                     }
 
                     dvm.getValues = function(searchText) {
-                        if (!_.has(dvm.axiom, 'valuesKey')) {
+                        var valuesKey = _.get(dvm.axiom, 'valuesKey');
+                        if (!valuesKey) {
                             dvm.array = [];
                             return;
                         }
-                        var array = _.has(dvm.os.listItem[dvm.axiom.valuesKey], 'iris') ? dvm.os.listItem[dvm.axiom.valuesKey].iris : dvm.os.listItem[dvm.axiom.valuesKey];
+                        var array = _.keys(_.has(dvm.os.listItem[valuesKey], 'iris') ? dvm.os.listItem[valuesKey].iris : dvm.os.listItem[valuesKey]);
                         var filtered = $filter('removeIriFromArray')(array, dvm.os.listItem.selected['@id']);
                         dvm.array = dvm.ontoUtils.getSelectList(filtered, searchText, dvm.ontoUtils.getDropDownText);
                     }

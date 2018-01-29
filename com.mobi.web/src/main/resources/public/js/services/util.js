@@ -231,20 +231,6 @@
             }
             /**
              * @ngdoc method
-             * @name getItemNamespace
-             * @methodOf util.service:utilService
-             *
-             * @description
-             * Gets the namespace value from the passed IRI item object.
-             *
-             * @param {Object} item A IRI object
-             * @return {string} The namespace of the object if found; otherwise a default message
-             */
-            self.getItemNamespace = function(item) {
-                return _.get(item, 'namespace', 'No namespace');
-            }
-            /**
-             * @ngdoc method
              * @name mergingArrays
              * @methodOf util.service:utilService
              *
@@ -310,7 +296,7 @@
              * @methodOf util.service:utilService
              *
              * @description
-             * Creates an error toast with the passed error text that will not disappear until it is dismissed.
+             * Creates an error toast with the passed error text that will disappear after 3 seconds
              *
              * @param {string} text The text for the body of the error toast
              */
@@ -323,7 +309,7 @@
              * @methodOf util.service:utilService
              *
              * @description
-             * Creates a success toast with the passed success text that will not disappear until it is dismissed.
+             * Creates a success toast with the passed success text that will disappear after 3 seconds
              *
              * @param {string} text The text for the body of the success toast
              */
@@ -332,18 +318,45 @@
             }
             /**
              * @ngdoc method
+             * @name createWarningToast
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Creates a warning toast with the passed success text that will disappear after 3 seconds
+             *
+             * @param {string} text The text for the body of the warning toast
+             */
+            self.createWarningToast = function(text) {
+                toastr.warning(text, 'Warning', {timeOut: 3000});
+            }
+            /**
+             * @ngdoc method
              * @name getIRINamespace
              * @methodOf util.service:utilService
              *
              * @description
-             * Gets the namespace of a JSON-LD entity.
+             * Gets the namespace of an IRI string.
              *
-             * @param {Object} entity A JSON-LD entity
-             * @return {string} The namespace of the entity's `@id` value
+             * @param {string} iri An IRI string.
+             * @return {string} The namespace of the IRI
              */
-            self.getIRINamespace = function(entity) {
-                var split = $filter('splitIRI')(entity);
+            self.getIRINamespace = function(iri) {
+                var split = $filter('splitIRI')(iri);
                 return split.begin + split.then;
+            }
+            /**
+             * @ngdoc method
+             * @name getIRINamespace
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Gets the namespace of an IRI string.
+             *
+             * @param {Object} iri An IRI string
+             * @return {string} The namespace of the IRI
+             */
+            self.getIRILocalName = function(iri) {
+                return $filter('splitIRI')(iri).end;
             }
             /**
              * @ngdoc method

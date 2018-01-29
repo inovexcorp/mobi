@@ -38,7 +38,6 @@
          * @name relationshipOverlay.directive:relationshipOverlay
          * @scope
          * @restrict E
-         * @requires responseObj.service:responseObj
          * @requires ontologyManager.service:ontologyManagerService
          * @requires ontologyState.service:ontologyStateService
          * @requires util.service:utilService
@@ -53,44 +52,64 @@
          */
         .directive('relationshipOverlay', relationshipOverlay);
 
-        relationshipOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
+        relationshipOverlay.$inject = ['ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'propertyManagerService'];
 
-        function relationshipOverlay(responseObj, ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService) {
+        function relationshipOverlay(ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/relationshipOverlay/relationshipOverlay.html',
                 scope: {
-                    relationshipList: '<',
+                    relationshipList: '<'
+                },
+                bindToController: {
                     onSubmit: '&?'
                 },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var pm = propertyManagerService;
+                    var om = ontologyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
-                    dvm.om = ontologyManagerService;
-                    dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.array = [];
-                    dvm.conceptList = dvm.om.getConceptIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConcepts);
-                    dvm.schemeList = dvm.om.getConceptSchemeIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConceptSchemes);
+                    dvm.conceptList = _.without(om.getConceptIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConcepts), dvm.os.listItem.selected['@id']);
+                    dvm.schemeList = _.without(om.getConceptSchemeIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConceptSchemes), dvm.os.listItem.selected['@id']);
                     dvm.values = [];
 
                     dvm.addRelationship = function() {
-                        var axiom = dvm.ro.getItemIri(dvm.relationship);
-                        dvm.os.listItem.selected[axiom] = _.union(_.get(dvm.os.listItem.selected, axiom, []), dvm.values);
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [axiom]: dvm.values});
+                        var addedValues = _.filter(dvm.values, value => pm.addId(dvm.os.listItem.selected, dvm.relationship, value));
+                        if (addedValues.length !== dvm.values.length) {
+                            dvm.util.createWarningToast('Duplicate property values not allowed');
+                        }
+                        if (addedValues.length) {
+                            var addedValueObjs = _.map(addedValues, value => ({'@id': value}));
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [dvm.relationship]: addedValueObjs});
+                            dvm.ontoUtils.saveCurrentChanges()
+                                .then(() => {
+                                    if (dvm.onSubmit) {
+                                        dvm.onSubmit({relationship: dvm.relationship, values: addedValueObjs})
+                                    }
+                                });
+                        }
                         dvm.os.showRelationshipOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
                     }
 
                     dvm.getValues = function(searchText) {
-                        if (!_.has(dvm.relationship, 'values')) {
+                        var isSchemeRelationship = _.includes(pm.conceptSchemeRelationshipList, dvm.relationship);
+                        var isSemanticRelation = _.includes(dvm.os.listItem.derivedSemanticRelations, dvm.relationship);
+                        var list = [];
+                        if (!isSchemeRelationship && !isSemanticRelation) {
                             dvm.array = [];
                             return;
+                        } else if (isSchemeRelationship) {
+                            list = dvm.schemeList;
+                        } else {
+                            list = dvm.conceptList;
                         }
-                        dvm.array = dvm.ontoUtils.getSelectList(dvm[dvm.relationship.values], searchText);
+
+                        dvm.array = dvm.ontoUtils.getSelectList(list, searchText);
                     }
                 }
             }

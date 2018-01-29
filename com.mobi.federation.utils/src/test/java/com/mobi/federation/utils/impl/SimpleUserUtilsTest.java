@@ -33,22 +33,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import com.mobi.federation.api.FederationService;
 import com.mobi.federation.utils.serializable.SerializedUser;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -62,12 +48,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class SimpleUserUtilsTest {
+public class SimpleUserUtilsTest extends OrmEnabledTestCase {
     private SimpleUserUtils utils = new SimpleUserUtils();
-    private ValueFactory vf = SimpleValueFactory.getInstance();
-    private ModelFactory mf = LinkedHashModelFactory.getInstance();
-    private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
-    private UserFactory userFactory = new UserFactory();
+    private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
     private User user;
     private User badUser;
 
@@ -82,28 +65,13 @@ public class SimpleUserUtilsTest {
 
     @Before
     public void setUp() throws Exception {
-        userFactory.setModelFactory(mf);
-        userFactory.setValueFactory(vf);
-        userFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(userFactory);
+        injectOrmFactoryReferencesIntoService(utils);
+        utils.setValueFactory(VALUE_FACTORY);
 
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
-
-        utils.setUserFactory(userFactory);
-        utils.setValueFactory(vf);
-
-        user = userFactory.createNew(vf.createIRI(userId));
-        user.setUsername(vf.createLiteral(username));
+        user = userFactory.createNew(VALUE_FACTORY.createIRI(userId));
+        user.setUsername(VALUE_FACTORY.createLiteral(username));
         userMap.put(populated, Stream.of(new SerializedUser(user)).collect(Collectors.toSet()));
-        badUser = userFactory.createNew(vf.createIRI("https://mobi.com/users#bad"));
+        badUser = userFactory.createNew(VALUE_FACTORY.createIRI("https://mobi.com/users#bad"));
 
         initMocks(this);
         when(service.<UUID, Set<SerializedUser>>getDistributedMap(SimpleUserUtils.FEDERATION_USERS_KEY))
@@ -218,8 +186,8 @@ public class SimpleUserUtilsTest {
         // Setup:
         when(service.getNodeId()).thenReturn(populated);
         String newUsername = "new-username";
-        User newUser = userFactory.createNew(vf.createIRI(userId));
-        newUser.setUsername(vf.createLiteral(newUsername));
+        User newUser = userFactory.createNew(VALUE_FACTORY.createIRI(userId));
+        newUser.setUsername(VALUE_FACTORY.createLiteral(newUsername));
 
         utils.updateUser(service, newUser);
         verify(service).getDistributedMap(SimpleUserUtils.FEDERATION_USERS_KEY);
@@ -239,8 +207,8 @@ public class SimpleUserUtilsTest {
     @Test(expected = IllegalStateException.class)
     public void testUpdateUserWithNoIRIMatch() {
         // Setup:
-        User newUser = userFactory.createNew(vf.createIRI("https://mobi.com/users#new"));
-        newUser.setUsername(vf.createLiteral("new-username"));
+        User newUser = userFactory.createNew(VALUE_FACTORY.createIRI("https://mobi.com/users#new"));
+        newUser.setUsername(VALUE_FACTORY.createLiteral("new-username"));
 
         utils.updateUser(service, user);
         verify(service).getDistributedMap(SimpleUserUtils.FEDERATION_USERS_KEY);

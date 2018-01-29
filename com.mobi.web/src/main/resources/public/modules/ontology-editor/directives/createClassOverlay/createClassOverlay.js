@@ -27,9 +27,9 @@
         .module('createClassOverlay', [])
         .directive('createClassOverlay', createClassOverlay);
 
-        createClassOverlay.$inject = ['$filter', 'REGEX', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
+        createClassOverlay.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createClassOverlay($filter, REGEX, ontologyStateService, prefixes, ontologyUtilsManagerService) {
+        function createClassOverlay($filter, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,9 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-
                     dvm.prefixes = prefixes;
-                    dvm.iriPattern = REGEX.IRI;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefix = dvm.os.getDefaultPrefix();
@@ -76,15 +74,14 @@
                         dvm.os.addEntity(dvm.os.listItem, dvm.clazz);
                         dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         // update relevant lists
-                        var split = $filter('splitIRI')(dvm.clazz['@id']);
-                        dvm.os.addToClassIRIs(dvm.os.listItem, {namespace: split.begin + split.then, localName: split.end});
+                        dvm.os.addToClassIRIs(dvm.os.listItem, dvm.clazz['@id']);
                         if (dvm.values.length) {
                             dvm.clazz[prefixes.rdfs + 'subClassOf'] = dvm.values;
                             var superClassIds = _.map(dvm.values, '@id');
                             if (dvm.ontoUtils.containsDerivedConcept(superClassIds)) {
                                 dvm.os.listItem.derivedConcepts.push(dvm.clazz['@id']);
                             }
-                            dvm.ontoUtils.setSuperClasses(dvm.clazz['@id'], _.map(dvm.values, '@id'));
+                            dvm.ontoUtils.setSuperClasses(dvm.clazz['@id'], superClassIds);
                         } else {
                             var hierarchy = _.get(dvm.os.listItem, 'classes.hierarchy');
                             hierarchy.push({'entityIRI': dvm.clazz['@id']});

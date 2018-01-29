@@ -27,9 +27,9 @@
         .module('createConceptOverlay', [])
         .directive('createConceptOverlay', createConceptOverlay);
 
-        createConceptOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'ontologyUtilsManagerService'];
+        createConceptOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'ontologyUtilsManagerService', 'propertyManagerService'];
 
-        function createConceptOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, utilService, ontologyUtilsManagerService) {
+        function createConceptOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, utilService, ontologyUtilsManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,12 +38,15 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var pm = propertyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
+                    dvm.schemeIRIs = dvm.om.getConceptSchemeIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConceptSchemes);
                     dvm.schemes = [];
+                    dvm.selectedSchemes = [];
                     dvm.prefix = dvm.os.getDefaultPrefix();
                     dvm.concept = {
                         '@id': dvm.prefix,
@@ -65,14 +68,10 @@
                         dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
                     dvm.create = function() {
-                        if (dvm.schemes.length) {
-                            _.forEach(dvm.schemes, scheme => {
+                        if (dvm.selectedSchemes.length) {
+                            _.forEach(dvm.selectedSchemes, scheme => {
                                 var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, scheme['@id']);
-                                if (_.has(entity, prefixes.skos + 'hasTopConcept')) {
-                                    entity[prefixes.skos + 'hasTopConcept'].push({'@id': dvm.concept['@id']});
-                                } else {
-                                    entity[prefixes.skos + 'hasTopConcept'] = [{'@id': dvm.concept['@id']}];
-                                }
+                                pm.addId(entity, prefixes.skos + 'hasTopConcept', dvm.concept['@id']);
                                 dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': scheme['@id'], [prefixes.skos + 'hasTopConcept']: [{'@id': dvm.concept['@id']}]});
                                 dvm.os.addEntityToHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, dvm.concept['@id'], dvm.os.listItem.conceptSchemes.index, scheme['@id']);
                             });
@@ -90,6 +89,9 @@
                         // hide the overlay
                         dvm.os.showCreateConceptOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
+                    }
+                    dvm.getSchemes = function(searchText) {
+                        dvm.schemes = dvm.ontoUtils.getSelectList(dvm.schemeIRIs, searchText);
                     }
                 }
             }

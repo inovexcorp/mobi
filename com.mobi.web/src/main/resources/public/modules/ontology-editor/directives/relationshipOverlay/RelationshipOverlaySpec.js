@@ -21,32 +21,33 @@
  * #L%
  */
 describe('Relationship Overlay directive', function() {
-    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, resObj, splitIRIFilter, ontoUtils;
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, util, ontoUtils, propertyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('relationshipOverlay');
         injectHighlightFilter();
         injectTrustedFilter();
-        injectSplitIRIFilter();
-        mockResponseObj();
         mockOntologyManager();
         mockOntologyState();
         mockUtil();
         mockOntologyUtilsManager();
+        mockPropertyManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyManagerService_, _splitIRIFilter_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _utilService_, _ontologyUtilsManagerService_, _propertyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
-            resObj = _responseObj_;
             ontologyManagerSvc = _ontologyManagerService_;
-            splitIRIFilter = _splitIRIFilter_;
+            util = _utilService_;
             ontoUtils = _ontologyUtilsManagerService_;
+            propertyManagerSvc = _propertyManagerService_;
         });
 
         scope.relationshipList = [];
-        this.element = $compile(angular.element('<relationship-overlay relationship-list="relationshipList"></relationship-overlay>'))(scope);
+        scope.onSubmit = jasmine.createSpy('onSubmit');
+        this.element = $compile(angular.element('<relationship-overlay relationship-list="relationshipList" on-submit="onSubmit(relationship, values)"></relationship-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('relationshipOverlay');
     });
@@ -54,11 +55,12 @@ describe('Relationship Overlay directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        $q = null;
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
-        resObj = null;
-        splitIRIFilter = null;
+        util = null;
         ontoUtils = null;
+        propertyManagerSvc = null;
         this.element.remove();
     });
 
@@ -70,6 +72,12 @@ describe('Relationship Overlay directive', function() {
             this.isolatedScope.relationshipList = [{}];
             scope.$digest();
             expect(scope.relationshipList).toEqual([]);
+        });
+    });
+    describe('controller bound variable', function() {
+        it('onSubmit should be called in parent scope', function() {
+            this.controller.onSubmit({relationship: '', values: []});
+            expect(scope.onSubmit).toHaveBeenCalledWith('', []);
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -106,12 +114,12 @@ describe('Relationship Overlay directive', function() {
             var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
-            this.controller.relationship = {};
+            this.controller.relationship = 'relationship';
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
         it('depending on whether values are selected', function() {
-            this.controller.relationship = {};
+            this.controller.relationship = 'relationship';
             scope.$digest();
             var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
@@ -122,32 +130,61 @@ describe('Relationship Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
-        it('should add a relationship', function() {
-            this.controller.relationship = {};
-            this.controller.values = [{}];
-            resObj.getItemIri.and.returnValue('axiom');
-            this.controller.addRelationship();
-            expect(resObj.getItemIri).toHaveBeenCalledWith(this.controller.relationship);
-            expect(ontologyStateSvc.listItem.selected.axiom).toEqual(this.controller.values);
-            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-            expect(ontologyStateSvc.showRelationshipOverlay).toBe(false);
-            expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+        describe('should add a relationship', function() {
+            beforeEach(function() {
+                this.controller.relationship = 'relationship';
+                this.controller.values = ['iri'];
+                propertyManagerSvc.addId.and.returnValue(true);
+                this.expected = {'@id': ontologyStateSvc.listItem.selected['@id']};
+                this.expected[this.controller.relationship] = [{'@id': 'iri'}];
+                ontoUtils.saveCurrentChanges.and.returnValue($q.when());
+            });
+            it('unless there is a duplicate value', function() {
+                propertyManagerSvc.addId.and.returnValue(false);
+                this.controller.addRelationship();
+                scope.$apply();
+                expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.relationship, 'iri');
+                expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
+                expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
+                expect(scope.onSubmit).not.toHaveBeenCalled();
+                expect(util.createWarningToast).toHaveBeenCalled();
+                expect(ontologyStateSvc.showRelationshipOverlay).toBe(false);
+            });
+            it('if there is at least one new value', function() {
+                this.controller.addRelationship();
+                scope.$apply();
+                expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.relationship, 'iri');
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.expected);
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                expect(scope.onSubmit).toHaveBeenCalledWith(this.controller.relationship, this.expected[this.controller.relationship]);
+                expect(util.createWarningToast).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.showRelationshipOverlay).toBe(false);
+            });
         });
         describe('getValues should return the correct values when controller.relationship', function() {
             beforeEach(function() {
                 this.controller.array = ['initial'];
+                this.controller.relationship = 'relationship';
             });
-            it('has values', function() {
+            it('is a scheme relationship', function() {
                 ontoUtils.getSelectList.and.returnValue(['item']);
-                this.controller.conceptList = ['first', 'second'];
-                this.controller.relationship = { values: 'conceptList' };
+                this.controller.schemeList = ['first', 'second'];
+                propertyManagerSvc.conceptSchemeRelationshipList = ['relationship'];
                 this.controller.getValues('I');
                 expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['first', 'second'], 'I');
                 expect(this.controller.array).toEqual(['item']);
             });
-            it('does not have values', function() {
-                this.controller.relationship = {};
-                this.controller.getValues('stuff');
+            it('is a semantic relation', function() {
+                ontoUtils.getSelectList.and.returnValue(['item']);
+                this.controller.conceptList = ['first', 'second'];
+                ontologyStateSvc.listItem.derivedSemanticRelations = ['relationship'];
+                this.controller.getValues('I');
+                expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['first', 'second'], 'I');
+                expect(this.controller.array).toEqual(['item']);
+            });
+            it('is not a scheme relationship or a semantic relation', function() {
+                this.controller.getValues('I');
+                expect(ontoUtils.getSelectList).not.toHaveBeenCalledWith();
                 expect(this.controller.array).toEqual([]);
             });
         });
