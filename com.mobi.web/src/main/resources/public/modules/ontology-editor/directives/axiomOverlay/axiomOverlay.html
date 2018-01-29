@@ -27,9 +27,9 @@
         <div class="form-group">
             <custom-label>Axiom</custom-label>
             <ui-select ng-model="dvm.axiom" on-select="dvm.values = []; dvm.editorOptions.readOnly = false" autofocus>
-                <ui-select-match placeholder="Select an axiom">{{dvm.ro.getItemIri($select.selected)}}</ui-select-match>
-                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="axiom in axiomList | filter:$select.search | orderBy:'localName'">
-                    <div ng-bind-html="axiom.localName | highlight: $select.search | trusted"></div>
+                <ui-select-match placeholder="Select an axiom">{{$select.selected.iri}}</ui-select-match>
+                <ui-select-choices group-by="dvm.getIRINamespace" repeat="axiom in axiomList | filter:$select.search | orderBy:dvm.getIRILocalName">
+                    <div ng-bind-html="dvm.getIRILocalName(axiom) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
         </div>
@@ -39,10 +39,10 @@
                     <custom-label>Values</custom-label>
                     <ui-select multiple ng-model="dvm.values" ng-disabled="!dvm.axiom">
                         <ui-select-match placeholder="Select values">
-                            <span title="{{dvm.ro.getItemIri($item)}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
+                            <span title="{{$item}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
                         </ui-select-match>
-                        <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.util.getItemNamespace" repeat="value in dvm.array">
-                            <div title="{{dvm.ro.getItemIri(value)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(value) | highlight: $select.search | trusted"></div>
+                        <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.util.getIRINamespace" repeat="value in dvm.array">
+                            <div title="{{value}}" ng-bind-html="dvm.ontoUtils.getDropDownText(value) | highlight: $select.search | trusted"></div>
                         </ui-select-choices>
                     </ui-select>
                 </div>

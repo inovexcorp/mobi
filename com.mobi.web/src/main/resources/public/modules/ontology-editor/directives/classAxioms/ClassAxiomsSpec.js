@@ -21,25 +21,23 @@
  * #L%
  */
 describe('Class Axioms directive', function() {
-    var $compile, scope, ontologyStateSvc, propertyManagerSvc, resObj, prefixes, ontoUtils, ontologyManagerSvc;
+    var $compile, scope, ontologyStateSvc, propertyManagerSvc, prefixes, ontoUtils, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('classAxioms');
-        injectShowPropertiesFilter();
         mockOntologyState();
         mockPropertyManager();
-        mockResponseObj();
         mockPrefixes();
         mockOntologyUtilsManager();
         mockOntologyManager();
+        injectShowPropertiesFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_, _prefixes_, _ontologyUtilsManagerService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _prefixes_, _ontologyUtilsManagerService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             propertyManagerSvc = _propertyManagerService_;
-            resObj = _responseObj_;
             prefixes = _prefixes_;
             ontoUtils = _ontologyUtilsManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
@@ -59,7 +57,6 @@ describe('Class Axioms directive', function() {
         scope = null;
         ontologyStateSvc = null;
         propertyManagerSvc = null;
-        resObj = null;
         prefixes = null;
         ontoUtils = null;
         ontologyManagerSvc = null;
@@ -101,6 +98,10 @@ describe('Class Axioms directive', function() {
                 }
             };
         });
+        it('should get the list of object property axioms', function() {
+            propertyManagerSvc.classAxiomList = [{iri: 'axiom'}];
+            expect(this.controller.getAxioms()).toEqual(['axiom']);
+        });
         it('should open the remove overlay', function() {
             this.controller.openRemoveOverlay('key', 0);
             expect(this.controller.key).toBe('key');
@@ -109,30 +110,35 @@ describe('Class Axioms directive', function() {
         });
         describe('should update the hierarchy', function() {
             beforeEach(function() {
-                this.values = [{localName: 'local', namespace: 'namespace/'}];
-                this.axiom = {};
+                this.values = ['iri'];
+                this.axiom = 'axiom';
             });
             it('unless the axiom is not subClassOf or there are no values', function() {
                 this.controller.updateHierarchy(this.axiom, this.values);
                 expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
-                expect(resObj.getItemIri).not.toHaveBeenCalled();
 
-                this.axiom.localName = 'subClassOf';
+                this.axiom = prefixes.rdfs + 'subClassOf';
                 this.values = [];
                 expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
-                expect(resObj.getItemIri).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.setVocabularyStuff).not.toHaveBeenCalled();
             });
-            it('if the axiom is subClassOf', function() {
-                this.axiom.localName = 'subClassOf';
-                resObj.getItemIri.and.returnValue('iri');
-                this.controller.updateHierarchy(this.axiom, this.values);
-                _.forEach(this.values, function(value) {
-                    expect(resObj.getItemIri).toHaveBeenCalledWith(value);
+            describe('if the axiom is subClassOf', function() {
+                beforeEach(function() {
+                    this.axiom = prefixes.rdfs + 'subClassOf';
                 });
-                expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('classId', ['iri']);
-                expect(ontoUtils.updateflatIndividualsHierarchy).toHaveBeenCalledWith(['iri']);
-                expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
+                it('and is present in the individual hierarchy', function () {
+                    ontologyStateSvc.listItem.individualsParentPath = [ontologyStateSvc.listItem.selected['@id']];
+                    this.controller.updateHierarchy(this.axiom, this.values);
+                    expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('classId', this.values);
+                    expect(ontoUtils.updateflatIndividualsHierarchy).toHaveBeenCalledWith(this.values);
+                    expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
+                });
+                it('and is not present in the individual hierarchy', function () {
+                    this.controller.updateHierarchy(this.axiom, this.values);
+                    expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('classId', this.values);
+                    expect(ontoUtils.updateflatIndividualsHierarchy).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
+                });
             });
         });
         describe('should remove a class from the hierarchy', function() {

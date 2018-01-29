@@ -1,0 +1,17 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.upload-data-overlay {
+    .importing-indicator {
+        position: relative;
+
+        .spinner-container {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+        }
+        .text-muted {
+            padding-left: 20px;
+        }
+    }
+}

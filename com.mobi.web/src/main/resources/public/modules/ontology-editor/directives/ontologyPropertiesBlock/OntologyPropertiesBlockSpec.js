@@ -21,30 +21,27 @@
  * #L%
  */
 describe('Ontology Properties Block directive', function() {
-    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, resObj;
+    var $compile, scope, ontologyStateSvc, propertyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('ontologyPropertiesBlock');
         injectShowPropertiesFilter();
         mockOntologyState();
-        mockOntologyManager();
-        mockResponseObj();
+        mockPropertyManager();
         mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _responseObj_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyManagerSvc = _ontologyManagerService_;
-            resObj = _responseObj_;
+            propertyManagerSvc = _propertyManagerService_;
         });
 
         ontologyStateSvc.listItem.selected = {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
-        ontologyManagerSvc.getAnnotationIRIs.and.returnValue(['prop1', 'prop2']);
         this.element = $compile(angular.element('<ontology-properties-block></ontology-properties-block>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('ontologyPropertiesBlock');
@@ -54,8 +51,7 @@ describe('Ontology Properties Block directive', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        ontologyManagerSvc = null;
-        resObj = null;
+        propertyManagerSvc = null;
         this.element.remove();
     });
 

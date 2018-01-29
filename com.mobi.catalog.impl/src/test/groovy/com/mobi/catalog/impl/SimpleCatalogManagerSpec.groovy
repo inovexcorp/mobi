@@ -22,78 +22,48 @@
  */
 package com.mobi.catalog.impl
 
-import com.mobi.catalog.api.ontologies.mcat.Branch
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory
-import com.mobi.catalog.api.ontologies.mcat.Catalog
-import com.mobi.catalog.api.ontologies.mcat.CatalogFactory
-import com.mobi.catalog.api.ontologies.mcat.Commit
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory
-import com.mobi.catalog.api.ontologies.mcat.Distribution
-import com.mobi.catalog.api.ontologies.mcat.DistributionFactory
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommitFactory
-import com.mobi.catalog.api.ontologies.mcat.Record
-import com.mobi.catalog.api.ontologies.mcat.RecordFactory
-import com.mobi.catalog.api.ontologies.mcat.RevisionFactory
-import com.mobi.catalog.api.ontologies.mcat.Tag
-import com.mobi.catalog.api.ontologies.mcat.TagFactory
-import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord
-import com.mobi.catalog.api.ontologies.mcat.UnversionedRecordFactory
-import com.mobi.catalog.api.ontologies.mcat.UserBranch
-import com.mobi.catalog.api.ontologies.mcat.UserBranchFactory
-import com.mobi.catalog.api.ontologies.mcat.Version
-import com.mobi.catalog.api.ontologies.mcat.VersionFactory
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory
-import com.mobi.catalog.api.ontologies.mcat.VersionedRecord
-import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService
+
 import com.mobi.catalog.api.builder.DistributionConfig
 import com.mobi.catalog.api.builder.RecordConfig
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter
-import com.mobi.catalog.api.ontologies.mcat.*
+import com.mobi.catalog.api.ontologies.mcat.Branch
+import com.mobi.catalog.api.ontologies.mcat.Catalog
+import com.mobi.catalog.api.ontologies.mcat.Commit
+import com.mobi.catalog.api.ontologies.mcat.Distribution
+import com.mobi.catalog.api.ontologies.mcat.Record
+import com.mobi.catalog.api.ontologies.mcat.Tag
+import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord
+import com.mobi.catalog.api.ontologies.mcat.UserBranch
+import com.mobi.catalog.api.ontologies.mcat.Version
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord
+import com.mobi.catalog.api.ontologies.mcat.VersionedRecord
 import com.mobi.jaas.api.ontologies.usermanagement.User
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory
 import com.mobi.rdf.api.Model
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
-import com.mobi.rdf.orm.conversion.impl.*
-import com.mobi.rdf.orm.impl.ThingFactory
 import com.mobi.repository.api.Repository
 import spock.lang.Specification
 
 class SimpleCatalogManagerSpec extends Specification {
 
+    def service = new SimpleCatalogManager()
     def repository = Mock(Repository)
     def model = Mock(Model)
-    def vf = SimpleValueFactory.getInstance()
-    def mf = LinkedHashModelFactory.getInstance()
+    def vf = getValueFactory()
+    def mf = getModelFactory()
     def catalog = Mock(Catalog)
-    def userFactory = new UserFactory()
+    def userFactory = getRequiredOrmFactory(User.class)
     def user
-    def vcr = new DefaultValueConverterRegistry()
-    def service = new SimpleCatalogManager()
-    def catalogFactory = new CatalogFactory()
-    def recordFactory = new RecordFactory()
-    def unversionedRecordFactory = new UnversionedRecordFactory()
-    def versionedRecordFactory = new VersionedRecordFactory()
-    def versionedRDFRecordFactory = new VersionedRDFRecordFactory()
-    def distributionFactory = new DistributionFactory()
-    def versionFactory = new VersionFactory()
-    def branchFactory = new BranchFactory()
-    def tagFactory = new TagFactory()
-    def inProgressCommitFactory = new InProgressCommitFactory()
-    def commitFactory = new CommitFactory()
-    def revisionFactory = new RevisionFactory()
-    def userBranchFactory = new UserBranchFactory()
-    def thingFactory = new ThingFactory()
+    def recordFactory = getRequiredOrmFactory(Record.class)
+    def unversionedRecordFactory = getRequiredOrmFactory(UnversionedRecord.class)
+    def versionedRecordFactory = getRequiredOrmFactory(VersionedRecord.class)
+    def versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class)
+    def versionFactory = getRequiredOrmFactory(Version.class)
+    def branchFactory = getRequiredOrmFactory(Branch.class)
+    def tagFactory = getRequiredOrmFactory(Tag.class)
+    def commitFactory = getRequiredOrmFactory(Commit.class)
+    def userBranchFactory = getRequiredOrmFactory(UserBranch.class)
     def title = "title"
     def description = "description"
     def identifier = "identifier"
@@ -116,90 +86,10 @@ class SimpleCatalogManagerSpec extends Specification {
     def dummyBranchIRI
 
     def setup() {
-        catalogFactory.setValueFactory(vf)
-        catalogFactory.setModelFactory(mf)
-        catalogFactory.setValueConverterRegistry(vcr)
-        recordFactory.setValueFactory(vf)
-        recordFactory.setModelFactory(mf)
-        recordFactory.setValueConverterRegistry(vcr)
-        unversionedRecordFactory.setValueFactory(vf)
-        unversionedRecordFactory.setModelFactory(mf)
-        unversionedRecordFactory.setValueConverterRegistry(vcr)
-        versionedRecordFactory.setValueFactory(vf)
-        versionedRecordFactory.setModelFactory(mf)
-        versionedRecordFactory.setValueConverterRegistry(vcr)
-        versionedRDFRecordFactory.setValueFactory(vf)
-        versionedRDFRecordFactory.setModelFactory(mf)
-        versionedRDFRecordFactory.setValueConverterRegistry(vcr)
-        distributionFactory.setValueFactory(vf)
-        distributionFactory.setModelFactory(mf)
-        distributionFactory.setValueConverterRegistry(vcr)
-        branchFactory.setValueFactory(vf)
-        branchFactory.setModelFactory(mf)
-        branchFactory.setValueConverterRegistry(vcr)
-        inProgressCommitFactory.setValueFactory(vf)
-        inProgressCommitFactory.setModelFactory(mf)
-        inProgressCommitFactory.setValueConverterRegistry(vcr)
-        commitFactory.setValueFactory(vf)
-        commitFactory.setModelFactory(mf)
-        commitFactory.setValueConverterRegistry(vcr)
-        tagFactory.setValueFactory(vf)
-        tagFactory.setModelFactory(mf)
-        tagFactory.setValueConverterRegistry(vcr)
-        versionFactory.setValueFactory(vf)
-        versionFactory.setModelFactory(mf)
-        versionFactory.setValueConverterRegistry(vcr)
-        revisionFactory.setValueFactory(vf)
-        revisionFactory.setModelFactory(mf)
-        revisionFactory.setValueConverterRegistry(vcr)
-        userBranchFactory.setValueFactory(vf)
-        userBranchFactory.setModelFactory(mf)
-        userBranchFactory.setValueConverterRegistry(vcr)
-        userFactory.setValueFactory(vf)
-        userFactory.setModelFactory(mf)
-        userFactory.setValueConverterRegistry(vcr)
-        thingFactory.setModelFactory(mf)
-        thingFactory.setValueFactory(vf)
-        thingFactory.setValueConverterRegistry(vcr)
-
-        vcr.registerValueConverter(catalogFactory)
-        vcr.registerValueConverter(recordFactory)
-        vcr.registerValueConverter(distributionFactory)
-        vcr.registerValueConverter(versionFactory)
-        vcr.registerValueConverter(branchFactory)
-        vcr.registerValueConverter(thingFactory)
-        vcr.registerValueConverter(unversionedRecordFactory)
-        vcr.registerValueConverter(versionedRecordFactory)
-        vcr.registerValueConverter(versionedRDFRecordFactory)
-        vcr.registerValueConverter(tagFactory)
-        vcr.registerValueConverter(inProgressCommitFactory)
-        vcr.registerValueConverter(commitFactory)
-        vcr.registerValueConverter(revisionFactory)
-        vcr.registerValueConverter(userBranchFactory)
-        vcr.registerValueConverter(new ResourceValueConverter())
-        vcr.registerValueConverter(new IRIValueConverter())
-        vcr.registerValueConverter(new DoubleValueConverter())
-        vcr.registerValueConverter(new IntegerValueConverter())
-        vcr.registerValueConverter(new FloatValueConverter())
-        vcr.registerValueConverter(new ShortValueConverter())
-        vcr.registerValueConverter(new StringValueConverter())
-        vcr.registerValueConverter(new ValueValueConverter())
-        vcr.registerValueConverter(new LiteralValueConverter())
-
         service.setRepository(repository)
+        injectOrmFactoryReferencesIntoService(service)
         service.setValueFactory(vf)
         service.setModelFactory(mf)
-        service.setCatalogFactory(catalogFactory)
-        service.setRecordFactory(recordFactory)
-        service.setDistributionFactory(distributionFactory)
-        service.setBranchFactory(branchFactory)
-        service.setCommitFactory(commitFactory)
-        service.setInProgressCommitFactory(inProgressCommitFactory)
-        service.setRevisionFactory(revisionFactory)
-        service.setVersionedRDFRecordFactory(versionedRDFRecordFactory)
-        service.setVersionedRecordFactory(versionedRecordFactory)
-        service.setUnversionedRecordFactory(unversionedRecordFactory)
-        service.setVersionFactory(versionFactory)
 
         catalog.getModel() >> model
 

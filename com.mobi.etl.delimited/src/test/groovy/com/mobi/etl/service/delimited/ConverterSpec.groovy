@@ -1,39 +1,23 @@
 package com.mobi.etl.service.delimited
 
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService
+
 import com.mobi.etl.api.config.delimited.ExcelConfig
 import com.mobi.etl.api.config.delimited.SVConfig
 import com.mobi.etl.api.exception.MobiETLException
 import com.mobi.etl.api.ontologies.delimited.ClassMapping
-import com.mobi.etl.api.ontologies.delimited.ClassMappingFactory
-import com.mobi.etl.api.ontologies.delimited.DataMappingFactory
-import com.mobi.etl.api.ontologies.delimited.MappingFactory
-import com.mobi.etl.api.ontologies.delimited.ObjectMappingFactory
-import com.mobi.etl.api.ontologies.delimited.PropertyFactory
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter
-import com.mobi.etl.api.ontologies.delimited.*
 import com.mobi.ontology.core.api.Ontology
 import com.mobi.ontology.core.api.OntologyManager
 import com.mobi.ontology.core.api.propertyexpression.DataProperty
 import com.mobi.rdf.api.Model
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
 import com.mobi.rdf.core.utils.Values
-import com.mobi.rdf.orm.conversion.impl.*
-import com.mobi.rdf.orm.impl.ThingFactory
 import com.mobi.vocabularies.xsd.XSD
 import org.openrdf.rio.RDFFormat
 import org.openrdf.rio.Rio
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
-
 /*-
  * #%L
  * com.mobi.etl.delimited
@@ -59,15 +43,7 @@ import spock.lang.Specification
 
 class ConverterSpec extends Specification {
 
-    def mf = LinkedHashModelFactory.getInstance()
-    def vf = SimpleValueFactory.getInstance()
-    def vcr = new DefaultValueConverterRegistry()
-    def mappingFactory = new MappingFactory()
-    def classMappingFactory = new ClassMappingFactory()
-    def dataMappingFactory = new DataMappingFactory()
-    def propertyFactory = new PropertyFactory()
-    def objectFactory = new ObjectMappingFactory()
-    def thingFactory = new ThingFactory()
+    def vf = getValueFactory()
 
     def c = Spy(DelimitedConverterImpl)
     def om = Mock(OntologyManager)
@@ -96,39 +72,10 @@ class ConverterSpec extends Specification {
     def testOutputNoPrefix = loadModel("output_no-prefix.ttl")
 
     def setup() {
-        mappingFactory.setValueFactory(vf)
-        mappingFactory.setValueConverterRegistry(vcr)
-        classMappingFactory.setValueFactory(vf)
-        classMappingFactory.setValueConverterRegistry(vcr)
-        dataMappingFactory.setValueFactory(vf)
-        dataMappingFactory.setValueConverterRegistry(vcr)
-        propertyFactory.setValueFactory(vf)
-        propertyFactory.setValueConverterRegistry(vcr)
-        objectFactory.setValueFactory(vf)
-        objectFactory.setValueConverterRegistry(vcr)
-        thingFactory.setValueFactory(vf)
-        thingFactory.setValueConverterRegistry(vcr)
-
-        vcr.registerValueConverter(mappingFactory)
-        vcr.registerValueConverter(classMappingFactory)
-        vcr.registerValueConverter(dataMappingFactory)
-        vcr.registerValueConverter(propertyFactory)
-        vcr.registerValueConverter(objectFactory)
-        vcr.registerValueConverter(thingFactory)
-        vcr.registerValueConverter(new ResourceValueConverter())
-        vcr.registerValueConverter(new IRIValueConverter())
-        vcr.registerValueConverter(new DoubleValueConverter())
-        vcr.registerValueConverter(new IntegerValueConverter())
-        vcr.registerValueConverter(new FloatValueConverter())
-        vcr.registerValueConverter(new ShortValueConverter())
-        vcr.registerValueConverter(new StringValueConverter())
-        vcr.registerValueConverter(new ValueValueConverter())
-
+        injectOrmFactoryReferencesIntoService(c)
         c.setValueFactory(vf)
-        c.setModelFactory(mf)
+        c.setModelFactory(getModelFactory())
         c.setOntologyManager(om)
-        c.setMappingFactory(mappingFactory)
-        c.setClassMappingFactory(classMappingFactory)
         c.generateUuid() >>> ["abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345"]
         ontology.getImportsClosure() >> Collections.singleton(ontology)
         ontology.getDataProperty(vf.createIRI("http://mobi.com/ontologies/uhtc/formula")) >> Optional.of(formulaProperty)

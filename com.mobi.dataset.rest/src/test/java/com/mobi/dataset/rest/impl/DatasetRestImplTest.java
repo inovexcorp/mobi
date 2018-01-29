@@ -23,6 +23,9 @@ package com.mobi.dataset.rest.impl;
  * #L%
  */
 
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -42,9 +45,7 @@ import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.api.builder.DatasetRecordConfig;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
@@ -55,33 +56,18 @@ import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
-import com.mobi.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.prov.api.ontologies.mobiprov.DeleteActivityFactory;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.core.utils.Values;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.exception.RepositoryException;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
@@ -116,13 +102,7 @@ public class DatasetRestImplTest extends MobiRestTestNg {
     private DatasetRestImpl rest;
     private ValueFactory vf;
     private ModelFactory mf;
-    private ValueConverterRegistry vcr;
-    private DatasetRecordFactory datasetRecordFactory;
-    private UserFactory userFactory;
-    private BranchFactory branchFactory;
-    private CommitFactory commitFactory;
-    private CreateActivityFactory createActivityFactory;
-    private DeleteActivityFactory deleteActivityFactory;
+    private OrmFactory<Branch> branchFactory;
     private DatasetRecord record1;
     private DatasetRecord record2;
     private DatasetRecord record3;
@@ -164,60 +144,20 @@ public class DatasetRestImplTest extends MobiRestTestNg {
 
     @Override
     protected Application configureApp() throws Exception {
-        vf = SimpleValueFactory.getInstance();
-        mf = LinkedHashModelFactory.getInstance();
-        vcr = new DefaultValueConverterRegistry();
+        vf = getValueFactory();
+        mf = getModelFactory();
         errorIRI = vf.createIRI("http://example.com/error");
         localIRI = vf.createIRI("http://example.com/catalogs/local");
         ontologyRecordIRI = vf.createIRI("http://example.com/ontologyRecord");
         branchIRI = vf.createIRI("http://example.com/branch");
         commitIRI = vf.createIRI("http://example.com/commit");
 
-        userFactory = new UserFactory();
-        userFactory.setValueFactory(vf);
-        userFactory.setModelFactory(mf);
-        userFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(userFactory);
-
-        datasetRecordFactory = new DatasetRecordFactory();
-        datasetRecordFactory.setValueFactory(vf);
-        datasetRecordFactory.setModelFactory(mf);
-        datasetRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(datasetRecordFactory);
-
-        branchFactory = new BranchFactory();
-        branchFactory.setValueFactory(vf);
-        branchFactory.setModelFactory(mf);
-        branchFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(branchFactory);
-
-        commitFactory = new CommitFactory();
-        commitFactory.setValueFactory(vf);
-        commitFactory.setModelFactory(mf);
-        commitFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(commitFactory);
-
-        createActivityFactory = new CreateActivityFactory();
-        createActivityFactory.setValueFactory(vf);
-        createActivityFactory.setModelFactory(mf);
-        createActivityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(createActivityFactory);
-
-        deleteActivityFactory = new DeleteActivityFactory();
-        deleteActivityFactory.setModelFactory(mf);
-        deleteActivityFactory.setValueFactory(vf);
-        deleteActivityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(deleteActivityFactory);
-
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
+        branchFactory = getRequiredOrmFactory(Branch.class);
+        OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+        OrmFactory<DatasetRecord> datasetRecordFactory = getRequiredOrmFactory(DatasetRecord.class);
+        OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+        OrmFactory<CreateActivity> createActivityFactory = getRequiredOrmFactory(CreateActivity.class);
+        OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
 
         record1 = datasetRecordFactory.createNew(vf.createIRI("http://example.com/record1"));
         record1.setProperty(vf.createLiteral("A"), vf.createIRI(DCTERMS.TITLE.stringValue()));
@@ -357,7 +297,8 @@ public class DatasetRestImplTest extends MobiRestTestNg {
                 .field("datasetIRI", "http://example.com/dataset")
                 .field("repositoryId", "system")
                 .field("description", "description")
-                .field("keywords", "test,demo")
+                .field("keywords", "test")
+                .field("keywords", "demo")
                 .field("ontologies", ontologyRecordIRI.stringValue());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));

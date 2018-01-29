@@ -27,9 +27,9 @@
         .module('annotationOverlay', [])
         .directive('annotationOverlay', annotationOverlay);
 
-        annotationOverlay.$inject = ['responseObj', 'propertyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];
+        annotationOverlay.$inject = ['propertyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];
 
-        function annotationOverlay(responseObj, propertyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes) {
+        function annotationOverlay(propertyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,29 +40,23 @@
                     var dvm = this;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.pm = propertyManagerService;
-                    dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.prefixes = prefixes;
+                    dvm.annotations = _.keys(dvm.os.listItem.annotations.iris);
 
                     function createJson(value, type, language) {
-                        var valueObj = {'@value': value};
-                        if (type) {
-                            _.set(valueObj, '@type', type);
-                        }
-                        if (language) {
-                            _.set(valueObj, '@language', language);
-                        }
-                        return dvm.util.createJson(dvm.os.listItem.selected['@id'], dvm.ro.getItemIri(dvm.os.annotationSelect), valueObj);
+                        var valueObj = dvm.pm.createValueObj(value, type, language);
+                        return dvm.util.createJson(dvm.os.listItem.selected['@id'], dvm.os.annotationSelect, valueObj);
                     }
 
                     dvm.disableProp = function(annotation) {
-                        return dvm.ro.getItemIri(annotation) === prefixes.owl + 'deprecated' && _.has(dvm.os.listItem.selected, "['" + prefixes.owl + 'deprecated' + "']");
+                        return annotation === prefixes.owl + 'deprecated' && _.has(dvm.os.listItem.selected, "['" + prefixes.owl + 'deprecated' + "']");
                     }
                     dvm.selectProp = function() {
                         dvm.os.annotationValue = '';
-                        if (dvm.ro.getItemIri(dvm.os.annotationSelect) === prefixes.owl + 'deprecated') {
-                            dvm.os.annotationType = {namespace: prefixes.xsd, localName: 'boolean'};
+                        if (dvm.os.annotationSelect === prefixes.owl + 'deprecated') {
+                            dvm.os.annotationType = prefixes.xsd + 'boolean';
                             dvm.os.annotationLanguage = '';
                         } else {
                             dvm.os.annotationType = undefined;
@@ -70,24 +64,28 @@
                         }
                     }
                     dvm.addAnnotation = function() {
-                        var property = dvm.ro.getItemIri(dvm.os.annotationSelect);
-                        var annotationType = dvm.ro.getItemIri(dvm.os.annotationType);
-                        dvm.pm.add(dvm.os.listItem.selected, property, dvm.os.annotationValue, annotationType, dvm.os.annotationLanguage);
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(dvm.os.annotationValue, annotationType, dvm.os.annotationLanguage));
+                        var added = dvm.pm.addValue(dvm.os.listItem.selected, dvm.os.annotationSelect, dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage);
+                        if (added) {
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage));
+                            dvm.ontoUtils.saveCurrentChanges();
+                            dvm.ontoUtils.updateLabel();
+                        } else {
+                            dvm.util.createWarningToast('Duplicate property values not allowed');
+                        }
                         dvm.os.showAnnotationOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
-                        dvm.ontoUtils.updateLabel();
                     }
                     dvm.editAnnotation = function() {
-                        var property = dvm.ro.getItemIri(dvm.os.annotationSelect);
-                        var annotationType = dvm.ro.getItemIri(dvm.os.annotationType);
-                        var oldObj = _.get(dvm.os.listItem.selected, "['" + property + "']['" + dvm.os.annotationIndex + "']");
-                        dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, createJson(_.get(oldObj, '@value'), _.get(oldObj, '@type'), _.get(oldObj, '@language')));
-                        dvm.pm.edit(dvm.os.listItem.selected, property, dvm.os.annotationValue, dvm.os.annotationIndex, annotationType, dvm.os.annotationLanguage);
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(dvm.os.annotationValue, annotationType, dvm.os.annotationLanguage));
+                        var oldObj = _.get(dvm.os.listItem.selected, "['" + dvm.os.annotationSelect + "']['" + dvm.os.annotationIndex + "']");
+                        var edited = dvm.pm.editValue(dvm.os.listItem.selected, dvm.os.annotationSelect, dvm.os.annotationIndex, dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage);
+                        if (edited) {
+                            dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, createJson(_.get(oldObj, '@value'), _.get(oldObj, '@type'), _.get(oldObj, '@language')));
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage));
+                            dvm.ontoUtils.saveCurrentChanges();
+                            dvm.ontoUtils.updateLabel();
+                        } else {
+                            dvm.util.createWarningToast('Duplicate property values not allowed');
+                        }
                         dvm.os.showAnnotationOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
-                        dvm.ontoUtils.updateLabel();
                     }
                 }
             }

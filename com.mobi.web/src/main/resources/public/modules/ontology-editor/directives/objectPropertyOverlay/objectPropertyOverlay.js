@@ -27,9 +27,9 @@
         .module('objectPropertyOverlay', [])
         .directive('objectPropertyOverlay', objectPropertyOverlay);
 
-        objectPropertyOverlay.$inject = ['$filter', 'responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
+        objectPropertyOverlay.$inject = ['ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'propertyManagerService'];
 
-        function objectPropertyOverlay($filter, responseObj, ontologyStateService, utilService, ontologyUtilsManagerService) {
+        function objectPropertyOverlay(ontologyStateService, utilService, ontologyUtilsManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,33 +38,31 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var pm = propertyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
-                    dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
-                    dvm.individuals = $filter('removeIriFromArray')(dvm.os.listItem.individuals.iris, dvm.os.getActiveEntityIRI());
-                    dvm.valueSelect = _.find(dvm.individuals, individual => dvm.ro.getItemIri(individual) === dvm.os.propertyValue);
+                    dvm.individuals = angular.copy(dvm.os.listItem.individuals.iris);
+                    delete dvm.individuals[dvm.os.getActiveEntityIRI()];
 
                     dvm.addProperty = function(select, value) {
-                        var property = dvm.ro.getItemIri(select);
-                        if (property) {
-                            if (_.has(dvm.os.listItem.selected, property)) {
-                                dvm.os.listItem.selected[property].push(value);
-                            } else {
-                                dvm.os.listItem.selected[property] = [value];
-                            }
+                        var valueObj = {'@id': value};
+                        var added = pm.addId(dvm.os.listItem.selected, select, value);
+                        if (added) {
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, valueObj));
+                            dvm.ontoUtils.saveCurrentChanges();
+                        } else {
+                            dvm.util.createWarningToast('Duplicate property values not allowed');
                         }
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], property, value));
                         dvm.os.showObjectPropertyOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
 
                         var types = dvm.os.listItem.selected['@type'];
                         if (dvm.ontoUtils.containsDerivedConcept(types) || dvm.ontoUtils.containsDerivedConceptScheme(types)) {
-                            dvm.ontoUtils.updateVocabularyHierarchies(property, [value]);
+                            dvm.ontoUtils.updateVocabularyHierarchies(select, [valueObj]);
                         }
                     }
                     dvm.getValues = function(searchText) {
-                        dvm.values =  dvm.ontoUtils.getSelectList(dvm.os.listItem.objectProperties.iris, searchText, dvm.ontoUtils.getDropDownText);
+                        dvm.values = dvm.ontoUtils.getSelectList(_.keys(dvm.os.listItem.objectProperties.iris), searchText, dvm.ontoUtils.getDropDownText);
                     }
                 }
             }

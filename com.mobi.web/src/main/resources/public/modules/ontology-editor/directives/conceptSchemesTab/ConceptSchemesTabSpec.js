@@ -21,26 +21,34 @@
  * #L%
  */
 describe('Concept Schemes Tab directive', function() {
-    var $compile, scope;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, propertyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('conceptSchemesTab');
         mockOntologyManager();
         mockOntologyState();
+        mockPropertyManager();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _propertyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyStateSvc = _ontologyStateService_;
+            ontologyManagerSvc = _ontologyManagerService_;
+            propertyManagerSvc = _propertyManagerService_;
         });
 
         this.element = $compile(angular.element('<concept-schemes-tab></concept-schemes-tab>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('conceptSchemesTab');
     });
 
     afterEach(function() {
         $compile = null;
         scope = null;
+        ontologyStateSvc = null;
+        ontologyManagerSvc = null;
+        propertyManagerSvc = null;
         this.element.remove();
     });
 
@@ -67,6 +75,27 @@ describe('Concept Schemes Tab directive', function() {
         });
         it('with a usages-block', function() {
             expect(this.element.find('usages-block').length).toBe(1);
+        });
+    });
+    describe('should update dvm.relationshipList when a', function() {
+        beforeEach(function () {
+            propertyManagerSvc.conceptSchemeRelationshipList = ['relationshipA', 'relationshipB'];
+            propertyManagerSvc.schemeRelationshipList = ['relationshipD'];
+            ontologyStateSvc.listItem.iriList = ['relationshipA'];
+            ontologyStateSvc.listItem.derivedSemanticRelations = ['relationshipC'];
+        });
+        it('Concept is selected', function() {
+            ontologyStateSvc.listItem.selected = {new: true};
+            ontologyManagerSvc.isConcept.and.returnValue(true);
+            scope.$digest();
+            expect(this.controller.relationshipList).toEqual(['relationshipC', 'relationshipA']);
+        });
+        it('ConceptScheme is selected', function() {
+            ontologyStateSvc.listItem.selected = {new: true};
+            ontologyManagerSvc.isConcept.and.returnValue(false);
+            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
+            scope.$digest();
+            expect(this.controller.relationshipList).toEqual(['relationshipD']);
         });
     });
 });

@@ -38,6 +38,7 @@
          * @name userManager.service:userManagerService
          * @requires $http
          * @requires $q
+         * @requires util.service:utilService
          *
          * @description
          * `userManagerService` is a service that provides access to the Mobi users and
@@ -45,12 +46,13 @@
          */
         .service('userManagerService', userManagerService);
 
-        userManagerService.$inject = ['$http', '$q', 'REST_PREFIX'];
+        userManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService'];
 
-        function userManagerService($http, $q, REST_PREFIX) {
+        function userManagerService($http, $q, REST_PREFIX, utilService) {
             var self = this,
                 userPrefix = REST_PREFIX + 'users',
                 groupPrefix = REST_PREFIX + 'groups';
+            var util = utilService;
 
             /**
              * @ngdoc property
@@ -131,7 +133,7 @@
                         _.forEach(responses, (response, idx) => {
                             self.users[idx].roles = response;
                         });
-                    }, error => console.log(_.get(error, 'statusText', 'Something went wrong. Could not load users.')));
+                    }, error => console.log(util.getErrorMessage(error, 'Something went wrong. Could not load users.')));
 
                 $http.get(groupPrefix)
                     .then(response => $q.all(_.map(response.data, groupTitle => self.getGroup(groupTitle))), error => $q.reject(error))
@@ -149,7 +151,7 @@
                         _.forEach(responses, (response, idx) => {
                             self.groups[idx].roles = response;
                         });
-                    }, error => console.log(_.get(error, 'statusText', 'Something went wrong. Could not load groups.')));
+                    }, error => console.log(util.getErrorMessage(error, 'Something went wrong. Could not load groups.')));
             }
 
             /**
@@ -169,21 +171,17 @@
              * error message otherwise
              */
             self.getUsername = function(iri) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {iri}
-                    };
-                var user = _.find(self.users, {iri});
+                var config = { params: { iri } };
+                var user = _.find(self.users, { iri });
                 if (user) {
-                    deferred.resolve(user.username);
+                    return $q.when(user.username);
                 } else {
-                    $http.get(userPrefix + '/username', config)
+                    return $http.get(userPrefix + '/username', config)
                         .then(response => {
-                            deferred.resolve(response.data);
                             _.set(_.find(self.users, {username: response.data}), 'iri', iri);
-                        }, error => onError(error, deferred));
+                            return response.data;
+                        }, util.rejectError);
                 }
-                return deferred.promise;
             }
 
             /**
@@ -202,16 +200,14 @@
              * with an error message otherwise
              */
             self.addUser = function(newUser, password) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {password}
-                    };
-                $http.post(userPrefix, newUser, config)
+                var config = { params: { password } };
+                return $http.post(userPrefix, newUser, config)
                     .then(response => {
-                        deferred.resolve();
-                        self.users.push(newUser);
-                    }, error => onError(error, deferred));
-                return deferred.promise;
+                        return self.getUser(newUser.username);
+                    }, $q.reject)
+                    .then(response => {
+                        self.users.push(_.merge(newUser, response));
+                    }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -228,10 +224,8 @@
              * rejects with an error message otherwise
              */
             self.getUser = function(username) {
-                var deferred = $q.defer();
-                $http.get(userPrefix + '/' + encodeURIComponent(username))
-                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
-                return deferred.promise;
+                return $http.get(userPrefix + '/' + encodeURIComponent(username))
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -252,13 +246,10 @@
              * with an error message otherwise
              */
             self.updateUser = function(username, newUser) {
-                var deferred = $q.defer();
-                $http.put(userPrefix + '/' + encodeURIComponent(username), newUser)
+                return $http.put(userPrefix + '/' + encodeURIComponent(username), newUser)
                     .then(response => {
-                        deferred.resolve();
                         _.assign(_.find(self.users, {username}), newUser);
-                    }, error => onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -278,16 +269,14 @@
              * with an error message otherwise
              */
             self.changePassword = function(username, password, newPassword) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {
-                            currentPassword: password,
-                            newPassword
-                        }
-                    };
-                $http.post(userPrefix + '/' + encodeURIComponent(username) + '/password', null, config)
-                    .then(response => deferred.resolve(), error => onError(error, deferred));
-                return deferred.promise;
+                var config = {
+                    params: {
+                        currentPassword: password,
+                        newPassword
+                    }
+                };
+                return $http.post(userPrefix + '/' + encodeURIComponent(username) + '/password', null, config)
+                    .then(_.noop, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -306,11 +295,9 @@
              * with an error message otherwise
              */
             self.resetPassword = function(username, newPassword) {
-                var deferred = $q.defer(),
-                    config = { params: { newPassword } };
-                $http.put(userPrefix + '/' + encodeURIComponent(username) + '/password', null, config)
-                    .then(response => deferred.resolve(), error => onError(error, deferred));
-                return deferred.promise;
+                var config = { params: { newPassword } };
+                return $http.put(userPrefix + '/' + encodeURIComponent(username) + '/password', null, config)
+                    .then(_.noop, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -328,14 +315,11 @@
              * an error message otherwise
              */
             self.deleteUser = function(username) {
-                var deferred = $q.defer();
-                $http.delete(userPrefix + '/' + encodeURIComponent(username))
+                return $http.delete(userPrefix + '/' + encodeURIComponent(username))
                     .then(response => {
-                        deferred.resolve();
                         _.remove(self.users, {username});
                         _.forEach(self.groups, group => _.pull(group.members, username));
-                    }, error => onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -355,17 +339,12 @@
              * with an error message otherwise
              */
             self.addUserRoles = function(username, roles) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {roles}
-                    };
-                $http.put(userPrefix + '/' + encodeURIComponent(username) + '/roles', null, config)
+                var config = { params: { roles } };
+                return $http.put(userPrefix + '/' + encodeURIComponent(username) + '/roles', null, config)
                     .then(response => {
-                        deferred.resolve();
                         var user = _.find(self.users, {username});
                         user.roles = _.union(_.get(user, 'roles', []), roles);
-                    }, error => onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -385,18 +364,11 @@
              * with an error message otherwise
              */
             self.deleteUserRole = function(username, role) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {
-                            role: role
-                        }
-                    };
-                $http.delete(userPrefix + '/' + encodeURIComponent(username) + '/roles', config)
+                var config = { params: { role } };
+                return $http.delete(userPrefix + '/' + encodeURIComponent(username) + '/roles', config)
                     .then(response => {
-                        deferred.resolve();
                         _.pull(_.get(_.find(self.users, {username}), 'roles'), role);
-                    }, error => onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -415,19 +387,16 @@
              * with an error message otherwise
              */
             self.addUserGroup = function(username, groupTitle) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {
-                            group: groupTitle
-                        }
-                    };
-                $http.put(userPrefix + '/' + encodeURIComponent(username) + '/groups', null, config)
+                var config = {
+                    params: {
+                        group: groupTitle
+                    }
+                };
+                return $http.put(userPrefix + '/' + encodeURIComponent(username) + '/groups', null, config)
                     .then(response => {
-                        deferred.resolve();
                         var group = _.find(self.groups, {title: groupTitle});
                         group.members = _.union(_.get(group, 'members', []), [username]);
-                    }, error => onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -447,18 +416,15 @@
              * with an error message otherwise
              */
             self.deleteUserGroup = function(username, groupTitle) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {
-                            group: groupTitle
-                        }
-                    };
-                $http.delete(userPrefix + '/' + encodeURIComponent(username) + '/groups', config)
+                var config = {
+                    params: {
+                        group: groupTitle
+                    }
+                };
+                return $http.delete(userPrefix + '/' + encodeURIComponent(username) + '/groups', config)
                     .then(response => {
-                        deferred.resolve();
                         _.pull(_.get(_.find(self.groups, {title: groupTitle}), 'members'), username);
-                    }, error => onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -476,13 +442,10 @@
              * with an error message otherwise
              */
             self.addGroup = function(newGroup) {
-                var deferred = $q.defer();
-                $http.post(groupPrefix, newGroup)
+                return $http.post(groupPrefix, newGroup)
                     .then(response => {
-                        deferred.resolve();
                         self.groups.push(newGroup);
-                    }, error => onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -499,10 +462,8 @@
              * rejects with an error message otherwise
              */
             self.getGroup = function(groupTitle) {
-                var deferred = $q.defer();
-                $http.get(groupPrefix + '/' + encodeURIComponent(groupTitle))
-                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
-                return deferred.promise;
+                return $http.get(groupPrefix + '/' + encodeURIComponent(groupTitle))
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -523,13 +484,10 @@
              * with an error message otherwise
              */
             self.updateGroup = function(groupTitle, newGroup) {
-                var deferred = $q.defer();
-                $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle), newGroup)
+                return $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle), newGroup)
                     .then(response => {
-                        deferred.resolve();
                         _.assign(_.find(self.groups, {title: groupTitle}), newGroup);
-                    }, error => onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -547,13 +505,10 @@
              * an error message otherwise
              */
             self.deleteGroup = function(groupTitle) {
-                var deferred = $q.defer();
-                $http.delete(groupPrefix + '/' + encodeURIComponent(groupTitle))
+                return $http.delete(groupPrefix + '/' + encodeURIComponent(groupTitle))
                     .then(response => {
-                        deferred.resolve();
                         _.remove(self.groups, {title: groupTitle});
-                    }, error => onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -573,17 +528,12 @@
              * with an error message otherwise
              */
             self.addGroupRoles = function(groupTitle, roles) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {roles}
-                    };
-                $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles', null, config)
+                var config = { params: { roles } };
+                return $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles', null, config)
                     .then(response => {
-                        deferred.resolve();
                         var group = _.find(self.groups, {title: groupTitle});
                         group.roles = _.union(_.get(group, 'roles', []), roles);
-                    }, error => onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -603,18 +553,11 @@
              * with an error message otherwise
              */
             self.deleteGroupRole = function(groupTitle, role) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {
-                            role: role
-                        }
-                    };
-                $http.delete(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles', config)
+                var config = { params: { role } };
+                return $http.delete(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles', config)
                     .then(response => {
-                        deferred.resolve();
                         _.pull(_.get(_.find(self.groups, {title: groupTitle}), 'roles'), role);
-                    }, error => onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -632,10 +575,8 @@
              * error message otherwise
              */
             self.getGroupUsers = function(groupTitle) {
-                var deferred = $q.defer();
-                $http.get(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users')
-                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
-                return deferred.promise;
+                return $http.get(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users')
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -655,17 +596,12 @@
              * with an error message otherwise
              */
             self.addGroupUsers = function(groupTitle, users) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {users}
-                    };
-                $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users', null, config)
+                var config = { params: { users } };
+                return $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users', null, config)
                     .then(response => {
-                        deferred.resolve();
                         var group = _.find(self.groups, {title: groupTitle});
                         group.members = _.union(_.get(group, 'members', []), users);
-                    }, error => onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -685,18 +621,15 @@
              * with an error message otherwise
              */
             self.deleteGroupUser = function(groupTitle, username) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {
-                            user: username
-                        }
-                    };
-                $http.delete(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users', config)
+                var config = {
+                    params: {
+                        user: username
+                    }
+                };
+                return $http.delete(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users', config)
                     .then(response => {
-                        deferred.resolve();
                         _.pull(_.get(_.find(self.groups, {title: groupTitle}), 'members'), username);
-                    }, error => onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -739,28 +672,18 @@
             }
 
             function listUserRoles(username) {
-                var deferred = $q.defer();
-                $http.get(userPrefix + '/' + encodeURIComponent(username) + '/roles')
-                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
-                return deferred.promise;
+                return $http.get(userPrefix + '/' + encodeURIComponent(username) + '/roles')
+                    .then(response => response.data, util.rejectError);
             }
 
             function listUserGroups(username) {
-                var deferred = $q.defer();
-                $http.get(userPrefix + '/' + encodeURIComponent(username) + '/groups')
-                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
-                return deferred.promise;
+                return $http.get(userPrefix + '/' + encodeURIComponent(username) + '/groups')
+                    .then(response => response.data, util.rejectError);
             }
 
             function listGroupRoles(groupTitle) {
-                var deferred = $q.defer();
-                $http.get(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles')
-                    .then(response => deferred.resolve(response.data), error => onError(error, deferred));
-                return deferred.promise;
-            }
-
-            function onError(error, deferred) {
-                deferred.reject(_.get(error, 'statusText', 'Something went wrong. Please try again later.'));
+                return $http.get(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles')
+                    .then(response => response.data, util.rejectError);
             }
         }
 })();

@@ -72,79 +72,7 @@
              * associated with that record.
              */
             self.ontologyRecords = [];
-            var xsdDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => {
-                return {
-                    'namespace': prefixes.xsd,
-                    'localName': item
-                }
-            });
-            var rdfDatatypes = _.map(['langString'], item => {
-                return {
-                    namespace: prefixes.rdf,
-                    localName: item
-                }
-            });
-            self.defaultDatatypes = _.concat(xsdDatatypes, rdfDatatypes);
-            /**
-             * @ngdoc property
-             * @name ontologyProperties
-             * @propertyOf ontologyManager.service:ontologyManagerService
-             * @type {Object[]}
-             *
-             * @description
-             * `ontologyProperties` holds an array of the property types available to be added to the ontology entity
-             * within the ontology.
-             */
-            self.ontologyProperties = _.map(['priorVersion', 'backwardCompatibleWith', 'incompatibleWith'], item => {
-                return {
-                    'namespace': prefixes.owl,
-                    'localName': item
-                }
-            });
-            /**
-             * @ngdoc property
-             * @name conceptRelationshipList
-             * @propertyOf ontologyManager.service:ontologyManagerService
-             * @type {Object[]}
-             *
-             * @description
-             * `conceptRelationshipList` holds an array of the relationships that skos:Concepts can have with other
-             * entities.
-             */
-            var conceptListRelationships = _.map(['broaderTransitive', 'broader', 'broadMatch', 'narrowerTransitive',
-                'narrower', 'narrowMatch', 'related', 'relatedMatch', 'mappingRelation', 'closeMatch', 'exactMatch'], item => ({
-                    namespace: prefixes.skos,
-                    localName: item,
-                    values: 'conceptList'
-                }));
-            self.conceptRelationshipList = _.concat(
-                conceptListRelationships,
-                [{
-                    namespace: prefixes.skos,
-                    localName: 'topConceptOf',
-                    values: 'schemeList'
-                },
-                {
-                    namespace: prefixes.skos,
-                    localName: 'inScheme',
-                    values: 'schemeList'
-                }]
-            );
-            /**
-             * @ngdoc property
-             * @name schemeRelationshipList
-             * @propertyOf ontologyManager.service:ontologyManagerService
-             * @type {Object[]}
-             *
-             * @description
-             * `schemeRelationshipList` holds an array of the relationships that skos:ConceptSchemes can have with other
-             * entities.
-             */
-            self.schemeRelationshipList = [{
-                namespace: prefixes.skos,
-                localName: 'hasTopConcept',
-                values: 'conceptList'
-            }];
+
             /**
              * @ngdoc method
              * @name reset
@@ -202,7 +130,7 @@
              * @param {File} file The ontology file.
              * @param {string} title The record title.
              * @param {string} description The record description.
-             * @param {string} keywords The record list of keywords separated by commas.
+             * @param {string} keywords The array of keywords for the record.
              * @param {string} id The identifier for this request.
              * @returns {Promise} A promise indicating whether the ontology was persisted.
              */
@@ -219,9 +147,7 @@
                 if (description) {
                     fd.append('description', description);
                 }
-                if (keywords) {
-                    fd.append('keywords', keywords);
-                }
+                _.forEach(keywords, word => fd.append('keywords', word));
                 var promise = id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
                 return promise.then(response => response.data, util.rejectError);
             }
@@ -271,13 +197,12 @@
              * @param {string} ontologyJson The JSON-LD representing the ontology.
              * @param {string} title The title for the OntologyRecord.
              * @param {string} description The description for the OntologyRecord.
-             * @param {string} keywords The keywords for the OntologyRecord.
+             * @param {string} keywords The array of keywords for the OntologyRecord.
              * @param {string} type The type (either "ontology" or "vocabulary") for the document being created.
              * @returns {Promise} A promise with the ontologyId, recordId, branchId, and commitId for the state of the newly created
              * ontology.
              */
             self.uploadJson = function(ontologyJson, title, description, keywords) {
-                var deferred = $q.defer();
                 var config = {
                     headers: {
                         'Content-Type': 'application/json'
@@ -287,12 +212,11 @@
                 if (description) {
                     config.params.description = description;
                 }
-                if (keywords) {
+                if (keywords && keywords.length) {
                     config.params.keywords = keywords;
                 }
-                $http.post(prefix, ontologyJson, config)
-                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
-                return deferred.promise;
+                return $http.post(prefix, ontologyJson, config)
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -330,7 +254,7 @@
             }
             /**
              * @ngdoc method
-             * @name getOntology
+             * @name deleteOntology
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
@@ -342,16 +266,13 @@
              * @return {Promise} HTTP OK unless there was an error.
              */
             self.deleteOntology = function(recordId, branchId) {
-                var deferred = $q.defer();
                 var config = {};
-
                 if (branchId) {
                     config.params = { branchId };
                 }
 
-                $http.delete(prefix + '/' + encodeURIComponent(recordId), config)
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.delete(prefix + '/' + encodeURIComponent(recordId), config)
+                    .then(_.noop, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -498,7 +419,7 @@
             self.getOntologyClasses = function(recordId, branchId, commitId) {
                 var config = { params: { branchId, commitId } };
                 return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/classes', config)
-                    .then(response => $q.when(response.data), util.rejectError);
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -555,11 +476,9 @@
              * of IRIs to parent IRIs
              */
             self.getClassesWithIndividuals = function(recordId, branchId, commitId) {
-                var deferred = $q.defer();
                 var config = { params: { branchId, commitId } };
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/classes-with-individuals', config)
-                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/classes-with-individuals', config)
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -578,11 +497,9 @@
              * parent IRIs
              */
             self.getDataPropertyHierarchies = function(recordId, branchId, commitId) {
-                var deferred = $q.defer();
                 var config = { params: { branchId, commitId } };
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/data-property-hierarchies', config)
-                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/data-property-hierarchies', config)
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -601,11 +518,9 @@
              * parent IRIs
              */
             self.getObjectPropertyHierarchies = function(recordId, branchId, commitId) {
-                var deferred = $q.defer();
                 var config = { params: { branchId, commitId } };
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/object-property-hierarchies', config)
-                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/object-property-hierarchies', config)
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -624,11 +539,45 @@
              * IRIs to parent IRIs
              */
             self.getAnnotationPropertyHierarchies = function(recordId, branchId, commitId) {
-                var deferred = $q.defer();
                 var config = { params: { branchId, commitId } };
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/annotation-property-hierarchies', config)
-                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/annotation-property-hierarchies', config)
+                    .then(response => response.data, util.rejectError);
+            }
+            /**
+             * @ngdoc method
+             * @name createAnnotation
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the POST /mobirest/ontologies/{recordId}/annotations endpoint and creates a new AnnotationProperty
+             * in the ontology. If the annotation already exists in the provided list of annotation IRIs, returns a
+             * rejected promise.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string[]} annotationIRIs A list of annotation IRI strings
+             * @param {string} iri The IRI for the new AnnotationProperty
+             * @return {Promise} A promise with the JSON-LD of the new AnnotationProperty if successful; otherwise
+             *      rejects with an error message
+             */
+            self.createAnnotation = function(recordId, annotationIRIs, iri) {
+                var annotationJSON = {'@id': iri, '@type': [prefixes.owl + 'AnnotationProperty']};
+                if (_.indexOf(annotationIRIs, iri) === -1) {
+                    var config = {
+                        params: {
+                            annotationjson: annotationJSON
+                        }
+                    };
+                    return $http.post(prefix + '/' + encodeURIComponent(recordId) + '/annotations', null, config)
+                        .then(response => {
+                            if (_.get(response, 'status') === 200) {
+                                return annotationJSON;
+                            } else {
+                                return util.rejectError(response);
+                            }
+                        }, util.rejectError);
+                } else {
+                    return $q.reject('This ontology already has an OWL Annotation declared with that IRI.');
+                }
             }
             /**
              * @ngdoc method
@@ -647,11 +596,9 @@
              * parent IRIs
              */
             self.getConceptHierarchies = function(recordId, branchId, commitId) {
-                var deferred = $q.defer();
                 var config = { params: { branchId, commitId } };
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-hierarchies', config)
-                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-hierarchies', config)
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -670,11 +617,9 @@
              * parent IRIs
              */
             self.getConceptSchemeHierarchies = function(recordId, branchId, commitId) {
-                var deferred = $q.defer();
                 var config = { params: { branchId, commitId } };
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-scheme-hierarchies', config)
-                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-scheme-hierarchies', config)
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -691,19 +636,17 @@
              * ontology.
              */
             self.getImportedOntologies = function(recordId, branchId, commitId, rdfFormat = 'jsonld') {
-                var deferred = $q.defer();
                 var config = {params: {rdfFormat, branchId, commitId}};
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-ontologies', config)
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-ontologies', config)
                     .then(response => {
                         if (_.get(response, 'status') === 200) {
-                            deferred.resolve(response.data);
+                            return response.data;
                         } else if (_.get(response, 'status') === 204) {
-                            deferred.resolve([]);
+                            return [];
                         } else {
-                            util.onError(response, deferred);
+                            return util.rejectError(response);
                         }
-                    }, response => util.onError(response, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -721,18 +664,16 @@
              * @returns {Promise} A promise containing the JSON SPARQL query results bindings.
              */
             self.getEntityUsages = function(recordId, branchId, commitId, entityIRI, queryType = 'select', id = '') {
-                var deferred = $q.defer();
                 var config = {params: {branchId, commitId, queryType}};
                 var url = prefix + '/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(entityIRI);
                 var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
-                promise.then(response => {
+                return promise.then(response => {
                     if (queryType === 'construct') {
-                        deferred.resolve(response.data);
+                        return response.data;
                     } else {
-                        deferred.resolve(response.data.results.bindings);
+                        return response.data.results.bindings;
                     }
-                }, response => util.onError(response, deferred));
-                return deferred.promise;
+                }, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -751,20 +692,17 @@
              */
             self.getSearchResults = function(recordId, branchId, commitId, searchText, id) {
                 var defaultErrorMessage = 'An error has occurred with your search.';
-                var deferred = $q.defer();
-                var config = {params: {searchText, branchId, commitId}};
-
-                httpService.get(prefix + '/' + encodeURIComponent(recordId) + '/search-results', config, id)
+                var config = { params: { searchText, branchId, commitId } };
+                return httpService.get(prefix + '/' + encodeURIComponent(recordId) + '/search-results', config, id)
                     .then(response => {
-                        if(_.get(response, 'status') === 200) {
-                            deferred.resolve(response.data);
+                        if (_.get(response, 'status') === 200) {
+                            return response.data;
                         } else if (_.get(response, 'status') === 204) {
-                            deferred.resolve([]);
+                            return [];
                         } else {
-                            deferred.reject(defaultErrorMessage);
+                            return $q.reject(defaultErrorMessage);
                         }
-                    }, response => util.onError(response, deferred, defaultErrorMessage));
-                return deferred.promise;
+                    }, response => util.rejectError(response, defaultErrorMessage));
             }
             /**
              * @ngdoc method
@@ -913,12 +851,7 @@
              * @returns {Object[]} An array of all owl:Class entities within the ontologies.
              */
             self.getClasses = function(ontologies) {
-                var classes = [];
-                _.forEach(ontologies, ont => {
-                    classes.push.apply(classes,
-                        _.filter(ont, entity => self.isClass(entity) && !self.isBlankNode(entity)));
-                });
-                return classes;
+                return collectThings(ontologies, entity => self.isClass(entity) && !self.isBlankNode(entity));
             }
             /**
              * @ngdoc method
@@ -965,12 +898,7 @@
              * @returns {Object[]} Returns an array of all the properties associated with the provided class IRI.
              */
             self.getClassProperties = function(ontologies, classIRI) {
-                var classProperties = [];
-                _.forEach(ontologies, ont => {
-                    classProperties.push.apply(classProperties,
-                        _.filter(ont, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]}));
-                });
-                return classProperties;
+                return collectThings(ontologies, entity => _.isMatch(entity, {[prefixes.rdfs + 'domain']: [{'@id': classIRI}]}));
             }
             /**
              * @ngdoc method
@@ -1030,12 +958,7 @@
              * @returns {Object[]} An array of all owl:ObjectProperty entities within the ontologies.
              */
             self.getObjectProperties = function(ontologies) {
-                var objectProperties = [];
-                _.forEach(ontologies, ont => {
-                    objectProperties.push.apply(objectProperties,
-                        _.filter(ont, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity)));
-                });
-                return objectProperties;
+                return collectThings(ontologies, entity => self.isObjectProperty(entity) && !self.isBlankNode(entity));
             }
             /**
              * @ngdoc method
@@ -1096,12 +1019,7 @@
              * @returns {Object[]} An array of all owl:DatatypeProperty entities within the ontologies.
              */
             self.getDataTypeProperties = function(ontologies) {
-                var dataTypeProperties = [];
-                _.forEach(ontologies, ont => {
-                    dataTypeProperties.push.apply(dataTypeProperties,
-                        _.filter(ont, entity => self.isDataTypeProperty(entity) && !self.isBlankNode(entity)));
-                });
-                return dataTypeProperties;
+                return collectThings(ontologies, entity => self.isDataTypeProperty(entity) && !self.isBlankNode(entity));
             }
             /**
              * @ngdoc method
@@ -1163,12 +1081,7 @@
              * @returns {Object[]} Returns an array of properties not associated with a class.
              */
             self.getNoDomainProperties = function(ontologies) {
-                var noDomainProperties = [];
-                _.forEach(ontologies, ont => {
-                    noDomainProperties.push.apply(noDomainProperties,
-                        _.filter(ont, entity => self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain')));
-                });
-                return noDomainProperties;
+                return collectThings(ontologies, entity => self.isProperty(entity) && !_.has(entity, prefixes.rdfs + 'domain'));
             }
             /**
              * @ngdoc method
@@ -1227,12 +1140,7 @@
              * @returns {Object[]} An array of all owl:AnnotationProperty entities within the ontologies.
              */
             self.getAnnotations = function(ontologies) {
-                var annotations = [];
-                _.forEach(ontologies, ont => {
-                    annotations.push.apply(annotations,
-                        _.filter(ont, entity => self.isAnnotation(entity) && !self.isBlankNode(entity)));
-                });
-                return annotations;
+                return collectThings(ontologies, entity => self.isAnnotation(entity) && !self.isBlankNode(entity));
             }
             /**
              * @ngdoc method
@@ -1290,11 +1198,7 @@
              * @returns {Object[]} An array of all owl:NamedIndividual entities within the ontologies.
              */
             self.getIndividuals = function(ontologies) {
-                var individuals = [];
-                _.forEach(ontologies, ont => {
-                    individuals.push.apply(individuals, _.filter(ont, entity => self.isIndividual(entity)));
-                });
-                return individuals;
+                return collectThings(ontologies, entity => self.isIndividual(entity));
             }
             /**
              * @ngdoc method
@@ -1325,12 +1229,7 @@
              * @returns {Object[]} An array of all owl:NamedIndividual entities with no other type within the ontologies.
              */
             self.getNoTypeIndividuals = function(ontologies) {
-                var individuals = [];
-                _.forEach(ontologies, ont => {
-                    individuals.push.apply(individuals,
-                        _.filter(ont, entity => self.isIndividual(entity) && entity['@type'].length === 1));
-                });
-                return individuals;
+                return collectThings(ontologies, entity => self.isIndividual(entity) && entity['@type'].length === 1);
             }
             /**
              * @ngdoc method
@@ -1390,11 +1289,7 @@
              * @returns {Object[]} An array of all owl:Restriction entities within the ontologies.
              */
             self.getRestrictions = function(ontologies) {
-                var restrictions = [];
-                _.forEach(ontologies, ont => {
-                    restrictions.push.apply(restrictions, _.filter(ont, entity => self.isRestriction(entity)));
-                });
-                return restrictions;
+                return collectThings(ontologies, entity => self.isRestriction(entity));
             }
             /**
              * @ngdoc method
@@ -1436,11 +1331,7 @@
              * @returns {Object[]} An array of all owl:Restriction entities within the ontologies.
              */
             self.getBlankNodes = function(ontologies) {
-                var blankNodes = [];
-                _.forEach(ontologies, ont => {
-                    blankNodes.push.apply(blankNodes, _.filter(ont, entity => self.isBlankNode(entity)));
-                });
-                return blankNodes;
+                return collectThings(ontologies, entity => self.isBlankNode(entity));
             }
             /**
              * @ngdoc method
@@ -1515,6 +1406,7 @@
              * Checks if the provided entity is an skos:Concept entity. Returns a boolean.
              *
              * @param {Object} entity The entity you want to check.
+             * @param {string[]} derivedConcepts A list of IRIs of classes that are subclasses of skos:Concept
              * @returns {boolean} Returns true if it is an skos:Concept entity, otherwise returns false.
              */
             self.isConcept = function(entity, derivedConcepts = []) {
@@ -1530,6 +1422,7 @@
              * Checks if the provided ontologies contain any skos:Concept entities. Returns a boolean.
              *
              * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @param {string[]} derivedConcepts A list of IRIs of classes that are subclasses of skos:Concept
              * @returns {boolean} Returns true if there are any skos:Concept entities in the ontologies, otherwise
              * returns false.
              */
@@ -1547,15 +1440,11 @@
              * Returns an Object[].
              *
              * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @param {string[]} derivedConcepts A list of IRIs of classes that are subclasses of skos:Concept
              * @returns {Object[]} An array of all skos:Concept entities within the ontologies.
              */
             self.getConcepts = function(ontologies, derivedConcepts) {
-                var concepts = [];
-                _.forEach(ontologies, ont => {
-                    concepts.push.apply(concepts,
-                        _.filter(ont, entity => self.isConcept(entity, derivedConcepts) && !self.isBlankNode(entity)));
-                });
-                return concepts;
+                return collectThings(ontologies, entity => self.isConcept(entity, derivedConcepts) && !self.isBlankNode(entity));
             }
             /**
              * @ngdoc method
@@ -1567,6 +1456,7 @@
              * Returns an string[].
              *
              * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @param {string[]} derivedConcepts A list of IRIs of classes that are subclasses of skos:Concept
              * @returns {string[]} An array of all skos:Concept entity IRI strings within the ontologies.
              */
             self.getConceptIRIs = function(ontologies, derivedConcepts) {
@@ -1581,6 +1471,7 @@
              * Checks if the provided entity is an skos:ConceptScheme entity. Returns a boolean.
              *
              * @param {Object} entity The entity you want to check.
+             * @param {string[]} derivedConceptSchemes A list of IRIs of classes that are subclasses of skos:ConceptScheme
              * @returns {boolean} Returns true if it is an skos:ConceptScheme entity, otherwise returns false.
              */
             self.isConceptScheme = function(entity, derivedConceptSchemes = []) {
@@ -1596,6 +1487,7 @@
              * Checks if the provided ontologies contain any skos:ConceptScheme entities. Returns a boolean.
              *
              * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @param {string[]} derivedConceptSchemes A list of IRIs of classes that are subclasses of skos:ConceptScheme
              * @returns {boolean} Returns true if there are any skos:ConceptScheme entities in the ontologies, otherwise
              * returns false.
              */
@@ -1613,15 +1505,11 @@
              * Returns an Object[].
              *
              * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @param {string[]} derivedConceptSchemes A list of IRIs of classes that are subclasses of skos:ConceptScheme
              * @returns {Object[]} An array of all skos:ConceptScheme entities within the ontologies.
              */
-            self.getConceptSchemes = function(ontologies) {
-                var conceptSchemes = [];
-                _.forEach(ontologies, ont => {
-                    conceptSchemes.push.apply(conceptSchemes,
-                        _.filter(ont, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity)));
-                });
-                return conceptSchemes;
+            self.getConceptSchemes = function(ontologies, derivedConceptSchemes) {
+                return collectThings(ontologies, entity => self.isConceptScheme(entity, derivedConceptSchemes) && !self.isBlankNode(entity));
             }
             /**
              * @ngdoc method
@@ -1633,10 +1521,23 @@
              * nodes. Returns a string[].
              *
              * @param {Object[]} ontologies The array of ontologies you want to check.
+             * @param {string[]} derivedConceptSchemes A list of IRIs of classes that are subclasses of skos:ConceptScheme
              * @returns {string[]} An array of all skos:ConceptScheme entity IRI strings within the ontology.
              */
-            self.getConceptSchemeIRIs = function(ontologies) {
-                return _.map(self.getConceptSchemes(ontologies), '@id');
+            self.getConceptSchemeIRIs = function(ontologies, derivedConceptSchemes) {
+                return _.map(self.getConceptSchemes(ontologies, derivedConceptSchemes), '@id');
+            }
+
+            function collectThings(ontologies, filterFunc) {
+                var things = [];
+                var iris = [];
+                _.forEach(ontologies, ont => {
+                    _.forEach(_.filter(ont, entity => !_.includes(iris, _.get(entity, '@id')) && filterFunc(entity)), entity => {
+                        things.push(entity);
+                        iris.push(_.get(entity, '@id'));
+                    });
+                });
+                return things;
             }
         }
 })();
