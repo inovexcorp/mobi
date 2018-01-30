@@ -46,7 +46,7 @@
                         dvm.os.editingProperty = false;
                         dvm.os.propertySelect = undefined;
                         dvm.os.propertyValue = '';
-                        dvm.os.propertyType = undefined;
+                        dvm.os.propertyType = prefixes.xsd + 'string';
                         dvm.os.propertyIndex = 0;
                         dvm.os.propertyLanguage = 'en';
                         dvm.os.showDataPropertyOverlay = true;

@@ -77,8 +77,9 @@ describe('Annotation Block directive', function() {
         it('should set the correct manager values when opening the Add Annotation Overlay', function() {
             this.controller.openAddOverlay();
             expect(ontologyStateSvc.editingAnnotation).toBe(false);
-            expect(ontologyStateSvc.annotationSelect).toEqual(undefined);
+            expect(ontologyStateSvc.annotationSelect).toBeUndefined();
             expect(ontologyStateSvc.annotationValue).toBe('');
+            expect(ontologyStateSvc.annotationType).toBeUndefined();
             expect(ontologyStateSvc.annotationIndex).toBe(0);
             expect(ontologyStateSvc.annotationLanguage).toBe('en');
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(true);

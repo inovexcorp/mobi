@@ -763,8 +763,11 @@ function mockPropertyManager() {
             this.getValuesKey = jasmine.createSpy('getValuesKey').and.returnValue('');
             this.getDefaultAnnotations = jasmine.createSpy('getDefaultAnnotations').and.returnValue([]);
             this.remove = jasmine.createSpy('remove');
-            this.add = jasmine.createSpy('add');
-            this.edit = jasmine.createSpy('edit');
+            this.addValue = jasmine.createSpy('addValue');
+            this.addId = jasmine.createSpy('addId');
+            this.editValue = jasmine.createSpy('editValue');
+            this.editId = jasmine.createSpy('editId');
+            this.createValueObj = jasmine.createSpy('createValueObj').and.returnValue({});
             this.create = jasmine.createSpy('create').and.returnValue($q.resolve({}));
         });
     });
@@ -969,6 +972,7 @@ function mockUtil() {
             this.parseLinks = jasmine.createSpy('parseLinks').and.returnValue({});
             this.createErrorToast = jasmine.createSpy('createErrorToast');
             this.createSuccessToast = jasmine.createSpy('createSuccessToast');
+            this.createWarningToast = jasmine.createSpy('createWarningToast');
             this.createJson = jasmine.createSpy('createJson').and.returnValue({});
             this.getIRINamespace = jasmine.createSpy('getIRINamespace').and.returnValue('');
             this.getIRILocalName = jasmine.createSpy('getIRILocalName').and.returnValue('');

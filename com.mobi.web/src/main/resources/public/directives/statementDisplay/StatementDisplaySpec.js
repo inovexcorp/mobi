@@ -27,6 +27,7 @@ describe('Statement Display directive', function() {
         module('templates');
         module('statementDisplay');
         injectSplitIRIFilter();
+        injectPrefixationFilter();
 
         inject(function(_$compile_, _$rootScope_, _splitIRIFilter_) {
             $compile = _$compile_;
@@ -133,6 +134,11 @@ describe('Statement Display directive', function() {
             this.compile('<statement-display predicate="predicate" object="object" deletion></statement-display>', {'@value': 'value', '@language': 'en'});
             expect(this.controller.o).toBe('value [language: en]');
             expect(this.controller.fullObject).toBe('value [language: en]');
+        });
+        it('when @type is present', function() {
+            this.compile('<statement-display predicate="predicate" object="object" deletion></statement-display>', {'@value': 'value', '@type': 'type'});
+            expect(this.controller.o).toBe('value [type: type]');
+            expect(this.controller.fullObject).toBe('value [type: type]');
         });
         it('when none of the above are present', function() {
             this.compile('<statement-display predicate="predicate" object="object" deletion></statement-display>', 'words');
