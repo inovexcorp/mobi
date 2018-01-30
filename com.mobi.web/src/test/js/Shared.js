@@ -1072,8 +1072,9 @@ function mockDiscoverState() {
                 editing: false,
                 instance: {
                     changed: [],
-                    entity: {},
-                    metadata: {}
+                    entity: [{}],
+                    metadata: {},
+                    original: []
                 },
                 instanceDetails: {
                     currentPage: 0,
