@@ -103,7 +103,7 @@
     dct:title "attribute ID"@en ;
     dct:description "The ID of the designated Attribute to retrieve."@en ;
     rdfs:domain :AttributeDesignator ;
-    rdfs:range xsd:anyURI .
+    rdfs:range xsd:anyURI, xsd:string .
 
 # AttributeSelector
 
