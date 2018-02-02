@@ -105,34 +105,46 @@
     rdfs:domain :AttributeDesignator ;
     rdfs:range xsd:anyURI, xsd:string .
 
+:category a owl:ObjectProperty, owl:FunctionalProperty ;
+    dct:title "category"@en ;
+    dct:description "The Category of an Attribute."@en ;
+    rdfs:domain :AttributeDesignator ;
+    rdfs:range :Category .
+
+:mustBePresent a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dct:title "must be present"@en ;
+    dct:description "Whether or not the designated or selected Attribute must be present. If true, returns \"Indeterminate\", If false, returns an empty collection of values."@en ;
+    rdfs:domain :AttributeDesignator ;
+    rdfs:range xsd:boolean .
+
 # AttributeSelector
 
-:AttributeSelector a owl:Class ;
-    dct:title "Attribute Selector"@en ;
-    dct:description "Selects a specific Attribute based on the path to it from a certain Category and returns the collection of values."@en ;
-    rdfs:subClassOf :Expression, [
-        a owl:Restriction ;
-        owl:cardinality "1"^^xsd:nonNegativeInteger ;
-        owl:onProperty :category
-    ], [
-        a owl:Restriction ;
-        owl:cardinality "1"^^xsd:nonNegativeInteger ;
-        owl:onProperty :mustBePresent
-    ], [
-        a owl:Restriction ;
-        owl:cardinality "1"^^xsd:nonNegativeInteger ;
-        owl:onProperty :dataType
-    ], [
-        a owl:Restriction ;
-        owl:cardinality "1"^^xsd:nonNegativeInteger ;
-        owl:onProperty :requestContextPath
-    ] .
-
-:requestContextPath a owl:DatatypeProperty, owl:FunctionalProperty ;
-    dct:title "request context path"@en ;
-    dct:description "The path to the selected Attribute."@en ;
-    rdfs:domain :AttributeSelector ;
-    rdfs:range xsd:string .
+# :AttributeSelector a owl:Class ;
+#     dct:title "Attribute Selector"@en ;
+#     dct:description "Selects a specific Attribute based on the path to it from a certain Category and returns the collection of values."@en ;
+#     rdfs:subClassOf :Expression, [
+#         a owl:Restriction ;
+#         owl:cardinality "1"^^xsd:nonNegativeInteger ;
+#         owl:onProperty :category
+#     ], [
+#         a owl:Restriction ;
+#         owl:cardinality "1"^^xsd:nonNegativeInteger ;
+#         owl:onProperty :mustBePresent
+#     ], [
+#         a owl:Restriction ;
+#         owl:cardinality "1"^^xsd:nonNegativeInteger ;
+#         owl:onProperty :dataType
+#     ], [
+#         a owl:Restriction ;
+#         owl:cardinality "1"^^xsd:nonNegativeInteger ;
+#         owl:onProperty :requestContextPath
+#     ] .
+# 
+# :requestContextPath a owl:DatatypeProperty, owl:FunctionalProperty ;
+#     dct:title "request context path"@en ;
+#     dct:description "The path to the selected Attribute."@en ;
+#     rdfs:domain :AttributeSelector ;
+#     rdfs:range xsd:string .
 
 # AttributeValue
 
@@ -755,20 +767,25 @@ xacml1Func:rfc822Name-set-equals a :Function, owl:NamedIndividual .
         owl:cardinality "1"^^xsd:nonNegativeInteger ;
         owl:onProperty :matchFunction
     ], [
-        a owl:Class ;
-        owl:disjointUnionOf (
-            [
-                a owl:Restriction ;
-                owl:cardinality "1"^^xsd:nonNegativeInteger ;
-                owl:onProperty :attributeDesignator
-            ]
-            [
-                a owl:Restriction ;
-                owl:cardinality "1"^^xsd:nonNegativeInteger ;
-                owl:onProperty :attributeSelector
-            ]
-        )
+        a owl:Restriction ;
+        owl:cardinality "1"^^xsd:nonNegativeInteger ;
+        owl:onProperty :attributeDesignator
     ] .
+    # ], [
+    #     a owl:Class ;
+    #     owl:disjointUnionOf (
+    #         [
+    #             a owl:Restriction ;
+    #             owl:cardinality "1"^^xsd:nonNegativeInteger ;
+    #             owl:onProperty :attributeDesignator
+    #         ]
+    #         [
+    #             a owl:Restriction ;
+    #             owl:cardinality "1"^^xsd:nonNegativeInteger ;
+    #             owl:onProperty :attributeSelector
+    #         ]
+    #     )
+    # ] .
 
 :matchFunction a owl:ObjectProperty, owl:FunctionalProperty ;
     dct:title "match function"@en ;
@@ -782,11 +799,11 @@ xacml1Func:rfc822Name-set-equals a :Function, owl:NamedIndividual .
     rdfs:domain :Match ;
     rdfs:range :AttributeValue .
 
-:attributeSelector a owl:ObjectProperty, owl:FunctionalProperty ;
-    dct:title "attribute selector"@en ;
-    dct:description "An AttributeSelector to specify the Attribute with an AttributeValue."@en ;
-    rdfs:domain :Match ;
-    rdfs:range :AttributeSelector .
+# :attributeSelector a owl:ObjectProperty, owl:FunctionalProperty ;
+#     dct:title "attribute selector"@en ;
+#     dct:description "An AttributeSelector to specify the Attribute with an AttributeValue."@en ;
+#     rdfs:domain :Match ;
+#     rdfs:range :AttributeSelector .
 
 :attributeDesignator a owl:ObjectProperty, owl:FunctionalProperty ;
     dct:title "attribute designator"@en ;
@@ -908,11 +925,12 @@ xacml1Func:rfc822Name-set-equals a :Function, owl:NamedIndividual .
 
 # Misc.
 
-:dataType a owl:ObjectProperty, owl:FunctionalProperty ;
+:dataType a owl:DatatypeProperty, owl:FunctionalProperty ;
     dct:title "data type"@en ;
     dct:description "The Datatype of an AttributeValue."@en ;
-    rdfs:domain :AttributeDesignator, :AttributeSelector, :AttributeValue ;
-    rdfs:range rdfs:Datatype .
+    rdfs:domain :AttributeDesignator, :AttributeValue ;
+    # rdfs:domain :AttributeDesignator, :AttributeSelector, :AttributeValue ;
+    rdfs:range xsd:anyURI .
 
 :target a owl:ObjectProperty, owl:FunctionalProperty ;
     dct:title "target"@en ;
@@ -926,17 +944,17 @@ xacml1Func:rfc822Name-set-equals a :Function, owl:NamedIndividual .
     rdfs:domain :Apply, :Condition ;
     rdfs:range :Expression .
 
-:category a owl:ObjectProperty, owl:FunctionalProperty ;
-    dct:title "category"@en ;
-    dct:description "The Category of an Attribute."@en ;
-    rdfs:domain :AttributeDesignator, :AttributeSelector ;
-    rdfs:range :Category .
-
-:mustBePresent a owl:DatatypeProperty, owl:FunctionalProperty ;
-    dct:title "must be present"@en ;
-    dct:description "Whether or not the designated or selected Attribute must be present. If true, returns \"Indeterminate\", If false, returns an empty collection of values."@en ;
-    rdfs:domain :AttributeDesignator, :AttributeSelector ;
-    rdfs:range xsd:boolean .
+# :category a owl:ObjectProperty, owl:FunctionalProperty ;
+#     dct:title "category"@en ;
+#     dct:description "The Category of an Attribute."@en ;
+#     rdfs:domain :AttributeDesignator, :AttributeSelector ;
+#     rdfs:range :Category .
+# 
+# :mustBePresent a owl:DatatypeProperty, owl:FunctionalProperty ;
+#     dct:title "must be present"@en ;
+#     dct:description "Whether or not the designated or selected Attribute must be present. If true, returns \"Indeterminate\", If false, returns an empty collection of values."@en ;
+#     rdfs:domain :AttributeDesignator, :AttributeSelector ;
+#     rdfs:range xsd:boolean .
 
 # Datatypes
 
