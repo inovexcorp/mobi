@@ -743,7 +743,7 @@ public interface CatalogManager {
     List<Commit> getCommitChain(Resource commitId);
 
     /**
-     * Gets the list of commits between the HEAD of a branch and the HEAD of a target branch
+     * Gets the list of commits between the HEAD of a branch and the HEAD of a target branch.
      *
      * @param catalogId The Resource identifying the Catalog which contains the Record.
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
@@ -756,7 +756,8 @@ public interface CatalogManager {
      * @throws IllegalStateException Thrown if either Branch does not have a head Commit or if the commit history does
      *      not have a common parent.
      */
-    List<Commit> getCommitChain(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Resource targetId);
+    List<Commit> getCommitChain(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
+                                Resource targetId);
 
     /**
      * Gets a List of Commits ordered by date descending within the repository starting with the head Commit of the

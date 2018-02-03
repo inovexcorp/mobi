@@ -23,7 +23,6 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogUtilsService;

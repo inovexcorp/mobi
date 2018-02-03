@@ -1874,7 +1874,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     }
 
 
-        /* throwDoesNotBelong */
+    /* throwDoesNotBelong */
 
     @Test
     public void throwDoesNotBelongTest() {
