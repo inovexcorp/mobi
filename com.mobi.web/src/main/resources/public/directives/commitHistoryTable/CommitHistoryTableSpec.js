@@ -70,6 +70,11 @@ describe('Commit History Table directive', function() {
     });
 
     describe('replaces the element with the correct html', function() {
+        beforeEach(function() {
+            this.controller.commits = this.commits;
+            // scope.$digest();
+        });
+        
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('commit-history-table')).toBe(true);
@@ -105,6 +110,11 @@ describe('Commit History Table directive', function() {
             this.controller.showOverlay = true;
             scope.$digest();
             expect(this.element.find('commit-info-overlay').length).toBe(1);
+        });
+        it('depending on if there is no commits', function() {
+            this.controller.commits = [];
+            // scope.$digest();
+            expect(this.element.querySelectorAll('.wrapper').length).toBe(0);
         });
     });
     describe('controller bound variable', function() {
