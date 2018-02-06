@@ -73,7 +73,7 @@ describe('Commit History Table directive', function() {
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             this.controller.commits = this.commits;
-            scope.$apply;
+            scope.$apply();
         });
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
@@ -105,10 +105,10 @@ describe('Commit History Table directive', function() {
             expect(this.element.find('error-display').length).toBe(1);
         });
         it('depending on whether there are commits', function() {
-            expect(this.element.find('info-message').length).toBe(1);
-            this.controller.commits = [{}];
-            scope.$apply();
             expect(this.element.find('info-message').length).toBe(0);
+            this.controller.commits = [];
+            scope.$apply();
+            expect(this.element.find('info-message').length).toBe(1);
         });
         it('depending on whether the commit overlay should be shown', function() {
             expect(this.element.find('commit-info-overlay').length).toBe(0);
