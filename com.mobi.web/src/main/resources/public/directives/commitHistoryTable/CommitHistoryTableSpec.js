@@ -71,6 +71,10 @@ describe('Commit History Table directive', function() {
     });
 
     describe('replaces the element with the correct html', function() {
+        beforeEach(function() {
+            this.controller.commits = this.commits;
+            scope.$apply;
+        });
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('commit-history-table')).toBe(true);
