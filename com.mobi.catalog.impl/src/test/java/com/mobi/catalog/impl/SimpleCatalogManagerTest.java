@@ -31,6 +31,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -1853,16 +1854,12 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
                 .deletions(MODEL_FACTORY.createModel())
                 .build();
         doReturn(sourceDiff).when(utilsService).getCommitDifference(eq(Collections.singletonList(sourceId)), any(RepositoryConnection.class));
-        doReturn(Stream.of(targetId, sourceId).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(sourceId), any(Boolean.class), any(RepositoryConnection.class));
-        doReturn(Collections.singletonList(targetId)).when(utilsService).getCommitChain(eq(targetId), any(Boolean.class), any(RepositoryConnection.class));
+        doReturn(Collections.singletonList(sourceId)).when(utilsService).getDifferenceChain(eq(sourceId), eq(targetId), any(RepositoryConnection.class));
 
         Difference diff = manager.getDifference(sourceId, targetId);
         assertEquals(sourceDiff, diff);
-        verify(utilsService).validateResource(eq(sourceId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).validateResource(eq(targetId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(sourceId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(targetId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitDifference(eq(Collections.singletonList(sourceId)), any(RepositoryConnection.class));
+        verify(utilsService).getDifferenceChain(eq(sourceId), eq(targetId), any(RepositoryConnection.class));
     }
 
     @Test
@@ -1871,7 +1868,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         Resource sourceId = VALUE_FACTORY.createIRI(COMMITS + "test4a");
         Resource targetId = VALUE_FACTORY.createIRI(COMMITS + "test1");
         thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("No common parent between Commit " + sourceId + " and " + targetId);
+        doThrow(new IllegalArgumentException()).when(utilsService).getDifferenceChain(any(Resource.class), any(Resource.class), any(RepositoryConnection.class));
 
         manager.getDifference(sourceId, targetId);
     }
