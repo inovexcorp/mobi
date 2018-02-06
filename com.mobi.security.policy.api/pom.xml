@@ -43,6 +43,11 @@
             <artifactId>rdf.orm</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>vfs</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
     
     <build>
@@ -81,6 +86,13 @@
                                     <ontologyName>Policy</ontologyName>
                                 </ontology>
                             </generates>
+                            <references>
+                                <ontology>
+                                    <ontologyFile>${basedir}/../com.mobi.vfs/src/main/resources/mobi_documents.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.vfs.ontologies.documents</outputPackage>
+                                    <ontologyName>Documents</ontologyName>
+                                </ontology>
+                            </references>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>
                         </configuration>
                     </execution>
