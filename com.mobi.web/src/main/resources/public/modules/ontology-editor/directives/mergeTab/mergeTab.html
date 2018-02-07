@@ -29,7 +29,7 @@
             <block>
                 <block-content class="padding">
                     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-                    <merge-form ng-if="!dvm.conflicts.length" branch-title="dvm.branchTitle" is-user-branch="dvm.isUserBranch" target-id="dvm.targetId" remove-branch="dvm.checkbox"></merge-form>
+                    <merge-form ng-if="!dvm.conflicts.length" branch="dvm.branch" is-user-branch="dvm.isUserBranch" target-id="dvm.targetId" remove-branch="dvm.checkbox"></merge-form>
                     <resolve-conflicts-form ng-if="dvm.conflicts.length" branch-title="dvm.branchTitle" target-title="dvm.getTargetTitle()" conflicts="dvm.conflicts" resolutions="dvm.resolutions"></resolve-conflicts-form>
                 </block-content>
                 <block-footer>
