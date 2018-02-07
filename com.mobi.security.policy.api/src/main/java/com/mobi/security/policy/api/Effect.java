@@ -23,15 +23,13 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-public class Decision {
-    private final String name;
+public class Effect {
+    private String name;
 
-    public static final Decision PERMIT = new Decision("Permit");
-    public static final Decision DENY = new Decision("Deny");
-    public static final Decision INDETERMINATE = new Decision("Indeterminate");
-    public static final Decision NOT_APPLICABLE = new Decision("Not Applicable");
+    private static final Effect PERMIT = new Effect("Permit");
+    private static final Effect DENY = new Effect("Deny");
 
-    public Decision(String name) {
+    private Effect(String name) {
         this.name = name;
     }
 

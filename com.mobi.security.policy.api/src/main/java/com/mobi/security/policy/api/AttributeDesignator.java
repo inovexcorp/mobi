@@ -23,20 +23,22 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-public class Decision {
-    private final String name;
+import com.mobi.rdf.api.IRI;
 
-    public static final Decision PERMIT = new Decision("Permit");
-    public static final Decision DENY = new Decision("Deny");
-    public static final Decision INDETERMINATE = new Decision("Indeterminate");
-    public static final Decision NOT_APPLICABLE = new Decision("Not Applicable");
+public interface AttributeDesignator {
 
-    public Decision(String name) {
-        this.name = name;
-    }
+    /**
+     * The ID of the Attribute to retrieve.
+     */
+    IRI attributeId();
 
-    @Override
-    public String toString() {
-        return name;
-    }
+    /**
+     * The category of the Attribute to retrieve. Possible categories are the subject, resource, action, or environment.
+     */
+    IRI category();
+
+    /**
+     * The XSD data type of the values of the Attribute to retrieve.
+     */
+    IRI datatype();
 }

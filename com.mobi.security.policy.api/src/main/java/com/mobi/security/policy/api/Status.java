@@ -23,15 +23,15 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-public class Decision {
-    private final String name;
+public class Status {
+    private String name;
 
-    public static final Decision PERMIT = new Decision("Permit");
-    public static final Decision DENY = new Decision("Deny");
-    public static final Decision INDETERMINATE = new Decision("Indeterminate");
-    public static final Decision NOT_APPLICABLE = new Decision("Not Applicable");
+    private static final Status OK = new Status("OK");
+    private static final Status MISSING_ATTRIBUTE = new Status("Missing Attribute");
+    private static final Status SYNTAX_ERROR = new Status("Syntax Error");
+    private static final Status PROCESSING_ERROR = new Status("Processing Error");
 
-    public Decision(String name) {
+    private Status(String name) {
         this.name = name;
     }
 

@@ -23,20 +23,40 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-import com.mobi.security.policy.api.exception.PolicySyntaxException;
-import com.mobi.security.policy.api.exception.ProcessingException;
+import com.mobi.rdf.api.IRI;
 
 import java.util.List;
+import java.util.Optional;
 
-public interface PRP {
+public interface Rule {
 
     /**
-     * Retrieves {@link PolicyWrapper Policies} that match the attributes in the authorization {@link Request}.
-     *
-     * @param request An authorization {@link Request}
-     * @return The matching {@link PolicyWrapper Policies}
-     * @throws PolicySyntaxException If a Policy contains a syntax error of some sort
-     * @throws ProcessingException If some sort of problem occurs while processing the Policies
+     * The IRI ID of the Rule.
      */
-    List<PolicyWrapper> findPolicy(Request request) throws ProcessingException, PolicySyntaxException;
+    IRI getId();
+
+    /**
+     * The description of the Rule if set.
+     */
+    Optional<String> getDescription();
+
+    /**
+     * The {@link Effect} of the Rule if it matches, i.e. Permit or Deny.
+     */
+    Effect getEffect();
+
+    /**
+     * The {@link Condition Conditions} set on this rule that must match the {@link Request} subject.
+     */
+    List<Condition> getSubjectConditions();
+
+    /**
+     * The {@link Condition Conditions} set on this rule that must match the {@link Request} resource.
+     */
+    List<Condition> getResourceConditions();
+
+    /**
+     * The {@link Condition Conditions} set on this rule that must match the {@link Request} action.
+     */
+    List<Condition> getActionConditions();
 }

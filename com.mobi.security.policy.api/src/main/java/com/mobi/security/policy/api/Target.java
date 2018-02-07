@@ -23,20 +23,23 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-public class Decision {
-    private final String name;
+import com.mobi.rdf.api.IRI;
 
-    public static final Decision PERMIT = new Decision("Permit");
-    public static final Decision DENY = new Decision("Deny");
-    public static final Decision INDETERMINATE = new Decision("Indeterminate");
-    public static final Decision NOT_APPLICABLE = new Decision("Not Applicable");
 
-    public Decision(String name) {
-        this.name = name;
-    }
+public interface Target {
 
-    @Override
-    public String toString() {
-        return name;
-    }
+    /**
+     * The ID of the subject the {@link PolicyWrapper Policy} is related to.
+     */
+    IRI getRelatedSubject();
+
+    /**
+     * The ID of the resource the {@link PolicyWrapper Policy} is related to.
+     */
+    IRI getRelatedResource();
+
+    /**
+     * The ID of the action the {@link PolicyWrapper Policy} is related to.
+     */
+    IRI getRelatedAction();
 }

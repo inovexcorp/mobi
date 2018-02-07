@@ -1,4 +1,4 @@
-package com.mobi.security.policy.api;
+package com.mobi.security.policy.api.exception;
 
 /*-
  * #%L
@@ -23,20 +23,22 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-public class Decision {
-    private final String name;
+import com.mobi.exception.MobiException;
 
-    public static final Decision PERMIT = new Decision("Permit");
-    public static final Decision DENY = new Decision("Deny");
-    public static final Decision INDETERMINATE = new Decision("Indeterminate");
-    public static final Decision NOT_APPLICABLE = new Decision("Not Applicable");
+public class ProcessingException extends MobiException {
+    private static final long serialVersionUID = -2444060419452600467L;
 
-    public Decision(String name) {
-        this.name = name;
+    public ProcessingException() {}
+
+    public ProcessingException(String message) {
+        super(message);
     }
 
-    @Override
-    public String toString() {
-        return name;
+    public ProcessingException(String message, Throwable throwable) {
+        super(message, throwable);
+    }
+
+    public ProcessingException(Throwable throwable) {
+        super(throwable);
     }
 }

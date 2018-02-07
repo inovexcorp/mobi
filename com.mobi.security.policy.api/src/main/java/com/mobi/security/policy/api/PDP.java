@@ -23,16 +23,27 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-import org.w3c.dom.Document;
+import com.mobi.rdf.api.IRI;
 
 public interface PDP {
 
     /**
-     * Receives an authorization XACML XML request and evaluates it against the known policies retrieved by the
-     * {@link PRP} by collecting attribute information from the {@link PIP} and returns and XACML XML response.
+     * Evaluates an authorization {@link Request} against a collection of {@link PolicyWrapper Policies} combined
+     * with a default algorithm and returns a {@link Response} with the authorization {@link Decision}. Based on ABAC.
      *
-     * @param request The XACML XML request
-     * @return An XACML XML response with the authorization result
+     * @param request An authorization Request
+     * @return A Response with the Decision of the Request
      */
-    Document evaluate(Document request);
+    Response evaluate(Request request);
+
+    /**
+     * Evaluates an authorization {@link Request} against a collection of {@link PolicyWrapper Policies} combined
+     * with the identified algorithm and returns a {@link Response} with the authorization {@link Decision}.
+     * Based on ABAC.
+     *
+     * @param request An authorization Request
+     * @param policyAlgorithm The IRI identifier for a Policy algorithm for combining results
+     * @return A Response with the Decision of the Request
+     */
+    Response evaluate(Request request, IRI policyAlgorithm);
 }

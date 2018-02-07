@@ -23,20 +23,25 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-public class Decision {
-    private final String name;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Literal;
 
-    public static final Decision PERMIT = new Decision("Permit");
-    public static final Decision DENY = new Decision("Deny");
-    public static final Decision INDETERMINATE = new Decision("Indeterminate");
-    public static final Decision NOT_APPLICABLE = new Decision("Not Applicable");
+import java.util.List;
 
-    public Decision(String name) {
-        this.name = name;
-    }
+public interface Condition {
 
-    @Override
-    public String toString() {
-        return name;
-    }
+    /**
+     * The ID of the Attribute the Condition is set on.
+     */
+    String getAttributeId();
+
+    /**
+     * The list of accepted values for the identified Attribute of this Condition.
+     */
+    List<Literal> values();
+
+    /**
+     * The IRI ID of the function to use when matching values of the identified Attribute.
+     */
+    IRI functionId();
 }

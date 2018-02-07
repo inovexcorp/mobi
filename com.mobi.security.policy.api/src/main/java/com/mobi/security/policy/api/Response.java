@@ -23,20 +23,30 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-public class Decision {
-    private final String name;
+import com.mobi.rdf.api.IRI;
 
-    public static final Decision PERMIT = new Decision("Permit");
-    public static final Decision DENY = new Decision("Deny");
-    public static final Decision INDETERMINATE = new Decision("Indeterminate");
-    public static final Decision NOT_APPLICABLE = new Decision("Not Applicable");
+import java.util.List;
 
-    public Decision(String name) {
-        this.name = name;
-    }
+public interface Response {
 
-    @Override
-    public String toString() {
-        return name;
-    }
+    /**
+     * The {@link Decision} of the authorization {@link Request}, i.e. whether the request was approved or denied.
+     */
+    Decision getDecision();
+
+    /**
+     * The {@link Status} of the authorization {@link Request}. Indicates whether the Request was evaluated
+     * successfully or not.
+     */
+    Status getStatus();
+
+    /**
+     * A status message providing more context about the {@link Decision}.
+     */
+    String getStatusMessage();
+
+    /**
+     * The IDs of the {@link PolicyWrapper Policies} used to make the authorization {@link Decision}.
+     */
+    List<IRI> getPolicyIds();
 }
