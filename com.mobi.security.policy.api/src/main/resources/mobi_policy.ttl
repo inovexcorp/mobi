@@ -14,39 +14,39 @@
     rdfs:comment "The Mobi Policy ontology describes security access control policies."@en ;
     dct:creator [foaf:name "Stephen Kahmann"], [foaf:name "Megan Mercer"] ;
     foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>] ;
-    dct:modified "2018-02-06"^^xsd:date .
+    dct:modified "2018-02-07"^^xsd:date .
 
 # Policy
 
 :Policy a owl:Class ;
     dct:title "Policy"@en ;
-    dct:description "A Collection of Rules stored in a binary XML file to be applied against a request."@en ;
-    rdfs:subClassOf doc:BinaryFile .
+    dct:description "A Collection of Rules to be applied against an authorization request."@en .
 
-# :target a owl:ObjectProperty ;
-#     rdfs:domain :Policy ;
-#     rdfs:range :AllOf .
-# 
-# :AllOf a owl:Class .
-# 
-# :anyOf a owl:ObjectProperty ;
-#     rdfs:domain :AllOf ;
-#     rdfs:range :AnyOf ;
-# 
-# :AnyOf a owl:Class .
-# 
-# :match a owl:ObjectProperty ;
-#     rdfs:domain :AnyOf ;
-#     rdfs:range :Match .
-# 
-# :Match a owl:Class .
-# 
-# <urn:oasis:names:tc:xacml:1.0:function:string-equal> a owl:Class ;
-#     rdfs:subClassOf :Match .
-# 
-# <urn:oasis:names:tc:xacml:1.0:function:string-regexp-match> a owl:Class ;
-#     rdfs:subClassOf :Match .
+:relatedSubject a owl:DatatypeProperty ;
+    dct:description "The ID of the subject the described Policy is related to."@en ;
+    rdfs:domain :Policy ;
+    rdfs:range xsd:anyURI .
 
+:relatedResource a owl:DatatypeProperty ;
+    dct:description "The ID of the resource the described Policy is related to."@en ;
+    rdfs:domain :Policy ;
+    rdfs:range xsd:anyURI .
+
+:relatedAction a owl:DatatypeProperty ;
+    dct:description "The ID of the action the described Policy is related to."@en ;
+    rdfs:domain :Policy ;
+    rdfs:range xsd:anyURI .
+
+:PolicyFile a owl:Class ;
+    dct:title "Policy File"@en ;
+    dct:description "A Policy stored in a binary file."@en ;
+    rdfs:subClassOf :BinaryFile, :Policy .
+
+
+# Matching functions
+
+# urn:oasis:names:tc:xacml:1.0:function:string-equal
+# urn:oasis:names:tc:xacml:1.0:function:string-regexp-match
 # urn:oasis:names:tc:xacml:3.0:function:string-equal-ignore-case
 # urn:oasis:names:tc:xacml:1.0:function:boolean-equal
 # urn:oasis:names:tc:xacml:1.0:function:integer-equal
@@ -81,24 +81,3 @@
 # urn:oasis:names:tc:xacml:3.0:function:anyURI-contains
 # urn:oasis:names:tc:xacml:1.0:function:string-regexp-match
 # urn:oasis:names:tc:xacml:2.0:function:anyURI-regexp-match
-
-# :value a owl:DatatypeProperty, owl:FunctionalProperty ;
-#     rdfs:domain :Match .
-# 
-# :designator a owl:ObjectProperty, owl:FunctionalProperty ;
-#     rdfs:domain :Match ;
-#     rdfs:range :Designator .
-# 
-# :Designator a owl:Class .
-# 
-# :category a owl:DatatypeProperty, owl:FunctionalProperty ;
-#     rdfs:domain :Designator ;
-#     rdfs:range xsd:anyURI .
-# 
-# :attributeId a owl:DatatypeProperty, owl:FunctionalProperty ;
-#     rdfs:domain :Designator ;
-#     rdfs:range xsd:anyURI .
-# 
-# :dataType a owl:ObjectProperty, owl:FunctionalProperty ;
-#     rdfs:domain :Designator ;
-#     rdfs:range rdfs:Datatype .
