@@ -29,7 +29,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>root</artifactId>
-    <version>1.12.2</version>
+    <version>1.12.3</version>
 
     <packaging>pom</packaging>
 
@@ -103,6 +103,7 @@
         <module>com.mobi.analytic.rest</module>
         <module>com.mobi.prov.rest</module>
         <module>com.mobi.sparql.cli</module>
+        <module>com.mobi.security.policy.api</module>
     </modules>
 
     <properties>
