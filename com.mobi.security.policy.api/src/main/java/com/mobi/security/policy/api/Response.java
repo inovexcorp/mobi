@@ -46,7 +46,7 @@ public interface Response {
     String getStatusMessage();
 
     /**
-     * The IDs of the {@link PolicyWrapper Policies} used to make the authorization {@link Decision}.
+     * The IDs of the {@link Policy Policies} used to make the authorization {@link Decision}.
      */
     List<IRI> getPolicyIds();
 }

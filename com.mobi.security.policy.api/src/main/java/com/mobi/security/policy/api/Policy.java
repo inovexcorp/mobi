@@ -25,10 +25,9 @@ package com.mobi.security.policy.api;
 
 import com.mobi.rdf.api.IRI;
 
-import java.util.List;
 import java.util.Optional;
 
-public interface PolicyWrapper {
+public interface Policy {
 
     /**
      * The IRI ID of the Policy.
@@ -39,19 +38,4 @@ public interface PolicyWrapper {
      * The description of the Policy if set.
      */
     Optional<String> getDescription();
-
-    /**
-     * The IRI ID of the algorithm to use when combining the results of the Policy's {@link Rule Rules}.
-     */
-    IRI getRuleAlgorithm();
-
-    /**
-     * The {@link Target} of the Policy.
-     */
-    Target getTarget();
-
-    /**
-     * The {@link Rule Rules} of the Policy.
-     */
-    List<Rule> getRules();
 }
