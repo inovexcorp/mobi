@@ -36,4 +36,10 @@ public class XACML {
     public static final String RESOURCE_ID = "urn:oasis:names:tc:xacml:1.0:resource:resource-id";
     public static final String ACTION_ID = "urn:oasis:names:tc:xacml:1.0:action:action-id";
     public static final String CURRENT_DATETIME = "urn:oasis:names:tc:xacml:1.0:environment:current-dateTime";
+
+    // Statuses
+    public static final String OK = "urn:oasis:names:tc:xacml:1.0:status:ok";
+    public static final String MISSING_ATTRIBUTE = "urn:oasis:names:tc:xacml:1.0:status:missing-attribute";
+    public static final String SYNTAX_ERROR = "urn:oasis:names:tc:xacml:1.0:status:syntax-error";
+    public static final String PROCESSING_ERROR = "urn:oasis:names:tc:xacml:1.0:status:processing-error";
 }

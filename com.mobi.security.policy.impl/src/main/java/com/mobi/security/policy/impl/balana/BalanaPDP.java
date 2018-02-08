@@ -26,8 +26,10 @@ package com.mobi.security.policy.impl.balana;
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.exception.MobiException;
+import com.mobi.rdf.api.IRI;
 import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.Request;
+import com.mobi.security.policy.api.Response;
 import org.w3c.dom.Document;
 import org.wso2.balana.Balana;
 import org.wso2.balana.PDPConfig;
@@ -35,16 +37,11 @@ import org.wso2.balana.finder.AttributeFinder;
 import org.wso2.balana.finder.AttributeFinderModule;
 import org.wso2.balana.finder.PolicyFinder;
 import org.wso2.balana.finder.PolicyFinderModule;
-import org.xml.sax.SAXException;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -76,16 +73,22 @@ public class BalanaPDP implements PDP {
     }
 
     @Override
-    public Document evaluate(Document request) {
+    public Response evaluate(Request request) {
         org.wso2.balana.PDP pdp = getPDP();
-        String result = pdp.evaluate(documentToString(request));
+        /*String result = pdp.evaluate(documentToString(request));
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         try {
             return dbf.newDocumentBuilder().parse(new ByteArrayInputStream(result.getBytes()));
         } catch (SAXException | IOException | ParserConfigurationException e) {
             throw new MobiException(e);
-        }
+        }*/
+        return null;
+    }
+
+    @Override
+    public Response evaluate(Request request, IRI policyAlgorithm) {
+        return null;
     }
 
     private org.wso2.balana.PDP getPDP() {

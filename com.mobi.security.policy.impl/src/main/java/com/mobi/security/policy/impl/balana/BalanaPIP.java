@@ -28,16 +28,20 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.security.policy.api.AttributeDesignator;
 import com.mobi.security.policy.api.PIP;
+import com.mobi.security.policy.api.Request;
+import com.mobi.security.policy.api.exception.MissingAttributeException;
+import com.mobi.security.policy.api.exception.ProcessingException;
 import com.mobi.security.policy.impl.XACML;
 import com.mobi.vocabularies.xsd.XSD;
-import org.w3c.dom.Document;
 import org.wso2.balana.attr.AttributeValue;
 import org.wso2.balana.attr.BagAttribute;
 import org.wso2.balana.attr.StringAttribute;
@@ -90,9 +94,8 @@ public class BalanaPIP extends AttributeFinderModule implements PIP {
     }
 
     @Override
-    public Set<com.mobi.security.policy.api.AttributeValue> findAttribute(IRI attributeId, IRI attributeType,
-                                                                          IRI categoryIRI, String issuer,
-                                                                          Document request) {
+    public List<Literal> findAttribute(AttributeDesignator attributeDesignator, Request request)
+            throws MissingAttributeException, ProcessingException {
         return null;
     }
 

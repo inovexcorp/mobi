@@ -30,6 +30,10 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.security.policy.api.PRP;
+import com.mobi.security.policy.api.PolicyWrapper;
+import com.mobi.security.policy.api.Request;
+import com.mobi.security.policy.api.exception.PolicySyntaxException;
+import com.mobi.security.policy.api.exception.ProcessingException;
 import com.mobi.security.policy.api.ontologies.policy.PolicyFactory;
 import org.w3c.dom.Document;
 import org.wso2.balana.AbstractPolicy;
@@ -49,6 +53,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -96,7 +101,7 @@ public class BalanaPRP extends PolicyFinderModule implements PRP {
     }
 
     @Override
-    public Set<Document> findPolicy(Document request) {
+    public List<PolicyWrapper> findPolicy(Request request) throws ProcessingException, PolicySyntaxException {
         return null;
     }
 
@@ -206,6 +211,4 @@ public class BalanaPRP extends PolicyFinderModule implements PRP {
                     });*/
         }
     }
-
-
 }
