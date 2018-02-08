@@ -33,7 +33,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>security.policy.impl</artifactId>
+    <artifactId>security.policy.impl.xacml</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
@@ -100,7 +100,7 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>Mobi Security Policy IMPL</Bundle-Name>
+                        <Bundle-Name>Mobi Security Policy IMPL XACML</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
                             com.mobi.security.policy.api;provide:=true

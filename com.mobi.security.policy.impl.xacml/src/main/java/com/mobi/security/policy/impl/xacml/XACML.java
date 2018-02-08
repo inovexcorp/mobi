@@ -1,4 +1,4 @@
-package com.mobi.security.policy.impl;
+package com.mobi.security.policy.impl.xacml;
 
 /*-
  * #%L

@@ -1,4 +1,4 @@
-package com.mobi.security.policy.impl.balana;
+package com.mobi.security.policy.impl.xacml;
 
 /*-
  * #%L
@@ -24,8 +24,6 @@ package com.mobi.security.policy.impl.balana;
  */
 
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import org.junit.Before;
 import org.junit.Test;

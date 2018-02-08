@@ -1,4 +1,4 @@
-package com.mobi.security.policy.impl.balana;
+package com.mobi.security.policy.impl.xacml;
 
 /*-
  * #%L
@@ -40,7 +40,6 @@ import com.mobi.security.policy.api.PIP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.exception.MissingAttributeException;
 import com.mobi.security.policy.api.exception.ProcessingException;
-import com.mobi.security.policy.impl.XACML;
 import com.mobi.vocabularies.xsd.XSD;
 import org.wso2.balana.attr.AttributeValue;
 import org.wso2.balana.attr.BagAttribute;
