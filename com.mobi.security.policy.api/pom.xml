@@ -61,6 +61,9 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>Mobi Security Policy API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
+                        <Export-Package>
+                            com.mobi.security.policy.api*
+                        </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>

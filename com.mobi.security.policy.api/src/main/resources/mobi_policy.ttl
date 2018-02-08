@@ -23,24 +23,55 @@
     dct:description "A Collection of Rules to be applied against an authorization request."@en .
 
 :relatedSubject a owl:DatatypeProperty ;
+    dct:title "Related Subject"@en ;
     dct:description "The ID of the subject the described Policy is related to."@en ;
     rdfs:domain :Policy ;
     rdfs:range xsd:anyURI .
 
 :relatedResource a owl:DatatypeProperty ;
+    dct:title "Related Resource"@en ;
     dct:description "The ID of the resource the described Policy is related to."@en ;
     rdfs:domain :Policy ;
     rdfs:range xsd:anyURI .
 
 :relatedAction a owl:DatatypeProperty ;
+    dct:title "Related Action"@en ;
     dct:description "The ID of the action the described Policy is related to."@en ;
     rdfs:domain :Policy ;
     rdfs:range xsd:anyURI .
 
+# PolicyFile
+
 :PolicyFile a owl:Class ;
     dct:title "Policy File"@en ;
     dct:description "A Policy stored in a binary file."@en ;
-    rdfs:subClassOf :BinaryFile, :Policy .
+    rdfs:subClassOf doc:BinaryFile, :Policy .
+
+# Actions
+
+:Action a owl:Class ;
+    dct:title "Action"@en ;
+    dct:description "An action taken against a Resource in an authorization request."@en .
+
+:Create a owl:Class ;
+    rdfs:subClassOf :Action ;
+    dct:title "Create"@en ;
+    dct:description "An action that would result in the creation of a resource."@en .
+
+:Read a owl:Class ;
+    rdfs:subClassOf :Action ;
+    dct:title "Read"@en ;
+    dct:description "A read-only action that does not affect resources at all."@en .
+
+:Update a owl:Class ;
+    rdfs:subClassOf :Action ;
+    dct:title "Create"@en ;
+    dct:description "An action that would updates the data about a resource."@en .
+
+:Delete a owl:Class ;
+    rdfs:subClassOf :Action ;
+    dct:title "Create"@en ;
+    dct:description "An action that would result in the deletion of a resource."@en .
 
 
 # Matching functions
