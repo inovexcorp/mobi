@@ -28,15 +28,15 @@ import com.mobi.security.policy.api.exception.ProcessingException;
 
 import java.util.List;
 
-public interface PRP {
+public interface PRP<T extends Policy> {
 
     /**
-     * Retrieves {@link PolicyWrapper Policies} that match the attributes in the authorization {@link Request}.
+     * Retrieves {@link Policy Policies} that match the attributes in the authorization {@link Request}.
      *
      * @param request An authorization {@link Request}
-     * @return The matching {@link PolicyWrapper Policies}
+     * @return The matching {@link Policy Policies}
      * @throws PolicySyntaxException If a Policy contains a syntax error of some sort
      * @throws ProcessingException If some sort of problem occurs while processing the Policies
      */
-    List<PolicyWrapper> findPolicy(Request request) throws ProcessingException, PolicySyntaxException;
+    List<T> findPolicies(Request request) throws ProcessingException, PolicySyntaxException;
 }

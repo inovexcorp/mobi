@@ -28,7 +28,7 @@ import com.mobi.rdf.api.IRI;
 public interface PDP {
 
     /**
-     * Evaluates an authorization {@link Request} against a collection of {@link PolicyWrapper Policies} combined
+     * Evaluates an authorization {@link Request} against a collection of {@link Policy Policies} combined
      * with a default algorithm and returns a {@link Response} with the authorization {@link Decision}. Based on ABAC.
      *
      * @param request An authorization Request
@@ -37,7 +37,7 @@ public interface PDP {
     Response evaluate(Request request);
 
     /**
-     * Evaluates an authorization {@link Request} against a collection of {@link PolicyWrapper Policies} combined
+     * Evaluates an authorization {@link Request} against a collection of {@link Policy Policies} combined
      * with the identified algorithm and returns a {@link Response} with the authorization {@link Decision}.
      * Based on ABAC.
      *
