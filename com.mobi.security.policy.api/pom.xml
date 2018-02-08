@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  com.mobi.vfs
+  com.mobi.security.policy.api
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -26,64 +26,30 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
+        <groupId>com.mobi</groupId>
         <version>1.12.3-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>vfs</artifactId>
+    <artifactId>security.policy.api</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
     <dependencies>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-vfs2</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>rdf.orm</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-        </dependency>
-        <!-- Test Dependencies -->
-        <dependency>
-            <groupId>org.spockframework</groupId>
-            <artifactId>spock-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
+            <groupId>com.mobi</groupId>
+            <artifactId>vfs</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
-
+    
     <build>
         <plugins>
             <plugin>
@@ -93,11 +59,10 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>Mobi Virtual Filesystem</Bundle-Name>
+                        <Bundle-Name>Mobi Security Policy API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.vfs.api,
-                            com.mobi.vfs.ontologies*
+                            com.mobi.security.policy.api*
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
@@ -119,11 +84,18 @@
                         <configuration>
                             <generates>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/mobi_documents.ttl</ontologyFile>
+                                    <ontologyFile>${project.basedir}/src/main/resources/mobi_policy.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.security.policy.api.ontologies.policy</outputPackage>
+                                    <ontologyName>Policy</ontologyName>
+                                </ontology>
+                            </generates>
+                            <references>
+                                <ontology>
+                                    <ontologyFile>${basedir}/../com.mobi.vfs/src/main/resources/mobi_documents.ttl</ontologyFile>
                                     <outputPackage>com.mobi.vfs.ontologies.documents</outputPackage>
                                     <ontologyName>Documents</ontologyName>
                                 </ontology>
-                            </generates>
+                            </references>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>
                         </configuration>
                     </execution>
@@ -131,5 +103,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
