@@ -23,24 +23,24 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-import com.mobi.rdf.api.IRI;
-import org.w3c.dom.Document;
+import com.mobi.rdf.api.Literal;
+import com.mobi.security.policy.api.exception.MissingAttributeException;
+import com.mobi.security.policy.api.exception.ProcessingException;
 
-import java.util.Set;
+import java.util.List;
 
 public interface PIP {
 
     /**
-     * Retrieves the Bag of {@link AttributeValue}s resulting from evaluating the attribute with the provided ID,
-     * type, category, and issuer.
+     * Looks for the Attribute that matches the {@link AttributeDesignator}, using values from the authorization
+     * {@link Request} if needed, and returns its {@link Literal} values.
      *
-     * @param attributeId The URI ID of the attribute to find
-     * @param attributeType The URI type of the attribute to find (typically XSD datatype)
-     * @param categoryIRI The URI category with the specified attribute
-     * @param issuer A string representation of the issuer of the attribute
-     * @param request An XACML XML request object for context
-     * @return A set of attribute values of the identified attribute; empty if attribute could not be found
+     * @param attributeDesignator The aspects of an Attribute to match
+     * @param request An authorization {@link Request}
+     * @return The matched Attribute's {@link Literal} values
+     * @throws MissingAttributeException If no Attribute is found that matches the passed aspects
+     * @throws ProcessingException If some sort of problem occurs while processing the Attributes
      */
-    Set<AttributeValue> findAttribute(IRI attributeId, IRI attributeType, IRI categoryIRI, String issuer,
-                                      Document request);
+    List<Literal> findAttribute(AttributeDesignator attributeDesignator, Request request)
+            throws MissingAttributeException, ProcessingException;
 }

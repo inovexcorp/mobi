@@ -40,5 +40,8 @@
             <commit-changes-display additions="dvm.difference.additions" deletions="dvm.difference.deletions"></commit-changes-display>
             <info-message ng-if="!dvm.difference.additions.length && !dvm.difference.deletions.length">No changes to display</info-message>
         </tab>
+        <tab heading="'Commits'" active="dvm.tabs.commits">
+            <commit-history-table branch="dvm.branch" record-id="dvm.os.listItem.ontologyRecord.recordId" target-id="dvm.targetId"></commit-history-table>
+        </tab>
     </tabset>
 </div>

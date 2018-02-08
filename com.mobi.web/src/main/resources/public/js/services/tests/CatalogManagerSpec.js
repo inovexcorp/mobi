@@ -1385,6 +1385,17 @@ describe('Catalog Manager service', function() {
                 });
             flushAndVerify($httpBackend);
         });
+        it('successfully with target ID', function() {
+            var params = $httpParamSerializer({targetId: this.branchId})
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getBranchCommits(this.branchId, this.recordId, this.catalogId, this.branchId)
+                .then(function(response) {
+                    expect(response).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
     });
     describe('should create a new commit on a Branch', function() {
         beforeEach(function() {

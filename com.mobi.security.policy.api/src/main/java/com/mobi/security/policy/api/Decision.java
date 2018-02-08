@@ -29,12 +29,14 @@ public class Decision {
     public static final Decision PERMIT = new Decision("Permit");
     public static final Decision DENY = new Decision("Deny");
     public static final Decision INDETERMINATE = new Decision("Indeterminate");
+    public static final Decision NOT_APPLICABLE = new Decision("Not Applicable");
 
     public Decision(String name) {
         this.name = name;
     }
 
-    public String getName() {
+    @Override
+    public String toString() {
         return name;
     }
 }

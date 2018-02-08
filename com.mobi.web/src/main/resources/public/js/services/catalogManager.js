@@ -983,10 +983,16 @@
              * @param {string} branchId The id of the Branch to retrieve the Commits of
              * @param {string} recordId The id of the Record with the specified Branch
              * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @param {string} targetId The id of the target Branch to retrieve commits that are between that and the
+             *      branchId
              * @return {Promise} A promise that resolves with the list of Branch Commits or rejects with an error message
              */
-            self.getBranchCommits = function(branchId, recordId, catalogId) {
-                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits')
+            self.getBranchCommits = function(branchId, recordId, catalogId, targetId) {
+                var config = {
+                    params: { targetId }
+                };
+
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits', config)
                     .then(response => response.data, util.rejectError);
             }
 

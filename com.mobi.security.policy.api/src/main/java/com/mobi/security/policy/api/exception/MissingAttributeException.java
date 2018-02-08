@@ -1,4 +1,4 @@
-package com.mobi.security.policy.api;
+package com.mobi.security.policy.api.exception;
 
 /*-
  * #%L
@@ -23,14 +23,22 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-public interface PolicyService {
+import com.mobi.exception.MobiException;
 
-    /**
-     * Evaluates an authorization request against a collection of Policies and Rules and returns an AuthResponse
-     * with the authorization decision. Based on the XACML standard.
-     *
-     * @param request A representation of an authorization request
-     * @return An AuthResponse with the Decision reached by the PolicyService
-     */
-    AuthResponse evaluate(AuthRequest request);
+public class MissingAttributeException extends MobiException {
+    private static final long serialVersionUID = 8383614281468031680L;
+
+    public MissingAttributeException() {}
+
+    public MissingAttributeException(String message) {
+        super(message);
+    }
+
+    public MissingAttributeException(String message, Throwable throwable) {
+        super(message, throwable);
+    }
+
+    public MissingAttributeException(Throwable throwable) {
+        super(throwable);
+    }
 }

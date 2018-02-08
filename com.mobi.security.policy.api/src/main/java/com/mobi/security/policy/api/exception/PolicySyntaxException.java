@@ -1,4 +1,4 @@
-package com.mobi.security.policy.api;
+package com.mobi.security.policy.api.exception;
 
 /*-
  * #%L
@@ -23,22 +23,20 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-import com.mobi.rdf.api.IRI;
+public class PolicySyntaxException extends ProcessingException {
+    private static final long serialVersionUID = -2550709457492364772L;
 
-public class AttributeValue {
-    private String value;
-    private IRI type;
+    public PolicySyntaxException() {}
 
-    public AttributeValue(String value, IRI type) {
-        this.value = value;
-        this.type = type;
+    public PolicySyntaxException(String message) {
+        super(message);
     }
 
-    public String getValue() {
-        return value;
+    public PolicySyntaxException(String message, Throwable throwable) {
+        super(message, throwable);
     }
 
-    public IRI getType() {
-        return type;
+    public PolicySyntaxException(Throwable throwable) {
+        super(throwable);
     }
 }

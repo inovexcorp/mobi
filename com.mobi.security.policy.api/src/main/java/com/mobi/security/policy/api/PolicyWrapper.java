@@ -23,19 +23,35 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-public class Action {
-    private final String name;
+import com.mobi.rdf.api.IRI;
 
-    public static final Action READ = new Action("Read");
-    public static final Action CREATE = new Action("Create");
-    public static final Action UPDATE = new Action("Update");
-    public static final Action DELETE = new Action("Delete");
+import java.util.List;
+import java.util.Optional;
 
-    public Action(String name) {
-        this.name = name;
-    }
+public interface PolicyWrapper {
 
-    public String getName() {
-        return name;
-    }
+    /**
+     * The IRI ID of the Policy.
+     */
+    IRI getId();
+
+    /**
+     * The description of the Policy if set.
+     */
+    Optional<String> getDescription();
+
+    /**
+     * The IRI ID of the algorithm to use when combining the results of the Policy's {@link Rule Rules}.
+     */
+    IRI getRuleAlgorithm();
+
+    /**
+     * The {@link Target} of the Policy.
+     */
+    Target getTarget();
+
+    /**
+     * The {@link Rule Rules} of the Policy.
+     */
+    List<Rule> getRules();
 }
