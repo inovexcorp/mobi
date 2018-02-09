@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +76,16 @@ public class RestUtils {
             e.printStackTrace();
         }
         return encoded;
+    }
+
+    public static String decode(String str) {
+        String decoded = null;
+        try {
+            decoded = URLDecoder.decode(str, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return decoded;
     }
 
     /**

@@ -27,33 +27,47 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.Response;
+import com.mobi.security.policy.api.Status;
+import com.mobi.security.policy.api.exception.ProcessingException;
+import com.mobi.security.policy.pip.impl.MobiPIP;
 import org.w3c.dom.Document;
 import org.wso2.balana.Balana;
 import org.wso2.balana.PDPConfig;
+import org.wso2.balana.combine.PolicyCombiningAlgorithm;
+import org.wso2.balana.combine.xacml2.FirstApplicablePolicyAlg;
+import org.wso2.balana.combine.xacml2.OnlyOneApplicablePolicyAlg;
+import org.wso2.balana.combine.xacml3.DenyOverridesPolicyAlg;
+import org.wso2.balana.combine.xacml3.DenyUnlessPermitPolicyAlg;
+import org.wso2.balana.combine.xacml3.OrderedDenyOverridesPolicyAlg;
+import org.wso2.balana.combine.xacml3.OrderedPermitOverridesPolicyAlg;
+import org.wso2.balana.combine.xacml3.PermitOverridesPolicyAlg;
+import org.wso2.balana.combine.xacml3.PermitUnlessDenyPolicyAlg;
 import org.wso2.balana.finder.AttributeFinder;
 import org.wso2.balana.finder.AttributeFinderModule;
 import org.wso2.balana.finder.PolicyFinder;
 import org.wso2.balana.finder.PolicyFinderModule;
+import org.xml.sax.SAXException;
 
-import java.io.StringWriter;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 @Component
 public class BalanaPDP implements PDP {
 
-    private BalanaPIP balanaPIP;
+    private MobiPIP mobiPIP;
     private BalanaPRP balanaPRP;
+    private ValueFactory vf;
 
     private Balana balana;
 
@@ -63,8 +77,8 @@ public class BalanaPDP implements PDP {
     }
 
     @Reference
-    void setBalanaPIP(BalanaPIP balanaPIP) {
-        this.balanaPIP = balanaPIP;
+    void setMobiPIP(MobiPIP mobiPIP) {
+        this.mobiPIP = mobiPIP;
     }
 
     @Reference
@@ -72,26 +86,39 @@ public class BalanaPDP implements PDP {
         this.balanaPRP = balanaPRP;
     }
 
+    @Reference
+    void setVf(ValueFactory vf) {
+        this.vf = vf;
+    }
+
     @Override
     public Response evaluate(Request request) {
-        org.wso2.balana.PDP pdp = getPDP();
-        /*String result = pdp.evaluate(documentToString(request));
-
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         try {
-            return dbf.newDocumentBuilder().parse(new ByteArrayInputStream(result.getBytes()));
-        } catch (SAXException | IOException | ParserConfigurationException e) {
-            throw new MobiException(e);
-        }*/
-        return null;
+            XACMLRequest xacmlRequest = getRequest(request);
+            org.wso2.balana.PDP pdp = getPDP(
+                    vf.createIRI("urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:deny-overrides"));
+            String result = pdp.evaluate(xacmlRequest.toString());
+            return getResponse(result);
+        } catch (Exception e) {
+            return new XACMLResponse.Builder(Decision.INDETERMINATE, Status.PROCESSING_ERROR)
+                    .statusMessage(e.getMessage()).build();
+        }
     }
 
     @Override
     public Response evaluate(Request request, IRI policyAlgorithm) {
-        return null;
+        try {
+            XACMLRequest xacmlRequest = getRequest(request);
+            org.wso2.balana.PDP pdp = getPDP(policyAlgorithm);
+            String result = pdp.evaluate(xacmlRequest.toString());
+            return getResponse(result);
+        } catch (Exception e) {
+            return new XACMLResponse.Builder(Decision.INDETERMINATE, Status.PROCESSING_ERROR)
+                    .statusMessage(e.getMessage()).build();
+        }
     }
 
-    private org.wso2.balana.PDP getPDP() {
+    private org.wso2.balana.PDP getPDP(IRI policyAlgorithm) {
         PDPConfig config = balana.getPdpConfig();
 
         PolicyFinder policyFinder = config.getPolicyFinder();
@@ -101,22 +128,59 @@ public class BalanaPDP implements PDP {
 
         AttributeFinder attributeFinder = config.getAttributeFinder();
         List<AttributeFinderModule> attributeFinderModules = attributeFinder.getModules();
+        BalanaPIP balanaPIP = new BalanaPIP(vf, mobiPIP);
         attributeFinderModules.add(balanaPIP);
         attributeFinder.setModules(attributeFinderModules);
 
-        return new org.wso2.balana.PDP(new PDPConfig(attributeFinder, policyFinder, null, false));
+        PDPConfig newConfig = new PDPConfig(attributeFinder, policyFinder, null, false);
+        balanaPRP.setPDPConfig(newConfig);
+        balanaPRP.setCombiningAlg(getAlgorithm(policyAlgorithm));
+        return new org.wso2.balana.PDP(newConfig);
     }
 
-    private String documentToString(Document doc) {
-        try {
-            TransformerFactory tf = TransformerFactory.newInstance();
-            Transformer transformer = tf.newTransformer();
-            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-            StringWriter writer = new StringWriter();
-            transformer.transform(new DOMSource(doc), new StreamResult(writer));
-            return writer.toString();
-        } catch (TransformerException e) {
-            throw new IllegalStateException("Issue transforming XACML request into string");
+    private XACMLResponse getResponse(String responseStr) {
+        try (InputStream stream = new ByteArrayInputStream(responseStr.getBytes())) {
+            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            docFactory.setNamespaceAware(true);
+            Document doc = docFactory.newDocumentBuilder().parse(stream);
+            return new XACMLResponse(doc, vf);
+        } catch (ParserConfigurationException | IOException | SAXException e) {
+            throw new ProcessingException(e);
+        }
+    }
+
+    private XACMLRequest getRequest(Request request) {
+        if (request instanceof XACMLRequest) {
+            return (XACMLRequest) request;
+        }
+        XACMLRequest.Builder builder = new XACMLRequest.Builder(request.getSubjectId(), request.getResourceId(),
+                request.getActionId(), request.getRequestTime());
+        request.getSubjectAttrs().forEach(builder::addSubjectAttr);
+        request.getResourceAttrs().forEach(builder::addResourceAttr);
+        request.getActionAttrs().forEach(builder::addActionAttr);
+        return builder.build();
+    }
+
+    private PolicyCombiningAlgorithm getAlgorithm(IRI policyAlgorithm) {
+        switch (policyAlgorithm.stringValue()) {
+            case "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:deny-overrides":
+                return new DenyOverridesPolicyAlg();
+            case "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:deny-unless-permit":
+                return new DenyUnlessPermitPolicyAlg();
+            case "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:ordered-deny-overrides":
+                return new OrderedDenyOverridesPolicyAlg();
+            case "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:ordered-permit-overrides":
+                return new OrderedPermitOverridesPolicyAlg();
+            case "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:permit-overrides":
+                return new PermitOverridesPolicyAlg();
+            case "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:permit-unless-deny":
+                return new PermitUnlessDenyPolicyAlg();
+            case "urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:first-applicable":
+                return new FirstApplicablePolicyAlg();
+            case "urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:only-one-applicable":
+                return new OnlyOneApplicablePolicyAlg();
+            default:
+                throw new ProcessingException("Policy algorithm " + policyAlgorithm + " not supported");
         }
     }
 }

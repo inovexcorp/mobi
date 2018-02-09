@@ -105,6 +105,7 @@
         <module>com.mobi.sparql.cli</module>
         <module>com.mobi.security.policy.api</module>
         <module>com.mobi.security.policy.impl.xacml</module>
+        <module>com.mobi.security.policy.pip.impl</module>
     </modules>
 
     <properties>

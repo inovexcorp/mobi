@@ -23,51 +23,63 @@ package com.mobi.security.policy.impl.xacml;
  * #L%
  */
 
+import static com.mobi.persistence.utils.RepositoryResults.asModel;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.security.policy.api.PRP;
-import com.mobi.security.policy.api.PolicyWrapper;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.exception.PolicySyntaxException;
 import com.mobi.security.policy.api.exception.ProcessingException;
-import com.mobi.security.policy.api.ontologies.policy.PolicyFactory;
+import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
+import com.mobi.security.policy.api.ontologies.policy.PolicyFileFactory;
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileSystemManager;
+import org.apache.commons.vfs2.VFS;
 import org.w3c.dom.Document;
 import org.wso2.balana.AbstractPolicy;
 import org.wso2.balana.MatchResult;
+import org.wso2.balana.PDPConfig;
 import org.wso2.balana.ParsingException;
 import org.wso2.balana.PolicySet;
 import org.wso2.balana.combine.PolicyCombiningAlgorithm;
-import org.wso2.balana.combine.xacml2.FirstApplicablePolicyAlg;
+import org.wso2.balana.ctx.AbstractRequestCtx;
 import org.wso2.balana.ctx.EvaluationCtx;
+import org.wso2.balana.ctx.EvaluationCtxFactory;
+import org.wso2.balana.ctx.RequestCtxFactory;
+import org.wso2.balana.ctx.Status;
 import org.wso2.balana.finder.PolicyFinder;
 import org.wso2.balana.finder.PolicyFinderModule;
 import org.wso2.balana.finder.PolicyFinderResult;
 import org.xml.sax.SAXException;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 @Component
-public class BalanaPRP extends PolicyFinderModule implements PRP {
-    private Map<Resource, AbstractPolicy> policies = new HashMap<>();
+public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
     private PolicyCombiningAlgorithm combiningAlg;
+    private PDPConfig config;
 
     private Repository repo;
     private ValueFactory vf;
     private ModelFactory mf;
-    private PolicyFactory policyFactory;
+    private PolicyFileFactory policyFileFactory;
 
     @Reference
     void setRepo(Repository repo) {
@@ -85,14 +97,20 @@ public class BalanaPRP extends PolicyFinderModule implements PRP {
     }
 
     @Reference
-    void setPolicyFactory(PolicyFactory policyFactory) {
-        this.policyFactory = policyFactory;
+    void setPolicyFileFactory(PolicyFileFactory policyFileFactory) {
+        this.policyFileFactory = policyFileFactory;
     }
 
     @Override
     public void init(PolicyFinder policyFinder) {
-        loadPolicies();
-        combiningAlg = new FirstApplicablePolicyAlg();
+    }
+
+    public void setCombiningAlg(PolicyCombiningAlgorithm policyAlgorithm) {
+        combiningAlg = policyAlgorithm;
+    }
+
+    public void setPDPConfig(PDPConfig config) {
+        this.config = config;
     }
 
     @Override
@@ -101,14 +119,21 @@ public class BalanaPRP extends PolicyFinderModule implements PRP {
     }
 
     @Override
-    public List<PolicyWrapper> findPolicy(Request request) throws ProcessingException, PolicySyntaxException {
-        return null;
+    public List<XACMLPolicy> findPolicies(Request request) throws ProcessingException, PolicySyntaxException {
+        try {
+            AbstractRequestCtx requestCtx = RequestCtxFactory.getFactory().getRequestCtx(request.toString());
+            EvaluationCtx context = EvaluationCtxFactory.getFactory().getEvaluationCtx(requestCtx, config);
+            return findPolicies(context).stream()
+                    .map(abstractPolicy -> new XACMLPolicy(abstractPolicy, vf))
+                    .collect(Collectors.toList());
+        } catch (ParsingException e) {
+            throw new ProcessingException(e);
+        }
     }
 
-    @Override
-    public PolicyFinderResult findPolicy(EvaluationCtx context) {
+    private List<AbstractPolicy> findPolicies(EvaluationCtx context) {
         ArrayList<AbstractPolicy> selectedPolicies = new ArrayList<>();
-        Set<Map.Entry<Resource, AbstractPolicy>> entrySet = policies.entrySet();
+        Set<Map.Entry<Resource, AbstractPolicy>> entrySet = loadPolicies().entrySet();
 
         // iterate through all the policies we currently have loaded
         for (Map.Entry<Resource, AbstractPolicy> entry : entrySet) {
@@ -119,7 +144,13 @@ public class BalanaPRP extends PolicyFinderModule implements PRP {
 
             // if target matching was indeterminate, then return the error
             if (result == MatchResult.INDETERMINATE) {
-                return new PolicyFinderResult(match.getStatus());
+                Status status = match.getStatus();
+                if (status.getCode().contains("urn:oasis:names:tc:xacml:1.0:status:syntax-error")) {
+                    throw new PolicySyntaxException(status.getMessage());
+                }
+                if (status.getCode().contains("urn:oasis:names:tc:xacml:1.0:status:processing-error")) {
+                    throw new ProcessingException(status.getMessage());
+                }
             }
 
             // see if the target matched
@@ -128,6 +159,20 @@ public class BalanaPRP extends PolicyFinderModule implements PRP {
                 // this is the first match we've found, so remember it
                 selectedPolicies.add(policy);
             }
+        }
+        return selectedPolicies;
+    }
+
+    @Override
+    public PolicyFinderResult findPolicy(EvaluationCtx context) {
+        List<AbstractPolicy> selectedPolicies;
+        try {
+            selectedPolicies = findPolicies(context);
+        } catch (PolicySyntaxException e) {
+            return new PolicyFinderResult(new Status(Collections.singletonList(XACML.SYNTAX_ERROR), e.getMessage()));
+        } catch (ProcessingException e) {
+            return new PolicyFinderResult(new Status(Collections.singletonList(XACML.PROCESSING_ERROR),
+                    e.getMessage()));
         }
 
         // no errors happened during the search, so now take the right
@@ -142,73 +187,40 @@ public class BalanaPRP extends PolicyFinderModule implements PRP {
         }
     }
 
-    private void loadPolicies() {
-        policies.clear();
-        String policy = "<Policy xmlns=\"urn:oasis:names:tc:xacml:3.0:core:schema:wd-17\" PolicyId=\"http://mobi.com/policies/policy1\" RuleCombiningAlgId=\"urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit\" Version=\"1.0\">\n" +
-                "    <Description>Who can create an OntologyRecord in the Local Catalog?</Description>\n" +
-                "    <Target>\n" +
-                "        <AnyOf>\n" +
-                "            <AllOf>\n" +
-                "                <Match MatchId=\"urn:oasis:names:tc:xacml:1.0:function:string-equal\">\n" +
-                "                    <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">http://mobi.com/catalogs/local-catalog</AttributeValue>\n" +
-                "                    <AttributeDesignator AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\" Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:resource\" DataType=\"http://www.w3.org/2001/XMLSchema#string\" MustBePresent=\"true\"/>\n" +
-                "                </Match>\n" +
-                "            </AllOf>\n" +
-                "        </AnyOf>\n" +
-                "    </Target>\n" +
-                "    <Rule Effect=\"Permit\" RuleId=\"urn:rule1\">\n" +
-                "        <Description>UserX can create an OntologyRecord in the Local Catalog</Description>\n" +
-                "        <Condition>\n" +
-                "            <Apply FunctionId=\"urn:oasis:names:tc:xacml:1.0:function:and\">\n" +
-                "                <Apply FunctionId=\"urn:oasis:names:tc:xacml:1.0:function:any-of\">\n" +
-                "                    <Function FunctionId=\"urn:oasis:names:tc:xacml:1.0:function:string-equal\"/>\n" +
-                "                    <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">create</AttributeValue>\n" +
-                "                    <AttributeDesignator AttributeId=\"urn:oasis:names:tc:xacml:1.0:action:action-id\" Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:action\" DataType=\"http://www.w3.org/2001/XMLSchema#string\" MustBePresent=\"true\"/>\n" +
-                "                </Apply>\n" +
-                "                <Apply FunctionId=\"urn:oasis:names:tc:xacml:1.0:function:any-of\">\n" +
-                "                    <Function FunctionId=\"urn:oasis:names:tc:xacml:1.0:function:string-equal\"/>\n" +
-                "                    <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">http://mobi.com/ontologies/ontology-editor#OntologyRecord</AttributeValue>\n" +
-                "                    <AttributeDesignator AttributeId=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\" Category=\"urn:oasis:names:tc:xacml:3.0:attribute-category:action\" DataType=\"http://www.w3.org/2001/XMLSchema#string\" MustBePresent=\"true\"/>\n" +
-                "                </Apply>\n" +
-                "                <Apply FunctionId=\"urn:oasis:names:tc:xacml:1.0:function:any-of\">\n" +
-                "                    <Function FunctionId=\"urn:oasis:names:tc:xacml:1.0:function:string-equal\"/>\n" +
-                "                    <AttributeValue DataType=\"http://www.w3.org/2001/XMLSchema#string\">http://mobi.com/roles/admin</AttributeValue>\n" +
-                "                    <AttributeDesignator AttributeId=\"http://mobi.com/ontologies/user/management#hasUserRole\" Category=\"urn:oasis:names:tc:xacml:1.0:subject-category:access-subject\" DataType=\"http://www.w3.org/2001/XMLSchema#string\" MustBePresent=\"true\"/>\n" +
-                "                </Apply>\n" +
-                "            </Apply>\n" +
-                "        </Condition>\n" +
-                "    </Rule>\n" +
-                "    <Rule Effect=\"Deny\" RuleId=\"urn:denyRule\" />\n" +
-                "</Policy>";
-        InputStream stream = null;
-        try {
-            stream = new ByteArrayInputStream(policy.getBytes());
-            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-            docFactory.setNamespaceAware(true);
-            Document doc = docFactory.newDocumentBuilder().parse(stream);
-            policies.put(vf.createIRI("http://mobi.com/policies/policy1"), org.wso2.balana.Policy.getInstance(doc.getDocumentElement()));
-        } catch (SAXException | IOException | ParserConfigurationException | ParsingException e) {
-            e.printStackTrace();
-        } finally {
-            if (stream != null) {
-                try {
-                    stream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-        /*try (RepositoryConnection conn = repo.getConnection()) {
+    private Map<Resource, AbstractPolicy> loadPolicies() {
+        Map<Resource, AbstractPolicy> policies = new HashMap<>();
+        try (RepositoryConnection conn = repo.getConnection()) {
             conn.getStatements(null, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
-                    vf.createLiteral(Policy.TYPE)).forEach(statement -> {
+                    vf.createIRI(PolicyFile.TYPE)).forEach(statement -> {
                         Resource policyIRI = statement.getSubject();
-                        if (!policies.keySet().contains(policyIRI)) {
-                            Model policyModel = asModel(conn.getStatements(null, null, null, policyIRI), mf);
-                            Policy policy = policyFactory.getExisting(policyIRI, policyModel).orElseThrow(() ->
-                                    new IllegalStateException("Could not create Policy"));
-                            policies.put(policyIRI, transform(policy));
-                        }
-                    });*/
+                        Model policyModel = asModel(conn.getStatements(null, null, null, policyIRI), mf);
+                        PolicyFile policyFile = policyFileFactory.getExisting(policyIRI, policyModel).orElseThrow(() ->
+                                new ProcessingException("Could not create Policy"));
+                        AbstractPolicy policy = transform(policyFile);
+                        policies.put(vf.createIRI(policy.getId().toString()), policy);
+                    });
+        }
+        return policies;
+    }
+
+    private AbstractPolicy transform(PolicyFile policy) {
+        try {
+            FileSystemManager manager = VFS.getManager();
+            FileObject fileObject = manager.resolveFile(policy.getResource().stringValue());
+            if (fileObject.isFile()) {
+                try (InputStream stream = fileObject.getContent().getInputStream()) {
+                    DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+                    docFactory.setNamespaceAware(true);
+                    Document doc = docFactory.newDocumentBuilder().parse(stream);
+                    return org.wso2.balana.Policy.getInstance(doc.getDocumentElement());
+                }
+            } else {
+                throw new ProcessingException("Could not retrieve Policy");
+            }
+        } catch (SAXException | ParsingException e) {
+            throw new PolicySyntaxException("Error parsing Policy");
+        } catch (ParserConfigurationException | IOException e) {
+            throw new ProcessingException("Error retrieving Policy");
         }
     }
 }

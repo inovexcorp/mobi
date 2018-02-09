@@ -23,26 +23,19 @@ package com.mobi.security.policy.impl.xacml;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
-import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.security.policy.api.AttributeDesignator;
-import com.mobi.security.policy.api.PIP;
-import com.mobi.security.policy.api.Request;
-import com.mobi.security.policy.api.exception.MissingAttributeException;
-import com.mobi.security.policy.api.exception.ProcessingException;
-import com.mobi.vocabularies.xsd.XSD;
+import com.mobi.security.policy.api.BasicAttributeDesignator;
+import com.mobi.security.policy.pip.impl.MobiPIP;
+import org.wso2.balana.ProcessingException;
+import org.wso2.balana.attr.AnyURIAttribute;
 import org.wso2.balana.attr.AttributeValue;
 import org.wso2.balana.attr.BagAttribute;
+import org.wso2.balana.attr.BooleanAttribute;
+import org.wso2.balana.attr.DateTimeAttribute;
+import org.wso2.balana.attr.DoubleAttribute;
+import org.wso2.balana.attr.IntegerAttribute;
 import org.wso2.balana.attr.StringAttribute;
 import org.wso2.balana.cond.EvaluationResult;
 import org.wso2.balana.ctx.EvaluationCtx;
@@ -53,33 +46,24 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Component
-public class BalanaPIP extends AttributeFinderModule implements PIP {
+public class BalanaPIP extends AttributeFinderModule {
 
-    private Repository repo;
     private ValueFactory vf;
+    private MobiPIP pip;
 
     private Map<String, String> categoryIds = new HashMap<>();
 
-    @Activate
-    public void setUp() {
+    public BalanaPIP(ValueFactory vf, MobiPIP mobiPIP) {
+        this.vf = vf;
+        this.pip = mobiPIP;
         categoryIds.put(XACML.SUBJECT_CATEGORY, XACML.SUBJECT_ID);
         categoryIds.put(XACML.RESOURCE_CATEGORY, XACML.RESOURCE_ID);
-    }
-
-    @Reference
-    void setRepo(Repository repo) {
-        this.repo = repo;
-    }
-
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
     }
 
     @Override
@@ -93,55 +77,50 @@ public class BalanaPIP extends AttributeFinderModule implements PIP {
     }
 
     @Override
-    public List<Literal> findAttribute(AttributeDesignator attributeDesignator, Request request)
-            throws MissingAttributeException, ProcessingException {
-        return null;
-    }
-
-    @Override
     public EvaluationResult findAttribute(URI attributeType, URI attributeId, String issuer, URI category,
                                           EvaluationCtx context) {
         if (!categoryIds.containsKey(category.toString())) {
-            // TODO: Return null result
-            return new EvaluationResult(new Status(Collections.singletonList(Status.STATUS_PROCESSING_ERROR)));
-        }
-        EvaluationResult idResult = context.getAttribute(getURI(XSD.STRING),
-                getURI(categoryIds.get(category.toString())), issuer, category);
-        if (idResult == null || idResult.getAttributeValue() == null || !idResult.getAttributeValue().isBag()) {
-            // TODO: Return null result
-            return new EvaluationResult(new Status(Collections.singletonList(Status.STATUS_PROCESSING_ERROR)));
+            return new EvaluationResult(new Status(Collections.singletonList(Status.STATUS_PROCESSING_ERROR),
+                    "Unsupported category"));
         }
 
-        BagAttribute bagAttribute = (BagAttribute) idResult.getAttributeValue();
-        Resource id = vf.createIRI(((AttributeValue) bagAttribute.iterator().next()).encode());
-        IRI prop = vf.createIRI(attributeId.toString());
-
-        try (RepositoryConnection conn = repo.getConnection()) {
-            List<Statement> statements = RepositoryResults.asList(conn.getStatements(id, prop, null));
-            List<AttributeValue> attributeValues = new ArrayList<>();
-            if (statements.size() == 0) {
-                // TODO: Return null result
-                return new EvaluationResult(new Status(Collections.singletonList(Status.STATUS_PROCESSING_ERROR)));
-            } else if (statements.size() == 1) {
-                Statement statement = statements.get(0);
-                Value value = statement.getObject();
-                attributeValues.add(new StringAttribute(value.stringValue()));
-            } else {
-                statements.stream()
-                        .map(Statement::getObject)
-                        .map(Value::stringValue)
-                        .map(StringAttribute::new)
-                        .forEach(attributeValues::add);
-            }
-            return new EvaluationResult(new BagAttribute(attributeType, attributeValues));
+        BasicAttributeDesignator designator = new BasicAttributeDesignator(vf.createIRI(attributeId.toString()),
+                vf.createIRI(category.toString()), vf.createIRI(attributeType.toString()));
+        List<Literal> values = pip.findAttribute(designator, new XACMLRequest(context.getRequestCtx(), vf));
+        List<AttributeValue> attributeValues = new ArrayList<>();
+        if (values.size() == 0) {
+            return new EvaluationResult(new Status(Collections.singletonList(Status.STATUS_MISSING_ATTRIBUTE)));
+        } else if (values.size() == 1) {
+            attributeValues.add(getAttributeValue(values.get(0)));
+        } else {
+            values.stream()
+                    .map(this::getAttributeValue)
+                    .forEach(attributeValues::add);
         }
+        return new EvaluationResult(new BagAttribute(attributeType, attributeValues));
     }
 
-    private URI getURI(String uri) {
-        try {
-            return new URI(uri);
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Not a valid URI", e);
+    private AttributeValue getAttributeValue(Literal literal) {
+        IRI datatype = literal.getDatatype();
+        switch (datatype.stringValue()) {
+            case "http://www.w3.org/2001/XMLSchema#string":
+                return new StringAttribute(literal.stringValue());
+            case "http://www.w3.org/2001/XMLSchema#boolean":
+                return BooleanAttribute.getInstance(literal.booleanValue());
+            case "http://www.w3.org/2001/XMLSchema#double":
+                return new DoubleAttribute(literal.doubleValue());
+            case "http://www.w3.org/2001/XMLSchema#integer":
+                return new IntegerAttribute(literal.longValue());
+            case "http://www.w3.org/2001/XMLSchema#anyURI":
+                try {
+                    return new AnyURIAttribute(new URI(literal.stringValue()));
+                } catch (URISyntaxException e) {
+                    throw new ProcessingException("Not a valid URI");
+                }
+            case "https://www.w3.org/2001/XMLSchema#dateTime":
+                return new DateTimeAttribute(new Date(literal.dateTimeValue().toInstant().toEpochMilli()));
+            default:
+                throw new ProcessingException("Datatype " + datatype + " is not supported");
         }
     }
 }
