@@ -27,6 +27,7 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
@@ -56,13 +57,15 @@ import org.xml.sax.SAXException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-@Component
+@Component(immediate = true, provide = {PDP.class, BalanaPDP.class})
 public class BalanaPDP implements PDP {
 
     private MobiPIP mobiPIP;
@@ -89,6 +92,22 @@ public class BalanaPDP implements PDP {
     @Reference
     void setVf(ValueFactory vf) {
         this.vf = vf;
+    }
+
+    @Override
+    public Request createRequest(IRI subjectId, Map<String, Literal> subjectAttrs, IRI resourceId,
+                                 Map<String, Literal> resourceAttrs, IRI actionId, Map<String, Literal> actionAttrs) {
+        XACMLRequest.Builder builder = new XACMLRequest.Builder(subjectId, resourceId, actionId, OffsetDateTime.now());
+        if (subjectAttrs != null) {
+            subjectAttrs.forEach(builder::addSubjectAttr);
+        }
+        if (resourceAttrs != null) {
+            resourceAttrs.forEach(builder::addResourceAttr);
+        }
+        if (actionAttrs != null) {
+            actionAttrs.forEach(builder::addActionAttr);
+        }
+        return builder.build();
     }
 
     @Override

@@ -71,7 +71,7 @@ import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-@Component
+@Component(immediate = true, provide = {PRP.class, BalanaPRP.class})
 public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
     private PolicyCombiningAlgorithm combiningAlg;
     private PDPConfig config;

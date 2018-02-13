@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Component
+@Component(immediate = true, provide = {PIP.class, MobiPIP.class})
 public class MobiPIP implements PIP {
 
     private String PROP_PATH_NAMESPACE = "http://mobi.com/policy/prop-path";
