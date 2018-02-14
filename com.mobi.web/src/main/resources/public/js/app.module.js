@@ -178,7 +178,9 @@
                 } else {
                     var ontologyHasChanges = _.some(ontologyStateService.list, ontologyStateService.hasChanges);
                     var mappingHasChanges = mapperStateService.isMappingChanged();
-                    return ontologyHasChanges || mappingHasChanges;
+                    if (ontologyHasChanges || mappingHasChanges) {
+                        return true;
+                    }
                 }
             }
         }
