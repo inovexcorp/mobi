@@ -21,7 +21,7 @@
  * #L%
  */
 describe('SPARQL Manager service', function() {
-    var sparqlManagerSvc, $q, scope, $httpBackend, $httpParamSerializer, windowSvc, utilSvc;
+    var sparqlManagerSvc, $q, scope, $httpBackend, $httpParamSerializer, utilSvc;
 
     beforeEach(function() {
         module('sparqlManager');
@@ -29,19 +29,12 @@ describe('SPARQL Manager service', function() {
         mockHttpService();
         injectRestPathConstant();
 
-        module(function($provide) {
-            $provide.service('$window', function() {
-                this.location = '';
-            });
-        });
-
-        inject(function(sparqlManagerService, _$q_, _$rootScope_, _$httpBackend_, _$httpParamSerializer_, _$window_, _utilService_, _httpService_) {
+        inject(function(sparqlManagerService, _$q_, _$rootScope_, _$httpBackend_, _$httpParamSerializer_, _utilService_, _httpService_) {
             sparqlManagerSvc = sparqlManagerService;
             $q = _$q_;
             scope = _$rootScope_;
             $httpBackend = _$httpBackend_;
             $httpParamSerializer = _$httpParamSerializer_;
-            windowSvc = _$window_;
             utilSvc = _utilService_;
             httpSvc = _httpService_;
         });
@@ -55,7 +48,6 @@ describe('SPARQL Manager service', function() {
         scope = null;
         $httpBackend = null;
         $httpParamSerializer = null;
-        windowSvc = null;
         utilSvc = null;
     });
 
@@ -320,20 +312,19 @@ describe('SPARQL Manager service', function() {
             sparqlManagerSvc.datasetRecordIRI = 'dataset';
             this.params.dataset = sparqlManagerSvc.datasetRecordIRI;
             sparqlManagerSvc.downloadResults(this.params.fileType);
-            expect(windowSvc.location).toBe('/mobirest/sparql?' + $httpParamSerializer(this.params));
+            expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/sparql?' + $httpParamSerializer(this.params));
         });
         it('with a file name', function() {
             this.params.fileName = 'test';
             sparqlManagerSvc.downloadResults(this.params.fileType, this.params.fileName);
-            expect(windowSvc.location).toBe('/mobirest/sparql?' + $httpParamSerializer(this.params));
+            expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/sparql?' + $httpParamSerializer(this.params));
         });
         it('without a file name', function() {
             sparqlManagerSvc.downloadResults(this.params.fileType);
-            expect(windowSvc.location).toBe('/mobirest/sparql?' + $httpParamSerializer(this.params));
+            expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/sparql?' + $httpParamSerializer(this.params));
 
-            windowSvc.location = '';
             sparqlManagerSvc.downloadResults(this.params.fileType, '');
-            expect(windowSvc.location).toBe('/mobirest/sparql?' + $httpParamSerializer(this.params));
+            expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/sparql?' + $httpParamSerializer(this.params));
         });
     });
 });

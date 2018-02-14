@@ -44,10 +44,10 @@
     <imports-overlay ng-if="dvm.showNewOverlay" on-submit="dvm.setIndirectImports()" on-close="dvm.showNewOverlay = false"></imports-overlay>
     <confirmation-overlay ng-if="dvm.showRemoveOverlay" header-text="'Remove Import'" confirm-click="dvm.remove()" cancel-click="dvm.showRemoveOverlay = false" confirm-text="'Yes'" cancel-text="'No'">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <div ng-if="dvm.os.hasChanges(dvm.os.listItem.ontologyRecord.recordId)">
+        <div ng-if="dvm.os.hasChanges(dvm.os.listItem)">
             <p><strong>NOTE: You have some unsaved changes.</strong></p>
             <p>Would you like to save those changes and remove the import: <strong>{{dvm.url}}</strong>?</p>
         </div>
-        <p ng-if="!dvm.os.hasChanges(dvm.os.listItem.ontologyRecord.recordId)">Are you sure you want to remove the import: <strong>{{dvm.url}}</strong>?</p>
+        <p ng-if="!dvm.os.hasChanges(dvm.os.listItem)">Are you sure you want to remove the import: <strong>{{dvm.url}}</strong>?</p>
     </confirmation-overlay>
 </div>
