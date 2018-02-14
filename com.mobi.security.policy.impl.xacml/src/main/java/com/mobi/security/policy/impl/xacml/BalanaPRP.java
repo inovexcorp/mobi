@@ -81,7 +81,7 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
     private ModelFactory mf;
     private PolicyFileFactory policyFileFactory;
 
-    @Reference
+    @Reference(target = "(id=system)")
     void setRepo(Repository repo) {
         this.repo = repo;
     }

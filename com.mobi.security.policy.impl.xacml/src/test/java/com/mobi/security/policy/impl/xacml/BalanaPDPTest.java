@@ -64,7 +64,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     private IRI userX = VALUE_FACTORY.createIRI("http://mobi.com/users/UserX");
     private IRI userY = VALUE_FACTORY.createIRI("http://mobi.com/users/UserY");
     private IRI userZ = VALUE_FACTORY.createIRI("http://mobi.com/users/UserZ");
-    private IRI resource = VALUE_FACTORY.createIRI("http://mobi.com/catalogs/local-catalog");
+    private IRI resource = VALUE_FACTORY.createIRI("http://mobi.com/catalog-local");
     private IRI createAction = VALUE_FACTORY.createIRI("http://mobi.com/ontologies/policy#Create");
     private Literal actionType = VALUE_FACTORY.createLiteral("http://mobi.com/ontologies/ontology-editor#OntologyRecord");
 

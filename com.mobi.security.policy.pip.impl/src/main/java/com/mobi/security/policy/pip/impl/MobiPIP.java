@@ -58,7 +58,7 @@ public class MobiPIP implements PIP {
     private Repository repo;
     private ValueFactory vf;
 
-    @Reference
+    @Reference(target = "(id=system)")
     public void setRepo(Repository repo) {
         this.repo = repo;
     }
