@@ -529,6 +529,19 @@ public interface CatalogUtilsService {
     Difference getRevisionChanges(Resource commitId, RepositoryConnection conn);
 
     /**
+     * Gets the commit chain between two commits, i.e. the list of commits between {@code sourceCommitId} and
+     * {@code targetCommitId}.
+     *
+     * @param sourceCommitId Source commit
+     * @param targetCommitId Target commit
+     * @param conn           Repo connection
+     * @return Commit chain between two commits
+     * @throws IllegalArgumentException Thrown if either Commit could not be found or the Commits have no common parent.
+     * @throws IllegalStateException Thrown if a Commit in either chain does not have the additions/deletions set.
+     */
+    List<Resource> getDifferenceChain(Resource sourceCommitId, Resource targetCommitId, RepositoryConnection conn);
+
+    /**
      * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference. The
      * statements contained in the returned Difference will have a context that matches the tracked quad. That is,
      * tracked triples will have no context and tracked quads will have a context that matches the data named graph.
