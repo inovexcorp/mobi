@@ -176,7 +176,7 @@ describe('Mapping Manager service', function() {
         it('default format', function() {
             mappingManagerSvc.downloadMapping('mapping');
             expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/mappings/mapping?format=jsonld');
-            expect(windowSvc.location).toBe('/mobirest/mappings/mapping?format=jsonld');*/
+            expect(windowSvc.location).toBe('/mobirest/mappings/mapping?format=jsonld');
         });
     });
     describe('should delete a mapping by id', function() {
