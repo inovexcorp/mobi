@@ -104,7 +104,7 @@
                                 .then(() => os.afterSave(), $q.reject)
                                 .then(() => os.updateOntology(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, os.listItem.upToDate, os.listItem.inProgressCommit), $q.reject)
                                 .then(() => {
-                                    os.listItem.isSaved = os.isCommittable(os.listItem.ontologyRecord.recordId);
+                                    os.listItem.isSaved = os.isCommittable(os.listItem);
                                     dvm.onSubmit();
                                     dvm.onClose();
                                 }, errorMessage => onError(errorMessage, tabKey));

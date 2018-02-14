@@ -59,7 +59,7 @@
                             .then(() => dvm.os.afterSave(), $q.reject)
                             .then(() => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.upToDate, dvm.os.listItem.inProgressCommit), $q.reject)
                             .then(() => {
-                                dvm.os.listItem.isSaved = dvm.os.isCommittable(dvm.os.listItem.ontologyRecord.recordId);
+                                dvm.os.listItem.isSaved = dvm.os.isCommittable(dvm.os.listItem);
                                 dvm.setIndirectImports();
                                 dvm.showRemoveOverlay = false;
                             }, errorMessage => dvm.error = errorMessage);
