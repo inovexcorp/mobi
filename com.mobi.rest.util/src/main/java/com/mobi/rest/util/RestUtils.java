@@ -64,7 +64,7 @@ public class RestUtils {
      * @return The URL encoded version of the passed string.
      */
     public static String encode(String str) {
-        String encoded = null;
+        String encoded;
         try {
             encoded = URLEncoder.encode(str, "UTF-8").replaceAll("%28", "(")
                     .replaceAll("%29", ")")
@@ -73,17 +73,23 @@ public class RestUtils {
                     .replaceAll("%21", "!")
                     .replaceAll("%7E", "~");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            throw new IllegalStateException(e);
         }
         return encoded;
     }
 
+    /**
+     * Decodes the passed string that is encoded using percent encoding.
+     *
+     * @param str The string to be decoded.
+     * @return The decoded version of the passed URL encoded string.
+     */
     public static String decode(String str) {
-        String decoded = null;
+        String decoded;
         try {
             decoded = URLDecoder.decode(str, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            throw new IllegalStateException(e);
         }
         return decoded;
     }
