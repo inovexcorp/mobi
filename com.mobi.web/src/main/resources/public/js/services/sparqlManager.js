@@ -37,10 +37,6 @@
         /**
          * @ngdoc service
          * @name sparqlManager.service:sparqlManagerService
-         * @requires $http
-         * @requires $q
-         * @requires $window
-         * @requires $httpParamSerializer
          * @requires util.service:utilService
          * @requires httpService.service:httpService
          *
@@ -50,9 +46,9 @@
          */
         .service('sparqlManagerService', sparqlManagerService);
 
-        sparqlManagerService.$inject = ['$http', '$q', '$window', '$httpParamSerializer', 'utilService', 'httpService', 'REST_PREFIX'];
+        sparqlManagerService.$inject = ['$http', '$q', '$httpParamSerializer', 'utilService', 'httpService', 'REST_PREFIX'];
 
-        function sparqlManagerService($http, $q, $window, $httpParamSerializer, utilService, httpService, REST_PREFIX) {
+        function sparqlManagerService($http, $q, $httpParamSerializer, utilService, httpService, REST_PREFIX) {
             var prefix = REST_PREFIX + 'sparql';
             var self = this;
             var util = utilService;
@@ -296,7 +292,7 @@
                 if (self.datasetRecordIRI) {
                     paramsObj.dataset = self.datasetRecordIRI;
                 }
-                $window.location = prefix + '?' + $httpParamSerializer(paramsObj);
+                util.startDownload(prefix + '?' + $httpParamSerializer(paramsObj));
             }
             /**
              * @ngdoc method

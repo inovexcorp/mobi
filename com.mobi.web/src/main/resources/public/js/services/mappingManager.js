@@ -37,10 +37,6 @@
         /**
          * @ngdoc service
          * @name mappingManager.service:mappingManagerService
-         * @requires $window
-         * @requires $filter
-         * @requires $http
-         * @requires $q
          * @requires prefixes.service:prefixes
          * @requires ontologyManager.service:ontologyManagerService
          * @requires uuid
@@ -52,9 +48,9 @@
          */
         .service('mappingManagerService', mappingManagerService);
 
-        mappingManagerService.$inject = ['$window', '$filter', '$http', '$q', 'utilService', 'ontologyManagerService', 'prefixes', 'uuid', 'REST_PREFIX'];
+        mappingManagerService.$inject = ['$filter', '$http', '$q', 'utilService', 'ontologyManagerService', 'prefixes', 'uuid', 'REST_PREFIX'];
 
-        function mappingManagerService($window, $filter, $http, $q, utilService, ontologyManagerService, prefixes, uuid, REST_PREFIX) {
+        function mappingManagerService($filter, $http, $q, utilService, ontologyManagerService, prefixes, uuid, REST_PREFIX) {
             var self = this,
                 om = ontologyManagerService,
                 util = utilService,
@@ -148,8 +144,8 @@
              * @param {string} mappingId The IRI for the mapping
              * @param {string} format the RDF serialization to retrieve the mapping in
              */
-            self.downloadMapping = function(mappingId, format) {
-                $window.location = prefix + '/' + encodeURIComponent(mappingId) + '?format=' + format;
+            self.downloadMapping = function(mappingId, format = 'jsonld') {
+                util.startDownload(prefix + '/' + encodeURIComponent(mappingId) + '?format=' + (format || 'jsonld'));
             }
             /**
              * @ngdoc method
