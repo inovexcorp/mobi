@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology Manager service', function() {
-    var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, windowSvc, util, paramSerializer, httpSvc;
+    var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, util, paramSerializer, httpSvc;
 
     beforeEach(function() {
         module('ontologyManager');
@@ -31,18 +31,11 @@ describe('Ontology Manager service', function() {
         mockHttpService();
         injectRestPathConstant();
 
-        module(function($provide) {
-            $provide.service('$window', function() {
-                this.location = '';
-            });
-        });
-
-        inject(function(ontologyManagerService, _$httpBackend_, _$q_, _$rootScope_, _$window_, _catalogManagerService_, _prefixes_, _utilService_, $httpParamSerializer, _httpService_) {
+        inject(function(ontologyManagerService, _$httpBackend_, _$q_, _$rootScope_, _catalogManagerService_, _prefixes_, _utilService_, $httpParamSerializer, _httpService_) {
             ontologyManagerSvc = ontologyManagerService;
             $httpBackend = _$httpBackend_;
             $q = _$q_;
             scope = _$rootScope_;
-            windowSvc = _$window_;
             catalogManagerSvc = _catalogManagerService_;
             prefixes = _prefixes_;
             util = _utilService_;
@@ -206,7 +199,6 @@ describe('Ontology Manager service', function() {
         scope = null;
         prefixes = null;
         $q = null;
-        windowSvc = null;
         util = null;
         paramSerializer = null;
         httpSvc = null;
@@ -453,22 +445,38 @@ describe('Ontology Manager service', function() {
             }));
         });
     });
-    describe('downloadOntology should set the $window.location properly', function() {
-        it('with a format', function() {
-            ontologyManagerSvc.downloadOntology(this.recordId, this.branchId, this.commitId, 'turtle');
-            expect(windowSvc.location).toBe('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?branchId=' + encodeURIComponent(this.branchId) + '&commitId=' + encodeURIComponent(this.commitId) + '&fileName=ontology&rdfFormat=turtle');
+    describe('downloadOntology should call the util.startDownload method properly', function() {
+        beforeEach(function () {
+            this.params = {
+                branchId: this.branchId,
+                commitId: this.commitId,
+                fileName: 'ontology',
+                rdfFormat: 'jsonld'
+            };
         });
-        it('without a format', function() {
+        it('with a format and no fileName', function() {
+            this.params.rdfFormat = 'turtle';
+            var params = paramSerializer(this.params);
+            ontologyManagerSvc.downloadOntology(this.recordId, this.branchId, this.commitId, 'turtle');
+            expect(util.startDownload).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?' + params);
+        });
+        it('without a format or a fileName', function() {
+            var params = paramSerializer(this.params);
             ontologyManagerSvc.downloadOntology(this.recordId, this.branchId, this.commitId);
-            expect(windowSvc.location).toBe('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?branchId=' + encodeURIComponent(this.branchId) + '&commitId=' + encodeURIComponent(this.commitId) + '&fileName=ontology&rdfFormat=jsonld');
+            expect(util.startDownload).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?' + params);
         });
-        it('with a fileName', function() {
+        it('with a format and fileName', function() {
+            this.params.rdfFormat = 'turtle';
+            this.params.fileName = 'fileName';
+            var params = paramSerializer(this.params);
             ontologyManagerSvc.downloadOntology(this.recordId, this.branchId, this.commitId, 'turtle', 'fileName');
-            expect(windowSvc.location).toBe('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?branchId=' + encodeURIComponent(this.branchId) + '&commitId=' + encodeURIComponent(this.commitId) + '&fileName=fileName&rdfFormat=turtle');
+            expect(util.startDownload).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?' + params);
         });
-        it('without a fileName', function() {
-            ontologyManagerSvc.downloadOntology(this.recordId, this.branchId, this.commitId, 'turtle');
-            expect(windowSvc.location).toBe('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?branchId=' + encodeURIComponent(this.branchId) + '&commitId=' + encodeURIComponent(this.commitId) + '&fileName=ontology&rdfFormat=turtle');
+        it('without a format and with a fileName', function() {
+            this.params.fileName = 'fileName';
+            var params = paramSerializer(this.params);
+            ontologyManagerSvc.downloadOntology(this.recordId, this.branchId, this.commitId, undefined, 'fileName');
+            expect(util.startDownload).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?' + params);
         });
     });
     describe('getOntology hits the proper endpoint', function() {
