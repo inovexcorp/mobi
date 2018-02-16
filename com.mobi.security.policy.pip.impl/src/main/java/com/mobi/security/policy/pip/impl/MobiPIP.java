@@ -28,8 +28,6 @@ import static com.mobi.rest.util.RestUtils.decode;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.Bindings;
-import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
@@ -43,17 +41,22 @@ import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.exception.MissingAttributeException;
 import com.mobi.security.policy.api.exception.ProcessingException;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Component(immediate = true, provide = {PIP.class, MobiPIP.class})
 public class MobiPIP implements PIP {
 
-    private String PROP_PATH_NAMESPACE = "http://mobi.com/policy/prop-path";
-    private String PROP_PATH_QUERY = "SELECT ?value\nWHERE {\n?sub %s ?value .\n}";
+    static final String PROP_PATH_NAMESPACE = "http://mobi.com/policy/prop-path";
+    private static final String PROP_PATH_QUERY = "SELECT ?value WHERE { ?sub %s ?value .}";
+    static final String SUBJECT_CATEGORY = "urn:oasis:names:tc:xacml:1.0:subject-category:access-subject";
+    static final String RESOURCE_CATEGORY = "urn:oasis:names:tc:xacml:3.0:attribute-category:resource";
+    static final String ACTION_CATEGORY = "urn:oasis:names:tc:xacml:3.0:attribute-category:action";
+    static final String ENVIRONMENT_CATEGORY = "urn:oasis:names:tc:xacml:3.0:attribute-category:environment";
+    static final String CURRENT_DATE_TIME = "urn:oasis:names:tc:xacml:1.0:environment:current-dateTime";
 
     private Repository repo;
     private ValueFactory vf;
@@ -75,33 +78,33 @@ public class MobiPIP implements PIP {
         IRI category = attributeDesignator.category();
         IRI sub;
         switch (category.stringValue()) {
-            case "urn:oasis:names:tc:xacml:1.0:subject-category:access-subject":
+            case SUBJECT_CATEGORY:
                 Map<String, Literal> subjectAttrs = request.getSubjectAttrs();
                 if (subjectAttrs.containsKey(attributeId.stringValue())) {
                     return Collections.singletonList(subjectAttrs.get(attributeId.stringValue()));
                 }
                 sub = request.getSubjectId();
                 break;
-            case "urn:oasis:names:tc:xacml:3.0:attribute-category:resource":
+            case RESOURCE_CATEGORY:
                 Map<String, Literal> resourceAttrs = request.getResourceAttrs();
                 if (resourceAttrs.containsKey(attributeId.stringValue())) {
                     return Collections.singletonList(resourceAttrs.get(attributeId.stringValue()));
                 }
                 sub = request.getResourceId();
                 break;
-            case "urn:oasis:names:tc:xacml:3.0:attribute-category:action":
+            case ACTION_CATEGORY:
                 Map<String, Literal> actionAttrs = request.getActionAttrs();
                 if (actionAttrs.containsKey(attributeId.stringValue())) {
                     return Collections.singletonList(actionAttrs.get(attributeId.stringValue()));
                 }
                 throw new MissingAttributeException("Cannot find attribute " + attributeId + " on the Action");
-            case "urn:oasis:names:tc:xacml:3.0:attribute-category:environment":
-                if (attributeId.stringValue().equals("urn:oasis:names:tc:xacml:1.0:environment:current-dateTime")) {
+            case ENVIRONMENT_CATEGORY:
+                if (attributeId.stringValue().equals(CURRENT_DATE_TIME)) {
                     return Collections.singletonList(vf.createLiteral(request.getRequestTime()));
                 }
                 throw new MissingAttributeException("Cannot find attribute " + attributeId + " on the Environment");
             default:
-                throw new MissingAttributeException("Category " + category + " not supported");
+                throw new IllegalArgumentException("Category " + category + " not supported");
         }
 
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -111,25 +114,21 @@ public class MobiPIP implements PIP {
                 String path = decode(attributeId.stringValue().substring(firstIdx, lastIdx));
                 TupleQuery query = conn.prepareTupleQuery(String.format(PROP_PATH_QUERY, path));
                 query.setBinding("sub", sub);
-                List<Literal> result = new ArrayList<>();
-                query.evaluate().forEach(bindings -> {
-                    Literal value;
-                    try {
-                        value = Bindings.requiredLiteral(bindings, "value");
-                    } catch (IllegalStateException e) {
-                        value = vf.createLiteral(Bindings.requiredResource(bindings, "value").stringValue());
-                    }
-                    result.add(value);
-                });
-                return result;
+                return StreamSupport.stream(query.evaluate().spliterator(), false)
+                        .map(bindings -> bindings.getBinding("value").get().getValue())
+                        .map(value -> {
+                            if (Literal.class.isAssignableFrom(value.getClass())) {
+                                return (Literal) value;
+                            } else {
+                                return vf.createLiteral(value.stringValue());
+                            }
+                        })
+                        .collect(Collectors.toList());
             } else {
-                List<Statement> statements = RepositoryResults.asList(conn.getStatements(sub, attributeId, null));
-                if (statements.size() == 0) {
-                    return Collections.emptyList();
-                }
-                return statements.stream()
+                return StreamSupport.stream(conn.getStatements(sub, attributeId, null).spliterator(), false)
                         .map(Statement::getObject)
-                        .map(value -> value instanceof Literal ? (Literal) value : vf.createLiteral(value.stringValue()))
+                        .map(value -> value instanceof Literal ? (Literal) value
+                                : vf.createLiteral(value.stringValue()))
                         .collect(Collectors.toList());
             }
         } catch (MobiException e) {
