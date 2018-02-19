@@ -23,18 +23,19 @@ package com.mobi.rest.util;
  * #L%
  */
 
+import com.mobi.exception.MobiException;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.SkolemizedStatementIterable;
 import com.mobi.persistence.utils.StatementIterable;
+import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
+import com.mobi.web.security.util.AuthenticationProps;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import com.mobi.jaas.api.engines.EngineManager;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.web.security.util.AuthenticationProps;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
@@ -73,7 +74,7 @@ public class RestUtils {
                     .replaceAll("%21", "!")
                     .replaceAll("%7E", "~");
         } catch (UnsupportedEncodingException e) {
-            throw new IllegalStateException(e);
+            throw new MobiException(e);
         }
         return encoded;
     }
@@ -89,7 +90,7 @@ public class RestUtils {
         try {
             decoded = URLDecoder.decode(str, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            throw new IllegalStateException(e);
+            throw new MobiException(e);
         }
         return decoded;
     }
