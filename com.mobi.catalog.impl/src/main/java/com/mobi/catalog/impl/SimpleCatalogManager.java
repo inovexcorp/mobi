@@ -1174,6 +1174,22 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public List<Commit> getCommitChain(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
+                                       final Resource targetBranchId) {
+        try (final RepositoryConnection conn = repository.getConnection()) {
+            Branch sourceBranch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
+            Resource sourceHead = utils.getHeadCommitIRI(sourceBranch);
+
+            Branch targetBranch = utils.getBranch(catalogId, versionedRDFRecordId, targetBranchId, branchFactory, conn);
+            Resource targetHead = utils.getHeadCommitIRI(targetBranch);
+
+            return utils.getDifferenceChain(sourceHead, targetHead, conn).stream()
+                    .map(res -> utils.getExpectedObject(res, commitFactory, conn))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Override
     public Model getCompiledResource(Resource commitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
@@ -1192,18 +1208,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Difference getDifference(Resource sourceCommitId, Resource targetCommitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            utils.validateResource(sourceCommitId, commitFactory.getTypeIRI(), conn);
-            utils.validateResource(targetCommitId, commitFactory.getTypeIRI(), conn);
-            List<Resource> sourceCommits = utils.getCommitChain(sourceCommitId, true, conn);
-            List<Resource> targetCommits = utils.getCommitChain(targetCommitId, true, conn);
-            List<Resource> commonCommits = new ArrayList<>(sourceCommits);
-            commonCommits.retainAll(targetCommits);
-            if (commonCommits.size() == 0) {
-                throw new IllegalArgumentException("No common parent between Commit " + sourceCommitId + " and "
-                        + targetCommitId);
-            }
-            sourceCommits.removeAll(commonCommits);
-            return utils.getCommitDifference(sourceCommits, conn);
+            return utils.getCommitDifference(utils.getDifferenceChain(sourceCommitId, targetCommitId, conn), conn);
         }
     }
 

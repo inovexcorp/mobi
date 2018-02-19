@@ -1812,6 +1812,68 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         throw service.throwAlreadyExists(RECORD_IRI, recordFactory);
     }
 
+    @Test
+    public void testGetDifferenceChain() {
+        // Setup:
+        List<Resource> commitChain = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4a"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4b"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3")).collect(Collectors.toList());
+        Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3");
+        Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0");
+
+        // Expected list should have the first commit removed
+        List<Resource> expected = commitChain.subList(1, commitChain.size());
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            List<Resource> actual = service.getDifferenceChain(sourceId, targetId, conn);
+
+            assertEquals(expected, actual);
+        }
+    }
+
+    @Test
+    public void testGetDifferenceChainCommonParent() {
+        // Setup:
+        Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4b");
+        Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testLoner");
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage(String.format("No common parent between Commit %s and %s", sourceId.stringValue(), targetId.stringValue()));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            List<Resource> actual = service.getDifferenceChain(sourceId, targetId, conn);
+        }
+    }
+
+    @Test
+    public void doesDifferenceChainSourceCommitExist() {
+        // Setup:
+        Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#fake");
+        Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testLoner");
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage(String.format("Commit %s could not be found", sourceId.stringValue()));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            List<Resource> actual = service.getDifferenceChain(sourceId, targetId, conn);
+        }
+    }
+
+    @Test
+    public void doesDifferenceChainTargetCommitExist() {
+        // Setup:
+        Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4a");
+        Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#fake");
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage(String.format("Commit %s could not be found", targetId.stringValue()));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            List<Resource> actual = service.getDifferenceChain(sourceId, targetId, conn);
+        }
+    }
+
+
     /* throwDoesNotBelong */
 
     @Test

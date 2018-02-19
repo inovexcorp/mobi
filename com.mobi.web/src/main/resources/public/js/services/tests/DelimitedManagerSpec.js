@@ -21,22 +21,15 @@
  * #L%
  */
 describe('Delimited Manager service', function() {
-    var delimitedManagerSvc, $httpBackend, $httpParamSerializer, windowSvc, utilSvc, $q;
+    var delimitedManagerSvc, $httpBackend, $httpParamSerializer, utilSvc, $q;
 
     beforeEach(function() {
         module('delimitedManager');
         mockUtil();
         injectRestPathConstant();
 
-        module(function($provide) {
-            $provide.service('$window', function() {
-                this.location = '';
-            });
-        });
-
-        inject(function(delimitedManagerService, _$window_, _$httpBackend_, _$httpParamSerializer_, _utilService_, _$q_) {
+        inject(function(delimitedManagerService, _$httpBackend_, _$httpParamSerializer_, _utilService_, _$q_) {
             delimitedManagerSvc = delimitedManagerService;
-            windowSvc = _$window_;
             $httpBackend = _$httpBackend_;
             $httpParamSerializer = _$httpParamSerializer_;
             utilSvc = _utilService_;
@@ -56,7 +49,6 @@ describe('Delimited Manager service', function() {
         delimitedManagerSvc = null;
         $httpBackend = null;
         $httpParamSerializer = null;
-        windowSvc = null;
         utilSvc = null;
     });
 
@@ -156,7 +148,7 @@ describe('Delimited Manager service', function() {
             fileName: fileName
         });
         delimitedManagerSvc.mapAndDownload(this.mappingRecordIRI, format, fileName);
-        expect(windowSvc.location).toEqual('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map?' + params);
+        expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map?' + params);
     });
     describe('should return a preview of mapped data from an uploaded delimited file', function() {
         beforeEach(function () {
