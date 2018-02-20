@@ -67,7 +67,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +77,7 @@ import javax.xml.parsers.ParserConfigurationException;
 @Component(immediate = true, provide = {PDP.class, BalanaPDP.class})
 public class BalanaPDP implements PDP {
 
-    private List<PIP> pips = new ArrayList<>();
+    private Set<PIP> pips = new HashSet<>();
     private BalanaPRP balanaPRP;
     private ValueFactory vf;
 

@@ -32,7 +32,7 @@ import java.util.Map;
 public interface Request {
 
     /**
-     * The identifier of the Subject category.
+     * The IRI representing the category of Subject attributes for {@link AttributeDesignator AttributeDesignators}.
      */
     IRI getSubjectCategory();
 
@@ -47,7 +47,7 @@ public interface Request {
     Map<String, Literal> getSubjectAttrs();
 
     /**
-     * The identifier of the Resource category.
+     * The IRI representing the category of Resources attributes for {@link AttributeDesignator AttributeDesignators}.
      */
     IRI getResourceCategory();
 
@@ -62,7 +62,7 @@ public interface Request {
     Map<String, Literal> getResourceAttrs();
 
     /**
-     * The identifier of the Action category.
+     * The IRI representing the category of Action attributes for {@link AttributeDesignator AttributeDesignators}.
      */
     IRI getActionCategory();
 

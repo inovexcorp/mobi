@@ -45,6 +45,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+/**
+ * The MobiPIP only supports searching for attributes on the Subject and Resource by using the IDs as subjects
+ * and the attribute ID as a predicates in a SPARQL query. Can do property path queries by looking for a specific
+ * namespace and parsing the property path string from within parenthesis in the attribute ID. Does not process
+ * the attributes on the Request itself.
+ */
 @Component(immediate = true)
 public class MobiPIP implements PIP {
 
@@ -69,11 +75,11 @@ public class MobiPIP implements PIP {
             throws MissingAttributeException, ProcessingException {
         IRI attributeId = attributeDesignator.attributeId();
         IRI category = attributeDesignator.category();
-        IRI sub;
+        IRI pathSource;
         if (category.equals(request.getSubjectCategory())) {
-            sub = request.getSubjectId();
+            pathSource = request.getSubjectId();
         } else if (category.equals(request.getResourceCategory())) {
-            sub = request.getResourceId();
+            pathSource = request.getResourceId();
         } else {
             return Collections.emptyList();
         }
@@ -84,7 +90,7 @@ public class MobiPIP implements PIP {
                 int lastIdx = attributeId.stringValue().lastIndexOf(")");
                 String path = decode(attributeId.stringValue().substring(firstIdx, lastIdx));
                 TupleQuery query = conn.prepareTupleQuery(String.format(PROP_PATH_QUERY, path));
-                query.setBinding("sub", sub);
+                query.setBinding("sub", pathSource);
                 return StreamSupport.stream(query.evaluate().spliterator(), false)
                         .map(bindings -> bindings.getBinding("value").get().getValue())
                         .map(value -> {
@@ -96,7 +102,7 @@ public class MobiPIP implements PIP {
                         })
                         .collect(Collectors.toList());
             } else {
-                return StreamSupport.stream(conn.getStatements(sub, attributeId, null).spliterator(), false)
+                return StreamSupport.stream(conn.getStatements(pathSource, attributeId, null).spliterator(), false)
                         .map(Statement::getObject)
                         .map(value -> value instanceof Literal ? (Literal) value
                                 : vf.createLiteral(value.stringValue()))
