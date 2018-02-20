@@ -23,6 +23,15 @@ package com.mobi.security.policy.impl.xacml;
  * #L%
  */
 
+import static com.mobi.security.policy.impl.xacml.XACML.POLICY_DENY_OVERRIDES;
+import static com.mobi.security.policy.impl.xacml.XACML.POLICY_DENY_UNLESS_PERMIT;
+import static com.mobi.security.policy.impl.xacml.XACML.POLICY_FIRST_APPLICABLE;
+import static com.mobi.security.policy.impl.xacml.XACML.POLICY_ONLY_ONE_APPLICABLE;
+import static com.mobi.security.policy.impl.xacml.XACML.POLICY_ORDERED_DENY_OVERRIDES;
+import static com.mobi.security.policy.impl.xacml.XACML.POLICY_ORDERED_PERMIT_OVERRIDES;
+import static com.mobi.security.policy.impl.xacml.XACML.POLICY_PERMIT_OVERRIDES;
+import static com.mobi.security.policy.impl.xacml.XACML.POLICY_PERMIT_UNLESS_DENY;
+
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -31,11 +40,11 @@ import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.PIP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.Response;
 import com.mobi.security.policy.api.Status;
 import com.mobi.security.policy.api.exception.ProcessingException;
-import com.mobi.security.policy.pip.impl.MobiPIP;
 import org.w3c.dom.Document;
 import org.wso2.balana.Balana;
 import org.wso2.balana.PDPConfig;
@@ -58,6 +67,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +78,7 @@ import javax.xml.parsers.ParserConfigurationException;
 @Component(immediate = true, provide = {PDP.class, BalanaPDP.class})
 public class BalanaPDP implements PDP {
 
-    private MobiPIP mobiPIP;
+    private List<PIP> pips = new ArrayList<>();
     private BalanaPRP balanaPRP;
     private ValueFactory vf;
 
@@ -79,9 +89,13 @@ public class BalanaPDP implements PDP {
         balana = Balana.getInstance();
     }
 
-    @Reference
-    void setMobiPIP(MobiPIP mobiPIP) {
-        this.mobiPIP = mobiPIP;
+    @Reference(type = '*', dynamic = true)
+    void addPIP(PIP pip) {
+        this.pips.add(pip);
+    }
+
+    void removePIP(PIP pip) {
+        this.pips.remove(pip);
     }
 
     @Reference
@@ -99,13 +113,25 @@ public class BalanaPDP implements PDP {
                                  Map<String, Literal> resourceAttrs, IRI actionId, Map<String, Literal> actionAttrs) {
         XACMLRequest.Builder builder = new XACMLRequest.Builder(subjectId, resourceId, actionId, OffsetDateTime.now());
         if (subjectAttrs != null) {
-            subjectAttrs.forEach(builder::addSubjectAttr);
+            subjectAttrs.forEach((key, value) -> {
+                if (value != null) {
+                    builder.addSubjectAttr(key, value);
+                }
+            });
         }
         if (resourceAttrs != null) {
-            resourceAttrs.forEach(builder::addResourceAttr);
+            resourceAttrs.forEach((key, value) -> {
+                if (value != null) {
+                    builder.addResourceAttr(key, value);
+                }
+            });
         }
         if (actionAttrs != null) {
-            actionAttrs.forEach(builder::addActionAttr);
+            actionAttrs.forEach((key, value) -> {
+                if (value != null) {
+                    builder.addActionAttr(key, value);
+                }
+            });
         }
         return builder.build();
     }
@@ -114,8 +140,7 @@ public class BalanaPDP implements PDP {
     public Response evaluate(Request request) {
         try {
             XACMLRequest xacmlRequest = getRequest(request);
-            org.wso2.balana.PDP pdp = getPDP(
-                    vf.createIRI("urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:deny-overrides"));
+            org.wso2.balana.PDP pdp = getPDP(vf.createIRI(POLICY_DENY_OVERRIDES));
             String result = pdp.evaluate(xacmlRequest.toString());
             return getResponse(result);
         } catch (Exception e) {
@@ -147,8 +172,10 @@ public class BalanaPDP implements PDP {
 
         AttributeFinder attributeFinder = config.getAttributeFinder();
         List<AttributeFinderModule> attributeFinderModules = attributeFinder.getModules();
-        BalanaPIP balanaPIP = new BalanaPIP(vf, mobiPIP);
-        attributeFinderModules.add(balanaPIP);
+        pips.forEach(pip -> {
+            MobiAttributeFinder mobiAttributeFinder = new MobiAttributeFinder(vf, pip);
+            attributeFinderModules.add(mobiAttributeFinder);
+        });
         attributeFinder.setModules(attributeFinderModules);
 
         PDPConfig newConfig = new PDPConfig(attributeFinder, policyFinder, null, false);
@@ -182,21 +209,21 @@ public class BalanaPDP implements PDP {
 
     private PolicyCombiningAlgorithm getAlgorithm(IRI policyAlgorithm) {
         switch (policyAlgorithm.stringValue()) {
-            case "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:deny-overrides":
+            case POLICY_DENY_OVERRIDES:
                 return new DenyOverridesPolicyAlg();
-            case "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:deny-unless-permit":
+            case POLICY_DENY_UNLESS_PERMIT:
                 return new DenyUnlessPermitPolicyAlg();
-            case "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:ordered-deny-overrides":
+            case POLICY_ORDERED_DENY_OVERRIDES:
                 return new OrderedDenyOverridesPolicyAlg();
-            case "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:ordered-permit-overrides":
+            case POLICY_ORDERED_PERMIT_OVERRIDES:
                 return new OrderedPermitOverridesPolicyAlg();
-            case "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:permit-overrides":
+            case POLICY_PERMIT_OVERRIDES:
                 return new PermitOverridesPolicyAlg();
-            case "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:permit-unless-deny":
+            case POLICY_PERMIT_UNLESS_DENY:
                 return new PermitUnlessDenyPolicyAlg();
-            case "urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:first-applicable":
+            case POLICY_FIRST_APPLICABLE:
                 return new FirstApplicablePolicyAlg();
-            case "urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:only-one-applicable":
+            case POLICY_ONLY_ONE_APPLICABLE:
                 return new OnlyOneApplicablePolicyAlg();
             default:
                 throw new ProcessingException("Policy algorithm " + policyAlgorithm + " not supported");

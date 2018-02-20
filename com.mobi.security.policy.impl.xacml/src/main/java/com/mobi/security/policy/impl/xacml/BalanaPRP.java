@@ -24,6 +24,8 @@ package com.mobi.security.policy.impl.xacml;
  */
 
 import static com.mobi.persistence.utils.RepositoryResults.asModel;
+import static com.mobi.security.policy.impl.xacml.XACML.PROCESSING_ERROR;
+import static com.mobi.security.policy.impl.xacml.XACML.SYNTAX_ERROR;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -145,10 +147,10 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
             // if target matching was indeterminate, then return the error
             if (result == MatchResult.INDETERMINATE) {
                 Status status = match.getStatus();
-                if (status.getCode().contains("urn:oasis:names:tc:xacml:1.0:status:syntax-error")) {
+                if (status.getCode().contains(SYNTAX_ERROR)) {
                     throw new PolicySyntaxException(status.getMessage());
                 }
-                if (status.getCode().contains("urn:oasis:names:tc:xacml:1.0:status:processing-error")) {
+                if (status.getCode().contains(PROCESSING_ERROR)) {
                     throw new ProcessingException(status.getMessage());
                 }
             }
@@ -169,9 +171,9 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
         try {
             selectedPolicies = findPolicies(context);
         } catch (PolicySyntaxException e) {
-            return new PolicyFinderResult(new Status(Collections.singletonList(XACML.SYNTAX_ERROR), e.getMessage()));
+            return new PolicyFinderResult(new Status(Collections.singletonList(SYNTAX_ERROR), e.getMessage()));
         } catch (ProcessingException e) {
-            return new PolicyFinderResult(new Status(Collections.singletonList(XACML.PROCESSING_ERROR),
+            return new PolicyFinderResult(new Status(Collections.singletonList(PROCESSING_ERROR),
                     e.getMessage()));
         }
 

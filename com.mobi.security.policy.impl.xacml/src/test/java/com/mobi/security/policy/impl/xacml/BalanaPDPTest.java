@@ -25,35 +25,37 @@ package com.mobi.security.policy.impl.xacml;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
 import com.mobi.ontologies.rdfs.Resource;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.security.policy.api.AttributeDesignator;
 import com.mobi.security.policy.api.Decision;
+import com.mobi.security.policy.api.PIP;
+import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.Response;
 import com.mobi.security.policy.api.Status;
 import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
-import com.mobi.security.policy.pip.impl.MobiPIP;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
 import org.openrdf.sail.memory.MemoryStore;
 
-import java.io.InputStream;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 
 public class BalanaPDPTest extends OrmEnabledTestCase {
     private Repository repo;
     private BalanaPDP pdp;
-    private MobiPIP pip;
     private BalanaPRP prp;
 
     private OrmFactory<PolicyFile> policyFileFactory = getRequiredOrmFactory(PolicyFile.class);
@@ -61,38 +63,30 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     private IRI policy1 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy1");
     private IRI policy2 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy2");
     private IRI policy3 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy3");
+    private IRI policy4 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy4");
     private IRI userX = VALUE_FACTORY.createIRI("http://mobi.com/users/UserX");
-    private IRI userY = VALUE_FACTORY.createIRI("http://mobi.com/users/UserY");
-    private IRI userZ = VALUE_FACTORY.createIRI("http://mobi.com/users/UserZ");
     private IRI resource = VALUE_FACTORY.createIRI("http://mobi.com/catalog-local");
     private IRI createAction = VALUE_FACTORY.createIRI("http://mobi.com/ontologies/policy#Create");
     private Literal actionType = VALUE_FACTORY.createLiteral("http://mobi.com/ontologies/ontology-editor#OntologyRecord");
 
+    @Mock
+    private PIP pip;
 
     @Before
     public void setUp() throws Exception {
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
-        PolicyFile policyFile = policyFileFactory.createNew(VALUE_FACTORY.createIRI(getClass().getResource("/policy1.xml").toString()));
+        MockitoAnnotations.initMocks(this);
+        when(pip.findAttribute(any(AttributeDesignator.class), any(Request.class))).thenReturn(Collections.emptyList());
 
-        InputStream testData = getClass().getResourceAsStream("/testData.ttl");
-
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(policyFile.getModel(), policyFile.getResource());
-            conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TURTLE)));
-        }
-
-        pip = new MobiPIP();
-        pip.setRepo(repo);
-        pip.setVf(VALUE_FACTORY);
         prp = new BalanaPRP();
         injectOrmFactoryReferencesIntoService(prp);
         prp.setRepo(repo);
         prp.setMf(MODEL_FACTORY);
         prp.setVf(VALUE_FACTORY);
         pdp = new BalanaPDP();
-        pdp.setMobiPIP(pip);
+        pdp.addPIP(pip);
         pdp.setBalanaPRP(prp);
         pdp.setVf(VALUE_FACTORY);
         pdp.setUp();
@@ -101,10 +95,10 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     @Test
     public void simplePermitTest() throws Exception {
         // Setup:
-        XACMLRequest.Builder builder = new XACMLRequest.Builder(userX, resource, createAction, OffsetDateTime.now());
-        builder.addActionAttr(Resource.type_IRI, actionType);
+        loadPolicy(policy1);
+        XACMLRequest request = new XACMLRequest.Builder(userX, resource, createAction, OffsetDateTime.now()).build();
 
-        Response result = pdp.evaluate(builder.build());
+        Response result = pdp.evaluate(request);
         System.out.println(result);
         assertEquals(Decision.PERMIT, result.getDecision());
         assertEquals(Status.OK, result.getStatus());
@@ -112,38 +106,24 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void propPathPermitTest() throws Exception {
+    public void missingAttributeTest() throws Exception {
         // Setup:
-        XACMLRequest.Builder builder = new XACMLRequest.Builder(userY, resource, createAction, OffsetDateTime.now());
-        builder.addActionAttr(Resource.type_IRI, actionType);
+        loadPolicy(policy2);
+        XACMLRequest request = new XACMLRequest.Builder(userX, resource, createAction, OffsetDateTime.now())
+                .addActionAttr(Resource.type_IRI, actionType)
+                .build();
 
-        Response result = pdp.evaluate(builder.build());
-        System.out.println(result);
-        assertEquals(Decision.PERMIT, result.getDecision());
-        assertEquals(Status.OK, result.getStatus());
-        assertTrue(result.getPolicyIds().contains(policy1));
-    }
-
-    @Test
-    public void denyTest() throws Exception {
-        // Setup:
-        XACMLRequest.Builder builder = new XACMLRequest.Builder(userZ, resource, createAction, OffsetDateTime.now());
-        builder.addActionAttr(Resource.type_IRI, actionType);
-
-        Response result = pdp.evaluate(builder.build());
+        Response result = pdp.evaluate(request);
         System.out.println(result);
         assertEquals(Decision.DENY, result.getDecision());
         assertEquals(Status.OK, result.getStatus());
-        assertTrue(result.getPolicyIds().contains(policy1));
+        assertTrue(result.getPolicyIds().contains(policy2));
     }
 
     @Test
     public void syntaxErrorTest() throws Exception {
         // Setup:
-        PolicyFile badPolicy = policyFileFactory.createNew(VALUE_FACTORY.createIRI(getClass().getResource("/policy2.xml").toString()));
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(badPolicy.getModel(), badPolicy.getResource());
-        }
+        loadPolicy(policy3);
         XACMLRequest.Builder builder = new XACMLRequest.Builder(userX, resource, createAction, OffsetDateTime.now());
         builder.addActionAttr(Resource.type_IRI, actionType);
 
@@ -157,10 +137,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     @Test
     public void unsupportedCategoryInRuleTest() throws Exception {
         // Setup:
-        PolicyFile badPolicy = policyFileFactory.createNew(VALUE_FACTORY.createIRI(getClass().getResource("/policy3.xml").toString()));
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(badPolicy.getModel(), badPolicy.getResource());
-        }
+        loadPolicy(policy4);
         XACMLRequest.Builder builder = new XACMLRequest.Builder(userX, resource, createAction, OffsetDateTime.now());
         builder.addActionAttr(Resource.type_IRI, actionType);
 
@@ -168,7 +145,13 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         System.out.println(result);
         assertEquals(Decision.DENY, result.getDecision());
         assertEquals(Status.OK, result.getStatus());
-        assertTrue(result.getPolicyIds().contains(policy1));
-        assertTrue(result.getPolicyIds().contains(policy3));
+        assertTrue(result.getPolicyIds().contains(policy4));
+    }
+
+    private void loadPolicy(IRI policyId) {
+        PolicyFile policyFile = policyFileFactory.createNew(VALUE_FACTORY.createIRI(getClass().getResource("/" + policyId.getLocalName() + ".xml").toString()));
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(policyFile.getModel(), policyFile.getResource());
+        }
     }
 }

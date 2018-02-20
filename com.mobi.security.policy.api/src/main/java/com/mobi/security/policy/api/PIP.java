@@ -33,7 +33,9 @@ public interface PIP {
 
     /**
      * Looks for the Attribute that matches the {@link AttributeDesignator}, using values from the authorization
-     * {@link Request} if needed, and returns its {@link Literal} values.
+     * {@link Request} if needed, and returns its {@link Literal} values. The PIP is not meant to search the
+     * passed Request for attributes to match.
+     *
      *
      * @param attributeDesignator The aspects of an Attribute to match
      * @param request An authorization {@link Request}

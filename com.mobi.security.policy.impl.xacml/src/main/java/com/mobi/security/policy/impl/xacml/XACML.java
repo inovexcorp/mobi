@@ -43,4 +43,23 @@ public class XACML {
     public static final String MISSING_ATTRIBUTE = "urn:oasis:names:tc:xacml:1.0:status:missing-attribute";
     public static final String SYNTAX_ERROR = "urn:oasis:names:tc:xacml:1.0:status:syntax-error";
     public static final String PROCESSING_ERROR = "urn:oasis:names:tc:xacml:1.0:status:processing-error";
+
+    // Policy Algorithms
+    public static final String POLICY_DENY_OVERRIDES =
+            "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:deny-overrides";
+    public static final String POLICY_DENY_UNLESS_PERMIT =
+            "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:deny-unless-permit";
+    public static final String POLICY_ORDERED_DENY_OVERRIDES =
+            "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:ordered-deny-overrides";
+    public static final String POLICY_ORDERED_PERMIT_OVERRIDES =
+            "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:ordered-permit-overrides";
+    public static final String POLICY_PERMIT_OVERRIDES =
+            "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:permit-overrides";
+    public static final String POLICY_PERMIT_UNLESS_DENY =
+            "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:permit-unless-deny";
+    public static final String POLICY_FIRST_APPLICABLE =
+            "urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:first-applicable";
+    public static final String POLICY_ONLY_ONE_APPLICABLE =
+            "urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:only-one-applicable";
+
 }

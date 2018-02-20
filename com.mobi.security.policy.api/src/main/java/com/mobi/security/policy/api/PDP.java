@@ -46,6 +46,7 @@ public interface PDP {
     /**
      * Evaluates an authorization {@link Request} against a collection of {@link Policy Policies} combined
      * with a default algorithm and returns a {@link Response} with the authorization {@link Decision}. Based on ABAC.
+     * The PDP should process the Request attributes.
      *
      * @param request An authorization Request
      * @return A Response with the Decision of the Request
@@ -55,7 +56,7 @@ public interface PDP {
     /**
      * Evaluates an authorization {@link Request} against a collection of {@link Policy Policies} combined
      * with the identified algorithm and returns a {@link Response} with the authorization {@link Decision}.
-     * Based on ABAC.
+     * Based on ABAC. The PDP should process the Request attributes.
      *
      * @param request An authorization Request
      * @param policyAlgorithm The IRI identifier for a Policy algorithm for combining results

@@ -27,7 +27,6 @@ import static com.mobi.rest.util.RestUtils.decode;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.exception.MobiException;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
@@ -43,20 +42,14 @@ import com.mobi.security.policy.api.exception.ProcessingException;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-@Component(immediate = true, provide = {PIP.class, MobiPIP.class})
+@Component(immediate = true)
 public class MobiPIP implements PIP {
 
     static final String PROP_PATH_NAMESPACE = "http://mobi.com/policy/prop-path";
     private static final String PROP_PATH_QUERY = "SELECT ?value WHERE { ?sub %s ?value .}";
-    static final String SUBJECT_CATEGORY = "urn:oasis:names:tc:xacml:1.0:subject-category:access-subject";
-    static final String RESOURCE_CATEGORY = "urn:oasis:names:tc:xacml:3.0:attribute-category:resource";
-    static final String ACTION_CATEGORY = "urn:oasis:names:tc:xacml:3.0:attribute-category:action";
-    static final String ENVIRONMENT_CATEGORY = "urn:oasis:names:tc:xacml:3.0:attribute-category:environment";
-    static final String CURRENT_DATE_TIME = "urn:oasis:names:tc:xacml:1.0:environment:current-dateTime";
 
     private Repository repo;
     private ValueFactory vf;
@@ -77,34 +70,12 @@ public class MobiPIP implements PIP {
         IRI attributeId = attributeDesignator.attributeId();
         IRI category = attributeDesignator.category();
         IRI sub;
-        switch (category.stringValue()) {
-            case SUBJECT_CATEGORY:
-                Map<String, Literal> subjectAttrs = request.getSubjectAttrs();
-                if (subjectAttrs.containsKey(attributeId.stringValue())) {
-                    return Collections.singletonList(subjectAttrs.get(attributeId.stringValue()));
-                }
-                sub = request.getSubjectId();
-                break;
-            case RESOURCE_CATEGORY:
-                Map<String, Literal> resourceAttrs = request.getResourceAttrs();
-                if (resourceAttrs.containsKey(attributeId.stringValue())) {
-                    return Collections.singletonList(resourceAttrs.get(attributeId.stringValue()));
-                }
-                sub = request.getResourceId();
-                break;
-            case ACTION_CATEGORY:
-                Map<String, Literal> actionAttrs = request.getActionAttrs();
-                if (actionAttrs.containsKey(attributeId.stringValue())) {
-                    return Collections.singletonList(actionAttrs.get(attributeId.stringValue()));
-                }
-                throw new MissingAttributeException("Cannot find attribute " + attributeId + " on the Action");
-            case ENVIRONMENT_CATEGORY:
-                if (attributeId.stringValue().equals(CURRENT_DATE_TIME)) {
-                    return Collections.singletonList(vf.createLiteral(request.getRequestTime()));
-                }
-                throw new MissingAttributeException("Cannot find attribute " + attributeId + " on the Environment");
-            default:
-                throw new IllegalArgumentException("Category " + category + " not supported");
+        if (category.equals(request.getSubjectCategory())) {
+            sub = request.getSubjectId();
+        } else if (category.equals(request.getResourceCategory())) {
+            sub = request.getResourceId();
+        } else {
+            return Collections.emptyList();
         }
 
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -131,7 +102,7 @@ public class MobiPIP implements PIP {
                                 : vf.createLiteral(value.stringValue()))
                         .collect(Collectors.toList());
             }
-        } catch (MobiException e) {
+        } catch (Exception e) {
             throw new ProcessingException(e);
         }
     }

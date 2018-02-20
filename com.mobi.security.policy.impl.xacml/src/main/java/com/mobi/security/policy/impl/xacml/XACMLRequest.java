@@ -23,6 +23,11 @@ package com.mobi.security.policy.impl.xacml;
  * #L%
  */
 
+import static com.mobi.security.policy.impl.xacml.XACML.ACTION_CATEGORY;
+import static com.mobi.security.policy.impl.xacml.XACML.CURRENT_DATETIME;
+import static com.mobi.security.policy.impl.xacml.XACML.RESOURCE_CATEGORY;
+import static com.mobi.security.policy.impl.xacml.XACML.SUBJECT_CATEGORY;
+
 import com.mobi.exception.MobiException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
@@ -57,16 +62,25 @@ import javax.xml.transform.TransformerException;
 public class XACMLRequest implements Request {
 
     private IRI subjectId;
+    private IRI subjectCategory;
     private Map<String, Literal> subjectAttrs;
     private IRI resourceId;
+    private IRI resourceCategory;
     private Map<String, Literal> resourceAttrs;
     private IRI actionId;
+    private IRI actionCategory;
     private Map<String, Literal> actionAttrs;
+    private IRI requestTimeAttribute;
     private OffsetDateTime requestTime;
 
     private Document document;
 
     public XACMLRequest(AbstractRequestCtx context, ValueFactory vf) {
+        subjectCategory = vf.createIRI(SUBJECT_CATEGORY);
+        resourceCategory = vf.createIRI(RESOURCE_CATEGORY);
+        actionCategory = vf.createIRI(ACTION_CATEGORY);
+        requestTimeAttribute = vf.createIRI(CURRENT_DATETIME);
+
         this.document = context.getDocumentRoot().getOwnerDocument();
         subjectAttrs = new HashMap<>();
         resourceAttrs = new HashMap<>();
@@ -74,7 +88,7 @@ public class XACMLRequest implements Request {
         context.getAttributesSet().forEach(attributes -> {
             Set<Attribute> attributeSet = attributes.getAttributes();
             switch (attributes.getCategory().toString()) {
-                case XACML.SUBJECT_CATEGORY:
+                case SUBJECT_CATEGORY:
                     attributeSet.forEach(attribute -> {
                         if (attribute.getId().toString().equals(XACML.SUBJECT_ID)) {
                             this.subjectId = vf.createIRI(attribute.getValue().encode());
@@ -137,7 +151,7 @@ public class XACMLRequest implements Request {
 
         // Subject
         AttributesElementDTO subjectAttributes = new AttributesElementDTO();
-        subjectAttributes.setCategory(XACML.SUBJECT_CATEGORY);
+        subjectAttributes.setCategory(SUBJECT_CATEGORY);
         List<AttributeElementDTO> subjectAttributeElements = new ArrayList<>();
         AttributeElementDTO subjectIdElement = new AttributeElementDTO();
         subjectIdElement.setAttributeId(XACML.SUBJECT_ID);
@@ -215,6 +229,11 @@ public class XACMLRequest implements Request {
     }
 
     @Override
+    public IRI getSubjectCategory() {
+        return subjectCategory;
+    }
+
+    @Override
     public IRI getSubjectId() {
         return subjectId;
     }
@@ -222,6 +241,11 @@ public class XACMLRequest implements Request {
     @Override
     public Map<String, Literal> getSubjectAttrs() {
         return subjectAttrs;
+    }
+
+    @Override
+    public IRI getResourceCategory() {
+        return resourceCategory;
     }
 
     @Override
@@ -235,6 +259,11 @@ public class XACMLRequest implements Request {
     }
 
     @Override
+    public IRI getActionCategory() {
+        return actionCategory;
+    }
+
+    @Override
     public IRI getActionId() {
         return actionId;
     }
@@ -242,6 +271,11 @@ public class XACMLRequest implements Request {
     @Override
     public Map<String, Literal> getActionAttrs() {
         return actionAttrs;
+    }
+
+    @Override
+    public IRI getRequestTimeAttribute() {
+        return requestTimeAttribute;
     }
 
     @Override

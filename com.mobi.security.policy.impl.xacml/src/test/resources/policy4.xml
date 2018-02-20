@@ -1,4 +1,4 @@
-<Policy xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="http://mobi.com/policies/policy1" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" Version="1.0">
+<Policy xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="http://mobi.com/policies/policy4" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" Version="1.0">
     <Description>Who can create an OntologyRecord in the Local Catalog?</Description>
     <Target>
         <AnyOf>
@@ -11,18 +11,13 @@
         </AnyOf>
     </Target>
     <Rule Effect="Permit" RuleId="urn:rule1">
-        <Description>UserX can create an OntologyRecord in the Local Catalog</Description>
+        <Description>Missing Attribute Rule</Description>
         <Condition>
             <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:and">
                 <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:any-of">
                     <Function FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-equal"/>
                     <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/ontologies/policy#Create</AttributeValue>
-                    <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:action" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
-                </Apply>
-                <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:any-of">
-                    <Function FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-equal"/>
-                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/users/UserX</AttributeValue>
-                    <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
+                    <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:broken" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                 </Apply>
             </Apply>
         </Condition>

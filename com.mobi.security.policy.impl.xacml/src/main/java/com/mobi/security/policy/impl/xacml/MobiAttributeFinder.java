@@ -27,7 +27,7 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.security.policy.api.BasicAttributeDesignator;
-import com.mobi.security.policy.pip.impl.MobiPIP;
+import com.mobi.security.policy.api.PIP;
 import org.wso2.balana.ProcessingException;
 import org.wso2.balana.attr.AnyURIAttribute;
 import org.wso2.balana.attr.AttributeValue;
@@ -47,23 +47,24 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-public class BalanaPIP extends AttributeFinderModule {
+public class MobiAttributeFinder extends AttributeFinderModule {
 
     private ValueFactory vf;
-    private MobiPIP pip;
+    private PIP pip;
 
-    private Map<String, String> categoryIds = new HashMap<>();
+    private Set<String> categoryIds = new HashSet<>();
 
-    public BalanaPIP(ValueFactory vf, MobiPIP mobiPIP) {
+    public MobiAttributeFinder(ValueFactory vf, PIP pip) {
         this.vf = vf;
-        this.pip = mobiPIP;
-        categoryIds.put(XACML.SUBJECT_CATEGORY, XACML.SUBJECT_ID);
-        categoryIds.put(XACML.RESOURCE_CATEGORY, XACML.RESOURCE_ID);
+        this.pip = pip;
+        categoryIds.add(XACML.SUBJECT_CATEGORY);
+        categoryIds.add(XACML.RESOURCE_CATEGORY);
+        categoryIds.add(XACML.ACTION_CATEGORY);
+        categoryIds.add(XACML.ENVIRONMENT_CATEGORY);
     }
 
     @Override
@@ -73,13 +74,13 @@ public class BalanaPIP extends AttributeFinderModule {
 
     @Override
     public Set<String> getSupportedCategories() {
-        return categoryIds.keySet();
+        return categoryIds;
     }
 
     @Override
     public EvaluationResult findAttribute(URI attributeType, URI attributeId, String issuer, URI category,
                                           EvaluationCtx context) {
-        if (!categoryIds.containsKey(category.toString())) {
+        if (!categoryIds.contains(category.toString())) {
             return new EvaluationResult(new Status(Collections.singletonList(Status.STATUS_PROCESSING_ERROR),
                     "Unsupported category"));
         }

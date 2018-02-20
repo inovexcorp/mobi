@@ -32,6 +32,11 @@ import java.util.Map;
 public interface Request {
 
     /**
+     * The identifier of the Subject category.
+     */
+    IRI getSubjectCategory();
+
+    /**
      * The ID of the Subject of this authorization Request.
      */
     IRI getSubjectId();
@@ -40,6 +45,11 @@ public interface Request {
      * A map of other attributes on the Subject that are sent as a part of this authorization Request.
      */
     Map<String, Literal> getSubjectAttrs();
+
+    /**
+     * The identifier of the Resource category.
+     */
+    IRI getResourceCategory();
 
     /**
      * The ID of the Resource of this authorization Request.
@@ -52,6 +62,11 @@ public interface Request {
     Map<String, Literal> getResourceAttrs();
 
     /**
+     * The identifier of the Action category.
+     */
+    IRI getActionCategory();
+
+    /**
      * The ID of the Action of this authorization Request.
      */
     IRI getActionId();
@@ -60,6 +75,11 @@ public interface Request {
      * A map of other attributes on the Action that are sent as a part of this authorization Request.
      */
     Map<String, Literal> getActionAttrs();
+
+    /**
+     * The identifier of the request time attribute.
+     */
+    IRI getRequestTimeAttribute();
 
     /**
      * The date and time of this authorization Request.
