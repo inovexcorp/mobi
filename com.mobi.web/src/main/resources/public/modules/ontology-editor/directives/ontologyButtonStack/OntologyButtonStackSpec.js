@@ -34,6 +34,8 @@ describe('Ontology Button Stack directive', function() {
             ontologyStateSvc = _ontologyStateService_;
         });
 
+        ontologyStateSvc.isCommittable.and.returnValue(false);
+        ontologyStateSvc.hasChanges.and.returnValue(false);
         this.element = $compile(angular.element('<ontology-button-stack></ontology-button-stack>'))(scope);
         scope.$digest();
     });
@@ -57,12 +59,23 @@ describe('Ontology Button Stack directive', function() {
             expect(this.element.find('circle-button').length).toBe(4);
         });
         it('depending on whether the ontology is committable', function() {
-            var button = angular.element(this.element.querySelectorAll('circle-button.btn-primary')[0]);
-            expect(button.attr('disabled')).toBeTruthy();
+            var commitButton = angular.element(this.element.querySelectorAll('circle-button.btn-primary')[0]);
+            var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
+            expect(commitButton.attr('disabled')).toBeTruthy();
+            expect(mergeButton.attr('disabled')).toBeFalsy();
 
             ontologyStateSvc.isCommittable.and.returnValue(true);
             scope.$digest();
-            expect(button.attr('disabled')).toBeFalsy();
+            expect(commitButton.attr('disabled')).toBeFalsy();
+            expect(mergeButton.attr('disabled')).toBeTruthy();
+        });
+        it('depending on whether the ontology has changes', function() {
+            var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
+            expect(mergeButton.attr('disabled')).toBeFalsy();
+
+            ontologyStateSvc.hasChanges.and.returnValue(true);
+            scope.$digest();
+            expect(mergeButton.attr('disabled')).toBeTruthy();
         });
     });
     it('should set the correct state when the upload changes button is clicked', function() {
