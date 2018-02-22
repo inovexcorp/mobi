@@ -85,7 +85,7 @@ describe('Ontology Editor Tabset directive', function() {
                 ontologyStateSvc.showCloseOverlay = false;
             });
             it('if it has changes', function() {
-                this.controller.onClose('A');
+                this.controller.onClose({ ontologyRecord: { recordId: 'A' } });
                 expect(ontologyStateSvc.recordIdToClose).toBe('A');
                 expect(ontologyStateSvc.showCloseOverlay).toBe(true);
                 expect(ontologyStateSvc.closeOntology).not.toHaveBeenCalled();
@@ -93,25 +93,22 @@ describe('Ontology Editor Tabset directive', function() {
             it('if it has no changes', function() {
                 ontologyStateSvc.listItem = this.listItemB;
                 ontologyStateSvc.hasChanges.and.returnValue(false);
-                this.controller.onClose('B');
+                this.controller.onClose({ ontologyRecord: { recordId: 'B' } });
                 expect(ontologyStateSvc.recordIdToClose).toBe('');
                 expect(ontologyStateSvc.showCloseOverlay).toBe(false);
                 expect(ontologyStateSvc.closeOntology).toHaveBeenCalledWith('B');
             });
         });
-        describe('onClick should set the listItem and page title correctly if recordId is', function() {
+        describe('onClick should set the listItem and page title correctly if listItem is', function() {
             beforeEach(function () {
                 ontologyStateSvc.listItem = {id: 'id'};
             });
             it('defined', function() {
-                ontologyStateSvc.getListItemByRecordId.and.returnValue({ontologyRecord: {type: 'type'}});
-                this.controller.onClick('recordId');
-                expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith('recordId');
+                this.controller.onClick({ontologyRecord: {type: 'type'}});
                 expect(ontologyStateSvc.listItem).toEqual({ontologyRecord: {type: 'type'}});
             });
             it('undefined', function() {
                 this.controller.onClick(undefined);
-                expect(ontologyStateSvc.getListItemByRecordId).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem).toEqual({});
             });
         });

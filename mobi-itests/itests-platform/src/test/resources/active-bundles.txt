@@ -48,3 +48,4 @@ com.mobi.cache.impl.ehcache
 com.mobi.federation.api
 com.mobi.federation.hazelcast
 com.mobi.federation.cli
+com.mobi.security.policy.api

@@ -1001,6 +1001,7 @@ function mockUtil() {
             this.getSkolemizedIRI = jasmine.createSpy('getSkolemizedIRI').and.returnValue('');
             this.getInputType = jasmine.createSpy('getInputType').and.returnValue('');
             this.getPattern = jasmine.createSpy('getPattern').and.returnValue(/[a-zA-Z]/);
+            this.startDownload = jasmine.createSpy('startDownload');
         });
     });
 }

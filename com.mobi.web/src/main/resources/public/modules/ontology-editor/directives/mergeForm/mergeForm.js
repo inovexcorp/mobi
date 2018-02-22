@@ -49,8 +49,11 @@
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.tabs = {
-                        changes: true
+                        changes: true,
+                        commits: false
                     };
+
+                    dvm.branchTitle = dvm.util.getDctermsValue(dvm.branch, 'title');
 
                     dvm.matchesCurrent = function(branch) {
                         return branch['@id'] !== dvm.branch['@id'];
@@ -68,6 +71,8 @@
                             dvm.os.listItem.merge.difference = undefined;
                         }
                     }
+
+                    dvm.changeTarget();
                 }]
             }
         }
