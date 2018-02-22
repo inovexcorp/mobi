@@ -36,7 +36,6 @@ import com.mobi.security.policy.api.Request;
 import com.mobi.vocabularies.xsd.XSD;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.wso2.balana.ProcessingException;
 import org.wso2.balana.attr.AttributeValue;
 import org.wso2.balana.ctx.AbstractRequestCtx;
 import org.wso2.balana.ctx.Attribute;
@@ -97,7 +96,7 @@ public class XACMLRequest implements Request {
                         }
                     });
                     if (this.subjectId == null) {
-                        throw new ProcessingException("No Subject ID passed in Request");
+                        throw new IllegalArgumentException("No Subject ID passed in Request");
                     }
                     break;
                 case XACML.RESOURCE_CATEGORY:
@@ -109,7 +108,7 @@ public class XACMLRequest implements Request {
                         }
                     });
                     if (this.resourceId == null) {
-                        throw new ProcessingException("No Resource ID passed in the request");
+                        throw new IllegalArgumentException("No Resource ID passed in the request");
                     }
                     break;
                 case XACML.ACTION_CATEGORY:
@@ -121,7 +120,7 @@ public class XACMLRequest implements Request {
                         }
                     });
                     if (this.actionId == null) {
-                        throw new ProcessingException("No Action ID passed in the request");
+                        throw new IllegalArgumentException("No Action ID passed in the request");
                     }
                     break;
                 case XACML.ENVIRONMENT_CATEGORY:
@@ -131,11 +130,11 @@ public class XACMLRequest implements Request {
                         }
                     });
                     if (this.requestTime == null) {
-                        throw new ProcessingException("No Environment Current Date Time passed in the request");
+                        throw new IllegalArgumentException("No Environment Current Date Time passed in the request");
                     }
                     break;
                 default:
-                    throw new ProcessingException("Unsupported category in request");
+                    throw new IllegalArgumentException("Unsupported category in request");
             }
         });
     }
@@ -224,7 +223,7 @@ public class XACMLRequest implements Request {
             Element requestEl = PolicyUtils.createRequestElement(request, this.document);
             this.document.appendChild(requestEl);
         } catch (ParserConfigurationException | PolicyBuilderException e) {
-            throw new ProcessingException(e);
+            throw new IllegalStateException(e);
         }
     }
 

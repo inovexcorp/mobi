@@ -29,6 +29,7 @@ import static com.mobi.security.policy.impl.xacml.XACML.SYNTAX_ERROR;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.mobi.exception.MobiException;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -129,7 +130,7 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
                     .map(abstractPolicy -> new XACMLPolicy(abstractPolicy, vf))
                     .collect(Collectors.toList());
         } catch (ParsingException e) {
-            throw new ProcessingException(e);
+            throw new MobiException(e);
         }
     }
 
@@ -197,7 +198,7 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
                         Resource policyIRI = statement.getSubject();
                         Model policyModel = asModel(conn.getStatements(null, null, null, policyIRI), mf);
                         PolicyFile policyFile = policyFileFactory.getExisting(policyIRI, policyModel).orElseThrow(() ->
-                                new ProcessingException("Could not create Policy"));
+                                new IllegalStateException("Could not create Policy"));
                         AbstractPolicy policy = transform(policyFile);
                         policies.put(vf.createIRI(policy.getId().toString()), policy);
                     });

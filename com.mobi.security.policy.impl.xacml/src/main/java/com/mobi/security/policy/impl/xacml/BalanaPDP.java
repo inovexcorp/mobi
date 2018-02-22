@@ -35,6 +35,7 @@ import static com.mobi.security.policy.impl.xacml.XACML.POLICY_PERMIT_UNLESS_DEN
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.mobi.exception.MobiException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
@@ -44,10 +45,10 @@ import com.mobi.security.policy.api.PIP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.Response;
 import com.mobi.security.policy.api.Status;
-import com.mobi.security.policy.api.exception.ProcessingException;
 import org.w3c.dom.Document;
 import org.wso2.balana.Balana;
 import org.wso2.balana.PDPConfig;
+import org.wso2.balana.ProcessingException;
 import org.wso2.balana.combine.PolicyCombiningAlgorithm;
 import org.wso2.balana.combine.xacml2.FirstApplicablePolicyAlg;
 import org.wso2.balana.combine.xacml2.OnlyOneApplicablePolicyAlg;
@@ -142,7 +143,7 @@ public class BalanaPDP implements PDP {
             org.wso2.balana.PDP pdp = getPDP(vf.createIRI(POLICY_DENY_OVERRIDES));
             String result = pdp.evaluate(xacmlRequest.toString());
             return getResponse(result);
-        } catch (Exception e) {
+        } catch (ProcessingException e) {
             return new XACMLResponse.Builder(Decision.INDETERMINATE, Status.PROCESSING_ERROR)
                     .statusMessage(e.getMessage()).build();
         }
@@ -155,7 +156,7 @@ public class BalanaPDP implements PDP {
             org.wso2.balana.PDP pdp = getPDP(policyAlgorithm);
             String result = pdp.evaluate(xacmlRequest.toString());
             return getResponse(result);
-        } catch (Exception e) {
+        } catch (ProcessingException e) {
             return new XACMLResponse.Builder(Decision.INDETERMINATE, Status.PROCESSING_ERROR)
                     .statusMessage(e.getMessage()).build();
         }
@@ -190,7 +191,7 @@ public class BalanaPDP implements PDP {
             Document doc = docFactory.newDocumentBuilder().parse(stream);
             return new XACMLResponse(doc, vf);
         } catch (ParserConfigurationException | IOException | SAXException e) {
-            throw new ProcessingException(e);
+            throw new MobiException(e);
         }
     }
 
@@ -225,7 +226,7 @@ public class BalanaPDP implements PDP {
             case POLICY_ONLY_ONE_APPLICABLE:
                 return new OnlyOneApplicablePolicyAlg();
             default:
-                throw new ProcessingException("Policy algorithm " + policyAlgorithm + " not supported");
+                throw new IllegalArgumentException("Policy algorithm " + policyAlgorithm + " not supported");
         }
     }
 }

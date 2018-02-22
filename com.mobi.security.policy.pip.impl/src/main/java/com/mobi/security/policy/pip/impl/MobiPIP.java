@@ -108,8 +108,6 @@ public class MobiPIP implements PIP {
                                 : vf.createLiteral(value.stringValue()))
                         .collect(Collectors.toList());
             }
-        } catch (Exception e) {
-            throw new ProcessingException(e);
         }
     }
 }

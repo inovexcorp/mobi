@@ -28,7 +28,6 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.Response;
 import com.mobi.security.policy.api.Status;
-import com.mobi.security.policy.api.exception.ProcessingException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -53,7 +52,7 @@ public class XACMLResponse implements Response {
     public XACMLResponse(Document response, ValueFactory vf) {
         NodeList decisionList = response.getElementsByTagName("Decision");
         if (decisionList.getLength() != 1) {
-            throw new ProcessingException("Response does not include a Decision");
+            throw new IllegalArgumentException("Response does not include a Decision");
         }
         switch (decisionList.item(0).getFirstChild().getNodeValue()) {
             case "Permit":
@@ -72,11 +71,11 @@ public class XACMLResponse implements Response {
         }
         NodeList statusList = response.getElementsByTagName("Status");
         if (statusList.getLength() != 1) {
-            throw new ProcessingException("Response does not include a Status");
+            throw new IllegalArgumentException("Response does not include a Status");
         }
         NodeList statusStuff = statusList.item(0).getChildNodes();
         if (statusStuff.getLength() == 0) {
-            throw new ProcessingException("Response's Status does not include any information");
+            throw new IllegalArgumentException("Response's Status does not include any information");
         }
         for (int i = 0; i < statusStuff.getLength(); i++) {
             Node statusThing = statusStuff.item(i);
@@ -101,7 +100,7 @@ public class XACMLResponse implements Response {
             }
         }
         if (this.status == null) {
-            throw new ProcessingException("Response's Status does not include a StatusCode");
+            throw new IllegalArgumentException("Response's Status does not include a StatusCode");
         }
         if (this.statusMessage == null) {
             this.statusMessage = "";
