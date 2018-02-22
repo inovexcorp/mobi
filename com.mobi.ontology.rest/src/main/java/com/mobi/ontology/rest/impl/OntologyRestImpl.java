@@ -949,30 +949,56 @@ public class OntologyRestImpl implements OntologyRest {
             }
         });
         topLevel.removeAll(lowerLevel);
-        JSONArray hierarchy = new JSONArray();
-        topLevel.forEach(classIRI -> {
-            JSONObject item = getHierarchyItem(classIRI, results);
-            hierarchy.add(item);
-        });
+        Set<String> hierarchy = createHierarchy(topLevel, results).stream()
+                .map(Object::toString)
+                .collect(Collectors.toSet());
         return new JSONObject().element("hierarchy", hierarchy).element("index", JSONObject.fromObject(index));
     }
 
     /**
-     * Creates an item to be stored in the hierarchy.
+     * Creates a Set of hierarchy items with their IRIs and lists of children based on the provided list of IRIs
+     * of entities without parents and map of IRIs to their Sets of children.
      *
-     * @param itemIRI the base item's IRI.
+     * @param topLevel a set of IRI strings of entities without parents
      * @param results the results which contains a map of parents and their associated children.
-     * @return a JSONObject representing an item in the hierarchy.
+     * @return a Set of HierarchyNodes representing the top level entities and their children
      */
-    private JSONObject getHierarchyItem(String itemIRI, Map<String, Set<String>> results) {
-        JSONObject item = new JSONObject();
-        item.put("entityIRI", itemIRI);
-        if (results.containsKey(itemIRI) && results.get(itemIRI).size() > 0) {
-            JSONArray subClassIRIs = new JSONArray();
-            results.get(itemIRI).forEach(subClassIRI -> subClassIRIs.add(getHierarchyItem(subClassIRI, results)));
-            item.put("subEntities", subClassIRIs);
+    private Set<HierarchyNode> createHierarchy(Set<String> topLevel, Map<String, Set<String>> results) {
+        Map<String, HierarchyNode> nodes = new HashMap<>();
+        results.forEach((key, children) -> {
+            HierarchyNode node = nodes.getOrDefault(key, new HierarchyNode(key));
+            children.forEach(child -> {
+                HierarchyNode obj = nodes.getOrDefault(child, new HierarchyNode(child));
+                node.addChild(obj);
+                nodes.put(child, obj);
+            });
+            nodes.put(key, node);
+        });
+        return topLevel.stream().map(nodes::get).collect(Collectors.toSet());
+    }
+
+    private class HierarchyNode {
+        private String iri;
+        private Set<HierarchyNode> children = new HashSet<>();
+
+        HierarchyNode(String iri) {
+            this.iri = iri;
         }
-        return item;
+
+        void addChild(HierarchyNode node) {
+            children.add(node);
+        }
+
+        public String toString() {
+            StringBuilder builder = new StringBuilder(String.format("{\"entityIRI\": \"%s\"", iri));
+            if (children.size() > 0) {
+                builder.append(", \"subEntities\": [")
+                        .append(String.join(", ", children.stream().map(Object::toString).collect(Collectors.toSet())))
+                        .append("]");
+            }
+            builder.append("}");
+            return builder.toString();
+        }
     }
 
     /**
