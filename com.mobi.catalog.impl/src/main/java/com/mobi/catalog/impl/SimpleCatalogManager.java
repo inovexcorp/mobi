@@ -78,6 +78,7 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
@@ -1221,7 +1222,7 @@ public class SimpleCatalogManager implements CatalogManager {
             if (commonCommits.size() == 0) {
                 throw new IllegalArgumentException("No common parent between Commit " + leftId + " and " + rightId);
             }
-            Resource originalEnd = commonCommits.get(commonCommits.size() - 1);
+//            Resource originalEnd = commonCommits.get(commonCommits.size() - 1);
             leftCommits.removeAll(commonCommits);
             rightCommits.removeAll(commonCommits);
 
@@ -1233,14 +1234,30 @@ public class SimpleCatalogManager implements CatalogManager {
             Model leftDeletions = leftDiff.getDeletions();
             Model rightDeletions = rightDiff.getDeletions();
 
-            removeDuplicates(left, right);
-            removeDuplicates(leftDeletions, rightDeletions);
+            /*removeDuplicates(left, right);
+            removeDuplicates(leftDeletions, rightDeletions);*/
 
             Set<Conflict> result = new HashSet<>();
-            Model original = utils.getCompiledResource(originalEnd, conn);
-            IRI rdfType = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
+            Model original = utils.getCompiledResource(commonCommits, conn);
+//            Model original = utils.getCompiledResource(originalEnd, conn);
+//            IRI rdfType = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
 
+            Set<Statement> statementsToRemove = new HashSet<>();
             leftDeletions.forEach(statement -> {
+                Resource subj = statement.getSubject();
+                IRI pred = statement.getPredicate();
+                Value obj = statement.getObject();
+                if (rightDeletions.contains(subj, pred, obj)
+                        && left.contains(subj, pred, null)
+                        && right.contains(subj, pred, null)) {
+                    result.add(createConflict(subj, pred, original, left, leftDeletions, right, rightDeletions));
+                    statementsToRemove.add(statement);
+                }
+            });
+            statementsToRemove.forEach(statement -> Stream.of(left, leftDeletions, right, rightDeletions)
+                    .forEach(model -> model.remove(statement.getSubject(), statement.getPredicate(), null)));
+
+            /*leftDeletions.forEach(statement -> {
                 Resource subject = statement.getSubject();
                 IRI predicate = statement.getPredicate();
                 if (predicate.equals(rdfType) || right.contains(subject, predicate, null)) {
@@ -1271,7 +1288,7 @@ public class SimpleCatalogManager implements CatalogManager {
                     Stream.of(leftDeletions, right, rightDeletions).forEach(item ->
                             item.remove(subject, predicate, null));
                 }
-            });
+            });*/
 
             return result;
         }
@@ -1311,24 +1328,24 @@ public class SimpleCatalogManager implements CatalogManager {
      */
     private Conflict createConflict(Resource subject, IRI predicate, Model original, Model left, Model leftDeletions,
                                     Model right, Model rightDeletions) {
-        IRI rdfType = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
+//        IRI rdfType = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
         Difference.Builder leftDifference = new Difference.Builder();
         Difference.Builder rightDifference = new Difference.Builder();
-        if (predicate.equals(rdfType)) {
+        /*if (predicate.equals(rdfType)) {
             leftDifference
                     .additions(mf.createModel(left).filter(subject, null, null))
                     .deletions(mf.createModel(leftDeletions).filter(subject, null, null));
             rightDifference
                     .additions(mf.createModel(right).filter(subject, null, null))
                     .deletions(mf.createModel(rightDeletions).filter(subject, null, null));
-        } else {
+        } else {*/
             leftDifference
                     .additions(mf.createModel(left).filter(subject, predicate, null))
                     .deletions(mf.createModel(leftDeletions).filter(subject, predicate, null));
             rightDifference
                     .additions(mf.createModel(right).filter(subject, predicate, null))
                     .deletions(mf.createModel(rightDeletions).filter(subject, predicate, null));
-        }
+//        }
 
         return new Conflict.Builder(mf.createModel(original).filter(subject, predicate, null),
                 vf.createIRI(subject.stringValue()))

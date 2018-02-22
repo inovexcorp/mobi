@@ -67,12 +67,12 @@
                                 } else {
                                     _.forEach(conflicts, conflict => {
                                         conflict.resolved = false;
-                                        var obj = _.find(dvm.conflicts, {iri: conflict.iri});
-                                        if (_.isEmpty(obj)) {
+                                        // var obj = _.find(dvm.conflicts, {iri: conflict.iri});
+                                        // if (_.isEmpty(obj)) {
                                             dvm.conflicts.push(conflict);
-                                        } else {
-                                            _.merge(obj, conflict);
-                                        }
+                                        // } else {
+                                        //     _.merge(obj, conflict);
+                                        // }
                                     });
                                 }
                             }, onError);
@@ -129,8 +129,11 @@
                         }
                     }
                     function addToResolutions(notSelected) {
-                        dvm.resolutions.additions = _.concat(dvm.resolutions.additions, notSelected.deletions);
-                        dvm.resolutions.deletions = _.concat(dvm.resolutions.deletions, notSelected.additions);
+                        if (notSelected.additions.length) {
+                            dvm.resolutions.deletions = _.concat(dvm.resolutions.deletions, notSelected.additions);
+                        } else {
+                            dvm.resolutions.additions = _.concat(dvm.resolutions.additions, notSelected.deletions);
+                        }
                     }
 
                     setupVariables();

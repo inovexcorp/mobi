@@ -156,7 +156,8 @@ describe('Merge Tab directive', function() {
             var selectedRight = {resolved: 'right', left: {additions: ['add-left'], deletions: ['del-left']}};
             this.controller.conflicts = [selectedLeft, selectedRight];
             this.controller.mergeWithResolutions();
-            expect(this.controller.resolutions.additions).toEqual(['del-right', 'del-left']);
+            expect(this.controller.resolutions.additions).toEqual([]);
+            // expect(this.controller.resolutions.additions).toEqual(['del-right', 'del-left']);
             expect(this.controller.resolutions.deletions).toEqual(['add-right', 'add-left']);
             expect(this.controller.merge).toHaveBeenCalled();
         });
