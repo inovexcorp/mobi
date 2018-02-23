@@ -570,7 +570,17 @@ function mockOntologyState() {
                     branchId: '',
                     commitId: ''
                 },
-                merge: false,
+                merge: {
+                    active: false,
+                    target: undefined,
+                    checkbox: false,
+                    difference: undefined,
+                    conflicts: [],
+                    resolutions: {
+                        additions: [],
+                        deletions: []
+                    }
+                },
                 dataPropertyRange: {},
                 derivedConcepts: [],
                 derivedConceptSchemes: [],

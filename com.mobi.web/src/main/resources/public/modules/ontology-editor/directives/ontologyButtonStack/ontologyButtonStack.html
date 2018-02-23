@@ -24,7 +24,7 @@
     <circle-button-stack>
         <circle-button class="btn-default" ng-click="dvm.os.showUploadChangesOverlay = true" btn-icon="'fa-upload'" display-text="'Upload Changes'" btn-small="true"></circle-button>
         <circle-button class="btn-warning" ng-click="dvm.os.showCreateBranchOverlay = true" btn-icon="'fa-code-fork'" display-text="'Create Branch'" btn-small="true"></circle-button>
-        <circle-button class="btn-success" ng-click="dvm.os.listItem.merge = true" btn-icon="'fa-random'" display-text="'Merge Branches'" btn-small="true"></circle-button>
+        <circle-button class="btn-success" ng-click="dvm.os.listItem.merge.active = true" btn-icon="'fa-random'" display-text="'Merge Branches'" btn-small="true" ng-disabled="dvm.os.isCommittable(dvm.os.listItem) || dvm.os.hasChanges(dvm.os.listItem)"></circle-button>
         <circle-button class="btn-primary" ng-click="dvm.os.showCommitOverlay = true" btn-icon="'fa-git'" display-text="'Commit Changes'" ng-disabled="!dvm.os.isCommittable(dvm.os.listItem)"></circle-button>
     </circle-button-stack>
 </div>
