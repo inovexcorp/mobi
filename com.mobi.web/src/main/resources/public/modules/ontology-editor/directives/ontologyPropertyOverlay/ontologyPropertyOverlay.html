@@ -44,7 +44,6 @@
             <div ng-if="dvm.os.ontologyProperty !== dvm.prefixes.owl + 'deprecated'">
                 <text-area ng-model="dvm.os.ontologyPropertyValue" display-text="'Value'"></text-area>
                 <language-select ng-model="dvm.os.ontologyPropertyLanguage"></language-select>
-                <!--<iri-select ng-model="dvm.os.ontologyPropertyType" display-text="'Type'" multi-select="false" select-list="dvm.os.listItem.dataPropertyRange"></iri-select>-->
             </div>
             <div ng-if="dvm.os.ontologyProperty === dvm.prefixes.owl + 'deprecated'">
                 <radio-button display-text="'True'" value="'true'" ng-model="dvm.os.ontologyPropertyValue"></radio-button>
