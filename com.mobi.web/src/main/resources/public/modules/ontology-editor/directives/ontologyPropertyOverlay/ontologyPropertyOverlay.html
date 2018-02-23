@@ -36,7 +36,7 @@
             <custom-label>Ontology IRI</custom-label>
             <input class="form-control" ng-model="dvm.os.ontologyPropertyIRI" ng-pattern="dvm.iriPattern" name="iri" ng-required="dvm.isOntologyProperty()" />
             <p ng-messages="dvm.propertyForm.iri.$error" class="error-display">
-                <ng-message when="pattern">The value provided is not a valid =IRI.</ng-message>
+                <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
                 <ng-message when="required">This field cannot be left empty.</ng-message>
             </p>
         </div>
