@@ -34,10 +34,6 @@ describe('Resolve Conflicts Form directive', function() {
             util = _utilService_;
         });
 
-        this.branchId = 'branchId';
-        this.branch = {'@id': this.branchId};
-        this.targetId = 'targetId';
-
         scope.branchTitle = '';
         scope.targetTitle = '';
         scope.conflicts = [];
