@@ -47,7 +47,6 @@ describe('Merge Form directive', function() {
         scope.target = undefined;
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
         this.element = $compile(angular.element('<merge-form branch="branch" is-user-branch="isUserBranch" target="target" remove-branch="removeBranch"></merge-form>'))(scope);
-        // this.element = $compile(angular.element('<merge-form branch="branch" is-user-branch="isUserBranch" target-id="targetId" remove-branch="removeBranch"></merge-form>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('mergeForm');
     });
@@ -109,7 +108,6 @@ describe('Merge Form directive', function() {
         it('depending on whether the branch is the master branch', function() {
             expect(this.element.find('checkbox').length).toEqual(1);
 
-            // util.getDctermsValue.and.returnValue('MASTER');
             this.controller.branchTitle = 'MASTER';
             scope.$digest();
             expect(this.element.find('checkbox').length).toEqual(0);

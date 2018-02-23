@@ -31,7 +31,6 @@
                     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
                     <merge-form ng-if="!dvm.os.listItem.merge.conflicts.length" branch="dvm.branch" is-user-branch="dvm.isUserBranch" target="dvm.os.listItem.merge.target" remove-branch="dvm.os.listItem.merge.checkbox"></merge-form>
                     <resolve-conflicts-form ng-if="dvm.os.listItem.merge.conflicts.length" branch-title="dvm.util.getDctermsValue(dvm.branch, 'title')" target-title="dvm.util.getDctermsValue(dvm.os.listItem.merge.target, 'title')" conflicts="dvm.os.listItem.merge.conflicts" resolutions="dvm.os.listItem.merge.resolutions"></resolve-conflicts-form>
-                    <!-- <merge-form ng-if="!dvm.conflicts.length" branch="dvm.branch" is-user-branch="dvm.isUserBranch" target-id="dvm.targetId" remove-branch="dvm.checkbox"></merge-form> -->
                 </block-content>
                 <block-footer>
                     <button ng-if="!dvm.os.listItem.merge.conflicts.length" class="btn btn-primary pull-right btn-merge" ng-click="dvm.attemptMerge()" ng-disabled="!dvm.os.listItem.merge.target">Submit</button>

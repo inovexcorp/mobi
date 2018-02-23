@@ -81,10 +81,11 @@
                     }
                     dvm.merge = function() {
                         var sourceId = angular.copy(dvm.branch['@id']);
+                        var checkbox = dvm.os.listItem.merge.checkbox;
                         cm.mergeBranches(sourceId, dvm.os.listItem.merge.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.os.listItem.merge.resolutions)
                             .then(commitId => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.merge.target['@id'], commitId), $q.reject)
                             .then(() => {
-                                if (dvm.os.listItem.merge.checkbox) {
+                                if (checkbox) {
                                     om.deleteOntology(dvm.os.listItem.ontologyRecord.recordId, sourceId)
                                         .then(() => {
                                             dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, sourceId);
