@@ -22,10 +22,11 @@
   -->
 <div class="commit-history-table">
     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+    <info-message ng-if="!dvm.commits.length">No commits to display</info-message>
     <commit-info-overlay ng-if="dvm.showOverlay" commit="dvm.commit" additions="dvm.additions" deletions="dvm.deletions" overlay-flag="dvm.showOverlay"></commit-info-overlay>
     <div class="wrapper">
         <svg class="commit-graph" ng-style="{'height': (graph ? dvm.commits.length * dvm.circleSpacing + dvm.deltaY : 0) + 'px', 'width': (graph ? dvm.deltaX + 10 : 0) + 'px'}"></svg>
-        <table class="table table-hover">
+        <table class="table table-hover" ng-if="dvm.commits.length">
             <thead class="thead-default">
                 <tr>
                     <th class="graph-column" ng-if="graph" ng-style="{'width': dvm.deltaX + 10 + 'px'}"></th>

@@ -29,13 +29,13 @@
             <block>
                 <block-content class="padding">
                     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-                    <merge-form ng-if="!dvm.conflicts.length" branch-title="dvm.branchTitle" is-user-branch="dvm.isUserBranch" target-id="dvm.targetId" remove-branch="dvm.checkbox"></merge-form>
-                    <resolve-conflicts-form ng-if="dvm.conflicts.length" branch-title="dvm.branchTitle" target-title="dvm.getTargetTitle()" conflicts="dvm.conflicts" resolutions="dvm.resolutions"></resolve-conflicts-form>
+                    <merge-form ng-if="!dvm.os.listItem.merge.conflicts.length" branch="dvm.branch" is-user-branch="dvm.isUserBranch" target="dvm.os.listItem.merge.target" remove-branch="dvm.os.listItem.merge.checkbox"></merge-form>
+                    <resolve-conflicts-form ng-if="dvm.os.listItem.merge.conflicts.length" branch-title="dvm.util.getDctermsValue(dvm.branch, 'title')" target-title="dvm.util.getDctermsValue(dvm.os.listItem.merge.target, 'title')" conflicts="dvm.os.listItem.merge.conflicts" resolutions="dvm.os.listItem.merge.resolutions"></resolve-conflicts-form>
                 </block-content>
                 <block-footer>
-                    <button ng-if="!dvm.conflicts.length" class="btn btn-primary pull-right btn-merge" ng-click="dvm.attemptMerge()" ng-disabled="!dvm.targetId">Submit</button>
-                    <button ng-if="dvm.conflicts.length" class="btn btn-primary pull-right btn-resolution" ng-click="dvm.mergeWithResolutions()" ng-disabled="!dvm.allResolved()">Submit with Resolutions</button>
-                    <button class="btn btn-default pull-right" ng-click="dvm.os.listItem.merge = false">Cancel</button>
+                    <button ng-if="!dvm.os.listItem.merge.conflicts.length" class="btn btn-primary pull-right btn-merge" ng-click="dvm.attemptMerge()" ng-disabled="!dvm.os.listItem.merge.target">Submit</button>
+                    <button ng-if="dvm.os.listItem.merge.conflicts.length" class="btn btn-primary pull-right btn-resolution" ng-click="dvm.mergeWithResolutions()" ng-disabled="!dvm.allResolved()">Submit with Resolutions</button>
+                    <button class="btn btn-default pull-right" ng-click="dvm.cancel()">Cancel</button>
                 </block-footer>
             </block>
         </div>

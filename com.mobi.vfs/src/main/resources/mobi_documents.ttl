@@ -1,0 +1,51 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix : <http://mobi.com/ontologies/documents#> .
+@base <http://mobi.com/ontologies/documents> .
+
+<http://mobi.com/ontologies/documents> a owl:Ontology ;
+    rdfs:label "The Mobi Document Ontology"@en ;
+    rdfs:comment "The Mobi Document ontology describes binary documents that the application keeps track of for a variety of reasons."@en ;
+    dct:creator [foaf:name "Megan Mercer"] ;
+    foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>] ;
+    dct:modified "2018-02-07"^^xsd:date .
+
+# BinaryFile
+
+:BinaryFile a owl:Class ;
+    dct:title "Binary File"@en ;
+    dct:description ""@en .
+
+:fileName a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dct:title "File Name"@en ;
+    dct:description "The file name of the described BinaryFile."@en ;
+    rdfs:domain :BinaryFile ;
+    rdfs:range xsd:string .
+
+:size a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dct:title "Size"@en ;
+    dct:description "The size in MB of the described BinaryFile."@en ;
+    rdfs:domain :BinaryFile ;
+    rdfs:range xsd:double .
+
+:compressed a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dct:title "Compressed"@en ;
+    dct:description "Whether the described BinaryFile is compressed or not."@en ;
+    rdfs:domain :BinaryFile ;
+    rdfs:range xsd:boolean .
+
+:mimeType a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dct:title "Mime Type"@en ;
+    dct:description "The MIME type of the described BinaryFile."@en ;
+    rdfs:domain :BinaryFile ;
+    rdfs:range xsd:string .
+
+:sha3-256Sum a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dct:title "SHA3-256 Sum"@en ;
+    dct:description "The SHA3-256 sum for the described BinaryFile."@en ;
+    rdfs:domain :BinaryFile ;
+    rdfs:range xsd:string .
