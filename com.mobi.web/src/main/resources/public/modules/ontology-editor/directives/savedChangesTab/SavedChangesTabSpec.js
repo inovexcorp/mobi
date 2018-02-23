@@ -120,6 +120,16 @@ describe('Saved Changes Tab directive', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('block-header error-display').length).toBe(0);
         });
+        it('depending on whether the list item is committable', function() {
+            ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
+            scope.$digest();
+            var button = angular.element(this.element.querySelectorAll('button.btn-danger')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+
+            ontologyStateSvc.isCommittable.and.returnValue(true);
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
+        });
     });
     describe('controller methods', function() {
         it('should go to a specific entity', function() {

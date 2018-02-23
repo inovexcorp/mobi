@@ -41,13 +41,12 @@ describe('Merge Form directive', function() {
             catalogManagerSvc = _catalogManagerService_;
         });
 
-        scope.branchTitle = '';
+        scope.branch = {'@id': 'branchId'};
         scope.isUserBranch = false;
         scope.removeBranch = false;
-        scope.targetId = '';
-        ontologyStateSvc.listItem.ontologyRecord.branchId = 'branchId';
+        scope.target = undefined;
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
-        this.element = $compile(angular.element('<merge-form branch-title="branchTitle" is-user-branch="isUserBranch" target-id="targetId" remove-branch="removeBranch"></merge-form>'))(scope);
+        this.element = $compile(angular.element('<merge-form branch="branch" is-user-branch="isUserBranch" target="target" remove-branch="removeBranch"></merge-form>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('mergeForm');
     });
@@ -62,20 +61,20 @@ describe('Merge Form directive', function() {
     });
 
     describe('controller bound variable', function() {
-        it('branchTitle is one way bound', function() {
-            this.controller.branchTitle = 'test';
+        it('branch is one way bound', function() {
+            this.controller.branch = {'@id': 'test'};
             scope.$digest();
-            expect(scope.branchTitle).toEqual('');
+            expect(scope.branch).toEqual({'@id': 'branchId'});
         });
         it('isUserBranch is one way bound', function() {
             this.controller.isUserBranch = true;
             scope.$digest();
             expect(scope.isUserBranch).toEqual(false);
         });
-        it('targetId is two way bound', function() {
-            this.controller.targetId = 'test';
+        it('target is two way bound', function() {
+            this.controller.target = {};
             scope.$digest();
-            expect(scope.targetId).toEqual('test');
+            expect(scope.target).toEqual({});
         });
         it('removeBranch is two way bound', function() {
             this.controller.removeBranch = true;
@@ -109,38 +108,39 @@ describe('Merge Form directive', function() {
         it('depending on whether the branch is the master branch', function() {
             expect(this.element.find('checkbox').length).toEqual(1);
 
-            scope.branchTitle = 'MASTER';
+            this.controller.branchTitle = 'MASTER';
             scope.$digest();
             expect(this.element.find('checkbox').length).toEqual(0);
         });
         it('depending on whether the branch difference is set', function() {
             expect(this.element.find('tabset').length).toEqual(0);
 
-            this.controller.difference = {};
+            ontologyStateSvc.listItem.merge.difference = {};
             scope.$digest();
             var tabset = this.element.find('tabset');
             expect(tabset.length).toEqual(1);
-            expect(tabset.find('tab').length).toEqual(1);
+            expect(tabset.find('tab').length).toEqual(2);
             expect(tabset.find('commit-changes-display').length).toEqual(1);
+            expect(tabset.find('commit-history-table').length).toEqual(1);
         });
         it('depending on whether the branch difference has additions and deletions', function() {
-            this.controller.difference = {additions: [], deletions: []};
+            ontologyStateSvc.listItem.merge.difference = {additions: [], deletions: []};
             scope.$digest();
             expect(this.element.querySelectorAll('tabset info-message').length).toEqual(1);
 
-            this.controller.difference.additions = [{}];
+            ontologyStateSvc.listItem.merge.difference.additions = [{}];
             scope.$digest();
             expect(this.element.querySelectorAll('tabset info-message').length).toEqual(0);
 
-            this.controller.difference.additions = [];
-            this.controller.difference.deletions = [{}];
+            ontologyStateSvc.listItem.merge.difference.additions = [];
+            ontologyStateSvc.listItem.merge.difference.deletions = [{}];
             scope.$digest();
             expect(this.element.querySelectorAll('tabset info-message').length).toEqual(0);
         });
     });
     describe('controller methods', function() {
         describe('matchesCurrent returns', function() {
-            it('true if it does not match ontologyStateService.listItem.ontologyRecord.branchId', function() {
+            it('true if it does not match branch["@id"]', function() {
                 expect(this.controller.matchesCurrent({'@id': 'differentId'})).toBe(true);
             });
             it('false if it does match ontologyStateService.listItem.ontologyRecord.branchId', function() {
@@ -149,33 +149,34 @@ describe('Merge Form directive', function() {
         });
         describe('should collect differences when changing the target branch', function() {
             beforeEach(function() {
-                this.controller.difference = {};
+                ontologyStateSvc.listItem.merge.difference = {};
             });
             it('unless the target is empty', function() {
                 this.controller.changeTarget();
                 expect(catalogManagerSvc.getBranchDifference).not.toHaveBeenCalled();
-                expect(this.controller.difference).toBeUndefined();
+                expect(ontologyStateSvc.listItem.merge.difference).toBeUndefined();
             });
             describe('when target is not empty', function() {
                 beforeEach(function() {
-                    this.controller.targetId = 'test';
+                    this.targetId = 'target';
+                    this.controller.target = {'@id': this.targetId};
                 });
                 it('unless an error occurs', function() {
                     catalogManagerSvc.getBranchDifference.and.returnValue($q.reject('Error'));
                     this.controller.changeTarget();
                     scope.$apply();
-                    expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.branchId, this.controller.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, 'catalogId');
+                    expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith(scope.branch['@id'], this.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, 'catalogId');
                     expect(util.createErrorToast).toHaveBeenCalledWith('Error');
-                    expect(this.controller.difference).toBeUndefined();
+                    expect(ontologyStateSvc.listItem.merge.difference).toBeUndefined();
                 });
                 it('successfully', function() {
                     var difference = {additions: [], deletions: []};
                     catalogManagerSvc.getBranchDifference.and.returnValue($q.when(difference));
                     this.controller.changeTarget();
                     scope.$apply();
-                    expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.branchId, this.controller.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, 'catalogId');
+                    expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith(scope.branch['@id'], this.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, 'catalogId');
                     expect(util.createErrorToast).not.toHaveBeenCalled();
-                    expect(this.controller.difference).toEqual(difference);
+                    expect(ontologyStateSvc.listItem.merge.difference).toEqual(difference);
                 });
             });
         });
