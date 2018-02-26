@@ -140,10 +140,10 @@ describe('Instance Editor directive', function() {
             });
         });
         it('cancel sets the correct variables', function() {
-            this.controller.original = {'@id': 'original'};
-            discoverStateSvc.explore.instance.entity = {'@id': 'entity'};
+            discoverStateSvc.explore.instance.original = [{'@id': 'original'}];
+            discoverStateSvc.explore.instance.entity = [{'@id': 'entity'}];
             this.controller.cancel();
-            expect(discoverStateSvc.explore.instance.entity).toEqual(this.controller.original);
+            expect(discoverStateSvc.explore.instance.entity).toEqual(discoverStateSvc.explore.instance.original);
             expect(discoverStateSvc.explore.editing).toBe(false);
         });
     });

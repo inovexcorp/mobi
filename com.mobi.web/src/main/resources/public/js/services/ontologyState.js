@@ -107,7 +107,17 @@
                 ontology: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
-                merge: false,
+                merge: {
+                    active: false,
+                    target: undefined,
+                    checkbox: false,
+                    difference: undefined,
+                    conflicts: [],
+                    resolutions: {
+                        additions: [],
+                        deletions: []
+                    }
+                },
                 dataPropertyRange: {},
                 derivedConcepts: [],
                 derivedConceptSchemes: [],
@@ -356,35 +366,6 @@
                         };
                     }, $q.reject);
             }
-            /**
-             * @ngdoc method
-             * @name uploadThenGet
-             * @methodOf ontologyState.service:ontologyStateService
-             *
-             * @description
-             * Uploads the provided file as an ontology and creates a new list item for the new ontology. Returns a
-             * promise with the record id of the new OntologyRecord.
-             *
-             * @param {File} file The ontology file.
-             * @param {string} title The record title.
-             * @param {string} description The record description.
-             * @param {string} keywords The array of keywords for the record.
-             * @returns {Promise} A promise with the ontology record ID or error message.
-             */
-            /*self.uploadThenGet = function(file, title, description, keywords) {
-                var recordId;
-                return om.uploadFile(file, title, description, keywords)
-                    .then(data => {
-                        recordId = data.recordId;
-                        return self.getOntology(recordId);
-                    }, $q.reject)
-                    .then(response => self.addOntologyToList(om.getOntologyIRI(response.ontology), recordId, response.branchId, response.commitId, response.ontology, response.inProgressCommit, title), $q.reject)
-                    .then(response => {
-                        self.listItem = response;
-                        self.setSelected(self.getActiveEntityIRI(), false);
-                        return recordId;
-                    }, $q.reject);
-            }*/
             /**
              * @ngdoc method
              * @name uploadChanges
