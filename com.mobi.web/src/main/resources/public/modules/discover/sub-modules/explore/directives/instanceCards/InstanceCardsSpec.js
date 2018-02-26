@@ -133,7 +133,7 @@ describe('Instance Cards directive', function() {
         describe('view should set the correct variables when getInstance is', function() {
             describe('resolved and getReferencedTitles is', function() {
                 beforeEach(function() {
-                    this.data = {'@id': 'instanceId'};
+                    this.data = [{'@id': 'instanceId'}];
                     this.item = {instanceIRI: 'instanceId', title: 'title'};
                     discoverStateSvc.explore.breadcrumbs = ['', ''];
                     exploreSvc.getInstance.and.returnValue($q.when(this.data));

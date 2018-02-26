@@ -26,7 +26,7 @@
             <block-header ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length">
                 <error-display ng-if="!dvm.os.listItem.upToDate">There have been other commits made on this Branch.</error-display>
                 <div class="btn-container clearfix">
-                    <button class="btn btn-danger pull-left" ng-click="dvm.removeChanges()" ng-disabled="!dvm.os.isCommittable(dvm.os.listItem.ontologyRecord.recordId)">Remove All Changes</button>
+                    <button class="btn btn-danger pull-left" ng-click="dvm.removeChanges()" ng-disabled="!dvm.os.isCommittable(dvm.os.listItem)">Remove All Changes</button>
                     <!--<a class="btn btn-link pull-left" ng-click="dvm.setChecked(true)">All</a>
                     <a class="btn btn-link pull-left" ng-click="dvm.setChecked(false)">None</a>-->
                 </div>
