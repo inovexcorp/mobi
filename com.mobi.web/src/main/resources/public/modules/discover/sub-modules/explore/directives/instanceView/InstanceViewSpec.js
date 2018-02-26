@@ -175,11 +175,18 @@ describe('Instance View directive', function() {
             expect(this.controller.getReification('', {})).toBeUndefined();
             expect(exploreUtilsSvc.getReification).toHaveBeenCalledWith(discoverStateSvc.explore.instance.entity, discoverStateSvc.explore.instance.metadata.instanceIRI, '', {});
         });
+        it('edit sets the correct state', function() {
+            discoverStateSvc.explore.editing = false;
+            discoverStateSvc.explore.instance.original = [];
+            this.controller.edit();
+            expect(discoverStateSvc.explore.editing).toBe(true);
+            expect(discoverStateSvc.explore.instance.original).toEqual(discoverStateSvc.explore.instance.entity);
+        });
     });
-    it('should set the variable correctly when edit button is clicked', function() {
-        discoverStateSvc.explore.editing = false;
+    it('should call edit when the edit button is clicked', function() {
+        spyOn(this.controller, 'edit');
         var button = angular.element(this.element.querySelectorAll('.pull-right.edit-button')[0]);
         button.triggerHandler('click');
-        expect(discoverStateSvc.explore.editing).toBe(true);
+        expect(this.controller.edit).toHaveBeenCalled();
     });
 });

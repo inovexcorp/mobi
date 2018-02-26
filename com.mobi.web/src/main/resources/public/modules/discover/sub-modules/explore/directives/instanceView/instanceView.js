@@ -75,6 +75,10 @@
                         }
                         return reification;
                     }
+                    dvm.edit = function() {
+                        dvm.ds.explore.editing = true;
+                        dvm.ds.explore.instance.original = angular.copy(dvm.ds.explore.instance.entity);
+                    }
 
                     function getEntity() {
                         return _.omit(dvm.ds.getInstance(), ['@id', '@type']);

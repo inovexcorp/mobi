@@ -150,6 +150,15 @@ describe('Open Ontology Tab directive', function() {
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
             });
         });
+        it('should set the correct state for creating a new ontology', function() {
+            this.controller.newOntology();
+            expect(ontologyStateSvc.showNewTab).toEqual(true);
+            expect(_.startsWith(ontologyStateSvc.newOntology['@id'], 'https://mobi.com/ontologies/')).toEqual(true);
+            expect(ontologyStateSvc.newOntology[prefixes.dcterms + 'title']).toEqual([{'@value': ''}]);
+            expect(ontologyStateSvc.newOntology[prefixes.dcterms + 'description']).toEqual([{'@value': ''}]);
+            expect(ontologyStateSvc.newLanguage).toEqual(undefined);
+            expect(ontologyStateSvc.newKeywords).toEqual([]);
+        });
         it('should get a page of results', function() {
             var begin = this.controller.begin;
             this.controller.getPage('next');
@@ -228,10 +237,11 @@ describe('Open Ontology Tab directive', function() {
         scope.$apply();
         expect(this.controller.filterText).not.toContain(jasmine.objectContaining({'@id': 'recordB'}));
     });
-    it('should set the correct state when the new ontology button is clicked', function() {
+    it('should call newOntology when the button is clicked', function() {
+        spyOn(this.controller, 'newOntology');
         var button = angular.element(this.element.querySelectorAll('.actions button')[0]);
         button.triggerHandler('click');
-        expect(ontologyStateSvc.showNewTab).toBe(true);
+        expect(this.controller.newOntology).toHaveBeenCalled();
     });
     it('should set the correct state when the upload ontology button is clicked', function() {
         var button = angular.element(this.element.querySelectorAll('.actions button')[1]);

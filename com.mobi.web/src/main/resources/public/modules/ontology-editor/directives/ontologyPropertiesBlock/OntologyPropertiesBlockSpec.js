@@ -94,7 +94,8 @@ describe('Ontology Properties Block directive', function() {
             expect(ontologyStateSvc.ontologyProperty).toBeUndefined();
             expect(ontologyStateSvc.ontologyPropertyValue).toBe('');
             expect(ontologyStateSvc.ontologyPropertyIRI).toBe('');
-            expect(ontologyStateSvc.ontologyPropertyLanguage).toBe('en');
+            expect(ontologyStateSvc.ontologyPropertyType).toBeUndefined();
+            expect(ontologyStateSvc.ontologyPropertyLanguage).toBe('');
             expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(true);
         });
         it('should set the correct manager values when opening the Remove Ontology Property Overlay', function() {
@@ -114,6 +115,7 @@ describe('Ontology Properties Block directive', function() {
             expect(ontologyStateSvc.ontologyProperty).toEqual(propertyIRI);
             expect(ontologyStateSvc.ontologyPropertyValue).toBe('value');
             expect(ontologyStateSvc.ontologyPropertyIRI).toBe('id');
+            expect(ontologyStateSvc.ontologyPropertyType).toBe('type');
             expect(ontologyStateSvc.ontologyPropertyIndex).toBe(0);
             expect(ontologyStateSvc.ontologyPropertyLanguage).toBe('lang');
             expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(true);
