@@ -1924,54 +1924,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
             }));
         });
     }
-    /*@Test
-    public void testGetConflictsClassDeletion() throws Exception {
-        // Setup:
-        // Class deletion
-        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
-        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1");
-        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2");
-
-        Model leftModel = MODEL_FACTORY.createModel();
-        leftModel.add(sub, typeIRI, VALUE_FACTORY.createIRI("http://test.com#Type"));
-        Difference leftDiff = new Difference.Builder()
-                .additions(MODEL_FACTORY.createModel())
-                .deletions(leftModel)
-                .build();
-
-        Model rightModel = MODEL_FACTORY.createModel();
-        rightModel.add(sub, typeIRI, VALUE_FACTORY.createIRI("http://test.com#Type"));
-        Difference rightDiff = new Difference.Builder()
-                .additions(rightModel)
-                .deletions(MODEL_FACTORY.createModel())
-                .build();
-
-        Model originalModel = MODEL_FACTORY.createModel();
-        originalModel.add(sub, descriptionIRI, VALUE_FACTORY.createLiteral("Description"));
-        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
-
-        Set<Conflict> result = manager.getConflicts(leftId, rightId);
-        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
-        assertEquals(1, result.size());
-        result.forEach(conflict -> {
-            assertEquals(0, conflict.getOriginal().size());
-            Difference left = conflict.getLeftDifference();
-            Difference right = conflict.getRightDifference();
-            assertEquals(0, left.getAdditions().size());
-            assertEquals(1, right.getAdditions().size());
-            assertEquals(0, right.getDeletions().size());
-            assertEquals(1, left.getDeletions().size());
-            Stream.of(left.getDeletions(), conflict.getOriginal()).forEach(model -> model.forEach(statement -> {
-                assertEquals(sub, statement.getSubject());
-                assertEquals(typeIRI, statement.getPredicate());
-            }));
-        });
-    }*/
 
     @Test
     public void testGetConflictsSamePropertyAltered() throws Exception {
@@ -2013,7 +1965,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
-//        verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
+        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
         assertEquals(1, result.size());
         result.forEach(conflict -> {
             assertEquals(1, conflict.getOriginal().size());

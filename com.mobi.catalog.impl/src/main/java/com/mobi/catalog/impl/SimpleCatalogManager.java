@@ -1244,71 +1244,51 @@ public class SimpleCatalogManager implements CatalogManager {
 //            IRI rdfType = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
 
             Set<Statement> statementsToRemove = new HashSet<>();
-            leftDeletions.forEach(statement -> {
-                Resource subj = statement.getSubject();
-                IRI pred = statement.getPredicate();
-                Value obj = statement.getObject();
-                if (rightDeletions.contains(subj, pred, obj)
-                        && left.contains(subj, pred, null)
-                        && right.contains(subj, pred, null)) {
-                    result.add(createConflict(subj, pred, original, left, leftDeletions, right, rightDeletions));
-                    statementsToRemove.add(statement);
-                }
 
+            leftDeletions.subjects().forEach(subject -> {
+                Model originalSubjectStatements = mf.createModel(original.filter(subject, null, null));
+                Model leftDeleteSubjectStatements = leftDeletions.filter(subject, null, null);
+
+                leftDeleteSubjectStatements.forEach(statement -> {
+                    originalSubjectStatements.remove(statement.getSubject(), statement.getPredicate(), statement.getObject());
+
+                    IRI pred = statement.getPredicate();
+                    Value obj = statement.getObject();
+                    if (rightDeletions.contains(subject, pred, obj)
+                            && left.contains(subject, pred, null)
+                            && right.contains(subject, pred, null)) {
+                        result.add(createConflict(subject, pred, original, left, leftDeletions, right, rightDeletions));
+                        statementsToRemove.add(statement);
+                    }
+                });
+
+                if (!left.contains(subject, null, null) && originalSubjectStatements.size() == 0) {
+                    right.filter(subject, null, null).forEach(rightAdd -> {
+                        result.add(createConflict(subject, rightAdd.getPredicate(), original, left, leftDeletions, right, rightDeletions));
+                        statementsToRemove.add(rightAdd);
+                    });
+                }
             });
+
             statementsToRemove.forEach(statement -> Stream.of(left, leftDeletions, right, rightDeletions)
                     .forEach(model -> model.remove(statement.getSubject(), statement.getPredicate(), null)));
 
-            leftDeletions.subjects().forEach(subject -> {
-                if (left.contains(subject, null, null)) {
-                    return;
-                }
 
-                Model subjectStatementsInOriginal = original.filter(subject, null, null);
-                Model subjectStatementsInLeftDelete = leftDeletions.filter(subject, null, null);
-                subjectStatementsInLeftDelete.forEach(statement -> subjectStatementsInOriginal.remove(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+            rightDeletions.subjects().forEach(subject -> {
+                Model originalSubjectStatements = mf.createModel(original.filter(subject, null, null));
+                Model rightDeleteSubjectStatements = rightDeletions.filter(subject, null, null);
 
-                if (subjectStatementsInOriginal.size() == 0) {
-                    right.filter(subject, null, null).forEach(rightAdd -> {
-                        result.add(createConflict(subject, rightAdd.getPredicate(), original, left, leftDeletions, right, rightDeletions));
-                        // statementsToRemove.add(rightAdd);
+                rightDeleteSubjectStatements.forEach(statement -> {
+                    originalSubjectStatements.remove(statement.getSubject(), statement.getPredicate(), statement.getObject());
+                });
+
+                if (!right.contains(subject, null, null) && originalSubjectStatements.size() == 0) {
+                    left.filter(subject, null, null).forEach(leftAdd -> {
+                        result.add(createConflict(subject, leftAdd.getPredicate(), original, left, leftDeletions, right, rightDeletions));
+                        statementsToRemove.add(leftAdd);
                     });
                 }
-
             });
-
-            /*leftDeletions.forEach(statement -> {
-                Resource subject = statement.getSubject();
-                IRI predicate = statement.getPredicate();
-                if (predicate.equals(rdfType) || right.contains(subject, predicate, null)) {
-                    result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
-                            rightDeletions));
-                    Stream.of(left, right, rightDeletions).forEach(item ->
-                            item.remove(subject, predicate, null));
-                }
-            });
-
-            rightDeletions.forEach(statement -> {
-                Resource subject = statement.getSubject();
-                IRI predicate = statement.getPredicate();
-                if (predicate.equals(rdfType) || left.contains(subject, predicate, null)) {
-                    result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
-                            rightDeletions));
-                    Stream.of(left, leftDeletions, right).forEach(item ->
-                            item.remove(subject, predicate, null));
-                }
-            });
-
-            left.forEach(statement -> {
-                Resource subject = statement.getSubject();
-                IRI predicate = statement.getPredicate();
-                if (right.contains(subject, predicate, null)) {
-                    result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
-                            rightDeletions));
-                    Stream.of(leftDeletions, right, rightDeletions).forEach(item ->
-                            item.remove(subject, predicate, null));
-                }
-            });*/
 
             return result;
         }
