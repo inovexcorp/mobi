@@ -86,6 +86,7 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
+import org.openrdf.model.vocabulary.OWL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1253,9 +1254,28 @@ public class SimpleCatalogManager implements CatalogManager {
                     result.add(createConflict(subj, pred, original, left, leftDeletions, right, rightDeletions));
                     statementsToRemove.add(statement);
                 }
+
             });
             statementsToRemove.forEach(statement -> Stream.of(left, leftDeletions, right, rightDeletions)
                     .forEach(model -> model.remove(statement.getSubject(), statement.getPredicate(), null)));
+
+            leftDeletions.subjects().forEach(subject -> {
+                if (left.contains(subject, null, null)) {
+                    return;
+                }
+
+                Model subjectStatementsInOriginal = original.filter(subject, null, null);
+                Model subjectStatementsInLeftDelete = leftDeletions.filter(subject, null, null);
+                subjectStatementsInLeftDelete.forEach(statement -> subjectStatementsInOriginal.remove(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+
+                if (subjectStatementsInOriginal.size() == 0) {
+                    right.filter(subject, null, null).forEach(rightAdd -> {
+                        result.add(createConflict(subject, rightAdd.getPredicate(), original, left, leftDeletions, right, rightDeletions));
+                        // statementsToRemove.add(rightAdd);
+                    });
+                }
+
+            });
 
             /*leftDeletions.forEach(statement -> {
                 Resource subject = statement.getSubject();
