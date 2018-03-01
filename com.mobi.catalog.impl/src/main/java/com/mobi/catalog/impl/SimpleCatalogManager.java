@@ -1240,8 +1240,6 @@ public class SimpleCatalogManager implements CatalogManager {
 
             Set<Conflict> result = new HashSet<>();
             Model original = utils.getCompiledResource(commonCommits, conn);
-//            Model original = utils.getCompiledResource(originalEnd, conn);
-//            IRI rdfType = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
 
             Set<Statement> statementsToRemove = new HashSet<>();
 
@@ -1250,10 +1248,11 @@ public class SimpleCatalogManager implements CatalogManager {
                 Model leftDeleteSubjectStatements = leftDeletions.filter(subject, null, null);
 
                 leftDeleteSubjectStatements.forEach(statement -> {
-                    originalSubjectStatements.remove(statement.getSubject(), statement.getPredicate(), statement.getObject());
-
                     IRI pred = statement.getPredicate();
                     Value obj = statement.getObject();
+
+                    originalSubjectStatements.remove(subject, pred, obj);
+
                     if (rightDeletions.contains(subject, pred, obj)
                             && left.contains(subject, pred, null)
                             && right.contains(subject, pred, null)) {
@@ -1263,10 +1262,9 @@ public class SimpleCatalogManager implements CatalogManager {
                 });
 
                 if (!left.contains(subject, null, null) && originalSubjectStatements.size() == 0) {
-                    right.filter(subject, null, null).forEach(rightAdd -> {
-                        result.add(createConflict(subject, rightAdd.getPredicate(), original, left, leftDeletions, right, rightDeletions));
-                        statementsToRemove.add(rightAdd);
-                    });
+                    Model rightSubjectAdd = right.filter(subject, null, null);
+                    result.add(createConflict(subject, null, original, left, leftDeletions, right, rightDeletions));
+                    statementsToRemove.addAll(rightSubjectAdd);
                 }
             });
 
@@ -1283,10 +1281,9 @@ public class SimpleCatalogManager implements CatalogManager {
                 });
 
                 if (!right.contains(subject, null, null) && originalSubjectStatements.size() == 0) {
-                    left.filter(subject, null, null).forEach(leftAdd -> {
-                        result.add(createConflict(subject, leftAdd.getPredicate(), original, left, leftDeletions, right, rightDeletions));
-                        statementsToRemove.add(leftAdd);
-                    });
+                    Model leftSubjectAdd = left.filter(subject, null, null);
+                    result.add(createConflict(subject, null, original, left, leftDeletions, right, rightDeletions));
+                    statementsToRemove.addAll(leftSubjectAdd);
                 }
             });
 
