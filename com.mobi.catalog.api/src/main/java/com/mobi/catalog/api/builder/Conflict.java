@@ -28,23 +28,17 @@ import com.mobi.rdf.api.Model;
 
 public class Conflict {
     private IRI iri;
-    private Model original;
     private Difference left;
     private Difference right;
 
     private Conflict(Builder builder) {
         this.iri = builder.iri;
-        this.original = builder.original;
         this.left = builder.left;
         this.right = builder.right;
     }
 
     public IRI getIRI() {
         return iri;
-    }
-
-    public Model getOriginal() {
-        return original;
     }
 
     public Difference getLeftDifference() {
@@ -57,7 +51,6 @@ public class Conflict {
 
     public static class Builder {
         private final IRI iri;
-        private final Model original;
         private Difference left;
         private Difference right;
 
@@ -66,11 +59,9 @@ public class Conflict {
          * compared (left), and the second Model being compared (right). The left and right Models are further broken
          * down into additions and deletions.
          *
-         * @param original The Model identifying the original state for this conflict.
          * @param iri The IRI identifying the entity for this conflict.
          */
-        public Builder(Model original, IRI iri) {
-            this.original = original;
+        public Builder(IRI iri) {
             this.iri = iri;
         }
 
