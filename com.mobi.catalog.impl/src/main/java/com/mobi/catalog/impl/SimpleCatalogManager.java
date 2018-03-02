@@ -1235,8 +1235,8 @@ public class SimpleCatalogManager implements CatalogManager {
             Model leftDeletions = leftDiff.getDeletions();
             Model rightDeletions = rightDiff.getDeletions();
 
-            removeDuplicates(left, right);
-            removeDuplicates(leftDeletions, rightDeletions);
+//            removeDuplicates(left, right);
+//            removeDuplicates(leftDeletions, rightDeletions);
 
             Set<Conflict> result = new HashSet<>();
             Model original = utils.getCompiledResource(commonCommits, conn);
