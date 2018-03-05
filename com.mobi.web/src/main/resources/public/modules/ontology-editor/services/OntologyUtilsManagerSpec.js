@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Ontology Utils Manager service', function() {
+describe('Ontology Utils Manager service', function() {
     var ontologyUtilsManagerSvc, ontologyManagerSvc, ontologyStateSvc, prefixes, util, updateRefs, scope, $q;
     var broaderRelations = ['broader', 'broaderTransitive', 'broadMatch'];
     var narrowerRelations = ['narrower', 'narrowerTransitive', 'narrowMatch'];
