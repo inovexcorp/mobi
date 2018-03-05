@@ -59,7 +59,7 @@
                                 } else {
                                     _.forEach(conflicts, conflict => {
                                         conflict.resolved = false;
-                                        dvm.conflicts.push(conflict);
+                                        dvm.os.listItem.merge.conflicts.push(conflict);
                                     });
                                 }
                             }, onError);
@@ -124,9 +124,9 @@
                     }
                     function addToResolutions(notSelected) {
                         if (notSelected.additions.length) {
-                            dvm.resolutions.deletions = _.concat(dvm.resolutions.deletions, notSelected.additions);
+                            dvm.os.listItem.merge.resolutions.deletions = _.concat(dvm.resolutions.deletions, notSelected.additions);
                         } else {
-                            dvm.resolutions.additions = _.concat(dvm.resolutions.additions, notSelected.deletions);
+                            dvm.os.listItem.merge.resolutions.additions = _.concat(dvm.resolutions.additions, notSelected.deletions);
                         }
                     }
                     setupVariables();

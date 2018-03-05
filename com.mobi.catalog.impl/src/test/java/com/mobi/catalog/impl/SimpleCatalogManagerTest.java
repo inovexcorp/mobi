@@ -1866,6 +1866,8 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         manager.getDifference(sourceId, targetId);
     }
 
+    /* getConflicts() */
+
     @Test
     public void testGetConflictsClassDeletion() throws Exception {
         // Setup:
@@ -1876,7 +1878,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
         Model leftModel = MODEL_FACTORY.createModel();
         leftModel.add(sub, descriptionIRI, VALUE_FACTORY.createLiteral("Description"));
-        leftModel.add(sub, typeIRI, VALUE_FACTORY.createIRI("http://test.com#Type"));
         Difference leftDiff = new Difference.Builder()
                 .additions(MODEL_FACTORY.createModel())
                 .deletions(leftModel)
@@ -1909,7 +1910,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
             assertEquals(0, left.getAdditions().size());
             assertEquals(1, right.getAdditions().size());
             assertEquals(0, right.getDeletions().size());
-            assertEquals(2, left.getDeletions().size());
+            assertEquals(1, left.getDeletions().size());
             Stream.of(left.getDeletions(), originalModel).forEach(model -> model.forEach(statement -> {
                 assertEquals(sub, statement.getSubject());
                 assertTrue(validIRIs.contains(statement.getPredicate()));

@@ -213,8 +213,8 @@ describe('Merge Tab directive', function() {
             var selectedRight = {resolved: 'right', left: {additions: ['add-left'], deletions: ['del-left']}};
             ontologyStateSvc.listItem.merge.conflicts = [selectedLeft, selectedRight];
             this.controller.mergeWithResolutions();
-            expect(this.controller.resolutions.additions).toEqual([]);
-            expect(this.controller.resolutions.deletions).toEqual(['add-right', 'add-left']);
+            expect(ontologyStateSvc.listItem.merge.resolutions.additions).toEqual([]);
+            expect(ontologyStateSvc.listItem.merge.resolutions.deletions).toEqual(['add-right', 'add-left']);
             expect(this.controller.merge).toHaveBeenCalled();
         });
         describe('merge calls the correct functions', function() {
