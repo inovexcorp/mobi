@@ -123,18 +123,12 @@
                         }
                     }
                     function addToResolutions(notSelected) {
-<<<<<<< HEAD
                         if (notSelected.additions.length) {
                             dvm.resolutions.deletions = _.concat(dvm.resolutions.deletions, notSelected.additions);
                         } else {
                             dvm.resolutions.additions = _.concat(dvm.resolutions.additions, notSelected.deletions);
                         }
-=======
-                        dvm.os.listItem.merge.resolutions.additions = _.concat(dvm.os.listItem.merge.resolutions.additions, notSelected.deletions);
-                        dvm.os.listItem.merge.resolutions.deletions = _.concat(dvm.os.listItem.merge.resolutions.deletions, notSelected.additions);
->>>>>>> develop
                     }
-
                     setupVariables();
                 }]
             }
