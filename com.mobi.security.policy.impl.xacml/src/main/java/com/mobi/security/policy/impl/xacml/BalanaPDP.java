@@ -138,15 +138,7 @@ public class BalanaPDP implements PDP {
 
     @Override
     public Response evaluate(Request request) {
-        try {
-            XACMLRequest xacmlRequest = getRequest(request);
-            org.wso2.balana.PDP pdp = getPDP(vf.createIRI(POLICY_DENY_OVERRIDES));
-            String result = pdp.evaluate(xacmlRequest.toString());
-            return getResponse(result);
-        } catch (ProcessingException e) {
-            return new XACMLResponse.Builder(Decision.INDETERMINATE, Status.PROCESSING_ERROR)
-                    .statusMessage(e.getMessage()).build();
-        }
+        return evaluate(request, vf.createIRI(POLICY_DENY_OVERRIDES));
     }
 
     @Override

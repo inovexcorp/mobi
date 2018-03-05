@@ -66,10 +66,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -126,7 +123,7 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
         try {
             AbstractRequestCtx requestCtx = RequestCtxFactory.getFactory().getRequestCtx(request.toString());
             EvaluationCtx context = EvaluationCtxFactory.getFactory().getEvaluationCtx(requestCtx, config);
-            return findPolicies(context).stream()
+            return findPolicyList(context).stream()
                     .map(abstractPolicy -> new XACMLPolicy(abstractPolicy, vf))
                     .collect(Collectors.toList());
         } catch (ParsingException e) {
@@ -134,14 +131,34 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
         }
     }
 
-    private List<AbstractPolicy> findPolicies(EvaluationCtx context) {
+    @Override
+    public PolicyFinderResult findPolicy(EvaluationCtx context) {
+        List<AbstractPolicy> selectedPolicies;
+        try {
+            selectedPolicies = findPolicyList(context);
+        } catch (PolicySyntaxException e) {
+            return new PolicyFinderResult(new Status(Collections.singletonList(SYNTAX_ERROR), e.getMessage()));
+        } catch (ProcessingException e) {
+            return new PolicyFinderResult(new Status(Collections.singletonList(PROCESSING_ERROR),
+                    e.getMessage()));
+        }
+
+        // no errors happened during the search, so now take the right
+        // action based on how many policies we found
+        switch (selectedPolicies.size()) {
+            case 0:
+                return new PolicyFinderResult();
+            case 1:
+                return new PolicyFinderResult(selectedPolicies.get(0));
+            default:
+                return new PolicyFinderResult(new PolicySet(null, combiningAlg, null, selectedPolicies));
+        }
+    }
+
+    private List<AbstractPolicy> findPolicyList(EvaluationCtx context) {
         ArrayList<AbstractPolicy> selectedPolicies = new ArrayList<>();
-        Set<Map.Entry<Resource, AbstractPolicy>> entrySet = loadPolicies().entrySet();
-
         // iterate through all the policies we currently have loaded
-        for (Map.Entry<Resource, AbstractPolicy> entry : entrySet) {
-
-            AbstractPolicy policy = entry.getValue();
+        loadPolicies().forEach(policy -> {
             MatchResult match = policy.match(context);
             int result = match.getResult();
 
@@ -162,36 +179,13 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
                 // this is the first match we've found, so remember it
                 selectedPolicies.add(policy);
             }
-        }
+        });
+
         return selectedPolicies;
     }
 
-    @Override
-    public PolicyFinderResult findPolicy(EvaluationCtx context) {
-        List<AbstractPolicy> selectedPolicies;
-        try {
-            selectedPolicies = findPolicies(context);
-        } catch (PolicySyntaxException e) {
-            return new PolicyFinderResult(new Status(Collections.singletonList(SYNTAX_ERROR), e.getMessage()));
-        } catch (ProcessingException e) {
-            return new PolicyFinderResult(new Status(Collections.singletonList(PROCESSING_ERROR),
-                    e.getMessage()));
-        }
-
-        // no errors happened during the search, so now take the right
-        // action based on how many policies we found
-        switch (selectedPolicies.size()) {
-            case 0:
-                return new PolicyFinderResult();
-            case 1:
-                return new PolicyFinderResult((selectedPolicies.get(0)));
-            default:
-                return new PolicyFinderResult(new PolicySet(null, combiningAlg, null, selectedPolicies));
-        }
-    }
-
-    private Map<Resource, AbstractPolicy> loadPolicies() {
-        Map<Resource, AbstractPolicy> policies = new HashMap<>();
+    private List<AbstractPolicy> loadPolicies() {
+        List<AbstractPolicy> policies = new ArrayList<>();
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.getStatements(null, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
                     vf.createIRI(PolicyFile.TYPE)).forEach(statement -> {
@@ -199,8 +193,7 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
                         Model policyModel = asModel(conn.getStatements(null, null, null, policyIRI), mf);
                         PolicyFile policyFile = policyFileFactory.getExisting(policyIRI, policyModel).orElseThrow(() ->
                                 new IllegalStateException("Could not create Policy"));
-                        AbstractPolicy policy = transform(policyFile);
-                        policies.put(vf.createIRI(policy.getId().toString()), policy);
+                        policies.add(transform(policyFile));
                     });
         }
         return policies;
