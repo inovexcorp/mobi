@@ -245,7 +245,8 @@
                     changed: [],
                     entity: [{}],
                     metadata: {},
-                    objectMap: {}
+                    objectMap: {},
+                    original: []
                 },
                 instanceDetails: {
                     currentPage: 0,
