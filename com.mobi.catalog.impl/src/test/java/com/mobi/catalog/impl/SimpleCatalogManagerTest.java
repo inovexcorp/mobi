@@ -25,7 +25,9 @@ package com.mobi.catalog.impl;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -70,7 +72,6 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -1948,9 +1949,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
         setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
-        /*doReturn(Collections.singletonList(leftDiff)).when(utilsService).getCommitChain(eq(leftId), eq(false), any(RepositoryConnection.class));
-        doReturn(Collections.singletonList(rightDiff)).when(utilsService).getCommitChain(eq(rightId), eq(false), any(RepositoryConnection.class));*/
-
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
         verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
@@ -1985,23 +1983,24 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-3");
         Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict3-3");
 
-        Difference leftDiff = new Difference.Builder()
-                .additions(MODEL_FACTORY.createModel())
-                .deletions(MODEL_FACTORY.createModel())
-                .build();
-
-        Model rightAdds = MODEL_FACTORY.createModel();
-        rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Right"));
-        Difference rightDiff = new Difference.Builder()
-                .additions(rightAdds)
-                .deletions(MODEL_FACTORY.createModel())
-                .build();
-
         Model originalModel = MODEL_FACTORY.createModel();
         originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
+
+        Model leftAdds = MODEL_FACTORY.createModel();
+        leftAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Left"));
+        Difference leftDiff = new Difference.Builder()
+                .additions(leftAdds)
+                .deletions(originalModel)
+                .build();
+
+        Difference rightDiff = new Difference.Builder()
+                .additions(MODEL_FACTORY.createModel())
+                .deletions(originalModel)
+                .build();
+
         setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
-        Set<Conflict> result = manager.getConflicts(leftId, rightId);
+        Set<Conflict> results = manager.getConflicts(leftId, rightId);
         verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
@@ -2009,7 +2008,20 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
-        assertEquals(0, result.size());
+        assertEquals(1, results.size());
+
+        results.forEach(conflict -> {
+            Difference left = conflict.getLeftDifference();
+            Difference right = conflict.getRightDifference();
+            assertEquals(1, left.getAdditions().size());
+            assertEquals(0, right.getAdditions().size());
+            assertEquals(1, right.getDeletions().size());
+            assertEquals(1, left.getDeletions().size());
+            Stream.of(left.getDeletions(), originalModel).forEach(model -> model.forEach(statement -> {
+                assertEquals(sub, statement.getSubject());
+                assertEquals(titleIRI, statement.getPredicate());
+            }));
+        });
     }
 
     @Test
@@ -2059,24 +2071,24 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-5");
         Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-5");
 
+        Model originalModel = MODEL_FACTORY.createModel();
+        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
+
         Model leftAdds = MODEL_FACTORY.createModel();
         leftAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Left"));
         Difference leftDiff = new Difference.Builder()
                 .additions(leftAdds)
-                .deletions(MODEL_FACTORY.createModel())
+                .deletions(originalModel)
                 .build();
 
         Model rightAdds = MODEL_FACTORY.createModel();
         Model rightDels = MODEL_FACTORY.createModel();
         rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Right"));
-        rightDels.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
         Difference rightDiff = new Difference.Builder()
                 .additions(rightAdds)
-                .deletions(rightDels)
+                .deletions(MODEL_FACTORY.createModel())
                 .build();
 
-        Model originalModel = MODEL_FACTORY.createModel();
-        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
         setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);

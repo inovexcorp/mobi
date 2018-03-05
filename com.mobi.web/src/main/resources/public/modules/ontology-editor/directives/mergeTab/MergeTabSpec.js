@@ -177,7 +177,7 @@ describe('Merge Tab directive', function() {
             expect(this.controller.allResolved()).toEqual(false);
         });
         describe('attemptMerge calls the correct functions', function() {
-            describe('when getBranchConflicts is resolved', function() {
+            fdescribe('when getBranchConflicts is resolved', function() {
                 it('and is empty', function() {
                     catalogManagerSvc.getBranchConflicts.and.returnValue($q.when([]));
                     spyOn(this.controller, 'merge');
@@ -193,7 +193,8 @@ describe('Merge Tab directive', function() {
                     scope.$apply();
                     expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(this.branchId, this.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                     expect(ontologyStateSvc.listItem.merge.conflicts).toEqual([
-                        {iri: 'conflict1', resolved: false, left: {additions: []}, right: {additions: []}},
+                        {iri: 'conflict1', resolved: false, left: {additions: []}},
+                        {iri: 'conflict1', resolved: false, right: {additions: []}},
                         {iri: 'conflict2', resolved: false}
                     ]);
                     expect(this.controller.merge).not.toHaveBeenCalled();

@@ -54,10 +54,12 @@
                     dvm.attemptMerge = function() {
                         cm.getBranchConflicts(dvm.branch['@id'], dvm.os.listItem.merge.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(conflicts => {
+                                console.log(conflicts);
                                 if (_.isEmpty(conflicts)) {
                                     dvm.merge();
                                 } else {
                                     _.forEach(conflicts, conflict => {
+                                    console.log(conflict)
                                         conflict.resolved = false;
                                         dvm.os.listItem.merge.conflicts.push(conflict);
                                     });
