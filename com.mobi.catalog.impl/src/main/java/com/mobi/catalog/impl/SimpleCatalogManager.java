@@ -86,7 +86,6 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
-import org.openrdf.model.vocabulary.OWL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1223,7 +1222,7 @@ public class SimpleCatalogManager implements CatalogManager {
             if (commonCommits.size() == 0) {
                 throw new IllegalArgumentException("No common parent between Commit " + leftId + " and " + rightId);
             }
-//            Resource originalEnd = commonCommits.get(commonCommits.size() - 1);
+
             leftCommits.removeAll(commonCommits);
             rightCommits.removeAll(commonCommits);
 
@@ -1234,9 +1233,6 @@ public class SimpleCatalogManager implements CatalogManager {
             Model right = rightDiff.getAdditions();
             Model leftDeletions = leftDiff.getDeletions();
             Model rightDeletions = rightDiff.getDeletions();
-
-//            removeDuplicates(left, right);
-//            removeDuplicates(leftDeletions, rightDeletions);
 
             Set<Conflict> result = new HashSet<>();
             Model original = utils.getCompiledResource(commonCommits, conn);
@@ -1277,13 +1273,11 @@ public class SimpleCatalogManager implements CatalogManager {
                 Model rightDeleteSubjectStatements = rightDeletions.filter(subject, null, null);
 
                 rightDeleteSubjectStatements.forEach(statement -> {
-                    originalSubjectStatements.remove(statement.getSubject(), statement.getPredicate(), statement.getObject());
+                    originalSubjectStatements.remove(subject, statement.getPredicate(), statement.getObject());
                 });
 
                 if (!right.contains(subject, null, null) && originalSubjectStatements.size() == 0) {
-                    Model leftSubjectAdd = left.filter(subject, null, null);
                     result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
-                    statementsToRemove.addAll(leftSubjectAdd);
                 }
             });
 
