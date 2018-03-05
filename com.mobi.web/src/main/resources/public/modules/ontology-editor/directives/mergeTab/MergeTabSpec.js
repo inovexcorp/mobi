@@ -177,7 +177,7 @@ describe('Merge Tab directive', function() {
             expect(this.controller.allResolved()).toEqual(false);
         });
         describe('attemptMerge calls the correct functions', function() {
-            fdescribe('when getBranchConflicts is resolved', function() {
+            describe('when getBranchConflicts is resolved', function() {
                 it('and is empty', function() {
                     catalogManagerSvc.getBranchConflicts.and.returnValue($q.when([]));
                     spyOn(this.controller, 'merge');
