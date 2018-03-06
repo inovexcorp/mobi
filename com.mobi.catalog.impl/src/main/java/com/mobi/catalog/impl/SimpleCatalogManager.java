@@ -1257,8 +1257,9 @@ public class SimpleCatalogManager implements CatalogManager {
                     }
                 });
 
-                if (!left.contains(subject, null, null) && originalSubjectStatements.size() == 0) {
-                    Model rightSubjectAdd = right.filter(subject, null, null);
+                Model rightSubjectAdd = right.filter(subject, null, null);
+                if (!left.contains(subject, null, null) && originalSubjectStatements.size() == 0
+                        && rightSubjectAdd.size() > 0 && !rightDeletions.containsAll(leftDeleteSubjectStatements)) {
                     result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
                     statementsToRemove.addAll(rightSubjectAdd);
                 }
@@ -1276,7 +1277,9 @@ public class SimpleCatalogManager implements CatalogManager {
                     originalSubjectStatements.remove(subject, statement.getPredicate(), statement.getObject());
                 });
 
-                if (!right.contains(subject, null, null) && originalSubjectStatements.size() == 0) {
+                Model leftSubjectAdd = left.filter(subject, null, null);
+                if (!right.contains(subject, null, null) && originalSubjectStatements.size() == 0
+                        && leftSubjectAdd.size() > 0 && !leftDeletions.containsAll(rightDeleteSubjectStatements)) {
                     result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
                 }
             });

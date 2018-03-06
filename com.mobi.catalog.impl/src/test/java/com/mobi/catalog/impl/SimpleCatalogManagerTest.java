@@ -1874,7 +1874,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         manager.getDifference(sourceId, targetId);
     }
 
-    /* getConflicts() */
+    /* getConflicts */
 
     @Test
     public void testGetConflictsClassDeletion() throws Exception {
@@ -1884,11 +1884,12 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1");
         Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2");
 
-        Model leftModel = MODEL_FACTORY.createModel();
-        leftModel.add(sub, descriptionIRI, VALUE_FACTORY.createLiteral("Description"));
+        Model originalModel = MODEL_FACTORY.createModel();
+        originalModel.add(sub, descriptionIRI, VALUE_FACTORY.createLiteral("Description"));
+
         Difference leftDiff = new Difference.Builder()
                 .additions(MODEL_FACTORY.createModel())
-                .deletions(leftModel)
+                .deletions(originalModel)
                 .build();
 
         Model rightModel = MODEL_FACTORY.createModel();
@@ -1898,8 +1899,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
                 .deletions(MODEL_FACTORY.createModel())
                 .build();
 
-        Model originalModel = MODEL_FACTORY.createModel();
-        originalModel.add(sub, descriptionIRI, VALUE_FACTORY.createLiteral("Description"));
         setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
@@ -2015,20 +2014,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
-        assertEquals(1, results.size());
-
-        results.forEach(conflict -> {
-            Difference left = conflict.getLeftDifference();
-            Difference right = conflict.getRightDifference();
-            assertEquals(1, left.getAdditions().size());
-            assertEquals(0, right.getAdditions().size());
-            assertEquals(1, right.getDeletions().size());
-            assertEquals(1, left.getDeletions().size());
-            Stream.of(left.getDeletions(), originalModel).forEach(model -> model.forEach(statement -> {
-                assertEquals(sub, statement.getSubject());
-                assertEquals(titleIRI, statement.getPredicate());
-            }));
-        });
+        assertEquals(0, results.size());
     }
 
     @Test
