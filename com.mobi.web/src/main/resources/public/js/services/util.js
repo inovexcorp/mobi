@@ -49,9 +49,9 @@
          */
         .service('utilService', utilService);
 
-        utilService.$inject = ['$filter', '$http', '$q', 'uuid', 'toastr', 'prefixes', 'httpService', 'REGEX'];
+        utilService.$inject = ['$filter', '$http', '$q', '$window', '$rootScope', 'uuid', 'toastr', 'prefixes', 'httpService', 'REGEX'];
 
-        function utilService($filter, $http, $q, uuid, toastr, prefixes, httpService, REGEX) {
+        function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, prefixes, httpService, REGEX) {
             var self = this;
 
             /**
@@ -587,7 +587,7 @@
             /**
              * @ngdoc method
              * @name getInputType
-             * @methodOf exploreUtils.service:exploreUtilsService
+             * @methodOf util.service:utilService
              *
              * @description
              * Gets the input type associated with the property in the properties list provided.
@@ -616,7 +616,7 @@
             /**
              * @ngdoc method
              * @name getPattern
-             * @methodOf exploreUtils.service:exploreUtilsService
+             * @methodOf util.service:utilService
              *
              * @description
              * Gets the pattern type associated with the property in the properties list provided.
@@ -642,6 +642,20 @@
                     default:
                         return REGEX.ANYTHING;
                 }
+            }
+            /**
+             * @ngdoc method
+             * @name startDownload
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Starts a download of the resource at the provided URL by setting the `$window.location`.
+             *
+             * @param {string} url The URL to start a download from
+             */
+            self.startDownload = function(url) {
+                $rootScope.isDownloading = true;
+                $window.location = url;
             }
 
             function setValue(entity, propertyIRI, valueObj) {

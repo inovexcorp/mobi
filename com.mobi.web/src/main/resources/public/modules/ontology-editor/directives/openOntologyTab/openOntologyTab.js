@@ -58,7 +58,22 @@
                         dvm.os.openOntology(record['@id'], dvm.util.getDctermsValue(record, 'title'))
                             .then(_.noop, dvm.util.createErrorToast);
                     }
-
+                    dvm.newOntology = function() {
+                        var date = new Date();
+                        dvm.os.newOntology = {
+                            '@id': 'https://mobi.com/ontologies/' + (date.getMonth() + 1) + '/' + date.getFullYear() + '/',
+                            '@type': [prefixes.owl + 'Ontology'],
+                            [prefixes.dcterms + 'title']: [{
+                                '@value': ''
+                            }],
+                            [prefixes.dcterms + 'description']: [{
+                                '@value': ''
+                            }]
+                        };
+                        dvm.os.newKeywords = [];
+                        dvm.os.newLanguage = undefined;
+                        dvm.os.showNewTab = true;
+                    }
                     dvm.getPage = function(direction) {
                         if (direction === 'next') {
                             dvm.begin += dvm.limit;
@@ -66,7 +81,6 @@
                             dvm.begin -= dvm.limit;
                         }
                     }
-
                     dvm.showDeleteConfirmationOverlay = function(record) {
                         dvm.recordId = _.get(record, '@id', '');
                         dvm.recordTitle = dvm.util.getDctermsValue(record, 'title');
@@ -80,7 +94,6 @@
 
                         dvm.showDeleteConfirmation = true;
                     }
-
                     dvm.deleteOntology = function() {
                         dvm.om.deleteOntology(dvm.recordId)
                             .then(response => {
@@ -92,7 +105,6 @@
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
-
                     dvm.getAllOntologyRecords = function(sortingOption) {
                         dvm.om.getAllOntologyRecords(sortingOption)
                             .then(records => {

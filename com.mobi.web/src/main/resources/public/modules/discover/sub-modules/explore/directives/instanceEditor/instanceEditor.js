@@ -64,7 +64,6 @@
                     var eu = exploreUtilsService;
                     dvm.ds = discoverStateService;
                     dvm.util = utilService;
-                    dvm.original = angular.copy(dvm.ds.explore.instance.entity);
                     dvm.isValid = true;
 
                     dvm.save = function() {
@@ -81,7 +80,7 @@
                     }
 
                     dvm.cancel = function() {
-                        dvm.ds.explore.instance.entity = dvm.original;
+                        dvm.ds.explore.instance.entity = dvm.ds.explore.instance.original;
                         dvm.ds.explore.editing = false;
                     }
                 }
