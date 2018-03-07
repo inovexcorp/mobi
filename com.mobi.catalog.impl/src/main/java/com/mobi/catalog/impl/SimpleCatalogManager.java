@@ -1211,13 +1211,14 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Set<Conflict> getConflicts(Resource leftId, Resource rightId) {
+        // Does not take into account named graphs
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(leftId, commitFactory.getTypeIRI(), conn);
             utils.validateResource(rightId, commitFactory.getTypeIRI(), conn);
 
-            List<Resource> leftCommits = utils.getCommitChain(leftId, true, conn);
-            List<Resource> rightCommits = utils.getCommitChain(rightId, true, conn);
-            List<Resource> commonCommits = new ArrayList<>(leftCommits);
+            ArrayList<Resource> leftCommits = new ArrayList<>(utils.getCommitChain(leftId, true, conn));
+            ArrayList<Resource> rightCommits = new ArrayList<>(utils.getCommitChain(rightId, true, conn));
+            ArrayList<Resource> commonCommits = new ArrayList<>(leftCommits);
             commonCommits.retainAll(rightCommits);
             if (commonCommits.size() == 0) {
                 throw new IllegalArgumentException("No common parent between Commit " + leftId + " and " + rightId);
@@ -1225,6 +1226,9 @@ public class SimpleCatalogManager implements CatalogManager {
 
             leftCommits.removeAll(commonCommits);
             rightCommits.removeAll(commonCommits);
+
+            leftCommits.trimToSize();
+            rightCommits.trimToSize();
 
             Difference leftDiff = utils.getCommitDifference(leftCommits, conn);
             Difference rightDiff = utils.getCommitDifference(rightCommits, conn);
@@ -1240,14 +1244,12 @@ public class SimpleCatalogManager implements CatalogManager {
             Set<Statement> statementsToRemove = new HashSet<>();
 
             leftDeletions.subjects().forEach(subject -> {
-                Model originalSubjectStatements = mf.createModel(original.filter(subject, null, null));
                 Model leftDeleteSubjectStatements = leftDeletions.filter(subject, null, null);
 
+                // Check for modification in left and right
                 leftDeleteSubjectStatements.forEach(statement -> {
                     IRI pred = statement.getPredicate();
                     Value obj = statement.getObject();
-
-                    originalSubjectStatements.remove(subject, pred, obj);
 
                     if (rightDeletions.contains(subject, pred, obj)
                             && left.contains(subject, pred, null)
@@ -1257,9 +1259,13 @@ public class SimpleCatalogManager implements CatalogManager {
                     }
                 });
 
+                // Check for deletion in left and addition in right
                 Model rightSubjectAdd = right.filter(subject, null, null);
-                if (!left.contains(subject, null, null) && originalSubjectStatements.size() == 0
-                        && rightSubjectAdd.size() > 0 && !rightDeletions.containsAll(leftDeleteSubjectStatements)) {
+                boolean leftEntityDeleted = !left.subjects().contains(subject) &&
+                        leftDeleteSubjectStatements.equals(original.filter(subject, null, null));
+                boolean rightEntityDeleted = rightDeletions.containsAll(leftDeleteSubjectStatements);
+
+                if (leftEntityDeleted && !rightEntityDeleted && rightSubjectAdd.size() > 0) {
                     result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
                     statementsToRemove.addAll(rightSubjectAdd);
                 }
@@ -1268,21 +1274,19 @@ public class SimpleCatalogManager implements CatalogManager {
             statementsToRemove.forEach(statement -> Stream.of(left, leftDeletions, right, rightDeletions)
                     .forEach(model -> model.remove(statement.getSubject(), statement.getPredicate(), null)));
 
-
             rightDeletions.subjects().forEach(subject -> {
-                Model originalSubjectStatements = mf.createModel(original.filter(subject, null, null));
+                // Check for deletion in right and addition in left
                 Model rightDeleteSubjectStatements = rightDeletions.filter(subject, null, null);
-
-                rightDeleteSubjectStatements.forEach(statement -> {
-                    originalSubjectStatements.remove(subject, statement.getPredicate(), statement.getObject());
-                });
-
                 Model leftSubjectAdd = left.filter(subject, null, null);
-                if (!right.contains(subject, null, null) && originalSubjectStatements.size() == 0
-                        && leftSubjectAdd.size() > 0 && !leftDeletions.containsAll(rightDeleteSubjectStatements)) {
+                boolean rightEntityDeleted = !right.subjects().contains(subject) &&
+                        rightDeleteSubjectStatements.equals(original.filter(subject, null, null));
+                boolean leftEntityDeleted = leftDeletions.containsAll(rightDeleteSubjectStatements);
+
+                if (rightEntityDeleted && !leftEntityDeleted && leftSubjectAdd.size() > 0) {
                     result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
                 }
             });
+
 
             return result;
         }

@@ -55,7 +55,7 @@ public class Conflict {
         private Difference right;
 
         /**
-         * The builder for a SimpleConflict which takes the subject IRI string, original Model, the first Model being
+         * The builder for a SimpleConflict which takes the subject IRI string, the first Model being
          * compared (left), and the second Model being compared (right). The left and right Models are further broken
          * down into additions and deletions.
          *

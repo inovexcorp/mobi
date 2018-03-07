@@ -1926,6 +1926,54 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testGetConflictsClassDeletionWithAddition() throws  Exception {
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2");
+
+        Model originalModel = MODEL_FACTORY.createModel();
+        originalModel.add(sub, typeIRI, VALUE_FACTORY.createIRI("http://test.com#Class"));
+        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Original"));
+
+        Model leftAdds = MODEL_FACTORY.createModel();
+        Model leftDels = MODEL_FACTORY.createModel();
+        leftAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
+        leftDels.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Original"));
+        Difference leftDiff = new Difference.Builder()
+                .additions(leftAdds)
+                .deletions(leftDels)
+                .build();
+
+        Difference rightDiff = new Difference.Builder()
+                .additions(MODEL_FACTORY.createModel())
+                .deletions(originalModel)
+                .build();
+
+        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
+
+        Set<Conflict> result = manager.getConflicts(leftId, rightId);
+        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
+        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
+        assertEquals(1, result.size());
+
+        // TODO:
+        result.forEach(conflict -> {
+            Difference left = conflict.getLeftDifference();
+            Difference right = conflict.getRightDifference();
+            assertEquals(1, left.getAdditions().size());
+            assertEquals(0, right.getAdditions().size());
+            assertEquals(1, left.getDeletions().size());
+            assertEquals(2, right.getDeletions().size());
+
+        });
+    }
+
+    @Test
     public void testGetConflictsSamePropertyAltered() throws Exception {
         // Setup:
         // Both altered same title
