@@ -1464,17 +1464,4 @@ public class SimpleCatalogManager implements CatalogManager {
                 .map(iri -> conn.contains(null, iri, commitId))
                 .reduce(false, (iri1, iri2) -> iri1 || iri2);
     }
-
-    /**
-     * Removes the duplicate Statements in the supplied Models.
-     *
-     * @param left  First Model
-     * @param right Second Model
-     */
-    private void removeDuplicates(Model left, Model right) {
-        Model duplicates = mf.createModel(left);
-        duplicates.retainAll(right);
-        left.removeAll(duplicates);
-        right.removeAll(duplicates);
-    }
 }

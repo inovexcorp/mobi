@@ -1926,7 +1926,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testGetConflictsClassDeletionWithAddition() throws  Exception {
+    public void testGetConflictsClassDeletionWithModification() throws  Exception {
         IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
         Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1");
         Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2");
@@ -1960,8 +1960,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
         assertEquals(1, result.size());
-
-        // TODO:
         result.forEach(conflict -> {
             Difference left = conflict.getLeftDifference();
             Difference right = conflict.getRightDifference();
@@ -1970,6 +1968,10 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
             assertEquals(1, left.getDeletions().size());
             assertEquals(2, right.getDeletions().size());
 
+            Stream.of(left.getAdditions(), right.getAdditions()).forEach(model -> model.forEach(statement -> {
+                assertEquals(sub, statement.getSubject());
+                assertEquals(titleIRI, statement.getPredicate());
+            }));
         });
     }
 
@@ -2017,8 +2019,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
             Difference right = conflict.getRightDifference();
             assertEquals(1, left.getAdditions().size());
             assertEquals(1, right.getAdditions().size());
-            assertEquals(1, right.getDeletions().size());
-            assertEquals(1, left.getDeletions().size());
             assertEquals(1, right.getDeletions().size());
             assertEquals(1, left.getDeletions().size());
 
