@@ -41,7 +41,7 @@
             <info-message ng-if="!dvm.os.listItem.merge.difference.additions.length && !dvm.os.listItem.merge.difference.deletions.length">No changes to display</info-message>
         </tab>
         <tab heading="'Commits'" active="dvm.tabs.commits">
-            <commit-history-table branch="dvm.branch" record-id="dvm.os.listItem.ontologyRecord.recordId" target-id="dvm.targetId"></commit-history-table>
+            <commit-history-table branch="dvm.branch" record-id="dvm.os.listItem.ontologyRecord.recordId" target-id="dvm.target['@id']"></commit-history-table>
         </tab>
     </tabset>
 </div>

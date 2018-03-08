@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Imports Block directive', function() {
+describe('Imports Block directive', function() {
     var $compile, scope, ontologyStateSvc, prefixes, propertyManagerSvc, $q;
 
     beforeEach(function() {
