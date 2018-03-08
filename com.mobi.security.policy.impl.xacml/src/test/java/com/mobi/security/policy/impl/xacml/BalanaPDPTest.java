@@ -43,6 +43,7 @@ import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.Response;
 import com.mobi.security.policy.api.Status;
 import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
+import com.mobi.vfs.impl.commons.SimpleVirtualFilesystem;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -50,8 +51,11 @@ import org.mockito.MockitoAnnotations;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 
+import java.lang.reflect.Method;
 import java.time.OffsetDateTime;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BalanaPDPTest extends OrmEnabledTestCase {
     private Repository repo;
@@ -80,11 +84,21 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         MockitoAnnotations.initMocks(this);
         when(pip.findAttribute(any(AttributeDesignator.class), any(Request.class))).thenReturn(Collections.emptyList());
 
+        SimpleVirtualFilesystem vfs = new SimpleVirtualFilesystem();
+        Map<String, Object> config = new HashMap<>();
+        config.put("maxNumberOfTempFiles", 10000);
+        config.put("secondsBetweenTempCleanup", 60000);
+
+        Method m = vfs.getClass().getDeclaredMethod("activate", Map.class);
+        m.setAccessible(true);
+        m.invoke(vfs, config);
+
         prp = new BalanaPRP();
         injectOrmFactoryReferencesIntoService(prp);
         prp.setRepo(repo);
         prp.setMf(MODEL_FACTORY);
         prp.setVf(VALUE_FACTORY);
+        prp.setVfs(vfs);
         pdp = new BalanaPDP();
         pdp.addPIP(pip);
         pdp.setBalanaPRP(prp);

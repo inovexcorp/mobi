@@ -42,9 +42,8 @@ import com.mobi.security.policy.api.exception.PolicySyntaxException;
 import com.mobi.security.policy.api.exception.ProcessingException;
 import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
 import com.mobi.security.policy.api.ontologies.policy.PolicyFileFactory;
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSystemManager;
-import org.apache.commons.vfs2.VFS;
+import com.mobi.vfs.api.VirtualFile;
+import com.mobi.vfs.api.VirtualFilesystem;
 import org.w3c.dom.Document;
 import org.wso2.balana.AbstractPolicy;
 import org.wso2.balana.MatchResult;
@@ -80,6 +79,7 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
     private ValueFactory vf;
     private ModelFactory mf;
     private PolicyFileFactory policyFileFactory;
+    private VirtualFilesystem vfs;
 
     @Reference(target = "(id=system)")
     void setRepo(Repository repo) {
@@ -99,6 +99,11 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
     @Reference
     void setPolicyFileFactory(PolicyFileFactory policyFileFactory) {
         this.policyFileFactory = policyFileFactory;
+    }
+
+    @Reference
+    void setVfs(VirtualFilesystem vfs) {
+        this.vfs = vfs;
     }
 
     @Override
@@ -201,10 +206,9 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
 
     private AbstractPolicy transform(PolicyFile policy) {
         try {
-            FileSystemManager manager = VFS.getManager();
-            FileObject fileObject = manager.resolveFile(policy.getResource().stringValue());
-            if (fileObject.isFile()) {
-                try (InputStream stream = fileObject.getContent().getInputStream()) {
+            VirtualFile virtualFile = vfs.resolveVirtualFile(policy.getResource().stringValue());
+            if (virtualFile.isFile()) {
+                try (InputStream stream = virtualFile.readContent()) {
                     DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
                     docFactory.setNamespaceAware(true);
                     Document doc = docFactory.newDocumentBuilder().parse(stream);
