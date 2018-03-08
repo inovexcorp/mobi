@@ -109,7 +109,7 @@ describe('Merge Form directive', function() {
             expect(this.element.find('checkbox').length).toEqual(1);
 
             this.controller.branchTitle = 'MASTER';
-            this.controller.isUserBranch = 'true';
+            this.controller.isUserBranch = true;
             scope.$digest();
             expect(this.element.find('checkbox').length).toEqual(0);
         });
