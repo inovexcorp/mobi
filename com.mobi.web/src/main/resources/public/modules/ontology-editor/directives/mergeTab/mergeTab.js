@@ -59,12 +59,7 @@
                                 } else {
                                     _.forEach(conflicts, conflict => {
                                         conflict.resolved = false;
-                                        var obj = _.find(dvm.os.listItem.merge.conflicts, {iri: conflict.iri});
-                                        if (_.isEmpty(obj)) {
-                                            dvm.os.listItem.merge.conflicts.push(conflict);
-                                        } else {
-                                            _.merge(obj, conflict);
-                                        }
+                                        dvm.os.listItem.merge.conflicts.push(conflict);
                                     });
                                 }
                             }, onError);
@@ -128,10 +123,12 @@
                         }
                     }
                     function addToResolutions(notSelected) {
-                        dvm.os.listItem.merge.resolutions.additions = _.concat(dvm.os.listItem.merge.resolutions.additions, notSelected.deletions);
-                        dvm.os.listItem.merge.resolutions.deletions = _.concat(dvm.os.listItem.merge.resolutions.deletions, notSelected.additions);
+                        if (notSelected.additions.length) {
+                            dvm.os.listItem.merge.resolutions.deletions = _.concat(dvm.os.listItem.merge.resolutions.deletions, notSelected.additions);
+                        } else {
+                            dvm.os.listItem.merge.resolutions.additions = _.concat(dvm.os.listItem.merge.resolutions.additions, notSelected.deletions);
+                        }
                     }
-
                     setupVariables();
                 }]
             }
