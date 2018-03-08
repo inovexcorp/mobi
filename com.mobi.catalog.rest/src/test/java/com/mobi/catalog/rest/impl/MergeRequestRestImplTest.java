@@ -37,8 +37,8 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
-import com.mobi.catalog.api.mergerequests.MergeRequestConfig;
-import com.mobi.catalog.api.mergerequests.MergeRequestManager;
+import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
+import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFactory;
 import com.mobi.exception.MobiException;

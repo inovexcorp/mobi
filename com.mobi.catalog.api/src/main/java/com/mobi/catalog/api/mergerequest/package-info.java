@@ -1,6 +1,6 @@
 @Version("1.0.0.${build}")
 
-package com.mobi.catalog.api.mergerequests;
+package com.mobi.catalog.api.mergerequest;
 
 /*-
  * #%L

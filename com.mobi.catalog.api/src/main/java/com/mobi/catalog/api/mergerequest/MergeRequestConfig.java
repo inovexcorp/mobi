@@ -1,4 +1,4 @@
-package com.mobi.catalog.api.mergerequests;
+package com.mobi.catalog.api.mergerequest;
 
 /*-
  * #%L

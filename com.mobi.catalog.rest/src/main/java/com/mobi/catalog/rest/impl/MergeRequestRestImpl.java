@@ -31,8 +31,8 @@ import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.catalog.api.mergerequests.MergeRequestConfig;
-import com.mobi.catalog.api.mergerequests.MergeRequestManager;
+import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
+import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.rest.MergeRequestRest;
 import com.mobi.exception.MobiException;

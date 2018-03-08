@@ -1,4 +1,4 @@
-package com.mobi.catalog.impl.mergerequests;
+package com.mobi.catalog.impl.mergerequest;
 
 /*-
  * #%L
@@ -27,17 +27,13 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
-import com.mobi.catalog.api.mergerequests.MergeRequestConfig;
-import com.mobi.catalog.api.mergerequests.MergeRequestManager;
+import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
+import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFactory;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
-import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
@@ -45,7 +41,6 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 
 import java.time.OffsetDateTime;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -54,7 +49,8 @@ import java.util.UUID;
 @Component(name = SimpleMergeRequestManager.COMPONENT_NAME)
 public class SimpleMergeRequestManager implements MergeRequestManager {
 
-    static final String COMPONENT_NAME = "com.mobi.catalog.api.mergerequests.MergeRequestManager";
+    static final String MERGE_REQUEST_NAMESPACE = "https://mobi.com/merge-requests#";
+    static final String COMPONENT_NAME = "com.mobi.catalog.api.mergerequest.MergeRequestManager";
 
     private RepositoryManager repositoryManager;
     private ValueFactory vf;
@@ -119,8 +115,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         }
 
         OffsetDateTime now = OffsetDateTime.now();
-        MergeRequest request = mergeRequestFactory.createNew(vf.createIRI(
-                MergeRequests.MERGE_REQUEST_NAMESPACE + UUID.randomUUID()));
+        MergeRequest request = mergeRequestFactory.createNew(vf.createIRI(MERGE_REQUEST_NAMESPACE + UUID.randomUUID()));
         request.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
         request.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
         request.setOnRecord(recordFactory.createNew(config.getRecordId()));

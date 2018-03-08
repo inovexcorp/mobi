@@ -1,4 +1,4 @@
-package com.mobi.catalog.impl.mergerequests;
+package com.mobi.catalog.impl.mergerequest;
 
 /*-
  * #%L
@@ -34,7 +34,7 @@ import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
-import com.mobi.catalog.api.mergerequests.MergeRequestConfig;
+import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
@@ -67,7 +67,6 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
