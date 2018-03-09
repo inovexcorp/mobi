@@ -110,6 +110,11 @@ public interface MergeRequestRest {
     /**
      * Updates an existing {@link MergeRequest} that has the {@code requestId} with the provided JSONLD of
      * {@code newMergeRequest}.
+     *
+     * @param requestId The String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @param newMergeRequest The String representing the JSONLD representation of the updated {@link MergeRequest}.
+     * @return A Response indicating the status of the update.
      */
     @PUT
     @Path("{requestId}")
