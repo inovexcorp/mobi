@@ -23,17 +23,12 @@ package com.mobi.catalog.rest.impl;
  * #L%
  */
 
-import static com.mobi.rest.util.RestUtils.checkStringParam;
-import static com.mobi.rest.util.RestUtils.getActiveUser;
-import static com.mobi.rest.util.RestUtils.getRDFFormat;
-import static com.mobi.rest.util.RestUtils.groupedModelToString;
-import static com.mobi.rest.util.RestUtils.modelToJsonld;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
+import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFactory;
 import com.mobi.catalog.rest.MergeRequestRest;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -41,6 +36,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import net.sf.json.JSONArray;
@@ -54,12 +50,15 @@ import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 
+import static com.mobi.rest.util.RestUtils.*;
+
 @Component(immediate = true)
 public class MergeRequestRestImpl implements MergeRequestRest {
 
     private MergeRequestManager manager;
     private SesameTransformer transformer;
     private EngineManager engineManager;
+    private MergeRequestFactory mergeRequestFactory;
     private ValueFactory vf;
     private ModelFactory mf;
 
@@ -76,6 +75,11 @@ public class MergeRequestRestImpl implements MergeRequestRest {
     @Reference
     void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
+    }
+
+    @Reference
+    void setMergeRequestFactory(MergeRequestFactory mergeRequestFactory) {
+        this.mergeRequestFactory = mergeRequestFactory;
     }
 
     @Reference
@@ -151,9 +155,27 @@ public class MergeRequestRestImpl implements MergeRequestRest {
         }
     }
 
+    @Override
+    public Response updateMergeRequest(String requestId, String newMergeRequest) {
+        try {
+            Resource requestIdResource = vf.createIRI(requestId);
+            manager.updateMergeRequest(requestIdResource, jsonToMergeRequest(requestIdResource, newMergeRequest));
+            return Response.ok().build();
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     private Model removeContext(Model model) {
         Model result = mf.createModel();
         model.forEach(statement -> result.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
         return result;
+    }
+
+    private MergeRequest jsonToMergeRequest(Resource requestId, String jsonMergeRequest) {
+        Model mergeReqModel = jsonldToModel(jsonMergeRequest, transformer);
+        return mergeRequestFactory.getExisting(requestId, mergeReqModel).orElseThrow(() ->
+                ErrorUtils.sendError(mergeRequestFactory.getTypeIRI().getLocalName() + " IDs must match",
+                        Response.Status.BAD_REQUEST));
     }
 }
