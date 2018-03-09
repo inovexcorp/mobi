@@ -108,7 +108,8 @@ public interface MergeRequestRest {
     Response getMergeRequest(@PathParam("requestId") String requestId);
 
     /**
-     *
+     * Updates an existing {@link MergeRequest} that has the {@code requestId} with the provided JSONLD of
+     * {@code newMergeRequest}.
      */
     @PUT
     @Path("{requestId}")

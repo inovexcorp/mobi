@@ -23,6 +23,13 @@ package com.mobi.catalog.rest.impl;
  * #L%
  */
 
+import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.getActiveUser;
+import static com.mobi.rest.util.RestUtils.getRDFFormat;
+import static com.mobi.rest.util.RestUtils.groupedModelToString;
+import static com.mobi.rest.util.RestUtils.modelToJsonld;
+import static com.mobi.rest.util.RestUtils.jsonldToModel;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
@@ -49,8 +56,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
-
-import static com.mobi.rest.util.RestUtils.*;
 
 @Component(immediate = true)
 public class MergeRequestRestImpl implements MergeRequestRest {
