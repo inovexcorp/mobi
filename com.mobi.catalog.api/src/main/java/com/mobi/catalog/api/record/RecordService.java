@@ -9,7 +9,7 @@ public interface RecordService {
      * @param record
      * @param config
      */
-    void export(IRI record, RecordExportConfig config);
+    void export(IRI iriRecord, RecordExportConfig config);
 
 
 }
