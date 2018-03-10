@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.11.20-SNAPSHOT</version>
+        <version>1.12.12-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -47,6 +47,11 @@
             <artifactId>rdf.orm</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>rdf.orm.ontologies</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -61,7 +66,12 @@
                         <Bundle-Name>Mobi RDF ORM Ontologies</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.ontologies.*,
+                            com.mobi.ontologies.dcelements,
+                            com.mobi.ontologies.dcterms,
+                            com.mobi.ontologies.rdfs,
+                            com.mobi.ontologies.foaf,
+                            com.mobi.ontologies.mobi,
+                            com.mobi.ontologies.provo,
                             com.mobi.vocabularies.xsd
                         </Export-Package>
                         <Service-Component>*</Service-Component>

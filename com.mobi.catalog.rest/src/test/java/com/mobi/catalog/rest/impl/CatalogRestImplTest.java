@@ -348,6 +348,7 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         when(catalogManager.getConflicts(any(Resource.class), any(Resource.class))).thenReturn(Collections.singleton(conflict));
         when(catalogManager.getCommitChain(any(Resource.class))).thenReturn(testCommits);
         when(catalogManager.getCommitChain(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(testCommits);
+        when(catalogManager.getCommitChain(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(testCommits);
         when(catalogManager.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class))).thenReturn(testCommits.get(0));
         when(catalogManager.getHeadCommit(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(testCommits.get(0));
         when(catalogManager.getCompiledResource(any(Resource.class))).thenReturn(compiledResource);
@@ -362,7 +363,6 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         when(versioningManager.merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(Model.class), any(Model.class))).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
 
         when(conflict.getIRI()).thenReturn(vf.createIRI(CONFLICT_IRI));
-        when(conflict.getOriginal()).thenReturn(mf.createModel());
         when(conflict.getLeftDifference()).thenReturn(difference);
         when(conflict.getRightDifference()).thenReturn(difference);
 
@@ -2280,6 +2280,30 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 500);
     }
 
+    @Test
+    public void getCommitChainWithTargetIdTest() {
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+                + "/branches/" + encode(BRANCH_IRI) + "/commits")
+                .queryParam("targetId", BRANCH_IRI)
+                .request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getCommitChain(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(BRANCH_IRI));
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
+        assertEquals(response.getLinks().size(), 0);
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), COMMIT_IRIS.length);
+            for (Object aResult : result) {
+                JSONObject commitObj = JSONObject.fromObject(aResult);
+                assertTrue(commitObj.containsKey("id"));
+                assertTrue(Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id")));
+            }
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
     // POST catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits
 
     @Test
@@ -2510,7 +2534,6 @@ public class CatalogRestImplTest extends MobiRestTestNg {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), 1);
             JSONObject outcome = JSONObject.fromObject(result.get(0));
-            assertTrue(outcome.containsKey("original"));
             assertTrue(outcome.containsKey("left"));
             assertTrue(outcome.containsKey("right"));
             JSONObject left = JSONObject.fromObject(outcome.get("left"));

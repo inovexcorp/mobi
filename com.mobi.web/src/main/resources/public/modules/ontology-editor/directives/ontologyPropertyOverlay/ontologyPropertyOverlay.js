@@ -27,9 +27,9 @@
         .module('ontologyPropertyOverlay', [])
         .directive('ontologyPropertyOverlay', ontologyPropertyOverlay);
 
-        ontologyPropertyOverlay.$inject = ['ontologyStateService', 'REGEX', 'propertyManagerService', 'utilService', 'ontologyUtilsManagerService'];
+        ontologyPropertyOverlay.$inject = ['ontologyStateService', 'REGEX', 'propertyManagerService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];
 
-        function ontologyPropertyOverlay(ontologyStateService, REGEX, propertyManagerService, utilService, ontologyUtilsManagerService) {
+        function ontologyPropertyOverlay(ontologyStateService, REGEX, propertyManagerService, utilService, ontologyUtilsManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,59 +39,77 @@
                 controller: function() {
                     var dvm = this;
                     var pm = propertyManagerService;
+                    dvm.prefixes = prefixes;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.os = ontologyStateService;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.util = utilService;
                     dvm.properties = _.union(pm.ontologyProperties, _.keys(dvm.os.listItem.annotations.iris));
 
-                    function getValue() {
-                        var value = '';
+                    dvm.isOntologyProperty = function() {
+                        return !!dvm.os.ontologyProperty && _.some(pm.ontologyProperties, property => dvm.os.ontologyProperty === property);
+                    }
+                    dvm.isAnnotationProperty = function() {
+                        return !!dvm.os.ontologyProperty && _.has(dvm.os.listItem.annotations.iris, dvm.os.ontologyProperty);
+                    }
+                    dvm.selectProp = function() {
+                        dvm.os.ontologyPropertyValue = '';
+                        if (dvm.os.ontologyProperty === prefixes.owl + 'deprecated') {
+                            dvm.os.ontologyPropertyType = prefixes.xsd + 'boolean';
+                            dvm.os.ontologyPropertyLanguage = '';
+                        } else {
+                            dvm.os.ontologyPropertyType = undefined;
+                            dvm.os.ontologyPropertyLanguage = 'en';
+                        }
+                    }
+                    dvm.addProperty = function() {
+                        var value, added = false;
                         if (dvm.isOntologyProperty()) {
                             value = dvm.os.ontologyPropertyIRI;
+                            added = pm.addId(dvm.os.listItem.selected, dvm.os.ontologyProperty, dvm.os.ontologyPropertyIRI);
                         } else if (dvm.isAnnotationProperty()) {
                             value = dvm.os.ontologyPropertyValue;
+                            added = pm.addValue(dvm.os.listItem.selected, dvm.os.ontologyProperty, dvm.os.ontologyPropertyValue, dvm.os.ontologyPropertyType, dvm.os.ontologyPropertyLanguage);
                         }
-                        return value;
+                        if (added) {
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(value, dvm.os.ontologyPropertyType, dvm.os.ontologyPropertyLanguage));
+                            dvm.ontoUtils.saveCurrentChanges();
+                        } else {
+                            dvm.util.createWarningToast('Duplicate property values not allowed');
+                        }
+                        dvm.os.showOntologyPropertyOverlay = false;
+                    }
+                    dvm.editProperty = function() {
+                        var oldObj = angular.copy(_.get(dvm.os.listItem.selected, "['" + dvm.os.ontologyProperty + "']['" + dvm.os.ontologyPropertyIndex + "']"));
+                        var value, edited = false;
+                        if (dvm.isOntologyProperty()) {
+                            value = dvm.os.ontologyPropertyIRI;
+                            edited = pm.editId(dvm.os.listItem.selected, dvm.os.ontologyProperty, dvm.os.ontologyPropertyIndex, value);
+                        } else if (dvm.isAnnotationProperty()) {
+                            value = dvm.os.ontologyPropertyValue;
+                            edited = pm.editValue(dvm.os.listItem.selected, dvm.os.ontologyProperty, dvm.os.ontologyPropertyIndex, value, dvm.os.ontologyPropertyType, dvm.os.ontologyPropertyLanguage);
+                        }
+                        if (edited) {
+                            dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, createJson(_.get(oldObj, '@value', _.get(oldObj, '@id')), _.get(oldObj, '@type'), _.get(oldObj, '@language')));
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(value, dvm.os.ontologyPropertyType, dvm.os.ontologyPropertyLanguage));
+                            dvm.ontoUtils.saveCurrentChanges();
+                        } else {
+                            dvm.util.createWarningToast('Duplicate property values not allowed');
+                        }
+                        dvm.os.showOntologyPropertyOverlay = false;
+                    }
+                    dvm.cannotEdit = function() {
+                        return dvm.propertyForm.$invalid;
                     }
 
-                    function createJson(value, language) {
+                    function createJson(value, type, language) {
                         var valueObj = {};
                         if (dvm.isOntologyProperty()) {
                             valueObj = {'@id': value};
                         } else if (dvm.isAnnotationProperty()) {
-                            valueObj = {'@value': value};
-                        }
-                        if (language) {
-                            _.set(valueObj, '@language', language);
+                            valueObj = pm.createValueObj(value, dvm.os.ontologyPropertyType, language);
                         }
                         return dvm.util.createJson(dvm.os.listItem.selected['@id'], dvm.os.ontologyProperty, valueObj);
-                    }
-
-                    dvm.isOntologyProperty = function() {
-                        return !!dvm.os.ontologyProperty && _.some(pm.ontologyProperties, property => dvm.os.ontologyProperty === property);
-                    }
-
-                    dvm.isAnnotationProperty = function() {
-                        return !!dvm.os.ontologyProperty && _.has(dvm.os.listItem.annotations.iris, dvm.os.ontologyProperty);
-                    }
-
-                    dvm.addProperty = function() {
-                        var value = getValue();
-                        pm.add(dvm.os.listItem.selected, dvm.os.ontologyProperty, value, null, dvm.os.ontologyPropertyLanguage);
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(value, dvm.os.ontologyPropertyLanguage));
-                        dvm.os.showOntologyPropertyOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
-                    }
-
-                    dvm.editProperty = function() {
-                        var value = getValue();
-                        var oldObj = _.get(dvm.os.listItem.selected, "['" + dvm.os.ontologyProperty + "']['" + dvm.os.ontologyPropertyIndex + "']");
-                        dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, createJson(_.get(oldObj, '@value', _.get(oldObj, '@id')), _.get(oldObj, '@language')));
-                        pm.edit(dvm.os.listItem.selected, dvm.os.ontologyProperty, value, dvm.os.ontologyPropertyIndex, null, dvm.os.ontologyPropertyLanguage);
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(value, dvm.os.ontologyPropertyLanguage));
-                        dvm.os.showOntologyPropertyOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

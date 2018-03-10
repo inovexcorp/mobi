@@ -49,9 +49,9 @@
          */
         .service('utilService', utilService);
 
-        utilService.$inject = ['$filter', '$http', '$q', 'uuid', 'toastr', 'prefixes', 'httpService', 'REGEX'];
+        utilService.$inject = ['$filter', '$http', '$q', '$window', '$rootScope', 'uuid', 'toastr', 'prefixes', 'httpService', 'REGEX'];
 
-        function utilService($filter, $http, $q, uuid, toastr, prefixes, httpService, REGEX) {
+        function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, prefixes, httpService, REGEX) {
             var self = this;
 
             /**
@@ -296,7 +296,7 @@
              * @methodOf util.service:utilService
              *
              * @description
-             * Creates an error toast with the passed error text that will not disappear until it is dismissed.
+             * Creates an error toast with the passed error text that will disappear after 3 seconds
              *
              * @param {string} text The text for the body of the error toast
              */
@@ -309,12 +309,25 @@
              * @methodOf util.service:utilService
              *
              * @description
-             * Creates a success toast with the passed success text that will not disappear until it is dismissed.
+             * Creates a success toast with the passed success text that will disappear after 3 seconds
              *
              * @param {string} text The text for the body of the success toast
              */
             self.createSuccessToast = function(text) {
                 toastr.success(text, 'Success', {timeOut: 3000});
+            }
+            /**
+             * @ngdoc method
+             * @name createWarningToast
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Creates a warning toast with the passed success text that will disappear after 3 seconds
+             *
+             * @param {string} text The text for the body of the warning toast
+             */
+            self.createWarningToast = function(text) {
+                toastr.warning(text, 'Warning', {timeOut: 3000});
             }
             /**
              * @ngdoc method
@@ -574,7 +587,7 @@
             /**
              * @ngdoc method
              * @name getInputType
-             * @methodOf exploreUtils.service:exploreUtilsService
+             * @methodOf util.service:utilService
              *
              * @description
              * Gets the input type associated with the property in the properties list provided.
@@ -603,7 +616,7 @@
             /**
              * @ngdoc method
              * @name getPattern
-             * @methodOf exploreUtils.service:exploreUtilsService
+             * @methodOf util.service:utilService
              *
              * @description
              * Gets the pattern type associated with the property in the properties list provided.
@@ -629,6 +642,20 @@
                     default:
                         return REGEX.ANYTHING;
                 }
+            }
+            /**
+             * @ngdoc method
+             * @name startDownload
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Starts a download of the resource at the provided URL by setting the `$window.location`.
+             *
+             * @param {string} url The URL to start a download from
+             */
+            self.startDownload = function(url) {
+                $rootScope.isDownloading = true;
+                $window.location = url;
             }
 
             function setValue(entity, propertyIRI, valueObj) {

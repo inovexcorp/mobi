@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology Manager service', function() {
-    var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, windowSvc, util, paramSerializer, httpSvc;
+    var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, util, paramSerializer, httpSvc;
 
     beforeEach(function() {
         module('ontologyManager');
@@ -31,18 +31,11 @@ describe('Ontology Manager service', function() {
         mockHttpService();
         injectRestPathConstant();
 
-        module(function($provide) {
-            $provide.service('$window', function() {
-                this.location = '';
-            });
-        });
-
-        inject(function(ontologyManagerService, _$httpBackend_, _$q_, _$rootScope_, _$window_, _catalogManagerService_, _prefixes_, _utilService_, $httpParamSerializer, _httpService_) {
+        inject(function(ontologyManagerService, _$httpBackend_, _$q_, _$rootScope_, _catalogManagerService_, _prefixes_, _utilService_, $httpParamSerializer, _httpService_) {
             ontologyManagerSvc = ontologyManagerService;
             $httpBackend = _$httpBackend_;
             $q = _$q_;
             scope = _$rootScope_;
-            windowSvc = _$window_;
             catalogManagerSvc = _catalogManagerService_;
             prefixes = _prefixes_;
             util = _utilService_;
@@ -206,7 +199,6 @@ describe('Ontology Manager service', function() {
         scope = null;
         prefixes = null;
         $q = null;
-        windowSvc = null;
         util = null;
         paramSerializer = null;
         httpSvc = null;
@@ -453,22 +445,38 @@ describe('Ontology Manager service', function() {
             }));
         });
     });
-    describe('downloadOntology should set the $window.location properly', function() {
-        it('with a format', function() {
-            ontologyManagerSvc.downloadOntology(this.recordId, this.branchId, this.commitId, 'turtle');
-            expect(windowSvc.location).toBe('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?branchId=' + encodeURIComponent(this.branchId) + '&commitId=' + encodeURIComponent(this.commitId) + '&fileName=ontology&rdfFormat=turtle');
+    describe('downloadOntology should call the util.startDownload method properly', function() {
+        beforeEach(function () {
+            this.params = {
+                branchId: this.branchId,
+                commitId: this.commitId,
+                fileName: 'ontology',
+                rdfFormat: 'jsonld'
+            };
         });
-        it('without a format', function() {
+        it('with a format and no fileName', function() {
+            this.params.rdfFormat = 'turtle';
+            var params = paramSerializer(this.params);
+            ontologyManagerSvc.downloadOntology(this.recordId, this.branchId, this.commitId, 'turtle');
+            expect(util.startDownload).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?' + params);
+        });
+        it('without a format or a fileName', function() {
+            var params = paramSerializer(this.params);
             ontologyManagerSvc.downloadOntology(this.recordId, this.branchId, this.commitId);
-            expect(windowSvc.location).toBe('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?branchId=' + encodeURIComponent(this.branchId) + '&commitId=' + encodeURIComponent(this.commitId) + '&fileName=ontology&rdfFormat=jsonld');
+            expect(util.startDownload).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?' + params);
         });
-        it('with a fileName', function() {
+        it('with a format and fileName', function() {
+            this.params.rdfFormat = 'turtle';
+            this.params.fileName = 'fileName';
+            var params = paramSerializer(this.params);
             ontologyManagerSvc.downloadOntology(this.recordId, this.branchId, this.commitId, 'turtle', 'fileName');
-            expect(windowSvc.location).toBe('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?branchId=' + encodeURIComponent(this.branchId) + '&commitId=' + encodeURIComponent(this.commitId) + '&fileName=fileName&rdfFormat=turtle');
+            expect(util.startDownload).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?' + params);
         });
-        it('without a fileName', function() {
-            ontologyManagerSvc.downloadOntology(this.recordId, this.branchId, this.commitId, 'turtle');
-            expect(windowSvc.location).toBe('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?branchId=' + encodeURIComponent(this.branchId) + '&commitId=' + encodeURIComponent(this.commitId) + '&fileName=ontology&rdfFormat=turtle');
+        it('without a format and with a fileName', function() {
+            this.params.fileName = 'fileName';
+            var params = paramSerializer(this.params);
+            ontologyManagerSvc.downloadOntology(this.recordId, this.branchId, this.commitId, undefined, 'fileName');
+            expect(util.startDownload).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?' + params);
         });
     });
     describe('getOntology hits the proper endpoint', function() {
@@ -1244,6 +1252,9 @@ describe('Ontology Manager service', function() {
         it('correct class objects if there are any only in the imported ontology', function() {
             expect(ontologyManagerSvc.getClasses([[this.ontologyObj], [this.importedClassObj, this.importedOntObj]])).toEqual([this.importedClassObj]);
         });
+        it('correct class objects if there are duplicates', function() {
+            expect(ontologyManagerSvc.getClasses([[this.classObj, this.ontologyObj],[this.classObj, this.importedOntObj]])).toEqual([this.classObj]);
+        });
         it('undefined if there are no classes in the ontology', function() {
             expect(ontologyManagerSvc.getClasses([[this.ontologyObj],[this.importedOntObj]])).toEqual([]);
         });
@@ -1257,6 +1268,9 @@ describe('Ontology Manager service', function() {
         });
         it('classId if there are classes only in the imported ontology', function() {
             expect(ontologyManagerSvc.getClassIRIs([[this.ontologyObj],[this.importedOntObj, this.importedClassObj]])).toEqual([this.importedClassId]);
+        });
+        it('classId if there are duplicates', function() {
+            expect(ontologyManagerSvc.getClassIRIs([[this.ontologyObj, this.classObj],[this.importedOntObj, this.classObj]])).toEqual([this.classId]);
         });
         it('[] if there are no classes in the ontology', function() {
             expect(ontologyManagerSvc.getClassIRIs([[this.ontologyObj],[this.importedOntObj]])).toEqual([]);
@@ -1280,6 +1294,9 @@ describe('Ontology Manager service', function() {
         it('correct objects if there are any entities with a domain of the provided class in the imported ontology', function() {
             expect(ontologyManagerSvc.getClassProperties([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.importedClassObj, this.importedOntObj, this.importedObjectPropertyObj]], this.importedClassId)).toEqual([this.importedObjectPropertyObj]);
         });
+        it('correct objects if there are duplicates', function() {
+            expect(ontologyManagerSvc.getClassProperties([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.classObj, this.importedOntObj, this.objectPropertyObj]], this.classId)).toEqual([this.objectPropertyObj]);
+        });
         it('[] if there are no entities with a domain of the provided class in the ontology', function() {
             expect(ontologyManagerSvc.getClassProperties([[this.classObj, this.ontologyObj], [this.importedClassObj, this.importedOntObj]], this.classId)).toEqual([]);
         });
@@ -1290,6 +1307,9 @@ describe('Ontology Manager service', function() {
         });
         it('correct IRIs if there are any entities with a domain of the provided class in the imported ontology', function() {
             expect(ontologyManagerSvc.getClassPropertyIRIs([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.importedClassObj, this.importedOntObj, this.importedObjectPropertyObj]], this.importedClassId)).toEqual([this.importedDataPropertyId]);
+        });
+        it('correct IRIs if there are duplicates', function() {
+            expect(ontologyManagerSvc.getClassPropertyIRIs([[this.classObj, this.ontologyObj, this.objectPropertyObj], [this.classObj, this.importedOntObj, this.objectPropertyObj]], this.classId)).toEqual([this.objectPropertyId]);
         });
         it('[] if there are not any entities with a domain of the provided class in the ontology', function() {
             expect(ontologyManagerSvc.getClassPropertyIRIs([[this.classObj, this.ontologyObj], [this.importedClassObj, this.importedOntObj]], this.classId)).toEqual([]);
@@ -1349,6 +1369,9 @@ describe('Ontology Manager service', function() {
         it('correct object if the imported ontology contains a property without the rdfs:domain set', function() {
             expect(ontologyManagerSvc.getNoDomainProperties([[this.ontologyObj], [this.importedOntObj, this.importedDataPropertyObj]])).toEqual([this.importedDataPropertyObj]);
         });
+        it('correct objects if there are duplicates', function() {
+            expect(ontologyManagerSvc.getNoDomainProperties([[this.dataPropertyObj, this.ontologyObj], [this.dataPropertyObj, this.importedOntObj]])).toEqual([this.dataPropertyObj]);
+        });
         it('[] if the ontology does not contain any properties', function() {
             expect(ontologyManagerSvc.getNoDomainProperties([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
         });
@@ -1365,6 +1388,9 @@ describe('Ontology Manager service', function() {
         });
         it('correct IRI if only the imported ontology contains a property without the rdfs:domain set', function() {
             expect(ontologyManagerSvc.getNoDomainPropertyIRIs([[this.ontologyObj, this.objectPropertyObj], [this.importedOntObj, this.importedDataPropertyObj]])).toEqual([this.importedDataPropertyId]);
+        });
+        it('correct IRI if there are duplicates', function() {
+            expect(ontologyManagerSvc.getNoDomainPropertyIRIs([[this.ontologyObj, this.dataPropertyObj], [this.dataPropertyObj, this.importedOntObj]])).toEqual([this.dataPropertyId]);
         });
         it('[] if the ontology does not contain any properties', function() {
             expect(ontologyManagerSvc.getNoDomainPropertyIRIs([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
@@ -1397,6 +1423,9 @@ describe('Ontology Manager service', function() {
         it('correct object property objects if there are any only in the imported ontology', function() {
             expect(ontologyManagerSvc.getObjectProperties([[this.ontologyObj], [this.importedObjectPropertyObj, this.importedOntObj]])).toEqual([this.importedObjectPropertyObj]);
         });
+        it('correct object property objects if there are duplicates', function() {
+            expect(ontologyManagerSvc.getObjectProperties([[this.objectPropertyObj, this.ontologyObj], [this.objectPropertyObj, this.importedOntObj]])).toEqual([this.objectPropertyObj]);
+        });
         it('undefined if there are no object properties in the ontology', function() {
             expect(ontologyManagerSvc.getObjectProperties([[this.ontologyObj],[this.importedOntObj]])).toEqual([]);
         });
@@ -1410,6 +1439,9 @@ describe('Ontology Manager service', function() {
         });
         it('objectPropertyId if there are object properties only in the imported ontology', function() {
             expect(ontologyManagerSvc.getObjectPropertyIRIs([[this.ontologyObj], [this.importedObjectPropertyObj, this.importedOntObj]])).toEqual([this.importedDataPropertyId]);
+        });
+        it('objectPropertyId if there are duplicates', function() {
+            expect(ontologyManagerSvc.getObjectPropertyIRIs([[this.ontologyObj, this.objectPropertyObj], [this.objectPropertyObj, this.importedOntObj]])).toEqual([this.objectPropertyId]);
         });
         it('[] if there are no object properties in the ontology', function() {
             expect(ontologyManagerSvc.getObjectPropertyIRIs([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
@@ -1439,6 +1471,9 @@ describe('Ontology Manager service', function() {
         it('correct data property objects if there are any only in the imported ontology', function() {
             expect(ontologyManagerSvc.getDataTypeProperties([[this.ontologyObj], [this.importedDataPropertyObj, this.importedOntObj]])).toEqual([this.importedDataPropertyObj]);
         });
+        it('correct data property objects if there are duplicates', function() {
+            expect(ontologyManagerSvc.getDataTypeProperties([[this.dataPropertyObj, this.ontologyObj], [this.dataPropertyObj, this.importedOntObj]])).toEqual([this.dataPropertyObj]);
+        });
         it('undefined if there are no data properties in the ontology', function() {
             expect(ontologyManagerSvc.getDataTypeProperties([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
         });
@@ -1452,6 +1487,9 @@ describe('Ontology Manager service', function() {
         });
         it('dataPropertyId if there are data properties in only the imported ontology', function() {
             expect(ontologyManagerSvc.getDataTypePropertyIRIs([[this.ontologyObj], [this.importedDataPropertyObj, this.importedOntObj]])).toEqual([this.importedDataPropertyId]);
+        });
+        it('dataPropertyId if there are duplicates', function() {
+            expect(ontologyManagerSvc.getDataTypePropertyIRIs([[this.ontologyObj, this.dataPropertyObj], [this.dataPropertyObj, this.importedOntObj]])).toEqual([this.dataPropertyId]);
         });
         it('[] if there are no data properties in the ontology', function() {
             expect(ontologyManagerSvc.getDataTypePropertyIRIs([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
@@ -1489,6 +1527,9 @@ describe('Ontology Manager service', function() {
         it('correct annotation objects if there are any in only the imported ontology', function() {
             expect(ontologyManagerSvc.getAnnotations([[this.ontologyObj], [this.importedAnnotationObj, this.importedOntObj]])).toEqual([this.importedAnnotationObj]);
         });
+        it('correct annotation objects if there are duplicates', function() {
+            expect(ontologyManagerSvc.getAnnotations([[this.annotationObj, this.ontologyObj], [this.annotationObj, this.importedOntObj]])).toEqual([this.annotationObj]);
+        });
         it('undefined if there are no annotations in the ontology', function() {
             expect(ontologyManagerSvc.getAnnotations([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
         });
@@ -1502,6 +1543,9 @@ describe('Ontology Manager service', function() {
         });
         it('annotationId if there are annotations in only the imported ontology', function() {
             expect(ontologyManagerSvc.getAnnotationIRIs([[this.ontologyObj], [this.importedAnnotationObj, this.importedOntObj]])).toEqual([this.importedAnnotationId]);
+        });
+        it('annotationId if there are duplicates', function() {
+            expect(ontologyManagerSvc.getAnnotationIRIs([[this.ontologyObj, this.annotationObj], [this.annotationObj, this.importedOntObj]])).toEqual([this.annotationId]);
         });
         it('[] if there are no annotations in the ontology', function() {
             expect(ontologyManagerSvc.getAnnotationIRIs([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
@@ -1539,6 +1583,9 @@ describe('Ontology Manager service', function() {
         it('correct individual objects if there are any in only the imported ontology', function() {
             expect(ontologyManagerSvc.getIndividuals([[this.ontologyObj], [this.importedIndividualObj, this.importedOntObj]])).toEqual([this.importedIndividualObj]);
         });
+        it('correct individual objects if there are duplicates', function() {
+            expect(ontologyManagerSvc.getIndividuals([[this.individualObj, this.ontologyObj], [this.individualObj, this.importedOntObj]])).toEqual([this.individualObj]);
+        });
         it('undefined if there are no individuals in the ontology', function() {
             expect(ontologyManagerSvc.getIndividuals([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
         });
@@ -1565,6 +1612,13 @@ describe('Ontology Manager service', function() {
                 '@type': [prefixes.owl + 'NamedIndividual']
             }
             expect(ontologyManagerSvc.getNoTypeIndividuals([[diffIndividualObj, this.ontologyObj]])).toEqual([diffIndividualObj]);
+        });
+        it('correct individual objects if there are duplicates', function() {
+            var diffIndividualObj = {
+                '@id': this.individualId,
+                '@type': [prefixes.owl + 'NamedIndividual']
+            }
+            expect(ontologyManagerSvc.getNoTypeIndividuals([[diffIndividualObj, this.ontologyObj], [diffIndividualObj, this.importedOntObj]])).toEqual([diffIndividualObj]);
         });
         it('undefined if there are no individuals in the ontology with no other @type', function() {
             expect(ontologyManagerSvc.getNoTypeIndividuals([[this.ontologyObj, this.individualObj]])).toEqual([]);
@@ -1613,6 +1667,9 @@ describe('Ontology Manager service', function() {
         it('correct restriction objects if there are any in only the imported ontology', function() {
             expect(ontologyManagerSvc.getRestrictions([[this.ontologyObj], [this.importedRestrictionObj, this.importedOntObj]])).toEqual([this.importedRestrictionObj]);
         });
+        it('correct restriction objects if there are duplicates', function() {
+            expect(ontologyManagerSvc.getRestrictions([[this.restrictionObj, this.ontologyObj], [this.restrictionObj, this.importedOntObj]])).toEqual([this.restrictionObj]);
+        });
         it('undefined if there are no restrictions in the ontology', function() {
             expect(ontologyManagerSvc.getRestrictions([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
         });
@@ -1640,6 +1697,9 @@ describe('Ontology Manager service', function() {
     describe('getBlankNodes should return', function() {
         it('correct blank node objects if there are any in the ontology', function() {
             expect(ontologyManagerSvc.getBlankNodes([[this.blankNodeObj, this.ontologyObj]])).toEqual([this.blankNodeObj]);
+        });
+        it('correct blank node objects if there are duplicates', function() {
+            expect(ontologyManagerSvc.getBlankNodes([[this.blankNodeObj, this.ontologyObj], [this.blankNodeObj, this.importedOntObj]])).toEqual([this.blankNodeObj]);
         });
         it('undefined if there are no blank nodes in the ontology', function() {
             expect(ontologyManagerSvc.getBlankNodes([[this.ontologyObj]])).toEqual([]);
@@ -1804,6 +1864,9 @@ describe('Ontology Manager service', function() {
         it('correct concept objects if there are any derived concepts', function() {
             expect(ontologyManagerSvc.getConcepts([[this.derivedConceptObj]], [this.derivedConceptType])).toEqual([this.derivedConceptObj]);
         });
+        it('correct concept objects if there are duplicates', function() {
+            expect(ontologyManagerSvc.getConcepts([[this.conceptObj, this.ontologyObj], [this.conceptObj, this.importedOntObj]])).toEqual([this.conceptObj]);
+        });
         it('undefined if there are no concepts in the ontology', function() {
             expect(ontologyManagerSvc.getConcepts([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
         });
@@ -1866,6 +1929,9 @@ describe('Ontology Manager service', function() {
         it('correct concept scheme objects if there are any derived concept schemes', function() {
             expect(ontologyManagerSvc.getConceptSchemes([[this.derivedConceptSchemeObj]], [this.derivedConceptSchemeType])).toEqual([this.derivedConceptSchemeObj]);
         });
+        it('correct concept schemes if there are duplicates', function() {
+            expect(ontologyManagerSvc.getConceptSchemes([[this.schemeObj, this.ontologyObj], [this.schemeObj, this.importedOntObj]])).toEqual([this.schemeObj]);
+        });
         it('undefined if there are no concept schemes in the ontology', function() {
             expect(ontologyManagerSvc.getConceptSchemes([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);
         });
@@ -1882,6 +1948,9 @@ describe('Ontology Manager service', function() {
         });
         it('schemeId if there are derived concepts', function() {
             expect(ontologyManagerSvc.getConceptSchemeIRIs([[this.derivedConceptSchemeObj]], [this.derivedConceptSchemeType])).toEqual([this.schemeId]);
+        });
+        it('schemeId if there are duplicates', function() {
+            expect(ontologyManagerSvc.getConceptSchemeIRIs([[this.ontologyObj, this.schemeObj], [this.importedOntObj, this.schemeObj]])).toEqual([this.schemeId]);
         });
         it('[] if there are no concept schemes in the ontology', function() {
             expect(ontologyManagerSvc.getConceptSchemeIRIs([[this.ontologyObj], [this.importedOntObj]])).toEqual([]);

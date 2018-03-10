@@ -706,8 +706,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response getCommitChain(UriInfo uriInfo, String catalogId, String recordId, String branchId, int offset,
-                                   int limit) {
+    public Response getCommitChain(UriInfo uriInfo, String catalogId, String recordId, String branchId, String targetId,
+                                   int offset, int limit) {
         if (offset < 0) {
             throw ErrorUtils.sendError("Offset cannot be negative.", Response.Status.BAD_REQUEST);
         }
@@ -716,8 +716,15 @@ public class CatalogRestImpl implements CatalogRest {
         }
         try {
             JSONArray commitChain = new JSONArray();
-            List<Commit> commits = catalogManager.getCommitChain(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(branchId));
+
+            final List<Commit> commits;
+            if (StringUtils.isBlank(targetId)) {
+                commits = catalogManager.getCommitChain(vf.createIRI(catalogId), vf.createIRI(recordId),
+                        vf.createIRI(branchId));
+            } else {
+                commits = catalogManager.getCommitChain(vf.createIRI(catalogId), vf.createIRI(recordId),
+                        vf.createIRI(branchId), vf.createIRI(targetId));
+            }
             Stream<Commit> result = commits.stream();
             if (limit > 0) {
                 result = result.skip(offset)
@@ -1248,7 +1255,6 @@ public class CatalogRestImpl implements CatalogRest {
     private JSONObject conflictToJson(Conflict conflict, String rdfFormat) {
         JSONObject object = new JSONObject();
         object.put("iri", conflict.getIRI().stringValue());
-        object.put("original", getModelInFormat(conflict.getOriginal(), rdfFormat));
         object.put("left", getDifferenceJson(conflict.getLeftDifference(), rdfFormat));
         object.put("right", getDifferenceJson(conflict.getRightDifference(), rdfFormat));
         return object;

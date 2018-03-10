@@ -42,20 +42,16 @@
                     dvm.os = ontologyStateService;
                     dvm.newTabActive = _.isEmpty(dvm.os.listItem);
 
-                    dvm.onClose = function(recordId) {
-                        if (dvm.os.hasChanges(recordId)) {
-                            dvm.os.recordIdToClose = recordId;
+                    dvm.onClose = function(listItem) {
+                        if (dvm.os.hasChanges(listItem)) {
+                            dvm.os.recordIdToClose = listItem.ontologyRecord.recordId;
                             dvm.os.showCloseOverlay = true;
                         } else {
-                            dvm.os.closeOntology(recordId);
+                            dvm.os.closeOntology(listItem.ontologyRecord.recordId);
                         }
                     }
-                    dvm.onClick = function(recordId) {
-                        if (recordId) {
-                            dvm.os.listItem = dvm.os.getListItemByRecordId(recordId);
-                        } else {
-                            dvm.os.listItem = {};
-                        }
+                    dvm.onClick = function(listItem) {
+                        dvm.os.listItem = listItem && !_.isEmpty(listItem) ? listItem : {};
                     }
 
                     $scope.$watch('dvm.os.listItem', () => {

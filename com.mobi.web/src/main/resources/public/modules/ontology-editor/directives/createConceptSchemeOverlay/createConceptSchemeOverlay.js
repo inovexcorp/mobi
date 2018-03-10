@@ -71,16 +71,22 @@
                     dvm.create = function() {
                         if (dvm.selectedConcepts.length) {
                             dvm.scheme[prefixes.skos + 'hasTopConcept'] = dvm.selectedConcepts;
-                            _.forEach(dvm.selectedConcepts, concept => {
-                                dvm.os.addEntityToHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, concept['@id'], dvm.os.listItem.conceptSchemes.index, dvm.scheme['@id']);
-                            });
                         }
                         dvm.ontoUtils.addLanguageToNewEntity(dvm.scheme, dvm.language);
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.scheme);
                         // update relevant lists
-                        dvm.ontoUtils.addConceptScheme(dvm.scheme);
+                        var hierarchy = _.get(dvm.os.listItem, 'conceptSchemes.hierarchy');
+                        var index = _.get(dvm.os.listItem, 'conceptSchemes.index');
+                        hierarchy.push({'entityIRI': dvm.scheme['@id']});
+                        // Add top concepts to hierarchy if they exist
+                        _.forEach(dvm.selectedConcepts, concept => {
+                            dvm.os.addEntityToHierarchy(hierarchy, concept['@id'], index, dvm.scheme['@id']);
+                        });
+                        dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                        // Update additions
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.scheme);
+                        // Update individual hierarchy
                         dvm.ontoUtils.addIndividual(dvm.scheme);
                         // select the new concept
                         dvm.os.selectItem(_.get(dvm.scheme, '@id'));

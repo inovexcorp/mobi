@@ -98,8 +98,6 @@ public class DocumentTranslationCLI implements Action {
     @Override
     public Object execute() throws Exception {
         validateOutputLocation(outputDirectory);
-        final String extension = validateFile(this.documentFile);
-
         final SemanticTranslator translator = getTranslatorForType(type != null ? type
                 : FilenameUtils.getExtension(documentFile.getName()));
         final IRI ontologyIri = valueFactory.createIRI(ontologyIriString);

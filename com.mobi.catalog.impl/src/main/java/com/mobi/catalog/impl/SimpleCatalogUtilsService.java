@@ -23,7 +23,6 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogUtilsService;
@@ -416,6 +415,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     private void updateCommit(Resource commitId, Revision revision, @Nullable Model additions,
                               @Nullable Model deletions, RepositoryConnection conn) {
+        if (additions != null && deletions != null) {
+            Model commonStatements = mf.createModel(additions);
+            commonStatements.retainAll(deletions);
+            additions.removeAll(commonStatements);
+            deletions.removeAll(commonStatements);
+        }
+
         // Map of revisionedGraph -> GraphRevision resources
         Map<Resource, Resource> knownGraphs = new HashMap<>();
         revision.getGraphRevision().forEach(graphRevision -> {
@@ -657,6 +663,27 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         Iterator<Resource> commits = getCommitChainIterator(commitId, asc, conn);
         commits.forEachRemaining(results::add);
         return results;
+    }
+
+    @Override
+    public List<Resource> getDifferenceChain(final Resource sourceCommitId, final Resource targetCommitId,
+                                             final RepositoryConnection conn) {
+        validateResource(sourceCommitId, commitFactory.getTypeIRI(), conn);
+        validateResource(targetCommitId, commitFactory.getTypeIRI(), conn);
+
+        final List<Resource> sourceCommits = getCommitChain(sourceCommitId, true, conn);
+        final List<Resource> targetCommits = getCommitChain(targetCommitId, true, conn);
+
+        final List<Resource> commonCommits = new ArrayList<>(sourceCommits);
+        commonCommits.retainAll(targetCommits);
+
+        if (commonCommits.size() == 0) {
+            throw new IllegalArgumentException("No common parent between Commit " + sourceCommitId + " and "
+                    + targetCommitId);
+        }
+        sourceCommits.removeAll(commonCommits);
+
+        return sourceCommits;
     }
 
     @Override

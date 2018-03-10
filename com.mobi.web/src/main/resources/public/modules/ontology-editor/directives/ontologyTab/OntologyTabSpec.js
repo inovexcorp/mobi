@@ -63,7 +63,7 @@ describe('Ontology Tab directive', function() {
         it('if branches are being merged', function() {
             expect(this.element.find('merge-tab').length).toBe(0);
 
-            ontologyStateSvc.listItem.merge = true;
+            ontologyStateSvc.listItem.merge.active = true;
             scope.$digest();
             expect(this.element.find('tabset').length).toBe(0);
             expect(this.element.find('branch-select').length).toBe(0);

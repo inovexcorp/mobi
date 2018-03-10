@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Imports Overlay directive', function() {
-    var $q, $compile, scope, $httpBackend, ontologyStateSvc, ontologyManagerSvc, utilSvc, prefixes;
+    var $q, $compile, scope, $httpBackend, ontologyStateSvc, ontologyManagerSvc, utilSvc, prefixes, propertyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -32,9 +32,10 @@ describe('Imports Overlay directive', function() {
         mockUtil();
         mockPrefixes();
         mockHttpService();
+        mockPropertyManager();
         injectRestPathConstant();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _$httpBackend_, _ontologyStateService_, _ontologyManagerService_, _utilService_, _prefixes_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _$httpBackend_, _ontologyStateService_, _ontologyManagerService_, _utilService_, _prefixes_, _propertyManagerService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -43,6 +44,7 @@ describe('Imports Overlay directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
+            propertyManagerSvc = _propertyManagerService_;
         });
 
         scope.onClose = jasmine.createSpy('onClose');
@@ -61,6 +63,7 @@ describe('Imports Overlay directive', function() {
         ontologyManagerSvc = null;
         utilSvc = null;
         prefixes = null;
+        propertyManagerSvc = null;
         this.element.remove();
     });
 
@@ -237,75 +240,99 @@ describe('Imports Overlay directive', function() {
         describe('confirmed should call the correct methods', function() {
             beforeEach(function() {
                 this.urls = ['url'];
+                ontologyStateSvc.listItem.isSaved = false;
             });
-            describe('when save changes resolves', function() {
-                beforeEach(function() {
-                    ontologyStateSvc.saveChanges.and.returnValue($q.when());
+            it('if there are duplciate values', function() {
+                propertyManagerSvc.addId.and.returnValue(false);
+                this.controller.confirmed(this.urls, 'url');
+                _.forEach(this.urls, function(url) {
+                    expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
                 });
-                describe('when after save resolves', function() {
+                expect(utilSvc.createWarningToast).toHaveBeenCalledWith('Duplicate property values not allowed');
+                expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.saveChanges).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.afterSave).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.isCommittable).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.listItem.isSaved).toBe(false);
+                expect(scope.onSubmit).not.toHaveBeenCalled();
+                expect(scope.onClose).toHaveBeenCalled();
+            });
+            describe('if there are no duplicated values', function() {
+                beforeEach(function() {
+                    propertyManagerSvc.addId.and.returnValue(true);
+                    this.additionsObj = {
+                        '@id': ontologyStateSvc.listItem.selected['@id'],
+                    };
+                    this.additionsObj[prefixes.owl + 'imports'] = _.map(this.urls, function(url) {
+                        return {'@id': url};
+                    });
+                });
+                describe('when save changes resolves', function() {
                     beforeEach(function() {
-                        ontologyStateSvc.afterSave.and.returnValue($q.when());
+                        ontologyStateSvc.saveChanges.and.returnValue($q.when());
                     });
-                    it('when update ontology resolves', function() {
-                        ontologyStateSvc.isCommittable.and.returnValue(true);
-                        ontologyStateSvc.updateOntology.and.returnValue($q.when());
+                    describe('when after save resolves', function() {
+                        beforeEach(function() {
+                            ontologyStateSvc.afterSave.and.returnValue($q.when());
+                        });
+                        it('when update ontology resolves', function() {
+                            ontologyStateSvc.isCommittable.and.returnValue(true);
+                            ontologyStateSvc.updateOntology.and.returnValue($q.when());
+                            this.controller.confirmed(this.urls, 'url');
+                            scope.$apply();
+                            _.forEach(this.urls, function(url) {
+                                expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
+                            });
+                            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.additionsObj);
+                            expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
+                            expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                            expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
+                            expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+                            expect(ontologyStateSvc.listItem.isSaved).toBe(true);
+                            expect(scope.onSubmit).toHaveBeenCalled();
+                            expect(scope.onClose).toHaveBeenCalled();
+                        });
+                        it('when update ontology rejects', function() {
+                            ontologyStateSvc.updateOntology.and.returnValue($q.reject('error'));
+                            this.controller.confirmed(this.urls, 'url');
+                            scope.$apply();
+                            _.forEach(this.urls, function(url) {
+                                expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
+                            });
+                            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.additionsObj);
+                            expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
+                            expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
+                            expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
+                            expect(this.controller.urlError).toBe('error');
+                        });
+                    });
+                    it('when after save rejects', function() {
+                        ontologyStateSvc.afterSave.and.returnValue($q.reject('error'));
                         this.controller.confirmed(this.urls, 'url');
                         scope.$apply();
                         _.forEach(this.urls, function(url) {
-                            expect(utilSvc.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
-                            expect(utilSvc.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': url});
+                            expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
                         });
-                        expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                        expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.additionsObj);
                         expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
-                        expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
-                        expect(ontologyStateSvc.listItem.isSaved).toBe(true);
-                        expect(scope.onSubmit).toHaveBeenCalled();
-                        expect(scope.onClose).toHaveBeenCalled();
-                    });
-                    it('when update ontology rejects', function() {
-                        ontologyStateSvc.updateOntology.and.returnValue($q.reject('error'));
-                        this.controller.confirmed(this.urls, 'url');
-                        scope.$apply();
-                        _.forEach(this.urls, function(url) {
-                            expect(utilSvc.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
-                            expect(utilSvc.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': url});
-                        });
-                        expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                        expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
-                        expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
+                        expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
                         expect(this.controller.urlError).toBe('error');
                     });
                 });
-                it('when after save rejects', function() {
-                    ontologyStateSvc.afterSave.and.returnValue($q.reject('error'));
+                it('when save changes rejects', function() {
+                    ontologyStateSvc.saveChanges.and.returnValue($q.reject('error'));
                     this.controller.confirmed(this.urls, 'url');
                     scope.$apply();
                     _.forEach(this.urls, function(url) {
-                        expect(utilSvc.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
-                        expect(utilSvc.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': url});
+                        expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
                     });
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.additionsObj);
                     expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
-                    expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                    expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.afterSave).not.toHaveBeenCalled();
                     expect(this.controller.urlError).toBe('error');
                 });
-            });
-            it('when save changes rejects', function() {
-                ontologyStateSvc.saveChanges.and.returnValue($q.reject('error'));
-                this.controller.confirmed(this.urls, 'url');
-                scope.$apply();
-                _.forEach(this.urls, function(url) {
-                    expect(utilSvc.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
-                    expect(utilSvc.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': url});
-                });
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
-                expect(ontologyStateSvc.afterSave).not.toHaveBeenCalled();
-                expect(this.controller.urlError).toBe('error');
             });
         });
     });

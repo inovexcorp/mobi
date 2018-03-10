@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Mapping Manager service', function() {
-    var mappingManagerSvc, $httpBackend, $httpParamSerializer, ontologyManagerSvc, utilSvc, uuidSvc, windowSvc, prefixes, splitIRI, camelCase, $q, scope;
+    var mappingManagerSvc, $httpBackend, $httpParamSerializer, ontologyManagerSvc, utilSvc, uuidSvc, prefixes, splitIRI, camelCase, $q, scope;
 
     beforeEach(function() {
         module('mappingManager');
@@ -33,22 +33,18 @@ describe('Mapping Manager service', function() {
         injectRestPathConstant();
 
         module(function($provide) {
-            $provide.service('$window', function() {
-                this.location = '';
-            });
             $provide.service('uuid', function() {
                 this.v4 = jasmine.createSpy('v4').and.returnValue('');
             });
         });
 
-        inject(function(mappingManagerService, _ontologyManagerService_, _utilService_, _uuid_, _$httpBackend_, _$httpParamSerializer_, _$window_, _prefixes_, _splitIRIFilter_, _camelCaseFilter_, _$q_, _$rootScope_) {
+        inject(function(mappingManagerService, _ontologyManagerService_, _utilService_, _uuid_, _$httpBackend_, _$httpParamSerializer_, _prefixes_, _splitIRIFilter_, _camelCaseFilter_, _$q_, _$rootScope_) {
             mappingManagerSvc = mappingManagerService;
             ontologyManagerSvc = _ontologyManagerService_;
             utilSvc = _utilService_;
             uuidSvc = _uuid_;
             $httpBackend = _$httpBackend_;
             $httpParamSerializer = _$httpParamSerializer_;
-            windowSvc = _$window_;
             prefixes = _prefixes_;
             splitIRI = _splitIRIFilter_;
             camelCase = _camelCaseFilter_;
@@ -66,7 +62,6 @@ describe('Mapping Manager service', function() {
         ontologyManagerSvc = null;
         utilSvc = null;
         uuidSvc = null;
-        windowSvc = null;
         prefixes = null;
         splitIRI = null;
         camelCase = null;
@@ -173,9 +168,15 @@ describe('Mapping Manager service', function() {
             flushAndVerify($httpBackend);
         });
     });
-    it('should download a mapping by id', function() {
-        mappingManagerSvc.downloadMapping('mapping', 'jsonld');
-        expect(windowSvc.location).toBe('/mobirest/mappings/mapping?format=jsonld');
+    describe('should download a mapping by id with the', function() {
+        it('provided format', function() {
+            mappingManagerSvc.downloadMapping('mapping', 'turtle');
+            expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/mappings/mapping?format=turtle');
+        });
+        it('default format', function() {
+            mappingManagerSvc.downloadMapping('mapping');
+            expect(utilSvc.startDownload).toHaveBeenCalledWith('/mobirest/mappings/mapping?format=jsonld');
+        });
     });
     describe('should delete a mapping by id', function() {
         beforeEach(function() {

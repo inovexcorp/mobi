@@ -25,7 +25,7 @@
         <h6>{{dvm.os.editingOntologyProperty ? 'Edit Property' : 'Add Property'}}</h6>
         <div class="form-group">
             <custom-label>Property</custom-label>
-            <ui-select ng-model="dvm.os.ontologyProperty" ng-disabled="dvm.os.editingOntologyProperty" autofocus>
+            <ui-select ng-model="dvm.os.ontologyProperty" ng-disabled="dvm.os.editingOntologyProperty" autofocus on-select="dvm.selectProp()">
                 <ui-select-match placeholder="Select a property">{{$select.selected}}</ui-select-match>
                 <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="property in dvm.properties | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
                     <div ng-bind-html="dvm.ontoUtils.getDropDownText(property) | highlight: $select.search | trusted"></div>
@@ -41,13 +41,18 @@
             </p>
         </div>
         <div ng-if="dvm.isAnnotationProperty()">
-            <text-area ng-model="dvm.os.ontologyPropertyValue" display-text="'Value'" required="required"></text-area>
-            <language-select ng-model="dvm.os.ontologyPropertyLanguage"></language-select>
-            <!--<iri-select ng-model="dvm.os.ontologyPropertyType" display-text="'Type'" multi-select="false" select-list="dvm.os.listItem.dataPropertyRange"></iri-select>-->
+            <div ng-if="dvm.os.ontologyProperty !== dvm.prefixes.owl + 'deprecated'">
+                <text-area ng-model="dvm.os.ontologyPropertyValue" display-text="'Value'"></text-area>
+                <language-select ng-model="dvm.os.ontologyPropertyLanguage"></language-select>
+            </div>
+            <div ng-if="dvm.os.ontologyProperty === dvm.prefixes.owl + 'deprecated'">
+                <radio-button display-text="'True'" value="'true'" ng-model="dvm.os.ontologyPropertyValue"></radio-button>
+                <radio-button display-text="'False'" value="'false'" ng-model="dvm.os.ontologyPropertyValue"></radio-button>
+            </div>
         </div>
         <div class="btn-container clearfix">
             <button ng-if="!dvm.os.editingOntologyProperty" class="btn btn-primary pull-right" ng-click="dvm.addProperty()" ng-disabled="dvm.propertyForm.$invalid">Add</button>
-            <button ng-if="dvm.os.editingOntologyProperty" class="btn btn-primary pull-right" ng-click="dvm.editProperty()" ng-disabled="dvm.propertyForm.$invalid">Edit</button>
+            <button ng-if="dvm.os.editingOntologyProperty" class="btn btn-primary pull-right" ng-click="dvm.editProperty()" ng-disabled="dvm.cannotEdit()">Edit</button>
             <button class="btn btn-default pull-right" ng-click="dvm.os.showOntologyPropertyOverlay = false">Cancel</button>
         </div>
     </form>

@@ -27,9 +27,9 @@
         .module('importsOverlay', [])
         .directive('importsOverlay', importsOverlay);
 
-        importsOverlay.$inject = ['$http', 'httpService', '$q', 'REGEX', 'ontologyStateService', 'ontologyManagerService', 'utilService', 'prefixes'];
+        importsOverlay.$inject = ['$http', 'httpService', '$q', 'REGEX', 'ontologyStateService', 'ontologyManagerService', 'utilService', 'prefixes', 'propertyManagerService'];
 
-        function importsOverlay($http, httpService, $q, REGEX, ontologyStateService, ontologyManagerService, utilService, prefixes) {
+        function importsOverlay($http, httpService, $q, REGEX, ontologyStateService, ontologyManagerService, utilService, prefixes, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -44,6 +44,7 @@
                     var dvm = this;
                     var om = ontologyManagerService;
                     var os = ontologyStateService;
+                    var pm = propertyManagerService;
                     dvm.spinnerId = 'imports-overlay';
                     dvm.util = utilService;
                     dvm.url = '';
@@ -92,18 +93,24 @@
                     }
                     dvm.confirmed = function(urls, tabKey) {
                         var importsIRI = prefixes.owl + 'imports';
-                        _.forEach(urls, url => {
-                            dvm.util.setPropertyId(os.listItem.selected, importsIRI, url);
-                            os.addToAdditions(os.listItem.ontologyRecord.recordId, dvm.util.createJson(os.listItem.selected['@id'], importsIRI, {'@id': url}));
-                        });
-                        os.saveChanges(os.listItem.ontologyRecord.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions})
-                            .then(() => os.afterSave(), $q.reject)
-                            .then(() => os.updateOntology(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, os.listItem.upToDate, os.listItem.inProgressCommit), $q.reject)
-                            .then(() => {
-                                os.listItem.isSaved = os.isCommittable(os.listItem.ontologyRecord.recordId);
-                                dvm.onSubmit();
-                                dvm.onClose();
-                            }, errorMessage => onError(errorMessage, tabKey));
+                        var addedUrls = _.filter(urls, url => pm.addId(os.listItem.selected, importsIRI, url));
+                        if (addedUrls.length !== urls.length) {
+                            dvm.util.createWarningToast('Duplicate property values not allowed');
+                        }
+                        if (addedUrls.length) {
+                            var urlObjs = _.map(addedUrls, url => ({'@id': url}));
+                            os.addToAdditions(os.listItem.ontologyRecord.recordId, {'@id': os.listItem.selected['@id'], [importsIRI]: urlObjs});
+                            os.saveChanges(os.listItem.ontologyRecord.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions})
+                                .then(() => os.afterSave(), $q.reject)
+                                .then(() => os.updateOntology(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, os.listItem.upToDate, os.listItem.inProgressCommit), $q.reject)
+                                .then(() => {
+                                    os.listItem.isSaved = os.isCommittable(os.listItem);
+                                    dvm.onSubmit();
+                                    dvm.onClose();
+                                }, errorMessage => onError(errorMessage, tabKey));
+                        } else {
+                            dvm.onClose();
+                        }
                     }
 
                     function isOntologyUnused(ontologyRecord) {
@@ -111,10 +118,8 @@
                     }
                     function onError(errorMessage, tabKey) {
                         if (tabKey === 'url') {
-                        // if (dvm.tabs.url) {
                             dvm.urlError = errorMessage;
                         } else if (tabKey = 'server') {
-                        // } else if (dvm.tabs.server) {
                             dvm.serverError = errorMessage;
                         }
                     }

@@ -21,20 +21,21 @@
  * #L%
  */
 describe('New Ontology Tab directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, utilSvc, stateManagerSvc, prefixes, ontoUtils;
+    var $compile, scope, $q, ontologyStateSvc, utilSvc, stateManagerSvc, prefixes, ontoUtils, splitIRI;
 
     beforeEach(function() {
         module('templates');
         module('newOntologyTab');
-        injectRegexConstant();
-        injectCamelCaseFilter();
         mockUtil();
         mockOntologyState();
         mockPrefixes();
         mockStateManager();
         mockOntologyUtilsManager();
+        injectRegexConstant();
+        injectCamelCaseFilter();
+        injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _utilService_, _stateManagerService_, _prefixes_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _utilService_, _stateManagerService_, _prefixes_, _ontologyUtilsManagerService_, _splitIRIFilter_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -43,8 +44,12 @@ describe('New Ontology Tab directive', function() {
             stateManagerSvc = _stateManagerService_;
             prefixes = _prefixes_;
             ontoUtils = _ontologyUtilsManagerService_;
+            splitIRI = _splitIRIFilter_;
         });
 
+        ontologyStateSvc.newOntology = {'@id': 'ontology'};
+        ontologyStateSvc.newOntology[prefixes.dcterms + 'title'] = [{'@value' : 'title'}];
+        ontologyStateSvc.newOntology[prefixes.dcterms + 'description'] = [{'@value' : 'description'}];
         this.element = $compile(angular.element('<new-ontology-tab></new-ontology-tab>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('newOntologyTab');
@@ -59,6 +64,7 @@ describe('New Ontology Tab directive', function() {
         stateManagerSvc = null;
         prefixes = null;
         ontoUtils = null;
+        splitIRI = null;
         this.element.remove();
     });
 
@@ -108,34 +114,36 @@ describe('New Ontology Tab directive', function() {
         });
         it('depending on the form validity', function() {
             var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
-            expect(button.attr('disabled')).toBeTruthy();
-
-            this.controller.form.$invalid = false;
-            scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
+
+            this.controller.form.$invalid = true;
+            scope.$digest();
+            expect(button.attr('disabled')).toBeTruthy();
         });
     });
     describe('controller methods', function() {
         describe('should update the id', function() {
             beforeEach(function() {
-                this.prefix = this.controller.ontology['@id'];
-                this.controller.title = 'title';
+                this.original = ontologyStateSvc.newOntology['@id'];
+                splitIRI.and.returnValue({begin: 'ontology', then: ''});
+                utilSvc.getPropertyValue.and.returnValue('title');
             });
             it('if the iri has not changed', function() {
                 this.controller.nameChanged();
-                expect(this.controller.ontology['@id']).toBe(this.prefix + this.controller.title);
+                expect(ontologyStateSvc.newOntology['@id']).toBe('ontologytitle');
+                expect(splitIRI).toHaveBeenCalledWith(this.original);
+                expect(utilSvc.getPropertyValue).toHaveBeenCalledWith(ontologyStateSvc.newOntology, prefixes.dcterms + 'title');
             });
             it('unless the iri has changed', function() {
                 this.controller.iriHasChanged = true;
                 this.controller.nameChanged();
-                expect(this.controller.ontology['@id']).toBe(this.prefix);
+                expect(ontologyStateSvc.newOntology['@id']).toBe(this.original);
+                expect(splitIRI).not.toHaveBeenCalled();
             });
         });
         describe('should create an ontology', function() {
             beforeEach(function() {
-                this.controller.title = 'title';
-                this.controller.description = 'description';
-                this.controller.keywords = [' one', 'two '];
+                ontologyStateSvc.newKeywords = [' one', 'two '];
                 this.response = {
                     recordId: 'record',
                     branchId: 'branch',
@@ -144,12 +152,16 @@ describe('New Ontology Tab directive', function() {
                 };
                 ontologyStateSvc.createOntology.and.returnValue($q.when(this.response));
                 this.errorMessage = 'Error message';
+                this.description = 'description';
+                utilSvc.getPropertyValue.and.callFake(function(obj, prop) {
+                    return prop === prefixes.dcterms + 'title' ? 'title' : this.description;
+                }.bind(this));
             });
             it('unless an error occurs with creating the ontology', function() {
                 ontologyStateSvc.createOntology.and.returnValue($q.reject(this.errorMessage));
                 this.controller.create();
                 scope.$apply();
-                expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(this.controller.ontology, this.controller.title, this.controller.description, ['one', 'two']);
+                expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', 'description', ['one', 'two']);
                 expect(stateManagerSvc.createOntologyState).not.toHaveBeenCalled();
                 expect(this.controller.error).toBe(this.errorMessage);
             });
@@ -157,20 +169,30 @@ describe('New Ontology Tab directive', function() {
                 stateManagerSvc.createOntologyState.and.returnValue($q.reject(this.errorMessage));
                 this.controller.create();
                 scope.$apply();
-                expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(this.controller.ontology, this.controller.title, this.controller.description, ['one', 'two']);
+                expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', 'description', ['one', 'two']);
                 expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
                 expect(this.controller.error).toBe(this.errorMessage);
             });
-            it('successfully', function() {
-                this.controller.create();
-                scope.$apply();
-                expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(this.controller.ontology, 'title', this.controller.title);
-                expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(this.controller.ontology, 'description', this.controller.description);
-                expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.ontology, this.controller.language);
-                expect(_.has(this.controller.ontology, prefixes.owl + 'imports')).toBe(false);
-                expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(this.controller.ontology, this.controller.title, this.controller.description, ['one', 'two']);
-                expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
-                expect(ontologyStateSvc.showNewTab).toBe(false);
+            describe('successfully', function() {
+                it('with a description', function() {
+                    this.controller.create();
+                    scope.$apply();
+                    expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(ontologyStateSvc.newOntology, ontologyStateSvc.newLanguage);
+                    expect(_.has(ontologyStateSvc.newOntology, prefixes.owl + 'imports')).toBe(false);
+                    expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', 'description', ['one', 'two']);
+                    expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
+                    expect(ontologyStateSvc.showNewTab).toBe(false);
+                });
+                it('without description', function() {
+                    this.description = '';
+                    this.controller.create();
+                    scope.$apply();
+                    expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(ontologyStateSvc.newOntology, ontologyStateSvc.newLanguage);
+                    expect(_.has(ontologyStateSvc.newOntology, prefixes.owl + 'imports')).toBe(false);
+                    expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', '', ['one', 'two']);
+                    expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
+                    expect(ontologyStateSvc.showNewTab).toBe(false);
+                });
             });
         });
     });
