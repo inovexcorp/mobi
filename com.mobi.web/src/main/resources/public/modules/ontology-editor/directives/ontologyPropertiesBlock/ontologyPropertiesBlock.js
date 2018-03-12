@@ -48,7 +48,8 @@
                         dvm.os.ontologyProperty = undefined;
                         dvm.os.ontologyPropertyIRI = '';
                         dvm.os.ontologyPropertyValue = '';
-                        dvm.os.ontologyPropertyLanguage = 'en';
+                        dvm.os.ontologyPropertyType = undefined;
+                        dvm.os.ontologyPropertyLanguage = '';
                         dvm.os.showOntologyPropertyOverlay = true;
                     }
                     dvm.openRemoveOverlay = function(key, index) {
@@ -62,6 +63,7 @@
                         dvm.os.ontologyProperty = property;
                         dvm.os.ontologyPropertyIRI = _.get(propertyObj, '@id');
                         dvm.os.ontologyPropertyValue = _.get(propertyObj, '@value');
+                        dvm.os.ontologyPropertyType = _.get(propertyObj, '@type');
                         dvm.os.ontologyPropertyIndex = index;
                         dvm.os.ontologyPropertyLanguage = _.get(propertyObj, '@language');
                         dvm.os.showOntologyPropertyOverlay = true;

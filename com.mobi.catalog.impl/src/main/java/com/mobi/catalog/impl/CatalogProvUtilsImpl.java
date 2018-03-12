@@ -23,6 +23,8 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
+import static com.mobi.persistence.utils.RepositoryResults.asModel;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
@@ -33,7 +35,6 @@ import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.ontologies.provo.EntityFactory;
-import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.platform.config.api.server.Mobi;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.prov.api.builder.ActivityConfig;
@@ -44,6 +45,8 @@ import com.mobi.prov.api.ontologies.mobiprov.DeleteActivityFactory;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 import java.util.Collections;
@@ -58,6 +61,8 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
     private EntityFactory entityFactory;
     private ModelFactory modelFactory;
     private Mobi mobi;
+
+    private static final Logger LOG = LoggerFactory.getLogger(CatalogProvUtilsImpl.class);
 
     private final String atLocation = "http://www.w3.org/ns/prov#atLocation";
 
@@ -126,11 +131,18 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
 
     @Override
     public DeleteActivity startDeleteActivity(User user, Resource recordIri) {
-        Entity recordEntity = entityFactory.getExisting(recordIri, RepositoryResults.asModel(provenanceService.getConnection()
-                .getStatements(recordIri, null, null), modelFactory)).orElseThrow(() ->
-                        new IllegalStateException("No Entity found for record."));
+        Entity recordEntity = entityFactory.getExisting(recordIri, asModel(provenanceService.getConnection()
+                .getStatements(recordIri, null, null), modelFactory))
+                .orElseGet(() -> {
+                    LOG.warn("No Entity found for record " + recordIri + ".");
+                    Entity entity = entityFactory.createNew(recordIri);
+                    entity.addProperty(vf.createLiteral(catalogManager.getRepositoryId()), vf.createIRI(atLocation));
+                    return entity;
+                });
 
-        ActivityConfig config = new ActivityConfig.Builder(Collections.singleton(DeleteActivity.class), user).invalidatedEntity(recordEntity).build();
+        ActivityConfig config = new ActivityConfig.Builder(Collections.singleton(DeleteActivity.class), user)
+                .invalidatedEntity(recordEntity)
+                .build();
         Activity activity = initializeActivity(config);
 
         provenanceService.addActivity(activity);
@@ -142,7 +154,7 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
     @Override
     public void endDeleteActivity(DeleteActivity deleteActivity, Record record) {
         Entity recordEntity = entityFactory.getExisting(record.getResource(), deleteActivity.getModel()).orElseThrow(()
-                -> new IllegalStateException("No Entity found for record."));;
+                -> new IllegalStateException("No Entity found for record."));
         recordEntity.addInvalidatedAtTime(OffsetDateTime.now());
 
         finalizeActivity(deleteActivity);
