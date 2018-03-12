@@ -486,7 +486,7 @@
                 if (!validateOntologyInfo(ontologyInfo)) {
                     return $q.reject('Missing identification information');
                 }
-                return om.getOntology(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId)
+                return om.getOntology(ontologyInfo.recordId, '', '')
                     .then(ontology => {return {id: om.getOntologyIRI(ontology), entities: ontology, recordId: ontologyInfo.recordId}}, $q.reject);
             }
             /**
