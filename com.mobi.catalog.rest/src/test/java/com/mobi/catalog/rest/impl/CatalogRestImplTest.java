@@ -363,7 +363,6 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         when(versioningManager.merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(Model.class), any(Model.class))).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
 
         when(conflict.getIRI()).thenReturn(vf.createIRI(CONFLICT_IRI));
-        when(conflict.getOriginal()).thenReturn(mf.createModel());
         when(conflict.getLeftDifference()).thenReturn(difference);
         when(conflict.getRightDifference()).thenReturn(difference);
 
@@ -2535,7 +2534,6 @@ public class CatalogRestImplTest extends MobiRestTestNg {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), 1);
             JSONObject outcome = JSONObject.fromObject(result.get(0));
-            assertTrue(outcome.containsKey("original"));
             assertTrue(outcome.containsKey("left"));
             assertTrue(outcome.containsKey("right"));
             JSONObject left = JSONObject.fromObject(outcome.get("left"));

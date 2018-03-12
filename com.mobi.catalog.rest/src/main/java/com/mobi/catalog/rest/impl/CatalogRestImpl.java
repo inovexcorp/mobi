@@ -1254,7 +1254,6 @@ public class CatalogRestImpl implements CatalogRest {
     private JSONObject conflictToJson(Conflict conflict, String rdfFormat) {
         JSONObject object = new JSONObject();
         object.put("iri", conflict.getIRI().stringValue());
-        object.put("original", getModelInFormat(conflict.getOriginal(), rdfFormat));
         object.put("left", getDifferenceJson(conflict.getLeftDifference(), rdfFormat));
         object.put("right", getDifferenceJson(conflict.getRightDifference(), rdfFormat));
         return object;

@@ -193,7 +193,8 @@ describe('Merge Tab directive', function() {
                     scope.$apply();
                     expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(this.branchId, this.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                     expect(ontologyStateSvc.listItem.merge.conflicts).toEqual([
-                        {iri: 'conflict1', resolved: false, left: {additions: []}, right: {additions: []}},
+                        {iri: 'conflict1', resolved: false, left: {additions: []}},
+                        {iri: 'conflict1', resolved: false, right: {additions: []}},
                         {iri: 'conflict2', resolved: false}
                     ]);
                     expect(this.controller.merge).not.toHaveBeenCalled();
@@ -213,7 +214,7 @@ describe('Merge Tab directive', function() {
             var selectedRight = {resolved: 'right', left: {additions: ['add-left'], deletions: ['del-left']}};
             ontologyStateSvc.listItem.merge.conflicts = [selectedLeft, selectedRight];
             this.controller.mergeWithResolutions();
-            expect(ontologyStateSvc.listItem.merge.resolutions.additions).toEqual(['del-right', 'del-left']);
+            expect(ontologyStateSvc.listItem.merge.resolutions.additions).toEqual([]);
             expect(ontologyStateSvc.listItem.merge.resolutions.deletions).toEqual(['add-right', 'add-left']);
             expect(this.controller.merge).toHaveBeenCalled();
         });
