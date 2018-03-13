@@ -654,11 +654,11 @@ describe('Ontology Manager service', function() {
     });
     describe('getOntologyClasses retrieves all classes in an ontology', function() {
         beforeEach(function() {
-            this.params = paramSerializer({ branchId: this.branchId, commitId: this.commitId });
+            this.params = paramSerializer({ branchId: this.branchId, commitId: this.commitId, applyInProgressCommit: false });
         });
         it('unless an error occurs', function() {
             $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/classes?' + this.params).respond(400, null, null, this.error);
-            ontologyManagerSvc.getOntologyClasses(this.recordId, this.branchId, this.commitId)
+            ontologyManagerSvc.getOntologyClasses(this.recordId, this.branchId, this.commitId, false)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
@@ -669,7 +669,7 @@ describe('Ontology Manager service', function() {
         });
         it('successfully', function() {
             $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/classes?' + this.params).respond(200, [{}]);
-            ontologyManagerSvc.getOntologyClasses(this.recordId, this.branchId, this.commitId)
+            ontologyManagerSvc.getOntologyClasses(this.recordId, this.branchId, this.commitId, false)
                 .then(function(response) {
                     expect(response).toEqual([{}]);
                 }, function() {
