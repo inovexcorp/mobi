@@ -37,6 +37,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -105,4 +106,20 @@ public interface MergeRequestRest {
     @RolesAllowed("user")
     @ApiOperation("Retrieves a MergeRequest from the application by its ID")
     Response getMergeRequest(@PathParam("requestId") String requestId);
+
+    /**
+     * Updates an existing {@link MergeRequest} that has the {@code requestId} with the provided JSONLD of
+     * {@code newMergeRequest}.
+     *
+     * @param requestId The String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @param newMergeRequest The String representing the JSONLD representation of the updated {@link MergeRequest}.
+     * @return A Response indicating the status of the update.
+     */
+    @PUT
+    @Path("{requestId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Updates a MergeRequest by its ID using the provided JSON-LD")
+    Response updateMergeRequest(@PathParam("requestId") String requestId, String newMergeRequest);
 }
