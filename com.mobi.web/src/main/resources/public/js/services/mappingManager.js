@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -466,8 +466,8 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Retrieves an ontology from MASTER and structures it for the mappingManagerService with its id and the
-             * list of entities within it. Does not apply any in progress commits. Returns a Promise with the structured
+             * Retrieves an ontology and structures it for the mappingManagerService with its id and the list of
+             * entities within it. Does not apply any in progress commit. Returns a Promise with the structured
              * ontology. The structure looks like:
              * ```
              * {
@@ -487,7 +487,7 @@
                 if (!validateOntologyInfo(ontologyInfo)) {
                     return $q.reject('Missing identification information');
                 }
-                return om.getOntology(ontologyInfo.recordId, '', '', undefined, undefined, undefined, false)
+                return om.getOntology(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId, undefined, undefined, undefined, false)
                     .then(ontology => {return {id: om.getOntologyIRI(ontology), entities: ontology, recordId: ontologyInfo.recordId}}, $q.reject);
             }
             /**
