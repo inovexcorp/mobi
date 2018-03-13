@@ -405,6 +405,8 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
      * @return classes in the ontology identified by the provided IDs.
      */
     @GET
@@ -415,7 +417,8 @@ public interface OntologyRest {
     Response getClassesInOntology(@Context ContainerRequestContext context,
                                   @PathParam("recordId") String recordIdStr,
                                   @QueryParam("branchId") String branchIdStr,
-                                  @QueryParam("commitId") String commitIdStr);
+                                  @QueryParam("commitId") String commitIdStr,
+                                  @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit);
 
     /**
      * Add a new class to ontology identified by the provided IDs from the server associated with the requester's

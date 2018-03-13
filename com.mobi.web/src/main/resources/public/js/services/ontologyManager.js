@@ -414,10 +414,12 @@
              * @param {string} recordId The id of the Record the Branch should be part of
              * @param {string} branchId The id of the Branch with the specified Commit
              * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @param {boolean} [applyInProgressCommit=true]  Boolean indicating whether or not any in progress commits by user
+             *                                                should be applied to the return value
              * @return {Promise} A promise with an array containing a list of classes
              */
-            self.getOntologyClasses = function(recordId, branchId, commitId) {
-                var config = { params: { branchId, commitId } };
+            self.getOntologyClasses = function(recordId, branchId, commitId, applyInProgressCommit = true) {
+                var config = { params: { branchId, commitId, applyInProgressCommit} };
                 return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/classes', config)
                     .then(response => response.data, util.rejectError);
             }

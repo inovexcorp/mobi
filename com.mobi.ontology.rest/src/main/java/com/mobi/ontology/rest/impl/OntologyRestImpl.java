@@ -361,7 +361,7 @@ public class OntologyRestImpl implements OntologyRest {
                                        String commitIdStr) {
         try {
             JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getVocabularyStuff);
+                    this::getVocabularyStuff, true);
             return Response.ok(result).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -398,7 +398,7 @@ public class OntologyRestImpl implements OntologyRest {
                                      String commitIdStr) {
         try {
             JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getOntologyStuff);
+                    this::getOntologyStuff, true);
             return Response.ok(result).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -440,7 +440,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getIRIsInOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                       String commitIdStr) {
         try {
-            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs);
+            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs, true);
             return Response.ok(result).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -452,7 +452,7 @@ public class OntologyRestImpl implements OntologyRest {
                                              String commitIdStr) {
         try {
             JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getAnnotationArray);
+                    this::getAnnotationArray, true);
             return Response.ok(result).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -484,9 +484,9 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getClassesInOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
-                                         String commitIdStr) {
+                                         String commitIdStr, boolean applyInProgressCommit) {
         try {
-            JSONArray result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray);
+            JSONArray result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray, applyInProgressCommit);
             return Response.ok(result).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -520,7 +520,7 @@ public class OntologyRestImpl implements OntologyRest {
                                            String commitIdStr) {
         try {
             JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getDatatypeArray);
+                    this::getDatatypeArray, true);
             return Response.ok(result).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -554,7 +554,7 @@ public class OntologyRestImpl implements OntologyRest {
                                                   String branchIdStr, String commitIdStr) {
         try {
             JSONArray result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getObjectPropertyArray);
+                    this::getObjectPropertyArray, true);
             return Response.ok(result).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -590,7 +590,7 @@ public class OntologyRestImpl implements OntologyRest {
                                                 String branchIdStr, String commitIdStr) {
         try {
             JSONArray result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getDataPropertyArray);
+                    this::getDataPropertyArray, true);
             return Response.ok(result).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -625,7 +625,7 @@ public class OntologyRestImpl implements OntologyRest {
                                                   String branchIdStr, String commitIdStr) {
         try {
             JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getNamedIndividualArray);
+                    this::getNamedIndividualArray, true);
             return Response.ok(result).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -1089,11 +1089,13 @@ public class OntologyRestImpl implements OntologyRest {
      * @param commitIdStr the commit ID String to process.
      * @param iriFunction the Function that takes an Ontology and returns a List of IRI corresponding to an Ontology
      *                    component.
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
      * @return The properly formatted JSON response with a List of a particular Ontology Component.
      */
     private <T extends JSON> T doWithOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
-                                           String commitIdStr, Function<Ontology, T> iriFunction) {
-        Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
+                                           String commitIdStr, Function<Ontology, T> iriFunction, boolean applyInProgressCommit) {
+        Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit);
         if (optionalOntology.isPresent()) {
             return iriFunction.apply(optionalOntology.get());
         } else {
