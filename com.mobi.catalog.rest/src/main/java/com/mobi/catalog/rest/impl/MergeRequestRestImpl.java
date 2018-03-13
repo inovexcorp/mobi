@@ -180,7 +180,6 @@ public class MergeRequestRestImpl implements MergeRequestRest {
     private MergeRequest jsonToMergeRequest(Resource requestId, String jsonMergeRequest) {
         Model mergeReqModel = jsonldToModel(jsonMergeRequest, transformer);
         return mergeRequestFactory.getExisting(requestId, mergeReqModel).orElseThrow(() ->
-                ErrorUtils.sendError(mergeRequestFactory.getTypeIRI().getLocalName() + " IDs must match",
-                        Response.Status.BAD_REQUEST));
+                ErrorUtils.sendError("MergeRequest IDs must match", Response.Status.BAD_REQUEST));
     }
 }

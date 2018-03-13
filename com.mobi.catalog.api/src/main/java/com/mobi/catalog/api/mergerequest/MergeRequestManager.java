@@ -82,6 +82,7 @@ public interface MergeRequestManager {
      *
      * @param requestId the {@link Resource} identifying a {@link MergeRequest}
      * @param request the updated {@link MergeRequest} referenced by {@code requestId}
+     * @throws IllegalArgumentException If the provided {@link MergeRequest} does not exist in the repository
      */
     void updateMergeRequest(Resource requestId, MergeRequest request);
 

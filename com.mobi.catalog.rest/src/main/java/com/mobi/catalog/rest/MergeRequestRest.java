@@ -118,7 +118,6 @@ public interface MergeRequestRest {
      */
     @PUT
     @Path("{requestId}")
-    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Updates a MergeRequest by its ID using the provided JSON-LD")

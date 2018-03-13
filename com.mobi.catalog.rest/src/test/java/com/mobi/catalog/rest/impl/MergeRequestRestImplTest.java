@@ -35,6 +35,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
@@ -437,6 +438,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
                 .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+        verify(requestManager).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
         assertEquals(response.getStatus(), 200);
     }
 
@@ -444,7 +446,8 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     public void updateMergeRequestEmptyJsonTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
-                .put(Entity.entity(groupedModelToString(mf.createModel(mf.createModel()), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+                .put(Entity.json("[]"));
+        verify(requestManager, never()).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -453,6 +456,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
                 .put(Entity.json("['test': true]"));
+        verify(requestManager, never()).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -461,6 +465,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
                 .put(Entity.entity(groupedModelToString(request2.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+        verify(requestManager, never()).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -470,6 +475,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
                 .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+        verify(requestManager).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
         assertEquals(response.getStatus(), 500);
     }
 }
