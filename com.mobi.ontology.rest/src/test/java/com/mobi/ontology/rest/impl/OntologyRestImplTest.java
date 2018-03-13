@@ -33,7 +33,6 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -961,11 +960,11 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
 
         assertEquals(response.getStatus(), 200);
-        verify(engineManager, never()).retrieveUser(anyString());
-        verify(catalogManager, never()).getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class));
-        verify(catalogManager, never()).applyInProgressCommit(any(Resource.class), any(Model.class));
-        verify(ontologyManager, never()).createOntology(any(Model.class));
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        verify(engineManager, times(0)).retrieveUser(anyString());
+        verify(catalogManager, times(0)).getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class));
+        verify(catalogManager, times(0)).applyInProgressCommit(any(Resource.class), any(Model.class));
+        verify(ontologyManager, times(0)).createOntology(any(Model.class));
         verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString(), anyString());
     }
 
@@ -4216,7 +4215,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager, times(0)).createOntology(any(FileInputStream.class), eq(false));
         verify(catalogManager, times(0)).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
         verify(catalogManager, times(0)).getDiff(any(Model.class), any(Model.class));
-        verify(catalogManager, times(1)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
         verify(catalogManager, times(0)).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
     }
 
