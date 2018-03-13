@@ -466,8 +466,9 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Retrieves an ontology and structures it for the mappingManagerService with its id and the list of
-             * entities within it. Returns a Promise with the structured ontology. The structure looks like:
+             * Retrieves an ontology from MASTER and structures it for the mappingManagerService with its id and the
+             * list of entities within it. Does not apply any in progress commits. Returns a Promise with the structured
+             * ontology. The structure looks like:
              * ```
              * {
              *    id: 'http://example.com/ontology',
@@ -486,7 +487,7 @@
                 if (!validateOntologyInfo(ontologyInfo)) {
                     return $q.reject('Missing identification information');
                 }
-                return om.getOntology(ontologyInfo.recordId, '', '')
+                return om.getOntology(ontologyInfo.recordId, '', '', undefined, undefined, undefined, false)
                     .then(ontology => {return {id: om.getOntologyIRI(ontology), entities: ontology, recordId: ontologyInfo.recordId}}, $q.reject);
             }
             /**

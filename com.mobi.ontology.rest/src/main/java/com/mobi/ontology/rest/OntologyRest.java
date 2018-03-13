@@ -115,6 +115,8 @@ public interface OntologyRest {
      * @param clearCache  whether or not the cached version of the identified Ontology should be cleared before
      *                    retrieval
      * @param skolemize   whether or not the JSON-LD of the ontology should be skolemized
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
      * @return a Response with the ontology in the requested format.
      */
     @GET
@@ -128,7 +130,8 @@ public interface OntologyRest {
                          @QueryParam("commitId") String commitIdStr,
                          @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
                          @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
-                         @DefaultValue("false") @QueryParam("skolemize") boolean skolemize);
+                         @DefaultValue("false") @QueryParam("skolemize") boolean skolemize,
+                         @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit);
 
     /**
      * Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is

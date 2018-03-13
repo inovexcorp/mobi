@@ -481,14 +481,14 @@ describe('Ontology Manager service', function() {
     });
     describe('getOntology hits the proper endpoint', function() {
         beforeEach(function() {
-            this.params = paramSerializer({ branchId: this.branchId, commitId: this.commitId, rdfFormat: this.format, clearCache: false, skolemize: true });
+            this.params = paramSerializer({ branchId: this.branchId, commitId: this.commitId, rdfFormat: this.format, clearCache: false, skolemize: true, applyInProgressCommit: true });
         });
         it('unless an error occurs', function() {
             $httpBackend.expectGET('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?' + this.params,
                 function(headers) {
                     return headers['Accept'] === 'text/plain';
                 }).respond(400, null, null, this.error);
-            ontologyManagerSvc.getOntology(this.recordId, this.branchId, this.commitId, this.format, false, false)
+            ontologyManagerSvc.getOntology(this.recordId, this.branchId, this.commitId, this.format, false, false, true)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
@@ -505,7 +505,7 @@ describe('Ontology Manager service', function() {
                 function(headers) {
                     return headers['Accept'] === 'text/plain';
                 }).respond(200, this.ontology);
-            ontologyManagerSvc.getOntology(this.recordId, this.branchId, this.commitId, this.format, false, false)
+            ontologyManagerSvc.getOntology(this.recordId, this.branchId, this.commitId, this.format, false, false, true)
                 .then(function(data) {
                     expect(data).toEqual(this.ontology);
                 }.bind(this), function(response) {

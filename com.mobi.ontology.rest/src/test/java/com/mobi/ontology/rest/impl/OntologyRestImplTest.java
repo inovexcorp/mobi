@@ -33,6 +33,7 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -949,6 +950,21 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         assertEquals(response.getStatus(), 200);
         assertGetOntology(false);
+        assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    public void testGetOntologyWithDoNotApplyInProgressCommit() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).queryParam("applyInProgressCommit", false)
+                .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(engineManager, never()).retrieveUser(anyString());
+        verify(catalogManager, never()).getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class));
+        verify(catalogManager, never()).applyInProgressCommit(any(Resource.class), any(Model.class));
+        verify(ontologyManager, never()).createOntology(any(Model.class));
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
         verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString(), anyString());
     }
