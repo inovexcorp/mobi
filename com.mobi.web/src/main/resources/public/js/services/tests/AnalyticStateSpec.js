@@ -449,7 +449,7 @@ describe('Analytic State Service', function() {
                         expect(response).toBe('The Dataset ontologies could not be retrieved');
                     });
                 scope.$apply();
-                expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
+                expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', undefined, undefined, undefined, false);
             });
             it('populated', function() {
                 ontologyManagerSvc.getOntology.and.returnValue($q.when([{}]));
@@ -458,7 +458,7 @@ describe('Analytic State Service', function() {
                         fail('Promise should have resolved');
                     })
                 scope.$apply();
-                expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
+                expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', undefined, undefined, undefined, false);
                 expect(ontologyManagerSvc.getClasses).toHaveBeenCalledWith([[{}]]);
                 expect(ontologyManagerSvc.getObjectProperties).toHaveBeenCalledWith([[{}]]);
                 expect(ontologyManagerSvc.getDataTypeProperties).toHaveBeenCalledWith([[{}]]);
@@ -478,7 +478,7 @@ describe('Analytic State Service', function() {
                     expect(response).toBe('The Dataset ontologies could not be found');
                 });
             scope.$apply();
-            expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
+            expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', undefined, undefined, undefined, false);
         });
     });
     describe('populateEditor should set the values correctly if setClassesAndProperties', function() {
