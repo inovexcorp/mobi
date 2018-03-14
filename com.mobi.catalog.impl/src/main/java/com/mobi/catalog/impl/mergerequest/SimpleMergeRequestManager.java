@@ -146,6 +146,14 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         }
     }
 
+    @Override
+    public void updateMergeRequest(Resource requestId, MergeRequest request) {
+        try (RepositoryConnection conn = getCatalogRepo().getConnection()) {
+            catalogUtils.validateResource(requestId, mergeRequestFactory.getTypeIRI(), conn);
+            catalogUtils.updateObject(request, conn);
+        }
+    }
+
     private Repository getCatalogRepo() {
         return repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
                 new IllegalStateException("Cannot retrieve Catalog repository"));
