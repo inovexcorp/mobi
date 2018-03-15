@@ -564,7 +564,7 @@
                 if (_.isEmpty(allOntologies)) {
                     return $q.reject('The Dataset does not have any associated ontologies');
                 }
-                return $q.all(_.map(allOntologies, ontology => om.getOntology(ontology.recordId, ontology.branchId, ontology.commitId)))
+                return $q.all(_.map(allOntologies, ontology => om.getOntology(ontology.recordId, ontology.branchId, ontology.commitId, undefined, undefined, undefined, false)))
                     .then(response => {
                         if (_.isEmpty(_.flattenDeep(response))) {
                             return $q.reject('The Dataset ontologies could not be retrieved');

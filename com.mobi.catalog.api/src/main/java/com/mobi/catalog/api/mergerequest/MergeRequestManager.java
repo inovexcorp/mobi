@@ -75,4 +75,15 @@ public interface MergeRequestManager {
      * @throws IllegalStateException If the catalog {@link com.mobi.repository.api.Repository} could not be found
      */
     Optional<MergeRequest> getMergeRequest(Resource requestId);
+
+    /**
+     * Replaces the stored {@link MergeRequest} of {@code requestId} with the provided {@link MergeRequest} {@code request}
+     * Assumes that {@code request} is properly populated.
+     *
+     * @param requestId the {@link Resource} identifying a {@link MergeRequest}
+     * @param request the updated {@link MergeRequest} referenced by {@code requestId}
+     * @throws IllegalArgumentException If the provided {@link MergeRequest} does not exist in the repository
+     */
+    void updateMergeRequest(Resource requestId, MergeRequest request);
+
 }

@@ -24,14 +24,18 @@ package com.mobi.catalog.rest.impl;
  */
 
 import static com.mobi.rest.util.RestUtils.encode;
+import static com.mobi.rest.util.RestUtils.getRDFFormat;
+import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
@@ -93,7 +97,8 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     private ValueFactory vf;
     private ModelFactory mf;
     private ValueConverterRegistry vcr;
-    private MergeRequest request;
+    private MergeRequest request1;
+    private MergeRequest request2;
     private User user;
 
     private final String RECORD_ID = "http://mobi.com/records#record";
@@ -144,10 +149,15 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         when(transformer.mobiModel(any(org.openrdf.model.Model.class)))
                 .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
 
-        request = mergeRequestFactory.createNew(vf.createIRI("http://mobi.com/merge-requests#1"));
-        Model contextModel = mf.createModel();
-        request.getModel().forEach(statement -> contextModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), request.getResource()));
-        request = mergeRequestFactory.getExisting(request.getResource(), contextModel).get();
+        request1 = mergeRequestFactory.createNew(vf.createIRI("http://mobi.com/merge-requests#1"));
+        Model contextModel1 = mf.createModel();
+        request1.getModel().forEach(statement -> contextModel1.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), request1.getResource()));
+        request1 = mergeRequestFactory.getExisting(request1.getResource(), contextModel1).get();
+
+        request2 = mergeRequestFactory.createNew(vf.createIRI("http://mobi.com/merge-requests#2"));
+        Model contextModel2 = mf.createModel();
+        request2.getModel().forEach(statement -> contextModel2.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), request1.getResource()));
+        request2 = mergeRequestFactory.getExisting(request2.getResource(), contextModel2).get();
         user = userFactory.createNew(vf.createIRI("http://test.org/" + UsernameTestFilter.USERNAME));
 
         rest = new MergeRequestRestImpl();
@@ -156,6 +166,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         rest.setTransformer(transformer);
         rest.setVf(vf);
         rest.setMf(mf);
+        rest.setMergeRequestFactory(mergeRequestFactory);
 
         return new ResourceConfig()
                 .register(rest)
@@ -170,10 +181,10 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
 
     @BeforeMethod
     public void setUpMocks() throws Exception {
-        when(requestManager.getMergeRequests()).thenReturn(Collections.singleton(request));
-        when(requestManager.createMergeRequest(any(MergeRequestConfig.class))).thenReturn(request);
+        when(requestManager.getMergeRequests()).thenReturn(Collections.singleton(request1));
+        when(requestManager.createMergeRequest(any(MergeRequestConfig.class))).thenReturn(request1);
         when(requestManager.getMergeRequest(any(Resource.class))).thenReturn(Optional.empty());
-        when(requestManager.getMergeRequest(request.getResource())).thenReturn(Optional.of(request));
+        when(requestManager.getMergeRequest(request1.getResource())).thenReturn(Optional.of(request1));
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
         when(engineManager.retrieveUser(UsernameTestFilter.USERNAME)).thenReturn(Optional.of(user));
@@ -199,7 +210,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
             JSONObject requestObj = requestArr.getJSONObject(0);
             assertFalse(requestObj.containsKey("@graph"));
             assertTrue(requestObj.containsKey("@id"));
-            assertEquals(requestObj.getString("@id"), request.getResource().stringValue());
+            assertEquals(requestObj.getString("@id"), request1.getResource().stringValue());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -243,7 +254,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createMergeRequest(any(MergeRequestConfig.class));
         verify(requestManager).addMergeRequest(any(MergeRequest.class));
-        assertEquals(request.getResource().stringValue(), response.readEntity(String.class));
+        assertEquals(request1.getResource().stringValue(), response.readEntity(String.class));
     }
 
     @Test
@@ -378,16 +389,16 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getMergeRequestTest() {
-        Response response = target().path("merge-requests/" + encode(request.getResource().stringValue())).request().get();
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue())).request().get();
         assertEquals(response.getStatus(), 200);
-        verify(requestManager).getMergeRequest(request.getResource());
+        verify(requestManager).getMergeRequest(request1.getResource());
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), 1);
             JSONObject requestObj = result.getJSONObject(0);
             assertFalse(requestObj.containsKey("@graph"));
             assertTrue(requestObj.containsKey("@id"));
-            assertEquals(requestObj.getString("@id"), request.getResource().stringValue());
+            assertEquals(requestObj.getString("@id"), request1.getResource().stringValue());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -403,20 +414,68 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     @Test
     public void getMergeRequestWithMissingRepoTest() {
         // Setup:
-        doThrow(new IllegalStateException()).when(requestManager).getMergeRequest(request.getResource());
+        doThrow(new IllegalStateException()).when(requestManager).getMergeRequest(request1.getResource());
 
-        Response response = target().path("merge-requests/" + encode(request.getResource().stringValue())).request().get();
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue())).request().get();
         assertEquals(response.getStatus(), 500);
-        verify(requestManager).getMergeRequest(request.getResource());
+        verify(requestManager).getMergeRequest(request1.getResource());
     }
 
     @Test
     public void getMergeRequestWithErrorTest() {
         // Setup:
-        doThrow(new MobiException()).when(requestManager).getMergeRequest(request.getResource());
+        doThrow(new MobiException()).when(requestManager).getMergeRequest(request1.getResource());
 
-        Response response = target().path("merge-requests/" + encode(request.getResource().stringValue())).request().get();
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue())).request().get();
         assertEquals(response.getStatus(), 500);
-        verify(requestManager).getMergeRequest(request.getResource());
+        verify(requestManager).getMergeRequest(request1.getResource());
+    }
+
+    /* POST merge-requests/{requestId} */
+
+    @Test
+    public void updateMergeRequestTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
+                .request()
+                .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+        verify(requestManager).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
+        assertEquals(response.getStatus(), 200);
+    }
+
+    @Test
+    public void updateMergeRequestEmptyJsonTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
+                .request()
+                .put(Entity.json("[]"));
+        verify(requestManager, never()).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void updateMergeRequestWithInvalidJsonTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
+                .request()
+                .put(Entity.json("['test': true]"));
+        verify(requestManager, never()).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void updateMergeRequestThatDoesNotMatchTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
+                .request()
+                .put(Entity.entity(groupedModelToString(request2.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+        verify(requestManager, never()).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void updateMergeRequestWithErrorTest() {
+        doThrow(new MobiException()).when(requestManager).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
+                .request()
+                .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+        verify(requestManager).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
+        assertEquals(response.getStatus(), 500);
     }
 }
