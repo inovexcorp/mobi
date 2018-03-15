@@ -1,66 +1,53 @@
 package com.mobi.catalog.impl.record;
 
+/*-
+ * #%L
+ * com.mobi.catalog.impl
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.RecordService;
-import com.mobi.catalog.api.record.config.RDFExportConfigImpl;
 import com.mobi.catalog.api.record.config.RecordExportConfig;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
+import com.mobi.repository.api.RepositoryConnection;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
+public class SimpleRecordService implements RecordService<Record> {
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleRecordService.class);
 
-public class SimpleRecordService implements RecordService {
-    private static final Logger LOG = LoggerFactory.getLogger(RDFExportConfigImpl.class);
-
-    private CatalogManager catalogManager;
-    private ValueFactory vf;
-    private RecordFactory recordFactory;
-    private VersionedRDFRecordFactory versionedRDFRecordFactory;
-    private BranchFactory branchFactory;
+    private CatalogUtilsService utilsService;
     private SesameTransformer transformer;
+    private RecordFactory recordFactory;
 
     @Reference
-    void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
-
-    @Reference
-    void setRecordFactory(RecordFactory recordFactory) {
-        this.recordFactory = recordFactory;
-    }
-
-    @Reference
-    void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
-        this.versionedRDFRecordFactory = versionedRDFRecordFactory;
-    }
-
-    @Reference
-    void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
+    void setUtilsService(CatalogUtilsService utilsService) {
+        this.utilsService = utilsService;
     }
 
     @Reference
@@ -68,65 +55,23 @@ public class SimpleRecordService implements RecordService {
         this.transformer = transformer;
     }
 
+    @Reference
+    void setRecordFactory(RecordFactory recordFactory) {
+        this.recordFactory = recordFactory;
+    }
+
+
     @Override
-    public void export(IRI iriRecord, RecordExportConfig config) {
+    public <T extends RecordExportConfig> void export(IRI iriRecord, T config, RepositoryConnection conn) {
         BatchExporter writer = new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(config.getFormat(), config.getOutput())));
         writer.setLogger(LOG);
         writer.setPrintToSystem(true);
 
-        com.mobi.rdf.api.Resource localCatalog = catalogManager.getLocalCatalogIRI();
-
-        //write Record
+        // Write Record
         writer.startRDF();
-        Record record = catalogManager.getRecord(localCatalog, iriRecord, recordFactory)
-                .orElseThrow(() -> new IllegalStateException("Could not retrieve record " + iriRecord.stringValue()));
+        Record record = utilsService.getExpectedObject(iriRecord, recordFactory, conn);
         record.getModel().forEach(writer::handleStatement);
-
-        // Write Versioned Data
-        IRI typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
-        IRI versionedRDFRecordType = vf.createIRI(VersionedRDFRecord.TYPE);
-        if (record.getProperties(typeIRI).contains(versionedRDFRecordType)) {
-            exportVersionedRDFData(iriRecord, writer);
-        }
-
         writer.endRDF();
     }
-
-    private void exportVersionedRDFData(com.mobi.rdf.api.Resource resource, BatchExporter writer) {
-        com.mobi.rdf.api.Resource localCatalog = catalogManager.getLocalCatalogIRI();
-
-        VersionedRDFRecord record = catalogManager.getRecord(localCatalog, resource, versionedRDFRecordFactory)
-                .orElseThrow(() -> new IllegalStateException("Could not retrieve record " + resource.stringValue()));
-
-        Set<String> processedCommits = new HashSet<>();
-        // Write Branches
-        record.getBranch_resource().forEach(branchResource -> {
-            Branch branch = catalogManager.getBranch(localCatalog, resource, branchResource, branchFactory)
-                    .orElseThrow(() -> new IllegalStateException("Could not retrieve expected branch " + branchResource.stringValue()));
-            branch.getModel().forEach(writer::handleStatement);
-
-            // Write Commits
-            for (Commit commit : catalogManager.getCommitChain(localCatalog, resource, branch.getResource())) {
-                com.mobi.rdf.api.Resource commitResource = commit.getResource();
-
-                if (processedCommits.contains(commitResource.stringValue())) {
-                    break;
-                } else {
-                    processedCommits.add(commitResource.stringValue());
-                }
-
-                // Write Commit/Revision Data
-                commit = catalogManager.getCommit(localCatalog, resource, branchResource, commitResource)
-                        .orElseThrow(() -> new IllegalStateException("Could not retrieve expected commit " + commitResource.stringValue()));
-                commit.getModel().forEach(writer::handleStatement);
-
-                // Write Additions/Deletions Graphs
-                Difference revisionChanges = catalogManager.getRevisionChanges(commitResource);
-                revisionChanges.getAdditions().forEach(writer::handleStatement);
-                revisionChanges.getDeletions().forEach(writer::handleStatement);
-            }
-        });
-    }
-
-    }
+}
 
