@@ -78,6 +78,7 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
@@ -1210,20 +1211,24 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Set<Conflict> getConflicts(Resource leftId, Resource rightId) {
+        // Does not take into account named graphs
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(leftId, commitFactory.getTypeIRI(), conn);
             utils.validateResource(rightId, commitFactory.getTypeIRI(), conn);
 
-            List<Resource> leftCommits = utils.getCommitChain(leftId, true, conn);
-            List<Resource> rightCommits = utils.getCommitChain(rightId, true, conn);
-            List<Resource> commonCommits = new ArrayList<>(leftCommits);
+            ArrayList<Resource> leftCommits = new ArrayList<>(utils.getCommitChain(leftId, true, conn));
+            ArrayList<Resource> rightCommits = new ArrayList<>(utils.getCommitChain(rightId, true, conn));
+            ArrayList<Resource> commonCommits = new ArrayList<>(leftCommits);
             commonCommits.retainAll(rightCommits);
             if (commonCommits.size() == 0) {
                 throw new IllegalArgumentException("No common parent between Commit " + leftId + " and " + rightId);
             }
-            Resource originalEnd = commonCommits.get(commonCommits.size() - 1);
+
             leftCommits.removeAll(commonCommits);
             rightCommits.removeAll(commonCommits);
+
+            leftCommits.trimToSize();
+            rightCommits.trimToSize();
 
             Difference leftDiff = utils.getCommitDifference(leftCommits, conn);
             Difference rightDiff = utils.getCommitDifference(rightCommits, conn);
@@ -1233,45 +1238,55 @@ public class SimpleCatalogManager implements CatalogManager {
             Model leftDeletions = leftDiff.getDeletions();
             Model rightDeletions = rightDiff.getDeletions();
 
-            removeDuplicates(left, right);
-            removeDuplicates(leftDeletions, rightDeletions);
-
             Set<Conflict> result = new HashSet<>();
-            Model original = utils.getCompiledResource(originalEnd, conn);
-            IRI rdfType = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
+            Model original = utils.getCompiledResource(commonCommits, conn);
 
-            leftDeletions.forEach(statement -> {
-                Resource subject = statement.getSubject();
-                IRI predicate = statement.getPredicate();
-                if (predicate.equals(rdfType) || right.contains(subject, predicate, null)) {
-                    result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
-                            rightDeletions));
-                    Stream.of(left, right, rightDeletions).forEach(item ->
-                            item.remove(subject, predicate, null));
+            Set<Statement> statementsToRemove = new HashSet<>();
+
+            leftDeletions.subjects().forEach(subject -> {
+                Model leftDeleteSubjectStatements = leftDeletions.filter(subject, null, null);
+
+                // Check for modification in left and right
+                leftDeleteSubjectStatements.forEach(statement -> {
+                    IRI pred = statement.getPredicate();
+                    Value obj = statement.getObject();
+
+                    if (rightDeletions.contains(subject, pred, obj)
+                            && left.contains(subject, pred, null)
+                            && right.contains(subject, pred, null)) {
+                        result.add(createConflict(subject, pred, left, leftDeletions, right, rightDeletions));
+                        statementsToRemove.add(statement);
+                    }
+                });
+
+                // Check for deletion in left and addition in right
+                Model rightSubjectAdd = right.filter(subject, null, null);
+                boolean leftEntityDeleted = !left.subjects().contains(subject) &&
+                        leftDeleteSubjectStatements.equals(original.filter(subject, null, null));
+                boolean rightEntityDeleted = rightDeletions.containsAll(leftDeleteSubjectStatements);
+
+                if (leftEntityDeleted && !rightEntityDeleted && rightSubjectAdd.size() > 0) {
+                    result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
+                    statementsToRemove.addAll(rightSubjectAdd);
                 }
             });
 
-            rightDeletions.forEach(statement -> {
-                Resource subject = statement.getSubject();
-                IRI predicate = statement.getPredicate();
-                if (predicate.equals(rdfType) || left.contains(subject, predicate, null)) {
-                    result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
-                            rightDeletions));
-                    Stream.of(left, leftDeletions, right).forEach(item ->
-                            item.remove(subject, predicate, null));
+            statementsToRemove.forEach(statement -> Stream.of(left, leftDeletions, right, rightDeletions)
+                    .forEach(model -> model.remove(statement.getSubject(), statement.getPredicate(), null)));
+
+            rightDeletions.subjects().forEach(subject -> {
+                // Check for deletion in right and addition in left
+                Model rightDeleteSubjectStatements = rightDeletions.filter(subject, null, null);
+                Model leftSubjectAdd = left.filter(subject, null, null);
+                boolean rightEntityDeleted = !right.subjects().contains(subject) &&
+                        rightDeleteSubjectStatements.equals(original.filter(subject, null, null));
+                boolean leftEntityDeleted = leftDeletions.containsAll(rightDeleteSubjectStatements);
+
+                if (rightEntityDeleted && !leftEntityDeleted && leftSubjectAdd.size() > 0) {
+                    result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
                 }
             });
 
-            left.forEach(statement -> {
-                Resource subject = statement.getSubject();
-                IRI predicate = statement.getPredicate();
-                if (right.contains(subject, predicate, null)) {
-                    result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
-                            rightDeletions));
-                    Stream.of(leftDeletions, right, rightDeletions).forEach(item ->
-                            item.remove(subject, predicate, null));
-                }
-            });
 
             return result;
         }
@@ -1302,36 +1317,25 @@ public class SimpleCatalogManager implements CatalogManager {
      *
      * @param subject        The Resource identifying the conflicted statement's subject.
      * @param predicate      The IRI identifying the conflicted statement's predicate.
-     * @param original       The Model of the original item.
      * @param left           The Model of the left item being compared.
      * @param leftDeletions  The Model of the deleted statements from the left Model.
      * @param right          The Model of the right item being compared.
      * @param rightDeletions The Model of the deleted statements from the right Model.
      * @return A Conflict created using all of the provided data.
      */
-    private Conflict createConflict(Resource subject, IRI predicate, Model original, Model left, Model leftDeletions,
+    private Conflict createConflict(Resource subject, IRI predicate, Model left, Model leftDeletions,
                                     Model right, Model rightDeletions) {
-        IRI rdfType = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
         Difference.Builder leftDifference = new Difference.Builder();
         Difference.Builder rightDifference = new Difference.Builder();
-        if (predicate.equals(rdfType)) {
-            leftDifference
-                    .additions(mf.createModel(left).filter(subject, null, null))
-                    .deletions(mf.createModel(leftDeletions).filter(subject, null, null));
-            rightDifference
-                    .additions(mf.createModel(right).filter(subject, null, null))
-                    .deletions(mf.createModel(rightDeletions).filter(subject, null, null));
-        } else {
-            leftDifference
-                    .additions(mf.createModel(left).filter(subject, predicate, null))
-                    .deletions(mf.createModel(leftDeletions).filter(subject, predicate, null));
-            rightDifference
-                    .additions(mf.createModel(right).filter(subject, predicate, null))
-                    .deletions(mf.createModel(rightDeletions).filter(subject, predicate, null));
-        }
 
-        return new Conflict.Builder(mf.createModel(original).filter(subject, predicate, null),
-                vf.createIRI(subject.stringValue()))
+        leftDifference
+                .additions(mf.createModel(left).filter(subject, predicate, null))
+                .deletions(mf.createModel(leftDeletions).filter(subject, predicate, null));
+        rightDifference
+                .additions(mf.createModel(right).filter(subject, predicate, null))
+                .deletions(mf.createModel(rightDeletions).filter(subject, predicate, null));
+
+        return new Conflict.Builder(vf.createIRI(subject.stringValue()))
                 .leftDifference(leftDifference.build())
                 .rightDifference(rightDifference.build())
                 .build();
@@ -1459,18 +1463,5 @@ public class SimpleCatalogManager implements CatalogManager {
         return Stream.of(headCommitIRI, baseCommitIRI, auxiliaryCommitIRI)
                 .map(iri -> conn.contains(null, iri, commitId))
                 .reduce(false, (iri1, iri2) -> iri1 || iri2);
-    }
-
-    /**
-     * Removes the duplicate Statements in the supplied Models.
-     *
-     * @param left  First Model
-     * @param right Second Model
-     */
-    private void removeDuplicates(Model left, Model right) {
-        Model duplicates = mf.createModel(left);
-        duplicates.retainAll(right);
-        left.removeAll(duplicates);
-        right.removeAll(duplicates);
     }
 }

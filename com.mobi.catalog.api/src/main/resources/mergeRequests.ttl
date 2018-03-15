@@ -1,0 +1,66 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix muser: <http://mobi.com/ontologies/user/management#> .
+@prefix : <http://mobi.com/ontologies/merge-requests#> .
+@base <http://mobi.com/ontologies/merge-requests> .
+
+<http://mobi.com/ontologies/merge-requests> a owl:Ontology ;
+    owl:versionIRI <http://mobi.com/ontologies/merge-requests#1.0> ;
+    owl:imports <http://mobi.com/ontologies/catalog>, <http://mobi.com/ontologies/user/management> ;
+    rdfs:label "The Mobi Merge Request Ontology"@en ;
+    rdfs:comment "The Mobi merge request ontology describes merge requests between branches of VersionedRDFRecords in the Mobi catalog."@en ;
+    dct:creator [foaf:name "Megan Mercer"] ;
+    foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>] ;
+    dct:modified "2017-12-12"^^xsd:date .
+
+# MergeRequest
+
+:MergeRequest a owl:Class ;
+    rdfs:label "Merge Request"@en ;
+    rdfs:comment "A request to merge a source Branch into a target Branch from a VersionedRDFRecord."@en .
+
+:assignee a owl:ObjectProperty ;
+    rdfs:label "assignee"@en ;
+    rdfs:comment "The User(s) assigned to review the described MergeRequest."@en ;
+    rdfs:domain :MergeRequest ;
+    rdfs:range muser:User .
+
+:onRecord a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "on Record"@en ;
+    rdfs:comment "The VersionedRDFRecord that the described MergeRequest relates to. Both the source and target Branches must be from this VersionedRDFRecord."@en ;
+    rdfs:domain :MergeRequest ;
+    rdfs:range mcat:VersionedRDFRecord .
+
+:sourceBranch a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "target branch"@en ;
+    rdf:comment "The Branch with the new Commits for the target Branch."@en ;
+    rdfs:domain :MergeRequest ;
+    rdfs:range mcat:Branch .
+
+:targetBranch a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "target branch"@en ;
+    rdf:comment "The Branch that will receive the new Commits from the source Branch."@en ;
+    rdfs:domain :MergeRequest ;
+    rdfs:range mcat:Branch .
+
+# AcceptedMergeRequest
+
+:AcceptedMergeRequest a owl:Class ;
+    rdfs:label "Merge Request"@en ;
+    rdfs:comment "A request to merge a source Branch into a target Branch that has been accepted and the merge performed."@en .
+
+:sourceCommit a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "source Commit"@en ;
+    rdfs:comment "The Commit that was the head of the source Branch when the described MergeRequest was accepted."@en ;
+    rdfs:domain :AcceptedMergeRequest ;
+    rdfs:range mcat:Commit .
+
+:targetCommit a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "target Commit"@en ;
+    rdfs:comment "The Commit that was the head of the source Branch when the described MergeRequest was accepted."@en ;
+    rdfs:domain :AcceptedMergeRequest ;
+    rdfs:range mcat:Commit .
