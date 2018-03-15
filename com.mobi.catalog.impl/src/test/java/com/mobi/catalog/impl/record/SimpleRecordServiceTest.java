@@ -100,13 +100,4 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
         verify(utilsService).getExpectedObject(eq(testIRI), any(OrmFactory.class), eq(connection));
     }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void exportEmptyIRITest() throws Exception {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        RecordExportConfig config = new RecordExportConfig.Builder(os, RDFFormat.JSONLD).build();
-
-        recordService.export(VALUE_FACTORY.createIRI(""), config, connection);
-        verify(utilsService).getExpectedObject(eq(testIRI), any(OrmFactory.class), eq(connection));
-    }
 }

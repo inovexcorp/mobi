@@ -35,6 +35,7 @@ public interface RecordService<T extends Record> {
      *
      * @param iriRecord An {@link IRI} of the record to be exported
      * @param config A {@link RecordExportConfig} that contains the export configuration.
+     * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      */
     <T extends RecordExportConfig> void export(IRI iriRecord, T config, RepositoryConnection conn);
 
