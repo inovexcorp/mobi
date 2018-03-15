@@ -229,11 +229,13 @@
              * @param {string} commitId The id of the Commit to retrieve the ontology from
              * @param {string} [rdfFormat='jsonld'] The RDF format to return the ontology in
              * @param {boolean} [clearCache=false] Boolean indicating whether or not you should clear the cache
-             * @param {boolen} [preview=false] Boolean indicating whether or not this ontology is inteded to be
+             * @param {boolean} [preview=false] Boolean indicating whether or not this ontology is intended to be
              * previewed, not edited
+             * @param {boolean} [applyInProgressCommit=true]  Boolean indicating whether or not any in progress commits by user
+             * should be applied to the return value
              * @return {Promise} A promise with the ontology at the specified commit in the specified RDF format
              */
-            self.getOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', clearCache = false, preview = false) {
+            self.getOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', clearCache = false, preview = false, applyInProgressCommit = true) {
                 var config = {
                     headers: {
                         'Accept': 'text/plain'
@@ -243,7 +245,8 @@
                         commitId,
                         rdfFormat,
                         clearCache,
-                        skolemize: !preview
+                        skolemize: !preview,
+                        applyInProgressCommit
                     }
                 };
                 return $http.get(prefix + '/' + encodeURIComponent(recordId), config)
@@ -411,10 +414,12 @@
              * @param {string} recordId The id of the Record the Branch should be part of
              * @param {string} branchId The id of the Branch with the specified Commit
              * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @param {boolean} [applyInProgressCommit=true]  Boolean indicating whether or not any in progress commits by user
+             *                                                should be applied to the return value
              * @return {Promise} A promise with an array containing a list of classes
              */
-            self.getOntologyClasses = function(recordId, branchId, commitId) {
-                var config = { params: { branchId, commitId } };
+            self.getOntologyClasses = function(recordId, branchId, commitId, applyInProgressCommit = true) {
+                var config = { params: { branchId, commitId, applyInProgressCommit} };
                 return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/classes', config)
                     .then(response => response.data, util.rejectError);
             }

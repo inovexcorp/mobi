@@ -239,7 +239,7 @@
                 branchId: util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch'),
                 commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit')
             }));
-            return $q.all(_.map(ontologies, ontology => om.getOntologyClasses(ontology.recordId, ontology.branchId, ontology.commitId)))
+            return $q.all(_.map(ontologies, ontology => om.getOntologyClasses(ontology.recordId, ontology.branchId, ontology.commitId, false)))
                 .then(response => {
                     var allClasses = _.flattenDeep(response);
                     if (_.isEmpty(allClasses)) {

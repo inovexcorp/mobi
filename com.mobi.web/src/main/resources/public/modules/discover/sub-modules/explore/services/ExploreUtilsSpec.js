@@ -190,7 +190,7 @@ describe('Explore Utils Service', function() {
                 });
             scope.$apply();
             expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith(datasetManagerSvc.datasetRecords[0]);
-            expect(ontologyManagerSvc.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
+            expect(ontologyManagerSvc.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', false);
         });
         it('unless no classes are retrieved', function() {
             ontologyManagerSvc.getOntologyClasses.and.returnValue($q.when([]));
@@ -202,7 +202,7 @@ describe('Explore Utils Service', function() {
                 });
             scope.$apply();
             expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith(datasetManagerSvc.datasetRecords[0]);
-            expect(ontologyManagerSvc.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
+            expect(ontologyManagerSvc.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', false);
         });
         it('successfully', function() {
             utilSvc.getPropertyValue.and.returnValue(true);
@@ -216,7 +216,7 @@ describe('Explore Utils Service', function() {
                 });
             scope.$apply();
             expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith(datasetManagerSvc.datasetRecords[0]);
-            expect(ontologyManagerSvc.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
+            expect(ontologyManagerSvc.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', false);
         });
     });
     describe('getNewProperties should return a list of properties that are not set on the entity', function() {
