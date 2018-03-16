@@ -23,6 +23,7 @@ package com.mobi.catalog.impl.record;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Record;
@@ -38,6 +39,7 @@ import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Component
 public class SimpleRecordService implements RecordService<Record> {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleRecordService.class);
 
