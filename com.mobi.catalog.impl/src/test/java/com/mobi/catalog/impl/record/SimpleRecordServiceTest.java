@@ -53,16 +53,16 @@ import java.util.Optional;
 import static junit.framework.TestCase.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
     private final IRI testIRI = VALUE_FACTORY.createIRI("urn:test");
     private final IRI catalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-test");
-    //private final IRI testIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#1");
 
     private SimpleRecordService recordService;
-
     private SimpleSesameTransformer transformer;
     private Record testRecord;
     private User user;
