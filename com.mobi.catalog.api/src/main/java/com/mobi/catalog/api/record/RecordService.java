@@ -25,10 +25,22 @@ package com.mobi.catalog.api.record;
 
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.record.config.RecordExportConfig;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.IRI;
 import com.mobi.repository.api.RepositoryConnection;
 
 public interface RecordService<T extends Record> {
+
+    /**
+     * Deletes a Record from a Catalog and creates a provenance event for the activity based on the provided user.
+     *
+     * @param catalogId A {@link IRI} of the Catalog to delete from
+     * @param recordId A {@link IRI} of the Record to delete
+     * @param user The {@link User} that is deleting the Record
+     * @param conn A {@link RepositoryConnection} to the repo where the Record exists
+     * @return
+     */
+    <T extends Record> T delete(IRI catalogId, IRI recordId, User user, RepositoryConnection conn);
 
     /**
      * Exports a given Record based on a provided configuration

@@ -25,14 +25,18 @@ package com.mobi.catalog.impl.record;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
-import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
+import com.mobi.catalog.api.ontologies.mcat.*;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordExportConfig;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
@@ -44,12 +48,24 @@ public class SimpleRecordService implements RecordService<Record> {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleRecordService.class);
 
     private CatalogUtilsService utilsService;
+    private CatalogProvUtils provUtils;
+    private ValueFactory vf;
     private SesameTransformer transformer;
     private RecordFactory recordFactory;
 
     @Reference
     void setUtilsService(CatalogUtilsService utilsService) {
         this.utilsService = utilsService;
+    }
+
+    @Reference
+    void setProvUtils(CatalogProvUtils provUtils) {
+        this.provUtils = provUtils;
+    }
+
+    @Reference
+    void setVf(ValueFactory vf) {
+        this.vf = vf;
     }
 
     @Reference
@@ -62,6 +78,29 @@ public class SimpleRecordService implements RecordService<Record> {
         this.recordFactory = recordFactory;
     }
 
+
+    @Override
+    public  Record delete(IRI catalogId, IRI recordId, User user, RepositoryConnection conn) {
+
+        utilsService.validateResource(catalogId, vf.createIRI(Catalog.TYPE), conn);
+
+        Record record = utilsService.optObject(recordId, recordFactory, conn).orElseThrow(()
+                -> new IllegalArgumentException("Record " + recordId + " does not exist"));
+
+        Resource catalog = record.getCatalog_resource().orElseThrow(()
+                -> new IllegalStateException("Record " + recordId + " does not have a Catalog set"));
+
+        if (catalog.equals(catalogId)) {
+            conn.begin();
+            DeleteActivity deleteActivity = provUtils.startDeleteActivity(user, recordId);
+            utilsService.remove(record.getResource(), conn);
+            utilsService.removeObject(record, conn);
+            provUtils.endDeleteActivity(deleteActivity, record);
+            conn.commit();
+        }
+
+        return record;
+    }
 
     @Override
     public <T extends RecordExportConfig> void export(IRI iriRecord, T config, RepositoryConnection conn) {
