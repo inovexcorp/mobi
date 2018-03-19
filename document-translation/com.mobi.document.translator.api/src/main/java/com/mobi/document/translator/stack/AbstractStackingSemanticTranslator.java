@@ -170,8 +170,8 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
         return extractedClass;
     }
 
-    protected IRI createInstance(Model result, ExtractedOntology managedOntology, T stackItem, ExtractedClass instanceClass,
-                                 Optional<T> parentOpt)
+    protected IRI createInstance(Model result, ExtractedOntology managedOntology, T stackItem,
+                                 ExtractedClass instanceClass, T parent)
             throws SemanticTranslationException {
         final IRI instance = generateInstanceIri(instanceClass, managedOntology, stackItem);
         // Create instance.
@@ -180,8 +180,7 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
         stackItem.getProperties().keySet().forEach(predicate ->
                 stackItem.getProperties().get(predicate).forEach(val -> result.add(instance, predicate, val))
         );
-        if (parentOpt.isPresent()) {
-            T parent = parentOpt.get();
+        if (parent != null) {
             ExtractedObjectProperty objectProperty = getOrCreateObjectProperty(managedOntology,
                     parent.getClassIri(), stackItem.getClassIri(), stackItem.getIdentifier(), getCurrentLocation());
             parent.getProperties().add((IRI) objectProperty.getResource(), instance);
@@ -189,7 +188,7 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
         return instance;
     }
 
-    protected IRI generateInstanceIri(ExtractedClass instanceClass, ExtractedOntology managedOntology, T stackItem)
+    private IRI generateInstanceIri(ExtractedClass instanceClass, ExtractedOntology managedOntology, T stackItem)
             throws SemanticTranslationException {
         final String expression = instanceClass.getSpelInstanceUri().orElse(DEFAULT_INSTANCE_IRI_EXPRESSION);
         return this.expressionProcessor.processExpression(expression,

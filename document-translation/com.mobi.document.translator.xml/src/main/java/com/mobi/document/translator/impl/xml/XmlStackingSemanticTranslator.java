@@ -157,7 +157,7 @@ public class XmlStackingSemanticTranslator extends AbstractStackingSemanticTrans
             if (StringUtils.isNotBlank(val)) {
                 endingItem.getProperties().add(getRdfValue(), valueFactory.createLiteral(val));
             }
-            final IRI instanceIri = createInstance(resultsModel, managedOntology, endingItem, clazz, peekStack());
+            final IRI instanceIri = createInstance(resultsModel, managedOntology, endingItem, clazz, peekStack().orElse(null));
             LOG.debug("Created instance of '{}' - '{}'", clazz.getResource(), instanceIri);
         }
     }

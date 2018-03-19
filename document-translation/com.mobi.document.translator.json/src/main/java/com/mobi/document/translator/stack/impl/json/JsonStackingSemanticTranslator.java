@@ -128,7 +128,7 @@ public class JsonStackingSemanticTranslator extends AbstractStackingSemanticTran
                         new SemanticTranslationException("Got a null object from the stack on an object end!"));
                 final ExtractedClass extractedClass = getOrCreateClass(managedOntology, endItem.getClassIri(),
                         endItem.getIdentifier(), getCurrentLocation());
-                createInstance(result, managedOntology, endItem, extractedClass, peekForLastNonArray());
+                createInstance(result, managedOntology, endItem, extractedClass, peekForLastNonArray().orElse(null));
                 break;
             case START_ARRAY:
                 JsonStackItem startArr = pushStack(
