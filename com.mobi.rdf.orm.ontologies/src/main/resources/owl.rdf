@@ -245,11 +245,13 @@
         <rdfs:subClassOf rdf:resource="&owl;ObjectProperty"/>
     </rdfs:Class>
 
+    <!-- Commented out to avoid conflicts with the ORM thing...
     <owl:Class rdf:about="&owl;Thing">
         <rdfs:comment>The class of OWL individuals.</rdfs:comment>
         <rdfs:isDefinedBy rdf:resource="&owl;"/>
         <rdfs:label>Thing</rdfs:label>
     </owl:Class>
+    -->
 
     <rdfs:Class rdf:about="&owl;TransitiveProperty">
         <rdfs:comment>The class of transitive properties.</rdfs:comment>
