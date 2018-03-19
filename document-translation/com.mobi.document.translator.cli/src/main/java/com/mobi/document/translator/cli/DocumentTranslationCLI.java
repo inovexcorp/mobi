@@ -57,6 +57,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -79,7 +80,7 @@ public class DocumentTranslationCLI implements Action {
     @Completion(FileCompleter.class)
     private File outputDirectory;
 
-    @Argument(index = 2, name = "Ontology IRI", required = true,
+    @Argument(index = 2, name = "Ontology IRI", required = false,
             description = "The IRI of the ontology you want to generate")
     private String ontologyIriString;
 
@@ -107,6 +108,8 @@ public class DocumentTranslationCLI implements Action {
         validateOutputLocation(outputDirectory);
         final SemanticTranslator translator = getTranslatorForType(type != null ? type
                 : FilenameUtils.getExtension(documentFile.getName()));
+        ontologyIriString = ontologyIriString != null ? ontologyIriString
+                        : String.format("urn://mobi.inovexcorp.com/extractedOntology/%s", UUID.randomUUID().toString());
         final IRI ontologyIri = valueFactory.createIRI(ontologyIriString);
         final ExtractedOntology ontology = ormFactoryRegistry.createNew(ontologyIri,
                 modelFactory.createModel(), ExtractedOntology.class);
