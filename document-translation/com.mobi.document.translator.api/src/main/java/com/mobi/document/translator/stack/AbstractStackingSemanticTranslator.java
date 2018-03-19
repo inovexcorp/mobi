@@ -207,6 +207,4 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
     protected Deque<T> getStack() {
         return stack;
     }
-
-
 }
