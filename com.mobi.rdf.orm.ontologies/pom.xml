@@ -112,6 +112,10 @@
                                     <ontologyFile>${project.basedir}/src/main/resources/mobi.ttl</ontologyFile>
                                     <outputPackage>com.mobi.ontologies.mobi</outputPackage>
                                 </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/owl.rdf</ontologyFile>
+                                    <outputPackage>com.mobi.ontologies.owl</outputPackage>
+                                </ontology>
                             </generates>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>
                         </configuration>
