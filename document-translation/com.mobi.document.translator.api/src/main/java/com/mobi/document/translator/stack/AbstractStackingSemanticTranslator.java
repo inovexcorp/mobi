@@ -118,7 +118,7 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
         }
     }
 
-    private <T extends Thing> OrmFactory<T> factory(Class<T> clazz) throws SemanticTranslationException {
+    private <X extends Thing> OrmFactory<X> factory(Class<X> clazz) throws SemanticTranslationException {
         return ormFactoryRegistry.getFactoryOfType(clazz)
                 .orElseThrow(() -> new SemanticTranslationException("ORM services not initialized correctly!"));
     }
@@ -129,23 +129,23 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
         return getOrCreateProperty(ExtractedDatatypeProperty.class, managedOntology, domain, range, name, address);
     }
 
-    protected ExtractedObjectProperty getOrCreateObjectProperty(ExtractedOntology managedOntology, IRI domain,
+    private ExtractedObjectProperty getOrCreateObjectProperty(ExtractedOntology managedOntology, IRI domain,
                                                                 IRI range, String name, String address)
             throws SemanticTranslationException {
         return getOrCreateProperty(ExtractedObjectProperty.class, managedOntology, domain, range, name, address);
     }
 
-    private <T extends ExtractedProperty> T getOrCreateProperty(Class<T> type, ExtractedOntology managedOntology, IRI domain,
+    private <X extends ExtractedProperty> X getOrCreateProperty(Class<X> type, ExtractedOntology managedOntology, IRI domain,
                                                                 IRI range, String name, String address)
             throws SemanticTranslationException {
-        final OrmFactory<T> factory = factory(type);
+        final OrmFactory<X> factory = factory(type);
         final String expression = managedOntology.getSpelPropertyUri().orElse(DEFAULT_PROPERTY_IRI_EXPRESSION);
         final IRI iri = this.expressionProcessor.processExpression(expression,
                 new DefaultPropertyIriExpressionContext(managedOntology, name, address, domain, range));
-        final T prop = factory.getExisting(iri, managedOntology.getModel())
+        final X prop = factory.getExisting(iri, managedOntology.getModel())
                 .orElseGet(() -> {
                     LOG.debug("Creating new property {}", iri);
-                    T val = factory.createNew(iri, managedOntology.getModel());
+                    X val = factory.createNew(iri, managedOntology.getModel());
                     val.addProperty(valueFactory.createLiteral(name), getLabelIri());
                     return val;
                 });
