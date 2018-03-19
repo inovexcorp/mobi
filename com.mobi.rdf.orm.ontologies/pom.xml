@@ -64,6 +64,7 @@
                             com.mobi.ontologies.dcelements,
                             com.mobi.ontologies.dcterms,
                             com.mobi.ontologies.rdfs,
+                            com.mobi.ontologies.owl,
                             com.mobi.ontologies.foaf,
                             com.mobi.ontologies.mobi,
                             com.mobi.ontologies.provo,
@@ -117,6 +118,16 @@
                                     <outputPackage>com.mobi.ontologies.owl</outputPackage>
                                 </ontology>
                             </generates>
+                            <references>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/owl.rdf</ontologyFile>
+                                    <outputPackage>com.mobi.ontologies.owl</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/rdfs.owl</ontologyFile>
+                                    <outputPackage>com.mobi.ontologies.rdfs</outputPackage>
+                                </ontology>
+                            </references>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>
                         </configuration>
                     </execution>
