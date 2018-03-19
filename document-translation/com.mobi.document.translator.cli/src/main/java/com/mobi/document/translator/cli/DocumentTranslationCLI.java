@@ -23,15 +23,14 @@ package com.mobi.document.translator.cli;
  * #L%
  */
 
+import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.document.translator.SemanticTranslationException;
 import com.mobi.document.translator.SemanticTranslator;
 import com.mobi.document.translator.ontology.ExtractedOntology;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.karaf.shell.api.action.Action;
@@ -41,6 +40,9 @@ import org.apache.karaf.shell.api.action.Completion;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
+import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,11 +50,13 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -95,6 +99,9 @@ public class DocumentTranslationCLI implements Action {
     @Reference
     private ModelFactory modelFactory;
 
+    @Reference
+    private SesameTransformer sesameTransformer;
+
     @Override
     public Object execute() throws Exception {
         validateOutputLocation(outputDirectory);
@@ -106,14 +113,19 @@ public class DocumentTranslationCLI implements Action {
         final Model results = translator.translate(Paths.get(documentFile.toURI()), ontology);
         final File outputFile = File.createTempFile(ontologyIri.getLocalName(), ".zip", outputDirectory);
         try (ZipOutputStream os = new ZipOutputStream(new FileOutputStream(outputFile))) {
-            ZipEntry ontologyEntry = new ZipEntry("ontology.ttl");
+            final ZipEntry ontologyEntry = new ZipEntry("ontology.ttl");
             os.putNextEntry(ontologyEntry);
-            //TODO - write ontology.
+            writeData(ontology.getModel(), os);
             ZipEntry dataEntry = new ZipEntry("data.ttl");
             os.putNextEntry(dataEntry);
-            //TODO - write data.
+            writeData(results, os);
         }
         return null;
+    }
+
+    private void writeData(final Model model, OutputStream os) {
+        org.openrdf.rio.RDFHandler handler1 = new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.TURTLE, os));
+        Rio.write(sesameTransformer.sesameModel(model), handler1);
     }
 
     private SemanticTranslator getTranslatorForType(String type) {

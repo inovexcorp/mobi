@@ -51,6 +51,11 @@
             <artifactId>document.translator.json</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>document.translator.xml</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- Test Dependencies -->
         <dependency>
             <groupId>com.mobi</groupId>
