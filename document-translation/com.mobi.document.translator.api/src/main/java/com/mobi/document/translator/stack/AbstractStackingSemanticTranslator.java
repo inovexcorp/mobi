@@ -144,7 +144,7 @@ public abstract class AbstractStackingSemanticTranslator<T extends StackItem> ex
                 new DefaultPropertyIriExpressionContext(managedOntology, name, address, domain, range));
         final T prop = factory.getExisting(iri, managedOntology.getModel())
                 .orElseGet(() -> {
-                    LOG.debug("Creating new data type property {}", iri);
+                    LOG.debug("Creating new property {}", iri);
                     T val = factory.createNew(iri, managedOntology.getModel());
                     val.addProperty(valueFactory.createLiteral(name), getLabelIri());
                     return val;
