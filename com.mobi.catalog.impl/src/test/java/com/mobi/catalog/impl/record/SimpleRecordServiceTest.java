@@ -114,15 +114,11 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void deleteTest() throws Exception {
-
-        doNothing().when(utilsService).validateResource(eq(catalogId), any(IRI.class), eq(connection));
         when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.of(testRecord));
 
-        Record deletedRecord = recordService.delete(catalogId, testIRI, user, connection);
+        Record deletedRecord = recordService.delete(testIRI, user, connection);
 
-        verify(utilsService).validateResource(eq(catalogId), any(IRI.class), eq(connection));
         verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
-        verify(utilsService).remove(eq(testRecord.getResource()), eq(connection));
         verify(utilsService).removeObject(eq(testRecord), eq(connection));
         verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
         verify(provUtils).endDeleteActivity(eq(deleteActivity), eq(testRecord));
@@ -131,12 +127,10 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
     @Test (expected = IllegalArgumentException.class)
     public void deleteRecordDoesNotExistTest() throws Exception {
-        doNothing().when(utilsService).validateResource(eq(catalogId), any(IRI.class), eq(connection));
         when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.empty());
 
-        recordService.delete(catalogId, testIRI, user, connection);
+        recordService.delete(testIRI, user, connection);
 
-        verify(utilsService).validateResource(eq(catalogId), any(IRI.class), eq(connection));
         verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
     }
 
@@ -148,9 +142,8 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         doNothing().when(utilsService).validateResource(eq(catalogId), any(IRI.class), eq(connection));
         when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.of(missingCatalog));
 
-        recordService.delete(catalogId, testIRI, user, connection);
+        recordService.delete(testIRI, user, connection);
 
-        verify(utilsService).validateResource(eq(catalogId), any(IRI.class), eq(connection));
         verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
     }
 

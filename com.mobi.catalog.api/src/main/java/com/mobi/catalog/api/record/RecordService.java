@@ -34,13 +34,12 @@ public interface RecordService<T extends Record> {
     /**
      * Deletes a Record from a Catalog and creates a provenance event for the activity based on the provided user.
      *
-     * @param catalogId A {@link IRI} of the Catalog to delete from
      * @param recordId A {@link IRI} of the Record to delete
      * @param user The {@link User} that is deleting the Record
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      * @return
      */
-    <T extends Record> T delete(IRI catalogId, IRI recordId, User user, RepositoryConnection conn);
+    T delete(IRI recordId, User user, RepositoryConnection conn);
 
     /**
      * Exports a given Record based on a provided configuration
@@ -49,6 +48,6 @@ public interface RecordService<T extends Record> {
      * @param config A {@link RecordExportConfig} that contains the export configuration.
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      */
-    <T extends RecordExportConfig> void export(IRI iriRecord, T config, RepositoryConnection conn);
+    <U extends RecordExportConfig> void export(IRI iriRecord, U config, RepositoryConnection conn);
 
 }

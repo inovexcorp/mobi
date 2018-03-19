@@ -27,7 +27,6 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
-import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.record.RecordService;
@@ -37,7 +36,6 @@ import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import org.openrdf.rio.Rio;
@@ -82,29 +80,29 @@ public class SimpleRecordService implements RecordService<Record> {
 
 
     @Override
-    public  Record delete(IRI catalogId, IRI recordId, User user, RepositoryConnection conn) {
-
-        utilsService.validateResource(catalogId, vf.createIRI(Catalog.TYPE), conn);
+    public Record delete(IRI recordId, User user, RepositoryConnection conn) {
 
         Record record = utilsService.optObject(recordId, recordFactory, conn).orElseThrow(()
                 -> new IllegalArgumentException("Record " + recordId + " does not exist"));
 
-        Resource catalog = record.getCatalog_resource().orElseThrow(()
+        record.getCatalog_resource().orElseThrow(()
                 -> new IllegalStateException("Record " + recordId + " does not have a Catalog set"));
 
-        if (catalog.equals(catalogId)) {
-            conn.begin();
-            DeleteActivity deleteActivity = provUtils.startDeleteActivity(user, recordId);
-            utilsService.removeObject(record, conn);
-            provUtils.endDeleteActivity(deleteActivity, record);
-            conn.commit();
-        }
+        DeleteActivity deleteActivity = provUtils.startDeleteActivity(user, recordId);
+        deleteRecord(record, conn);
+        provUtils.endDeleteActivity(deleteActivity, record);
 
         return record;
     }
 
+    protected void deleteRecord(Record record, RepositoryConnection conn) {
+        conn.begin();
+        utilsService.removeObject(record, conn);
+        conn.commit();
+    }
+
     @Override
-    public <T extends RecordExportConfig> void export(IRI iriRecord, T config, RepositoryConnection conn) {
+    public void export(IRI iriRecord, RecordExportConfig config, RepositoryConnection conn) {
         BatchExporter writer = new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(config.getFormat(), config.getOutput())));
         writer.setLogger(LOG);
         writer.setPrintToSystem(true);
