@@ -95,7 +95,6 @@ public class SimpleRecordService implements RecordService<Record> {
         if (catalog.equals(catalogId)) {
             conn.begin();
             DeleteActivity deleteActivity = provUtils.startDeleteActivity(user, recordId);
-            utilsService.remove(record.getResource(), conn);
             utilsService.removeObject(record, conn);
             provUtils.endDeleteActivity(deleteActivity, record);
             conn.commit();
