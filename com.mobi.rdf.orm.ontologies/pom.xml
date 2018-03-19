@@ -47,11 +47,6 @@
             <artifactId>rdf.orm</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>rdf.orm.ontologies</artifactId>
-            <version>${project.version}</version>
-        </dependency>
     </dependencies>
 
     <build>
