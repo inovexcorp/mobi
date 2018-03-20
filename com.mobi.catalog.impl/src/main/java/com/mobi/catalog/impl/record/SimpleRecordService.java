@@ -33,13 +33,11 @@ import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordExportConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.BatchExporter;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
-import org.openrdf.rio.Rio;
-import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +48,6 @@ public class SimpleRecordService implements RecordService<Record> {
     private CatalogUtilsService utilsService;
     private CatalogProvUtils provUtils;
     private ValueFactory vf;
-    private SesameTransformer transformer;
     private RecordFactory recordFactory;
 
     @Reference
@@ -66,11 +63,6 @@ public class SimpleRecordService implements RecordService<Record> {
     @Reference
     void setVf(ValueFactory vf) {
         this.vf = vf;
-    }
-
-    @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
     }
 
     @Reference
@@ -102,16 +94,56 @@ public class SimpleRecordService implements RecordService<Record> {
     }
 
     @Override
-    public void export(IRI iriRecord, RecordExportConfig config, RepositoryConnection conn) {
-        BatchExporter writer = new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(config.getFormat(), config.getOutput())));
-        writer.setLogger(LOG);
-        writer.setPrintToSystem(true);
+    public final void export(IRI iriRecord, RecordExportConfig config, RepositoryConnection conn) {
+        ExportWriter writerWrapper = new ExportWriter(config.getBatchExporter());
+        writerWrapper.setLogger(LOG);
+        writerWrapper.setPrintToSystem(true);
 
         // Write Record
-        writer.startRDF();
+        if (writerWrapper.isActive()) {
+            writerWrapper.startRDFExport();
+        }
+        exportRecord(iriRecord, writerWrapper, conn);
+        if (writerWrapper.isActive()) {
+            writerWrapper.endRDFExport();
+        }
+    }
+
+    protected void exportRecord(IRI iriRecord, ExportWriter writer, RepositoryConnection conn) {
         Record record = utilsService.getExpectedObject(iriRecord, recordFactory, conn);
         record.getModel().forEach(writer::handleStatement);
-        writer.endRDF();
+    }
+
+    protected class ExportWriter {
+        BatchExporter writer;
+
+        protected ExportWriter(BatchExporter writer) {
+            this.writer = writer;
+        }
+
+        protected void handleStatement(Statement statement) {
+            writer.handleStatement(statement);
+        }
+
+        protected void setLogger(Logger logger) {
+            writer.setLogger(logger);
+        }
+
+        protected void setPrintToSystem(boolean printToSystem) {
+            writer.setPrintToSystem(printToSystem);
+        }
+
+        protected boolean isActive() {
+            return  writer.isActive();
+        }
+
+        private void startRDFExport() {
+            writer.startRDF();
+        }
+
+        private void endRDFExport() {
+            writer.endRDF();
+        }
     }
 }
 

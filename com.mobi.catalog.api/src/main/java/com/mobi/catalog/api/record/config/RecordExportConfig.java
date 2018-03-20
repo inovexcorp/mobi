@@ -23,44 +23,51 @@ package com.mobi.catalog.api.record.config;
  * #L%
  */
 
+import com.mobi.persistence.utils.BatchExporter;
+import com.mobi.persistence.utils.api.SesameTransformer;
 import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
+import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
 public class RecordExportConfig {
-    private OutputStream output;
-    private RDFFormat format;
+    private BatchExporter batchExporter;
 
     protected RecordExportConfig(Builder builder) {
-        this.output = builder.output;
-        this.format = builder.format;
+        this.batchExporter = builder.batchExporter;
     }
 
-    public OutputStream getOutput() {
-        return output;
-    }
-
-    public RDFFormat getFormat() {
-        return format;
+    public BatchExporter getBatchExporter() {
+        return batchExporter;
     }
 
     public static class Builder {
-        private OutputStream output;
+        private BatchExporter batchExporter;
+        private OutputStream outputStream ;
         private RDFFormat format;
+        private SesameTransformer transformer;
 
         /**
-         * Creates a new Builder for a BaseExportConfig.
+         * Creates a new Builder for RecordExportConfig that will construct a BatchExporter
+         * if one is not provided.
          *
-         * @param output The OutputStream for the exported data.
-         * @param format The RDFFormat for the exported data.
          */
-        public Builder(OutputStream output, RDFFormat format) {
-            this.output = output;
+        public Builder(BatchExporter batchExporter) {
+            this.batchExporter = batchExporter;
+        }
+
+        public Builder(OutputStream os, RDFFormat format, SesameTransformer transformer) {
+            this.outputStream = os;
             this.format = format;
+            this. transformer = transformer;
         }
 
         public RecordExportConfig build() throws IOException {
+            if (this.batchExporter == null) {
+                this.batchExporter = new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(format, outputStream)));
+            }
             return new RecordExportConfig(this);
         }
     }
