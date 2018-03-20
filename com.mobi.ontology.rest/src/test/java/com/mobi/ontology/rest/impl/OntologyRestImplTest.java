@@ -954,6 +954,21 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     }
 
     @Test
+    public void testGetOntologyWithDoNotApplyInProgressCommit() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).queryParam("applyInProgressCommit", false)
+                .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
+
+        assertEquals(response.getStatus(), 200);
+        assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        verify(engineManager, times(0)).retrieveUser(anyString());
+        verify(catalogManager, times(0)).getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class));
+        verify(catalogManager, times(0)).applyInProgressCommit(any(Resource.class), any(Model.class));
+        verify(ontologyManager, times(0)).createOntology(any(Model.class));
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString(), anyString());
+    }
+
+    @Test
     public void testGetOntologyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("commitId", commitId.stringValue()).queryParam("entityId", catalogId.stringValue())
@@ -1595,6 +1610,23 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertClasses(getResponseArray(response), classes);
+    }
+
+    @Test
+    public void testGetClassesInOntologyWithDoNotApplyInProgressCommit() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/classes")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("applyInProgressCommit", false)
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        assertClasses(getResponseArray(response), classes);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        verify(engineManager, times(0)).retrieveUser(anyString());
+        verify(catalogManager, times(0)).getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class));
+        verify(catalogManager, times(0)).applyInProgressCommit(any(Resource.class), any(Model.class));
+        verify(ontologyManager, times(0)).createOntology(any(Model.class));
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -4200,7 +4232,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager, times(0)).createOntology(any(FileInputStream.class), eq(false));
         verify(catalogManager, times(0)).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
         verify(catalogManager, times(0)).getDiff(any(Model.class), any(Model.class));
-        verify(catalogManager, times(1)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
         verify(catalogManager, times(0)).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
     }
 

@@ -30,6 +30,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.CatalogManager;
@@ -160,6 +161,7 @@ public class SimpleMergeRequestManagerTest {
         when(utilsService.optObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(request1));
         when(utilsService.optObject(eq(request2.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class))).thenReturn(Optional.empty());
         when(utilsService.throwAlreadyExists(any(Resource.class), any(OrmFactory.class))).thenReturn(new IllegalArgumentException());
+        doThrow(new IllegalArgumentException()).when(utilsService).validateResource(eq(request2.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
 
         manager = new SimpleMergeRequestManager();
         manager.setVf(vf);
@@ -283,5 +285,22 @@ public class SimpleMergeRequestManagerTest {
         when(catalogManager.getRepositoryId()).thenReturn("error");
 
         manager.getMergeRequest(request1.getResource());
+    }
+
+    /* updateMergeRequest */
+
+    @Test
+    public void updateMergeRequestTest() throws Exception {
+        MergeRequest request1Update = mergeRequestFactory.createNew(vf.createIRI("http://mobi.com/test/merge-requests#1"));
+        manager.updateMergeRequest(request1Update.getResource(), request1Update);
+        verify(utilsService).validateResource(eq(request1Update.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).updateObject(eq(request1Update), any(RepositoryConnection.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void updateMergeRequestDoesNotExistTest() throws Exception {
+        manager.updateMergeRequest(request2.getResource(), request2);
+        verify(utilsService).validateResource(eq(request2.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).updateObject(eq(request2), any(RepositoryConnection.class));
     }
 }
