@@ -40,7 +40,7 @@ public class XACMLPolicy implements Policy {
     protected IRI id;
     protected String description;
 
-    private ObjectFactory of;
+    protected ObjectFactory of;
 
     protected XACMLPolicy() {}
 
@@ -49,6 +49,13 @@ public class XACMLPolicy implements Policy {
         this.policyType = JAXB.unmarshal(new StringReader(policy), PolicyType.class);
         this.id = vf.createIRI(this.policyType.getPolicyId());
         this.description = this.policyType.getDescription();
+    }
+
+    public XACMLPolicy(PolicyType policyType, ValueFactory vf) {
+        of = new ObjectFactory();
+        this.policyType = policyType;
+        this.id = vf.createIRI(policyType.getPolicyId());
+        this.description = policyType.getDescription();
     }
 
     @Override
