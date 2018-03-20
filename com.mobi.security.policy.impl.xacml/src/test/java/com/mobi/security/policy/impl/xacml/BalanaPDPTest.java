@@ -117,7 +117,6 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         BalanaRequest request = new BalanaRequest.Builder(userX, resource, createAction, OffsetDateTime.now(), VALUE_FACTORY).build();
 
         Response result = pdp.evaluate(request);
-        System.out.println(result);
         assertEquals(Decision.PERMIT, result.getDecision());
         assertEquals(Status.OK, result.getStatus());
         assertTrue(result.getPolicyIds().contains(policy1));
@@ -131,7 +130,6 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         builder.addActionAttr(Resource.type_IRI, actionType);
 
         Response result = pdp.evaluate(builder.build());
-        System.out.println(result);
         assertEquals(Decision.DENY, result.getDecision());
         assertEquals(Status.OK, result.getStatus());
         assertTrue(result.getPolicyIds().contains(policy2));
@@ -145,7 +143,6 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         builder.addActionAttr(Resource.type_IRI, actionType);
 
         Response result = pdp.evaluate(builder.build());
-        System.out.println(result);
         assertEquals(Decision.DENY, result.getDecision());
         assertEquals(Status.OK, result.getStatus());
         assertTrue(result.getPolicyIds().contains(policy3));

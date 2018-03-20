@@ -1,4 +1,4 @@
-package com.mobi.security.policy.impl.cache;
+package com.mobi.security.policy.impl.core.cache;
 
 /*-
  * #%L
@@ -45,10 +45,7 @@ public class PolicyCacheImpl implements PolicyCache {
 
     @Override
     public Optional<Cache<String, Policy>> getPolicyCache() {
-        if (cacheManager != null) {
-            return cacheManager.getCache(CACHE_NAME, String.class, Policy.class);
-        }
-        return Optional.empty();
+        return cacheManager.getCache(CACHE_NAME, String.class, Policy.class);
     }
 
 }

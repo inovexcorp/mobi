@@ -1,4 +1,4 @@
-package com.mobi.security.policy.impl.pip;
+package com.mobi.security.policy.impl.core.pip;
 
 /*-
  * #%L

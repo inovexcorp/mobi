@@ -38,6 +38,7 @@ import com.mobi.security.policy.api.xacml.jaxb.StatusCodeType;
 import com.mobi.security.policy.api.xacml.jaxb.StatusType;
 
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,6 +52,7 @@ public class XACMLResponse implements Response {
     private List<IRI> policyIds;
 
     private ResponseType responseType;
+    private ObjectFactory of;
 
     public XACMLResponse(Builder builder) {
         this.decision = builder.decision;
@@ -58,7 +60,7 @@ public class XACMLResponse implements Response {
         this.statusMessage = builder.statusMessage;
         this.policyIds = builder.policyIds;
 
-        ObjectFactory of = new ObjectFactory();
+        of = new ObjectFactory();
 
         StatusCodeType statusCodeType = of.createStatusCodeType();
         statusCodeType.setValue(status.toString());
@@ -85,6 +87,8 @@ public class XACMLResponse implements Response {
 
     public XACMLResponse(String response, ValueFactory vf) {
         this.responseType = JAXB.unmarshal(new StringReader(response), ResponseType.class);
+
+        of = new ObjectFactory();
 
         ResultType resultType = this.responseType.getResult().get(0);
         setDecision(resultType.getDecision());
@@ -118,6 +122,13 @@ public class XACMLResponse implements Response {
 
     public ResponseType getJaxbResponse() {
         return responseType;
+    }
+
+    @Override
+    public String toString() {
+        StringWriter sw = new StringWriter();
+        JAXB.marshal(of.createResponse(responseType), sw);
+        return sw.toString();
     }
 
     public static class Builder {

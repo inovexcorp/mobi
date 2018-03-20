@@ -36,6 +36,8 @@ import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.cache.PolicyCache;
 import com.mobi.security.policy.api.exception.PolicySyntaxException;
 import com.mobi.security.policy.api.exception.ProcessingException;
+import com.mobi.security.policy.api.xacml.XACMLPolicy;
+import org.w3c.dom.Document;
 import org.wso2.balana.AbstractPolicy;
 import org.wso2.balana.MatchResult;
 import org.wso2.balana.PDPConfig;
@@ -50,13 +52,19 @@ import org.wso2.balana.ctx.Status;
 import org.wso2.balana.finder.PolicyFinder;
 import org.wso2.balana.finder.PolicyFinderModule;
 import org.wso2.balana.finder.PolicyFinderResult;
+import org.xml.sax.SAXException;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 @Component(immediate = true, provide = {PRP.class, BalanaPRP.class})
 public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
@@ -163,14 +171,38 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
         List<AbstractPolicy> policies = new ArrayList<>();
         Optional<Cache<String, Policy>> cache = policyCache.getPolicyCache();
         cache.ifPresent(entries -> {
+            /*StreamSupport.stream(entries.spliterator(), false)
+                    .forEach(entry -> {
+                        Policy policy = entry.getValue();
+                        if (policy instanceof BalanaPolicy) {
+                            policies.add(((BalanaPolicy) policy).getAbstractPolicy());
+                        } else if (policy instanceof XACMLPolicy) {
+                            policies.add(stringToPolicy(policy.toString()));
+                        }
+                    });*/
             for (Cache.Entry<String, Policy> entry : entries) {
                 Policy policy = entry.getValue();
                 if (policy instanceof BalanaPolicy) {
                     policies.add(((BalanaPolicy) policy).getAbstractPolicy());
+                } else if (policy instanceof XACMLPolicy) {
+                    policies.add(stringToPolicy(policy.toString()));
                 }
             }
         });
 
         return policies;
+    }
+
+    private AbstractPolicy stringToPolicy(String policyStr) {
+        try (InputStream stream = new ByteArrayInputStream(policyStr.getBytes())) {
+            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            docFactory.setNamespaceAware(true);
+            Document doc = docFactory.newDocumentBuilder().parse(stream);
+            return org.wso2.balana.Policy.getInstance(doc.getDocumentElement());
+        } catch (SAXException | ParsingException e) {
+            throw new PolicySyntaxException("Error parsing Policy");
+        } catch (ParserConfigurationException | IOException e) {
+            throw new ProcessingException("Error retrieving Policy");
+        }
     }
 }
