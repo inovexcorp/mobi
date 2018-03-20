@@ -50,14 +50,21 @@ public class RecordExportConfig {
         private SesameTransformer transformer;
 
         /**
-         * Creates a new Builder for RecordExportConfig that will construct a BatchExporter
-         * if one is not provided.
+         * Creates a new Builder for RecordExportConfig with the provided BatchExporter
          *
+         * @param batchExporter the {@link BatchExporter} to handle writing
          */
         public Builder(BatchExporter batchExporter) {
             this.batchExporter = batchExporter;
         }
 
+        /**
+         * Creates a new Builder for RecordExportConfig with the provided fields
+         *
+         * @param os the {@link OutputStream} to write to
+         * @param format the {@link RDFFormat} of the output
+         * @param transformer the {@link SesameTransformer} to be used in BatchExporter
+         */
         public Builder(OutputStream os, RDFFormat format, SesameTransformer transformer) {
             this.outputStream = os;
             this.format = format;

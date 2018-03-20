@@ -77,9 +77,6 @@ public class SimpleRecordService implements RecordService<Record> {
         Record record = utilsService.optObject(recordId, recordFactory, conn).orElseThrow(()
                 -> new IllegalArgumentException("Record " + recordId + " does not exist"));
 
-        record.getCatalog_resource().orElseThrow(()
-                -> new IllegalStateException("Record " + recordId + " does not have a Catalog set"));
-
         DeleteActivity deleteActivity = provUtils.startDeleteActivity(user, recordId);
         deleteRecord(record, conn);
         provUtils.endDeleteActivity(deleteActivity, record);

@@ -54,7 +54,8 @@ import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
@@ -126,19 +127,6 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
     @Test (expected = IllegalArgumentException.class)
     public void deleteRecordDoesNotExistTest() throws Exception {
         when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.empty());
-
-        recordService.delete(testIRI, user, connection);
-
-        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
-    }
-
-    @Test (expected = IllegalStateException.class)
-    public void deleteRecordWithNoCatalogTest() throws Exception {
-        Record missingCatalog = RDFRecordFactory.createNew(testIRI);
-        missingCatalog.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
-
-        doNothing().when(utilsService).validateResource(eq(catalogId), any(IRI.class), eq(connection));
-        when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.of(missingCatalog));
 
         recordService.delete(testIRI, user, connection);
 
