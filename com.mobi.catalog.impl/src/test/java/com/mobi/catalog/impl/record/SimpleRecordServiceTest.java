@@ -31,29 +31,29 @@ import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.record.config.RecordExportConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
+import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
-import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
+import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Optional;
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -103,7 +103,6 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
 
         injectOrmFactoryReferencesIntoService(recordService);
-        recordService.setTransformer(transformer);
         recordService.setRecordFactory(recordFactory);
         recordService.setUtilsService(utilsService);
         recordService.setVf(VALUE_FACTORY);
@@ -134,28 +133,33 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
     }
 
-    @Test (expected = IllegalStateException.class)
-    public void deleteRecordWithNoCatalogTest() throws Exception {
-        Record missingCatalog = RDFRecordFactory.createNew(testIRI);
-        missingCatalog.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
-
-        doNothing().when(utilsService).validateResource(eq(catalogId), any(IRI.class), eq(connection));
-        when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.of(missingCatalog));
-
-        recordService.delete(testIRI, user, connection);
-
-        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
-    }
-
     /* export() */
 
+    @Test
     public void exportTest() throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        RecordExportConfig config = new RecordExportConfig.Builder(os, RDFFormat.JSONLD).build();
+        RecordExportConfig config = new RecordExportConfig.Builder(os, RDFFormat.JSONLD, transformer).build();
 
+        BatchExporter exporter = config.getBatchExporter();
+        assertFalse(exporter.isActive());
         recordService.export(testIRI, config, connection);
-        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(config.getOutput().toString())), "", RDFFormat.JSONLD));
-        assertEquals(testRecord.getModel(), outputModel);
+        assertFalse(exporter.isActive());
+
+        verify(utilsService).getExpectedObject(eq(testIRI), any(OrmFactory.class), eq(connection));
+    }
+
+    @Test
+    public void exportBatchExporterTest() throws Exception {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        BatchExporter exporter = new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
+        RecordExportConfig config = new RecordExportConfig.Builder(exporter).build();
+
+        assertFalse(exporter.isActive());
+        exporter.startRDF();
+        assertTrue(exporter.isActive());
+        recordService.export(testIRI, config, connection);
+        exporter.endRDF();
+        assertFalse(exporter.isActive());
 
         verify(utilsService).getExpectedObject(eq(testIRI), any(OrmFactory.class), eq(connection));
     }
