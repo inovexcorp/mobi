@@ -1,4 +1,4 @@
-package com.mobi.security.policy.api;
+package com.mobi.security.policy.api.cache;
 
 /*-
  * #%L
@@ -23,22 +23,16 @@ package com.mobi.security.policy.api;
  * #L%
  */
 
-import com.mobi.rdf.api.IRI;
+import com.mobi.security.policy.api.Policy;
 
 import java.util.Optional;
+import javax.cache.Cache;
 
-/**
- * A high level API for a security policy. Should also implement the toString method.
- */
-public interface Policy {
-
+public interface PolicyCache {
     /**
-     * The IRI ID of the Policy.
+     * Retrieves the policy cache if it is found.
+     *
+     * @return An Optional with the policy cache if found; empty Optional otherwise
      */
-    IRI getId();
-
-    /**
-     * The description of the Policy if set.
-     */
-    Optional<String> getDescription();
+    Optional<Cache<String, Policy>> getPolicyCache();
 }

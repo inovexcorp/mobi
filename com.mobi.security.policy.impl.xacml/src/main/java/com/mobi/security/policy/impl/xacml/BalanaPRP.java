@@ -23,28 +23,19 @@ package com.mobi.security.policy.impl.xacml;
  * #L%
  */
 
-import static com.mobi.persistence.utils.RepositoryResults.asModel;
-import static com.mobi.security.policy.impl.xacml.XACML.PROCESSING_ERROR;
-import static com.mobi.security.policy.impl.xacml.XACML.SYNTAX_ERROR;
+import static com.mobi.security.policy.api.xacml.XACML.PROCESSING_ERROR;
+import static com.mobi.security.policy.api.xacml.XACML.SYNTAX_ERROR;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.exception.MobiException;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.security.policy.api.PRP;
+import com.mobi.security.policy.api.Policy;
 import com.mobi.security.policy.api.Request;
+import com.mobi.security.policy.api.cache.PolicyCache;
 import com.mobi.security.policy.api.exception.PolicySyntaxException;
 import com.mobi.security.policy.api.exception.ProcessingException;
-import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
-import com.mobi.security.policy.api.ontologies.policy.PolicyFileFactory;
-import com.mobi.vfs.api.VirtualFile;
-import com.mobi.vfs.api.VirtualFilesystem;
-import org.w3c.dom.Document;
 import org.wso2.balana.AbstractPolicy;
 import org.wso2.balana.MatchResult;
 import org.wso2.balana.PDPConfig;
@@ -59,51 +50,30 @@ import org.wso2.balana.ctx.Status;
 import org.wso2.balana.finder.PolicyFinder;
 import org.wso2.balana.finder.PolicyFinderModule;
 import org.wso2.balana.finder.PolicyFinderResult;
-import org.xml.sax.SAXException;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
+import javax.cache.Cache;
 
 @Component(immediate = true, provide = {PRP.class, BalanaPRP.class})
-public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
+public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
     private PolicyCombiningAlgorithm combiningAlg;
     private PDPConfig config;
 
-    private Repository repo;
+    private PolicyCache policyCache;
     private ValueFactory vf;
-    private ModelFactory mf;
-    private PolicyFileFactory policyFileFactory;
-    private VirtualFilesystem vfs;
 
-    @Reference(target = "(id=system)")
-    void setRepo(Repository repo) {
-        this.repo = repo;
+    @Reference
+    void setPolicyCache(PolicyCache policyCache) {
+        this.policyCache = policyCache;
     }
 
     @Reference
     void setVf(ValueFactory vf) {
         this.vf = vf;
-    }
-
-    @Reference
-    void setMf(ModelFactory mf) {
-        this.mf = mf;
-    }
-
-    @Reference
-    void setPolicyFileFactory(PolicyFileFactory policyFileFactory) {
-        this.policyFileFactory = policyFileFactory;
-    }
-
-    @Reference
-    void setVfs(VirtualFilesystem vfs) {
-        this.vfs = vfs;
     }
 
     @Override
@@ -124,12 +94,12 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
     }
 
     @Override
-    public List<XACMLPolicy> findPolicies(Request request) throws ProcessingException, PolicySyntaxException {
+    public List<BalanaPolicy> findPolicies(Request request) throws ProcessingException, PolicySyntaxException {
         try {
             AbstractRequestCtx requestCtx = RequestCtxFactory.getFactory().getRequestCtx(request.toString());
             EvaluationCtx context = EvaluationCtxFactory.getFactory().getEvaluationCtx(requestCtx, config);
             return findPolicyList(context).stream()
-                    .map(abstractPolicy -> new XACMLPolicy(abstractPolicy, vf))
+                    .map(abstractPolicy -> new BalanaPolicy(abstractPolicy, vf))
                     .collect(Collectors.toList());
         } catch (ParsingException e) {
             throw new MobiException(e);
@@ -191,36 +161,16 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<XACMLPolicy> {
 
     private List<AbstractPolicy> loadPolicies() {
         List<AbstractPolicy> policies = new ArrayList<>();
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.getStatements(null, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
-                    vf.createIRI(PolicyFile.TYPE)).forEach(statement -> {
-                        Resource policyIRI = statement.getSubject();
-                        Model policyModel = asModel(conn.getStatements(null, null, null, policyIRI), mf);
-                        PolicyFile policyFile = policyFileFactory.getExisting(policyIRI, policyModel).orElseThrow(() ->
-                                new IllegalStateException("Could not create Policy"));
-                        policies.add(transform(policyFile));
-                    });
-        }
-        return policies;
-    }
-
-    private AbstractPolicy transform(PolicyFile policy) {
-        try {
-            VirtualFile virtualFile = vfs.resolveVirtualFile(policy.getResource().stringValue());
-            if (virtualFile.isFile()) {
-                try (InputStream stream = virtualFile.readContent()) {
-                    DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-                    docFactory.setNamespaceAware(true);
-                    Document doc = docFactory.newDocumentBuilder().parse(stream);
-                    return org.wso2.balana.Policy.getInstance(doc.getDocumentElement());
+        Optional<Cache<String, Policy>> cache = policyCache.getPolicyCache();
+        cache.ifPresent(entries -> {
+            for (Cache.Entry<String, Policy> entry : entries) {
+                Policy policy = entry.getValue();
+                if (policy instanceof BalanaPolicy) {
+                    policies.add(((BalanaPolicy) policy).getAbstractPolicy());
                 }
-            } else {
-                throw new ProcessingException("Could not retrieve Policy");
             }
-        } catch (SAXException | ParsingException e) {
-            throw new PolicySyntaxException("Error parsing Policy");
-        } catch (ParserConfigurationException | IOException e) {
-            throw new ProcessingException("Error retrieving Policy");
-        }
+        });
+
+        return policies;
     }
 }

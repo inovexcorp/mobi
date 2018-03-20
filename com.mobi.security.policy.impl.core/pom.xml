@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  com.mobi.security.policy.api
+  com.mobi.security.policy.pip.impl
   $Id:$
   $HeadURL:$
   %%
@@ -33,19 +33,19 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>security.policy.api</artifactId>
+    <artifactId>security.policy.impl.core</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
     <dependencies>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>rdf.orm</artifactId>
+            <artifactId>security.policy.api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>vfs</artifactId>
+            <artifactId>rest.util</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -53,8 +53,18 @@
             <artifactId>cache</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>rdf-orm-test</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>repository.impl.sesame</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
-    
+
     <build>
         <plugins>
             <plugin>
@@ -64,47 +74,17 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>Mobi Security Policy API</Bundle-Name>
+                        <Bundle-Name>Mobi Security Policy PIP IMPL</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.security.policy.api*
+                            com.mobi.security.policy.api;provide:=true,
+                            com.mobi.security.policy.impl.core*
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>com.mobi.orm</groupId>
-                <artifactId>rdf-orm-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>generateOrmSources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>generate-orm</goal>
-                        </goals>
-                        <inherited>false</inherited>
-                        <configuration>
-                            <generates>
-                                <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/mobi_policy.ttl</ontologyFile>
-                                    <outputPackage>com.mobi.security.policy.api.ontologies.policy</outputPackage>
-                                    <ontologyName>Policy</ontologyName>
-                                </ontology>
-                            </generates>
-                            <references>
-                                <ontology>
-                                    <ontologyFile>${basedir}/../com.mobi.vfs/src/main/resources/mobi_documents.ttl</ontologyFile>
-                                    <outputPackage>com.mobi.vfs.ontologies.documents</outputPackage>
-                                    <ontologyName>Documents</ontologyName>
-                                </ontology>
-                            </references>
-                            <outputLocation>${project.basedir}/src/main/java</outputLocation>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

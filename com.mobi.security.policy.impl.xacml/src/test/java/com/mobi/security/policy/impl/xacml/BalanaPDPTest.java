@@ -31,43 +31,42 @@ import static org.mockito.Mockito.when;
 import com.mobi.ontologies.rdfs.Resource;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import com.mobi.security.policy.api.AttributeDesignator;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PIP;
+import com.mobi.security.policy.api.Policy;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.Response;
 import com.mobi.security.policy.api.Status;
-import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
-import com.mobi.vfs.impl.commons.SimpleVirtualFilesystem;
+import com.mobi.security.policy.api.cache.PolicyCache;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
+import org.w3c.dom.Document;
+import org.wso2.balana.AbstractPolicy;
 
-import java.lang.reflect.Method;
+import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Iterator;
+import java.util.Optional;
+import javax.cache.Cache;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 public class BalanaPDPTest extends OrmEnabledTestCase {
     private Repository repo;
     private BalanaPDP pdp;
     private BalanaPRP prp;
 
-    private OrmFactory<PolicyFile> policyFileFactory = getRequiredOrmFactory(PolicyFile.class);
-
     private IRI policy1 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy1");
     private IRI policy2 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy2");
     private IRI policy3 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy3");
-    private IRI policy4 = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy4");
     private IRI userX = VALUE_FACTORY.createIRI("http://mobi.com/users/UserX");
     private IRI resource = VALUE_FACTORY.createIRI("http://mobi.com/catalog-local");
     private IRI createAction = VALUE_FACTORY.createIRI("http://mobi.com/ontologies/policy#Create");
@@ -75,6 +74,18 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
 
     @Mock
     private PIP pip;
+
+    @Mock
+    private PolicyCache policyCache;
+
+    @Mock
+    private Cache<String, Policy> cache;
+
+    @Mock
+    private Iterator<Cache.Entry<String, Policy>> it;
+
+    @Mock
+    private Cache.Entry<String, Policy> entry;
 
     @Before
     public void setUp() throws Exception {
@@ -84,21 +95,14 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         MockitoAnnotations.initMocks(this);
         when(pip.findAttribute(any(AttributeDesignator.class), any(Request.class))).thenReturn(Collections.emptyList());
 
-        SimpleVirtualFilesystem vfs = new SimpleVirtualFilesystem();
-        Map<String, Object> config = new HashMap<>();
-        config.put("maxNumberOfTempFiles", 10000);
-        config.put("secondsBetweenTempCleanup", 60000);
-
-        Method m = vfs.getClass().getDeclaredMethod("activate", Map.class);
-        m.setAccessible(true);
-        m.invoke(vfs, config);
+        when(policyCache.getPolicyCache()).thenReturn(Optional.of(cache));
+        when(cache.iterator()).thenReturn(it);
+        when(it.hasNext()).thenReturn(true, false);
+        when(it.next()).thenReturn(entry);
 
         prp = new BalanaPRP();
-        injectOrmFactoryReferencesIntoService(prp);
-        prp.setRepo(repo);
-        prp.setMf(MODEL_FACTORY);
         prp.setVf(VALUE_FACTORY);
-        prp.setVfs(vfs);
+        prp.setPolicyCache(policyCache);
         pdp = new BalanaPDP();
         pdp.addPIP(pip);
         pdp.setBalanaPRP(prp);
@@ -110,7 +114,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     public void simplePermitTest() throws Exception {
         // Setup:
         loadPolicy(policy1);
-        XACMLRequest request = new XACMLRequest.Builder(userX, resource, createAction, OffsetDateTime.now()).build();
+        BalanaRequest request = new BalanaRequest.Builder(userX, resource, createAction, OffsetDateTime.now(), VALUE_FACTORY).build();
 
         Response result = pdp.evaluate(request);
         System.out.println(result);
@@ -123,11 +127,10 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     public void missingAttributeTest() throws Exception {
         // Setup:
         loadPolicy(policy2);
-        XACMLRequest request = new XACMLRequest.Builder(userX, resource, createAction, OffsetDateTime.now())
-                .addActionAttr(Resource.type_IRI, actionType)
-                .build();
+        BalanaRequest.Builder builder = new BalanaRequest.Builder(userX, resource, createAction, OffsetDateTime.now(), VALUE_FACTORY);
+        builder.addActionAttr(Resource.type_IRI, actionType);
 
-        Response result = pdp.evaluate(request);
+        Response result = pdp.evaluate(builder.build());
         System.out.println(result);
         assertEquals(Decision.DENY, result.getDecision());
         assertEquals(Status.OK, result.getStatus());
@@ -135,37 +138,28 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void syntaxErrorTest() throws Exception {
-        // Setup:
-        loadPolicy(policy3);
-        XACMLRequest.Builder builder = new XACMLRequest.Builder(userX, resource, createAction, OffsetDateTime.now());
-        builder.addActionAttr(Resource.type_IRI, actionType);
-
-        Response result = pdp.evaluate(builder.build());
-        System.out.println(result);
-        assertEquals(Decision.INDETERMINATE, result.getDecision());
-        assertEquals(Status.SYNTAX_ERROR, result.getStatus());
-        assertTrue(result.getPolicyIds().isEmpty());
-    }
-
-    @Test
     public void unsupportedCategoryInRuleTest() throws Exception {
         // Setup:
-        loadPolicy(policy4);
-        XACMLRequest.Builder builder = new XACMLRequest.Builder(userX, resource, createAction, OffsetDateTime.now());
+        loadPolicy(policy3);
+        BalanaRequest.Builder builder = new BalanaRequest.Builder(userX, resource, createAction, OffsetDateTime.now(), VALUE_FACTORY);
         builder.addActionAttr(Resource.type_IRI, actionType);
 
         Response result = pdp.evaluate(builder.build());
         System.out.println(result);
         assertEquals(Decision.DENY, result.getDecision());
         assertEquals(Status.OK, result.getStatus());
-        assertTrue(result.getPolicyIds().contains(policy4));
+        assertTrue(result.getPolicyIds().contains(policy3));
     }
 
-    private void loadPolicy(IRI policyId) {
-        PolicyFile policyFile = policyFileFactory.createNew(VALUE_FACTORY.createIRI(getClass().getResource("/" + policyId.getLocalName() + ".xml").toString()));
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(policyFile.getModel(), policyFile.getResource());
+    private void loadPolicy(IRI policyId) throws Exception {
+        try (InputStream in = getClass().getResourceAsStream("/" + policyId.getLocalName() + ".xml")) {
+            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            docFactory.setNamespaceAware(true);
+            Document doc = docFactory.newDocumentBuilder().parse(in);
+            AbstractPolicy abstractPolicy = org.wso2.balana.Policy.getInstance(doc.getDocumentElement());
+            Policy policy = new BalanaPolicy(abstractPolicy, VALUE_FACTORY);
+            when(entry.getKey()).thenReturn(policyId.stringValue());
+            when(entry.getValue()).thenReturn(policy);
         }
     }
 }

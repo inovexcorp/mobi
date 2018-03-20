@@ -28,6 +28,7 @@ import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.security.policy.api.BasicAttributeDesignator;
 import com.mobi.security.policy.api.PIP;
+import com.mobi.security.policy.api.xacml.XACML;
 import org.wso2.balana.ProcessingException;
 import org.wso2.balana.attr.AnyURIAttribute;
 import org.wso2.balana.attr.AttributeValue;
@@ -87,7 +88,7 @@ public class MobiAttributeFinder extends AttributeFinderModule {
 
         BasicAttributeDesignator designator = new BasicAttributeDesignator(vf.createIRI(attributeId.toString()),
                 vf.createIRI(category.toString()), vf.createIRI(attributeType.toString()));
-        List<Literal> values = pip.findAttribute(designator, new XACMLRequest(context.getRequestCtx(), vf));
+        List<Literal> values = pip.findAttribute(designator, new BalanaRequest(context.getRequestCtx(), vf));
         List<AttributeValue> attributeValues = new ArrayList<>();
         if (values.size() == 0) {
             return new EvaluationResult(new Status(Collections.singletonList(Status.STATUS_MISSING_ATTRIBUTE)));

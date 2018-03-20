@@ -23,19 +23,18 @@ package com.mobi.security.policy.impl.xacml;
  * #L%
  */
 
-import static com.mobi.security.policy.impl.xacml.XACML.POLICY_DENY_OVERRIDES;
-import static com.mobi.security.policy.impl.xacml.XACML.POLICY_DENY_UNLESS_PERMIT;
-import static com.mobi.security.policy.impl.xacml.XACML.POLICY_FIRST_APPLICABLE;
-import static com.mobi.security.policy.impl.xacml.XACML.POLICY_ONLY_ONE_APPLICABLE;
-import static com.mobi.security.policy.impl.xacml.XACML.POLICY_ORDERED_DENY_OVERRIDES;
-import static com.mobi.security.policy.impl.xacml.XACML.POLICY_ORDERED_PERMIT_OVERRIDES;
-import static com.mobi.security.policy.impl.xacml.XACML.POLICY_PERMIT_OVERRIDES;
-import static com.mobi.security.policy.impl.xacml.XACML.POLICY_PERMIT_UNLESS_DENY;
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_DENY_OVERRIDES;
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_DENY_UNLESS_PERMIT;
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_FIRST_APPLICABLE;
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_ONLY_ONE_APPLICABLE;
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_ORDERED_DENY_OVERRIDES;
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_ORDERED_PERMIT_OVERRIDES;
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_UNLESS_DENY;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.exception.MobiException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
@@ -45,7 +44,7 @@ import com.mobi.security.policy.api.PIP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.Response;
 import com.mobi.security.policy.api.Status;
-import org.w3c.dom.Document;
+import com.mobi.security.policy.api.xacml.XACMLResponse;
 import org.wso2.balana.Balana;
 import org.wso2.balana.PDPConfig;
 import org.wso2.balana.ProcessingException;
@@ -62,18 +61,12 @@ import org.wso2.balana.finder.AttributeFinder;
 import org.wso2.balana.finder.AttributeFinderModule;
 import org.wso2.balana.finder.PolicyFinder;
 import org.wso2.balana.finder.PolicyFinderModule;
-import org.xml.sax.SAXException;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 @Component(immediate = true, provide = {PDP.class, BalanaPDP.class})
 public class BalanaPDP implements PDP {
@@ -111,7 +104,8 @@ public class BalanaPDP implements PDP {
     @Override
     public Request createRequest(IRI subjectId, Map<String, Literal> subjectAttrs, IRI resourceId,
                                  Map<String, Literal> resourceAttrs, IRI actionId, Map<String, Literal> actionAttrs) {
-        XACMLRequest.Builder builder = new XACMLRequest.Builder(subjectId, resourceId, actionId, OffsetDateTime.now());
+        BalanaRequest.Builder builder = new BalanaRequest.Builder(subjectId, resourceId, actionId, OffsetDateTime.now(),
+                vf);
         if (subjectAttrs != null) {
             subjectAttrs.forEach((key, value) -> {
                 if (value != null) {
@@ -144,10 +138,9 @@ public class BalanaPDP implements PDP {
     @Override
     public Response evaluate(Request request, IRI policyAlgorithm) {
         try {
-            XACMLRequest xacmlRequest = getRequest(request);
+            BalanaRequest balanaRequest = getRequest(request);
             org.wso2.balana.PDP pdp = getPDP(policyAlgorithm);
-            String result = pdp.evaluate(xacmlRequest.toString());
-            return getResponse(result);
+            return new XACMLResponse(pdp.evaluate(balanaRequest.toString()), vf);
         } catch (ProcessingException e) {
             return new XACMLResponse.Builder(Decision.INDETERMINATE, Status.PROCESSING_ERROR)
                     .statusMessage(e.getMessage()).build();
@@ -176,23 +169,12 @@ public class BalanaPDP implements PDP {
         return new org.wso2.balana.PDP(newConfig);
     }
 
-    private XACMLResponse getResponse(String responseStr) {
-        try (InputStream stream = new ByteArrayInputStream(responseStr.getBytes())) {
-            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-            docFactory.setNamespaceAware(true);
-            Document doc = docFactory.newDocumentBuilder().parse(stream);
-            return new XACMLResponse(doc, vf);
-        } catch (ParserConfigurationException | IOException | SAXException e) {
-            throw new MobiException(e);
+    private BalanaRequest getRequest(Request request) {
+        if (request instanceof BalanaRequest) {
+            return (BalanaRequest) request;
         }
-    }
-
-    private XACMLRequest getRequest(Request request) {
-        if (request instanceof XACMLRequest) {
-            return (XACMLRequest) request;
-        }
-        XACMLRequest.Builder builder = new XACMLRequest.Builder(request.getSubjectId(), request.getResourceId(),
-                request.getActionId(), request.getRequestTime());
+        BalanaRequest.Builder builder = new BalanaRequest.Builder(request.getSubjectId(), request.getResourceId(),
+                request.getActionId(), request.getRequestTime(), vf);
         request.getSubjectAttrs().forEach(builder::addSubjectAttr);
         request.getResourceAttrs().forEach(builder::addResourceAttr);
         request.getActionAttrs().forEach(builder::addActionAttr);

@@ -299,12 +299,17 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
+            <artifactId>security.policy.api.xacml</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
             <artifactId>security.policy.impl.xacml</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>security.policy.pip.impl</artifactId>
+            <artifactId>security.policy.impl.core</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
