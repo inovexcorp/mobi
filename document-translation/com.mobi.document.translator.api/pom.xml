@@ -116,10 +116,6 @@
                                 </ontology>
                             </generates>
                             <references>
-                                <!--<ontology>
-                                    <ontologyFile>${project.basedir}/../../com.mobi.rdf.orm.ontologies/src/main/resources/rdfs.owl</ontologyFile>
-                                    <outputPackage>com.mobi.ontologies.rdfs</outputPackage>
-                                </ontology>-->
                                 <ontology>
                                     <ontologyFile>${project.basedir}/../../com.mobi.rdf.orm.ontologies/src/main/resources/owl.rdf</ontologyFile>
                                     <outputPackage>com.mobi.ontologies.owl</outputPackage>

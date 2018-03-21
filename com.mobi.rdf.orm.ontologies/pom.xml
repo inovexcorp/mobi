@@ -123,12 +123,6 @@
                                     <ontologyFile>${project.basedir}/src/main/resources/owl.rdf</ontologyFile>
                                     <outputPackage>com.mobi.ontologies.owl</outputPackage>
                                 </ontology>
-                                <!--
-                                <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/rdfs.owl</ontologyFile>
-                                    <outputPackage>com.mobi.ontologies.rdfs</outputPackage>
-                                </ontology>
-                                -->
                             </references>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>
                         </configuration>
