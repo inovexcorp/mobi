@@ -61,13 +61,7 @@
                         <Bundle-Name>Mobi RDF ORM Ontologies</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.ontologies.dcelements,
-                            com.mobi.ontologies.dcterms,
-                            com.mobi.ontologies.rdfs,
-                            com.mobi.ontologies.owl,
-                            com.mobi.ontologies.foaf,
-                            com.mobi.ontologies.mobi,
-                            com.mobi.ontologies.provo,
+                            com.mobi.ontologies.*,
                             com.mobi.vocabularies.xsd
                         </Export-Package>
                         <Service-Component>*</Service-Component>
