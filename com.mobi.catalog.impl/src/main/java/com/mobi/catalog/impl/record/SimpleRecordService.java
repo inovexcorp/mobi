@@ -96,12 +96,14 @@ public class SimpleRecordService implements RecordService<Record> {
         writerWrapper.setLogger(LOG);
         writerWrapper.setPrintToSystem(true);
 
+        boolean writerIsActive = writerWrapper.isActive();
+
         // Write Record
-        if (writerWrapper.isActive()) {
+        if (!writerIsActive) {
             writerWrapper.startRDFExport();
         }
         exportRecord(iriRecord, writerWrapper, conn);
-        if (writerWrapper.isActive()) {
+        if (!writerIsActive) {
             writerWrapper.endRDFExport();
         }
     }
