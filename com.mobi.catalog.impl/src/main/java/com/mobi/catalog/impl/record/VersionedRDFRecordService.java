@@ -12,11 +12,8 @@ import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -26,32 +23,16 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public class VersionedRDFRecordService extends SimpleRecordService {
-    private static final Logger LOG = LoggerFactory.getLogger(SimpleRecordService.class);
 
+    protected CommitFactory commitFactory;
+    protected BranchFactory branchFactory;
     protected ModelFactory mf;
     protected VersionedRDFRecordFactory versionedRDFRecordFactory;
     protected VersionFactory versionFactory;
-    protected CommitFactory commitFactory;
-    protected BranchFactory branchFactory;
-
-    @Reference
-    void setMf(ModelFactory mf) {
-        this.mf = mf;
-    }
-
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
 
     @Reference
     void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
         this.versionedRDFRecordFactory = versionedRDFRecordFactory;
-    }
-
-    @Reference
-    void setVersionFactory(VersionFactory versionFactory) {
-        this.versionFactory = versionFactory;
     }
 
     @Reference
@@ -62,6 +43,16 @@ public class VersionedRDFRecordService extends SimpleRecordService {
     @Reference
     void setBranchFactory(BranchFactory branchFactory) {
         this.branchFactory = branchFactory;
+    }
+
+    @Reference
+    void setMf(ModelFactory mf) {
+        this.mf = mf;
+    }
+
+    @Reference
+    void setVersionFactory(VersionFactory versionFactory) {
+        this.versionFactory = versionFactory;
     }
 
 
@@ -173,8 +164,8 @@ public class VersionedRDFRecordService extends SimpleRecordService {
 
 
     @Override
-    public void exportRecord(IRI iriRecord, ExportWriter writer, RepositoryConnection conn) {
-        VersionedRDFRecord record = utilsService.getExpectedObject(iriRecord, versionedRDFRecordFactory, conn);
+    protected void exportRecord(IRI iriRecord, ExportWriter writer, RepositoryConnection conn) {
+        VersionedRDFRecord record = (VersionedRDFRecord) utilsService.getExpectedObject(iriRecord, recordFactory, conn);
 
         Set<Resource> processedCommits = new HashSet<>();
         // Write Branches
