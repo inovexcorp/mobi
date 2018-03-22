@@ -1228,6 +1228,11 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     /* removeBranch */
 
     @Test
+    public void test() {
+
+    }
+
+    @Test
     public void testRemoveBranch() throws Exception {
         // Setup:
         Resource commitIdToRemove = VALUE_FACTORY.createIRI(COMMITS + "conflict2");

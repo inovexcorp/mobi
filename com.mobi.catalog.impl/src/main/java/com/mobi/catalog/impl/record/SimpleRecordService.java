@@ -34,8 +34,8 @@ import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.repository.api.RepositoryConnection;
-import org.openrdf.rio.Rio;
-import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +65,8 @@ public class SimpleRecordService implements RecordService<Record> {
 
     @Override
     public <T extends RecordExportConfig> void export(IRI iriRecord, T config, RepositoryConnection conn) {
-        BatchExporter writer = new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(config.getFormat(), config.getOutput())));
+        BatchExporter writer = new BatchExporter(transformer,
+                new BufferedGroupingRDFHandler(Rio.createWriter(config.getFormat(), config.getOutput())));
         writer.setLogger(LOG);
         writer.setPrintToSystem(true);
 

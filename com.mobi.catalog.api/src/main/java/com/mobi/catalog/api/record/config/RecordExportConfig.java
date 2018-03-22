@@ -23,7 +23,7 @@ package com.mobi.catalog.api.record.config;
  * #L%
  */
 
-import org.openrdf.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.io.IOException;
 import java.io.OutputStream;
