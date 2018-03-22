@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
 
 @Component
 public class SimpleRecordService implements RecordService<Record> {
-    private static final Logger LOG = LoggerFactory.getLogger(SimpleRecordService.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(SimpleRecordService.class);
 
     protected CatalogUtilsService utilsService;
     protected CatalogProvUtils provUtils;

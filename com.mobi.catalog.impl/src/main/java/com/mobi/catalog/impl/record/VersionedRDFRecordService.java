@@ -1,57 +1,21 @@
 package com.mobi.catalog.impl.record;
 
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.*;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class VersionedRDFRecordService extends SimpleRecordService {
-    private static final Logger LOG = LoggerFactory.getLogger(SimpleRecordService.class);
 
-    private CatalogUtilsService utilsService;
-    private CatalogProvUtils provUtils;
-    private ValueFactory vf;
-    private SesameTransformer transformer;
-    private VersionedRDFRecordFactory versionedRDFRecordFactory;
-    private CommitFactory commitFactory;
-    private BranchFactory branchFactory;
+    protected CommitFactory commitFactory;
+    protected BranchFactory branchFactory;
 
-    @Reference
-    void setUtilsService(CatalogUtilsService utilsService) {
-        this.utilsService = utilsService;
-    }
-
-    @Reference
-    void setProvUtils(CatalogProvUtils provUtils) {
-        this.provUtils = provUtils;
-    }
-
-    @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
-
-    @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
-    }
-
-    @Reference
-    void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
-        this.versionedRDFRecordFactory = versionedRDFRecordFactory;
-    }
 
     @Reference
     void setCommitFactory(CommitFactory commitFactory) {
@@ -69,8 +33,8 @@ public class VersionedRDFRecordService extends SimpleRecordService {
     }
 
     @Override
-    public void exportRecord(IRI iriRecord, ExportWriter writer, RepositoryConnection conn) {
-        VersionedRDFRecord record = utilsService.getExpectedObject(iriRecord, versionedRDFRecordFactory, conn);
+    protected void exportRecord(IRI iriRecord, ExportWriter writer, RepositoryConnection conn) {
+        VersionedRDFRecord record = (VersionedRDFRecord) utilsService.getExpectedObject(iriRecord, recordFactory, conn);
 
         Set<Resource> processedCommits = new HashSet<>();
         // Write Branches
