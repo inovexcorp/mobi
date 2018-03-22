@@ -48,9 +48,11 @@ import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
@@ -137,6 +139,30 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         recordService.setUtilsService(utilsService);
         recordService.setVf(VALUE_FACTORY);
         recordService.setProvUtils(provUtils);
+    }
+
+    /* delete() */
+
+    @Test
+    public void deleteTest() throws Exception {
+        when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.of(testRecord));
+
+        VersionedRDFRecord deletedRecord = (VersionedRDFRecord) recordService.delete(testIRI, user, connection);
+
+//        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
+//        verify(utilsService).removeObject(eq(testRecord), eq(connection));
+//        verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
+//        verify(provUtils).endDeleteActivity(eq(deleteActivity), eq(testRecord));
+        assertEquals(testRecord, deletedRecord);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void deleteRecordDoesNotExistTest() throws Exception {
+        when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.empty());
+
+        recordService.delete(testIRI, user, connection);
+
+        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
     }
 
     /* export() */

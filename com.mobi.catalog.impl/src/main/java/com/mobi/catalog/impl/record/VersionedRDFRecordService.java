@@ -1,14 +1,11 @@
 package com.mobi.catalog.impl.record;
 
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.*;
 import com.mobi.catalog.impl.SimpleCatalogManager;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.query.api.TupleQuery;
@@ -31,25 +28,11 @@ import java.util.stream.Stream;
 public class VersionedRDFRecordService extends SimpleRecordService {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleRecordService.class);
 
-    private CatalogUtilsService utilsService;
-    private CatalogProvUtils provUtils;
-    private ModelFactory mf;
-    private ValueFactory vf;
-    private SesameTransformer transformer;
-    private VersionedRDFRecordFactory versionedRDFRecordFactory;
-    private VersionFactory versionFactory;
-    private CommitFactory commitFactory;
-    private BranchFactory branchFactory;
-
-    @Reference
-    void setUtilsService(CatalogUtilsService utilsService) {
-        this.utilsService = utilsService;
-    }
-
-    @Reference
-    void setProvUtils(CatalogProvUtils provUtils) {
-        this.provUtils = provUtils;
-    }
+    protected ModelFactory mf;
+    protected VersionedRDFRecordFactory versionedRDFRecordFactory;
+    protected VersionFactory versionFactory;
+    protected CommitFactory commitFactory;
+    protected BranchFactory branchFactory;
 
     @Reference
     void setMf(ModelFactory mf) {
@@ -59,11 +42,6 @@ public class VersionedRDFRecordService extends SimpleRecordService {
     @Reference
     void setVf(ValueFactory vf) {
         this.vf = vf;
-    }
-
-    @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
     }
 
     @Reference
