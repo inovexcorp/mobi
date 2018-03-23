@@ -24,7 +24,6 @@ package com.mobi.security.policy.impl.core.cache;
  */
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -63,9 +62,5 @@ public class PolicyCacheImplTest {
         Optional<Cache<String, Policy>> result = service.getPolicyCache();
         assertTrue(result.isPresent());
         assertEquals(cache, result.get());
-
-        service.setCacheManager(null);
-        result = service.getPolicyCache();
-        assertFalse(result.isPresent());
     }
 }

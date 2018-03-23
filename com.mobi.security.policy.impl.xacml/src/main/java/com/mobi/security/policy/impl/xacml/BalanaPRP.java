@@ -52,11 +52,11 @@ import org.wso2.balana.finder.PolicyFinder;
 import org.wso2.balana.finder.PolicyFinderModule;
 import org.wso2.balana.finder.PolicyFinderResult;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.cache.Cache;
 
 @Component(immediate = true, provide = {PRP.class, BalanaPRP.class})
@@ -99,9 +99,7 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
         try {
             AbstractRequestCtx requestCtx = RequestCtxFactory.getFactory().getRequestCtx(request.toString());
             EvaluationCtx context = EvaluationCtxFactory.getFactory().getEvaluationCtx(requestCtx, config);
-            return findPolicyList(context).stream()
-                    .map(abstractPolicy -> new BalanaPolicy(abstractPolicy, vf))
-                    .collect(Collectors.toList());
+            return findMatchingPolicies(context);
         } catch (ParsingException e) {
             throw new MobiException(e);
         }
@@ -111,7 +109,9 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
     public PolicyFinderResult findPolicy(EvaluationCtx context) {
         List<AbstractPolicy> selectedPolicies;
         try {
-            selectedPolicies = findPolicyList(context);
+            selectedPolicies = findMatchingPolicies(context).stream()
+                    .map(BalanaPolicy::getAbstractPolicy)
+                    .collect(Collectors.toList());
         } catch (PolicySyntaxException e) {
             return new PolicyFinderResult(new Status(Collections.singletonList(SYNTAX_ERROR), e.getMessage()));
         } catch (ProcessingException e) {
@@ -131,50 +131,40 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
         }
     }
 
-    private List<AbstractPolicy> findPolicyList(EvaluationCtx context) {
-        ArrayList<AbstractPolicy> selectedPolicies = new ArrayList<>();
+    private List<BalanaPolicy> findMatchingPolicies(EvaluationCtx context) {
         // iterate through all the policies we currently have loaded
-        loadPolicies().forEach(policy -> {
-            MatchResult match = policy.match(context);
-            int result = match.getResult();
-
-            // if target matching was indeterminate, then return the error
-            if (result == MatchResult.INDETERMINATE) {
-                Status status = match.getStatus();
-                if (status.getCode().contains(SYNTAX_ERROR)) {
-                    throw new PolicySyntaxException(status.getMessage());
-                }
-                if (status.getCode().contains(PROCESSING_ERROR)) {
-                    throw new ProcessingException(status.getMessage());
-                }
-            }
-
-            // see if the target matched
-            if (result == MatchResult.MATCH) {
-
-                // this is the first match we've found, so remember it
-                selectedPolicies.add(policy);
-            }
-        });
-
-        return selectedPolicies;
-    }
-
-    private List<AbstractPolicy> loadPolicies() {
-        List<AbstractPolicy> policies = new ArrayList<>();
         Optional<Cache<String, Policy>> cache = policyCache.getPolicyCache();
-        cache.ifPresent(entries -> {
-            for (Cache.Entry<String, Policy> entry : entries) {
-                Policy policy = entry.getValue();
-                if (policy instanceof BalanaPolicy) {
-                    policies.add(((BalanaPolicy) policy).getAbstractPolicy());
-                } else if (policy instanceof XACMLPolicy) {
-                    BalanaPolicy balanaPolicy = new BalanaPolicy(((XACMLPolicy) policy).getJaxbPolicy(), vf);
-                    policies.add(balanaPolicy.getAbstractPolicy());
-                }
-            }
-        });
+        if (cache.isPresent()) {
+            return StreamSupport.stream(cache.get().spliterator(), false)
+                    .map(Cache.Entry::getValue)
+                    .filter(policy -> policy instanceof XACMLPolicy)
+                    .map(policy -> (XACMLPolicy) policy)
+                    .map(policy -> {
+                        if (policy instanceof BalanaPolicy) {
+                            return (BalanaPolicy) policy;
+                        } else {
+                            return new BalanaPolicy(policy.getJaxbPolicy(), vf);
+                        }
+                    })
+                    .filter(policy -> {
+                        MatchResult match = policy.getAbstractPolicy().match(context);
+                        int result = match.getResult();
 
-        return policies;
+                        // if target matching was indeterminate, then return the error
+                        if (result == MatchResult.INDETERMINATE) {
+                            Status status = match.getStatus();
+                            if (status.getCode().contains(SYNTAX_ERROR)) {
+                                throw new PolicySyntaxException(status.getMessage());
+                            }
+                            if (status.getCode().contains(PROCESSING_ERROR)) {
+                                throw new ProcessingException(status.getMessage());
+                            }
+                        }
+                        return result == MatchResult.MATCH;
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        return Collections.emptyList();
     }
 }

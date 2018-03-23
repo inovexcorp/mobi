@@ -26,6 +26,7 @@ package com.mobi.security.policy.impl.xacml;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.mobi.ontologies.rdfs.Resource;
@@ -53,8 +54,9 @@ import org.wso2.balana.AbstractPolicy;
 
 import java.io.InputStream;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 import javax.cache.Cache;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -81,11 +83,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     @Mock
     private Cache<String, Policy> cache;
 
-    @Mock
-    private Iterator<Cache.Entry<String, Policy>> it;
-
-    @Mock
-    private Cache.Entry<String, Policy> entry;
+    private List<Cache.Entry<String, Policy>> entries;
 
     @Before
     public void setUp() throws Exception {
@@ -95,11 +93,9 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         MockitoAnnotations.initMocks(this);
         when(pip.findAttribute(any(AttributeDesignator.class), any(Request.class))).thenReturn(Collections.emptyList());
 
+        entries = new ArrayList<>();
         when(policyCache.getPolicyCache()).thenReturn(Optional.of(cache));
-        when(cache.iterator()).thenReturn(it);
-        when(it.hasNext()).thenReturn(true, false);
-        when(it.next()).thenReturn(entry);
-
+        when(cache.spliterator()).thenReturn(entries.spliterator());
         prp = new BalanaPRP();
         prp.setVf(VALUE_FACTORY);
         prp.setPolicyCache(policyCache);
@@ -155,8 +151,10 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
             Document doc = docFactory.newDocumentBuilder().parse(in);
             AbstractPolicy abstractPolicy = org.wso2.balana.Policy.getInstance(doc.getDocumentElement());
             Policy policy = new BalanaPolicy(abstractPolicy, VALUE_FACTORY);
+            Cache.Entry<String, Policy> entry = mock(Cache.Entry.class);
             when(entry.getKey()).thenReturn(policyId.stringValue());
             when(entry.getValue()).thenReturn(policy);
+            entries.add(entry);
         }
     }
 }
