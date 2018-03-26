@@ -133,7 +133,7 @@ public class SimpleRecordService implements RecordService<Record> {
         }
 
         protected boolean isActive() {
-            return  writer.isActive();
+            return writer.isActive();
         }
 
         private void startRDFExport() {
