@@ -24,14 +24,7 @@ package com.mobi.catalog.api;
  */
 
 import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.Distribution;
-import com.mobi.catalog.api.ontologies.mcat.Version;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.ontologies.mcat.Revision;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.ontologies.mcat.*;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -40,10 +33,10 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.repository.api.RepositoryConnection;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 
 public interface CatalogUtilsService {
     /**
@@ -128,6 +121,17 @@ public interface CatalogUtilsService {
      * @param <T> A Class that extends Thing.
      */
     <T extends Thing> void removeObject(T object, RepositoryConnection conn);
+
+    /**
+     * Removes the provided Object from the Repository along with other relationship statements
+     *
+     * @param objectId The ID of the Object in the Repository to remove.
+     * @param removeFromId The Subject to remove
+     * @param predicate The Predicate to remove
+     * @param conn A RepositoryConnection to use for lookup.
+     */
+    void removeObjectWithRelationship(Resource objectId, Resource removeFromId, String predicate,
+                                             RepositoryConnection conn);
 
     /**
      * Validates the type and existence of a Record in a Catalog.
@@ -216,6 +220,24 @@ public interface CatalogUtilsService {
                                      RepositoryConnection conn);
 
     /**
+     * Removes the Version identified by the provided RecordId and Version from the repository.
+     *
+     * @param recordId The Resource identifying the VersionedRecord which has the Version.
+     * @param version The Version object to remove
+     * @param conn A RepositoryConnection to use for lookup.
+     */
+    void removeVersion(Resource recordId, Version version, RepositoryConnection conn);
+
+    /**
+     * Removes the Version identified by the provided Resources from the repository.
+     *
+     * @param recordId The Resource identifying the VersionedRecord which has the Version.
+     * @param versionId The Resource identifying the Version you want to remove.
+     * @param conn A RepositoryConnection to use for lookup.
+     */
+    void removeVersion(Resource recordId, Resource versionId, RepositoryConnection conn);
+
+    /**
      * Validates the existence of a Distribution of a Version.
      *
      * @param catalogId The Resource identifying the Catalog which should have the Record.
@@ -291,6 +313,25 @@ public interface CatalogUtilsService {
      */
     <T extends Branch> T getBranch(VersionedRDFRecord record, Resource branchId, OrmFactory<T> factory,
                                    RepositoryConnection conn);
+
+    /**
+     * TODO: SHOULD IT DO THE MASTER BRANCH CHECK???
+     * Removes Branch identified by the provided Resource and Branch from the repository.
+     * @param recordId The Resource identifying the VersionedRDFRecord which has the Branch.
+     * @param branch The Branch object you want to remove.
+     * @param conn A RepositoryConnection to use for lookup.
+     */
+    void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn);
+
+    /**
+     * TODO: SHOULD IT DO THE MASTER BRANCH CHECK???
+     * Removes the Branch identified by the provided Resources from the repository.
+     *
+     * @param recordId The Resource identifying the VersionedRDFRecord which has the Branch.
+     * @param branchId The Resource identifying the Branch you want to remove.
+     * @param conn A RepositoryConnection to use for lookup.
+     */
+    void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn);
 
     /**
      * Retrieves the IRI of the head Commit of the provided Branch. Throws an IllegalStateException if the Branch does

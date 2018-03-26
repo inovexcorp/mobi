@@ -23,11 +23,7 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.component.Reference;
+import aQute.bnd.annotation.component.*;
 import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
@@ -37,30 +33,7 @@ import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
 import com.mobi.catalog.api.builder.RecordConfig;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
-import com.mobi.catalog.api.ontologies.mcat.Catalog;
-import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
-import com.mobi.catalog.api.ontologies.mcat.Distribution;
-import com.mobi.catalog.api.ontologies.mcat.DistributionFactory;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommitFactory;
-import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
-import com.mobi.catalog.api.ontologies.mcat.Revision;
-import com.mobi.catalog.api.ontologies.mcat.RevisionFactory;
-import com.mobi.catalog.api.ontologies.mcat.Tag;
-import com.mobi.catalog.api.ontologies.mcat.TagFactory;
-import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
-import com.mobi.catalog.api.ontologies.mcat.UnversionedRecordFactory;
-import com.mobi.catalog.api.ontologies.mcat.Version;
-import com.mobi.catalog.api.ontologies.mcat.VersionFactory;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
+import com.mobi.catalog.api.ontologies.mcat.*;
 import com.mobi.catalog.config.CatalogConfig;
 import com.mobi.catalog.util.SearchResults;
 import com.mobi.exception.MobiException;
@@ -69,18 +42,10 @@ import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.persistence.utils.Bindings;
-import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.Binding;
 import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.api.*;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
@@ -89,20 +54,13 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component(
         configurationPolicy = ConfigurationPolicy.require,
@@ -220,7 +178,6 @@ public class SimpleCatalogManager implements CatalogManager {
 
     private static final String FIND_RECORDS_QUERY;
     private static final String COUNT_RECORDS_QUERY;
-    private static final String GET_NEW_LATEST_VERSION;
     private static final String RECORD_BINDING = "record";
     private static final String CATALOG_BINDING = "catalog";
     private static final String RECORD_COUNT_BINDING = "record_count";
@@ -235,10 +192,6 @@ public class SimpleCatalogManager implements CatalogManager {
             );
             COUNT_RECORDS_QUERY = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/count-records.rq"),
-                    "UTF-8"
-            );
-            GET_NEW_LATEST_VERSION = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/get-new-latest-version.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -545,7 +498,7 @@ public class SimpleCatalogManager implements CatalogManager {
             Distribution distribution = utils.getUnversionedDistribution(catalogId, unversionedRecordId, distributionId,
                     conn);
             conn.begin();
-            removeObjectWithRelationship(distribution.getResource(), unversionedRecordId,
+            utils.removeObjectWithRelationship(distribution.getResource(), unversionedRecordId,
                     UnversionedRecord.unversionedDistribution_IRI, conn);
             conn.commit();
         }
@@ -623,31 +576,9 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             Version version = utils.getVersion(catalogId, versionedRecordId, versionId, versionFactory, conn);
             conn.begin();
-            removeVersion(versionedRecordId, version, conn);
+            utils.removeVersion(versionedRecordId, version, conn);
             conn.commit();
         }
-    }
-
-    private void removeVersion(Resource recordId, Version version, RepositoryConnection conn) {
-        removeObjectWithRelationship(version.getResource(), recordId, VersionedRecord.version_IRI, conn);
-        IRI latestVersionIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
-        if (conn.contains(recordId, latestVersionIRI, version.getResource(), recordId)) {
-            conn.remove(recordId, latestVersionIRI, version.getResource(), recordId);
-            TupleQuery query = conn.prepareTupleQuery(GET_NEW_LATEST_VERSION);
-            query.setBinding(RECORD_BINDING, recordId);
-            TupleQueryResult result = query.evaluate();
-
-            Optional<Binding> binding;
-            if (result.hasNext() && (binding = result.next().getBinding("version")).isPresent()) {
-                conn.add(recordId, latestVersionIRI, binding.get().getValue(), recordId);
-            }
-        }
-        version.getVersionedDistribution_resource().forEach(resource -> utils.remove(resource, conn));
-    }
-
-    private void removeVersion(Resource recordId, Resource versionId, RepositoryConnection conn) {
-        Version version = utils.getObject(versionId, versionFactory, conn);
-        removeVersion(recordId, version, conn);
     }
 
     @Override
@@ -734,7 +665,7 @@ public class SimpleCatalogManager implements CatalogManager {
             Distribution distribution = utils.getVersionedDistribution(catalogId, versionedRecordId, versionId,
                     distributionId, conn);
             conn.begin();
-            removeObjectWithRelationship(distribution.getResource(), versionId, Version.versionedDistribution_IRI,
+            utils.removeObjectWithRelationship(distribution.getResource(), versionId, Version.versionedDistribution_IRI,
                     conn);
             conn.commit();
         }
@@ -861,50 +792,9 @@ public class SimpleCatalogManager implements CatalogManager {
                 throw new IllegalStateException("Branch " + branchId + " is the master Branch and cannot be removed.");
             }
             conn.begin();
-            removeBranch(versionedRDFRecordId, branch, conn);
+            utils.removeBranch(versionedRDFRecordId, branch, conn);
             conn.commit();
         }
-    }
-
-    private void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn) {
-        removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
-        Optional<Resource> headCommit = branch.getHead_resource();
-        if (headCommit.isPresent()) {
-            List<Resource> chain = utils.getCommitChain(headCommit.get(), false, conn);
-            IRI commitIRI = vf.createIRI(Tag.commit_IRI);
-            Set<Resource> deltaIRIs = new HashSet<>();
-            for (Resource commitId : chain) {
-                if (!commitIsReferenced(commitId, conn)) {
-                    // Get Additions/Deletions Graphs
-                    Revision revision = utils.getRevision(commitId, conn);
-                    revision.getAdditions().ifPresent(deltaIRIs::add);
-                    revision.getDeletions().ifPresent(deltaIRIs::add);
-                    revision.getGraphRevision().forEach(graphRevision -> {
-                        graphRevision.getAdditions().ifPresent(deltaIRIs::add);
-                        graphRevision.getDeletions().ifPresent(deltaIRIs::add);
-                    });
-
-                    // Remove Commit
-                    utils.remove(commitId, conn);
-
-                    // Remove Tags Referencing this Commit
-                    Set<Resource> tags = RepositoryResults.asModel(conn.getStatements(null, commitIRI, commitId), mf)
-                            .subjects();
-                    tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId, VersionedRecord.version_IRI,
-                            conn));
-                } else {
-                    break;
-                }
-            }
-            deltaIRIs.forEach(resource -> utils.remove(resource, conn));
-        } else {
-            log.warn("The HEAD Commit was not set on the Branch.");
-        }
-    }
-
-    private void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn) {
-        Branch branch = utils.getObject(branchId, branchFactory, conn);
-        removeBranch(recordId, branch, conn);
     }
 
     @Override
@@ -1401,12 +1291,6 @@ public class SimpleCatalogManager implements CatalogManager {
         return record;
     }
 
-    private void removeObjectWithRelationship(Resource objectId, Resource removeFromId, String predicate,
-                                              RepositoryConnection conn) {
-        utils.remove(objectId, conn);
-        conn.remove(removeFromId, vf.createIRI(predicate), objectId, removeFromId);
-    }
-
     /**
      * Removes the UnversionedRecord created from the provided Record along with all associated Distributions.
      *
@@ -1431,7 +1315,7 @@ public class SimpleCatalogManager implements CatalogManager {
         versionedRecordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRecord -> {
                     versionedRecord.getVersion_resource()
-                            .forEach(resource -> removeVersion(versionedRecord.getResource(), resource, conn));
+                            .forEach(resource -> utils.removeVersion(versionedRecord.getResource(), resource, conn));
                     utils.removeObject(versionedRecord, conn);
                 });
     }
@@ -1447,21 +1331,12 @@ public class SimpleCatalogManager implements CatalogManager {
         versionedRDFRecordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRDFRecord -> {
                     versionedRDFRecord.getVersion_resource()
-                            .forEach(resource -> removeVersion(versionedRDFRecord.getResource(), resource, conn));
+                            .forEach(resource -> utils.removeVersion(versionedRDFRecord.getResource(), resource, conn));
                     conn.remove(versionedRDFRecord.getResource(), vf.createIRI(VersionedRDFRecord.masterBranch_IRI),
                             null, versionedRDFRecord.getResource());
                     versionedRDFRecord.getBranch_resource()
-                            .forEach(resource -> removeBranch(versionedRDFRecord.getResource(), resource, conn));
+                            .forEach(resource -> utils.removeBranch(versionedRDFRecord.getResource(), resource, conn));
                     utils.removeObject(versionedRDFRecord, conn);
                 });
-    }
-
-    private boolean commitIsReferenced(Resource commitId, RepositoryConnection conn) {
-        IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
-        IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
-        IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
-        return Stream.of(headCommitIRI, baseCommitIRI, auxiliaryCommitIRI)
-                .map(iri -> conn.contains(null, iri, commitId))
-                .reduce(false, (iri1, iri2) -> iri1 || iri2);
     }
 }

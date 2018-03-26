@@ -35,6 +35,7 @@ import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
@@ -68,6 +69,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private final IRI tagIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#tag");
     private final IRI distributionIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/distributions#distribution");
     private final IRI masterBranchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#master");
+    private final IRI revisionIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/revisions#commit");
 
     private VersionedRDFRecordService recordService;
     private SimpleSesameTransformer transformer;
@@ -162,29 +164,16 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     @Test
     public void deleteTest() throws Exception {
         when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.of(testRecord));
-//
-//        VersionedRDFRecord deletedRecord = (VersionedRDFRecord) recordService.delete(testIRI, user, connection);
-//
-////        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
-////        verify(utilsService).removeObject(eq(testRecord), eq(connection));
-////        verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
-////        verify(provUtils).endDeleteActivity(eq(deleteActivity), eq(testRecord));
-//        assertEquals(testRecord, deletedRecord);
-        // Setup:
-
-        doReturn(revisionFactory.createNew()).when(utilsService).getRevision()
-        doReturn(Optional.of(testRecord)).when(utilsService).optObject(eq(testIRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        doReturn(tag).when(utilsService).getObject(eq(tagIRI), any(OrmFactory.class), any(RepositoryConnection.class));
-        doReturn(branch).when(utilsService).getObject(eq(branchIRI), eq(branchFactory), any(RepositoryConnection.class));
 
         VersionedRDFRecord deletedRecord = (VersionedRDFRecord) recordService.delete(testIRI, user, connection);
 
         assertEquals(testRecord, deletedRecord);
-        verify(utilsService).getObject(eq(tagIRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        verify(utilsService).remove(eq(tagIRI), any(RepositoryConnection.class));
-        verify(utilsService).remove(eq(distributionIRI), any(RepositoryConnection.class));
-        verify(utilsService).getObject(eq(masterBranchIRI), eq(branchFactory), any(RepositoryConnection.class));
-        verify(utilsService).remove(eq(masterBranchIRI), any(RepositoryConnection.class));
+        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
+        verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
+        verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));
+        verify(utilsService).removeVersion(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService).removeBranch(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService).removeObject(any(VersionedRDFRecord.class), any(RepositoryConnection.class));
     }
 
     @Test (expected = IllegalArgumentException.class)

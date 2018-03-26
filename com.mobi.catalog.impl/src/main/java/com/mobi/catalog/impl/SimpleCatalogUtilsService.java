@@ -27,62 +27,27 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
-import com.mobi.catalog.api.ontologies.mcat.Catalog;
-import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
-import com.mobi.catalog.api.ontologies.mcat.Distribution;
-import com.mobi.catalog.api.ontologies.mcat.DistributionFactory;
-import com.mobi.catalog.api.ontologies.mcat.GraphRevision;
-import com.mobi.catalog.api.ontologies.mcat.GraphRevisionFactory;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommitFactory;
-import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
-import com.mobi.catalog.api.ontologies.mcat.Revision;
-import com.mobi.catalog.api.ontologies.mcat.RevisionFactory;
-import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
-import com.mobi.catalog.api.ontologies.mcat.UnversionedRecordFactory;
-import com.mobi.catalog.api.ontologies.mcat.Version;
-import com.mobi.catalog.api.ontologies.mcat.VersionFactory;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
+import com.mobi.catalog.api.ontologies.mcat.*;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.Binding;
 import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.api.*;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.io.IOUtils;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import javax.annotation.Nullable;
 
 @Component(immediate = true)
 public class SimpleCatalogUtilsService implements CatalogUtilsService {
@@ -103,6 +68,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     private static final String GET_IN_PROGRESS_COMMIT;
     private static final String GET_COMMIT_CHAIN;
+    private static final String GET_NEW_LATEST_VERSION;
     private static final String USER_BINDING = "user";
     private static final String PARENT_BINDING = "parent";
     private static final String RECORD_BINDING = "record";
@@ -116,6 +82,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             );
             GET_COMMIT_CHAIN = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-chain.rq"),
+                    "UTF-8"
+            );
+            GET_NEW_LATEST_VERSION = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-new-latest-version.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -240,6 +210,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public void removeObjectWithRelationship(Resource objectId, Resource removeFromId, String predicate,
+                                             RepositoryConnection conn) {
+        remove(objectId, conn);
+        conn.remove(removeFromId, vf.createIRI(predicate), objectId, removeFromId);
+    }
+
+    @Override
     public void validateRecord(Resource catalogId, Resource recordId, IRI recordType,
                                RepositoryConnection conn) {
         validateResource(catalogId, vf.createIRI(Catalog.TYPE), conn);
@@ -291,6 +268,30 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public void removeVersion(Resource recordId, Version version, RepositoryConnection conn) {
+        removeObjectWithRelationship(version.getResource(), recordId, VersionedRecord.version_IRI, conn);
+        IRI latestVersionIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
+        if (conn.contains(recordId, latestVersionIRI, version.getResource(), recordId)) {
+            conn.remove(recordId, latestVersionIRI, version.getResource(), recordId);
+            TupleQuery query = conn.prepareTupleQuery(GET_NEW_LATEST_VERSION);
+            query.setBinding(RECORD_BINDING, recordId);
+            TupleQueryResult result = query.evaluate();
+
+            Optional<Binding> binding;
+            if (result.hasNext() && (binding = result.next().getBinding("version")).isPresent()) {
+                conn.add(recordId, latestVersionIRI, binding.get().getValue(), recordId);
+            }
+        }
+        version.getVersionedDistribution_resource().forEach(resource -> remove(resource, conn));
+    }
+
+    @Override
+    public void removeVersion(Resource recordId, Resource versionId, RepositoryConnection conn) {
+        Version version = getObject(versionId, versionFactory, conn);
+        removeVersion(recordId, version, conn);
+    }
+
+    @Override
     public void validateVersionedDistribution(Resource catalogId, Resource recordId, Resource versionId,
                                               Resource distributionId, RepositoryConnection conn) {
         Version version = getVersion(catalogId, recordId, versionId, versionFactory, conn);
@@ -331,6 +332,56 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                                           RepositoryConnection conn) {
         testBranchPath(record, branchId);
         return getObject(branchId, factory, conn);
+    }
+
+    @Override
+    public void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn) {
+        removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
+        Optional<Resource> headCommit = branch.getHead_resource();
+        if (headCommit.isPresent()) {
+            List<Resource> chain = getCommitChain(headCommit.get(), false, conn);
+            IRI commitIRI = vf.createIRI(Tag.commit_IRI);
+            Set<Resource> deltaIRIs = new HashSet<>();
+            for (Resource commitId : chain) {
+                if (!commitIsReferenced(commitId, conn)) {
+                    // Get Additions/Deletions Graphs
+                    Revision revision = getRevision(commitId, conn);
+                    revision.getAdditions().ifPresent(deltaIRIs::add);
+                    revision.getDeletions().ifPresent(deltaIRIs::add);
+                    revision.getGraphRevision().forEach(graphRevision -> {
+                        graphRevision.getAdditions().ifPresent(deltaIRIs::add);
+                        graphRevision.getDeletions().ifPresent(deltaIRIs::add);
+                    });
+
+                    // Remove Commit
+                    remove(commitId, conn);
+
+                    // Remove Tags Referencing this Commit
+                    Set<Resource> tags = RepositoryResults.asModel(conn.getStatements(null, commitIRI, commitId), mf)
+                            .subjects();
+                    tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId, VersionedRecord.version_IRI,
+                            conn));
+                } else {
+                    break;
+                }
+            }
+            deltaIRIs.forEach(resource -> remove(resource, conn));
+        }
+    }
+
+    @Override
+    public void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn) {
+        Branch branch = getObject(branchId, branchFactory, conn);
+        removeBranch(recordId, branch, conn);
+    }
+
+    private boolean commitIsReferenced(Resource commitId, RepositoryConnection conn) {
+        IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
+        IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
+        IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
+        return Stream.of(headCommitIRI, baseCommitIRI, auxiliaryCommitIRI)
+                .map(iri -> conn.contains(null, iri, commitId))
+                .reduce(false, (iri1, iri2) -> iri1 || iri2);
     }
 
     @Override

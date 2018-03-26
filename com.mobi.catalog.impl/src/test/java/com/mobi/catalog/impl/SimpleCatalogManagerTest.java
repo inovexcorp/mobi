@@ -22,40 +22,13 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.Catalog;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.Distribution;
-import com.mobi.catalog.api.ontologies.mcat.GraphRevision;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.ontologies.mcat.Revision;
-import com.mobi.catalog.api.ontologies.mcat.Tag;
-import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
-import com.mobi.catalog.api.ontologies.mcat.UserBranch;
-import com.mobi.catalog.api.ontologies.mcat.Version;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
+import com.mobi.catalog.api.ontologies.mcat.*;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
@@ -85,16 +58,15 @@ import org.openrdf.rio.Rio;
 import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.Arrays;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static junit.framework.TestCase.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
 
 public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
@@ -583,13 +555,11 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         Distribution dist = distributionFactory.createNew(DISTRIBUTION_IRI);
         version.setVersionedDistribution(Collections.singleton(dist));
         doReturn(Optional.of(record)).when(utilsService).optObject(eq(VERSIONED_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-        doReturn(version).when(utilsService).getObject(eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
 
         Record result = manager.removeRecord(distributedCatalogId, VERSIONED_RECORD_IRI, versionedRecordFactory);
         assertEquals(record, result);
-        verify(utilsService).getObject(eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
-        verify(utilsService).remove(eq(VERSION_IRI), any(RepositoryConnection.class));
-        verify(utilsService).remove(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
+        verify(utilsService).removeVersion(eq(record.getResource()), any(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService).removeObject(any(VersionedRDFRecord.class), any(RepositoryConnection.class));
     }
 
     @Test
@@ -606,16 +576,12 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         record.setBranch(Collections.singleton(branch));
         record.setMasterBranch(branch);
         doReturn(Optional.of(record)).when(utilsService).optObject(eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        doReturn(tag).when(utilsService).getObject(eq(TAG_IRI), eq(versionFactory), any(RepositoryConnection.class));
-        doReturn(branch).when(utilsService).getObject(eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
 
         Record result = manager.removeRecord(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, versionedRDFRecordFactory);
         assertEquals(record, result);
-        verify(utilsService).getObject(eq(TAG_IRI), eq(versionFactory), any(RepositoryConnection.class));
-        verify(utilsService).remove(eq(TAG_IRI), any(RepositoryConnection.class));
-        verify(utilsService).remove(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
-        verify(utilsService).getObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        verify(utilsService).remove(eq(MASTER_BRANCH_IRI), any(RepositoryConnection.class));
+        verify(utilsService).removeVersion(eq(record.getResource()), any(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService).removeBranch(eq(record.getResource()), any(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService).removeObject(any(VersionedRDFRecord.class), any(RepositoryConnection.class));
     }
 
     /* getRecord */
@@ -766,8 +732,8 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
             manager.removeUnversionedDistribution(distributedCatalogId, UNVERSIONED_RECORD_IRI, DISTRIBUTION_IRI);
             verify(utilsService).getUnversionedDistribution(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
-            assertFalse(conn.getStatements(UNVERSIONED_RECORD_IRI, distributionIRI, DISTRIBUTION_IRI, UNVERSIONED_RECORD_IRI).hasNext());
+            verify(utilsService).removeObjectWithRelationship(eq(DISTRIBUTION_IRI), eq(UNVERSIONED_RECORD_IRI),
+                    eq(UnversionedRecord.unversionedDistribution_IRI), any(RepositoryConnection.class));
         }
     }
 
@@ -895,10 +861,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
             manager.removeVersion(distributedCatalogId, VERSIONED_RECORD_IRI, LATEST_VERSION_IRI);
             verify(utilsService).getVersion(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(LATEST_VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(LATEST_VERSION_IRI), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, latestIRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RECORD_IRI, versionIRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            verify(utilsService).removeVersion(eq(VERSIONED_RECORD_IRI), eq(version), any(RepositoryConnection.class));
         }
     }
 
@@ -1075,8 +1038,8 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
             manager.removeVersionedDistribution(distributedCatalogId, VERSIONED_RECORD_IRI, VERSION_IRI, DISTRIBUTION_IRI);
             verify(utilsService).getVersionedDistribution(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VERSION_IRI), eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
-            assertFalse(conn.getStatements(VERSION_IRI, distributionIRI, DISTRIBUTION_IRI, VERSION_IRI).hasNext());
+            verify(utilsService).removeObjectWithRelationship(eq(DISTRIBUTION_IRI), eq(VERSION_IRI),
+                    eq(Version.versionedDistribution_IRI), any(RepositoryConnection.class));
         }
     }
 
@@ -1230,25 +1193,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     @Test
     public void testRemoveBranch() throws Exception {
         // Setup:
-        Resource commitIdToRemove = VALUE_FACTORY.createIRI(COMMITS + "conflict2");
-        IRI additionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "conflict2");
-        IRI deletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "conflict2");
-        Resource revisionToRemove = VALUE_FACTORY.createIRI(REVISIONS + "conflict2");
-        Resource commitIdToKeep = VALUE_FACTORY.createIRI(COMMITS + "conflict0");
-        Resource additionsToKeep = VALUE_FACTORY.createIRI(ADDITIONS + "conflict0");
-        Resource deletionsToKeep = VALUE_FACTORY.createIRI(DELETIONS + "conflict0");
-
-        Branch branch = branchFactory.createNew(BRANCH_IRI);
-        branch.setHead(commitFactory.createNew(commitIdToRemove));
-        doReturn(branch).when(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-
-        doReturn(Stream.of(commitIdToRemove, commitIdToKeep).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(commitIdToRemove), eq(false), any(RepositoryConnection.class));
-
-        Revision revision = revisionFactory.createNew(revisionToRemove);
-        revision.setAdditions(additionsToRemove);
-        revision.setDeletions(deletionsToRemove);
-        doReturn(revision).when(utilsService).getRevision(eq(commitIdToRemove), any(RepositoryConnection.class));
-
         IRI headIRI = VALUE_FACTORY.createIRI(Branch.head_IRI);
         IRI versionIRI = VALUE_FACTORY.createIRI(VersionedRecord.version_IRI);
         IRI branchIRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
@@ -1260,90 +1204,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
             manager.removeBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, BRANCH_IRI);
             verify(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-            verify(utilsService).getCommitChain(eq(commitIdToRemove), eq(false), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(BRANCH_IRI), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(commitIdToRemove), any(RepositoryConnection.class));
-            verify(utilsService, times(0)).remove(eq(commitIdToKeep), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(additionsToRemove), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(deletionsToRemove), any(RepositoryConnection.class));
-            verify(utilsService, times(0)).remove(eq(additionsToKeep), any(RepositoryConnection.class));
-            verify(utilsService, times(0)).remove(eq(deletionsToKeep), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(LATEST_TAG_IRI), any(RepositoryConnection.class));
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, versionIRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-        }
-    }
-
-    @Test
-    public void testRemoveBranchWithQuads() throws Exception {
-        // TODO: This does not test if a chain of commits is properly removed. Requires real utilsService.
-        // Setup:
-        IRI record = VALUE_FACTORY.createIRI(RECORDS + "quad-versioned-rdf-record");
-        IRI branchToRemove = VALUE_FACTORY.createIRI(BRANCHES + "quad-branch");
-        Resource commit0 = VALUE_FACTORY.createIRI(COMMITS + "quad-test0");
-        Resource commit1 = VALUE_FACTORY.createIRI(COMMITS + "quad-test1");
-        Resource commit2 = VALUE_FACTORY.createIRI(COMMITS + "quad-test2");
-        IRI additionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "quad-test2");
-        IRI deletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "quad-test2");
-        IRI graphAdditionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "quad-test2%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1");
-        IRI graphDeletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "quad-test2%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1");
-        Resource revisionToRemove = VALUE_FACTORY.createIRI(REVISIONS + "quad-test2");
-
-        Branch branch = branchFactory.createNew(branchToRemove);
-        branch.setHead(commitFactory.createNew(commit2));
-        doReturn(branch).when(utilsService).getBranch(eq(distributedCatalogId), eq(record), eq(branchToRemove), eq(branchFactory), any(RepositoryConnection.class));
-
-        doReturn(Stream.of(commit2, commit1, commit0).collect(Collectors.toList()))
-                .when(utilsService).getCommitChain(eq(commit2), eq(false), any(RepositoryConnection.class));
-
-        GraphRevision graphRevision = graphRevisionFactory.createNew(VALUE_FACTORY.createBNode());
-        graphRevision.setRevisionedGraph(VALUE_FACTORY.createIRI(GRAPHS + "quad-graph1"));
-        graphRevision.setAdditions(graphAdditionsToRemove);
-        graphRevision.setDeletions(graphDeletionsToRemove);
-
-        Set<GraphRevision> graphRevisions = new HashSet<>();
-        graphRevisions.add(graphRevision);
-
-        Revision revision = revisionFactory.createNew(revisionToRemove, graphRevision.getModel());
-        revision.setAdditions(additionsToRemove);
-        revision.setDeletions(deletionsToRemove);
-        revision.setGraphRevision(graphRevisions);
-
-        doReturn(revision).when(utilsService).getRevision(eq(commit2), any(RepositoryConnection.class));
-
-        IRI headIRI = VALUE_FACTORY.createIRI(Branch.head_IRI);
-        IRI branchIRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
-        try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(record, branchIRI, branchToRemove, record).hasNext());
-            // Remove the head statement so that commit logic works
-            conn.remove(branchToRemove, headIRI, null);
-
-            manager.removeBranch(distributedCatalogId, record, branchToRemove);
-            verify(utilsService).getBranch(eq(distributedCatalogId), eq(record), eq(branchToRemove), eq(branchFactory), any(RepositoryConnection.class));
-            verify(utilsService).getCommitChain(eq(commit2), eq(false), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(branchToRemove), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(commit2), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(additionsToRemove), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(deletionsToRemove), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(graphAdditionsToRemove), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(graphDeletionsToRemove), any(RepositoryConnection.class));
-            assertFalse(conn.getStatements(record, branchIRI, branchToRemove, record).hasNext());
-        }
-    }
-
-    @Test
-    public void testRemoveBranchWithNoHead() {
-        // Setup:
-        Branch branch = branchFactory.createNew(BRANCH_IRI);
-        doReturn(branch).when(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        IRI branchIRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
-        try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-
-            manager.removeBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, BRANCH_IRI);
-            verify(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(BRANCH_IRI), any(RepositoryConnection.class));
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            verify(utilsService).removeBranch(eq(VERSIONED_RDF_RECORD_IRI), any(Branch.class), any(RepositoryConnection.class));
         }
     }
 
