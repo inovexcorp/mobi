@@ -35,9 +35,12 @@ import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -136,7 +139,7 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
     /* export() */
 
     @Test
-    public void exportTest() throws Exception {
+    public void exportUsingOutputStreamTest() throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         RecordExportConfig config = new RecordExportConfig.Builder(os, RDFFormat.JSONLD, transformer).build();
 
@@ -145,11 +148,14 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         recordService.export(testIRI, config, connection);
         assertFalse(exporter.isActive());
 
+        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString())), "", RDFFormat.JSONLD));
+        assertEquals(testRecord.getModel(), outputModel);
+
         verify(utilsService).getExpectedObject(eq(testIRI), any(OrmFactory.class), eq(connection));
     }
 
     @Test
-    public void exportBatchExporterTest() throws Exception {
+    public void exportUsingBatchExporterTest() throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         BatchExporter exporter = new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
         RecordExportConfig config = new RecordExportConfig.Builder(exporter).build();
@@ -160,6 +166,9 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         recordService.export(testIRI, config, connection);
         exporter.endRDF();
         assertFalse(exporter.isActive());
+
+        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString())), "", RDFFormat.JSONLD));
+        assertEquals(testRecord.getModel(), outputModel);
 
         verify(utilsService).getExpectedObject(eq(testIRI), any(OrmFactory.class), eq(connection));
     }
