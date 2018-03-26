@@ -57,9 +57,7 @@ import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
@@ -67,6 +65,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private final IRI catalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-test");
     private final IRI branchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch");
     private final IRI commitIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commit");
+    private final IRI tagIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#tag");
+    private final IRI distributionIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/distributions#distribution");
+    private final IRI masterBranchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#master");
 
     private VersionedRDFRecordService recordService;
     private SimpleSesameTransformer transformer;
@@ -76,6 +77,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private Difference difference;
     private User user;
     private DeleteActivity deleteActivity;
+    private Tag tag;
 
     private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
     private OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
@@ -83,6 +85,10 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+    private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
+    private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
+    private OrmFactory<Version> versionFactory = getRequiredOrmFactory(Version.class);
+    private OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
 
     @Mock
     private CatalogUtilsService utilsService;
@@ -118,10 +124,17 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
                 .deletions(deletions)
                 .build();
 
+        tag = tagFactory.createNew(tagIRI);
+        tag.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(distributionIRI)));
+
         testRecord = versionedRDFRecordFactory.createNew(testIRI);
         testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
         testRecord.setBranch(Collections.singleton(branch));
+        testRecord.setVersion(Collections.singleton(tag));
+        testRecord.setLatestVersion(tag);
+        testRecord.setBranch(Collections.singleton(branch));
+        testRecord.setMasterBranch(branchFactory.createNew(masterBranchIRI));
 
 
         MockitoAnnotations.initMocks(this);
@@ -133,6 +146,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         when(utilsService.getExpectedObject(eq(commitIRI), any(OrmFactory.class), eq(connection))).thenReturn(headCommit);
         when(utilsService.getRevisionChanges(eq(commitIRI), eq(connection))).thenReturn(difference);
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
+
+        when(utilsService.getObject(eq(branchIRI), any(OrmFactory.class), eq(connection))).thenReturn(branch);
+        //when(utilsService.getRevision())
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.setRecordFactory(recordFactory);
@@ -146,14 +162,29 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     @Test
     public void deleteTest() throws Exception {
         when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.of(testRecord));
+//
+//        VersionedRDFRecord deletedRecord = (VersionedRDFRecord) recordService.delete(testIRI, user, connection);
+//
+////        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
+////        verify(utilsService).removeObject(eq(testRecord), eq(connection));
+////        verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
+////        verify(provUtils).endDeleteActivity(eq(deleteActivity), eq(testRecord));
+//        assertEquals(testRecord, deletedRecord);
+        // Setup:
+
+        doReturn(revisionFactory.createNew()).when(utilsService).getRevision()
+        doReturn(Optional.of(testRecord)).when(utilsService).optObject(eq(testIRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+        doReturn(tag).when(utilsService).getObject(eq(tagIRI), any(OrmFactory.class), any(RepositoryConnection.class));
+        doReturn(branch).when(utilsService).getObject(eq(branchIRI), eq(branchFactory), any(RepositoryConnection.class));
 
         VersionedRDFRecord deletedRecord = (VersionedRDFRecord) recordService.delete(testIRI, user, connection);
 
-//        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
-//        verify(utilsService).removeObject(eq(testRecord), eq(connection));
-//        verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
-//        verify(provUtils).endDeleteActivity(eq(deleteActivity), eq(testRecord));
         assertEquals(testRecord, deletedRecord);
+        verify(utilsService).getObject(eq(tagIRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(tagIRI), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(distributionIRI), any(RepositoryConnection.class));
+        verify(utilsService).getObject(eq(masterBranchIRI), eq(branchFactory), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(masterBranchIRI), any(RepositoryConnection.class));
     }
 
     @Test (expected = IllegalArgumentException.class)

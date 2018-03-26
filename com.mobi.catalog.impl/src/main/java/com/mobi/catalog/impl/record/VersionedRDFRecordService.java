@@ -71,7 +71,7 @@ public class VersionedRDFRecordService extends SimpleRecordService {
     }
 
     @Override
-    public void deleteRecord(Record record, RepositoryConnection conn) {
+    protected void deleteRecord(Record record, RepositoryConnection conn) {
         versionedRDFRecordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRDFRecord -> {
                     versionedRDFRecord.getVersion_resource()
