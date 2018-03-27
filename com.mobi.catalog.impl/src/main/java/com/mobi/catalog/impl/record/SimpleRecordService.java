@@ -72,7 +72,7 @@ public class SimpleRecordService implements RecordService<Record> {
 
 
     @Override
-    public Record delete(IRI recordId, User user, RepositoryConnection conn) {
+    public final Record delete(IRI recordId, User user, RepositoryConnection conn) {
 
         Record record = utilsService.optObject(recordId, recordFactory, conn).orElseThrow(()
                 -> new IllegalArgumentException("Record " + recordId + " does not exist"));
@@ -114,7 +114,15 @@ public class SimpleRecordService implements RecordService<Record> {
     }
 
     protected class ExportWriter {
-        BatchExporter writer;
+        private BatchExporter writer;
+
+        private void startRDFExport() {
+            writer.startRDF();
+        }
+
+        private void endRDFExport() {
+            writer.endRDF();
+        }
 
         protected ExportWriter(BatchExporter writer) {
             this.writer = writer;
@@ -134,14 +142,6 @@ public class SimpleRecordService implements RecordService<Record> {
 
         protected boolean isActive() {
             return writer.isActive();
-        }
-
-        private void startRDFExport() {
-            writer.startRDF();
-        }
-
-        private void endRDFExport() {
-            writer.endRDF();
         }
     }
 }
