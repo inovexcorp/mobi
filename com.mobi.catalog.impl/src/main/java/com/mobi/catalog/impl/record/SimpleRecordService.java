@@ -116,6 +116,14 @@ public class SimpleRecordService implements RecordService<Record> {
     protected class ExportWriter {
         BatchExporter writer;
 
+        private void startRDFExport() {
+            writer.startRDF();
+        }
+
+        private void endRDFExport() {
+            writer.endRDF();
+        }
+
         protected ExportWriter(BatchExporter writer) {
             this.writer = writer;
         }
@@ -134,14 +142,6 @@ public class SimpleRecordService implements RecordService<Record> {
 
         protected boolean isActive() {
             return writer.isActive();
-        }
-
-        private void startRDFExport() {
-            writer.startRDF();
-        }
-
-        private void endRDFExport() {
-            writer.endRDF();
         }
     }
 }
