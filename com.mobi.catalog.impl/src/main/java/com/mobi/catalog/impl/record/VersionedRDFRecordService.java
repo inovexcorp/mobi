@@ -14,8 +14,7 @@ public class VersionedRDFRecordService extends SimpleRecordService {
 
     protected CommitFactory commitFactory;
     protected BranchFactory branchFactory;
-
-
+    
     @Reference
     void setCommitFactory(CommitFactory commitFactory) {
         this.commitFactory = commitFactory;
