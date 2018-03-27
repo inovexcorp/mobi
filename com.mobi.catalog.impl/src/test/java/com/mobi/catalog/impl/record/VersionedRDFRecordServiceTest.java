@@ -35,10 +35,12 @@ import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -58,7 +60,9 @@ import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
@@ -188,7 +192,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     /* export() */
 
     @Test
-    public void exportTest() throws Exception {
+    public void exportUsingOutputStreamTest() throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         RecordExportConfig config = new RecordExportConfig.Builder(os, RDFFormat.JSONLD, transformer).build();
 
@@ -196,6 +200,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         assertFalse(exporter.isActive());
         recordService.export(testIRI, config, connection);
         assertFalse(exporter.isActive());
+
+        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString())), "", RDFFormat.JSONLD));
+        assertTrue(outputModel.containsAll(testRecord.getModel()));
 
         verify(utilsService).getExpectedObject(eq(testIRI), any(OrmFactory.class), eq(connection));
         verify(utilsService).getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection));
@@ -206,7 +213,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void exportBatchExporterTest() throws Exception {
+    public void exportUsingBatchExporterTest() throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         BatchExporter exporter = new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
         RecordExportConfig config = new RecordExportConfig.Builder(exporter).build();
@@ -217,6 +224,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         recordService.export(testIRI, config, connection);
         exporter.endRDF();
         assertFalse(exporter.isActive());
+
+        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString())), "", RDFFormat.JSONLD));
+        assertTrue(outputModel.containsAll(testRecord.getModel()));
 
         verify(utilsService).getExpectedObject(eq(testIRI), any(OrmFactory.class), eq(connection));
         verify(utilsService).getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection));

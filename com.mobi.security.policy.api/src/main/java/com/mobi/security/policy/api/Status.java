@@ -26,10 +26,10 @@ package com.mobi.security.policy.api;
 public class Status {
     private String name;
 
-    private static final Status OK = new Status("OK");
-    private static final Status MISSING_ATTRIBUTE = new Status("Missing Attribute");
-    private static final Status SYNTAX_ERROR = new Status("Syntax Error");
-    private static final Status PROCESSING_ERROR = new Status("Processing Error");
+    public static final Status OK = new Status("OK");
+    public static final Status MISSING_ATTRIBUTE = new Status("Missing Attribute");
+    public static final Status SYNTAX_ERROR = new Status("Syntax Error");
+    public static final Status PROCESSING_ERROR = new Status("Processing Error");
 
     private Status(String name) {
         this.name = name;

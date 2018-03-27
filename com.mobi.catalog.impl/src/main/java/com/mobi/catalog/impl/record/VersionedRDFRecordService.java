@@ -12,9 +12,9 @@ import java.util.Set;
 
 public class VersionedRDFRecordService extends SimpleRecordService {
 
+    protected VersionedRDFRecordFactory versionedRDFRecordFactory;
     protected CommitFactory commitFactory;
     protected BranchFactory branchFactory;
-    protected VersionedRDFRecordFactory versionedRDFRecordFactory;
 
     @Reference
     void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
@@ -48,38 +48,47 @@ public class VersionedRDFRecordService extends SimpleRecordService {
 
     @Override
     protected void exportRecord(IRI iriRecord, ExportWriter writer, RepositoryConnection conn) {
-        VersionedRDFRecord record = (VersionedRDFRecord) utilsService.getExpectedObject(iriRecord, recordFactory, conn);
+        VersionedRDFRecord record = utilsService.getExpectedObject(iriRecord, versionedRDFRecordFactory, conn);
 
+        writeRecordData(record, writer);
+        writeVersionedRDFData(record, writer, conn);
+    }
+
+    /**
+     * Writes the VersionedRDFRecord data (Branches, Commits, Tags) to the provided ExportWriter
+     *
+     * @param record The VersionedRDFRecord to write versioned data
+     * @param writer The ExportWriter to write the VersionedRDFRecord to
+     * @param conn A RepositoryConnection to use for lookup
+     */
+    protected void writeVersionedRDFData(VersionedRDFRecord record, ExportWriter writer, RepositoryConnection conn) {
         Set<Resource> processedCommits = new HashSet<>();
+
         // Write Branches
         record.getBranch_resource().forEach(branchResource -> {
 
             Branch branch = utilsService.getBranch(record, branchResource, branchFactory, conn);
             branch.getModel().forEach(writer::handleStatement);
+            Resource headIRI = utilsService.getHeadCommitIRI(branch);
 
-            exportCommits(utilsService.getHeadCommitIRI(branch), processedCommits, writer, conn);
-        });
-    }
+            // Write Commits
+            for (Resource commitId : utilsService.getCommitChain(headIRI, false, conn)) {
 
-    protected void exportCommits(Resource headIRI, Set<Resource> processedCommits, ExportWriter writer, RepositoryConnection conn) {
+                if (processedCommits.contains(commitId)) {
+                    break;
+                } else {
+                    processedCommits.add(commitId);
+                }
 
-        // Write Commits
-        for (Resource commitId : utilsService.getCommitChain(headIRI, false, conn)) {
+                // Write Commit/Revision Data
+                Commit commit = utilsService.getExpectedObject(commitId, commitFactory, conn);
+                commit.getModel().forEach(writer::handleStatement);
 
-            if (processedCommits.contains(commitId)) {
-                break;
-            } else {
-                processedCommits.add(commitId);
+                // Write Additions/Deletions Graphs
+                Difference revisionChanges = utilsService.getRevisionChanges(commitId, conn);
+                revisionChanges.getAdditions().forEach(writer::handleStatement);
+                revisionChanges.getDeletions().forEach(writer::handleStatement);
             }
-
-            // Write Commit/Revision Data
-            Commit commit = utilsService.getExpectedObject(commitId, commitFactory, conn);
-            commit.getModel().forEach(writer::handleStatement);
-
-            // Write Additions/Deletions Graphs
-            Difference revisionChanges = utilsService.getRevisionChanges(commitId, conn);
-            revisionChanges.getAdditions().forEach(writer::handleStatement);
-            revisionChanges.getDeletions().forEach(writer::handleStatement);
-        }
+        });
     }
 }
