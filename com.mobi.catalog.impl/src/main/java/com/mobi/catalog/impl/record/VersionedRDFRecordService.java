@@ -3,7 +3,6 @@ package com.mobi.catalog.impl.record;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.*;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
@@ -25,11 +24,6 @@ public class VersionedRDFRecordService extends SimpleRecordService {
     @Reference
     void setBranchFactory(BranchFactory branchFactory) {
         this.branchFactory = branchFactory;
-    }
-
-    @Override
-    public VersionedRDFRecord delete(IRI recordId, User user, RepositoryConnection conn) {
-        return null;
     }
 
     @Override

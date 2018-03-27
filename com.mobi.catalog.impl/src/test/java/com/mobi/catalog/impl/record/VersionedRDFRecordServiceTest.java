@@ -142,7 +142,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     /* export() */
 
     @Test
-    public void exportTest() throws Exception {
+    public void exportUsingOutputStreamTest() throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         RecordExportConfig config = new RecordExportConfig.Builder(os, RDFFormat.JSONLD, transformer).build();
 
@@ -160,7 +160,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void exportBatchExporterTest() throws Exception {
+    public void exportUsingBatchExporterTest() throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         BatchExporter exporter = new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
         RecordExportConfig config = new RecordExportConfig.Builder(exporter).build();
