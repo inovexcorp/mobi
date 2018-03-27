@@ -1332,6 +1332,52 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testRemoveBranchComplete() {
+        // Setup:
+        Resource recordId = VALUE_FACTORY.createIRI(RECORDS + "complex-record");
+        Resource commitA = VALUE_FACTORY.createIRI(COMMITS + "complex-a");
+        IRI commitARevision = VALUE_FACTORY.createIRI(REVISIONS + "complex-a");
+        IRI commitAAdditions = VALUE_FACTORY.createIRI(ADDITIONS + "complex-a");
+        IRI commitADeletions = VALUE_FACTORY.createIRI(DELETIONS + "complex-a");
+        Resource commitB = VALUE_FACTORY.createIRI(COMMITS + "complex-b");
+        Resource commitC = VALUE_FACTORY.createIRI(COMMITS + "complex-c");
+        IRI commitCRevision = VALUE_FACTORY.createIRI(REVISIONS + "complex-c");
+        IRI commitCAdditions = VALUE_FACTORY.createIRI(ADDITIONS + "complex-c");
+        IRI commitCDeletions = VALUE_FACTORY.createIRI(DELETIONS + "complex-c");
+        Resource commitD = VALUE_FACTORY.createIRI(COMMITS + "complex-d");
+        Branch branch = branchFactory.createNew(VALUE_FACTORY.createIRI(BRANCHES + "complex-branch"));
+        branch.setHead(commitFactory.createNew(commitA));
+        doReturn(branch).when(utilsService).getBranch(eq(distributedCatalogId), eq(recordId), eq(branch.getResource()), eq(branchFactory), any(RepositoryConnection.class));
+        doReturn(Stream.of(commitA, commitB, commitC, commitD).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(commitA), eq(false), any(RepositoryConnection.class));
+        Revision revisionA = revisionFactory.createNew(commitARevision);
+        revisionA.setAdditions(commitAAdditions);
+        revisionA.setDeletions(commitADeletions);
+        doReturn(revisionA).when(utilsService).getRevision(eq(commitA), any(RepositoryConnection.class));
+        Revision revisionC = revisionFactory.createNew(commitCRevision);
+        revisionC.setAdditions(commitCAdditions);
+        revisionC.setDeletions(commitCDeletions);
+        doReturn(revisionC).when(utilsService).getRevision(eq(commitC), any(RepositoryConnection.class));
+
+
+        IRI headIRI = VALUE_FACTORY.createIRI(Branch.head_IRI);
+        IRI branchIRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(recordId, branchIRI, branch.getResource(), recordId).hasNext());
+            conn.remove(branch.getResource(), headIRI, null);
+
+            manager.removeBranch(distributedCatalogId, recordId, branch.getResource());
+            verify(utilsService).getBranch(eq(distributedCatalogId), eq(recordId), eq(branch.getResource()), eq(branchFactory), any(RepositoryConnection.class));
+            verify(utilsService).getCommitChain(eq(commitA), eq(false), any(RepositoryConnection.class));
+            verify(utilsService).remove(eq(branch.getResource()), any(RepositoryConnection.class));
+            verify(utilsService).remove(eq(commitA), any(RepositoryConnection.class));
+            verify(utilsService, times(0)).remove(eq(commitB), any(RepositoryConnection.class));
+            verify(utilsService).remove(eq(commitC), any(RepositoryConnection.class));
+            verify(utilsService, times(0)).remove(eq(commitD), any(RepositoryConnection.class));
+            assertFalse(conn.getStatements(recordId, branchIRI, branch.getResource(), recordId).hasNext());
+        }
+    }
+
+    @Test
     public void testRemoveBranchWithNoHead() {
         // Setup:
         Branch branch = branchFactory.createNew(BRANCH_IRI);
