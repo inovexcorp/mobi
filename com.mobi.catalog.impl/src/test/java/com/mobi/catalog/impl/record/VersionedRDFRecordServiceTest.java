@@ -12,12 +12,12 @@ package com.mobi.catalog.impl.record;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -79,7 +79,6 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private Branch branch;
     private Commit headCommit;
     private Difference difference;
-    private User user;
     private DeleteActivity deleteActivity;
 
     private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
@@ -108,7 +107,6 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         transformer = new SimpleSesameTransformer();
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
 
-        user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/user"));
         headCommit = commitFactory.createNew(commitIRI);
         branch = branchFactory.createNew(branchIRI);
         branch.setHead(headCommit);
