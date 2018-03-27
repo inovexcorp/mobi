@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class RecordExportConfig {
-    private BatchExporter batchExporter;
+    protected BatchExporter batchExporter;
 
     protected RecordExportConfig(Builder builder) {
         this.batchExporter = builder.batchExporter;
@@ -44,10 +44,10 @@ public class RecordExportConfig {
     }
 
     public static class Builder {
-        private BatchExporter batchExporter;
-        private OutputStream outputStream ;
-        private RDFFormat format;
-        private SesameTransformer transformer;
+        protected BatchExporter batchExporter;
+        protected OutputStream outputStream ;
+        protected RDFFormat format;
+        protected SesameTransformer transformer;
 
         /**
          * Creates a new Builder for RecordExportConfig with the provided BatchExporter

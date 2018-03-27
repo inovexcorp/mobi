@@ -26,8 +26,12 @@ package com.mobi.catalog.impl.record;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.*;
-import com.mobi.catalog.api.record.config.RecordExportConfig;
+import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.Catalog;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.record.config.VersionedRDFRecordExportConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
@@ -57,7 +61,10 @@ import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
@@ -144,7 +151,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     @Test
     public void exportUsingOutputStreamTest() throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        RecordExportConfig config = new RecordExportConfig.Builder(os, RDFFormat.JSONLD, transformer).build();
+        VersionedRDFRecordExportConfig config = new VersionedRDFRecordExportConfig.Builder(os, RDFFormat.JSONLD, transformer).build();
 
         BatchExporter exporter = config.getBatchExporter();
         assertFalse(exporter.isActive());
@@ -153,6 +160,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
         Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString())), "", RDFFormat.JSONLD));
         assertTrue(outputModel.containsAll(testRecord.getModel()));
+        assertTrue(outputModel.containsAll(branch.getModel()));
+        assertTrue(outputModel.containsAll(difference.getAdditions()));
+        assertTrue(outputModel.containsAll(difference.getDeletions()));
 
         verify(utilsService).getExpectedObject(eq(testIRI), any(OrmFactory.class), eq(connection));
         verify(utilsService).getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection));
@@ -166,7 +176,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     public void exportUsingBatchExporterTest() throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         BatchExporter exporter = new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
-        RecordExportConfig config = new RecordExportConfig.Builder(exporter).build();
+        VersionedRDFRecordExportConfig config = new VersionedRDFRecordExportConfig.Builder(exporter).build();
 
         assertFalse(exporter.isActive());
         exporter.startRDF();
@@ -177,6 +187,69 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
         Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString())), "", RDFFormat.JSONLD));
         assertTrue(outputModel.containsAll(testRecord.getModel()));
+        assertTrue(outputModel.containsAll(branch.getModel()));
+        assertTrue(outputModel.containsAll(difference.getAdditions()));
+        assertTrue(outputModel.containsAll(difference.getDeletions()));
+
+        verify(utilsService).getExpectedObject(eq(testIRI), any(OrmFactory.class), eq(connection));
+        verify(utilsService).getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection));
+        verify(utilsService).getHeadCommitIRI(eq(branch));
+        verify(utilsService).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(commitIRI), any(OrmFactory.class), eq(connection));
+        verify(utilsService).getRevisionChanges(eq(commitIRI), eq(connection));
+    }
+
+    @Test
+    public void exportRecordOnlyTest() throws Exception {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        BatchExporter exporter = new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
+        VersionedRDFRecordExportConfig config = new VersionedRDFRecordExportConfig.Builder(exporter).writeVersionedData(false).build();
+
+        assertFalse(exporter.isActive());
+        exporter.startRDF();
+        assertTrue(exporter.isActive());
+        recordService.export(testIRI, config, connection);
+        exporter.endRDF();
+        assertFalse(exporter.isActive());
+
+        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString())), "", RDFFormat.JSONLD));
+        assertTrue(outputModel.containsAll(testRecord.getModel()));
+        assertFalse(outputModel.containsAll(branch.getModel()));
+        assertFalse(outputModel.containsAll(difference.getDeletions()));
+
+        verify(utilsService).getExpectedObject(eq(testIRI), any(OrmFactory.class), eq(connection));
+        verify(utilsService, never()).getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection));
+        verify(utilsService, never()).getHeadCommitIRI(eq(branch));
+        verify(utilsService, never()).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
+        verify(utilsService, never()).getExpectedObject(eq(commitIRI), any(OrmFactory.class), eq(connection));
+        verify(utilsService, never()).getRevisionChanges(eq(commitIRI), eq(connection));
+    }
+
+    @Test
+    public void exportSpecificBranch() throws Exception {
+        Branch doNotWriteBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch2"));
+        doNotWriteBranch.setHead(headCommit);
+        doNotWriteBranch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+
+        testRecord.addBranch(doNotWriteBranch);
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        BatchExporter exporter = new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
+        VersionedRDFRecordExportConfig config = new VersionedRDFRecordExportConfig.Builder(exporter).addBranchResource(branchIRI).build();
+
+        assertFalse(exporter.isActive());
+        exporter.startRDF();
+        assertTrue(exporter.isActive());
+        recordService.export(testIRI, config, connection);
+        exporter.endRDF();
+        assertFalse(exporter.isActive());
+
+        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString())), "", RDFFormat.JSONLD));
+        testRecord.removeBranch(doNotWriteBranch);
+        assertTrue(outputModel.containsAll(testRecord.getModel()));
+        assertTrue(outputModel.containsAll(branch.getModel()));
+        assertFalse(outputModel.containsAll(doNotWriteBranch.getModel()));
+        assertTrue(outputModel.containsAll(difference.getDeletions()));
 
         verify(utilsService).getExpectedObject(eq(testIRI), any(OrmFactory.class), eq(connection));
         verify(utilsService).getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection));
