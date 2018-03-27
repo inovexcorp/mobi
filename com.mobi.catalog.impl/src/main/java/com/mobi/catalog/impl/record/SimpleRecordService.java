@@ -110,6 +110,10 @@ public class SimpleRecordService implements RecordService<Record> {
 
     protected void exportRecord(IRI iriRecord, ExportWriter writer, RepositoryConnection conn) {
         Record record = utilsService.getExpectedObject(iriRecord, recordFactory, conn);
+        writeRecordData(record, writer);
+    }
+
+    protected void writeRecordData(Record record, ExportWriter writer) {
         record.getModel().forEach(writer::handleStatement);
     }
 
