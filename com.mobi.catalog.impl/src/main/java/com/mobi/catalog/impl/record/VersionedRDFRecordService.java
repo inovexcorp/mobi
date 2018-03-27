@@ -2,7 +2,12 @@ package com.mobi.catalog.impl.record;
 
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.*;
+import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.config.RecordExportConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordExportConfig;
 import com.mobi.rdf.api.IRI;
@@ -59,7 +64,6 @@ public class VersionedRDFRecordService extends SimpleRecordService {
 
         // Write Branches
         record.getBranch_resource().forEach(branchResource -> {
-
             if (branchesToWrite.isEmpty() || branchesToWrite.contains(branchResource)) {
                 Branch branch = utilsService.getBranch(record, branchResource, branchFactory, conn);
                 branch.getModel().forEach(writer::handleStatement);
