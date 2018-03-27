@@ -27,6 +27,9 @@ import com.mobi.rdf.api.IRI;
 
 import java.util.Optional;
 
+/**
+ * A high level API for a security policy. Should also implement the toString method.
+ */
 public interface Policy {
 
     /**

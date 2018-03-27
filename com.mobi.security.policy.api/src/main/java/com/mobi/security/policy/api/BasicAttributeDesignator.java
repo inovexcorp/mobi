@@ -39,16 +39,16 @@ public class BasicAttributeDesignator implements AttributeDesignator {
 
     @Override
     public IRI attributeId() {
-        return null;
+        return attributeId;
     }
 
     @Override
     public IRI category() {
-        return null;
+        return category;
     }
 
     @Override
     public IRI datatype() {
-        return null;
+        return datatype;
     }
 }
