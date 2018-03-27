@@ -24,8 +24,24 @@ package com.mobi.security.policy.api;
  */
 
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Literal;
+
+import java.util.Map;
 
 public interface PDP {
+    /**
+     * Creates a new {@link Request} object with the provided details that is compatible with this PDP.
+     *
+     * @param subjectId The ID of the Subject of the Request.
+     * @param subjectAttrs A map of other attributes on the Subject.
+     * @param resourceId The ID of the Resource of the Request.
+     * @param resourceAttrs A map of other attributes on the Resource.
+     * @param actionId The ID of the Action of the Request.
+     * @param actionAttrs A map of other attributes on the Action.
+     * @return A Request in the appropriate format for this PDP
+     */
+    Request createRequest(IRI subjectId, Map<String, Literal> subjectAttrs, IRI resourceId,
+                          Map<String, Literal> resourceAttrs, IRI actionId, Map<String, Literal> actionAttrs);
 
     /**
      * Evaluates an authorization {@link Request} against a collection of {@link Policy Policies} combined
