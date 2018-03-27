@@ -17,6 +17,11 @@ public class VersionedRDFRecordService extends SimpleRecordService {
     protected BranchFactory branchFactory;
 
     @Reference
+    void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
+        this.versionedRDFRecordFactory = versionedRDFRecordFactory;
+    }
+
+    @Reference
     void setCommitFactory(CommitFactory commitFactory) {
         this.commitFactory = commitFactory;
     }
@@ -34,6 +39,13 @@ public class VersionedRDFRecordService extends SimpleRecordService {
         writeVersionedRDFData(record, writer, conn);
     }
 
+    /**
+     * Writes the VersionedRDFRecord data (Branches, Commits, Tags) to the provided ExportWriter
+     *
+     * @param record The VersionedRDFRecord to write versioned data
+     * @param writer The ExportWriter to write the VersionedRDFRecord to
+     * @param conn A RepositoryConnection to use for lookup
+     */
     protected void writeVersionedRDFData(VersionedRDFRecord record, ExportWriter writer, RepositoryConnection conn) {
         Set<Resource> processedCommits = new HashSet<>();
 

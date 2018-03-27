@@ -84,6 +84,12 @@ public class SimpleRecordService implements RecordService<Record> {
         return record;
     }
 
+    /**
+     * Removes the Record object from the repository
+     *
+     * @param record The Record to be removed
+     * @param conn A RepositoryConnection to use for lookup
+     */
     protected void deleteRecord(Record record, RepositoryConnection conn) {
         conn.begin();
         utilsService.removeObject(record, conn);
@@ -108,15 +114,31 @@ public class SimpleRecordService implements RecordService<Record> {
         }
     }
 
+    /**
+     * Retrieves a Record based on the given IRI and exports the data to the provided ExportWriter
+     *
+     * @param iriRecord IRI of the Record to export
+     * @param writer An ExportWriter to write the Record to
+     * @param conn A RepositoryConnection to use for lookup
+     */
     protected void exportRecord(IRI iriRecord, ExportWriter writer, RepositoryConnection conn) {
         Record record = utilsService.getExpectedObject(iriRecord, recordFactory, conn);
         writeRecordData(record, writer);
     }
 
+    /**
+     * Writes the base Record data to the provided ExportWriter
+     *
+     * @param record The Record to write out
+     * @param writer The ExportWriter to write the Record to
+     */
     protected void writeRecordData(Record record, ExportWriter writer) {
         record.getModel().forEach(writer::handleStatement);
     }
 
+    /**
+     * Wrapper class of BatchExporter. Restricts access to start and stop writing methods from subclasses.
+     */
     protected class ExportWriter {
         private BatchExporter writer;
 
