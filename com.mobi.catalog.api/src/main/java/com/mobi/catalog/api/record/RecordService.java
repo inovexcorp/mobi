@@ -37,7 +37,7 @@ public interface RecordService<T extends Record> {
      * @param recordId A {@link IRI} of the Record to delete
      * @param user The {@link User} that is deleting the Record
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
-     * @return
+     * @return The deleted Record
      */
     T delete(IRI recordId, User user, RepositoryConnection conn);
 

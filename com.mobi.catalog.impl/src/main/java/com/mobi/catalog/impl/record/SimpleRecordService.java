@@ -72,7 +72,7 @@ public class SimpleRecordService implements RecordService<Record> {
 
 
     @Override
-    public Record delete(IRI recordId, User user, RepositoryConnection conn) {
+    public final Record delete(IRI recordId, User user, RepositoryConnection conn) {
 
         Record record = utilsService.optObject(recordId, recordFactory, conn).orElseThrow(()
                 -> new IllegalArgumentException("Record " + recordId + " does not exist"));
