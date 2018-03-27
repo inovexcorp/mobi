@@ -48,6 +48,11 @@
             <artifactId>vfs</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>cache</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
     
     <build>
