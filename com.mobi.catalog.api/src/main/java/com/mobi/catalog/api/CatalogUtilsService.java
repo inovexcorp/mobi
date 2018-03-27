@@ -24,7 +24,15 @@ package com.mobi.catalog.api;
  */
 
 import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.*;
+import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.Catalog;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.Distribution;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
+import com.mobi.catalog.api.ontologies.mcat.Version;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;

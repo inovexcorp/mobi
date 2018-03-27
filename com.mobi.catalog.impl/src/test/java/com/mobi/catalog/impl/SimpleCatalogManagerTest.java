@@ -28,7 +28,20 @@ import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.*;
+import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.Catalog;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.Distribution;
+import com.mobi.catalog.api.ontologies.mcat.GraphRevision;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
+import com.mobi.catalog.api.ontologies.mcat.Tag;
+import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
+import com.mobi.catalog.api.ontologies.mcat.UserBranch;
+import com.mobi.catalog.api.ontologies.mcat.Version;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
@@ -58,15 +71,29 @@ import org.openrdf.rio.Rio;
 import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static junit.framework.TestCase.*;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 

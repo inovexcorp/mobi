@@ -24,7 +24,17 @@ package com.mobi.catalog.impl;
  */
 
 import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.*;
+import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.Catalog;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.Distribution;
+import com.mobi.catalog.api.ontologies.mcat.GraphRevision;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
+import com.mobi.catalog.api.ontologies.mcat.Version;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.rdf.api.IRI;
@@ -49,13 +59,16 @@ import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     private SimpleCatalogUtilsService service;
