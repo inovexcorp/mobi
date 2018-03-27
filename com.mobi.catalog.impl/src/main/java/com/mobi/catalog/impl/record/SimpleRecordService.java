@@ -114,7 +114,7 @@ public class SimpleRecordService implements RecordService<Record> {
     }
 
     protected class ExportWriter {
-        BatchExporter writer;
+        private BatchExporter writer;
 
         private void startRDFExport() {
             writer.startRDF();
