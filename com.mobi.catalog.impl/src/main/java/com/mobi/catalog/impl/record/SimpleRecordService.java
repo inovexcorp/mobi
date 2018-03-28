@@ -108,7 +108,7 @@ public class SimpleRecordService implements RecordService<Record> {
         if (!writerIsActive) {
             writerWrapper.startRDFExport();
         }
-        exportRecord(iriRecord, writerWrapper, conn);
+        exportRecord(iriRecord, writerWrapper, config, conn);
         if (!writerIsActive) {
             writerWrapper.endRDFExport();
         }
@@ -121,7 +121,7 @@ public class SimpleRecordService implements RecordService<Record> {
      * @param writer An ExportWriter to write the Record to
      * @param conn A RepositoryConnection to use for lookup
      */
-    protected void exportRecord(IRI iriRecord, ExportWriter writer, RepositoryConnection conn) {
+    protected void exportRecord(IRI iriRecord, ExportWriter writer, RecordExportConfig config, RepositoryConnection conn) {
         Record record = utilsService.getExpectedObject(iriRecord, recordFactory, conn);
         writeRecordData(record, writer);
     }
@@ -142,16 +142,16 @@ public class SimpleRecordService implements RecordService<Record> {
     protected class ExportWriter {
         private BatchExporter writer;
 
+        protected ExportWriter(BatchExporter writer) {
+            this.writer = writer;
+        }
+
         private void startRDFExport() {
             writer.startRDF();
         }
 
         private void endRDFExport() {
             writer.endRDF();
-        }
-
-        protected ExportWriter(BatchExporter writer) {
-            this.writer = writer;
         }
 
         protected void handleStatement(Statement statement) {
