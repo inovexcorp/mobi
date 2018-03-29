@@ -126,6 +126,10 @@
                                     <ontologyFile>${project.basedir}/../com.mobi.rdf.orm.ontologies/src/main/resources/prov-o.ttl</ontologyFile>
                                     <outputPackage>com.mobi.ontologies.provo</outputPackage>
                                 </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../com.mobi.rdf.orm.ontologies/src/main/resources/owl.rdf</ontologyFile>
+                                    <outputPackage>com.mobi.ontologies.owl</outputPackage>
+                                </ontology>
                             </references>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>
                         </configuration>

@@ -294,6 +294,26 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
+            <artifactId>document.translator.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>document.translator.cli</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>document.translator.json</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>document.translator.xml</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
             <artifactId>security.policy.api</artifactId>
             <version>${project.version}</version>
         </dependency>
