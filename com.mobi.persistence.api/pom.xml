@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.12.17-SNAPSHOT</version>
+        <version>1.12.18-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -65,7 +65,8 @@
                         <Bundle-Name>Mobi Persistence API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.rdf*,
+                            com.mobi.rdf.api,
+                            com.mobi.rdf.base,
                             com.mobi.repository*,
                             com.mobi.query*
                         </Export-Package>

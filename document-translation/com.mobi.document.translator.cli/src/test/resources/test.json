@@ -1,0 +1,20 @@
+{
+  "id": "123",
+  "subObject": {
+    "nullValue": null,
+    "int": 1,
+    "double": 3.1415,
+    "string": "some long string value"
+  },
+  "emptyObject": {},
+  "anotherEmpty": {
+  },
+  "arrayEntity": [
+    {},
+    {"test":"testOne"},
+    {"test":"testTwo", "different":"differentValue", "anotherDifferent": "anotherDifferentValue"}
+  ],
+  "arrayProperty": [
+    "arrOne" , "arrTwo"
+  ]
+}
