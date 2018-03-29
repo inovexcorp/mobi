@@ -93,6 +93,12 @@
         <!-- Document Translation -->
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-expression/5.0.2.RELEASE_1</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-core/5.0.2.RELEASE_1</bundle>
+
+        <!-- XACML Security Dependencies -->
+        <bundle start-level="80">mvn:org.wso2.balana/org.wso2.balana/1.1.3</bundle>
+        <bundle start-level="80">mvn:org.wso2.balana/org.wso2.balana.utils/1.1.3</bundle>
+        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.xerces/2.9.1_5</bundle>
+        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.xmlresolver/1.2_5</bundle>
     </feature>
     <feature name="mobi-core" description="Mobi Core Platform Bundles" version="${project.version}">
         <feature prerequisite="true">jaas</feature>
@@ -143,6 +149,9 @@
         <bundle start-level="80">mvn:com.mobi/document.translator.json/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/document.translator.xml/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/security.policy.api/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.mobi/security.policy.api.xacml/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.mobi/security.policy.impl.core/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.mobi/security.policy.impl.xacml/${project.version}</bundle>
     </feature>
     <feature name="mobi-cli" description="Mobi CLI Bundles" version="${project.version}">
         <feature prerequisite="true">mobi-core</feature>

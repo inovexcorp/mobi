@@ -23,18 +23,19 @@ package com.mobi.rest.util;
  * #L%
  */
 
+import com.mobi.exception.MobiException;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.SkolemizedStatementIterable;
 import com.mobi.persistence.utils.StatementIterable;
+import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
+import com.mobi.web.security.util.AuthenticationProps;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import com.mobi.jaas.api.engines.EngineManager;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.web.security.util.AuthenticationProps;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
@@ -44,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +65,7 @@ public class RestUtils {
      * @return The URL encoded version of the passed string.
      */
     public static String encode(String str) {
-        String encoded = null;
+        String encoded;
         try {
             encoded = URLEncoder.encode(str, "UTF-8").replaceAll("%28", "(")
                     .replaceAll("%29", ")")
@@ -72,9 +74,25 @@ public class RestUtils {
                     .replaceAll("%21", "!")
                     .replaceAll("%7E", "~");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            throw new MobiException(e);
         }
         return encoded;
+    }
+
+    /**
+     * Decodes the passed string that is encoded using percent encoding.
+     *
+     * @param str The string to be decoded.
+     * @return The decoded version of the passed URL encoded string.
+     */
+    public static String decode(String str) {
+        String decoded;
+        try {
+            decoded = URLDecoder.decode(str, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new MobiException(e);
+        }
+        return decoded;
     }
 
     /**
