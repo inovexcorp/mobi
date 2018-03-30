@@ -26,8 +26,8 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>mobi-parent</artifactId>
         <groupId>com.mobi</groupId>
+        <artifactId>mobi-parent</artifactId>
         <version>1.12.18-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
@@ -85,6 +85,10 @@
                         <Export-Package>
                             com.mobi.rest.security*
                         </Export-Package>
+                        <Import-Package>
+                            com.mobi.jaas.api.ontologies.usermanagement,
+                            *
+                        </Import-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>

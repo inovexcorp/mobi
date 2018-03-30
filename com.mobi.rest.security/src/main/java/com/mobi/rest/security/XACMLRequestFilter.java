@@ -26,6 +26,7 @@ package com.mobi.rest.security;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
@@ -45,6 +46,7 @@ import com.mobi.security.policy.api.ontologies.policy.Create;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.security.policy.api.ontologies.policy.Update;
+import com.mobi.web.security.util.AuthenticationProps;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.message.internal.MediaTypes;
@@ -57,6 +59,8 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
+import javax.annotation.Priority;
+import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ResourceInfo;
@@ -71,6 +75,7 @@ import javax.ws.rs.ext.Provider;
  * the PDP service to authorize the request.
  */
 @Provider
+@Priority(Priorities.AUTHORIZATION - 1)
 @Component(immediate = true)
 public class XACMLRequestFilter implements ContainerRequestFilter {
 
@@ -103,7 +108,8 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext context) throws IOException {
-        IRI subjectId = vf.createIRI(RestUtils.getActiveUser(context, engineManager).getResource().stringValue());
+        IRI subjectId = (IRI) RestUtils.optActiveUser(context, engineManager).map(User::getResource)
+                .orElse(vf.createIRI(AuthenticationProps.ANON_USER));
 
         MultivaluedMap<String, String> pathParameters = uriInfo.getPathParameters();
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
