@@ -86,6 +86,7 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -221,6 +222,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String FIND_RECORDS_QUERY;
     private static final String COUNT_RECORDS_QUERY;
     private static final String GET_NEW_LATEST_VERSION;
+    private static final String GET_COMMIT_PATHS;
     private static final String RECORD_BINDING = "record";
     private static final String CATALOG_BINDING = "catalog";
     private static final String RECORD_COUNT_BINDING = "record_count";
@@ -239,6 +241,10 @@ public class SimpleCatalogManager implements CatalogManager {
             );
             GET_NEW_LATEST_VERSION = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/get-new-latest-version.rq"),
+                    "UTF-8"
+            );
+            GET_COMMIT_PATHS = IOUtils.toString(
+                    SimpleCatalogManager.class.getResourceAsStream("/get-commit-paths.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -431,7 +437,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Record> T removeRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory) {
-        T record = null;
+        T record;
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(catalogId, catalogFactory.getTypeIRI(), conn);
 
@@ -509,7 +515,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void addUnversionedDistribution(Resource catalogId, Resource unversionedRecordId, Distribution distribution) {
+    public void addUnversionedDistribution(Resource catalogId, Resource unversionedRecordId,
+                                           Distribution distribution) {
         try (RepositoryConnection conn = repository.getConnection()) {
             UnversionedRecord record = utils.getRecord(catalogId, unversionedRecordId, unversionedRecordFactory, conn);
             if (conn.containsContext(distribution.getResource())) {
@@ -872,34 +879,37 @@ public class SimpleCatalogManager implements CatalogManager {
         if (headCommit.isPresent()) {
             // Explicitly remove this so algorithm works for head commit
             conn.remove(branch.getResource(), vf.createIRI(Branch.head_IRI), headCommit.get());
-            List<Resource> chain = utils.getCommitChain(headCommit.get(), false, conn);
             IRI commitIRI = vf.createIRI(Tag.commit_IRI);
             Set<Resource> deltaIRIs = new HashSet<>();
             List<Resource> deletedCommits = new ArrayList<>();
-            for (Resource commitId : chain) {
-                if (!commitIsReferenced(commitId, deletedCommits, conn)) {
-                    // Get Additions/Deletions Graphs
-                    Revision revision = utils.getRevision(commitId, conn);
-                    revision.getAdditions().ifPresent(deltaIRIs::add);
-                    revision.getDeletions().ifPresent(deltaIRIs::add);
-                    revision.getGraphRevision().forEach(graphRevision -> {
-                        graphRevision.getAdditions().ifPresent(deltaIRIs::add);
-                        graphRevision.getDeletions().ifPresent(deltaIRIs::add);
-                    });
+            getCommitPaths(headCommit.get()).forEach(path -> {
+                for (Resource commitId : path) {
+                    if (!deletedCommits.contains(commitId)) {
+                        if (!commitIsReferenced(commitId, deletedCommits, conn)) {
+                            // Get Additions/Deletions Graphs
+                            Revision revision = utils.getRevision(commitId, conn);
+                            revision.getAdditions().ifPresent(deltaIRIs::add);
+                            revision.getDeletions().ifPresent(deltaIRIs::add);
+                            revision.getGraphRevision().forEach(graphRevision -> {
+                                graphRevision.getAdditions().ifPresent(deltaIRIs::add);
+                                graphRevision.getDeletions().ifPresent(deltaIRIs::add);
+                            });
 
-                    // Remove Commit
-                    utils.remove(commitId, conn);
+                            // Remove Commit
+                            utils.remove(commitId, conn);
 
-                    // Remove Tags Referencing this Commit
-                    Set<Resource> tags = RepositoryResults.asModel(conn.getStatements(null, commitIRI, commitId), mf)
-                            .subjects();
-                    tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId, VersionedRecord.version_IRI,
-                            conn));
-                    deletedCommits.add(commitId);
-                } else {
-                    break;
+                            // Remove Tags Referencing this Commit
+                            Set<Resource> tags = RepositoryResults.asModel(
+                                    conn.getStatements(null, commitIRI, commitId), mf).subjects();
+                            tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId,
+                                    VersionedRecord.version_IRI, conn));
+                            deletedCommits.add(commitId);
+                        } else {
+                            break;
+                        }
+                    }
                 }
-            }
+            });
             deltaIRIs.forEach(resource -> utils.remove(resource, conn));
         } else {
             log.warn("The HEAD Commit was not set on the Branch.");
@@ -909,6 +919,27 @@ public class SimpleCatalogManager implements CatalogManager {
     private void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn) {
         Branch branch = utils.getObject(branchId, branchFactory, conn);
         removeBranch(recordId, branch, conn);
+    }
+
+    private List<List<Resource>> getCommitPaths(Resource commitId) {
+        List<List<Resource>> rtn = new ArrayList<>();
+        try (RepositoryConnection conn = repository.getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_PATHS);
+            query.setBinding("start", commitId);
+            query.evaluate().forEach(bindings -> {
+                String[] path = StringUtils.split(Bindings.requiredLiteral(bindings, "path").stringValue(), " ");
+                Optional<Binding> parent = bindings.getBinding("parent");
+                if (!parent.isPresent()) {
+                    rtn.add(Stream.of(path).map(vf::createIRI).collect(Collectors.toList()));
+                } else {
+                    String[] connectPath = StringUtils.split(
+                            Bindings.requiredLiteral(bindings, "connectPath").stringValue(), " ");
+                    rtn.add(Stream.of(connectPath, path).flatMap(Stream::of).map(vf::createIRI)
+                            .collect(Collectors.toList()));
+                }
+            });
+            return rtn;
+        }
     }
 
     @Override
@@ -1265,8 +1296,8 @@ public class SimpleCatalogManager implements CatalogManager {
 
                 // Check for deletion in left and addition in right
                 Model rightSubjectAdd = right.filter(subject, null, null);
-                boolean leftEntityDeleted = !left.subjects().contains(subject) &&
-                        leftDeleteSubjectStatements.equals(original.filter(subject, null, null));
+                boolean leftEntityDeleted = !left.subjects().contains(subject)
+                        && leftDeleteSubjectStatements.equals(original.filter(subject, null, null));
                 boolean rightEntityDeleted = rightDeletions.containsAll(leftDeleteSubjectStatements);
 
                 if (leftEntityDeleted && !rightEntityDeleted && rightSubjectAdd.size() > 0) {
@@ -1282,8 +1313,8 @@ public class SimpleCatalogManager implements CatalogManager {
                 // Check for deletion in right and addition in left
                 Model rightDeleteSubjectStatements = rightDeletions.filter(subject, null, null);
                 Model leftSubjectAdd = left.filter(subject, null, null);
-                boolean rightEntityDeleted = !right.subjects().contains(subject) &&
-                        rightDeleteSubjectStatements.equals(original.filter(subject, null, null));
+                boolean rightEntityDeleted = !right.subjects().contains(subject)
+                        && rightDeleteSubjectStatements.equals(original.filter(subject, null, null));
                 boolean leftEntityDeleted = leftDeletions.containsAll(rightDeleteSubjectStatements);
 
                 if (rightEntityDeleted && !leftEntityDeleted && leftSubjectAdd.size() > 0) {

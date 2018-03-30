@@ -38,6 +38,7 @@ public class BatchExporter implements RDFHandler {
     private long batchSize = 10000;
     private Logger logger = null;
     private boolean printToSystem = false;
+    private boolean active = false;
 
     /**
      * Creates a new BatchExporter that will log exported statements. Wraps a Sesame RDFHandler and performs conversion
@@ -53,11 +54,13 @@ public class BatchExporter implements RDFHandler {
 
     @Override
     public void startRDF() throws com.mobi.persistence.utils.exception.RDFHandlerException {
+        active = true;
         delegate.startRDF();
     }
 
     @Override
     public void endRDF() throws RDFHandlerException {
+        active = false;
         delegate.endRDF();
         if (logger != null) {
             logger.debug("Operation complete. " + count + " statements exported.");
@@ -120,5 +123,14 @@ public class BatchExporter implements RDFHandler {
      */
     public long getFinalCount() {
         return count;
+    }
+
+    /**
+     * Returns whether or not the export transaction is currently active.
+     *
+     * @return boolean True if transaction is active; false otherwise
+     */
+    public boolean isActive() {
+        return active;
     }
 }
