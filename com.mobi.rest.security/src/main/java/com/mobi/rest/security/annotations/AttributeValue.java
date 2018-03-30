@@ -29,7 +29,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An annotation to represent an attribute value to be set on a RESt endpoint request.
+ * An annotation to represent an attribute value to be set on a REST endpoint request.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
