@@ -94,10 +94,15 @@ public class XACMLResponse implements Response {
         setDecision(resultType.getDecision());
         StatusType statusType = resultType.getStatus();
         setStatus(statusType.getStatusCode().getValue());
-        this.statusMessage = statusType.getStatusMessage();
-        this.policyIds = resultType.getPolicyIdentifierList().getPolicyIdReferenceOrPolicySetIdReference().stream()
-                .map(idReferenceTypeJAXBElement -> vf.createIRI(idReferenceTypeJAXBElement.getValue().getValue()))
-                .collect(Collectors.toList());
+        this.statusMessage = statusType.getStatusMessage() == null ? "" : statusType.getStatusMessage();
+        PolicyIdentifierListType policyIdentifierListType = resultType.getPolicyIdentifierList();
+        if (policyIdentifierListType != null) {
+            this.policyIds = policyIdentifierListType.getPolicyIdReferenceOrPolicySetIdReference().stream()
+                    .map(idReferenceTypeJAXBElement -> vf.createIRI(idReferenceTypeJAXBElement.getValue().getValue()))
+                    .collect(Collectors.toList());
+        } else {
+            this.policyIds = new ArrayList<>();
+        }
     }
 
     @Override

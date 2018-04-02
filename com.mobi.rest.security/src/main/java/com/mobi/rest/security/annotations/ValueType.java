@@ -1,12 +1,12 @@
-package com.mobi.web.security.util;
+package com.mobi.rest.security.annotations;
 
 /*-
  * #%L
- * com.mobi.web.security
+ * com.mobi.rest.security
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,7 +23,6 @@ package com.mobi.web.security.util;
  * #L%
  */
 
-public class AuthenticationProps {
-    public static final String USERNAME = "com.mobi.web.username";
-    public static final String ANON_USER = "http://mobi.com/users/anon";
+public enum ValueType {
+    PRIMITIVE, PATH, QUERY, BODY
 }

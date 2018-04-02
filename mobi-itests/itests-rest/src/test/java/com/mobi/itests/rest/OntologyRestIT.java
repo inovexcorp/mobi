@@ -26,6 +26,7 @@ package com.mobi.itests.rest;
 import static com.mobi.itests.rest.utils.RestITUtils.authenticateUser;
 import static com.mobi.itests.rest.utils.RestITUtils.baseUrl;
 import static com.mobi.itests.rest.utils.RestITUtils.createHttpClient;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -46,16 +47,11 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -110,7 +106,7 @@ public class OntologyRestIT extends KarafTestSupport {
         HttpEntity entity = createFormData("/test-ontology.ttl", "Test Ontology");
 
         try (CloseableHttpResponse response = uploadFile(createHttpClient(), entity)) {
-            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
+            assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
             String[] ids = parseAndValidateUploadResponse(response);
             recordId = ids[0];
             branchId = ids[1];
@@ -120,7 +116,7 @@ public class OntologyRestIT extends KarafTestSupport {
 
         try (CloseableHttpResponse response = deleteOntology(createHttpClient(), recordId)) {
             assertNotNull(response);
-            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
+            assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
             validateOntologyDeleted(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId), additionsGraphIRI);
         } catch (IOException | GeneralSecurityException e) {
             fail("Exception thrown: " + e.getLocalizedMessage());
@@ -135,7 +131,7 @@ public class OntologyRestIT extends KarafTestSupport {
         HttpEntity entity = createFormData("/test-vocabulary.ttl", "Test Vocabulary");
 
         try (CloseableHttpResponse response = uploadFile(createHttpClient(), entity)) {
-            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
+            assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
             String[] ids = parseAndValidateUploadResponse(response);
             recordId = ids[0];
             branchId = ids[1];
@@ -145,7 +141,7 @@ public class OntologyRestIT extends KarafTestSupport {
 
         try (CloseableHttpResponse response = deleteOntology(createHttpClient(), recordId)) {
             assertNotNull(response);
-            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
+            assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
             validateOntologyDeleted(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId), additionsGraphIRI);
         } catch (IOException | GeneralSecurityException e) {
             fail("Exception thrown: " + e.getLocalizedMessage());
