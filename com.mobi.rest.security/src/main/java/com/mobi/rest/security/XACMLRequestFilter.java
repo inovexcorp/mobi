@@ -23,6 +23,8 @@ package com.mobi.rest.security;
  * #L%
  */
 
+import static com.mobi.web.security.util.AuthenticationProps.ANON_USER;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -46,7 +48,6 @@ import com.mobi.security.policy.api.ontologies.policy.Create;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.security.policy.api.ontologies.policy.Update;
-import com.mobi.web.security.util.AuthenticationProps;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.message.internal.MediaTypes;
@@ -109,7 +110,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
     @Override
     public void filter(ContainerRequestContext context) throws IOException {
         IRI subjectId = (IRI) RestUtils.optActiveUser(context, engineManager).map(User::getResource)
-                .orElse(vf.createIRI(AuthenticationProps.ANON_USER));
+                .orElse(vf.createIRI(ANON_USER));
 
         MultivaluedMap<String, String> pathParameters = uriInfo.getPathParameters();
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();

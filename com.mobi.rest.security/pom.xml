@@ -39,6 +39,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>api</artifactId>
             <version>${project.version}</version>
@@ -65,10 +69,6 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>
-        <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
@@ -85,10 +85,6 @@
                         <Export-Package>
                             com.mobi.rest.security*
                         </Export-Package>
-                        <Import-Package>
-                            com.mobi.jaas.api.ontologies.usermanagement,
-                            *
-                        </Import-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
