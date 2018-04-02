@@ -1,6 +1,6 @@
-@Version("1.1.0.${build}")
+@Version("1.0.0.${build}")
 
-package com.mobi.security.policy.api.xacml;
+package com.mobi.security.policy.api.xacml.config;
 
 /*-
  * #%L

@@ -1,6 +1,4 @@
-@Version("1.1.0.${build}")
-
-package com.mobi.security.policy.api.xacml;
+package com.mobi.security.policy.api.xacml.config;
 
 /*-
  * #%L
@@ -25,4 +23,14 @@ package com.mobi.security.policy.api.xacml;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import aQute.bnd.annotation.metatype.Meta;
+import com.mobi.repository.config.RepositoryConsumerConfig;
+
+@Meta.OCD
+public interface PolicyManagerConfig extends RepositoryConsumerConfig {
+
+    /**
+     * The absolute path to where policies should be stored and retrieved.
+     */
+    String policyFileLocation();
+}
