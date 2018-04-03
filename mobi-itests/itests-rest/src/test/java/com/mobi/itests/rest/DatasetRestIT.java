@@ -26,6 +26,7 @@ package com.mobi.itests.rest;
 import static com.mobi.itests.rest.utils.RestITUtils.authenticateUser;
 import static com.mobi.itests.rest.utils.RestITUtils.baseUrl;
 import static com.mobi.itests.rest.utils.RestITUtils.createHttpClient;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.mobi.dataset.ontology.dataset.Dataset;
@@ -103,7 +104,7 @@ public class DatasetRestIT extends KarafTestSupport {
         // Create Dataset to upload data into
         HttpEntity datasetEntity = createDatasetFormData("Test Dataset");
         try (CloseableHttpResponse response = createDataset(createHttpClient(), datasetEntity)) {
-            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
+            assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
             recordId = vf.createIRI(EntityUtils.toString(response.getEntity()));
 
             // Assert setup of DatasetRecord, Dataset, and system default named graph
@@ -128,7 +129,7 @@ public class DatasetRestIT extends KarafTestSupport {
         // Upload Data to Dataset
         HttpEntity dataEntity = createUploadFormData(DATA_FILE);
         try (CloseableHttpResponse response = uploadFile(createHttpClient(), recordId, dataEntity)) {
-            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
+            assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 
             // Assert data in system default named graph
             try (RepositoryConnection conn = repo.getConnection()) {
