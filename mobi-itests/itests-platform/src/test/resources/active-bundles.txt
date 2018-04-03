@@ -49,3 +49,7 @@ com.mobi.federation.api
 com.mobi.federation.hazelcast
 com.mobi.federation.cli
 com.mobi.security.policy.api
+com.mobi.security.policy.api.xacml
+com.mobi.security.policy.impl.core
+com.mobi.security.policy.impl.xacml
+com.mobi.rest.security
