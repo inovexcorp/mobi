@@ -52,9 +52,10 @@
                     <div class="value-container" ng-repeat="item in value" ng-hide="isClosed">
                         <span class="value-display-wrapper">
                             <span ng-if="::dvm.ontoUtils.isLinkable(item['@id'])" class="value-display"><span ng-bind-html="dvm.ontoUtils.getLabelForIRI(item['@id']) | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span> <small>&lt;<a ng-click="dvm.os.goTo(item['@id'])" ng-bind-html="item['@id'] | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></a>&gt;</small></span>
-                            <span ng-if="::!dvm.ontoUtils.isLinkable(item['@id'])" class="value-display" ng-bind-html="(dvm.ontoUtils.getBlankNodeValue(item['@id']) || item['@id'] || item['@value']) | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span>
-                            <small ng-if="item['@type']" class="text-muted type-display">[type: <span ng-bind-html="item['@type'] | prefixation | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span>]</small>
-                            <small ng-if="item['@language']" class="text-muted type-display">[language: <span ng-bind-html="item['@language'] | prefixation | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span>]</small>
+                            <span ng-if="::!dvm.ontoUtils.isLinkable(item['@id'])" class="value-display"><span ng-bind-html="(dvm.ontoUtils.getBlankNodeValue(item['@id']) || item['@id'] || item['@value']) | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span>
+                                <small ng-if="item['@type']" class="text-muted type-display">[type: <span ng-bind-html="item['@type'] | prefixation | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span>]</small>
+                                <small ng-if="item['@language']" class="text-muted type-display">[language: <span ng-bind-html="item['@language'] | prefixation | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span>]</small>
+                            </span>
                         </span>
                     </div>
                 </div>
