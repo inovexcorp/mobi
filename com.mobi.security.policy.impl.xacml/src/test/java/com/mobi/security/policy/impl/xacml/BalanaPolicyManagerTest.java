@@ -49,11 +49,13 @@ import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import com.mobi.security.policy.api.Policy;
 import com.mobi.security.policy.api.cache.PolicyCache;
 import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
+import com.mobi.security.policy.api.xacml.PolicyQueryParams;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.impl.commons.SimpleVirtualFilesystem;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -87,6 +89,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     @Mock
     private Cache<String, Policy> cache;
 
+    private String fileLocation = System.getProperty("java.io.tmpdir") + "com.mobi.security.policy.xacml.impl/";
     private Map<String, Policy> entries;
     private IRI otherPolicy = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy2");
     private IRI policyId = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy1");
@@ -108,6 +111,10 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         Method m = vfs.getClass().getDeclaredMethod("activate", Map.class);
         m.setAccessible(true);
         m.invoke(vfs, config);
+        VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
+        if (!directory.exists()) {
+            directory.createFolder();
+        }
 
         // Setup Repository
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
@@ -147,7 +154,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
 
         // Setup configuration props
         props = new HashMap<>();
-        props.put("policyFileLocation", System.getProperty("java.io.tmpdir"));
+        props.put("policyFileLocation", fileLocation);
 
         manager = new BalanaPolicyManager();
         injectOrmFactoryReferencesIntoService(manager);
@@ -158,10 +165,18 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         manager.setRepository(repo);
     }
 
+    @After
+    public void cleanup() throws Exception {
+        VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
+        for (VirtualFile child : directory.getChildren()) {
+            child.delete();
+        }
+    }
+
     @Test
     public void startWithCacheTest() {
         manager.start(props);
-        verify(policyCache).getPolicyCache();
+        verify(policyCache, atLeastOnce()).getPolicyCache();
         verify(cache).clear();
         assertTrue(entries.containsKey(policyFile.getResource().stringValue()));
         Policy policy = entries.get(policyFile.getResource().stringValue());
@@ -175,7 +190,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
 
         manager.start(props);
-        verify(policyCache).getPolicyCache();
+        verify(policyCache, atLeastOnce()).getPolicyCache();
         verify(cache, times(0)).clear();
         assertFalse(entries.containsKey(policyFile.getResource().stringValue()));
     }
@@ -271,9 +286,9 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         manager.start(props);
 
-        List<XACMLPolicy> policies = manager.getPolicies();
+        List<XACMLPolicy> policies = manager.getPolicies(new PolicyQueryParams.Builder().build());
         verify(policyCache, atLeastOnce()).getPolicyCache();
-        verify(cache).spliterator();
+        verify(cache, atLeastOnce()).spliterator();
         assertTrue(policies.size() > 0);
         Optional<XACMLPolicy> optPolicy = policies.stream()
                 .filter(policy -> policy.getId().equals(policyId))
@@ -287,7 +302,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
         manager.start(props);
 
-        List<XACMLPolicy> policies = manager.getPolicies();
+        List<XACMLPolicy> policies = manager.getPolicies(new PolicyQueryParams.Builder().build());
         verify(policyCache, atLeastOnce()).getPolicyCache();
         verify(cache, times(0)).spliterator();
         assertTrue(policies.size() > 0);
@@ -476,7 +491,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     }
 
     private String copyToTemp(String resourceName) throws IOException {
-        String absolutePath = System.getProperty("java.io.tmpdir") + resourceName;
+        String absolutePath = fileLocation + resourceName;
         Files.copy(getClass().getResourceAsStream("/" + resourceName), Paths.get(absolutePath), StandardCopyOption.REPLACE_EXISTING);
         return absolutePath;
     }

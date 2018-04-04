@@ -50,11 +50,13 @@ public interface XACMLPolicyManager {
     Resource addPolicy(XACMLPolicy policy);
 
     /**
-     * Returns a list of all the {@link XACMLPolicy XACMLPolicies} stored in Mobi.
+     * Returns a list of all the {@link XACMLPolicy XACMLPolicies} stored in Mobi that match the provided
+     * query parameters.
      *
+     * @param params Any related resources, subjects, or actions to filter the policies by
      * @return A {@link List} of {@link XACMLPolicy XACMLPolicies} that are stored in Mobi
      */
-    List<XACMLPolicy> getPolicies();
+    List<XACMLPolicy> getPolicies(PolicyQueryParams params);
 
     /**
      * Retrieves a {@link XACMLPolicy} by its {@link Resource} identifier if found.

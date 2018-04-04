@@ -33,4 +33,7 @@ public interface PolicyManagerConfig extends RepositoryConsumerConfig {
      * The absolute path to where policies should be stored and retrieved.
      */
     String policyFileLocation();
+
+    @Meta.AD(required = false)
+    boolean createLocationIfNotExists();
 }
