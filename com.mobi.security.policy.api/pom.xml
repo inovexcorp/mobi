@@ -67,7 +67,11 @@
                         <Bundle-Name>Mobi Security Policy API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.security.policy.api*
+                            com.mobi.security.policy.api.cache; provide:=true,
+                            com.mobi.cache.config; provide:=true,
+                            com.mobi.security.policy.api.exception,
+                            com.mobi.security.policy.api.ontologies*,
+                            com.mobi.security.policy.api
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>

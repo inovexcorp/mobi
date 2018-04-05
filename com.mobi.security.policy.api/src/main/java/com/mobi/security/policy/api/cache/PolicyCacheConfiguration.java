@@ -29,27 +29,39 @@ import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.cache.config.CacheConfiguration;
-import com.mobi.cache.config.CacheServiceConfig;
 import com.mobi.security.policy.api.Policy;
+import com.mobi.security.policy.api.cache.config.PolicyCacheServiceConfig;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.CacheEventListenerConfigurationBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.config.units.MemoryUnit;
+import org.ehcache.core.events.CacheEventListenerConfiguration;
+import org.ehcache.event.EventType;
+import org.ehcache.expiry.Expirations;
 import org.ehcache.jsr107.Eh107Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import javax.cache.configuration.Configuration;
 
 @Component(
         immediate = true,
-        configurationPolicy = ConfigurationPolicy.require
+        configurationPolicy = ConfigurationPolicy.require,
+        designateFactory = PolicyCacheServiceConfig.class
 )
 public class PolicyCacheConfiguration implements CacheConfiguration {
+    private static final Logger LOG = LoggerFactory.getLogger(PolicyCacheConfiguration.class);
+
     private String cacheId;
+    private int maxHeapSize;
 
     @Activate
     public void start(Map<String, Object> props) {
-        CacheServiceConfig config = Configurable.createConfigurable(CacheServiceConfig.class, props);
+        PolicyCacheServiceConfig config = Configurable.createConfigurable(PolicyCacheServiceConfig.class, props);
 
         this.cacheId = config.id();
+        this.maxHeapSize = config.maxHeapSize();
     }
 
     @Modified
@@ -64,8 +76,16 @@ public class PolicyCacheConfiguration implements CacheConfiguration {
 
     @Override
     public Configuration getCacheConfiguration() {
+        CacheEventListenerConfiguration eventConfig = CacheEventListenerConfigurationBuilder
+                .newEventListenerConfiguration(cacheEvent ->
+                        LOG.warn("Policy " + ((Policy) cacheEvent.getOldValue()).getId()
+                                + " has been evicted. Check your max heap size settings"), EventType.EVICTED)
+                .build();
         return Eh107Configuration.fromEhcacheCacheConfiguration(CacheConfigurationBuilder
-                .newCacheConfigurationBuilder(String.class, Policy.class, ResourcePoolsBuilder.heap(0))
+                .newCacheConfigurationBuilder(String.class, Policy.class,
+                        ResourcePoolsBuilder.newResourcePoolsBuilder().heap(maxHeapSize, MemoryUnit.MB))
+                .withExpiry(Expirations.noExpiration())
+                .add(eventConfig)
                 .build());
     }
 }

@@ -40,10 +40,12 @@ public interface XACMLPolicyManager {
     XACMLPolicy createPolicy(PolicyType policyType);
 
     /**
-     * Adds the provided XACMLPolicy to Mobi and returns its {@link Resource} identifier.
+     * Adds the provided XACMLPolicy to Mobi and returns its {@link Resource} identifier which will be the same as
+     * the provided {@link XACMLPolicy#id}.
      *
      * @param policy The XACMLPolicy whose contents will be stored in the system.
      * @return A Resource identifier
+     * @throws IllegalArgumentException If the Policy ID already exists in the repository
      * @throws IllegalStateException If an error occurred preventing the policy being saved that the system could
      *      not prevent
      */
@@ -69,19 +71,17 @@ public interface XACMLPolicyManager {
     Optional<XACMLPolicy> getPolicy(Resource policyId);
 
     /**
-     * Updates the policy identified by the provided {@link Resource} identifier by replacing its contents with the
-     * provided new {@link XACMLPolicy).
+     * Updates the policy identified by the id within the provided new {@link XACMLPolicy) by replacing its contents.
      *
-     * @param policyId A {@link Resource} identifying a policy
      * @param newPolicy The new policy to replace the identified one with
      * @throws IllegalArgumentException If the policy does not exist
      * @throws IllegalStateException If an error occurred preventing the policy being retrieved or saved that the
      *      system could not prevent
      */
-    void updatePolicy(Resource policyId, XACMLPolicy newPolicy);
+    void updatePolicy(XACMLPolicy newPolicy);
 
     /**
-     * Removes the identified policy from Mobi.
+     * Removes the policy identified with the provided {@link Resource} identifier from Mobi.
      *
      * @param policyId A {@link Resource} identifying a policy
      * @throws IllegalStateException If an error occurred preventing the policy being removed that the system could
