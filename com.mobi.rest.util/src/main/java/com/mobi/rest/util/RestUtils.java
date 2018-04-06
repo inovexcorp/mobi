@@ -366,6 +366,28 @@ public class RestUtils {
     }
 
     /**
+     * Retrieves the User associated with a Request using the passed EngineManager. If the User cannot be found,
+     * returns an empty Optional.
+     *
+     * @param context       The context of a Request.
+     * @param engineManager The EngineManager to use when attempting to retrieve the User.
+     * @return An Optional containing the User who made the Request if found; otherwise empty
+     */
+    public static Optional<User> optActiveUser(ContainerRequestContext context, EngineManager engineManager) {
+        return optActiveUsername(context).flatMap(engineManager::retrieveUser);
+    }
+
+    /**
+     * Retrieves the username associated with a Request. If the username cannot be found, returns an empty Optional.
+     *
+     * @param context The context of a Request.
+     * @return An Optional with the username associated with the Request if found; otherwise empty
+     */
+    public static Optional<String> optActiveUsername(ContainerRequestContext context) {
+        return Optional.ofNullable(context.getProperty(AuthenticationProps.USERNAME)).map(Object::toString);
+    }
+
+    /**
      * Tests for the existence and value of a string, assumed to be from a REST parameter.
      *
      * @param param        The string parameter to check

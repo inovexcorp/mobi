@@ -68,6 +68,7 @@
                     var om = ontologyManagerService;
                     var state = ontologyStateService;
                     var file = undefined;
+                    var uploadOffset = state.uploadList.length;
                     dvm.total = dvm.files.length;
                     dvm.index = 0;
                     dvm.title = '';
@@ -75,7 +76,7 @@
                     dvm.keywords = [];
 
                     dvm.submit = function() {
-                        var id = 'upload-' + dvm.index;
+                        var id = 'upload-' + (uploadOffset + dvm.index);
                         var promise = om.uploadFile(file, dvm.title, dvm.description, _.map(dvm.keywords, _.trim), id)
                             .then(_.noop, errorMessage => state.addErrorToUploadItem(id, errorMessage));
                         state.uploadList.push({title: dvm.title, id, promise, error: undefined});

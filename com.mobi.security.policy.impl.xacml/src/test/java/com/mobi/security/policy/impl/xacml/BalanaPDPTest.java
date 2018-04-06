@@ -144,6 +144,17 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         assertTrue(result.getPolicyIds().contains(policy3));
     }
 
+    @Test
+    public void noPolicyTest() throws Exception {
+        // Setup:
+        BalanaRequest request = new BalanaRequest.Builder(userX, resource, createAction, OffsetDateTime.now(), VALUE_FACTORY).build();
+
+        Response result = pdp.evaluate(request);
+        assertEquals(Status.OK, result.getStatus());
+        assertEquals(Decision.NOT_APPLICABLE, result.getDecision());
+        assertTrue(result.getPolicyIds().isEmpty());
+    }
+
     private void loadPolicy(IRI policyId) throws Exception {
         try (InputStream in = getClass().getResourceAsStream("/" + policyId.getLocalName() + ".xml")) {
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
