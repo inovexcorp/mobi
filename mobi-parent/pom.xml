@@ -242,6 +242,11 @@
                 <version>2.4_1</version>
             </dependency>
             <dependency>
+                <groupId>com.io7m.xom</groupId>
+                <artifactId>xom</artifactId>
+                <version>1.2.10</version>
+            </dependency>
+            <dependency>
                 <groupId>org.glassfish.jersey.media</groupId>
                 <artifactId>jersey-media-multipart</artifactId>
                 <version>2.25.1</version>
