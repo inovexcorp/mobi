@@ -65,7 +65,6 @@ public interface XACMLPolicyManager {
      *
      * @param policyId A Resource identifying a policy
      * @return The identified {@link XACMLPolicy} if found; otherwise an {@link Optional#empty()}
-     * @throws IllegalArgumentException If the policy does not exist
      * @throws IllegalStateException If an error occurred retrieving the policy that the system could not prevent
      */
     Optional<XACMLPolicy> getPolicy(Resource policyId);
