@@ -874,6 +874,12 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     private void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn) {
+        List<Resource> deletedCommits = new ArrayList<>();
+        removeBranch(recordId, branch, deletedCommits, conn);
+    }
+
+    private void removeBranch(Resource recordId, Branch branch, List<Resource> deletedCommits,
+                              RepositoryConnection conn) {
         removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
         Optional<Resource> headCommit = branch.getHead_resource();
         if (headCommit.isPresent()) {
@@ -881,7 +887,6 @@ public class SimpleCatalogManager implements CatalogManager {
             conn.remove(branch.getResource(), vf.createIRI(Branch.head_IRI), headCommit.get());
             IRI commitIRI = vf.createIRI(Tag.commit_IRI);
             Set<Resource> deltaIRIs = new HashSet<>();
-            List<Resource> deletedCommits = new ArrayList<>();
             getCommitPaths(headCommit.get()).forEach(path -> {
                 for (Resource commitId : path) {
                     if (!deletedCommits.contains(commitId)) {
@@ -916,9 +921,10 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
-    private void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn) {
+    private void removeBranch(Resource recordId, Resource branchId, List<Resource> deletedCommits,
+                              RepositoryConnection conn) {
         Branch branch = utils.getObject(branchId, branchFactory, conn);
-        removeBranch(recordId, branch, conn);
+        removeBranch(recordId, branch, deletedCommits, conn);
     }
 
     private List<List<Resource>> getCommitPaths(Resource commitId) {
@@ -1485,8 +1491,10 @@ public class SimpleCatalogManager implements CatalogManager {
                             .forEach(resource -> removeVersion(versionedRDFRecord.getResource(), resource, conn));
                     conn.remove(versionedRDFRecord.getResource(), vf.createIRI(VersionedRDFRecord.masterBranch_IRI),
                             null, versionedRDFRecord.getResource());
+                    List<Resource> deletedCommits = new ArrayList<>();
                     versionedRDFRecord.getBranch_resource()
-                            .forEach(resource -> removeBranch(versionedRDFRecord.getResource(), resource, conn));
+                            .forEach(resource -> removeBranch(versionedRDFRecord.getResource(), resource,
+                                    deletedCommits, conn));
                     utils.removeObject(versionedRDFRecord, conn);
                 });
     }
