@@ -63,6 +63,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -254,7 +257,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 out.write(balanaPolicy.toString().getBytes());
             }
             setRelatedProperties(policyFile, balanaPolicy);
-            // TODO: Overwrite SHA hash value on PolicyFile
+            policyFile.setChecksum(getChecksum(balanaPolicy));
             try (RepositoryConnection conn = repository.getConnection()) {
                 conn.clear(newPolicy.getId());
                 conn.add(policyFile.getModel(), newPolicy.getId());
@@ -339,12 +342,6 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
 
     private Optional<BalanaPolicy> optPolicyFromFile(Resource policyId, RepositoryConnection conn) {
         return optPolicy(policyId, conn).map(file -> getPolicyFromFile(getRetrievalURL(file).stringValue()));
-    }
-
-    private BalanaPolicy getPolicyFromFile(Resource policyId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            return getPolicyFromFile(policyId, conn);
-        }
     }
 
     private BalanaPolicy getPolicyFromFile(Resource policyId, RepositoryConnection conn) {
@@ -441,7 +438,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         policyFile.setRetrievalURL(vf.createIRI(file.getIdentifier()));
         policyFile.setSize((double) file.getSize());
         policyFile.setFileName(fileName);
-        // TODO: Determine SHA hash
+        policyFile.setChecksum(getChecksum(balanaPolicy));
         setRelatedProperties(policyFile, balanaPolicy);
         try (RepositoryConnection conn = repository.getConnection()) {
             conn.add(policyFile.getModel(), policyFile.getResource());
@@ -480,6 +477,16 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 values.append("BIND (<").append(iris.iterator().next()).append("> as ?").append(variableName)
                         .append(") ");
             }
+        }
+    }
+
+    private String getChecksum(BalanaPolicy policy) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(policy.toString().getBytes());
+            return new String(hash, "UTF-8");
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            throw new MobiException(e);
         }
     }
 }

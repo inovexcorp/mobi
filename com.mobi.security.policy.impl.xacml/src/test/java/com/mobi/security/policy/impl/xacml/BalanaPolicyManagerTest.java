@@ -248,6 +248,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
             Optional<Double> fileSize = policyFile.getSize();
             assertTrue(fileSize.isPresent());
             assertEquals((double) virtualFile.getSize(), fileSize.get(), 0.01);
+            assertTrue(policyFile.getChecksum().isPresent());
             assertTrue(policyFile.getRelatedSubject().isEmpty());
             assertTrue(policyFile.getRelatedAction().isEmpty());
             assertTrue(!policyFile.getRelatedResource().isEmpty() && policyFile.getRelatedResource().contains(relatedResource));
@@ -280,6 +281,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
             Optional<Double> fileSize = policyFile.getSize();
             assertTrue(fileSize.isPresent());
             assertEquals((double) virtualFile.getSize(), fileSize.get(), 0.01);
+            assertTrue(policyFile.getChecksum().isPresent());
             assertTrue(policyFile.getRelatedSubject().isEmpty());
             assertTrue(policyFile.getRelatedAction().isEmpty());
             assertTrue(!policyFile.getRelatedResource().isEmpty() && policyFile.getRelatedResource().contains(relatedResource));
@@ -416,6 +418,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
             PolicyFile newPolicyFile = optPolicyFile.get();
             Optional<IRI> filePath = policyFile.getRetrievalURL();
             assertTrue(filePath.isPresent());
+            assertTrue(newPolicyFile.getChecksum().isPresent());
             VirtualFile virtualFile = vfs.resolveVirtualFile(filePath.get().stringValue());
             assertTrue(virtualFile.exists() && virtualFile.isFile());
             assertTrue(!newPolicyFile.getRelatedResource().isEmpty() && newPolicyFile.getRelatedResource().contains(relatedResource));
@@ -442,6 +445,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
             PolicyFile newPolicyFile = optPolicyFile.get();
             Optional<IRI> filePath = policyFile.getRetrievalURL();
             assertTrue(filePath.isPresent());
+            assertTrue(newPolicyFile.getChecksum().isPresent());
             VirtualFile virtualFile = vfs.resolveVirtualFile(filePath.get().stringValue());
             assertTrue(virtualFile.exists() && virtualFile.isFile());
             assertTrue(!newPolicyFile.getRelatedResource().isEmpty() && newPolicyFile.getRelatedResource().contains(relatedResource));
