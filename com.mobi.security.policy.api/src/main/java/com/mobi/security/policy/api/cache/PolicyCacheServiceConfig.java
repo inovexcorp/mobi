@@ -1,10 +1,8 @@
-@Version("1.1.0.${build}")
-
-package com.mobi.security.policy.api.xacml;
+package com.mobi.security.policy.api.cache.config;
 
 /*-
  * #%L
- * com.mobi.security.policy.api.xacml
+ * com.mobi.security.policy.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -25,4 +23,16 @@ package com.mobi.security.policy.api.xacml;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import aQute.bnd.annotation.metatype.Meta;
+import com.mobi.cache.config.CacheServiceConfig;
+
+@Meta.OCD
+public interface PolicyCacheServiceConfig extends CacheServiceConfig {
+
+    /**
+     * The maximum heap size in MB.
+     *
+     * @return The maximum heap size
+     */
+    int maxHeapSize();
+}
