@@ -1,0 +1,96 @@
+{
+  "Description" : "Who can create an OntologyRecord in the Local Catalog?",
+  "PolicyIssuer" : null,
+  "PolicyDefaults" : null,
+  "Target" : {
+    "AnyOf" : [ {
+      "AllOf" : [ {
+        "Match" : [ {
+          "AttributeValue" : {
+            "content" : [ "http://mobi.com/catalog-local" ],
+            "otherAttributes" : { },
+            "DataType" : "http://www.w3.org/2001/XMLSchema#string"
+          },
+          "AttributeDesignator" : {
+            "Category" : "urn:oasis:names:tc:xacml:3.0:attribute-category:resource",
+            "AttributeId" : "urn:oasis:names:tc:xacml:1.0:resource:resource-id",
+            "DataType" : "http://www.w3.org/2001/XMLSchema#string",
+            "Issuer" : null,
+            "MustBePresent" : true
+          },
+          "AttributeSelector" : null,
+          "MatchId" : "urn:oasis:names:tc:xacml:1.0:function:string-equal"
+        }, {
+          "AttributeValue" : {
+            "content" : [ "http://mobi.com/ontologies/policy#Create" ],
+            "otherAttributes" : { },
+            "DataType" : "http://www.w3.org/2001/XMLSchema#string"
+          },
+          "AttributeDesignator" : {
+            "Category" : "urn:oasis:names:tc:xacml:3.0:attribute-category:action",
+            "AttributeId" : "urn:oasis:names:tc:xacml:1.0:action:action-id",
+            "DataType" : "http://www.w3.org/2001/XMLSchema#string",
+            "Issuer" : null,
+            "MustBePresent" : true
+          },
+          "AttributeSelector" : null,
+          "MatchId" : "urn:oasis:names:tc:xacml:1.0:function:string-equal"
+        }, {
+          "AttributeValue" : {
+            "content" : [ "http://mobi.com/ontologies/ontology-editor#OntologyRecord" ],
+            "otherAttributes" : { },
+            "DataType" : "http://www.w3.org/2001/XMLSchema#string"
+          },
+          "AttributeDesignator" : {
+            "Category" : "urn:oasis:names:tc:xacml:3.0:attribute-category:action",
+            "AttributeId" : "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+            "DataType" : "http://www.w3.org/2001/XMLSchema#string",
+            "Issuer" : null,
+            "MustBePresent" : true
+          },
+          "AttributeSelector" : null,
+          "MatchId" : "urn:oasis:names:tc:xacml:1.0:function:string-equal"
+        } ]
+      } ]
+    } ]
+  },
+  "CombinerParameters" : null,
+  "RuleCombinerParameters" : null,
+  "VariableDefinition" : null,
+  "Rule" : [ {
+    "Description" : null,
+    "Target" : {
+      "AnyOf" : [ {
+        "AllOf" : [ {
+          "Match" : [ {
+            "AttributeValue" : {
+              "content" : [ "http://mobi.com/users/UserX" ],
+              "otherAttributes" : { },
+              "DataType" : "http://www.w3.org/2001/XMLSchema#string"
+            },
+            "AttributeDesignator" : {
+              "Category" : "urn:oasis:names:tc:xacml:1.0:subject-category:access-subject",
+              "AttributeId" : "urn:oasis:names:tc:xacml:1.0:subject:subject-id",
+              "DataType" : "http://www.w3.org/2001/XMLSchema#string",
+              "Issuer" : null,
+              "MustBePresent" : true
+            },
+            "AttributeSelector" : null,
+            "MatchId" : "urn:oasis:names:tc:xacml:1.0:function:string-equal"
+          } ]
+        } ]
+      } ]
+    },
+    "Condition" : null,
+    "ObligationExpressions" : null,
+    "AdviceExpressions" : null,
+    "RuleId" : "urn:rule1",
+    "Effect" : "Permit"
+  } ],
+  "ObligationExpressions" : null,
+  "AdviceExpressions" : null,
+  "PolicyId" : "http://mobi.com/policies/policy1",
+  "Version" : "1.0",
+  "RuleCombiningAlgId" : "urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit",
+  "MaxDelegationDepth" : null
+}

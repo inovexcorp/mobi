@@ -25,6 +25,10 @@ package com.mobi.security.policy.rest.impl;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 import com.mobi.exception.MobiException;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
@@ -36,14 +40,11 @@ import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 import com.mobi.security.policy.rest.PolicyRest;
 import net.sf.json.JSONArray;
-import net.sf.json.JSONSerializer;
-import net.sf.json.xml.XMLSerializer;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.StringReader;
+import java.io.IOException;
 import java.util.Optional;
 import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXB;
 
 @Component(immediate = true)
 public class PolicyRestImpl implements PolicyRest {
@@ -63,7 +64,6 @@ public class PolicyRestImpl implements PolicyRest {
 
     @Override
     public Response getPolicies(String relatedSubject, String relatedResource, String relatedAction) {
-        XMLSerializer serializer = new XMLSerializer();
         PolicyQueryParams.Builder params = new PolicyQueryParams.Builder();
         if (StringUtils.isNotEmpty(relatedResource)) {
             params.addResourceIRI(vf.createIRI(relatedResource));
@@ -76,7 +76,7 @@ public class PolicyRestImpl implements PolicyRest {
         }
         try {
             return Response.ok(policyManager.getPolicies(params.build()).stream()
-                    .map(policy -> serializer.read(policy.toString()))
+                    .map(this::policyToJson)
                     .collect(JSONArray::new, JSONArray::add, JSONArray::add)).build();
         } catch (Exception ex) {
             throw ErrorUtils.sendError(ex, "Error retrieving policies", Response.Status.INTERNAL_SERVER_ERROR);
@@ -86,7 +86,7 @@ public class PolicyRestImpl implements PolicyRest {
     @Override
     public Response createPolicy(String policyJson) {
         try {
-            Resource policyId = policyManager.addPolicy(getPolicyFromJson(policyJson));
+            Resource policyId = policyManager.addPolicy(jsonToPolicy(policyJson));
             return Response.status(201).entity(policyId.stringValue()).build();
         } catch (IllegalArgumentException | PolicySyntaxException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -102,7 +102,7 @@ public class PolicyRestImpl implements PolicyRest {
             if (!policy.isPresent()) {
                 throw ErrorUtils.sendError("Policy could not be found", Response.Status.BAD_REQUEST);
             }
-            return Response.ok(new XMLSerializer().read(policy.get().toString())).build();
+            return Response.ok(policyToJson(policy.get())).build();
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, "Policy could not be retrieved", Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -111,7 +111,7 @@ public class PolicyRestImpl implements PolicyRest {
     @Override
     public Response updatePolicy(String policyId, String policyJson) {
         try {
-            XACMLPolicy policy = getPolicyFromJson(policyJson);
+            XACMLPolicy policy = jsonToPolicy(policyJson);
             if (!policy.getId().equals(vf.createIRI(policyId))) {
                 throw ErrorUtils.sendError("Policy Id does not match provided policy", Response.Status.BAD_REQUEST);
             }
@@ -124,21 +124,30 @@ public class PolicyRestImpl implements PolicyRest {
         }
     }
 
-    private XACMLPolicy getPolicyFromJson(String json) {
-        XMLSerializer serializer = new XMLSerializer();
-        String policyXML = serializer.write(JSONSerializer.toJSON(json));
-        return getPolicy(policyXML);
-    }
-
-    private XACMLPolicy getPolicy(String xml) {
-        return policyManager.createPolicy(validatePolicyXML(xml));
-    }
-
-    private PolicyType validatePolicyXML(String xml) {
-        PolicyType policyType = JAXB.unmarshal(new StringReader(xml), PolicyType.class);
-        if (StringUtils.isEmpty(policyType.getPolicyId())) {
-            throw ErrorUtils.sendError("Policy must have a PolicyId", Response.Status.BAD_REQUEST);
+    private XACMLPolicy jsonToPolicy(String json) {
+        try {
+            PolicyType converted = getMapper().readValue(json, PolicyType.class);
+            if (StringUtils.isEmpty(converted.getPolicyId())) {
+                throw ErrorUtils.sendError("Policy must have a id", Response.Status.BAD_REQUEST);
+            }
+            return policyManager.createPolicy(converted);
+        } catch (IOException ex) {
+            throw ErrorUtils.sendError(ex, "Error converting policy", Response.Status.INTERNAL_SERVER_ERROR);
         }
-        return policyType;
+    }
+
+    private String policyToJson(XACMLPolicy policy) {
+        try {
+            return getMapper().writeValueAsString(policy.getJaxbPolicy());
+        } catch (JsonProcessingException ex) {
+            throw ErrorUtils.sendError(ex, "Error converting policy", Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private ObjectMapper getMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JaxbAnnotationModule());
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        return objectMapper;
     }
 }

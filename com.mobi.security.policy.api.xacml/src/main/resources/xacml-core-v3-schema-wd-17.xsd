@@ -2,6 +2,9 @@
 <!-- Copyright OASIS Open 2010. All Rights Reserved. -->
 <xs:schema xmlns:xacml="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+	xmlns:simplify="http://jaxb2-commons.dev.java.net/basic/simplify"
+	jaxb:extensionBindingPrefixes="simplify"
 	targetNamespace="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17"
 	elementFormDefault="qualified" attributeFormDefault="unqualified">
 
@@ -358,6 +361,11 @@
 			<xs:element ref="xacml:PolicyDefaults" minOccurs="0"/>
 			<xs:element ref="xacml:Target"/>
 			<xs:choice maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:appinfo>
+						<simplify:as-element-property/>
+					</xs:appinfo>
+				</xs:annotation>
 				<xs:element ref="xacml:CombinerParameters" minOccurs="0"/>
 				<xs:element ref="xacml:RuleCombinerParameters" minOccurs="0"/>
 				<xs:element ref="xacml:VariableDefinition"/>

@@ -74,7 +74,17 @@
                         <source>${project.basedir}/src/main/resources/xacml-core-v3-schema-wd-17.xsd</source>
                     </sources>
                     <packageName>com.mobi.security.policy.api.xacml.jaxb</packageName>
+                    <arguments>
+                        <argument>-Xsimplify</argument>
+                    </arguments>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.jvnet.jaxb2_commons</groupId>
+                        <artifactId>jaxb2-basics</artifactId>
+                        <version>1.11.1</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
