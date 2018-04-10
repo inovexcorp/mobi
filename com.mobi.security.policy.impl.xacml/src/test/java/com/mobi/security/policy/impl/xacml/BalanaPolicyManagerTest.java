@@ -89,7 +89,14 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     @Mock
     private Cache<String, Policy> cache;
 
-    private String fileLocation = System.getProperty("java.io.tmpdir") + "com.mobi.security.policy.xacml.impl/";
+    private static String fileLocation;
+    static {
+        StringBuilder builder = new StringBuilder(System.getProperty("java.io.tmpdir"));
+        if (!System.getProperty("java.io.tmpdir").endsWith("/")) {
+            builder.append("/");
+        }
+        fileLocation = builder.append("com.mobi.security.policy.xacml.impl/").toString();
+    }
     private Map<String, Policy> entries;
     private IRI missingPolicyId = VALUE_FACTORY.createIRI("urn:missing");
     private IRI policyId = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy1");
