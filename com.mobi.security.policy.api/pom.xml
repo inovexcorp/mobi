@@ -28,7 +28,7 @@
     <parent>
         <artifactId>mobi-parent</artifactId>
         <groupId>com.mobi</groupId>
-        <version>1.12.20</version>
+        <version>1.12.21</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -67,7 +67,11 @@
                         <Bundle-Name>Mobi Security Policy API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.security.policy.api*
+                            com.mobi.security.policy.api.cache; provide:=true,
+                            com.mobi.cache.config; provide:=true,
+                            com.mobi.security.policy.api.exception,
+                            com.mobi.security.policy.api.ontologies*,
+                            com.mobi.security.policy.api
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
