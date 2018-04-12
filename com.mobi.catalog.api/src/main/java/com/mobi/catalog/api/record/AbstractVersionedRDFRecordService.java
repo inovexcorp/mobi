@@ -1,8 +1,8 @@
-package com.mobi.catalog.impl.record;
+package com.mobi.catalog.api.record;
 
 /*-
  * #%L
- * com.mobi.catalog.impl
+ * com.mobi.catalog.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,55 +23,35 @@ package com.mobi.catalog.impl.record;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
-import com.mobi.catalog.api.record.config.RecordExportConfig;
-import com.mobi.catalog.api.record.config.VersionedRDFRecordExportConfig;
-import com.mobi.rdf.api.IRI;
+import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class VersionedRDFRecordService extends SimpleRecordService {
+public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRecord> extends AbstractRecordService<T> implements RecordService<T> {
 
-    protected VersionedRDFRecordFactory versionedRDFRecordFactory;
     protected CommitFactory commitFactory;
     protected BranchFactory branchFactory;
 
-    @Reference
-    void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
-        this.versionedRDFRecordFactory = versionedRDFRecordFactory;
-    }
-
-    @Reference
-    void setCommitFactory(CommitFactory commitFactory) {
-        this.commitFactory = commitFactory;
-    }
-
-    @Reference
-    void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
-    }
-
-    @Override
-    protected void exportRecord(IRI iriRecord, ExportWriter writer, RecordExportConfig config, RepositoryConnection conn) {
-        VersionedRDFRecord record = utilsService.getExpectedObject(iriRecord, versionedRDFRecordFactory, conn);
-
-        VersionedRDFRecordExportConfig versionedConfig = (VersionedRDFRecordExportConfig) config;
-        writeRecordData(record, writer);
-
-        if (versionedConfig.writeVersionedData()) {
-            writeVersionedRDFData(record, versionedConfig.getBranches(), writer, conn);
-        }
-    }
+//    protected void deleteVersionedRDFData(Record record, RepositoryConnection conn) {
+//        recordFactory.getExisting(record.getResource(), record.getModel())
+//                .ifPresent(versionedRDFRecord -> {
+//                    versionedRDFRecord.getVersion_resource()
+//                            .forEach(resource -> utilsService.removeVersion(versionedRDFRecord.getResource(), resource, conn));
+//                    conn.remove(versionedRDFRecord.getResource(), valueFactory.createIRI(VersionedRDFRecord.masterBranch_IRI),
+//                            null, versionedRDFRecord.getResource());
+//                    versionedRDFRecord.getBranch_resource()
+//                            .forEach(resource -> utilsService.removeBranch(versionedRDFRecord.getResource(), resource, conn));
+//                });
+//    }
 
     /**
      * Writes the VersionedRDFRecord data (Branches, Commits, Tags) to the provided ExportWriter
@@ -79,17 +59,17 @@ public class VersionedRDFRecordService extends SimpleRecordService {
      *
      * @param record The VersionedRDFRecord to write versioned data
      * @param branchesToWrite The Set of Resources identifying branches to write out
-     * @param writer The ExportWriter to write the VersionedRDFRecord to
+     * @param exporter The ExportWriter to write the VersionedRDFRecord to
      * @param conn A RepositoryConnection to use for lookup
      */
-    protected void writeVersionedRDFData(VersionedRDFRecord record, Set<Resource> branchesToWrite, ExportWriter writer, RepositoryConnection conn) {
+    protected void writeVersionedRDFData(VersionedRDFRecord record, Set<Resource> branchesToWrite, BatchExporter exporter, RepositoryConnection conn) {
         Set<Resource> processedCommits = new HashSet<>();
 
         // Write Branches
         record.getBranch_resource().forEach(branchResource -> {
             if (branchesToWrite.isEmpty() || branchesToWrite.contains(branchResource)) {
                 Branch branch = utilsService.getBranch(record, branchResource, branchFactory, conn);
-                branch.getModel().forEach(writer::handleStatement);
+                branch.getModel().forEach(exporter::handleStatement);
                 Resource headIRI = utilsService.getHeadCommitIRI(branch);
 
                 // Write Commits
@@ -103,12 +83,12 @@ public class VersionedRDFRecordService extends SimpleRecordService {
 
                     // Write Commit/Revision Data
                     Commit commit = utilsService.getExpectedObject(commitId, commitFactory, conn);
-                    commit.getModel().forEach(writer::handleStatement);
+                    commit.getModel().forEach(exporter::handleStatement);
 
                     // Write Additions/Deletions Graphs
                     Difference revisionChanges = utilsService.getRevisionChanges(commitId, conn);
-                    revisionChanges.getAdditions().forEach(writer::handleStatement);
-                    revisionChanges.getDeletions().forEach(writer::handleStatement);
+                    revisionChanges.getAdditions().forEach(exporter::handleStatement);
+                    revisionChanges.getDeletions().forEach(exporter::handleStatement);
                 }
             }
         });
