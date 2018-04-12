@@ -67,12 +67,7 @@ public class OperationConfig implements RecordOperationConfig {
             Object putIfAbsent = settings.putIfAbsent((OperationSetting<Object>)setting, value);
 
             if (putIfAbsent != null) {
-                // override the previous setting anyway, putIfAbsent just gives us
-                // information about whether it was previously set or not
                 settings.put((OperationSetting<Object>)setting, value);
-
-                // this.log.trace("Overriding previous setting for {}",
-                // setting.getKey());
             }
         }
 

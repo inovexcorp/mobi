@@ -2,7 +2,7 @@ package com.mobi.catalog.impl.record;
 
 /*-
  * #%L
- * com.mobi.catalog.api
+ * com.mobi.catalog.impl
  * $Id:$
  * $HeadURL:$
  * %%

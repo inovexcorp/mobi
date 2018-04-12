@@ -27,9 +27,24 @@ import java.io.Serializable;
 
 public interface OperationSetting<T> extends Serializable {
 
-    T getDefaultValue();
+    /**
+     * Gets the String representation of a key that identifies a configuration setting.
+     *
+     * @return The key of a configuration setting
+     */
+    String getKey();
 
+    /**
+     * Gets the String description of a configuration setting.
+     *
+     * @return The description of a configuration setting
+     */
     String getDescription();
 
-    String getKey();
+    /**
+     * Gets the default value of a configuration setting.
+     *
+     * @return The default value of a setting
+     */
+    T getDefaultValue();
 }
