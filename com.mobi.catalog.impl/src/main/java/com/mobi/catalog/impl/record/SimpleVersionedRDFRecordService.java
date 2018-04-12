@@ -23,6 +23,7 @@ package com.mobi.catalog.impl.record;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
@@ -31,15 +32,9 @@ import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
-import com.mobi.catalog.api.record.config.RecordExportSettings;
-import com.mobi.catalog.api.record.config.RecordOperationConfig;
-import com.mobi.catalog.api.record.config.VersionedRDFRecordExportSettings;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.BatchExporter;
-import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.RepositoryConnection;
 
+@Component
 public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordService<VersionedRDFRecord> {
 
     @Reference
@@ -75,37 +70,5 @@ public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordS
     @Override
     public Class<VersionedRDFRecord> getType() {
         return VersionedRDFRecord.class;
-    }
-
-    @Override
-    public VersionedRDFRecord delete(IRI recordId, User user, RepositoryConnection conn) {
-        VersionedRDFRecord record = getRecord(recordId, conn);
-
-//        DeleteActivity deleteActivity = provUtils.startDeleteActivity(user, recordId);
-//        deleteVersionedRDFData(record, conn);
-//        deleteRecord(record, conn);
-//        provUtils.endDeleteActivity(deleteActivity, record);
-
-        return record;
-    }
-
-    @Override
-    public void export(IRI iriRecord, RecordOperationConfig config, RepositoryConnection conn) {
-        BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
-        if (exporter == null) {
-            throw new IllegalArgumentException("BatchExporter must not be null");
-        }
-        boolean exporterIsActive = exporter.isActive();
-        if (!exporterIsActive) {
-            exporter.startRDF();
-        }
-        VersionedRDFRecord record = getRecord(iriRecord, conn);
-        writeRecordData(record, exporter);
-        if (config.get(VersionedRDFRecordExportSettings.WRITE_VERSIONED_DATA)) {
-            writeVersionedRDFData(record, config.get(VersionedRDFRecordExportSettings.BRANCHES_TO_EXPORT), exporter, conn);
-        }
-        if (!exporterIsActive) {
-            exporter.endRDF();
-        }
     }
 }

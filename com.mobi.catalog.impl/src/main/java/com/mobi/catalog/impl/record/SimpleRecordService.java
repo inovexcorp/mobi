@@ -23,21 +23,16 @@ package com.mobi.catalog.impl.record;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.record.AbstractRecordService;
-import com.mobi.catalog.api.record.config.RecordExportSettings;
-import com.mobi.catalog.api.record.config.RecordOperationConfig;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.BatchExporter;
-import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.RepositoryConnection;
 
+@Component
 public class SimpleRecordService extends AbstractRecordService<Record> {
 
     @Reference
@@ -63,33 +58,5 @@ public class SimpleRecordService extends AbstractRecordService<Record> {
     @Override
     public Class<Record> getType() {
         return Record.class;
-    }
-
-    @Override
-    public Record delete(IRI recordId, User user, RepositoryConnection conn) {
-        Record record = getRecord(recordId, conn);
-
-        DeleteActivity deleteActivity = provUtils.startDeleteActivity(user, recordId);
-        deleteRecord(record, conn);
-        provUtils.endDeleteActivity(deleteActivity, record);
-
-        return record;
-    }
-
-    @Override
-    public void export(IRI iriRecord, RecordOperationConfig config, RepositoryConnection conn) {
-        BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
-        if (exporter == null) {
-            throw new IllegalArgumentException("BatchExporter must not be null");
-        }
-        boolean exporterIsActive = exporter.isActive();
-        if (!exporterIsActive) {
-            exporter.startRDF();
-        }
-        Record record = getRecord(iriRecord, conn);
-        writeRecordData(record, exporter);
-        if (!exporterIsActive) {
-            exporter.endRDF();
-        }
     }
 }

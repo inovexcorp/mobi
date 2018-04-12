@@ -77,7 +77,6 @@ public class OperationConfig implements RecordOperationConfig {
     @Override
     public RecordOperationConfig useDefaults() {
         settings.clear();
-
         return this;
     }
 }

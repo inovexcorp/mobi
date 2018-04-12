@@ -32,7 +32,7 @@ import com.mobi.repository.api.RepositoryConnection;
 public interface RecordService<T extends Record> {
 
     /**
-     * The type of Record this service supports.
+     * The type of {@link Record} this service supports.
      *
      * @return The type of Record
      */
