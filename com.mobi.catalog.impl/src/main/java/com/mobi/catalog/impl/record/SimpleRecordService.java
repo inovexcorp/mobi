@@ -23,32 +23,22 @@ package com.mobi.catalog.impl.record;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
-import com.mobi.catalog.api.record.RecordService;
-import com.mobi.catalog.api.record.config.RecordExportConfig;
+import com.mobi.catalog.api.record.AbstractRecordService;
+import com.mobi.catalog.api.record.config.RecordExportSettings;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-@Component
-public class SimpleRecordService implements RecordService<Record> {
-    private static final Logger LOG = LoggerFactory.getLogger(SimpleRecordService.class);
-
-    protected CatalogUtilsService utilsService;
-    protected CatalogProvUtils provUtils;
-    protected ValueFactory vf;
-    protected RecordFactory recordFactory;
+public class SimpleRecordService extends AbstractRecordService<Record> {
 
     @Reference
     void setUtilsService(CatalogUtilsService utilsService) {
@@ -61,8 +51,8 @@ public class SimpleRecordService implements RecordService<Record> {
     }
 
     @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
+    void setVf(ValueFactory valueFactory) {
+        this.valueFactory = valueFactory;
     }
 
     @Reference
@@ -70,12 +60,14 @@ public class SimpleRecordService implements RecordService<Record> {
         this.recordFactory = recordFactory;
     }
 
+    @Override
+    public Class<Record> getType() {
+        return Record.class;
+    }
 
     @Override
-    public final Record delete(IRI recordId, User user, RepositoryConnection conn) {
-
-        Record record = utilsService.optObject(recordId, recordFactory, conn).orElseThrow(()
-                -> new IllegalArgumentException("Record " + recordId + " does not exist"));
+    public Record delete(IRI recordId, User user, RepositoryConnection conn) {
+        Record record = getRecord(recordId, conn);
 
         DeleteActivity deleteActivity = provUtils.startDeleteActivity(user, recordId);
         deleteRecord(record, conn);
@@ -84,91 +76,20 @@ public class SimpleRecordService implements RecordService<Record> {
         return record;
     }
 
-    /**
-     * Removes the Record object from the repository
-     *
-     * @param record The Record to be removed
-     * @param conn A RepositoryConnection to use for lookup
-     */
-    protected void deleteRecord(Record record, RepositoryConnection conn) {
-        conn.begin();
-        utilsService.removeObject(record, conn);
-        conn.commit();
-    }
-
     @Override
-    public final void export(IRI iriRecord, RecordExportConfig config, RepositoryConnection conn) {
-        ExportWriter writerWrapper = new ExportWriter(config.getBatchExporter());
-        writerWrapper.setLogger(LOG);
-        writerWrapper.setPrintToSystem(true);
-
-        boolean writerIsActive = writerWrapper.isActive();
-
-        // Write Record
-        if (!writerIsActive) {
-            writerWrapper.startRDFExport();
+    public void export(IRI iriRecord, RecordOperationConfig config, RepositoryConnection conn) {
+        BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
+        if (exporter == null) {
+            throw new IllegalArgumentException("BatchExporter must not be null");
         }
-        exportRecord(iriRecord, writerWrapper, config, conn);
-        if (!writerIsActive) {
-            writerWrapper.endRDFExport();
+        boolean exporterIsActive = exporter.isActive();
+        if (!exporterIsActive) {
+            exporter.startRDF();
         }
-    }
-
-    /**
-     * Retrieves a Record based on the given IRI and exports the data to the provided ExportWriter
-     *
-     * @param iriRecord IRI of the Record to export
-     * @param writer An ExportWriter to write the Record to
-     * @param conn A RepositoryConnection to use for lookup
-     */
-    protected void exportRecord(IRI iriRecord, ExportWriter writer, RecordExportConfig config, RepositoryConnection conn) {
-        Record record = utilsService.getExpectedObject(iriRecord, recordFactory, conn);
-        writeRecordData(record, writer);
-    }
-
-    /**
-     * Writes the base Record data to the provided ExportWriter
-     *
-     * @param record The Record to write out
-     * @param writer The ExportWriter to write the Record to
-     */
-    protected void writeRecordData(Record record, ExportWriter writer) {
-        record.getModel().forEach(writer::handleStatement);
-    }
-
-    /**
-     * Wrapper class of BatchExporter. Restricts access to start and stop writing methods from subclasses.
-     */
-    protected class ExportWriter {
-        private BatchExporter writer;
-
-        protected ExportWriter(BatchExporter writer) {
-            this.writer = writer;
-        }
-
-        private void startRDFExport() {
-            writer.startRDF();
-        }
-
-        private void endRDFExport() {
-            writer.endRDF();
-        }
-
-        protected void handleStatement(Statement statement) {
-            writer.handleStatement(statement);
-        }
-
-        protected void setLogger(Logger logger) {
-            writer.setLogger(logger);
-        }
-
-        protected void setPrintToSystem(boolean printToSystem) {
-            writer.setPrintToSystem(printToSystem);
-        }
-
-        protected boolean isActive() {
-            return writer.isActive();
+        Record record = getRecord(iriRecord, conn);
+        writeRecordData(record, exporter);
+        if (!exporterIsActive) {
+            exporter.endRDF();
         }
     }
 }
-

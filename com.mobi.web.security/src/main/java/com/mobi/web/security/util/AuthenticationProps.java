@@ -25,4 +25,5 @@ package com.mobi.web.security.util;
 
 public class AuthenticationProps {
     public static final String USERNAME = "com.mobi.web.username";
+    public static final String ANON_USER = "http://mobi.com/users/anon";
 }

@@ -714,6 +714,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testUploadInvalidOntologyFile() {
+        // Setup:
         when(ontologyManager.createOntology(any(FileInputStream.class), anyBoolean()))
                 .thenThrow(new MobiOntologyException("Error"));
 
@@ -751,6 +752,32 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 400);
         verify(provUtils).startCreateActivity(user);
         verify(provUtils).removeActivity(createActivity);
+    }
+
+    @Test
+    public void  testUploadFileCommitFail() {
+        // Setup:
+        when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString(), any(Model.class), any(Model.class))).thenThrow(new IllegalStateException());
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        fd.field("title", "title");
+        fd.field("description", "description");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
+
+        Response response = target().path("ontologies").request().post(Entity.entity(fd,
+                MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 500);
+        assertGetUserFromContext();
+        verify(ontologyManager).createOntology(any(FileInputStream.class), eq(false));
+        verify(catalogManager, atLeastOnce()).getLocalCatalogIRI();
+        verify(ontologyManager).createOntologyRecord(any(OntologyRecordConfig.class));
+        verify(catalogManager).addRecord(catalogId, record);
+        verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
+        verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(createActivity);
+        verify(ontologyManager).deleteOntology(recordId);
     }
 
     // Test upload ontology json

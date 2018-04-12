@@ -28,7 +28,9 @@ import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
-import com.mobi.catalog.api.record.config.RecordExportConfig;
+import com.mobi.catalog.api.record.config.OperationConfig;
+import com.mobi.catalog.api.record.config.RecordExportSettings;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
@@ -53,8 +55,8 @@ import java.io.ByteArrayOutputStream;
 import java.util.Optional;
 
 import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
@@ -102,7 +104,7 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
 
         MockitoAnnotations.initMocks(this);
-        when(utilsService.getExpectedObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(testRecord);
+        when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
 
         injectOrmFactoryReferencesIntoService(recordService);
@@ -139,26 +141,12 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
     /* export() */
 
     @Test
-    public void exportUsingOutputStreamTest() throws Exception {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        RecordExportConfig config = new RecordExportConfig.Builder(os, RDFFormat.JSONLD, transformer).build();
-
-        BatchExporter exporter = config.getBatchExporter();
-        assertFalse(exporter.isActive());
-        recordService.export(testIRI, config, connection);
-        assertFalse(exporter.isActive());
-
-        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString())), "", RDFFormat.JSONLD));
-        assertEquals(testRecord.getModel(), outputModel);
-
-        verify(utilsService).getExpectedObject(eq(testIRI), any(OrmFactory.class), eq(connection));
-    }
-
-    @Test
     public void exportUsingBatchExporterTest() throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        BatchExporter exporter = new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
-        RecordExportConfig config = new RecordExportConfig.Builder(exporter).build();
+        BatchExporter exporter =  new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.JSONLD, os)));
+        RecordOperationConfig config = new OperationConfig();
+
+        config.set(RecordExportSettings.BATCH_EXPORTER, exporter);
 
         assertFalse(exporter.isActive());
         exporter.startRDF();
@@ -170,6 +158,6 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString())), "", RDFFormat.JSONLD));
         assertEquals(testRecord.getModel(), outputModel);
 
-        verify(utilsService).getExpectedObject(eq(testIRI), any(OrmFactory.class), eq(connection));
+        verify(utilsService).optObject(eq(testIRI), any(OrmFactory.class), eq(connection));
     }
 }

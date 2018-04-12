@@ -1,0 +1,156 @@
+package com.mobi.document.translator.cli;
+
+/*-
+ * #%L
+ * com.mobi.document.translation.cli
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
+import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.orm.OrmFactoryRegistry;
+import com.mobi.document.translator.SemanticTranslator;
+import com.mobi.document.translator.ontology.ExtractedOntology;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.action.Argument;
+import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.Completion;
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
+import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.apache.karaf.shell.support.completers.FileCompleter;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
+import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+@Command(scope = "mobi", name = "document-translate",
+        description = "Translates a document into RDF with an associated generated ontology.")
+@Service
+public class DocumentTranslationCLI implements Action {
+
+    /**
+     * Logging utility.
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(DocumentTranslationCLI.class);
+
+    @Argument(index = 0, name = "Document", required = true, description = "The document file to translate")
+    @Completion(FileCompleter.class)
+    private File documentFile;
+
+    @Argument(index = 1, name = "Output Location", required = true,
+            description = "The directory where we'll write the output zip file containing the ontology and data")
+    @Completion(FileCompleter.class)
+    private File outputDirectory;
+
+    @Argument(index = 2, name = "Ontology IRI", required = false,
+            description = "The IRI of the ontology you want to generate")
+    private String ontologyIriString;
+
+    @Argument(index = 3, name = "Document Type",
+            description = "The type of document (If you don't want to use the file extension)")
+    private String type;
+
+    @Reference
+    private List<SemanticTranslator> translators = new ArrayList<>();
+
+    @Reference
+    private OrmFactoryRegistry ormFactoryRegistry;
+
+    @Reference
+    private ValueFactory valueFactory;
+
+    @Reference
+    private ModelFactory modelFactory;
+
+    @Reference
+    private SesameTransformer sesameTransformer;
+
+    @Override
+    public Object execute() throws Exception {
+        validateOutputLocation(outputDirectory);
+        final SemanticTranslator translator = getTranslatorForType(type != null ? type
+                : FilenameUtils.getExtension(documentFile.getName()));
+        ontologyIriString = ontologyIriString != null ? ontologyIriString
+                        : String.format("urn://mobi.inovexcorp.com/extractedOntology/%s", UUID.randomUUID().toString());
+        final IRI ontologyIri = valueFactory.createIRI(ontologyIriString);
+        final ExtractedOntology ontology = ormFactoryRegistry.createNew(ontologyIri,
+                modelFactory.createModel(), ExtractedOntology.class);
+        final Model results = translator.translate(Paths.get(documentFile.toURI()), ontology);
+        final File outputFile = File.createTempFile(ontologyIri.getLocalName(), ".zip", outputDirectory);
+        try (ZipOutputStream os = new ZipOutputStream(new FileOutputStream(outputFile))) {
+            final ZipEntry ontologyEntry = new ZipEntry("ontology.ttl");
+            os.putNextEntry(ontologyEntry);
+            writeData(ontology.getModel(), os);
+            ZipEntry dataEntry = new ZipEntry("data.ttl");
+            os.putNextEntry(dataEntry);
+            writeData(results, os);
+        }
+        return null;
+    }
+
+    private void writeData(final Model model, OutputStream os) {
+        org.openrdf.rio.RDFHandler handler1 = new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.TURTLE, os));
+        Rio.write(sesameTransformer.sesameModel(model), handler1);
+    }
+
+    private SemanticTranslator getTranslatorForType(String type) {
+        LOGGER.info("Translating for type '{}' -- We have {} translators registered", type, this.translators.size());
+        return translators.stream()
+                // If any of the supported types contains the type extensions.
+                .filter(translator -> Arrays.asList(translator.getSupportedTypes()).contains(type))
+                // Find the first matching the above filter predicate.
+                .findFirst()
+                // Or else throw an exception.
+                .orElseThrow(() -> new UnsupportedOperationException("No JSON translator was found in the system"));
+    }
+
+    private static void validateOutputLocation(File loc) throws IOException {
+        FileUtils.forceMkdir(loc);
+    }
+
+    private static String validateFile(@Nonnull final File documentFile) throws IOException {
+        if (documentFile.isFile()) {
+            return FilenameUtils.getExtension(documentFile.getName());
+        } else {
+            throw new IOException("Specified file doesn't exist: " + documentFile.getAbsolutePath());
+        }
+    }
+}

@@ -24,12 +24,19 @@ package com.mobi.catalog.api.record;
  */
 
 import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.record.config.RecordExportConfig;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.IRI;
 import com.mobi.repository.api.RepositoryConnection;
 
 public interface RecordService<T extends Record> {
+
+    /**
+     * The type of Record this service supports.
+     *
+     * @return The type of Record
+     */
+    Class<T> getType();
 
     /**
      * Deletes a Record from a Catalog and creates a provenance event for the activity based on the provided user.
@@ -45,9 +52,8 @@ public interface RecordService<T extends Record> {
      * Exports a given Record based on a provided configuration
      *
      * @param iriRecord An {@link IRI} of the record to be exported
-     * @param config A {@link RecordExportConfig} that contains the export configuration.
+     * @param config A {@link RecordOperationConfig} that contains the export configuration.
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      */
-    <U extends RecordExportConfig> void export(IRI iriRecord, U config, RepositoryConnection conn);
-
+    void export(IRI iriRecord, RecordOperationConfig config, RepositoryConnection conn);
 }

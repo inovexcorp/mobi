@@ -69,6 +69,7 @@ import com.mobi.rdf.orm.Thing;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -83,6 +84,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -106,6 +108,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private static final String GET_IN_PROGRESS_COMMIT;
     private static final String GET_COMMIT_CHAIN;
     private static final String GET_NEW_LATEST_VERSION;
+    private static final String GET_COMMIT_PATHS;
     private static final String USER_BINDING = "user";
     private static final String PARENT_BINDING = "parent";
     private static final String RECORD_BINDING = "record";
@@ -123,6 +126,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             );
             GET_NEW_LATEST_VERSION = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-new-latest-version.rq"),
+                    "UTF-8"
+            );
+            GET_COMMIT_PATHS = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-paths.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -376,32 +383,35 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
         Optional<Resource> headCommit = branch.getHead_resource();
         if (headCommit.isPresent()) {
-            List<Resource> chain = getCommitChain(headCommit.get(), false, conn);
             IRI commitIRI = vf.createIRI(Tag.commit_IRI);
             Set<Resource> deltaIRIs = new HashSet<>();
-            for (Resource commitId : chain) {
-                if (!commitIsReferenced(commitId, conn)) {
-                    // Get Additions/Deletions Graphs
-                    Revision revision = getRevision(commitId, conn);
-                    revision.getAdditions().ifPresent(deltaIRIs::add);
-                    revision.getDeletions().ifPresent(deltaIRIs::add);
-                    revision.getGraphRevision().forEach(graphRevision -> {
-                        graphRevision.getAdditions().ifPresent(deltaIRIs::add);
-                        graphRevision.getDeletions().ifPresent(deltaIRIs::add);
-                    });
+            getCommitPaths(headCommit.get(), conn).forEach(path -> {
+                for (Resource commitId : path) {
+                    if (conn.contains(null, null, null, commitId)) {
+                        if (!commitIsReferenced(commitId, conn)) {
+                            // Get Additions/Deletions Graphs
+                            Revision revision = getRevision(commitId, conn);
+                            revision.getAdditions().ifPresent(deltaIRIs::add);
+                            revision.getDeletions().ifPresent(deltaIRIs::add);
+                            revision.getGraphRevision().forEach(graphRevision -> {
+                                graphRevision.getAdditions().ifPresent(deltaIRIs::add);
+                                graphRevision.getDeletions().ifPresent(deltaIRIs::add);
+                            });
 
-                    // Remove Commit
-                    remove(commitId, conn);
+                            // Remove Commit
+                            remove(commitId, conn);
 
-                    // Remove Tags Referencing this Commit
-                    Set<Resource> tags = RepositoryResults.asModel(conn.getStatements(null, commitIRI, commitId), mf)
-                            .subjects();
-                    tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId, VersionedRecord.version_IRI,
-                            conn));
-                } else {
-                    break;
+                            // Remove Tags Referencing this Commit
+                            Set<Resource> tags = RepositoryResults.asModel(conn.getStatements(null, commitIRI, commitId), mf)
+                                    .subjects();
+                            tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId, VersionedRecord.version_IRI,
+                                    conn));
+                        } else {
+                            break;
+                        }
+                    }
                 }
-            }
+            });
             deltaIRIs.forEach(resource -> remove(resource, conn));
         }
     }
@@ -410,6 +420,23 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     public void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn) {
         Branch branch = getObject(branchId, branchFactory, conn);
         removeBranch(recordId, branch, conn);
+    }
+
+    private List<List<Resource>> getCommitPaths(Resource commitId, RepositoryConnection conn) {
+        List<List<Resource>> rtn = new ArrayList<>();
+        TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_PATHS);
+        query.setBinding("start", commitId);
+        query.evaluate().forEach(bindings -> {
+            String[] path = StringUtils.split(Bindings.requiredLiteral(bindings, "path").stringValue(), " ");
+            Optional<Binding> parent = bindings.getBinding("parent");
+            if (!parent.isPresent()) {
+                rtn.add(Stream.of(path).map(vf::createIRI).collect(Collectors.toList()));
+            } else {
+                String[] connectPath = StringUtils.split(Bindings.requiredLiteral(bindings, "connectPath").stringValue(), " ");
+                rtn.add(Stream.of(connectPath, path).flatMap(Stream::of).map(vf::createIRI).collect(Collectors.toList()));
+            }
+        });
+        return rtn;
     }
 
     private boolean commitIsReferenced(Resource commitId, RepositoryConnection conn) {
