@@ -24,7 +24,7 @@ package com.mobi.rdf.orm.generate;
  */
 
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.rdf.api.Literal;
+import com.mobi.rdf.api.*;
 import com.mobi.rdf.orm.AbstractOrmFactory;
 import com.sun.codemodel.ClassType;
 import com.sun.codemodel.JBlock;
@@ -44,9 +44,6 @@ import com.sun.codemodel.JOp;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 import org.apache.commons.lang3.StringUtils;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmException;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
@@ -79,6 +76,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class SourceGenerator {
 
@@ -258,9 +256,9 @@ public class SourceGenerator {
                 getExisting.annotate(Override.class);
 
                 /*
-                  * The conditional here is basically going to filter the model for the rdf:type of the
-                  * thing we're looking for, and will return whether or not the resulting submodel is empty.
-                  *
+                 * The conditional here is basically going to filter the model for the rdf:type of the
+                 * thing we're looking for, and will return whether or not the resulting submodel is empty.
+                 *
                  */
                 final JInvocation conditional = JExpr.ref("model").invoke("filter")
                         .arg(JExpr.ref("resource"))
@@ -273,9 +271,9 @@ public class SourceGenerator {
                 final JInvocation emptyOptional = codeModel.ref(Optional.class).staticInvoke("empty");
 
                 /*
-                  * If the condition is false, meaning there is a matching rdf:type statement.  Then
-                  * we will create an Optional.of a new instance of our target Thing class using the
-                  * model we're referencing.
+                 * If the condition is false, meaning there is a matching rdf:type statement.  Then
+                 * we will create an Optional.of a new instance of our target Thing class using the
+                 * model we're referencing.
                  */
                 final JInvocation realOptional = codeModel.ref(Optional.class).staticInvoke("of")
                         .arg(JExpr._new(clazz)
@@ -364,10 +362,10 @@ public class SourceGenerator {
         interfaces.forEach((classIri, interfaceClass) -> {
             if (classIri != null) {
                 try {
-                /*
-                 * Define the implementation class, wire it to the correct
-                 * interface and extend Thing.
-                 */
+                    /*
+                     * Define the implementation class, wire it to the correct
+                     * interface and extend Thing.
+                     */
                     final JDefinedClass impl = codeModel._class(JMod.PUBLIC,
                             packageName + "." + interfaceClass.name() + "Impl", ClassType.CLASS);
                     interfaceImplMap.put(interfaceClass, impl);
@@ -938,11 +936,21 @@ public class SourceGenerator {
      * ontology
      */
     private Collection<IRI> identifyClasses() {
-        final Model submodel = this.model.filter(null, RDF.TYPE, OWL.CLASS);
-        classIris = new ArrayList<>(submodel.size());
-        submodel.stream()
-                .filter(statement -> statement.getSubject() instanceof IRI)
-                .forEach(statement -> classIris.add((IRI) statement.getSubject()));
+        final Model owlClasses = this.model.filter(null, RDF.TYPE, OWL.CLASS);
+        final Model rdfsClasses = this.model.filter(null, RDF.TYPE, RDFS.CLASS);
+        classIris = new HashSet<>(owlClasses.size() + rdfsClasses.size());
+
+        owlClasses.stream()
+                .map(org.openrdf.model.Statement::getSubject)
+                .filter(subject->subject instanceof IRI)
+                .map(subject -> (IRI) subject)
+                .forEach(classIris::add);
+
+        rdfsClasses.stream()
+                .map(org.openrdf.model.Statement::getSubject)
+                .filter(subject->subject instanceof IRI)
+                .map(subject -> (IRI) subject)
+                .forEach(classIris::add);
         return classIris;
     }
 

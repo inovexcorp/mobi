@@ -460,6 +460,97 @@ GRAPH additions:testLoner {
 GRAPH deletions:testLoner {
 }
 
+# Complex Commit History Deletion Test
+
+GRAPH records:complex-record {
+    records:complex-record a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
+        mcat:catalog catalogs:catalog-distributed ;
+        dc:title "Complex History Record" ;
+        dc:description "Description" ;
+        dc:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher muser:tester ;
+        mcat:branch branches:complex-branch ;
+        mcat:branch branches:complex-master ;
+        mcat:masterBranch branches:complex-master .
+}
+
+GRAPH branches:complex-master {
+    branches:complex-master a mcat:Branch ;
+        dc:title "Complex Master Branch" ;
+        dc:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        mcat:head commits:complex-b .
+}
+
+GRAPH branches:complex-branch {
+    branches:complex-branch a mcat:Branch ;
+        dc:title "Complex Branch" ;
+        dc:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        mcat:head commits:complex-a .
+}
+
+GRAPH commits:complex-a {
+    commits:complex-a a mcat:Commit ;
+        dc:title "Complex Commit A" ;
+        prov:atTime "2018-01-04T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:complex-c ;
+        mcat:auxiliaryCommit commits:complex-b ;
+        prov:generated revisions:complex-a .
+
+    revisions:complex-a a mcat:Revision ;
+        mcat:additions additions:complex-a ;
+        mcat:deletions deletions:complex-a .
+}
+
+GRAPH commits:complex-b {
+    commits:complex-b a mcat:Commit ;
+        dc:title "Complex Commit B" ;
+        prov:atTime "2018-01-03T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:complex-d ;
+        prov:generated revisions:complex-b .
+
+    revisions:complex-b a mcat:Revision ;
+        mcat:additions additions:complex-b ;
+        mcat:deletions deletions:complex-b .
+}
+
+GRAPH additions:complex-c {
+    <http://mobi.com/test/ClassB> a owl:Class .
+}
+
+GRAPH commits:complex-c {
+    commits:complex-c a mcat:Commit ;
+        dc:title "Complex Commit C" ;
+        prov:atTime "2018-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:complex-d ;
+        prov:generated revisions:complex-c .
+
+    revisions:complex-c a mcat:Revision ;
+        mcat:additions additions:complex-c ;
+        mcat:deletions deletions:complex-c .
+}
+
+GRAPH additions:complex-c {
+    <http://mobi.com/test/ClassA> a owl:Class .
+}
+
+GRAPH commits:complex-d {
+    commits:complex-d a mcat:Commit ;
+        dc:title "Complex Commit D" ;
+        prov:atTime "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:complex-d .
+
+    revisions:complex-d a mcat:Revision ;
+        mcat:additions additions:complex-d ;
+        mcat:deletions deletions:complex-d .
+}
+
+GRAPH additions:complex-d {
+    <http://mobi.com/test/ontology> a owl:Ontology .
+}
+
 # Conflict Scenario 1 - Class deletion (1 conflict)
 
 GRAPH commits:conflict0 {

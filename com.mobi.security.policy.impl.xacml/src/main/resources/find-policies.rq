@@ -1,0 +1,8 @@
+PREFIX : <http://mobi.com/ontologies/policy#>
+
+SELECT ?policyId
+WHERE {
+    %BINDINGVALUES
+    ?policyId a :PolicyFile .
+    %FILTERS
+}
