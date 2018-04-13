@@ -25,8 +25,14 @@ package com.mobi.catalog.api.record.config;
 
 import com.mobi.persistence.utils.BatchExporter;
 
+/**
+ * Base {@link com.mobi.catalog.api.ontologies.mcat.Record} export settings
+ */
 public class RecordExportSettings {
 
+    /**
+     * Setting for the {@link BatchExporter} to write Records out to.
+     */
     public static OperationSetting<BatchExporter> BATCH_EXPORTER;
 
     private RecordExportSettings() {}
