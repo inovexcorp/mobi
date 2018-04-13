@@ -42,10 +42,11 @@ import java.util.Set;
 /**
  * Defines functionality for VersionedRDFRecordService. Provides common methods for exporting and deleting a Record.
  * Overrides exportRecord() and deleteRecord() to perform VersionedRDFRecord specific operations such as writing
- * out Branches, Commits, and Tags.
+ * out Branches, Commits, and Tags.S
  * @param <T> of VersionedRDFRecord
  */
-public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRecord> extends AbstractRecordService<T> implements RecordService<T> {
+public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRecord>
+        extends AbstractRecordService<T> implements RecordService<T> {
 
     protected CommitFactory commitFactory;
     protected BranchFactory branchFactory;
@@ -55,7 +56,8 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
         writeRecordData(record, exporter);
         if (config.get(VersionedRDFRecordExportSettings.WRITE_VERSIONED_DATA)) {
-            writeVersionedRDFData(record, config.get(VersionedRDFRecordExportSettings.BRANCHES_TO_EXPORT), exporter, conn);
+            writeVersionedRDFData(record, config.get(VersionedRDFRecordExportSettings.BRANCHES_TO_EXPORT),
+                    exporter, conn);
         }
     }
 
@@ -68,7 +70,8 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param exporter The ExportWriter to write the VersionedRDFRecord to
      * @param conn A RepositoryConnection to use for lookup
      */
-    protected void writeVersionedRDFData(VersionedRDFRecord record, Set<Resource> branchesToWrite, BatchExporter exporter, RepositoryConnection conn) {
+    protected void writeVersionedRDFData(VersionedRDFRecord record, Set<Resource> branchesToWrite,
+                                         BatchExporter exporter, RepositoryConnection conn) {
         Set<Resource> processedCommits = new HashSet<>();
 
         // Write Branches

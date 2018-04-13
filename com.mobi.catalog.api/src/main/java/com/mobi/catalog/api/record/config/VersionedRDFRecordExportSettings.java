@@ -29,7 +29,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * {@link com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord} export settings
+ * {@link com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord} export settings.
  */
 public class VersionedRDFRecordExportSettings {
 
@@ -46,7 +46,9 @@ public class VersionedRDFRecordExportSettings {
     private VersionedRDFRecordExportSettings() {}
 
     static {
-        WRITE_VERSIONED_DATA = new OperationSettingImpl<>("com.mobi.catalog.operation.export.writeversioneddata", "Write versioned RDF data", true);
-        BRANCHES_TO_EXPORT = new OperationSettingImpl<>("com.mobi.catalog.operation.export.branchestoexport", "Branches to export", new HashSet<>());
+        WRITE_VERSIONED_DATA = new OperationSettingImpl<>("com.mobi.catalog.operation.export.writeversioneddata",
+                "Write versioned RDF data", true);
+        BRANCHES_TO_EXPORT = new OperationSettingImpl<>("com.mobi.catalog.operation.export.branchestoexport",
+                "Branches to export", new HashSet<>());
     }
 }

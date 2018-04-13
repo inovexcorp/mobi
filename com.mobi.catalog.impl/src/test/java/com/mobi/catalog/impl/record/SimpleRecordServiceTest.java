@@ -163,7 +163,6 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
     @Test (expected = IllegalArgumentException.class)
     public void exportNullBatchExporterTest() throws Exception {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
         BatchExporter exporter =  null;
         RecordOperationConfig config = new OperationConfig();
 

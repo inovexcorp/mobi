@@ -78,8 +78,8 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     }
 
     /**
-     * Method that specifies {@link Record} specific write behavior. Can be overridden by subclasses to apply specific export
-     * behavior.
+     * Method that specifies {@link Record} specific write behavior. Can be overridden by subclasses to apply specific
+     * export behavior.
      *
      * @param record An {@link IRI} of the record to be exported
      * @param config A {@link RecordOperationConfig} that contains the export configuration.
@@ -94,7 +94,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
      * Checks that the required passed in settings for a {@link RecordOperationConfig} are valid.
      *
      * @param config The {@link RecordOperationConfig} to validate settings
-     * @throws {@link IllegalArgumentException} If a setting is not valid
+     * @throws IllegalArgumentException If a setting is not valid
      */
     protected void validateSettings(RecordOperationConfig config) {
         BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
@@ -104,7 +104,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     }
 
     /**
-     * Gets a {@link Record} object from the associated factory
+     * Gets a {@link Record} object from the associated factory.
      *
      * @param recordId {@link IRI} of the Record
      * @param conn A {@link RepositoryConnection} to use for lookup
@@ -116,8 +116,8 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     }
 
     /**
-     * Method that specifies {@link Record} type specific delete behavior. Can be overridden by subclasses to apply specific
-     * delete behavior.
+     * Method that specifies {@link Record} type specific delete behavior. Can be overridden by subclasses to apply
+     * specific delete behavior.
      *
      * @param record The {@link Record} to be removed
      * @param conn A {@link RepositoryConnection} to use for lookup
@@ -127,7 +127,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     }
 
     /**
-     * Removes the Record object from the repository
+     * Removes the Record object from the repository.
      *
      * @param record Record to remove
      * @param conn A RepositoryConnection to use for lookup
@@ -137,7 +137,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     }
 
     /**
-     * Writes the base Record data to the provided ExportWriter
+     * Writes the base Record data to the provided ExportWriter.
      *
      * @param record The Record to write out
      * @param exporter The BatchExporter that writes the Record data
