@@ -39,6 +39,12 @@ import com.mobi.repository.api.RepositoryConnection;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Defines functionality for VersionedRDFRecordService. Provides common methods for exporting and deleting a Record.
+ * Overrides exportRecord() and deleteRecord() to perform VersionedRDFRecord specific operations such as writing
+ * out Branches, Commits, and Tags.
+ * @param <T> of VersionedRDFRecord
+ */
 public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRecord> extends AbstractRecordService<T> implements RecordService<T> {
 
     protected CommitFactory commitFactory;
