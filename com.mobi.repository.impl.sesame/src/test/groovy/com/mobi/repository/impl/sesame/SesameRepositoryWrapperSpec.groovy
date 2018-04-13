@@ -1,10 +1,10 @@
 package com.mobi.repository.impl.sesame
 
+import com.mobi.repository.api.RepositoryConnection
+import org.eclipse.rdf4j.repository.sail.SailRepository
+import org.eclipse.rdf4j.sail.memory.MemoryStore
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import com.mobi.repository.api.RepositoryConnection
-import org.openrdf.repository.sail.SailRepository
-import org.openrdf.sail.memory.MemoryStore
 import spock.lang.Specification
 
 class SesameRepositoryWrapperSpec extends Specification {

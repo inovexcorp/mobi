@@ -49,16 +49,16 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import org.apache.commons.io.IOUtils;
-import org.openrdf.model.impl.LinkedHashModel;
-import org.openrdf.model.util.Models;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFHandler;
-import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.RDFParseException;
-import org.openrdf.rio.Rio;
-import org.openrdf.rio.WriterConfig;
-import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
-import org.openrdf.rio.helpers.StatementCollector;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.util.Models;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandler;
+import org.eclipse.rdf4j.rio.RDFHandlerException;
+import org.eclipse.rdf4j.rio.RDFParseException;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.WriterConfig;
+import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
+import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
@@ -152,7 +152,7 @@ public class SimpleOntology implements Ontology {
     private Set<Annotation> annotations;
     private Set<AnnotationProperty> annotationProperties;
     private Set<IRI> missingImports = new HashSet<>();
-    private org.openrdf.model.Model sesameModel;
+    private org.eclipse.rdf4j.model.Model sesameModel;
 
     //Owlapi variables
     private OWLOntology owlOntology;
@@ -732,11 +732,11 @@ public class SimpleOntology implements Ontology {
     /**
      * @return the unmodifiable sesame model that represents this Ontology.
      */
-    protected synchronized org.openrdf.model.Model asSesameModel() throws MobiOntologyException {
+    protected synchronized org.eclipse.rdf4j.model.Model asSesameModel() throws MobiOntologyException {
         if (sesameModel != null) {
             return sesameModel.unmodifiable();
         } else {
-            sesameModel = new org.openrdf.model.impl.LinkedHashModel();
+            sesameModel = new org.eclipse.rdf4j.model.impl.LinkedHashModel();
             RDFHandler rdfHandler = new StatementCollector(sesameModel);
             OWLDocumentFormat format = this.owlOntology.getFormat();
             format.setAddMissingTypes(false);
@@ -750,7 +750,7 @@ public class SimpleOntology implements Ontology {
     public Model asModel(ModelFactory factory) throws MobiOntologyException {
         Model model = factory.createModel();
 
-        org.openrdf.model.Model sesameModel = asSesameModel();
+        org.eclipse.rdf4j.model.Model sesameModel = asSesameModel();
         sesameModel.forEach(stmt -> model.add(transformer.mobiStatement(stmt)));
 
         return model;
@@ -760,7 +760,7 @@ public class SimpleOntology implements Ontology {
     public OutputStream asTurtle() throws MobiOntologyException {
         OutputStream outputStream = new ByteArrayOutputStream();
         try {
-            org.openrdf.model.Model sesameModel = asSesameModel();
+            org.eclipse.rdf4j.model.Model sesameModel = asSesameModel();
             Rio.write(sesameModel, outputStream, RDFFormat.TURTLE);
         } catch (RDFHandlerException e) {
             throw new MobiOntologyException("Error while writing Ontology.");
@@ -772,7 +772,7 @@ public class SimpleOntology implements Ontology {
     public OutputStream asRdfXml() throws MobiOntologyException {
         OutputStream outputStream = new ByteArrayOutputStream();
         try {
-            org.openrdf.model.Model sesameModel = asSesameModel();
+            org.eclipse.rdf4j.model.Model sesameModel = asSesameModel();
             Rio.write(sesameModel, outputStream, RDFFormat.RDFXML);
         } catch (RDFHandlerException e) {
             throw new MobiOntologyException("Error while writing Ontology.");
@@ -790,7 +790,7 @@ public class SimpleOntology implements Ontology {
         OutputStream outputStream = new ByteArrayOutputStream();
         WriterConfig config = new WriterConfig();
         try {
-            org.openrdf.model.Model sesameModel = asSesameModel();
+            org.eclipse.rdf4j.model.Model sesameModel = asSesameModel();
             if (skolemize) {
                 sesameModel = transformer.sesameModel(bNodeService.skolemize(transformer.mobiModel(sesameModel)));
             }
@@ -812,8 +812,8 @@ public class SimpleOntology implements Ontology {
             SimpleOntology simpleOntology = (SimpleOntology) obj;
             OntologyId ontologyId = simpleOntology.getOntologyId();
             if (this.ontologyId.equals(ontologyId)) {
-                org.openrdf.model.Model thisSesameModel = this.asSesameModel();
-                org.openrdf.model.Model otherSesameModel = simpleOntology.asSesameModel();
+                org.eclipse.rdf4j.model.Model thisSesameModel = this.asSesameModel();
+                org.eclipse.rdf4j.model.Model otherSesameModel = simpleOntology.asSesameModel();
                 return Models.isomorphic(thisSesameModel, otherSesameModel);
             }
         }
@@ -824,7 +824,7 @@ public class SimpleOntology implements Ontology {
     @Override
     public int hashCode() {
         // TODO: This looks like an expensive operation
-        org.openrdf.model.Model sesameModel = this.asSesameModel();
+        org.eclipse.rdf4j.model.Model sesameModel = this.asSesameModel();
         return this.ontologyId.hashCode() + sesameModel.hashCode();
     }
 

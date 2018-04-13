@@ -28,14 +28,15 @@ import com.mobi.query.api.BindingSet;
 import com.mobi.query.exception.QueryEvaluationException;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.utils.Values;
-import org.openrdf.query.impl.ListBindingSet;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.query.impl.ListBindingSet;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class TestQueryResult extends TupleQueryResult {
     private List<String> bindings;
-    private List<org.openrdf.model.Value> values;
+    private List<Value> values;
     private int size;
 
     public TestQueryResult(List<String> bindings, List<String> values, int size, ValueFactory vf) {

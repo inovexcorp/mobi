@@ -33,7 +33,7 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.base.AbstractStatementSet;
-import org.openrdf.model.util.Models;
+import org.eclipse.rdf4j.model.util.Models;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -243,10 +243,10 @@ public class SimpleNamedGraph extends AbstractStatementSet implements NamedGraph
             if (!getGraphID().equals(graph.getGraphID()))
                 return false;
 
-            SesameModelWrapper model1 = new SesameModelWrapper(new org.openrdf.model.impl.LinkedHashModel());
+            SesameModelWrapper model1 = new SesameModelWrapper(new org.eclipse.rdf4j.model.impl.LinkedHashModel());
             model1.addAll(this);
 
-            SesameModelWrapper model2 = new SesameModelWrapper(new org.openrdf.model.impl.LinkedHashModel());
+            SesameModelWrapper model2 = new SesameModelWrapper(new org.eclipse.rdf4j.model.impl.LinkedHashModel());
             model2.addAll(graph);
 
             return Models.isomorphic(model1.getSesameModel(), model2.getSesameModel());

@@ -25,7 +25,7 @@ package com.mobi.rdf.core.impl.sesame;
 
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ValueFactory;
-import org.openrdf.model.vocabulary.XMLSchema;
+import org.eclipse.rdf4j.model.vocabulary.XMLSchema;
 
 public class NumericLiteral extends SimpleLiteral {
 

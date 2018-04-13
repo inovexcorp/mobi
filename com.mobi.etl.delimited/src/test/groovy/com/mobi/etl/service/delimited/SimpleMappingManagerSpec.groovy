@@ -38,8 +38,8 @@ import com.mobi.ontologies.rdfs.Resource
 import com.mobi.persistence.utils.api.SesameTransformer
 import com.mobi.rdf.api.Model
 import com.mobi.rdf.core.utils.Values
-import org.openrdf.rio.RDFFormat
-import org.openrdf.rio.Rio
+import org.eclipse.rdf4j.rio.RDFFormat
+import org.eclipse.rdf4j.rio.Rio
 import spock.lang.Specification
 
 import java.nio.file.Paths

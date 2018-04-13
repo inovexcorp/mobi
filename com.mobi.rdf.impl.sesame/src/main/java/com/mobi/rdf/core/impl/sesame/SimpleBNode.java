@@ -24,12 +24,11 @@ package com.mobi.rdf.core.impl.sesame;
  */
 
 import com.mobi.rdf.api.BNode;
-import com.mobi.rdf.api.BNode;
 
 /**
  * An simple default implementation of the BNode interface.
  */
-public class SimpleBNode extends org.openrdf.model.impl.SimpleBNode implements BNode {
+public class SimpleBNode extends org.eclipse.rdf4j.model.impl.SimpleBNode implements BNode {
     private static final long serialVersionUID = -3536371650881494322L;
 
     protected SimpleBNode() {

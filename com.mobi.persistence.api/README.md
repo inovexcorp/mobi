@@ -63,7 +63,7 @@ endpointUrl = http://mydb.com/sparql
 Repository services are published to the service registry via Declarative Services. They can be referenced via Blueprints like so:
  
 ```xml
-<reference id="repo" interface="org.openrdf.repository.Repository" filter="(repositorytype=memory)"/>
+<reference id="repo" interface="org.eclipse.rdf4j.repository.Repository" filter="(repositorytype=memory)"/>
 ```
     
 and via Declarative Services via a Reference annotation:

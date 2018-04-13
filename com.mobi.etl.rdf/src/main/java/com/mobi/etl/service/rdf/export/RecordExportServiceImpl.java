@@ -40,8 +40,8 @@ import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ValueFactory;
-import org.openrdf.rio.Rio;
-import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

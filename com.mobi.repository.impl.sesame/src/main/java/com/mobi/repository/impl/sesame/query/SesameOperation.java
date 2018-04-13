@@ -24,22 +24,20 @@ package com.mobi.repository.impl.sesame.query;
  */
 
 import com.mobi.query.api.BindingSet;
-import com.mobi.query.api.processor.OperationProcessor;
-import org.apache.commons.lang.NotImplementedException;
-import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.Operation;
 import com.mobi.query.api.processor.OperationProcessor;
 import com.mobi.query.exception.QueryInterruptedException;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.core.utils.Values;
+import org.apache.commons.lang.NotImplementedException;
 
 import java.util.List;
 
 public class SesameOperation implements Operation {
 
-    private org.openrdf.query.Operation sesameOperation;
+    private org.eclipse.rdf4j.query.Operation sesameOperation;
 
-    public SesameOperation(org.openrdf.query.Operation sesameOperation) {
+    public SesameOperation(org.eclipse.rdf4j.query.Operation sesameOperation) {
         this.sesameOperation = sesameOperation;
     }
 
@@ -76,7 +74,7 @@ public class SesameOperation implements Operation {
     public void setMaxExecutionTime(int maxExecTime) {
         try {
             sesameOperation.setMaxExecutionTime(maxExecTime);
-        } catch (org.openrdf.query.UpdateExecutionException | org.openrdf.query.QueryInterruptedException e) {
+        } catch (org.eclipse.rdf4j.query.UpdateExecutionException | org.eclipse.rdf4j.query.QueryInterruptedException e) {
             throw new QueryInterruptedException(e);
         }
     }

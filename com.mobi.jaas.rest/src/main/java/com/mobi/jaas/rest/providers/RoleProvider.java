@@ -28,7 +28,7 @@ import aQute.bnd.annotation.component.Reference;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
-import org.openrdf.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 
 import java.io.IOException;
 import java.io.OutputStream;

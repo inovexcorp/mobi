@@ -146,8 +146,8 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
         when(transformer.sesameStatement(any(Statement.class)))
                 .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-        when(transformer.mobiModel(any(org.openrdf.model.Model.class)))
-                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
+        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
+                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
 
         request1 = mergeRequestFactory.createNew(vf.createIRI("http://mobi.com/merge-requests#1"));
         Model contextModel1 = mf.createModel();

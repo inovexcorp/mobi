@@ -44,10 +44,10 @@ import com.mobi.repository.api.RepositoryConnection
 import com.mobi.repository.api.RepositoryManager
 import com.mobi.repository.base.RepositoryResult
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper
-import org.openrdf.repository.sail.SailRepository
-import org.openrdf.rio.RDFFormat
-import org.openrdf.rio.Rio
-import org.openrdf.sail.memory.MemoryStore
+import org.eclipse.rdf4j.repository.sail.SailRepository
+import org.eclipse.rdf4j.rio.RDFFormat
+import org.eclipse.rdf4j.rio.Rio
+import org.eclipse.rdf4j.sail.memory.MemoryStore
 import spock.lang.Shared
 import spock.lang.Specification
 

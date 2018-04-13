@@ -23,17 +23,19 @@ package com.mobi.repository.impl.sesame.memory;
  * #L%
  */
 
-import aQute.bnd.annotation.component.*;
+import aQute.bnd.annotation.component.Activate;
+import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.ConfigurationPolicy;
+import aQute.bnd.annotation.component.Deactivate;
+import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.metatype.Configurable;
-import com.mobi.repository.exception.RepositoryConfigException;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import com.mobi.repository.api.DelegatingRepository;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.base.RepositoryWrapper;
 import com.mobi.repository.exception.RepositoryConfigException;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.sail.memory.MemoryStore;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
 
 import java.io.File;
 import java.util.Map;

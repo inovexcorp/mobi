@@ -1,8 +1,8 @@
 package com.mobi.repository.impl.sesame.query
 
 import com.mobi.rdf.core.utils.Values
-import org.openrdf.model.impl.SimpleValueFactory
-import org.openrdf.query.GraphQueryResult
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.query.GraphQueryResult
 import spock.lang.Specification
 
 class SesameGraphQueryResultSpec extends Specification {

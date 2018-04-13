@@ -54,12 +54,12 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rest.util.MobiRestTestNg;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.openrdf.model.vocabulary.DCTERMS;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

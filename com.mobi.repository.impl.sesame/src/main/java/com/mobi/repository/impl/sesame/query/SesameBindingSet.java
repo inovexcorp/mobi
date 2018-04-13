@@ -34,9 +34,9 @@ import java.util.Set;
 
 public class SesameBindingSet implements BindingSet {
 
-    private org.openrdf.query.BindingSet bindingSet;
+    private org.eclipse.rdf4j.query.BindingSet bindingSet;
 
-    public SesameBindingSet(org.openrdf.query.BindingSet bindingSet) {
+    public SesameBindingSet(org.eclipse.rdf4j.query.BindingSet bindingSet) {
         this.bindingSet = bindingSet;
     }
 
@@ -52,7 +52,7 @@ public class SesameBindingSet implements BindingSet {
 
     @Override
     public Optional<Binding> getBinding(String bindingName) {
-        org.openrdf.query.Binding sesameBinding = bindingSet.getBinding(bindingName);
+        org.eclipse.rdf4j.query.Binding sesameBinding = bindingSet.getBinding(bindingName);
         if (sesameBinding == null) {
             return Optional.empty();
         } else {
@@ -67,7 +67,7 @@ public class SesameBindingSet implements BindingSet {
 
     @Override
     public Optional<Value> getValue(String bindingName) {
-        org.openrdf.model.Value value = bindingSet.getValue(bindingName);
+        org.eclipse.rdf4j.model.Value value = bindingSet.getValue(bindingName);
         if (value == null) {
             return Optional.empty();
         } else {
@@ -82,9 +82,9 @@ public class SesameBindingSet implements BindingSet {
 
     private class SesameBindingSetIterator implements Iterator<Binding> {
 
-        Iterator<org.openrdf.query.Binding> sesameBindingSetIterator;
+        Iterator<org.eclipse.rdf4j.query.Binding> sesameBindingSetIterator;
 
-        public SesameBindingSetIterator(Iterator<org.openrdf.query.Binding> sesameBindingSetIterator) {
+        public SesameBindingSetIterator(Iterator<org.eclipse.rdf4j.query.Binding> sesameBindingSetIterator) {
             this.sesameBindingSetIterator = sesameBindingSetIterator;
         }
 

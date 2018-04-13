@@ -38,18 +38,18 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
-import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.commons.lang.StringUtils;
-import org.openrdf.model.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.stream.*;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 @Component(immediate = true, provide = {SemanticTranslator.class, StackingSemanticTranslator.class})
 public class XmlStackingSemanticTranslator extends AbstractStackingSemanticTranslator<XmlStackItem>
