@@ -29,26 +29,11 @@ import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
-import com.mobi.catalog.api.record.RecordService;
-import com.mobi.catalog.api.record.config.RecordExportConfig;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.BatchExporter;
-import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Statement;
+import com.mobi.catalog.api.record.AbstractRecordService;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.RepositoryConnection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Component
-public class SimpleRecordService implements RecordService<Record> {
-    private static final Logger LOG = LoggerFactory.getLogger(SimpleRecordService.class);
-
-    protected CatalogUtilsService utilsService;
-    protected CatalogProvUtils provUtils;
-    protected ValueFactory vf;
-    protected RecordFactory recordFactory;
+public class SimpleRecordService extends AbstractRecordService<Record> {
 
     @Reference
     void setUtilsService(CatalogUtilsService utilsService) {
@@ -61,8 +46,8 @@ public class SimpleRecordService implements RecordService<Record> {
     }
 
     @Reference
-    void setVf(ValueFactory vf) {
-        this.vf = vf;
+    void setVf(ValueFactory valueFactory) {
+        this.valueFactory = valueFactory;
     }
 
     @Reference
@@ -70,79 +55,8 @@ public class SimpleRecordService implements RecordService<Record> {
         this.recordFactory = recordFactory;
     }
 
-
     @Override
-    public final Record delete(IRI recordId, User user, RepositoryConnection conn) {
-
-        Record record = utilsService.optObject(recordId, recordFactory, conn).orElseThrow(()
-                -> new IllegalArgumentException("Record " + recordId + " does not exist"));
-
-        DeleteActivity deleteActivity = provUtils.startDeleteActivity(user, recordId);
-        deleteRecord(record, conn);
-        provUtils.endDeleteActivity(deleteActivity, record);
-
-        return record;
-    }
-
-    protected void deleteRecord(Record record, RepositoryConnection conn) {
-        conn.begin();
-        utilsService.removeObject(record, conn);
-        conn.commit();
-    }
-
-    @Override
-    public final void export(IRI iriRecord, RecordExportConfig config, RepositoryConnection conn) {
-        ExportWriter writerWrapper = new ExportWriter(config.getBatchExporter());
-        writerWrapper.setLogger(LOG);
-        writerWrapper.setPrintToSystem(true);
-
-        boolean writerIsActive = writerWrapper.isActive();
-
-        // Write Record
-        if (!writerIsActive) {
-            writerWrapper.startRDFExport();
-        }
-        exportRecord(iriRecord, writerWrapper, conn);
-        if (!writerIsActive) {
-            writerWrapper.endRDFExport();
-        }
-    }
-
-    protected void exportRecord(IRI iriRecord, ExportWriter writer, RepositoryConnection conn) {
-        Record record = utilsService.getExpectedObject(iriRecord, recordFactory, conn);
-        record.getModel().forEach(writer::handleStatement);
-    }
-
-    protected class ExportWriter {
-        private BatchExporter writer;
-
-        private void startRDFExport() {
-            writer.startRDF();
-        }
-
-        private void endRDFExport() {
-            writer.endRDF();
-        }
-
-        protected ExportWriter(BatchExporter writer) {
-            this.writer = writer;
-        }
-
-        protected void handleStatement(Statement statement) {
-            writer.handleStatement(statement);
-        }
-
-        protected void setLogger(Logger logger) {
-            writer.setLogger(logger);
-        }
-
-        protected void setPrintToSystem(boolean printToSystem) {
-            writer.setPrintToSystem(printToSystem);
-        }
-
-        protected boolean isActive() {
-            return writer.isActive();
-        }
+    public Class<Record> getType() {
+        return Record.class;
     }
 }
-

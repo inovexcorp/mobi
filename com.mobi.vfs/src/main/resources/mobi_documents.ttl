@@ -12,13 +12,19 @@
     rdfs:comment "The Mobi Document ontology describes binary documents that the application keeps track of for a variety of reasons."@en ;
     dct:creator [foaf:name "Megan Mercer"] ;
     foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>] ;
-    dct:modified "2018-02-07"^^xsd:date .
+    dct:modified "2018-04-04"^^xsd:date .
 
 # BinaryFile
 
 :BinaryFile a owl:Class ;
     dct:title "Binary File"@en ;
-    dct:description ""@en .
+    dct:description "A representation of a file stored somewhere."@en .
+
+:retrievalURL a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dct:title "Retrieval URL"@en ;
+    dct:description "The URL for where to retrieve the represented file."@en ;
+    rdfs:domain :BinaryFile ;
+    rdfs:range xsd:anyURI .
 
 :fileName a owl:DatatypeProperty, owl:FunctionalProperty ;
     dct:title "File Name"@en ;
@@ -44,8 +50,8 @@
     rdfs:domain :BinaryFile ;
     rdfs:range xsd:string .
 
-:sha3-256Sum a owl:DatatypeProperty, owl:FunctionalProperty ;
-    dct:title "SHA3-256 Sum"@en ;
-    dct:description "The SHA3-256 sum for the described BinaryFile."@en ;
+:checksum a owl:DatatypeProperty, owl:FunctionalProperty ;
+    dct:title "Checksum"@en ;
+    dct:description "A checksum hash for the described BinaryFile. The exact hash function is not specified."@en ;
     rdfs:domain :BinaryFile ;
     rdfs:range xsd:string .
