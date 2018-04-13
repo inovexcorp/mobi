@@ -1,8 +1,8 @@
 package com.mobi.repository.impl.sesame.query
 
-import org.openrdf.model.impl.ValueFactoryImpl
-import org.openrdf.query.BindingSet
-import org.openrdf.query.impl.MapBindingSet
+import org.eclipse.rdf4j.model.impl.ValueFactoryImpl
+import org.eclipse.rdf4j.query.BindingSet
+import org.eclipse.rdf4j.query.impl.MapBindingSet
 import spock.lang.Specification
 
 class SesameBindingSetSpec extends Specification {
@@ -67,7 +67,7 @@ class SesameBindingSetSpec extends Specification {
         setup:
         def sesBindingSet = Mock(BindingSet)
         def matBindingSet = new SesameBindingSet(sesBindingSet)
-        def sesBinding = Mock(org.openrdf.query.Binding)
+        def sesBinding = Mock(org.eclipse.rdf4j.query.Binding)
         def matBinding = new SesameBinding(sesBinding)
         def testVal =  new ValueFactoryImpl().createIRI("http://testVal.com");
 

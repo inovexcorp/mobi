@@ -43,12 +43,12 @@ import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.Response;
 import com.mobi.security.policy.api.Status;
 import com.mobi.security.policy.api.cache.PolicyCache;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.sail.memory.MemoryStore;
 import org.w3c.dom.Document;
 import org.wso2.balana.AbstractPolicy;
 

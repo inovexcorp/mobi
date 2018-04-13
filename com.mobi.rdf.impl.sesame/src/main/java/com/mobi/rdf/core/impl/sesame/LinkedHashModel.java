@@ -26,9 +26,6 @@ package com.mobi.rdf.core.impl.sesame;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Namespace;
 import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Namespace;
-import com.mobi.rdf.api.Statement;
 
 import java.util.Collection;
 import java.util.Set;
@@ -51,7 +48,7 @@ public class LinkedHashModel extends SesameModelWrapper {
 
     public LinkedHashModel(int size) {
         super();
-        setDelegate(new org.openrdf.model.impl.LinkedHashModel(size));
+        setDelegate(new org.eclipse.rdf4j.model.impl.LinkedHashModel(size));
     }
 
     public LinkedHashModel(Set<Namespace> namespaces) {

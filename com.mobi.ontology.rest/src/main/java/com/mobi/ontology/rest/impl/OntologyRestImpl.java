@@ -78,9 +78,9 @@ import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.openrdf.model.vocabulary.OWL;
-import org.openrdf.model.vocabulary.SKOS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

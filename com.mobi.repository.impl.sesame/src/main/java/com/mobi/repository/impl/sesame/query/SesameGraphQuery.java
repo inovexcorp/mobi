@@ -26,22 +26,17 @@ package com.mobi.repository.impl.sesame.query;
 import com.mobi.query.GraphQueryResult;
 import com.mobi.query.api.GraphQuery;
 import com.mobi.query.exception.QueryEvaluationException;
-import com.mobi.query.GraphQueryResult;
-import com.mobi.query.api.BindingSet;
-import com.mobi.query.api.GraphQuery;
-import com.mobi.query.exception.QueryEvaluationException;
-import com.mobi.rdf.api.Value;
 
 public class SesameGraphQuery extends SesameOperation implements GraphQuery {
 
-    private org.openrdf.query.GraphQuery sesameGraphQuery;
+    private org.eclipse.rdf4j.query.GraphQuery sesameGraphQuery;
 
-    public SesameGraphQuery( org.openrdf.query.GraphQuery sesameGraphQuery) {
+    public SesameGraphQuery( org.eclipse.rdf4j.query.GraphQuery sesameGraphQuery) {
         super(sesameGraphQuery);
         setDelegate(sesameGraphQuery);
     }
 
-    protected void setDelegate(org.openrdf.query.GraphQuery sesameGraphQuery) {
+    protected void setDelegate(org.eclipse.rdf4j.query.GraphQuery sesameGraphQuery) {
         this.sesameGraphQuery = sesameGraphQuery;
     }
 
@@ -49,7 +44,7 @@ public class SesameGraphQuery extends SesameOperation implements GraphQuery {
     public GraphQueryResult evaluate() throws QueryEvaluationException {
         try {
             return new SesameGraphQueryResult(sesameGraphQuery.evaluate());
-        } catch (org.openrdf.query.QueryEvaluationException e) {
+        } catch (org.eclipse.rdf4j.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }
     }

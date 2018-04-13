@@ -27,18 +27,18 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.rdf.api.BNode;
-import com.mobi.rdf.api.Statement;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
-import org.openrdf.model.impl.LinkedHashModel;
-import org.openrdf.model.impl.ValueFactoryImpl;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.impl.ValueFactoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 @Component (provide = SesameTransformer.class)
 public class SimpleSesameTransformer implements SesameTransformer {
 
-    private static final org.openrdf.model.ValueFactory SESAME_VF = ValueFactoryImpl.getInstance();
+    private static final org.eclipse.rdf4j.model.ValueFactory SESAME_VF = ValueFactoryImpl.getInstance();
     private ValueFactory mobiVF;
     private ModelFactory mobiMF;
     private static final Logger LOG = LoggerFactory.getLogger(SimpleSesameTransformer.class);
@@ -77,19 +77,19 @@ public class SimpleSesameTransformer implements SesameTransformer {
     public SimpleSesameTransformer() {}
 
     @Override
-    public org.openrdf.model.Model sesameModel(Model m) {
-        Set<org.openrdf.model.Statement> stmts = m.stream()
+    public org.eclipse.rdf4j.model.Model sesameModel(Model m) {
+        Set<org.eclipse.rdf4j.model.Statement> stmts = m.stream()
                 .map(this::sesameStatement)
                 .collect(Collectors.toSet());
 
-        org.openrdf.model.Model sesameModel = new LinkedHashModel();
+        org.eclipse.rdf4j.model.Model sesameModel = new LinkedHashModel();
         sesameModel.addAll(stmts);
 
         return sesameModel;
     }
 
     @Override
-    public Model mobiModel(org.openrdf.model.Model m) {
+    public Model mobiModel(org.eclipse.rdf4j.model.Model m) {
         Set<Statement> stmts = m.stream()
                 .map(this::mobiStatement)
                 .collect(Collectors.toSet());
@@ -98,7 +98,7 @@ public class SimpleSesameTransformer implements SesameTransformer {
     }
 
     @Override
-    public org.openrdf.model.Statement sesameStatement(Statement statement) {
+    public org.eclipse.rdf4j.model.Statement sesameStatement(Statement statement) {
         if (statement == null) {
             return null;
         } else if (!statement.getContext().isPresent()) {
@@ -111,7 +111,7 @@ public class SimpleSesameTransformer implements SesameTransformer {
     }
 
     @Override
-    public Statement mobiStatement(org.openrdf.model.Statement statement) {
+    public Statement mobiStatement(org.eclipse.rdf4j.model.Statement statement) {
         if (statement == null) {
             return null;
         } else if (statement.getContext() == null) {
@@ -124,7 +124,7 @@ public class SimpleSesameTransformer implements SesameTransformer {
     }
 
     @Override
-    public org.openrdf.model.Resource sesameResource(Resource resource) {
+    public org.eclipse.rdf4j.model.Resource sesameResource(Resource resource) {
         if (resource == null) {
             return null;
         } else if (resource instanceof IRI) {
@@ -135,19 +135,19 @@ public class SimpleSesameTransformer implements SesameTransformer {
     }
 
     @Override
-    public Resource mobiResource(org.openrdf.model.Resource resource) {
+    public Resource mobiResource(org.eclipse.rdf4j.model.Resource resource) {
         if (resource == null) {
             return null;
-        } else if (resource instanceof org.openrdf.model.IRI) {
-            return mobiIRI((org.openrdf.model.IRI) resource);
+        } else if (resource instanceof org.eclipse.rdf4j.model.IRI) {
+            return mobiIRI((org.eclipse.rdf4j.model.IRI) resource);
         } else {
-            return mobiVF.createBNode(((org.openrdf.model.BNode) resource).getID());
+            return mobiVF.createBNode(((org.eclipse.rdf4j.model.BNode) resource).getID());
         }
     }
 
 
     @Override
-    public org.openrdf.model.IRI sesameIRI(IRI iri) {
+    public org.eclipse.rdf4j.model.IRI sesameIRI(IRI iri) {
         if (iri == null) {
             return null;
         } else {
@@ -156,7 +156,7 @@ public class SimpleSesameTransformer implements SesameTransformer {
     }
 
     @Override
-    public IRI mobiIRI(org.openrdf.model.IRI sesameIRI) {
+    public IRI mobiIRI(org.eclipse.rdf4j.model.IRI sesameIRI) {
         if (sesameIRI == null) {
             return null;
         } else {
@@ -165,7 +165,7 @@ public class SimpleSesameTransformer implements SesameTransformer {
     }
 
     @Override
-    public org.openrdf.model.Value sesameValue(Value value) {
+    public org.eclipse.rdf4j.model.Value sesameValue(Value value) {
         if (value == null) {
             return null;
         } else if (value instanceof IRI) {
@@ -178,23 +178,23 @@ public class SimpleSesameTransformer implements SesameTransformer {
             if (literal.getLanguage().isPresent()) {
                 return SESAME_VF.createLiteral(literal.stringValue(), literal.getLanguage().get());
             } else {
-                org.openrdf.model.IRI datatype = SESAME_VF.createIRI(literal.getDatatype().stringValue());
+                org.eclipse.rdf4j.model.IRI datatype = SESAME_VF.createIRI(literal.getDatatype().stringValue());
                 return SESAME_VF.createLiteral(literal.stringValue(), datatype);
             }
         }
     }
 
     @Override
-    public Value mobiValue(org.openrdf.model.Value value) {
+    public Value mobiValue(org.eclipse.rdf4j.model.Value value) {
         if (value == null) {
             return null;
-        } else if (value instanceof org.openrdf.model.IRI) {
-            return mobiIRI((org.openrdf.model.IRI) value);
-        } else if (value instanceof org.openrdf.model.BNode) {
-            return mobiResource((org.openrdf.model.BNode) value);
+        } else if (value instanceof org.eclipse.rdf4j.model.IRI) {
+            return mobiIRI((org.eclipse.rdf4j.model.IRI) value);
+        } else if (value instanceof org.eclipse.rdf4j.model.BNode) {
+            return mobiResource((org.eclipse.rdf4j.model.BNode) value);
         } else {
             // Else it's a Sesame Literal
-            org.openrdf.model.Literal literal = (org.openrdf.model.Literal) value;
+            org.eclipse.rdf4j.model.Literal literal = (org.eclipse.rdf4j.model.Literal) value;
             if (literal.getLanguage().isPresent()) {
                 return mobiVF.createLiteral(literal.stringValue(), literal.getLanguage().get());
             } else {

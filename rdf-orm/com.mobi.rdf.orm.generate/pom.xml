@@ -26,7 +26,7 @@
 	<parent>
 		<groupId>com.mobi</groupId>
 		<artifactId>rdf-orm</artifactId>
-		<version>1.12.22</version>
+		<version>1.12.23</version>
 	</parent>
 
 	<artifactId>rdf.orm.generate</artifactId>
@@ -56,8 +56,8 @@
         </dependency>
         <!-- For reading in ontology data -->
         <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-runtime-osgi</artifactId>
+            <groupId>org.eclipse.rdf4j</groupId>
+            <artifactId>rdf4j-runtime-osgi</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

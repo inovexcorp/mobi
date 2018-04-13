@@ -23,14 +23,14 @@ package com.mobi.document.translator.cli;
  * #L%
  */
 
+import com.mobi.document.translator.SemanticTranslator;
+import com.mobi.document.translator.ontology.ExtractedOntology;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.document.translator.SemanticTranslator;
-import com.mobi.document.translator.ontology.ExtractedOntology;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.karaf.shell.api.action.Action;
@@ -40,19 +40,16 @@ import org.apache.karaf.shell.api.action.Completion;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
-import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,6 +57,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.annotation.Nonnull;
 
 @Command(scope = "mobi", name = "document-translate",
         description = "Translates a document into RDF with an associated generated ontology.")
@@ -127,7 +125,8 @@ public class DocumentTranslationCLI implements Action {
     }
 
     private void writeData(final Model model, OutputStream os) {
-        org.openrdf.rio.RDFHandler handler1 = new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.TURTLE, os));
+        org.eclipse.rdf4j.rio.RDFHandler handler1 =
+                new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.TURTLE, os));
         Rio.write(sesameTransformer.sesameModel(model), handler1);
     }
 

@@ -921,6 +921,24 @@ GRAPH commits:quad-test1 {
         ] .
 }
 
+GRAPH commits:quad-test3 {
+    commits:quad-test3 a mcat:Commit ;
+        dc:title "Quad Test 3" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:quad-test1 ;
+        prov:generated revisions:revision3 .
+
+    revisions:revision3 a mcat:Revision ;
+        mcat:additions additions:quad-test3 ;
+        mcat:deletions deletions:quad-test3 ;
+        mcat:graphRevision [
+            a mcat:GraphRevision ;
+            mcat:revisionedGraph graphs:quad-graph3 ;
+            mcat:additions additions:quad-test3%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph3 ;
+            mcat:deletions deletions:quad-test3%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph3
+        ] .
+}
+
 GRAPH additions:quad-test1 {
     <http://mobi.com/test/object1> dc:title "Test 1 Title" .
 }

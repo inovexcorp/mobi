@@ -23,45 +23,6 @@ package com.mobi.sparql.rest.impl;
  * #L%
  */
 
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import com.mobi.rest.util.MobiRestTestNg;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.apache.commons.io.IOUtils;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
-import com.mobi.dataset.api.DatasetConnection;
-import com.mobi.dataset.api.DatasetManager;
-import com.mobi.exception.MobiException;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.api.RepositoryManager;
-import com.mobi.rest.util.RestUtils;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.sail.memory.MemoryStore;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
 import static com.mobi.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -72,7 +33,45 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+
+import com.mobi.dataset.api.DatasetConnection;
+import com.mobi.dataset.api.DatasetManager;
+import com.mobi.exception.MobiException;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
+import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.RepositoryManager;
+import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.rest.util.MobiRestTestNg;
+import com.mobi.rest.util.RestUtils;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 
 public class SparqlRestImplTest extends MobiRestTestNg {
     private SparqlRestImpl rest;

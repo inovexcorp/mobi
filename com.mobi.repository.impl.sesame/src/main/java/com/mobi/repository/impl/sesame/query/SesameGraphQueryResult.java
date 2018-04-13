@@ -32,9 +32,9 @@ import java.util.Map;
 
 public class SesameGraphQueryResult extends GraphQueryResult {
 
-    org.openrdf.query.GraphQueryResult graphQueryResult;
+    org.eclipse.rdf4j.query.GraphQueryResult graphQueryResult;
 
-    public SesameGraphQueryResult(org.openrdf.query.GraphQueryResult graphQueryResult) {
+    public SesameGraphQueryResult(org.eclipse.rdf4j.query.GraphQueryResult graphQueryResult) {
         this.graphQueryResult = graphQueryResult;
     }
 
@@ -42,7 +42,7 @@ public class SesameGraphQueryResult extends GraphQueryResult {
     public Map<String, String> getNamespaces() throws QueryEvaluationException {
         try {
             return graphQueryResult.getNamespaces();
-        } catch (org.openrdf.query.QueryEvaluationException e) {
+        } catch (org.eclipse.rdf4j.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }
     }
@@ -51,7 +51,7 @@ public class SesameGraphQueryResult extends GraphQueryResult {
     public void close() throws QueryEvaluationException {
         try {
             graphQueryResult.close();
-        } catch (org.openrdf.query.QueryEvaluationException e) {
+        } catch (org.eclipse.rdf4j.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }
     }
@@ -60,7 +60,7 @@ public class SesameGraphQueryResult extends GraphQueryResult {
     public boolean hasNext() throws QueryEvaluationException {
         try {
             return graphQueryResult.hasNext();
-        } catch (org.openrdf.query.QueryEvaluationException e) {
+        } catch (org.eclipse.rdf4j.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }
     }
@@ -69,7 +69,7 @@ public class SesameGraphQueryResult extends GraphQueryResult {
     public Statement next() throws QueryEvaluationException {
         try {
             return Values.mobiStatement(graphQueryResult.next());
-        } catch (org.openrdf.query.QueryEvaluationException e) {
+        } catch (org.eclipse.rdf4j.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }
     }
@@ -78,7 +78,7 @@ public class SesameGraphQueryResult extends GraphQueryResult {
     public void remove() throws QueryEvaluationException {
         try {
             graphQueryResult.remove();
-        } catch (org.openrdf.query.QueryEvaluationException e) {
+        } catch (org.eclipse.rdf4j.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }
     }
