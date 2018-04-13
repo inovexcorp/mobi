@@ -27,13 +27,15 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
-import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
-import com.mobi.catalog.api.record.AbstractRecordService;
+import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
+import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
+import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.rdf.api.ValueFactory;
 
 @Component
-public class SimpleRecordService extends AbstractRecordService<Record> {
+public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordService<VersionedRDFRecord> {
 
     @Reference
     void setUtilsService(CatalogUtilsService utilsService) {
@@ -51,12 +53,22 @@ public class SimpleRecordService extends AbstractRecordService<Record> {
     }
 
     @Reference
-    void setRecordFactory(RecordFactory recordFactory) {
+    void setRecordFactory(VersionedRDFRecordFactory recordFactory) {
         this.recordFactory = recordFactory;
     }
 
+    @Reference
+    void setCommitFactory(CommitFactory commitFactory) {
+        this.commitFactory = commitFactory;
+    }
+
+    @Reference
+    void setBranchFactory(BranchFactory branchFactory) {
+        this.branchFactory = branchFactory;
+    }
+
     @Override
-    public Class<Record> getType() {
-        return Record.class;
+    public Class<VersionedRDFRecord> getType() {
+        return VersionedRDFRecord.class;
     }
 }
