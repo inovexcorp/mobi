@@ -1,5 +1,3 @@
-@Version("3.0.0.${build}")
-
 package com.mobi.catalog.api.record.config;
 
 /*-
@@ -8,7 +6,7 @@ package com.mobi.catalog.api.record.config;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,28 @@ package com.mobi.catalog.api.record.config;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import java.io.Serializable;
+
+public interface OperationSetting<T> extends Serializable {
+
+    /**
+     * Gets the String representation of a key that identifies a configuration setting.
+     *
+     * @return The key of a configuration setting
+     */
+    String getKey();
+
+    /**
+     * Gets the String description of a configuration setting.
+     *
+     * @return The description of a configuration setting
+     */
+    String getDescription();
+
+    /**
+     * Gets the default value of a configuration setting.
+     *
+     * @return The default value of a setting
+     */
+    T getDefaultValue();
+}
