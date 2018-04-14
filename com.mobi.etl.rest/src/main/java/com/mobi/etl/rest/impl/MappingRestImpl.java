@@ -31,10 +31,6 @@ import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.PaginatedSearchResults;
@@ -60,8 +56,12 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.jaxb.Links;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

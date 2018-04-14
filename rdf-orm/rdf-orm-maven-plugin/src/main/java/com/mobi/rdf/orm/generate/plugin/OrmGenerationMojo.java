@@ -1,16 +1,16 @@
 package com.mobi.rdf.orm.generate.plugin;
 
 
+import com.mobi.rdf.orm.generate.GraphReadingUtility;
+import com.mobi.rdf.orm.generate.ReferenceOntology;
+import com.mobi.rdf.orm.generate.SourceGenerator;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import com.mobi.rdf.orm.generate.GraphReadingUtility;
-import com.mobi.rdf.orm.generate.ReferenceOntology;
-import com.mobi.rdf.orm.generate.SourceGenerator;
-import org.openrdf.model.Model;
+import org.eclipse.rdf4j.model.Model;
 
 import java.io.File;
 import java.io.IOException;

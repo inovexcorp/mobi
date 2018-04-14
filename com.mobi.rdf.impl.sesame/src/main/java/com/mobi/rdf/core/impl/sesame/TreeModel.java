@@ -23,7 +23,6 @@ package com.mobi.rdf.core.impl.sesame;
  * #L%
  */
 
-import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Namespace;
 import com.mobi.rdf.api.Statement;
@@ -34,7 +33,7 @@ import java.util.Set;
 public class TreeModel extends SesameModelWrapper {
 
     public TreeModel() {
-        setDelegate(new org.openrdf.model.impl.TreeModel());
+        setDelegate(new org.eclipse.rdf4j.model.impl.TreeModel());
     }
 
     public TreeModel(Model model) {

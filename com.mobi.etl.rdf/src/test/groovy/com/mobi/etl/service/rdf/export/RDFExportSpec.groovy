@@ -33,7 +33,7 @@ import com.mobi.rdf.core.utils.Values
 import com.mobi.repository.api.DelegatingRepository
 import com.mobi.repository.api.RepositoryConnection
 import com.mobi.repository.base.RepositoryResult
-import org.openrdf.rio.RDFFormat
+import org.eclipse.rdf4j.rio.RDFFormat
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
 

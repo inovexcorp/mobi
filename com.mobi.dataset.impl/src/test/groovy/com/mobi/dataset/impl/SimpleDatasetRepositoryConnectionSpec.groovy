@@ -23,7 +23,6 @@
 package com.mobi.dataset.impl
 
 import com.mobi.dataset.ontology.dataset.Dataset
-import com.mobi.ontologies.rdfs.Resource
 import com.mobi.persistence.utils.QueryResults
 import com.mobi.persistence.utils.RepositoryResults
 import com.mobi.rdf.api.Resource
@@ -34,10 +33,10 @@ import com.mobi.repository.api.Repository
 import com.mobi.repository.api.RepositoryConnection
 import com.mobi.repository.api.RepositoryManager
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper
-import org.openrdf.repository.sail.SailRepository
-import org.openrdf.rio.RDFFormat
-import org.openrdf.rio.Rio
-import org.openrdf.sail.memory.MemoryStore
+import org.eclipse.rdf4j.repository.sail.SailRepository
+import org.eclipse.rdf4j.rio.RDFFormat
+import org.eclipse.rdf4j.rio.Rio
+import org.eclipse.rdf4j.sail.memory.MemoryStore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll

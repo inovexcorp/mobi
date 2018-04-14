@@ -55,14 +55,14 @@ import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.impl.commons.SimpleVirtualFilesystem;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Answer;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.IOException;
 import java.lang.reflect.Method;

@@ -29,8 +29,8 @@ import static org.junit.Assert.assertNotEquals;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.junit.Test;
-import org.openrdf.model.impl.LinkedHashModel;
 
 public class SesameModelWrapperTest {
 

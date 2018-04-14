@@ -23,11 +23,19 @@ package com.mobi.document.translator.impl.xml;
  * #L%
  */
 
-import com.mobi.document.translator.AbstractSemanticTranslator;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
 import com.mobi.document.translator.SemanticTranslationException;
 import com.mobi.document.translator.expression.DefaultIriExpressionProcessor;
 import com.mobi.document.translator.expression.IriExpressionProcessor;
-import com.mobi.document.translator.ontology.*;
+import com.mobi.document.translator.ontology.ExtractedClass;
+import com.mobi.document.translator.ontology.ExtractedDatatypeProperty;
+import com.mobi.document.translator.ontology.ExtractedObjectProperty;
+import com.mobi.document.translator.ontology.ExtractedOntology;
+import com.mobi.document.translator.ontology.ExtractedProperty;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -42,8 +50,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-
-import static org.junit.Assert.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class XmlStackingSemanticTranslatorTest extends OrmEnabledTestCase {

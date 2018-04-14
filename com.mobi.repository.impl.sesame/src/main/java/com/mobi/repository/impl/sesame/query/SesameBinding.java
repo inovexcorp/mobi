@@ -29,9 +29,9 @@ import com.mobi.rdf.core.utils.Values;
 
 public class SesameBinding implements Binding {
 
-    private org.openrdf.query.Binding binding;
+    private org.eclipse.rdf4j.query.Binding binding;
 
-    public SesameBinding(org.openrdf.query.Binding binding) {
+    public SesameBinding(org.eclipse.rdf4j.query.Binding binding) {
         this.binding = binding;
     }
 

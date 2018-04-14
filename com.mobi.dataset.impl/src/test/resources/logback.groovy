@@ -8,6 +8,6 @@ appender("STDOUT", ConsoleAppender) {
     }
 }
 
-logger("org.openrdf", INFO)
+logger("org.eclipse.rdf4j", INFO)
 
 root(DEBUG, ["STDOUT"])

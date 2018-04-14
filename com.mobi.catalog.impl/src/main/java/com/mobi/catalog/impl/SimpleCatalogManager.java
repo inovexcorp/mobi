@@ -437,7 +437,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Record> T removeRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory) {
-        T record = null;
+        T record;
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(catalogId, catalogFactory.getTypeIRI(), conn);
 
@@ -515,7 +515,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void addUnversionedDistribution(Resource catalogId, Resource unversionedRecordId, Distribution distribution) {
+    public void addUnversionedDistribution(Resource catalogId, Resource unversionedRecordId,
+                                           Distribution distribution) {
         try (RepositoryConnection conn = repository.getConnection()) {
             UnversionedRecord record = utils.getRecord(catalogId, unversionedRecordId, unversionedRecordFactory, conn);
             if (conn.containsContext(distribution.getResource())) {
@@ -873,15 +874,23 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     private void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn) {
+        List<Resource> deletedCommits = new ArrayList<>();
+        removeBranch(recordId, branch, deletedCommits, conn);
+    }
+
+    private void removeBranch(Resource recordId, Branch branch, List<Resource> deletedCommits,
+                              RepositoryConnection conn) {
         removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
         Optional<Resource> headCommit = branch.getHead_resource();
         if (headCommit.isPresent()) {
+            // Explicitly remove this so algorithm works for head commit
+            conn.remove(branch.getResource(), vf.createIRI(Branch.head_IRI), headCommit.get());
             IRI commitIRI = vf.createIRI(Tag.commit_IRI);
             Set<Resource> deltaIRIs = new HashSet<>();
             getCommitPaths(headCommit.get()).forEach(path -> {
                 for (Resource commitId : path) {
-                    if (conn.contains(null, null, null, commitId)) {
-                        if (!commitIsReferenced(commitId, conn)) {
+                    if (!deletedCommits.contains(commitId)) {
+                        if (!commitIsReferenced(commitId, deletedCommits, conn)) {
                             // Get Additions/Deletions Graphs
                             Revision revision = utils.getRevision(commitId, conn);
                             revision.getAdditions().ifPresent(deltaIRIs::add);
@@ -895,10 +904,11 @@ public class SimpleCatalogManager implements CatalogManager {
                             utils.remove(commitId, conn);
 
                             // Remove Tags Referencing this Commit
-                            Set<Resource> tags = RepositoryResults.asModel(conn.getStatements(null, commitIRI, commitId), mf)
-                                    .subjects();
-                            tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId, VersionedRecord.version_IRI,
-                                    conn));
+                            Set<Resource> tags = RepositoryResults.asModel(
+                                    conn.getStatements(null, commitIRI, commitId), mf).subjects();
+                            tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId,
+                                    VersionedRecord.version_IRI, conn));
+                            deletedCommits.add(commitId);
                         } else {
                             break;
                         }
@@ -911,9 +921,10 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
-    private void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn) {
+    private void removeBranch(Resource recordId, Resource branchId, List<Resource> deletedCommits,
+                              RepositoryConnection conn) {
         Branch branch = utils.getObject(branchId, branchFactory, conn);
-        removeBranch(recordId, branch, conn);
+        removeBranch(recordId, branch, deletedCommits, conn);
     }
 
     private List<List<Resource>> getCommitPaths(Resource commitId) {
@@ -927,8 +938,10 @@ public class SimpleCatalogManager implements CatalogManager {
                 if (!parent.isPresent()) {
                     rtn.add(Stream.of(path).map(vf::createIRI).collect(Collectors.toList()));
                 } else {
-                    String[] connectPath = StringUtils.split(Bindings.requiredLiteral(bindings, "connectPath").stringValue(), " ");
-                    rtn.add(Stream.of(connectPath, path).flatMap(Stream::of).map(vf::createIRI).collect(Collectors.toList()));
+                    String[] connectPath = StringUtils.split(
+                            Bindings.requiredLiteral(bindings, "connectPath").stringValue(), " ");
+                    rtn.add(Stream.of(connectPath, path).flatMap(Stream::of).map(vf::createIRI)
+                            .collect(Collectors.toList()));
                 }
             });
             return rtn;
@@ -1289,8 +1302,8 @@ public class SimpleCatalogManager implements CatalogManager {
 
                 // Check for deletion in left and addition in right
                 Model rightSubjectAdd = right.filter(subject, null, null);
-                boolean leftEntityDeleted = !left.subjects().contains(subject) &&
-                        leftDeleteSubjectStatements.equals(original.filter(subject, null, null));
+                boolean leftEntityDeleted = !left.subjects().contains(subject)
+                        && leftDeleteSubjectStatements.equals(original.filter(subject, null, null));
                 boolean rightEntityDeleted = rightDeletions.containsAll(leftDeleteSubjectStatements);
 
                 if (leftEntityDeleted && !rightEntityDeleted && rightSubjectAdd.size() > 0) {
@@ -1306,8 +1319,8 @@ public class SimpleCatalogManager implements CatalogManager {
                 // Check for deletion in right and addition in left
                 Model rightDeleteSubjectStatements = rightDeletions.filter(subject, null, null);
                 Model leftSubjectAdd = left.filter(subject, null, null);
-                boolean rightEntityDeleted = !right.subjects().contains(subject) &&
-                        rightDeleteSubjectStatements.equals(original.filter(subject, null, null));
+                boolean rightEntityDeleted = !right.subjects().contains(subject)
+                        && rightDeleteSubjectStatements.equals(original.filter(subject, null, null));
                 boolean leftEntityDeleted = leftDeletions.containsAll(rightDeleteSubjectStatements);
 
                 if (rightEntityDeleted && !leftEntityDeleted && leftSubjectAdd.size() > 0) {
@@ -1478,18 +1491,28 @@ public class SimpleCatalogManager implements CatalogManager {
                             .forEach(resource -> removeVersion(versionedRDFRecord.getResource(), resource, conn));
                     conn.remove(versionedRDFRecord.getResource(), vf.createIRI(VersionedRDFRecord.masterBranch_IRI),
                             null, versionedRDFRecord.getResource());
+                    List<Resource> deletedCommits = new ArrayList<>();
                     versionedRDFRecord.getBranch_resource()
-                            .forEach(resource -> removeBranch(versionedRDFRecord.getResource(), resource, conn));
+                            .forEach(resource -> removeBranch(versionedRDFRecord.getResource(), resource,
+                                    deletedCommits, conn));
                     utils.removeObject(versionedRDFRecord, conn);
                 });
     }
 
-    private boolean commitIsReferenced(Resource commitId, RepositoryConnection conn) {
+    private boolean commitIsReferenced(Resource commitId, List<Resource> deletedCommits, RepositoryConnection conn) {
         IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
         IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
         IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
-        return Stream.of(headCommitIRI, baseCommitIRI, auxiliaryCommitIRI)
-                .map(iri -> conn.contains(null, iri, commitId))
+
+        boolean isHeadCommit = conn.contains(null, headCommitIRI, commitId);
+        boolean isParent = Stream.of(baseCommitIRI, auxiliaryCommitIRI)
+                .map(iri -> {
+                    List<Resource> temp = new ArrayList<>();
+                    conn.getStatements(null, iri, commitId).forEach(statement -> temp.add(statement.getSubject()));
+                    temp.removeAll(deletedCommits);
+                    return temp.size() > 0;
+                })
                 .reduce(false, (iri1, iri2) -> iri1 || iri2);
+        return isHeadCommit || isParent;
     }
 }

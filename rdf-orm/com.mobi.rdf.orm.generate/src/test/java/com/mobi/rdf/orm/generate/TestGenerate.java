@@ -23,10 +23,10 @@ package com.mobi.rdf.orm.generate;
  * #L%
  */
 
+import org.eclipse.rdf4j.rio.RDFHandlerException;
+import org.eclipse.rdf4j.rio.RDFParseException;
+import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.junit.Test;
-import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.RDFParseException;
-import org.openrdf.rio.UnsupportedRDFormatException;
 
 import java.io.File;
 import java.io.IOException;

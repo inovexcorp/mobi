@@ -23,7 +23,7 @@ package com.mobi.etl.api.config.rdf.export;
  * #L%
  */
 
-import org.openrdf.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.io.OutputStream;
 

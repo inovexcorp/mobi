@@ -25,10 +25,15 @@ package com.mobi.rdf.orm.generate;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.openrdf.model.Model;
-import org.openrdf.model.impl.LinkedHashModel;
-import org.openrdf.rio.*;
-import org.openrdf.rio.helpers.StatementCollector;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandlerException;
+import org.eclipse.rdf4j.rio.RDFParseException;
+import org.eclipse.rdf4j.rio.RDFParser;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
+import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

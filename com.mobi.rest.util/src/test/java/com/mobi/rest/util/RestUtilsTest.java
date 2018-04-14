@@ -50,7 +50,7 @@ import com.mobi.rdf.core.utils.Values;
 import com.mobi.web.security.util.AuthenticationProps;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.openrdf.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.util.Optional;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -94,7 +94,7 @@ public class RestUtilsTest {
         when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn("tester");
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(transformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-        when(transformer.mobiModel(any(org.openrdf.model.Model.class))).thenReturn(model);
+        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class))).thenReturn(model);
         when(service.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));
         when(service.deskolemize(model)).thenReturn(model);
     }
@@ -212,14 +212,14 @@ public class RestUtilsTest {
     public void jsonldToModelTest() throws Exception {
         Model result = RestUtils.jsonldToModel(expectedJsonld, transformer);
         assertEquals(model, result);
-        verify(transformer).mobiModel(any(org.openrdf.model.Model.class));
+        verify(transformer).mobiModel(any(org.eclipse.rdf4j.model.Model.class));
     }
 
     @Test
     public void jsonldToDeskolemizedModelTest() throws Exception {
         Model result = RestUtils.jsonldToDeskolemizedModel(expectedJsonld, transformer, service);
         assertEquals(model, result);
-        verify(transformer).mobiModel(any(org.openrdf.model.Model.class));
+        verify(transformer).mobiModel(any(org.eclipse.rdf4j.model.Model.class));
         verify(service).deskolemize(model);
     }
 

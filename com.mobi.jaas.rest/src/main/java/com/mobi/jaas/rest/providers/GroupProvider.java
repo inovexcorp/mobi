@@ -34,7 +34,7 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
-import org.openrdf.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 
 import java.io.IOException;
 import java.io.InputStream;

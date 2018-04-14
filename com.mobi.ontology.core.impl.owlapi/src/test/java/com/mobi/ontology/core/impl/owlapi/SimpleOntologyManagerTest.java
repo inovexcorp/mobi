@@ -61,6 +61,8 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.core.SimpleRepositoryManager;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -69,8 +71,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -159,7 +159,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         doThrow(new IllegalArgumentException()).when(catalogManager).getBranch(catalogIRI, recordIRI, missingIRI, branchFactory);
         doThrow(new IllegalArgumentException()).when(catalogManager).getCommit(catalogIRI, recordIRI, branchIRI, missingIRI);
 
-        when(sesameTransformer.sesameModel(any(Model.class))).thenReturn(new org.openrdf.model.impl.LinkedHashModel());
+        when(sesameTransformer.sesameModel(any(Model.class))).thenReturn(new org.eclipse.rdf4j.model.impl.LinkedHashModel());
 
         InputStream testOntology = getClass().getResourceAsStream("/test-ontology.ttl");
         when(ontology.asModel(MODEL_FACTORY)).thenReturn(Values.mobiModel(Rio.parse(testOntology, "", RDFFormat.TURTLE)));

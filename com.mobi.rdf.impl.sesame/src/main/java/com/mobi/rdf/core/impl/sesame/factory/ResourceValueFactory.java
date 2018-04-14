@@ -26,10 +26,10 @@ package com.mobi.rdf.core.impl.sesame.factory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.core.utils.Values;
 
-public class ResourceValueFactory implements SesameMobiValueFactory<Resource, org.openrdf.model.Resource> {
+public class ResourceValueFactory implements SesameMobiValueFactory<Resource, org.eclipse.rdf4j.model.Resource> {
 
     @Override
-    public Resource asMobiObject(org.openrdf.model.Resource object) {
+    public Resource asMobiObject(org.eclipse.rdf4j.model.Resource object) {
         return Values.mobiResource(object);
     }
 }

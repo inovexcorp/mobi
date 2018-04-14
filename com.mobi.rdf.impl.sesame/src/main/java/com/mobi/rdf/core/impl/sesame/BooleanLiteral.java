@@ -23,7 +23,7 @@ package com.mobi.rdf.core.impl.sesame;
  * #L%
  */
 
-import org.openrdf.model.vocabulary.XMLSchema;
+import org.eclipse.rdf4j.model.vocabulary.XMLSchema;
 
 public class BooleanLiteral extends SimpleLiteral {
 
