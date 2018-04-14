@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  com.mobi.security.policy.api.xacml
+  com.mobi.security.policy.rest
   $Id:$
   $HeadURL:$
   %%
@@ -33,59 +33,70 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>security.policy.api.xacml</artifactId>
+    <artifactId>security.policy.rest</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
     <dependencies>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>security.policy.api</artifactId>
+            <artifactId>security.policy.api.xacml</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>rdf.orm.ontologies</artifactId>
+            <artifactId>rest.util</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.servicemix.bundles</groupId>
+            <artifactId>org.apache.servicemix.bundles.json-lib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-multipart</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-jaxb-annotations</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>persistence.utils</artifactId>
-            <version>${project.version}</version>
+            <artifactId>rdf-orm-test</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.test-framework.providers</groupId>
+            <artifactId>jersey-test-framework-provider-jdk-http</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>jaxb2-maven-plugin</artifactId>
-                <version>2.2</version>
-                <executions>
-                    <execution>
-                        <id>xjc</id>
-                        <goals>
-                            <goal>xjc</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <sources>
-                        <source>${project.basedir}/src/main/resources/xacml-core-v3-schema-wd-17.xsd</source>
-                    </sources>
-                    <packageName>com.mobi.security.policy.api.xacml.jaxb</packageName>
-                    <arguments>
-                        <argument>-Xsimplify</argument>
-                    </arguments>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.jvnet.jaxb2_commons</groupId>
-                        <artifactId>jaxb2-basics</artifactId>
-                        <version>1.11.1</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
@@ -93,10 +104,10 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>Mobi Security Policy XACML API</Bundle-Name>
+                        <Bundle-Name>Mobi Security Policy REST Services</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.security.policy.api.xacml*
+                            com.mobi.security.policy.rest
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
@@ -106,4 +117,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>

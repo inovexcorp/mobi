@@ -30,6 +30,7 @@
         <bundle start-level="80">mvn:org.apache.httpcomponents/httpcore-osgi/4.4</bundle>
         <bundle start-level="80">mvn:javax.ws.rs/javax.ws.rs-api/2.0.1</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.json-lib/2.4_1</bundle>
+        <bundle start-level="80">mvn:com.fasterxml.jackson.module/jackson-module-jaxb-annotations/2.6.0</bundle>
         <bundle start-level="80">mvn:com.eclipsesource.jaxrs/swagger-all/1.5.7</bundle>
         <bundle start-level="80">mvn:com.nimbusds/nimbus-jose-jwt/4.11</bundle>
         <bundle start-level="80">mvn:com.spatial4j/spatial4j/0.4.1</bundle>
@@ -152,6 +153,7 @@
         <bundle start-level="80">mvn:com.mobi/security.policy.api.xacml/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/security.policy.impl.core/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/security.policy.impl.xacml/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.mobi/security.policy.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/rest.security/${project.version}</bundle>
     </feature>
     <feature name="mobi-cli" description="Mobi CLI Bundles" version="${project.version}">
