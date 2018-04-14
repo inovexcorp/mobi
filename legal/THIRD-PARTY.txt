@@ -1,5 +1,5 @@
 
-Lists of 321 third-party dependencies.
+Lists of 323 third-party dependencies.
      (Public Domain) AOP alliance (aopalliance:aopalliance:1.0 - http://aopalliance.sourceforge.net)
      (The Apache Software License, Version 2.0) avalon-framework (avalon-framework:avalon-framework:4.1.3 - no url defined)
      (The Apache Software License, Version 2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.1.0 - http://bnd.bndtools.org/)
@@ -16,7 +16,9 @@ Lists of 321 third-party dependencies.
      (The Apache Software License, Version 2.0) Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.8.5 - http://github.com/FasterXML/jackson)
      (The Apache Software License, Version 2.0) Jackson-core (com.fasterxml.jackson.core:jackson-core:2.6.3 - https://github.com/FasterXML/jackson-core)
      (The Apache Software License, Version 2.0) Jackson-core (com.fasterxml.jackson.core:jackson-core:2.8.5 - https://github.com/FasterXML/jackson-core)
+     (The Apache Software License, Version 2.0) jackson-databind (com.fasterxml.jackson.core:jackson-databind:2.6.0 - http://github.com/FasterXML/jackson)
      (The Apache Software License, Version 2.0) jackson-databind (com.fasterxml.jackson.core:jackson-databind:2.7.4 - http://github.com/FasterXML/jackson)
+     (The Apache Software License, Version 2.0) Jackson-module-JAXB-annotations (com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.6.0 - http://wiki.fasterxml.com/JacksonJAXBAnnotations)
      (The Apache Software License, Version 2.0) Caffeine cache (com.github.ben-manes.caffeine:caffeine:2.5.6 - https://github.com/ben-manes/caffeine)
      (Revised BSD License) JSONLD Java :: Core (com.github.jsonld-java:jsonld-java:0.8.3 - http://github.com/jsonld-java/jsonld-java/jsonld-java/)
      (Revised BSD License) JSONLD Java :: Core (com.github.jsonld-java:jsonld-java:0.9.0 - http://github.com/jsonld-java/jsonld-java/jsonld-java/)

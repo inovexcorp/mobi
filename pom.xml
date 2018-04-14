@@ -29,7 +29,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>root</artifactId>
-    <version>1.12.23</version>
+    <version>1.12.24</version>
 
     <packaging>pom</packaging>
 
@@ -109,6 +109,7 @@
         <module>com.mobi.security.policy.impl.xacml</module>
         <module>com.mobi.security.policy.impl.core</module>
         <module>com.mobi.rest.security</module>
+        <module>com.mobi.security.policy.rest</module>
     </modules>
 
     <properties>
