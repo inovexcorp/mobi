@@ -32,7 +32,7 @@ import com.mobi.repository.api.RepositoryConnection;
 public interface RecordService<T extends Record> {
 
     /**
-     * The type of Record this service supports.
+     * The type of {@link Record} this service supports.
      *
      * @return The type of Record
      */
@@ -49,7 +49,7 @@ public interface RecordService<T extends Record> {
     T delete(IRI recordId, User user, RepositoryConnection conn);
 
     /**
-     * Exports a given Record based on a provided configuration
+     * Exports a given Record based on a provided configuration.
      *
      * @param iriRecord An {@link IRI} of the record to be exported
      * @param config A {@link RecordOperationConfig} that contains the export configuration.

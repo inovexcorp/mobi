@@ -28,15 +28,27 @@ import com.mobi.rdf.api.Resource;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * {@link com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord} export settings.
+ */
 public class VersionedRDFRecordExportSettings {
 
+    /**
+     * Boolean setting for whether or not to write out versioned RDF data.
+     */
     public static OperationSetting<Boolean> WRITE_VERSIONED_DATA;
+
+    /**
+     * Set of Resources of the branches to write out. If not set, default is to write all branches out.
+     */
     public static OperationSetting<Set<Resource>> BRANCHES_TO_EXPORT;
 
     private VersionedRDFRecordExportSettings() {}
 
     static {
-        WRITE_VERSIONED_DATA = new OperationSettingImpl<>("com.mobi.catalog.operation.export.writeversioneddata", "Write versioned RDF data", true);
-        BRANCHES_TO_EXPORT = new OperationSettingImpl<>("com.mobi.catalog.operation.export.branchestoexport", "Branches to export", new HashSet<>());
+        WRITE_VERSIONED_DATA = new OperationSettingImpl<>("com.mobi.catalog.operation.export.writeversioneddata",
+                "Write versioned RDF data", true);
+        BRANCHES_TO_EXPORT = new OperationSettingImpl<>("com.mobi.catalog.operation.export.branchestoexport",
+                "Branches to export", new HashSet<>());
     }
 }

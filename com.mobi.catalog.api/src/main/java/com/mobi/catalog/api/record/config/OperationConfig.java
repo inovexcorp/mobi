@@ -49,7 +49,7 @@ public class OperationConfig implements RecordOperationConfig {
             return setting.getDefaultValue();
         }
 
-        return (T)result;
+        return (T) result;
     }
 
     @Override
@@ -62,12 +62,11 @@ public class OperationConfig implements RecordOperationConfig {
     public <T> RecordOperationConfig set(OperationSetting<T> setting, T value) {
         if (value == null) {
             settings.remove(setting);
-        }
-        else {
-            Object putIfAbsent = settings.putIfAbsent((OperationSetting<Object>)setting, value);
+        } else {
+            Object putIfAbsent = settings.putIfAbsent((OperationSetting<Object>) setting, value);
 
             if (putIfAbsent != null) {
-                settings.put((OperationSetting<Object>)setting, value);
+                settings.put((OperationSetting<Object>) setting, value);
             }
         }
 
@@ -77,7 +76,6 @@ public class OperationConfig implements RecordOperationConfig {
     @Override
     public RecordOperationConfig useDefaults() {
         settings.clear();
-
         return this;
     }
 }

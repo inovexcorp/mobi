@@ -160,4 +160,13 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
         verify(utilsService).optObject(eq(testIRI), any(OrmFactory.class), eq(connection));
     }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void exportNullBatchExporterTest() throws Exception {
+        BatchExporter exporter =  null;
+        RecordOperationConfig config = new OperationConfig();
+
+        config.set(RecordExportSettings.BATCH_EXPORTER, exporter);
+        recordService.export(testIRI, config, connection);
+    }
 }

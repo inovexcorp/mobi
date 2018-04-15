@@ -29,6 +29,9 @@ import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.record.config.RecordExportSettings;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.config.VersionedRDFRecordExportSettings;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
@@ -36,22 +39,27 @@ import com.mobi.repository.api.RepositoryConnection;
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRecord> extends AbstractRecordService<T> implements RecordService<T> {
+/**
+ * Defines functionality for VersionedRDFRecordService. Provides common methods for exporting and deleting a Record.
+ * Overrides exportRecord() and deleteRecord() to perform VersionedRDFRecord specific operations such as writing
+ * out Branches, Commits, and Tags.
+ * @param <T> of VersionedRDFRecord
+ */
+public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRecord>
+        extends AbstractRecordService<T> implements RecordService<T> {
 
     protected CommitFactory commitFactory;
     protected BranchFactory branchFactory;
 
-//    protected void deleteVersionedRDFData(Record record, RepositoryConnection conn) {
-//        recordFactory.getExisting(record.getResource(), record.getModel())
-//                .ifPresent(versionedRDFRecord -> {
-//                    versionedRDFRecord.getVersion_resource()
-//                            .forEach(resource -> utilsService.removeVersion(versionedRDFRecord.getResource(), resource, conn));
-//                    conn.remove(versionedRDFRecord.getResource(), valueFactory.createIRI(VersionedRDFRecord.masterBranch_IRI),
-//                            null, versionedRDFRecord.getResource());
-//                    versionedRDFRecord.getBranch_resource()
-//                            .forEach(resource -> utilsService.removeBranch(versionedRDFRecord.getResource(), resource, conn));
-//                });
-//    }
+    @Override
+    protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
+        BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
+        writeRecordData(record, exporter);
+        if (config.get(VersionedRDFRecordExportSettings.WRITE_VERSIONED_DATA)) {
+            writeVersionedRDFData(record, config.get(VersionedRDFRecordExportSettings.BRANCHES_TO_EXPORT),
+                    exporter, conn);
+        }
+    }
 
     /**
      * Writes the VersionedRDFRecord data (Branches, Commits, Tags) to the provided ExportWriter
@@ -62,7 +70,8 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param exporter The ExportWriter to write the VersionedRDFRecord to
      * @param conn A RepositoryConnection to use for lookup
      */
-    protected void writeVersionedRDFData(VersionedRDFRecord record, Set<Resource> branchesToWrite, BatchExporter exporter, RepositoryConnection conn) {
+    protected void writeVersionedRDFData(VersionedRDFRecord record, Set<Resource> branchesToWrite,
+                                         BatchExporter exporter, RepositoryConnection conn) {
         Set<Resource> processedCommits = new HashSet<>();
 
         // Write Branches

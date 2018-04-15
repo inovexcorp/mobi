@@ -295,4 +295,13 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         verify(utilsService).getExpectedObject(eq(commitIRI), any(OrmFactory.class), eq(connection));
         verify(utilsService).getRevisionChanges(eq(commitIRI), eq(connection));
     }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void exportNullBatchExporterTest() throws Exception {
+        BatchExporter exporter =  null;
+        RecordOperationConfig config = new OperationConfig();
+
+        config.set(RecordExportSettings.BATCH_EXPORTER, exporter);
+        recordService.export(testIRI, config, connection);
+    }
 }

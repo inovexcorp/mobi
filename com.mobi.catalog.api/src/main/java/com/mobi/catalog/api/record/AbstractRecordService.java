@@ -26,12 +26,21 @@ package com.mobi.catalog.api.record;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.record.config.RecordExportSettings;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.BatchExporter;
+import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
 
+/**
+ * Defines basic functionality of a RecordService. Provides common methods for exporting and deleting a Record.
+ * Subclasses of Record can override exportRecord() and deleteRecord() to perform Record specific operations.
+ * @param <T> of Record
+ */
 public abstract class AbstractRecordService<T extends Record> implements RecordService<T> {
 
     protected CatalogUtilsService utilsService;
@@ -39,25 +48,96 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     protected ValueFactory valueFactory;
     protected OrmFactory<T> recordFactory;
 
+    @Override
+    public T delete(IRI recordId, User user, RepositoryConnection conn) {
+        T record = getRecord(recordId, conn);
+
+        DeleteActivity deleteActivity = provUtils.startDeleteActivity(user, recordId);
+        conn.begin();
+        deleteRecord(record, conn);
+        conn.commit();
+        provUtils.endDeleteActivity(deleteActivity, record);
+
+        return record;
+    }
+
+    @Override
+    public void export(IRI iriRecord, RecordOperationConfig config, RepositoryConnection conn) {
+        validateSettings(config);
+
+        BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
+        boolean exporterIsActive = exporter.isActive();
+        if (!exporterIsActive) {
+            exporter.startRDF();
+        }
+        T record = getRecord(iriRecord, conn);
+        exportRecord(record, config, conn);
+        if (!exporterIsActive) {
+            exporter.endRDF();
+        }
+    }
+
+    /**
+     * Method that specifies {@link Record} specific write behavior. Can be overridden by subclasses to apply specific
+     * export behavior.
+     *
+     * @param record An {@link IRI} of the record to be exported
+     * @param config A {@link RecordOperationConfig} that contains the export configuration.
+     * @param conn A {@link RepositoryConnection} to the repo where the Record exists
+     */
+    protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
+        BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
+        writeRecordData(record, exporter);
+    }
+
+    /**
+     * Checks that the required passed in settings for a {@link RecordOperationConfig} are valid.
+     *
+     * @param config The {@link RecordOperationConfig} to validate settings
+     * @throws IllegalArgumentException If a setting is not valid
+     */
+    protected void validateSettings(RecordOperationConfig config) {
+        BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
+        if (exporter == null) {
+            throw new IllegalArgumentException("BatchExporter must not be null");
+        }
+    }
+
+    /**
+     * Gets a {@link Record} object from the associated factory.
+     *
+     * @param recordId {@link IRI} of the Record
+     * @param conn A {@link RepositoryConnection} to use for lookup
+     * @return A {@link Record} of the provided IRI
+     */
     protected T getRecord(IRI recordId, RepositoryConnection conn) {
         return utilsService.optObject(recordId, recordFactory, conn).orElseThrow(()
                 -> new IllegalArgumentException("Record " + recordId + " does not exist"));
     }
 
     /**
-     * Removes the Record object from the repository
+     * Method that specifies {@link Record} type specific delete behavior. Can be overridden by subclasses to apply
+     * specific delete behavior.
      *
-     * @param record The Record to be removed
-     * @param conn A RepositoryConnection to use for lookup
+     * @param record The {@link Record} to be removed
+     * @param conn A {@link RepositoryConnection} to use for lookup
      */
     protected void deleteRecord(T record, RepositoryConnection conn) {
-        conn.begin();
-        utilsService.removeObject(record, conn);
-        conn.commit();
+        deleteRecordObject(record, conn);
     }
 
     /**
-     * Writes the base Record data to the provided ExportWriter
+     * Removes the Record object from the repository.
+     *
+     * @param record Record to remove
+     * @param conn A RepositoryConnection to use for lookup
+     */
+    protected void deleteRecordObject(T record, RepositoryConnection conn) {
+        utilsService.removeObject(record, conn);
+    }
+
+    /**
+     * Writes the base Record data to the provided ExportWriter.
      *
      * @param record The Record to write out
      * @param exporter The BatchExporter that writes the Record data
