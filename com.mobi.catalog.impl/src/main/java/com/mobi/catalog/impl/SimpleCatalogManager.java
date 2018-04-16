@@ -87,8 +87,6 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -101,6 +99,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 @Component(
         configurationPolicy = ConfigurationPolicy.require,
@@ -218,8 +218,6 @@ public class SimpleCatalogManager implements CatalogManager {
 
     private static final String FIND_RECORDS_QUERY;
     private static final String COUNT_RECORDS_QUERY;
-    private static final String GET_NEW_LATEST_VERSION;
-    private static final String GET_COMMIT_PATHS;
     private static final String RECORD_BINDING = "record";
     private static final String CATALOG_BINDING = "catalog";
     private static final String RECORD_COUNT_BINDING = "record_count";
@@ -234,14 +232,6 @@ public class SimpleCatalogManager implements CatalogManager {
             );
             COUNT_RECORDS_QUERY = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/count-records.rq"),
-                    "UTF-8"
-            );
-            GET_NEW_LATEST_VERSION = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/get-new-latest-version.rq"),
-                    "UTF-8"
-            );
-            GET_COMMIT_PATHS = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/get-commit-paths.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -676,7 +666,6 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
-
     @Override
     public void addVersionedDistribution(Resource catalogId, Resource versionedRecordId, Resource versionId,
                                          Distribution distribution) {
@@ -721,7 +710,6 @@ public class SimpleCatalogManager implements CatalogManager {
             conn.commit();
         }
     }
-
 
     @Override
     public Optional<Distribution> getVersionedDistribution(Resource catalogId, Resource recordId, Resource versionId,

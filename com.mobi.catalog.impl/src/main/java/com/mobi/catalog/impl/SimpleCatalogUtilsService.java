@@ -71,7 +71,6 @@ import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -87,6 +86,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 
 @Component(immediate = true)
 public class SimpleCatalogUtilsService implements CatalogUtilsService {
@@ -397,7 +397,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         removeBranch(recordId, branch, deletedCommits, conn);
     }
 
-    private void removeBranch(Resource recordId, Branch branch, List<Resource> deletedCommits, RepositoryConnection conn) {
+    private void removeBranch(Resource recordId, Branch branch, List<Resource> deletedCommits,
+                              RepositoryConnection conn) {
         removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
         Optional<Resource> headCommit = branch.getHead_resource();
         if (headCommit.isPresent()) {
@@ -420,10 +421,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                             remove(commitId, conn);
 
                             // Remove Tags Referencing this Commit
-                            Set<Resource> tags = RepositoryResults.asModel(conn.getStatements(null, commitIRI, commitId), mf)
-                                    .subjects();
-                            tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId, VersionedRecord.version_IRI,
-                                    conn));
+                            Set<Resource> tags = RepositoryResults.asModel(conn.getStatements(null, commitIRI,
+                                    commitId), mf).subjects();
+                            tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId,
+                                    VersionedRecord.version_IRI, conn));
                         } else {
                             break;
                         }
@@ -444,8 +445,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             if (!parent.isPresent()) {
                 rtn.add(Stream.of(path).map(vf::createIRI).collect(Collectors.toList()));
             } else {
-                String[] connectPath = StringUtils.split(Bindings.requiredLiteral(bindings, "connectPath").stringValue(), " ");
-                rtn.add(Stream.of(connectPath, path).flatMap(Stream::of).map(vf::createIRI).collect(Collectors.toList()));
+                String[] connectPath = StringUtils.split(Bindings.requiredLiteral(bindings, "connectPath")
+                        .stringValue(), " ");
+                rtn.add(Stream.of(connectPath, path).flatMap(Stream::of).map(vf::createIRI)
+                        .collect(Collectors.toList()));
             }
         });
         return rtn;

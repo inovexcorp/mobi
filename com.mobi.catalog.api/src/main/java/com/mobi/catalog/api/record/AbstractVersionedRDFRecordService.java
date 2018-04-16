@@ -68,9 +68,11 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         recordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRDFRecord -> {
                     versionedRDFRecord.getVersion_resource()
-                            .forEach(resource -> utilsService.removeVersion(versionedRDFRecord.getResource(), resource, conn));
-                    conn.remove(versionedRDFRecord.getResource(), valueFactory.createIRI(VersionedRDFRecord.masterBranch_IRI),
-                            null, versionedRDFRecord.getResource());
+                            .forEach(resource -> utilsService.removeVersion(versionedRDFRecord.getResource(),
+                                    resource, conn));
+                    conn.remove(versionedRDFRecord.getResource(),
+                            valueFactory.createIRI(VersionedRDFRecord.masterBranch_IRI),null,
+                            versionedRDFRecord.getResource());
                     List<Resource> deletedCommits = new ArrayList<>();
                     versionedRDFRecord.getBranch_resource()
                             .forEach(resource -> utilsService.removeBranch(versionedRDFRecord.getResource(),
