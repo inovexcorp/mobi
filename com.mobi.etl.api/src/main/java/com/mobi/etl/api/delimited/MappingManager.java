@@ -30,7 +30,7 @@ import com.mobi.etl.api.pagination.MappingPaginatedSearchParams;
 import com.mobi.exception.MobiException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
-import org.openrdf.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.io.File;
 import java.io.IOException;

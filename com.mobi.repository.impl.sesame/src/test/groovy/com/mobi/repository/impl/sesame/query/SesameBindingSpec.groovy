@@ -1,16 +1,14 @@
 package com.mobi.repository.impl.sesame.query
 
 import com.mobi.rdf.core.utils.Values
-import org.openrdf.model.IRI
-import org.openrdf.model.impl.ValueFactoryImpl
+import org.eclipse.rdf4j.model.impl.ValueFactoryImpl
 import spock.lang.Specification
-import com.mobi.query.api.Binding
 
 class SesameBindingSpec extends Specification {
 
     def "getName() returns binding name"() {
         setup:
-        def sesBinding = Mock(org.openrdf.query.Binding)
+        def sesBinding = Mock(org.eclipse.rdf4j.query.Binding)
         def matBinding = new SesameBinding(sesBinding);
 
 /*-
@@ -44,7 +42,7 @@ class SesameBindingSpec extends Specification {
 
     def "getValue() returns binding's value"() {
         setup:
-        def sesBinding = Mock(org.openrdf.query.Binding)
+        def sesBinding = Mock(org.eclipse.rdf4j.query.Binding)
         def matBinding = new SesameBinding(sesBinding)
         def testVal =  new ValueFactoryImpl().createIRI("http://testVal.com");
 

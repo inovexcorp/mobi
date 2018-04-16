@@ -36,7 +36,9 @@ import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -60,6 +62,22 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                     exporter, conn);
         }
     }
+
+    @Override
+    protected void deleteRecord(T record, RepositoryConnection conn) {
+        recordFactory.getExisting(record.getResource(), record.getModel())
+                .ifPresent(versionedRDFRecord -> {
+                    versionedRDFRecord.getVersion_resource()
+                            .forEach(resource -> utilsService.removeVersion(versionedRDFRecord.getResource(), resource, conn));
+                    conn.remove(versionedRDFRecord.getResource(), valueFactory.createIRI(VersionedRDFRecord.masterBranch_IRI),
+                            null, versionedRDFRecord.getResource());
+                    List<Resource> deletedCommits = new ArrayList<>();
+                    versionedRDFRecord.getBranch_resource()
+                            .forEach(resource -> utilsService.removeBranch(versionedRDFRecord.getResource(),
+                                    resource, deletedCommits, conn));
+                });
+    }
+
 
     /**
      * Writes the VersionedRDFRecord data (Branches, Commits, Tags) to the provided ExportWriter

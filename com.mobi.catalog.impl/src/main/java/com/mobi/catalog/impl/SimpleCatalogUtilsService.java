@@ -379,7 +379,25 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn) {
+        Branch branch = getObject(branchId, branchFactory, conn);
+        removeBranch(recordId, branch, conn);
+    }
+
+    @Override
+    public void removeBranch(Resource recordId, Resource branchId, List<Resource> deletedCommits,
+                              RepositoryConnection conn) {
+        Branch branch = getObject(branchId, branchFactory, conn);
+        removeBranch(recordId, branch, deletedCommits, conn);
+    }
+
+    @Override
     public void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn) {
+        List<Resource> deletedCommits = new ArrayList<>();
+        removeBranch(recordId, branch, deletedCommits, conn);
+    }
+
+    private void removeBranch(Resource recordId, Branch branch, List<Resource> deletedCommits, RepositoryConnection conn) {
         removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
         Optional<Resource> headCommit = branch.getHead_resource();
         if (headCommit.isPresent()) {
@@ -388,7 +406,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             getCommitPaths(headCommit.get(), conn).forEach(path -> {
                 for (Resource commitId : path) {
                     if (conn.contains(null, null, null, commitId)) {
-                        if (!commitIsReferenced(commitId, conn)) {
+                        if (!commitIsReferenced(commitId, deletedCommits, conn)) {
                             // Get Additions/Deletions Graphs
                             Revision revision = getRevision(commitId, conn);
                             revision.getAdditions().ifPresent(deltaIRIs::add);
@@ -416,12 +434,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         }
     }
 
-    @Override
-    public void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn) {
-        Branch branch = getObject(branchId, branchFactory, conn);
-        removeBranch(recordId, branch, conn);
-    }
-
     private List<List<Resource>> getCommitPaths(Resource commitId, RepositoryConnection conn) {
         List<List<Resource>> rtn = new ArrayList<>();
         TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_PATHS);
@@ -439,13 +451,21 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         return rtn;
     }
 
-    private boolean commitIsReferenced(Resource commitId, RepositoryConnection conn) {
+    private boolean commitIsReferenced(Resource commitId, List<Resource> deletedCommits, RepositoryConnection conn) {
         IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
         IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
         IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
-        return Stream.of(headCommitIRI, baseCommitIRI, auxiliaryCommitIRI)
-                .map(iri -> conn.contains(null, iri, commitId))
+
+        boolean isHeadCommit = conn.contains(null, headCommitIRI, commitId);
+        boolean isParent = Stream.of(baseCommitIRI, auxiliaryCommitIRI)
+                .map(iri -> {
+                    List<Resource> temp = new ArrayList<>();
+                    conn.getStatements(null, iri, commitId).forEach(statement -> temp.add(statement.getSubject()));
+                    temp.removeAll(deletedCommits);
+                    return temp.size() > 0;
+                })
                 .reduce(false, (iri1, iri2) -> iri1 || iri2);
+        return isHeadCommit || isParent;
     }
 
     @Override

@@ -25,10 +25,12 @@ package com.mobi.platform.config.rest.impl;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.platform.config.api.state.StateManager;
 import com.mobi.platform.config.rest.StateRest;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
@@ -36,10 +38,8 @@ import com.mobi.rest.util.RestUtils;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
-import com.mobi.exception.MobiException;
-import com.mobi.rdf.api.ModelFactory;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 
 import java.io.IOException;
 import java.util.List;

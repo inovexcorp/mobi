@@ -27,10 +27,10 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.core.impl.sesame.SimpleStatement;
 import com.mobi.rdf.core.utils.Values;
 
-public class StatementValueFactory implements SesameMobiValueFactory<Statement, org.openrdf.model.Statement> {
+public class StatementValueFactory implements SesameMobiValueFactory<Statement, org.eclipse.rdf4j.model.Statement> {
 
     @Override
-    public Statement asMobiObject(org.openrdf.model.Statement object) {
+    public Statement asMobiObject(org.eclipse.rdf4j.model.Statement object) {
         return new SimpleStatement(Values.mobiResource(object.getSubject()), Values.mobiIRI(object.getPredicate()),
                 Values.mobiValue(object.getObject()), Values.mobiResource(object.getContext()));
     }

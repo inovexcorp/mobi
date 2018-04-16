@@ -29,7 +29,9 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.config.OperationConfig;
@@ -49,17 +51,18 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
-import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -94,7 +97,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private Difference difference;
     private User user;
     private DeleteActivity deleteActivity;
-//    private Tag tag;
+    private Tag tag;
 
     private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
     private OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
@@ -102,10 +105,8 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
-//    private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
-//    private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
-//    private OrmFactory<Version> versionFactory = getRequiredOrmFactory(Version.class);
-//    private OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
+    private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
+    private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
 
     @Mock
     private CatalogUtilsService utilsService;
@@ -141,17 +142,17 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
                 .deletions(deletions)
                 .build();
 
-//        tag = tagFactory.createNew(tagIRI);
-//        tag.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(distributionIRI)));
+        tag = tagFactory.createNew(tagIRI);
+        tag.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(distributionIRI)));
 
         testRecord = versionedRDFRecordFactory.createNew(testIRI);
         testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
         testRecord.setBranch(Collections.singleton(branch));
-//        testRecord.setVersion(Collections.singleton(tag));
-//        testRecord.setLatestVersion(tag);
-//        testRecord.setBranch(Collections.singleton(branch));
-//        testRecord.setMasterBranch(branchFactory.createNew(masterBranchIRI));
+        testRecord.setVersion(Collections.singleton(tag));
+        testRecord.setLatestVersion(tag);
+        testRecord.setBranch(Collections.singleton(branch));
+        testRecord.setMasterBranch(branchFactory.createNew(masterBranchIRI));
 
 
         MockitoAnnotations.initMocks(this);
@@ -175,17 +176,17 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void deleteTest() throws Exception {
-        when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.of(testRecord));
+        when(recordFactory.getExisting(eq(testIRI), any(Model.class))).thenReturn(Optional.of(testRecord));
 
-        VersionedRDFRecord deletedRecord = (VersionedRDFRecord) recordService.delete(testIRI, user, connection);
+        VersionedRDFRecord deletedRecord = recordService.delete(testIRI, user, connection);
 
         assertEquals(testRecord, deletedRecord);
         verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
         verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
-        verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));
+        verify(recordFactory).getExisting(eq(testIRI), eq(testRecord.getModel()));
         verify(utilsService).removeVersion(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).removeBranch(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).removeObject(any(VersionedRDFRecord.class), any(RepositoryConnection.class));
+        verify(utilsService).removeBranch(eq(testRecord.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
+        verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -193,7 +194,6 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.empty());
 
         recordService.delete(testIRI, user, connection);
-
         verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
     }
 

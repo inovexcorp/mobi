@@ -38,12 +38,12 @@ import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.AttributeDesignator;
 import com.mobi.security.policy.api.Request;
 import com.mobi.vocabularies.xsd.XSD;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.sail.memory.MemoryStore;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;

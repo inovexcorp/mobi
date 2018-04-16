@@ -126,6 +126,7 @@ GRAPH records:versioned-rdf-record {
         mcat:version versions:latest-tag ;
         mcat:latestVersion versions:latest-tag ;
         mcat:branch branches:user-branch ;
+        mcat:branch branches:no-head-branch ;
         mcat:branch branches:branch ;
         mcat:branch branches:master ;
         mcat:masterBranch branches:master .
@@ -210,6 +211,10 @@ GRAPH branches:lone-branch {
 GRAPH branches:branch {
     branches:branch a mcat:Branch ;
         mcat:head commits:conflict2 .
+}
+
+GRAPH branches:no-head-branch {
+    branches:no-head-branch a mcat:Branch .
 }
 
 GRAPH branches:user-branch {
@@ -918,6 +923,24 @@ GRAPH commits:quad-test1 {
             mcat:revisionedGraph graphs:quad-graph1 ;
             mcat:additions additions:quad-test1%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1 ;
             mcat:deletions deletions:quad-test1%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1
+        ] .
+}
+
+GRAPH commits:quad-test3 {
+    commits:quad-test3 a mcat:Commit ;
+        dc:title "Quad Test 3" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:quad-test1 ;
+        prov:generated revisions:revision3 .
+
+    revisions:revision3 a mcat:Revision ;
+        mcat:additions additions:quad-test3 ;
+        mcat:deletions deletions:quad-test3 ;
+        mcat:graphRevision [
+            a mcat:GraphRevision ;
+            mcat:revisionedGraph graphs:quad-graph3 ;
+            mcat:additions additions:quad-test3%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph3 ;
+            mcat:deletions deletions:quad-test3%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph3
         ] .
 }
 

@@ -218,6 +218,8 @@ public class SimpleCatalogManager implements CatalogManager {
 
     private static final String FIND_RECORDS_QUERY;
     private static final String COUNT_RECORDS_QUERY;
+    private static final String GET_NEW_LATEST_VERSION;
+    private static final String GET_COMMIT_PATHS;
     private static final String RECORD_BINDING = "record";
     private static final String CATALOG_BINDING = "catalog";
     private static final String RECORD_COUNT_BINDING = "record_count";
@@ -232,6 +234,14 @@ public class SimpleCatalogManager implements CatalogManager {
             );
             COUNT_RECORDS_QUERY = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/count-records.rq"),
+                    "UTF-8"
+            );
+            GET_NEW_LATEST_VERSION = IOUtils.toString(
+                    SimpleCatalogManager.class.getResourceAsStream("/get-new-latest-version.rq"),
+                    "UTF-8"
+            );
+            GET_COMMIT_PATHS = IOUtils.toString(
+                    SimpleCatalogManager.class.getResourceAsStream("/get-commit-paths.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -424,7 +434,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Record> T removeRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory) {
-        T record = null;
+        T record;
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(catalogId, catalogFactory.getTypeIRI(), conn);
 
@@ -502,7 +512,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void addUnversionedDistribution(Resource catalogId, Resource unversionedRecordId, Distribution distribution) {
+    public void addUnversionedDistribution(Resource catalogId, Resource unversionedRecordId,
+                                           Distribution distribution) {
         try (RepositoryConnection conn = repository.getConnection()) {
             UnversionedRecord record = utils.getRecord(catalogId, unversionedRecordId, unversionedRecordFactory, conn);
             if (conn.containsContext(distribution.getResource())) {
@@ -1191,8 +1202,8 @@ public class SimpleCatalogManager implements CatalogManager {
 
                 // Check for deletion in left and addition in right
                 Model rightSubjectAdd = right.filter(subject, null, null);
-                boolean leftEntityDeleted = !left.subjects().contains(subject) &&
-                        leftDeleteSubjectStatements.equals(original.filter(subject, null, null));
+                boolean leftEntityDeleted = !left.subjects().contains(subject)
+                        && leftDeleteSubjectStatements.equals(original.filter(subject, null, null));
                 boolean rightEntityDeleted = rightDeletions.containsAll(leftDeleteSubjectStatements);
 
                 if (leftEntityDeleted && !rightEntityDeleted && rightSubjectAdd.size() > 0) {
@@ -1208,8 +1219,8 @@ public class SimpleCatalogManager implements CatalogManager {
                 // Check for deletion in right and addition in left
                 Model rightDeleteSubjectStatements = rightDeletions.filter(subject, null, null);
                 Model leftSubjectAdd = left.filter(subject, null, null);
-                boolean rightEntityDeleted = !right.subjects().contains(subject) &&
-                        rightDeleteSubjectStatements.equals(original.filter(subject, null, null));
+                boolean rightEntityDeleted = !right.subjects().contains(subject)
+                        && rightDeleteSubjectStatements.equals(original.filter(subject, null, null));
                 boolean leftEntityDeleted = leftDeletions.containsAll(rightDeleteSubjectStatements);
 
                 if (rightEntityDeleted && !leftEntityDeleted && leftSubjectAdd.size() > 0) {
@@ -1374,8 +1385,10 @@ public class SimpleCatalogManager implements CatalogManager {
                             .forEach(resource -> utils.removeVersion(versionedRDFRecord.getResource(), resource, conn));
                     conn.remove(versionedRDFRecord.getResource(), vf.createIRI(VersionedRDFRecord.masterBranch_IRI),
                             null, versionedRDFRecord.getResource());
+                    List<Resource> deletedCommits = new ArrayList<>();
                     versionedRDFRecord.getBranch_resource()
-                            .forEach(resource -> utils.removeBranch(versionedRDFRecord.getResource(), resource, conn));
+                            .forEach(resource -> utils.removeBranch(versionedRDFRecord.getResource(), resource,
+                                    deletedCommits, conn));
                     utils.removeObject(versionedRDFRecord, conn);
                 });
     }

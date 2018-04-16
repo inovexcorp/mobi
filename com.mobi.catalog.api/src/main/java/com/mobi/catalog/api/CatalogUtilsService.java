@@ -324,15 +324,6 @@ public interface CatalogUtilsService {
 
     /**
      * TODO: SHOULD IT DO THE MASTER BRANCH CHECK???
-     * Removes Branch identified by the provided Resource and Branch from the repository.
-     * @param recordId The Resource identifying the VersionedRDFRecord which has the Branch.
-     * @param branch The Branch object you want to remove.
-     * @param conn A RepositoryConnection to use for lookup.
-     */
-    void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn);
-
-    /**
-     * TODO: SHOULD IT DO THE MASTER BRANCH CHECK???
      * Removes the Branch identified by the provided Resources from the repository.
      *
      * @param recordId The Resource identifying the VersionedRDFRecord which has the Branch.
@@ -340,6 +331,26 @@ public interface CatalogUtilsService {
      * @param conn A RepositoryConnection to use for lookup.
      */
     void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn);
+
+    /**
+     * TODO: SHOULD IT DO THE MASTER BRANCH CHECK???
+     * Removes the Branch identified by the provided Resources from the repository.
+     *
+     * @param recordId The Resource identifying the VersionedRDFRecord which has the Branch.
+     * @param branchId The Resource identifying the Branch you want to remove.
+     * @param deletedCommits A List of commits that have been deleted.
+     * @param conn A RepositoryConnection to use for lookup.
+     */
+    void removeBranch(Resource recordId, Resource branchId, List<Resource> deletedCommits, RepositoryConnection conn);
+
+    /**
+     * TODO: SHOULD IT DO THE MASTER BRANCH CHECK???
+     * Removes Branch identified by the provided Resource and Branch from the repository.
+     * @param recordId The Resource identifying the VersionedRDFRecord which has the Branch.
+     * @param branch The Branch object you want to remove.
+     * @param conn A RepositoryConnection to use for lookup.
+     */
+    void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn);
 
     /**
      * Retrieves the IRI of the head Commit of the provided Branch. Throws an IllegalStateException if the Branch does

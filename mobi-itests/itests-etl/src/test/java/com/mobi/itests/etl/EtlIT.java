@@ -23,26 +23,26 @@ package com.mobi.itests.etl;
  * #L%
  */
 
+import static org.junit.Assert.assertTrue;
+
+import com.mobi.itests.support.KarafTestSupport;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.util.Models;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import com.mobi.itests.support.KarafTestSupport;
-import org.openrdf.model.Model;
-import org.openrdf.model.util.Models;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.osgi.framework.BundleContext;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-
-import static org.junit.Assert.assertTrue;
+import javax.inject.Inject;
 
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)

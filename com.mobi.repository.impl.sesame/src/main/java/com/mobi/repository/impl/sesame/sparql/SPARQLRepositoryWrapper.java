@@ -35,7 +35,7 @@ import com.mobi.repository.base.RepositoryWrapper;
 import com.mobi.repository.exception.RepositoryConfigException;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import org.apache.commons.validator.routines.UrlValidator;
-import org.openrdf.repository.sparql.SPARQLRepository;
+import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 
 import java.util.Map;
 

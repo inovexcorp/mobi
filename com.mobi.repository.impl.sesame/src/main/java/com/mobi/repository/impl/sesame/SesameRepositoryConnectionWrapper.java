@@ -30,20 +30,6 @@ import com.mobi.query.api.Operation;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.query.api.Update;
 import com.mobi.query.exception.MalformedQueryException;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.core.impl.sesame.factory.ResourceValueFactory;
-import com.mobi.rdf.core.impl.sesame.factory.StatementValueFactory;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
-import com.mobi.repository.impl.sesame.query.SesameBooleanQuery;
-import com.mobi.repository.impl.sesame.query.SesameGraphQuery;
-import com.mobi.repository.impl.sesame.query.SesameOperation;
-import com.mobi.repository.impl.sesame.query.SesameTupleQuery;
-import com.mobi.repository.impl.sesame.query.SesameUpdate;
-import com.mobi.query.api.*;
-import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
@@ -54,22 +40,26 @@ import com.mobi.rdf.core.utils.Values;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.exception.RepositoryException;
-import com.mobi.repository.impl.sesame.query.*;
-import org.openrdf.OpenRDFException;
-import org.openrdf.query.QueryLanguage;
+import com.mobi.repository.impl.sesame.query.SesameBooleanQuery;
+import com.mobi.repository.impl.sesame.query.SesameGraphQuery;
+import com.mobi.repository.impl.sesame.query.SesameOperation;
+import com.mobi.repository.impl.sesame.query.SesameTupleQuery;
+import com.mobi.repository.impl.sesame.query.SesameUpdate;
+import org.eclipse.rdf4j.OpenRDFException;
+import org.eclipse.rdf4j.query.QueryLanguage;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
 
-    org.openrdf.repository.RepositoryConnection sesameConn;
+    org.eclipse.rdf4j.repository.RepositoryConnection sesameConn;
 
-    public SesameRepositoryConnectionWrapper(org.openrdf.repository.RepositoryConnection conn) {
+    public SesameRepositoryConnectionWrapper(org.eclipse.rdf4j.repository.RepositoryConnection conn) {
         setDelegate(conn);
     }
 
-    protected void setDelegate(org.openrdf.repository.RepositoryConnection conn) {
+    protected void setDelegate(org.eclipse.rdf4j.repository.RepositoryConnection conn) {
         this.sesameConn = conn;
     }
 
@@ -81,7 +71,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             } else {
                 sesameConn.add(Values.sesameStatement(stmt));
             }
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -89,7 +79,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     @Override
     public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
         try {
-            Set<org.openrdf.model.Statement> sesameStatements = new HashSet<>();
+            Set<org.eclipse.rdf4j.model.Statement> sesameStatements = new HashSet<>();
             statements.forEach(stmt -> sesameStatements.add(Values.sesameStatement(stmt)));
 
             if (contexts.length > 0) {
@@ -97,7 +87,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             } else {
                 sesameConn.add(sesameStatements);
             }
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -111,7 +101,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
                 sesameConn.add(Values.sesameResource(subject), Values.sesameIRI(predicate),
                         Values.sesameValue(object), Values.sesameResources(contexts));
             }
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -124,7 +114,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             } else {
                 sesameConn.remove(Values.sesameStatement(stmt));
             }
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -132,7 +122,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     @Override
     public void remove(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
         try {
-            Set<org.openrdf.model.Statement> sesameStatements = new HashSet<>();
+            Set<org.eclipse.rdf4j.model.Statement> sesameStatements = new HashSet<>();
             statements.forEach(stmt -> sesameStatements.add(Values.sesameStatement(stmt)));
 
             if (contexts.length > 0) {
@@ -140,7 +130,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             } else {
                 sesameConn.remove(sesameStatements);
             }
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -154,7 +144,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
                 sesameConn.remove(Values.sesameResource(subject), Values.sesameIRI(predicate),
                         Values.sesameValue(object), Values.sesameResources(contexts));
             }
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -167,7 +157,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             } else {
                 sesameConn.clear();
             }
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -176,7 +166,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     public void close() throws RepositoryException {
         try {
             sesameConn.close();
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -185,7 +175,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     public long size(Resource... contexts) throws RepositoryException {
         try {
             return sesameConn.size(Values.sesameResources(contexts));
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -195,7 +185,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             getStatements(Resource subject, IRI predicate, Value object, Resource... contexts)
             throws RepositoryException {
         try {
-            org.openrdf.repository.RepositoryResult<org.openrdf.model.Statement> sesameResults;
+            org.eclipse.rdf4j.repository.RepositoryResult<org.eclipse.rdf4j.model.Statement> sesameResults;
 
             if (contexts.length > 0) {
                 sesameResults = sesameConn.getStatements(Values.sesameResource(subject), Values.sesameIRI(predicate),
@@ -206,7 +196,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             }
 
             return new SesameRepositoryResult<>(sesameResults, new StatementValueFactory());
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -216,7 +206,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
         try {
             return sesameConn.getStatements(Values.sesameResource(subject), Values.sesameIRI(predicate),
                     Values.sesameValue(object), Values.sesameResources(contexts)).hasNext();
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -225,7 +215,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     public boolean containsContext(Resource context) {
         try {
             return sesameConn.getStatements(null, null, null, Values.sesameResources(context)).hasNext();
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -234,7 +224,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     public RepositoryResult<Resource> getContextIDs() throws RepositoryException {
         try {
             return new SesameRepositoryResult<>(sesameConn.getContextIDs(), new ResourceValueFactory());
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -243,7 +233,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     public void begin() throws RepositoryException {
         try {
             sesameConn.begin();
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -252,7 +242,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     public void commit() throws RepositoryException {
         try {
             sesameConn.commit();
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -261,7 +251,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     public void rollback() throws RepositoryException {
         try {
             sesameConn.rollback();
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -270,7 +260,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     public boolean isActive() throws RepositoryException {
         try {
             return sesameConn.isActive();
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
     }
@@ -280,9 +270,9 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throws RepositoryException, MalformedQueryException {
         try {
             return new SesameOperation(sesameConn.prepareQuery(query));
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
-        } catch (org.openrdf.query.MalformedQueryException e) {
+        } catch (org.eclipse.rdf4j.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
         } catch (OpenRDFException e) {
             throw new MobiException(e);
@@ -294,9 +284,9 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throws RepositoryException, MalformedQueryException {
         try {
             return new SesameOperation(sesameConn.prepareQuery(QueryLanguage.SPARQL, query, baseURI));
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
-        } catch (org.openrdf.query.MalformedQueryException e) {
+        } catch (org.eclipse.rdf4j.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
         } catch (OpenRDFException e) {
             throw new MobiException(e);
@@ -308,9 +298,9 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throws RepositoryException, MalformedQueryException {
         try {
             return new SesameTupleQuery(sesameConn.prepareTupleQuery(query));
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
-        } catch (org.openrdf.query.MalformedQueryException e) {
+        } catch (org.eclipse.rdf4j.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
         } catch (OpenRDFException e) {
             throw new MobiException(e);
@@ -322,9 +312,9 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throws RepositoryException, MalformedQueryException {
         try {
             return new SesameTupleQuery(sesameConn.prepareTupleQuery(QueryLanguage.SPARQL, query, baseURI));
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
-        } catch (org.openrdf.query.MalformedQueryException e) {
+        } catch (org.eclipse.rdf4j.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
         } catch (OpenRDFException e) {
             throw new MobiException(e);
@@ -336,9 +326,9 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throws RepositoryException, MalformedQueryException {
         try {
             return new SesameGraphQuery(sesameConn.prepareGraphQuery(query));
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
-        } catch (org.openrdf.query.MalformedQueryException e) {
+        } catch (org.eclipse.rdf4j.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
         } catch (OpenRDFException e) {
             throw new MobiException(e);
@@ -350,9 +340,9 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
             throws RepositoryException, MalformedQueryException {
         try {
             return new SesameGraphQuery(sesameConn.prepareGraphQuery(QueryLanguage.SPARQL, query, baseURI));
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
-        } catch (org.openrdf.query.MalformedQueryException e) {
+        } catch (org.eclipse.rdf4j.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
         } catch (OpenRDFException e) {
             throw new MobiException(e);
@@ -363,9 +353,9 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     public BooleanQuery prepareBooleanQuery(String query) throws RepositoryException, MalformedQueryException {
         try {
             return new SesameBooleanQuery(sesameConn.prepareBooleanQuery(query));
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
-        } catch (org.openrdf.query.MalformedQueryException e) {
+        } catch (org.eclipse.rdf4j.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
         } catch (OpenRDFException e) {
             throw new MobiException(e);
@@ -376,9 +366,9 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     public BooleanQuery prepareBooleanQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
         try {
             return new SesameBooleanQuery(sesameConn.prepareBooleanQuery(QueryLanguage.SPARQL, query, baseURI));
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
-        } catch (org.openrdf.query.MalformedQueryException e) {
+        } catch (org.eclipse.rdf4j.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
         } catch (OpenRDFException e) {
             throw new MobiException(e);
@@ -389,9 +379,9 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     public Update prepareUpdate(String update) throws RepositoryException, MalformedQueryException {
         try {
             return new SesameUpdate(sesameConn.prepareUpdate(update));
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
-        } catch (org.openrdf.query.MalformedQueryException e) {
+        } catch (org.eclipse.rdf4j.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
         } catch (OpenRDFException e) {
             throw new MobiException(e);
@@ -402,9 +392,9 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     public Update prepareUpdate(String update, String baseURI) throws RepositoryException, MalformedQueryException {
         try {
             return new SesameUpdate(sesameConn.prepareUpdate(QueryLanguage.SPARQL, update, baseURI));
-        } catch (org.openrdf.repository.RepositoryException e) {
+        } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
-        } catch (org.openrdf.query.MalformedQueryException e) {
+        } catch (org.eclipse.rdf4j.query.MalformedQueryException e) {
             throw new MalformedQueryException(e);
         } catch (OpenRDFException e) {
             throw new MobiException(e);

@@ -32,7 +32,7 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.base.AbstractStatementSet;
 import com.mobi.rdf.core.utils.Values;
-import org.openrdf.model.util.Models;
+import org.eclipse.rdf4j.model.util.Models;
 
 import java.util.Iterator;
 import java.util.Optional;
@@ -45,15 +45,15 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
     private static final long serialVersionUID = -4290503637573113943L;
     private static final ValueFactory MOBI_VF = SimpleValueFactory.getInstance();
 
-    private org.openrdf.model.Model sesameModel;
+    private org.eclipse.rdf4j.model.Model sesameModel;
 
     protected SesameModelWrapper() {}
 
-    protected SesameModelWrapper(org.openrdf.model.Model model) {
+    protected SesameModelWrapper(org.eclipse.rdf4j.model.Model model) {
         setDelegate(model);
     }
 
-    protected void setDelegate(org.openrdf.model.Model model) {
+    protected void setDelegate(org.eclipse.rdf4j.model.Model model) {
         this.sesameModel = model;
     }
 
@@ -79,7 +79,7 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
         if (context == null) {
             return new SesameModelWrapper(
                     sesameModel.filter(Values.sesameResource(subject), Values.sesameIRI(predicate),
-                            Values.sesameValue(object), (org.openrdf.model.Resource) null)
+                            Values.sesameValue(object), (org.eclipse.rdf4j.model.Resource) null)
             );
         } else {
             return new SesameModelWrapper(
@@ -100,7 +100,7 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
     public boolean remove(Resource subject, IRI predicate, Value object, Resource... context) {
         if (context == null) {
             return sesameModel.remove(Values.sesameResource(subject), Values.sesameIRI(predicate),
-                    Values.sesameValue(object), (org.openrdf.model.Resource) null);
+                    Values.sesameValue(object), (org.eclipse.rdf4j.model.Resource) null);
         } else {
             return sesameModel.remove(Values.sesameResource(subject), Values.sesameIRI(predicate),
                     Values.sesameValue(object), Values.sesameResources(context));
@@ -109,7 +109,7 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
 
     @Override
     public Optional<Namespace> removeNamespace(@Nonnull String prefix) {
-        Optional<org.openrdf.model.Namespace> sesameNS = sesameModel.removeNamespace(prefix);
+        Optional<org.eclipse.rdf4j.model.Namespace> sesameNS = sesameModel.removeNamespace(prefix);
 
         if (sesameNS.isPresent()) {
             return Optional.of(new SimpleNamespace(sesameNS.get().getPrefix(), sesameNS.get().getName()));
@@ -121,7 +121,7 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
     @Override
     public void setNamespace(@Nonnull Namespace namespace) {
         sesameModel.setNamespace(
-            new org.openrdf.model.impl.SimpleNamespace(namespace.getPrefix(), namespace.getName())
+            new org.eclipse.rdf4j.model.impl.SimpleNamespace(namespace.getPrefix(), namespace.getName())
         );
     }
 
@@ -165,7 +165,7 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
 
     @Override
     public @Nonnull Iterator<Statement> iterator() {
-        Iterator<org.openrdf.model.Statement> sesameItr = sesameModel.iterator();
+        Iterator<org.eclipse.rdf4j.model.Statement> sesameItr = sesameModel.iterator();
 
         return new Iterator<Statement>() {
             @Override
@@ -175,7 +175,7 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
 
             @Override
             public Statement next() {
-                org.openrdf.model.Statement stmt = sesameItr.next();
+                org.eclipse.rdf4j.model.Statement stmt = sesameItr.next();
                 return MOBI_VF.createStatement(Values.mobiResource(stmt.getSubject()),
                         Values.mobiIRI(stmt.getPredicate()), Values.mobiValue(stmt.getObject()),
                         Values.mobiResource(stmt.getContext()));
@@ -246,7 +246,7 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
     /**
      * @return the unmodifiable sesame model that represents this Model
      */
-    protected org.openrdf.model.Model getSesameModel() {
+    protected org.eclipse.rdf4j.model.Model getSesameModel() {
         return sesameModel.unmodifiable();
     }
 }

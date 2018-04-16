@@ -31,7 +31,7 @@ import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
 import com.mobi.rdf.core.utils.Values
 import com.mobi.repository.base.RepositoryResult
-import org.openrdf.rio.RDFFormat
+import org.eclipse.rdf4j.rio.RDFFormat
 import spock.lang.Specification
 
 class DatasetExportSpec extends Specification {

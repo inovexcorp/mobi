@@ -24,8 +24,8 @@ package com.mobi.etl.cli.export;
  */
 
 import org.apache.karaf.shell.api.action.Option;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 
 import java.io.FileOutputStream;
 import java.io.IOException;

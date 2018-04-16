@@ -41,7 +41,7 @@ class LinkedHashModelSpec extends Specification {
         def s = new SimpleIRI("http://test.com/s")
         def p = new SimpleIRI("http://test.com/p")
         def o = new SimpleIRI("http://test.com/o")
-        def model2 = new SesameModelWrapper(new org.openrdf.model.impl.LinkedHashModel())
+        def model2 = new SesameModelWrapper(new org.eclipse.rdf4j.model.impl.LinkedHashModel())
         model2.add(s, p, o)
         def model = new LinkedHashModel(model2)
 

@@ -34,10 +34,10 @@ import java.util.Optional;
 
 public class SimpleStatement implements Statement {
 
-    private static final org.openrdf.model.ValueFactory SESAME_VF = org.openrdf.model.impl.SimpleValueFactory.getInstance();
+    private static final org.eclipse.rdf4j.model.ValueFactory SESAME_VF = org.eclipse.rdf4j.model.impl.SimpleValueFactory.getInstance();
     private static final long serialVersionUID = -6157353529575653321L;
 
-    private org.openrdf.model.Statement sesameStmt;
+    private org.eclipse.rdf4j.model.Statement sesameStmt;
 
     public SimpleStatement(Resource subject, IRI predicate, Value object) {
         constructSesameStmt(subject, predicate, object, null);
@@ -59,7 +59,7 @@ public class SimpleStatement implements Statement {
 
     @Override
     public Optional<Resource> getContext() {
-        org.openrdf.model.Resource context = sesameStmt.getContext();
+        org.eclipse.rdf4j.model.Resource context = sesameStmt.getContext();
 
         if (context == null) {
             return Optional.empty();
@@ -92,12 +92,12 @@ public class SimpleStatement implements Statement {
         if (o instanceof Statement) {
             Statement that = (Statement) o;
 
-			/* We check  object equality first since it's most likely to be different.
-			 *
-			 * In general the number of different predicates and contexts in sets of
-			 * statements are the smallest (and therefore most likely to be identical), so
-			 * these are checked last.
-			 */
+            /* We check  object equality first since it's most likely to be different.
+             *
+             * In general the number of different predicates and contexts in sets of
+             * statements are the smallest (and therefore most likely to be identical), so
+             * these are checked last.
+             */
             return this.getObject().equals(that.getObject()) &&
                     this.getSubject().equals(that.getSubject()) &&
                     this.getPredicate().equals(that.getPredicate()) &&
