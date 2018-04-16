@@ -23,6 +23,16 @@ package com.mobi.catalog.impl.record;
  * #L%
  */
 
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
@@ -68,16 +78,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
     private final IRI testIRI = VALUE_FACTORY.createIRI("urn:test");
@@ -87,7 +87,6 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private final IRI tagIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#tag");
     private final IRI distributionIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/distributions#distribution");
     private final IRI masterBranchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#master");
-    private final IRI revisionIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/revisions#commit");
 
     private SimpleVersionedRDFRecordService recordService;
     private SimpleSesameTransformer transformer;
