@@ -402,11 +402,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
         Optional<Resource> headCommit = branch.getHead_resource();
         if (headCommit.isPresent()) {
+            // Explicitly remove this so algorithm works for head commit
+            conn.remove(branch.getResource(), vf.createIRI(Branch.head_IRI), headCommit.get());
             IRI commitIRI = vf.createIRI(Tag.commit_IRI);
             Set<Resource> deltaIRIs = new HashSet<>();
             getCommitPaths(headCommit.get(), conn).forEach(path -> {
                 for (Resource commitId : path) {
-                    if (conn.contains(null, null, null, commitId)) {
+                    if (!deletedCommits.contains(commitId)) {
                         if (!commitIsReferenced(commitId, deletedCommits, conn)) {
                             // Get Additions/Deletions Graphs
                             Revision revision = getRevision(commitId, conn);
@@ -421,10 +423,11 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                             remove(commitId, conn);
 
                             // Remove Tags Referencing this Commit
-                            Set<Resource> tags = RepositoryResults.asModel(conn.getStatements(null, commitIRI,
-                                    commitId), mf).subjects();
+                            Set<Resource> tags = RepositoryResults.asModel(
+                                    conn.getStatements(null, commitIRI, commitId), mf).subjects();
                             tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId,
                                     VersionedRecord.version_IRI, conn));
+                            deletedCommits.add(commitId);
                         } else {
                             break;
                         }
@@ -445,8 +448,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             if (!parent.isPresent()) {
                 rtn.add(Stream.of(path).map(vf::createIRI).collect(Collectors.toList()));
             } else {
-                String[] connectPath = StringUtils.split(Bindings.requiredLiteral(bindings, "connectPath")
-                        .stringValue(), " ");
+                String[] connectPath = StringUtils.split(
+                        Bindings.requiredLiteral(bindings, "connectPath").stringValue(), " ");
                 rtn.add(Stream.of(connectPath, path).flatMap(Stream::of).map(vf::createIRI)
                         .collect(Collectors.toList()));
             }
