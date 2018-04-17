@@ -27,11 +27,11 @@
         .module('branchSelect', [])
         .directive('branchSelect', branchSelect);
 
-        branchSelect.$inject = ['$q', 'catalogManagerService', 'ontologyStateService',
-            'ontologyManagerService', 'utilService', 'stateManagerService'];
+        branchSelect.$inject = ['$filter', '$q', 'catalogManagerService', 'ontologyStateService',
+            'ontologyManagerService', 'utilService', 'stateManagerService', 'loginManagerService', 'prefixes'];
 
-        function branchSelect($q, catalogManagerService, ontologyStateService, ontologyManagerService, utilService,
-            stateManagerService) {
+        function branchSelect($filter, $q, catalogManagerService, ontologyStateService, ontologyManagerService, utilService,
+            stateManagerService, loginManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -46,6 +46,7 @@
                     var cm = catalogManagerService;
                     var sm = stateManagerService;
                     var om = ontologyManagerService;
+                    var lm = loginManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
 
                     dvm.os = ontologyStateService;
@@ -81,6 +82,10 @@
                     dvm.getBranchName = function(branch) {
                         dvm.os.listItem.userBranch = dvm.os.isUserBranch(branch);
                         return dvm.util.getDctermsValue(branch, 'title');
+                    }
+
+                    dvm.getDisplayBranches = function(branches) {
+                        return $filter('branchesToDisplay')(branches, lm.currentUserIRI, dvm.os, dvm.util, prefixes);
                     }
 
                     dvm.delete = function() {
