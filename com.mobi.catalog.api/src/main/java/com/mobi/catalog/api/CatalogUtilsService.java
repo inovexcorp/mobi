@@ -41,10 +41,10 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.repository.api.RepositoryConnection;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 public interface CatalogUtilsService {
     /**
@@ -139,7 +139,7 @@ public interface CatalogUtilsService {
      * @param conn A RepositoryConnection to use for lookup.
      */
     void removeObjectWithRelationship(Resource objectId, Resource removeFromId, String predicate,
-                                             RepositoryConnection conn);
+                                      RepositoryConnection conn);
 
     /**
      * Validates the type and existence of a Record in a Catalog.
@@ -323,8 +323,7 @@ public interface CatalogUtilsService {
                                    RepositoryConnection conn);
 
     /**
-     * TODO: SHOULD IT DO THE MASTER BRANCH CHECK???
-     * Removes the Branch identified by the provided Resources from the repository.
+     * Removes the Branch identified by the provided Resources from the repository.  Does not check if branch is master.
      *
      * @param recordId The Resource identifying the VersionedRDFRecord which has the Branch.
      * @param branchId The Resource identifying the Branch you want to remove.
@@ -333,8 +332,7 @@ public interface CatalogUtilsService {
     void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn);
 
     /**
-     * TODO: SHOULD IT DO THE MASTER BRANCH CHECK???
-     * Removes the Branch identified by the provided Resources from the repository.
+     * Removes the Branch identified by the provided Resources from the repository. Does not check if branch is master.
      *
      * @param recordId The Resource identifying the VersionedRDFRecord which has the Branch.
      * @param branchId The Resource identifying the Branch you want to remove.
@@ -344,8 +342,9 @@ public interface CatalogUtilsService {
     void removeBranch(Resource recordId, Resource branchId, List<Resource> deletedCommits, RepositoryConnection conn);
 
     /**
-     * TODO: SHOULD IT DO THE MASTER BRANCH CHECK???
-     * Removes Branch identified by the provided Resource and Branch from the repository.
+     * Removes Branch identified by the provided Resource and Branch from the repository. Does not check if branch
+     * is master.
+     *
      * @param recordId The Resource identifying the VersionedRDFRecord which has the Branch.
      * @param branch The Branch object you want to remove.
      * @param conn A RepositoryConnection to use for lookup.
@@ -529,23 +528,23 @@ public interface CatalogUtilsService {
      * @param branchId The {@link Resource} of the {@link Branch} which should have the {@link Commit}.
      * @param commitId The {@link Resource} of the {@link Commit}.
      * @param conn A RepositoryConnection to use for lookup.
-     * @throws IllegalArgumentException Thrown if the {@link Catalog} could not be found, the {@link Record} could not 
-     *      be found, the {@link Record} does not belong to the {@link Catalog}, the {@link Branch} does not belong to 
+     * @throws IllegalArgumentException Thrown if the {@link Catalog} could not be found, the {@link Record} could not
+     *      be found, the {@link Record} does not belong to the {@link Catalog}, the {@link Branch} does not belong to
      *      the {@link Record}, or the {@link Commit} does not belong to the {@link Branch}.
      */
     void validateCommitPath(Resource catalogId, Resource recordId, Resource branchId, Resource commitId,
             RepositoryConnection conn);
 
     /**
-     * 
+     *
      * @param branchId The {@link Resource} of the {@link Branch} which should have the {@link Commit}.
      * @param commitId The {@link Resource} of the {@link Commit}.
      * @param conn A RepositoryConnection to use for lookup.
-     * @return {@code true} is the (@link Commit} {@link Resource} is in the {@link Branch}'s commit chain and 
+     * @return {@code true} is the (@link Commit} {@link Resource} is in the {@link Branch}'s commit chain and
      *         {@code false} otherwise.
      */
     boolean commitInBranch(Resource branchId, Resource commitId, RepositoryConnection conn);
-    
+
     /**
      * Gets a List which represents the commit chain from the initial commit to the specified commit in either
      * ascending or descending date order.

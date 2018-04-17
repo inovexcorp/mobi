@@ -65,6 +65,17 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
 
     @Override
     protected void deleteRecord(T record, RepositoryConnection conn) {
+        deleteRecordObject(record, conn);
+        deleteVersionedRDFData(record, conn);
+    }
+
+    /**
+     * Deletes VersionedRDFRecord specific data (Branches, Commits, Tags) from the repository.
+     *
+     * @param record The VersionedRDFRecord to delete
+     * @param conn A RepositoryConnection to use for lookup
+     */
+    protected void deleteVersionedRDFData(T record, RepositoryConnection conn) {
         recordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRDFRecord -> {
                     versionedRDFRecord.getVersion_resource()
@@ -79,7 +90,6 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                                     resource, deletedCommits, conn));
                 });
     }
-
 
     /**
      * Writes the VersionedRDFRecord data (Branches, Commits, Tags) to the provided ExportWriter
