@@ -107,6 +107,7 @@
                 ontology: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
+                userBranch: false,
                 merge: {
                     active: false,
                     target: undefined,
@@ -282,9 +283,11 @@
                     var branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "branch'][0]['@id']");
                     var commitId = _.get(state, "model[0]['" + prefixes.ontologyState + "commit'][0]['@id']");
                     var upToDate = false;
+                    var userBranch = false;
                     return cm.getRecordBranch(branchId, recordId, catalogId)
                         .then(branch => {
                             upToDate = _.get(branch, "['" + prefixes.catalog + "head'][0]['@id']", '') === commitId;
+                            //userBranch = self.getUserBranch
                             return cm.getInProgressCommit(recordId, catalogId);
                         }, $q.reject)
                         .then(response => {
@@ -1149,6 +1152,9 @@
                     listItem.isVocabulary = false;
                 }
                 delete listItem.classes.iris[iri];
+            }
+            self.isUserBranch = function(branch) {
+                return _.includes(branch['@type'], prefixes.catalog + "UserBranch");
             }
 
             /* Private helper functions */

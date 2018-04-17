@@ -78,6 +78,11 @@
                         dvm.showEditOverlay = true;
                     }
 
+                    dvm.getBranchName = function(branch) {
+                        dvm.os.listItem.userBranch = dvm.os.isUserBranch(branch);
+                        return dvm.util.getDctermsValue(branch, 'title');
+                    }
+
                     dvm.delete = function() {
                         om.deleteOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id'])
                             .then(() => {
