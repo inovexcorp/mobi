@@ -87,7 +87,7 @@
                     return aTitle.localeCompare(bTitle);
                 }
             });
-            
+
             return displayBranches;
         }
     }
