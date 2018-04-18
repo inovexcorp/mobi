@@ -2,28 +2,32 @@
 @import "./src/main/resources/public/css/variables";
 
 .permissions-page {
-    .selected-items {
-        width: 100%;
-        border: 1px solid lightgray;
-        border-radius: 5px;
-        height: 200px;
-        overflow-y: auto;
+    .policy {
+        margin: 0;
 
-        .selected-item {
-            padding: 5px;
+        .selected-items {
+            width: 100%;
+            border: 1px solid lightgray;
+            border-radius: 5px;
+            height: 200px;
+            overflow-y: auto;
 
-            a {
-                float: right;
-                cursor: pointer;
+            .selected-item {
+                padding: 5px;
+
+                a {
+                    float: right;
+                    cursor: pointer;
+                }
             }
         }
-    }
-    md-autocomplete[hide-label] label {
-        display: none;
-    }
-    md-switch {
-        margin-left: 0;
-        margin-top: 0;
+        md-autocomplete[hide-label] label {
+            display: none;
+        }
+        md-switch {
+            margin-left: 0;
+            margin-top: 0;
+        }
     }
     .save-container {
         height: auto;
