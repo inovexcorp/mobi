@@ -102,6 +102,10 @@
                             deletions: []
                         };
                     }
+                    dvm.attemptMergeUserBranch = function() {
+                        setupVariables();
+                        dvm.attemptMerge();
+                    }
 
                     function onSuccess() {
                         dvm.util.createSuccessToast('Your merge was successful.');

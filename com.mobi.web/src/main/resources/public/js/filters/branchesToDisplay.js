@@ -51,17 +51,18 @@
 
     function branchesToDisplay() {
         return function(branches, userIRI, os, us, prefixes) {
-            var createdFromIRIsToHide =[]
+            var createdFromIRIsToHide =[];
             var displayBranches = [];
             _.forEach(branches, function(branch) {
                 var publisher = us.getDctermsId(branch, 'publisher');
                 if (os.isUserBranch(branch) && userIRI === publisher) {
                     createdFromIRIsToHide.push(us.getPropertyId(branch, prefixes.catalog + 'createdFrom'));
+                    displayBranches.push(branch);
                 }
             });
             if (createdFromIRIsToHide) {
                 _.forEach(branches, function(branch) {
-                    if (!_.includes(createdFromIRIsToHide, branch['@id'])) {
+                    if (!os.isUserBranch(branch) && !_.includes(createdFromIRIsToHide, branch['@id'])) {
                         displayBranches.push(branch);
                     }
                 });

@@ -21,23 +21,26 @@
   #L%
   -->
 <div class="merge-tab">
-    <div class="actions">
-        <span class="header active">Merge Branches</span>
-    </div>
-    <div class="row row-container">
-        <div class="col-xs-12">
-            <block>
-                <block-content class="padding">
-                    <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-                    <merge-form ng-if="!dvm.os.listItem.merge.conflicts.length" branch="dvm.branch" is-user-branch="dvm.isUserBranch" target="dvm.os.listItem.merge.target" remove-branch="dvm.os.listItem.merge.checkbox"></merge-form>
-                    <resolve-conflicts-form ng-if="dvm.os.listItem.merge.conflicts.length" branch-title="dvm.util.getDctermsValue(dvm.branch, 'title')" target-title="dvm.util.getDctermsValue(dvm.os.listItem.merge.target, 'title')" conflicts="dvm.os.listItem.merge.conflicts" resolutions="dvm.os.listItem.merge.resolutions"></resolve-conflicts-form>
-                </block-content>
-                <block-footer>
-                    <button ng-if="!dvm.os.listItem.merge.conflicts.length" class="btn btn-primary pull-right btn-merge" ng-click="dvm.attemptMerge()" ng-disabled="!dvm.os.listItem.merge.target">Submit</button>
-                    <button ng-if="dvm.os.listItem.merge.conflicts.length" class="btn btn-primary pull-right btn-resolution" ng-click="dvm.mergeWithResolutions()" ng-disabled="!dvm.allResolved()">Submit with Resolutions</button>
-                    <button class="btn btn-default pull-right" ng-click="dvm.cancel()">Cancel</button>
-                </block-footer>
-            </block>
+    <div ng-if="!dvm.os.listItem.userBranch || dvm.os.listItem.merge.conflicts.length">
+        <div class="actions">
+            <span class="header active">Merge Branches</span>
+        </div>
+        <div class="row row-container">
+            <div class="col-xs-12">
+                <block>
+                    <block-content class="padding">
+                        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+                        <merge-form ng-if="!dvm.os.listItem.merge.conflicts.length" branch="dvm.branch" is-user-branch="dvm.isUserBranch" target="dvm.os.listItem.merge.target" remove-branch="dvm.os.listItem.merge.checkbox"></merge-form>
+                        <resolve-conflicts-form ng-if="dvm.os.listItem.merge.conflicts.length" branch-title="dvm.util.getDctermsValue(dvm.branch, 'title')" target-title="dvm.util.getDctermsValue(dvm.os.listItem.merge.target, 'title')" conflicts="dvm.os.listItem.merge.conflicts" resolutions="dvm.os.listItem.merge.resolutions"></resolve-conflicts-form>
+                    </block-content>
+                    <block-footer>
+                        <button ng-if="!dvm.os.listItem.merge.conflicts.length" class="btn btn-primary pull-right btn-merge" ng-click="dvm.attemptMerge()" ng-disabled="!dvm.os.listItem.merge.target">Submit</button>
+                        <button ng-if="dvm.os.listItem.merge.conflicts.length" class="btn btn-primary pull-right btn-resolution" ng-click="dvm.mergeWithResolutions()" ng-disabled="!dvm.allResolved()">Submit with Resolutions</button>
+                        <button class="btn btn-default pull-right" ng-click="dvm.cancel()">Cancel</button>
+                    </block-footer>
+                </block>
+            </div>
         </div>
     </div>
+    <div ng-if="dvm.os.listItem.userBranch" ng-init="dvm.attemptMergeUserBranch()"/>
 </div>
