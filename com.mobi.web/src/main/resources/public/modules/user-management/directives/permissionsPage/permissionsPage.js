@@ -29,6 +29,9 @@
          * @name permissionsPage
          *
          * @description
+         * The `permissionsPage` module only provides the `permissionsPage` directive which which creates
+         * a Bootstrap `row` with a {@link block.directive:block block} for viewing and updating overall
+         * permissions of the application.
          */
         .module('permissionsPage', [])
         /**
@@ -36,11 +39,31 @@
          * @name permissionsPage.directive:permissionsPage
          * @scope
          * @restrict E
+         * @requires policyManager.service:policyManagerService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
+         * @requires userManager.service:userManagerService
          *
          * @description
-         * 
+         * `permissionsPage` is a directive that creates a Bootstrap `row` div with a single column
+         * containing a {@link block.directive:block block} for viewing and updating overall permissions
+         * from policies retrieved through the {@link policyManager.service:policyManagerService}.
+         * The list is refreshed everytime this directive is rendered for the first time so any changes
+         * made to the policies will reset when navigating away and back. Currently, the only policies
+         * displayed are those for restrictions on record creation. The directive is replaced by the
+         * contents of its template.
          */
         .directive('permissionsPage', permissionsPage)
+        /**
+         * @ngdoc directive
+         * @name permissionsPage.directive:hideLabel
+         * @restrict A
+         *
+         * @description
+         * `hideLabel` is a utility directive for working with Angular Material inputs so that
+         * the placeholder for a md-autocomplete is set appropriately on the underlying <input>.
+         */
         .directive('hideLabel', hideLabel);
 
     permissionsPage.$inject = ['$q', 'policyManagerService', 'catalogManagerService', 'utilService', 'prefixes', 'userManagerService'];

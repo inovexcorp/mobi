@@ -46,7 +46,7 @@
                                 <div class="selected-items">
                                     <div class="selected-item" ng-repeat="group in item.selectedGroups track by group.iri">
                                         <span>{{group.title}}</span>
-                                        <a ng-click="dvm.removeGroup(group)"><i class="fa fa-times"></i></a>
+                                        <a ng-click="dvm.removeGroup(group, item)"><i class="fa fa-times"></i></a>
                                     </div>
                                 </div>
                                 <div class="selector-container">

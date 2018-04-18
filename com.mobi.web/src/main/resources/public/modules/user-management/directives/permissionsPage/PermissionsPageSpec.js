@@ -379,5 +379,38 @@ describe('Permissions Page directive', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('.policy').length).toEqual(this.controller.policies.length);
         });
+        it('depending on how many users are selected for a policy', function() {
+            this.controller.policies = [{selectedUsers: [{}]}];
+            scope.$digest();
+            expect(this.element.querySelectorAll('.policy .selected-item').length).toEqual(1);
+        });
+        it('depending on how many groups are selected for a policy', function() {
+            this.controller.policies = [{selectedGroups: [{}]}];
+            scope.$digest();
+            expect(this.element.querySelectorAll('.policy .selected-item').length).toEqual(1);
+        });
+        it('with md-autocompletes for the users and groups for a policy', function() {
+            this.controller.policies = [{}];
+            scope.$digest();
+            expect(this.element.querySelectorAll('.policy md-autocomplete').length).toEqual(2);
+        });
+    });
+    it('should call removeUser when the link is clicked', function() {
+        this.controller.policies = [{selectedUsers: [userManagerSvc.users[0]]}];
+        scope.$digest();
+        spyOn(this.controller, 'removeUser');
+
+        var link = angular.element(this.element.querySelectorAll('.policy .selected-item a')[0]);
+        link.triggerHandler('click');
+        expect(this.controller.removeUser).toHaveBeenCalledWith(userManagerSvc.users[0], this.controller.policies[0]);
+    });
+    it('should call removeGroup when the link is clicked', function() {
+        this.controller.policies = [{selectedGroups: [userManagerSvc.groups[0]]}];
+        scope.$digest();
+        spyOn(this.controller, 'removeGroup');
+
+        var link = angular.element(this.element.querySelectorAll('.policy .selected-item a')[0]);
+        link.triggerHandler('click');
+        expect(this.controller.removeGroup).toHaveBeenCalledWith(userManagerSvc.groups[0], this.controller.policies[0]);
     });
 });

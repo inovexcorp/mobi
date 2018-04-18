@@ -29,13 +29,21 @@
          * @name policyManager
          *
          * @description
+         * The `policyManager` module only provides the `policyManagerService` service which
+         * provides access to the Mobi polict REST endpoints and variables with common IRIs
+         * used in policies.
          */
         .module('policyManager', [])
         /**
          * @ngdoc service
          * @name policyManager.service:policyManagerService
+         * @requires prefixes.service:prefixes
+         * @requires util.service:utilService
+         * @requires httpService.service:httpService
          *
          * @description
+         * `policyManagerService` is a service that provides access to the Mobi policy REST
+         * endpoints and variables with common IRIs used in policies.
          */
         .service('policyManagerService', policyManagerService);
 
