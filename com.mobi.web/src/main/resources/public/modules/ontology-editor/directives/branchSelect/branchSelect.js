@@ -84,10 +84,6 @@
                         return dvm.util.getDctermsValue(branch, 'title');
                     }
 
-                    dvm.getDisplayBranches = function(branches) {
-                        return $filter('branchesToDisplay')(branches, lm.currentUserIRI, dvm.os, dvm.util, prefixes);
-                    }
-
                     dvm.delete = function() {
                         om.deleteOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id'])
                             .then(() => {

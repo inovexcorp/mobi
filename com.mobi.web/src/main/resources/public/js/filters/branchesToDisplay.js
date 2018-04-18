@@ -49,26 +49,45 @@
          */
         .filter('branchesToDisplay', branchesToDisplay);
 
-    function branchesToDisplay() {
-        return function(branches, userIRI, os, us, prefixes) {
+    branchesToDisplay.$inject = ['ontologyStateService', 'utilService', 'loginManagerService', 'prefixes'];
+
+    function branchesToDisplay(ontologyStateService, utilService, loginManagerService, prefixes) {
+        return function(branches) {
             var createdFromIRIsToHide =[];
             var displayBranches = [];
             _.forEach(branches, function(branch) {
-                var publisher = us.getDctermsId(branch, 'publisher');
-                if (os.isUserBranch(branch) && userIRI === publisher) {
-                    createdFromIRIsToHide.push(us.getPropertyId(branch, prefixes.catalog + 'createdFrom'));
+                var publisher = utilService.getDctermsId(branch, 'publisher');
+                if (ontologyStateService.isUserBranch(branch) && loginManagerService.currentUserIRI === publisher) {
+                    createdFromIRIsToHide.push(utilService.getPropertyId(branch, prefixes.catalog + 'createdFrom'));
                     displayBranches.push(branch);
                 }
             });
             if (createdFromIRIsToHide) {
                 _.forEach(branches, function(branch) {
-                    if (!os.isUserBranch(branch) && !_.includes(createdFromIRIsToHide, branch['@id'])) {
+                    if (!ontologyStateService.isUserBranch(branch) && !_.includes(createdFromIRIsToHide, branch['@id'])) {
                         displayBranches.push(branch);
                     }
                 });
             } else {
                 displayBranches = branches;
             }
+
+            displayBranches.sort(function(a, b) {
+                var aTitle = utilService.getDctermsValue(a, 'title');
+                var bTitle = utilService.getDctermsValue(b, 'title');
+                var master = 'MASTER';
+
+                if (aTitle === master && bTitle === master) {
+                    return 0;
+                } else if (aTitle === master && bTitle !== master) {
+                    return -1;
+                } else if (aTitle !== master && bTitle === master) {
+                    return 1;
+                } else {
+                    return aTitle.localeCompare(bTitle);
+                }
+            });
+            
             return displayBranches;
         }
     }
