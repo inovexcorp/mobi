@@ -444,7 +444,10 @@
             self.addGroup = function(newGroup) {
                 return $http.post(groupPrefix, newGroup)
                     .then(response => {
-                        self.groups.push(newGroup);
+                        return self.getGroup(newGroup.title);
+                    }, $q.reject)
+                    .then(response => {
+                        self.groups.push(_.merge(newGroup, response));
                     }, util.rejectError);
             }
             /**
