@@ -86,6 +86,12 @@
 
                 dvm.policies = [];
 
+                dvm.filterUsers = function(users, searchText) {
+                    return _.filter(users, user => _.includes(user.username.toLowerCase(), searchText.toLowerCase()));
+                }
+                dvm.filterGroups = function(groups, searchText) {
+                    return _.filter(groups, group => _.includes(group.title.toLowerCase(), searchText.toLowerCase()));
+                }
                 dvm.addUser = function(user, item) {
                     if (user) {
                         item.selectedUsers.push(user);

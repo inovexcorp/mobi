@@ -37,8 +37,11 @@
                                     </div>
                                 </div>
                                 <div class="selector-container">
-                                    <md-autocomplete hide-label md-no-cache="true" md-min-length="0" md-selected-item="item.selectedUser" md-search-text="item.userSearchText" md-selected-item-change="dvm.addUser(user, item)" md-items="user in item.users" md-item-text="user.username" placeholder="Select a user..." md-floating-label="Test">
-                                        <span md-highlight-text="item.userSearchText">{{user.username}}</span>
+                                    <md-autocomplete hide-label md-no-cache="true" md-min-length="0" md-selected-item="item.selectedUser" md-search-text="item.userSearchText" md-selected-item-change="dvm.addUser(user, item)" md-items="user in dvm.filterUsers(item.users, item.userSearchText)" md-item-text="user.username" placeholder="Select a user..." md-floating-label="Test" ng-disabled="item.everyone">
+                                        <md-item-template>
+                                            <span md-highlight-text="item.userSearchText" md-highlight-flags="i">{{user.username}}</span>
+                                        </md-item-template>
+                                        <md-not-found><span class="text-muted">No users to show</span></md-not-found>
                                     </md-autocomplete>
                                 </div>
                             </div>
@@ -50,8 +53,11 @@
                                     </div>
                                 </div>
                                 <div class="selector-container">
-                                    <md-autocomplete hide-label md-no-cache="true" md-min-length="0" md-selected-item="item.selectedGroup" md-search-text="item.groupSearchText" md-selected-item-change="dvm.addGroup(group, item)" md-items="group in item.groups" md-item-text="group.title" placeholder="Select a group..." md-floating-label="Test">
-                                        <span md-highlight-text="item.groupSearchText">{{group.title}}</span>
+                                    <md-autocomplete hide-label md-no-cache="true" md-min-length="0" md-selected-item="item.selectedGroup" md-search-text="item.groupSearchText" md-selected-item-change="dvm.addGroup(group, item)" md-items="group in dvm.filterGroups(item.groups, item.groupSearchText)" md-item-text="group.title" placeholder="Select a group..." md-floating-label="Test" ng-disabled="item.everyone">
+                                        <md-item-template>
+                                            <span md-highlight-text="item.groupSearchText" md-highlight-flags="i">{{group.title}}</span>
+                                        </md-item-template>
+                                        <md-not-found><span class="text-muted">No groups to show</span></md-not-found>
                                     </md-autocomplete>
                                 </div>
                             </div>
