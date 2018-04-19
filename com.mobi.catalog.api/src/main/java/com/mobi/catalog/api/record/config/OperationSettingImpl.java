@@ -29,6 +29,13 @@ public class OperationSettingImpl<T> implements OperationSetting<T> {
     private final String description;
     private final T defaultValue;
 
+    /**
+     * Creates an OperationSettingImpl that represents a configuration setting with a key, description, and value.
+     *
+     * @param key Unique key to identify the setting
+     * @param description A brief description of the setting
+     * @param defaultValue A default value to initialize a setting to
+     */
     public OperationSettingImpl(String key, String description, T defaultValue) {
         if (key == null) {
             throw new NullPointerException("Setting key cannot be null");

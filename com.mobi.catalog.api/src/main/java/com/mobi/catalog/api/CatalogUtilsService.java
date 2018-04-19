@@ -131,11 +131,11 @@ public interface CatalogUtilsService {
     <T extends Thing> void removeObject(T object, RepositoryConnection conn);
 
     /**
-     * Removes the provided Object from the Repository along with other relationship statements
+     * Removes the provided Object from the Repository along with other relationship statements.
      *
      * @param objectId The ID of the Object in the Repository to remove.
-     * @param removeFromId The Subject to remove
-     * @param predicate The Predicate to remove
+     * @param removeFromId The Subject of the statements to remove
+     * @param predicate The Predicate of the statements to remove
      * @param conn A RepositoryConnection to use for lookup.
      */
     void removeObjectWithRelationship(Resource objectId, Resource removeFromId, String predicate,
@@ -431,7 +431,8 @@ public interface CatalogUtilsService {
      * @param conn A RepositoryConnection to use for lookup.
      * @throws IllegalStateException Thrown if the Commit has no addition or deletion graph.
      */
-    void updateCommit(Resource commitId, @Nullable Model additions, @Nullable Model deletions, RepositoryConnection conn);
+    void updateCommit(Resource commitId, @Nullable Model additions, @Nullable Model deletions,
+                      RepositoryConnection conn);
 
     /**
      * Adds the provided addition and deletion Models to the provided Commit.
@@ -536,11 +537,12 @@ public interface CatalogUtilsService {
             RepositoryConnection conn);
 
     /**
+     * Checks if a Commit exists in a Branch.
      *
      * @param branchId The {@link Resource} of the {@link Branch} which should have the {@link Commit}.
      * @param commitId The {@link Resource} of the {@link Commit}.
      * @param conn A RepositoryConnection to use for lookup.
-     * @return {@code true} is the (@link Commit} {@link Resource} is in the {@link Branch}'s commit chain and
+     * @return {@code true} if the (@link Commit} {@link Resource} is in the {@link Branch}'s commit chain and
      *         {@code false} otherwise.
      */
     boolean commitInBranch(Resource branchId, Resource commitId, RepositoryConnection conn);
