@@ -118,12 +118,22 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     private final IRI IN_PROGRESS_COMMIT_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#in-progress-commit");
     private final IRI IN_PROGRESS_COMMIT_NO_RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#in-progress-commit-no-record");
     private final IRI OWL_THING = VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Thing");
-    private final String COMMITS = "http://mobi.com/test/commits#";
-    private final String GRAPHS = "http://mobi.com/test/graphs#";
-    private final String ADDITIONS = "https://mobi.com/additions#";
-    private final String DELETIONS = "https://mobi.com/deletions#";
-    private final String BRANCHES = "http://mobi.com/test/branches#";
-    private final String RECORDS = "http://mobi.com/test/records#";
+
+    private static final String COMMITS = "http://mobi.com/test/commits#";
+    private static final String GRAPHS = "http://mobi.com/test/graphs#";
+    private static final String ADDITIONS = "https://mobi.com/additions#";
+    private static final String DELETIONS = "https://mobi.com/deletions#";
+    private static final String BRANCHES = "http://mobi.com/test/branches#";
+    private static final String RECORDS = "http://mobi.com/test/records#";
+    private static final String REVISIONS = "http://mobi.com/test/revisions#";
+
+    private static final IRI VERSION_CATALOG_IRI = VALUE_FACTORY.createIRI(VersionedRecord.version_IRI);
+    private static final IRI BRANCH_CATALOG_IRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
+    private static final IRI HEAD_CATALOG_IRI = VALUE_FACTORY.createIRI(Branch.head_IRI);
+    private static final IRI COMMIT_CATALOG_IRI = VALUE_FACTORY.createIRI(Commit.TYPE);
+    private static final IRI ADDITIONS_CATALOG_IRI = VALUE_FACTORY.createIRI(Revision.additions_IRI);
+    private static final IRI DELETIONS_CATALOG_IRI = VALUE_FACTORY.createIRI(Revision.deletions_IRI);
+    private static final IRI LATEST_VERSION_CATALOG_IRI = VALUE_FACTORY.createIRI(VersionedRecord.latestVersion_IRI);
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -614,34 +624,40 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     @Test
     public void removeVersionWithObjectTest() throws Exception {
         // Setup:
-        IRI versionIRI = VALUE_FACTORY.createIRI(VersionedRecord.version_IRI);
-        IRI latestIRI = VALUE_FACTORY.createIRI(VersionedRecord.latestVersion_IRI);
+
         Version version = versionFactory.createNew(LATEST_VERSION_IRI);
         version.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(DISTRIBUTION_IRI)));
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, latestIRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, versionIRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
 
             service.removeVersion(VERSIONED_RECORD_IRI, version, conn);
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, latestIRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RECORD_IRI, versionIRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+
+            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertFalse(conn.getStatements(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertFalse(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
         }
     }
 
     @Test
     public void removeVersionWithResourceTest() throws Exception {
         // Setup:
-        IRI versionIRI = VALUE_FACTORY.createIRI(VersionedRecord.version_IRI);
-        IRI latestIRI = VALUE_FACTORY.createIRI(VersionedRecord.latestVersion_IRI);
+
         Version version = versionFactory.createNew(LATEST_VERSION_IRI);
         version.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(DISTRIBUTION_IRI)));
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, latestIRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, versionIRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
 
             service.removeVersion(VERSIONED_RECORD_IRI, version.getResource(), conn);
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, latestIRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RECORD_IRI, versionIRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+
+            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertFalse(conn.getStatements(VERSIONED_RECORD_IRI, LATEST_VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            assertFalse(conn.getStatements(VERSIONED_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
         }
     }
 
@@ -956,68 +972,156 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     @Test
     public void removeBranchTest() throws Exception {
         // Setup:
-        IRI versionIRI = VALUE_FACTORY.createIRI(VersionedRecord.version_IRI);
-        IRI branchIRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
+        Resource commitIdToRemove = VALUE_FACTORY.createIRI(COMMITS + "conflict2");
+        IRI additionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "conflict2");
+        IRI deletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "conflict2");
+        IRI revisionToRemove = VALUE_FACTORY.createIRI(REVISIONS + "conflict2");
+
+        Resource commitIdToKeep = VALUE_FACTORY.createIRI(COMMITS + "conflict0");
+        IRI additionsToKeep = VALUE_FACTORY.createIRI(ADDITIONS + "conflict0");
+        IRI deletionsToKeep = VALUE_FACTORY.createIRI(DELETIONS + "conflict0");
+        IRI revisionToKeep = VALUE_FACTORY.createIRI(REVISIONS + "conflict0");
+
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, versionIRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, BRANCH_IRI).hasNext());
+            assertTrue(conn.getStatements(commitIdToRemove, typeIRI, COMMIT_CATALOG_IRI, commitIdToRemove).hasNext());
+            assertTrue(conn.getStatements(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commitIdToRemove).hasNext());
+            assertTrue(conn.getStatements(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commitIdToRemove).hasNext());
+            assertTrue(conn.getStatements(commitIdToKeep, typeIRI, COMMIT_CATALOG_IRI, commitIdToKeep).hasNext());
+            assertTrue(conn.getStatements(revisionToKeep, ADDITIONS_CATALOG_IRI, additionsToKeep, commitIdToKeep).hasNext());
+            assertTrue(conn.getStatements(revisionToKeep, DELETIONS_CATALOG_IRI, deletionsToKeep, commitIdToKeep).hasNext());
 
             service.removeBranch(VERSIONED_RDF_RECORD_IRI, BRANCH_IRI, conn);
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, versionIRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+
+            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertFalse(conn.getStatements(BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, BRANCH_IRI).hasNext());
+            assertFalse(conn.getStatements(commitIdToRemove, typeIRI, COMMIT_CATALOG_IRI, commitIdToRemove).hasNext());
+            assertFalse(conn.getStatements(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commitIdToRemove).hasNext());
+            assertFalse(conn.getStatements(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commitIdToRemove).hasNext());
+            assertTrue(conn.getStatements(commitIdToKeep, typeIRI, COMMIT_CATALOG_IRI, commitIdToKeep).hasNext());
+            assertTrue(conn.getStatements(revisionToKeep, ADDITIONS_CATALOG_IRI, additionsToKeep, commitIdToKeep).hasNext());
+            assertTrue(conn.getStatements(revisionToKeep, DELETIONS_CATALOG_IRI, deletionsToKeep, commitIdToKeep).hasNext());
         }
     }
 
     @Test
     public void removeBranchWithDeletedCommitListTest() throws Exception {
         // Setup:
-        IRI versionIRI = VALUE_FACTORY.createIRI(VersionedRecord.version_IRI);
-        IRI branchIRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
+        Resource commitIdToRemove = VALUE_FACTORY.createIRI(COMMITS + "conflict2");
+        IRI additionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "conflict2");
+        IRI deletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "conflict2");
+        IRI revisionToRemove = VALUE_FACTORY.createIRI(REVISIONS + "conflict2");
+
+        Resource commitIdToKeep = VALUE_FACTORY.createIRI(COMMITS + "conflict0");
+        IRI additionsToKeep = VALUE_FACTORY.createIRI(ADDITIONS + "conflict0");
+        IRI deletionsToKeep = VALUE_FACTORY.createIRI(DELETIONS + "conflict0");
+        IRI revisionToKeep = VALUE_FACTORY.createIRI(REVISIONS + "conflict0");
+
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, versionIRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, BRANCH_IRI).hasNext());
+            assertTrue(conn.getStatements(commitIdToRemove, typeIRI, COMMIT_CATALOG_IRI, commitIdToRemove).hasNext());
+            assertTrue(conn.getStatements(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commitIdToRemove).hasNext());
+            assertTrue(conn.getStatements(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commitIdToRemove).hasNext());
+            assertTrue(conn.getStatements(commitIdToKeep, typeIRI, COMMIT_CATALOG_IRI, commitIdToKeep).hasNext());
+            assertTrue(conn.getStatements(revisionToKeep, ADDITIONS_CATALOG_IRI, additionsToKeep, commitIdToKeep).hasNext());
+            assertTrue(conn.getStatements(revisionToKeep, DELETIONS_CATALOG_IRI, deletionsToKeep, commitIdToKeep).hasNext());
 
             List<Resource> deletedCommits = new ArrayList<>();
             service.removeBranch(VERSIONED_RDF_RECORD_IRI, BRANCH_IRI, deletedCommits, conn);
 
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, versionIRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertFalse(conn.getStatements(BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, BRANCH_IRI).hasNext());
+            assertFalse(conn.getStatements(commitIdToRemove, typeIRI, COMMIT_CATALOG_IRI, commitIdToRemove).hasNext());
+            assertFalse(conn.getStatements(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commitIdToRemove).hasNext());
+            assertFalse(conn.getStatements(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commitIdToRemove).hasNext());
+            assertTrue(conn.getStatements(commitIdToKeep, typeIRI, COMMIT_CATALOG_IRI, commitIdToKeep).hasNext());
+            assertTrue(conn.getStatements(revisionToKeep, ADDITIONS_CATALOG_IRI, additionsToKeep, commitIdToKeep).hasNext());
+            assertTrue(conn.getStatements(revisionToKeep, DELETIONS_CATALOG_IRI, deletionsToKeep, commitIdToKeep).hasNext());
         }
     }
 
     @Test
     public void removeBranchCompleteTest() {
         // Setup:
-        Resource recordId = VALUE_FACTORY.createIRI(RECORDS + "complex-record");
+        Resource complexRecordIRI = VALUE_FACTORY.createIRI(RECORDS + "complex-record");
+        Resource complexBranchIRI = VALUE_FACTORY.createIRI(BRANCHES + "complex-branch");
         Resource commitA = VALUE_FACTORY.createIRI(COMMITS + "complex-a");
+        IRI commitARevision = VALUE_FACTORY.createIRI(REVISIONS + "complex-a");
+        IRI commitAAdditions = VALUE_FACTORY.createIRI(ADDITIONS + "complex-a");
+        IRI commitADeletions = VALUE_FACTORY.createIRI(DELETIONS + "complex-a");
+        Resource commitB = VALUE_FACTORY.createIRI(COMMITS + "complex-b");
+        Resource commitC = VALUE_FACTORY.createIRI(COMMITS + "complex-c");
+        IRI commitCRevision = VALUE_FACTORY.createIRI(REVISIONS + "complex-c");
+        IRI commitCAdditions = VALUE_FACTORY.createIRI(ADDITIONS + "complex-c");
+        IRI commitCDeletions = VALUE_FACTORY.createIRI(DELETIONS + "complex-c");
+        Resource commitD = VALUE_FACTORY.createIRI(COMMITS + "complex-d");
 
-        Branch branch = branchFactory.createNew(VALUE_FACTORY.createIRI(BRANCHES + "complex-branch"));
-        branch.setHead(commitFactory.createNew(commitA));
-
-        IRI branchIRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(recordId, branchIRI, branch.getResource(), recordId).hasNext());
-            service.removeBranch(recordId, branch.getResource(), conn);
-            assertFalse(conn.getStatements(recordId, branchIRI, branch.getResource(), recordId).hasNext());
+
+            assertTrue(conn.getStatements(complexRecordIRI, BRANCH_CATALOG_IRI, complexBranchIRI, complexRecordIRI).hasNext());
+            assertTrue(conn.getStatements(commitA, typeIRI, COMMIT_CATALOG_IRI, commitA).hasNext());
+            assertTrue(conn.getStatements(commitARevision, ADDITIONS_CATALOG_IRI, commitAAdditions, commitA).hasNext());
+            assertTrue(conn.getStatements(commitARevision, DELETIONS_CATALOG_IRI, commitADeletions, commitA).hasNext());
+
+            assertTrue(conn.getStatements(commitC, typeIRI, COMMIT_CATALOG_IRI, commitC).hasNext());
+            assertTrue(conn.getStatements(commitCRevision, ADDITIONS_CATALOG_IRI, commitCAdditions, commitC).hasNext());
+            assertTrue(conn.getStatements(commitCRevision, DELETIONS_CATALOG_IRI, commitCDeletions, commitC).hasNext());
+
+            assertTrue(conn.getStatements(commitB, typeIRI, COMMIT_CATALOG_IRI, commitB).hasNext());
+            assertTrue(conn.getStatements(commitD, typeIRI, COMMIT_CATALOG_IRI, commitD).hasNext());
+
+            service.removeBranch(complexRecordIRI, complexBranchIRI, conn);
+
+            assertFalse(conn.getStatements(complexRecordIRI, BRANCH_CATALOG_IRI, complexBranchIRI, complexRecordIRI).hasNext());
+            assertFalse(conn.getStatements(commitA, typeIRI, COMMIT_CATALOG_IRI, commitA).hasNext());
+            assertFalse(conn.getStatements(commitARevision, ADDITIONS_CATALOG_IRI, commitAAdditions, commitA).hasNext());
+            assertFalse(conn.getStatements(commitARevision, DELETIONS_CATALOG_IRI, commitADeletions, commitA).hasNext());
+
+            assertFalse(conn.getStatements(commitC, typeIRI, COMMIT_CATALOG_IRI, commitC).hasNext());
+            assertFalse(conn.getStatements(commitCRevision, ADDITIONS_CATALOG_IRI, commitCAdditions, commitC).hasNext());
+            assertFalse(conn.getStatements(commitCRevision, DELETIONS_CATALOG_IRI, commitCDeletions, commitC).hasNext());
+
+            assertTrue(conn.getStatements(commitB, typeIRI, COMMIT_CATALOG_IRI, commitB).hasNext());
+            assertTrue(conn.getStatements(commitD, typeIRI, COMMIT_CATALOG_IRI, commitD).hasNext());
         }
     }
 
     @Test
     public void removeBranchWithQuadsTest() throws Exception {
         // Setup:
-        IRI record = VALUE_FACTORY.createIRI(RECORDS + "quad-versioned-rdf-record");
+        Resource quadVersionedRecordId = VALUE_FACTORY.createIRI(RECORDS + "quad-versioned-rdf-record");
         IRI branchToRemove = VALUE_FACTORY.createIRI(BRANCHES + "quad-branch");
         Resource commit2 = VALUE_FACTORY.createIRI(COMMITS + "quad-test2");
+        Resource revisionToRemove = VALUE_FACTORY.createIRI(REVISIONS + "revision2");
+        IRI additionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "quad-test2");
+        IRI deletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "quad-test2");
+        IRI graphAdditionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "quad-test2%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1");
+        IRI graphDeletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "quad-test2%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1");
 
         Branch branch = branchFactory.createNew(branchToRemove);
         branch.setHead(commitFactory.createNew(commit2));
 
-        IRI branchIRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(record, branchIRI, branchToRemove, record).hasNext());
+            assertTrue(conn.getStatements(quadVersionedRecordId, BRANCH_CATALOG_IRI, branchToRemove, quadVersionedRecordId).hasNext());
+            assertTrue(conn.getStatements(commit2, typeIRI, COMMIT_CATALOG_IRI, commit2).hasNext());
+            assertTrue(conn.getStatements(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commit2).hasNext());
+            assertTrue(conn.getStatements(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commit2).hasNext());
+            assertTrue(conn.getStatements(null, null, null, graphAdditionsToRemove).hasNext());
+            assertTrue(conn.getStatements(null, null, null, graphDeletionsToRemove).hasNext());
 
-            service.removeBranch(record, branchToRemove, conn);
-            assertFalse(conn.getStatements(record, branchIRI, branchToRemove, record).hasNext());
+            service.removeBranch(quadVersionedRecordId, branchToRemove, conn);
+            assertFalse(conn.getStatements(quadVersionedRecordId, BRANCH_CATALOG_IRI, branchToRemove, quadVersionedRecordId).hasNext());
+            assertFalse(conn.getStatements(commit2, typeIRI, COMMIT_CATALOG_IRI, commit2).hasNext());
+            assertFalse(conn.getStatements(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commit2).hasNext());
+            assertFalse(conn.getStatements(revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commit2).hasNext());
+            assertFalse(conn.getStatements(null, null, null, graphAdditionsToRemove).hasNext());
+            assertFalse(conn.getStatements(null, null, null, graphDeletionsToRemove).hasNext());
         }
     }
 

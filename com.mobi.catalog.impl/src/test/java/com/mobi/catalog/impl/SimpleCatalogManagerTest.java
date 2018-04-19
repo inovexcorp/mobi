@@ -133,7 +133,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private final IRI LATEST_VERSION_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#latest-version");
     private final IRI VERSION_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#version");
     private final IRI TAG_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#tag");
-    private final IRI LATEST_TAG_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#latest-tag");
     private final IRI MASTER_BRANCH_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#master");
     private final IRI BRANCH_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch");
     private final IRI USER_BRANCH_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#user-branch");
@@ -141,12 +140,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private final IRI IN_PROGRESS_COMMIT_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#in-progress-commit");
 
     private static final String COMMITS = "http://mobi.com/test/commits#";
-    private static final String ADDITIONS = "https://mobi.com/additions#";
-    private static final String DELETIONS = "https://mobi.com/deletions#";
-    private static final String REVISIONS = "http://mobi.com/test/revisions#";
-    private static final String BRANCHES = "http://mobi.com/test/branches#";
     private static final String RECORDS = "http://mobi.com/test/records#";
-    private static final String GRAPHS = "http://mobi.com/test/graphs#";
 
     private static final int TOTAL_SIZE = 9;
 
