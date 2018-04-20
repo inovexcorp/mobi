@@ -181,6 +181,16 @@
                 data: {
                     title: 'Analytics'
                 }
+            }).state('root.merge-requests', {
+                url: '/merge-requests',
+                views: {
+                    'container@': {
+                        templateUrl: 'modules/merge-requests/merge-requests.html'
+                    }
+                },
+                data: {
+                    title: 'Merge Requests'
+                }
             });
 
         authenticate.$inject = ['loginManagerService'];

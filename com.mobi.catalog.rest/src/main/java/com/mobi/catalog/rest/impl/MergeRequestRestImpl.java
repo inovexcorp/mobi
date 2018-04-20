@@ -27,8 +27,8 @@ import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
-import static com.mobi.rest.util.RestUtils.modelToJsonld;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
+import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -40,7 +40,9 @@ import com.mobi.catalog.rest.MergeRequestRest;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -52,7 +54,6 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
@@ -98,10 +99,10 @@ public class MergeRequestRestImpl implements MergeRequestRest {
     }
 
     @Override
-    public Response getMergeRequests() {
+    public Response getMergeRequests(String sort, boolean asc, boolean accepted) {
+        IRI pred = vf.createIRI(StringUtils.isEmpty(sort) ? _Thing.issued_IRI : sort);
         try {
-            Set<MergeRequest> requests = manager.getMergeRequests();
-            JSONArray result = JSONArray.fromObject(requests.stream()
+            JSONArray result = JSONArray.fromObject(manager.getMergeRequests(pred, asc, accepted).stream()
                     .map(request -> removeContext(request.getModel()))
                     .map(model -> modelToJsonld(model, transformer))
                     .collect(Collectors.toSet()));

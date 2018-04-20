@@ -1,14 +1,10 @@
-@Version("2.0.0.${build}")
-
-package com.mobi.catalog.api.mergerequest;
-
 /*-
  * #%L
- * com.mobi.catalog.api
+ * com.mobi.web
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,5 +20,28 @@ package com.mobi.catalog.api.mergerequest;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+(function() {
+    'use strict';
 
-import aQute.bnd.annotation.Version;
+    angular
+        /**
+         * @ngdoc overview
+         * @name mergeRequestsState
+         *
+         * @description
+         */
+        .module('mergeRequestsState', [])
+        /**
+         * @ngdoc service
+         * @name mergeRequestsState.service:mergeRequestsStateService
+         *
+         * @description
+         */
+        .service('mergeRequestsStateService', mergeRequestsStateService);
+
+        function mergeRequestsStateService() {
+            var self = this;
+
+            self.open = true;
+        }
+})();
