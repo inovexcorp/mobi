@@ -43,6 +43,7 @@ import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.RevisionFactory;
+import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.Version;
@@ -55,6 +56,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.Binding;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -67,6 +69,7 @@ import com.mobi.rdf.orm.Thing;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -80,6 +83,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
@@ -103,6 +107,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     private static final String GET_IN_PROGRESS_COMMIT;
     private static final String GET_COMMIT_CHAIN;
+    private static final String GET_NEW_LATEST_VERSION;
+    private static final String GET_COMMIT_PATHS;
     private static final String USER_BINDING = "user";
     private static final String PARENT_BINDING = "parent";
     private static final String RECORD_BINDING = "record";
@@ -116,6 +122,14 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             );
             GET_COMMIT_CHAIN = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-chain.rq"),
+                    "UTF-8"
+            );
+            GET_NEW_LATEST_VERSION = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-new-latest-version.rq"),
+                    "UTF-8"
+            );
+            GET_COMMIT_PATHS = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-paths.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -240,6 +254,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public void removeObjectWithRelationship(Resource objectId, Resource removeFromId, String predicate,
+                                             RepositoryConnection conn) {
+        remove(objectId, conn);
+        conn.remove(removeFromId, vf.createIRI(predicate), objectId, removeFromId);
+    }
+
+    @Override
     public void validateRecord(Resource catalogId, Resource recordId, IRI recordType,
                                RepositoryConnection conn) {
         validateResource(catalogId, vf.createIRI(Catalog.TYPE), conn);
@@ -291,6 +312,30 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public void removeVersion(Resource recordId, Version version, RepositoryConnection conn) {
+        removeObjectWithRelationship(version.getResource(), recordId, VersionedRecord.version_IRI, conn);
+        IRI latestVersionIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
+        if (conn.contains(recordId, latestVersionIRI, version.getResource(), recordId)) {
+            conn.remove(recordId, latestVersionIRI, version.getResource(), recordId);
+            TupleQuery query = conn.prepareTupleQuery(GET_NEW_LATEST_VERSION);
+            query.setBinding(RECORD_BINDING, recordId);
+            TupleQueryResult result = query.evaluate();
+
+            Optional<Binding> binding;
+            if (result.hasNext() && (binding = result.next().getBinding("version")).isPresent()) {
+                conn.add(recordId, latestVersionIRI, binding.get().getValue(), recordId);
+            }
+        }
+        version.getVersionedDistribution_resource().forEach(resource -> remove(resource, conn));
+    }
+
+    @Override
+    public void removeVersion(Resource recordId, Resource versionId, RepositoryConnection conn) {
+        Version version = getObject(versionId, versionFactory, conn);
+        removeVersion(recordId, version, conn);
+    }
+
+    @Override
     public void validateVersionedDistribution(Resource catalogId, Resource recordId, Resource versionId,
                                               Resource distributionId, RepositoryConnection conn) {
         Version version = getVersion(catalogId, recordId, versionId, versionFactory, conn);
@@ -331,6 +376,102 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                                           RepositoryConnection conn) {
         testBranchPath(record, branchId);
         return getObject(branchId, factory, conn);
+    }
+
+    @Override
+    public void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn) {
+        Branch branch = getObject(branchId, branchFactory, conn);
+        removeBranch(recordId, branch, conn);
+    }
+
+    @Override
+    public void removeBranch(Resource recordId, Resource branchId, List<Resource> deletedCommits,
+                              RepositoryConnection conn) {
+        Branch branch = getObject(branchId, branchFactory, conn);
+        removeBranch(recordId, branch, deletedCommits, conn);
+    }
+
+    @Override
+    public void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn) {
+        List<Resource> deletedCommits = new ArrayList<>();
+        removeBranch(recordId, branch, deletedCommits, conn);
+    }
+
+    private void removeBranch(Resource recordId, Branch branch, List<Resource> deletedCommits,
+                              RepositoryConnection conn) {
+        removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
+        Optional<Resource> headCommit = branch.getHead_resource();
+        if (headCommit.isPresent()) {
+            // Explicitly remove this so algorithm works for head commit
+            conn.remove(branch.getResource(), vf.createIRI(Branch.head_IRI), headCommit.get());
+            IRI commitIRI = vf.createIRI(Tag.commit_IRI);
+            Set<Resource> deltaIRIs = new HashSet<>();
+            getCommitPaths(headCommit.get(), conn).forEach(path -> {
+                for (Resource commitId : path) {
+                    if (!deletedCommits.contains(commitId)) {
+                        if (!commitIsReferenced(commitId, deletedCommits, conn)) {
+                            // Get Additions/Deletions Graphs
+                            Revision revision = getRevision(commitId, conn);
+                            revision.getAdditions().ifPresent(deltaIRIs::add);
+                            revision.getDeletions().ifPresent(deltaIRIs::add);
+                            revision.getGraphRevision().forEach(graphRevision -> {
+                                graphRevision.getAdditions().ifPresent(deltaIRIs::add);
+                                graphRevision.getDeletions().ifPresent(deltaIRIs::add);
+                            });
+
+                            // Remove Commit
+                            remove(commitId, conn);
+
+                            // Remove Tags Referencing this Commit
+                            Set<Resource> tags = RepositoryResults.asModel(
+                                    conn.getStatements(null, commitIRI, commitId), mf).subjects();
+                            tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId,
+                                    VersionedRecord.version_IRI, conn));
+                            deletedCommits.add(commitId);
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            });
+            deltaIRIs.forEach(resource -> remove(resource, conn));
+        }
+    }
+
+    private List<List<Resource>> getCommitPaths(Resource commitId, RepositoryConnection conn) {
+        List<List<Resource>> rtn = new ArrayList<>();
+        TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_PATHS);
+        query.setBinding("start", commitId);
+        query.evaluate().forEach(bindings -> {
+            String[] path = StringUtils.split(Bindings.requiredLiteral(bindings, "path").stringValue(), " ");
+            Optional<Binding> parent = bindings.getBinding("parent");
+            if (!parent.isPresent()) {
+                rtn.add(Stream.of(path).map(vf::createIRI).collect(Collectors.toList()));
+            } else {
+                String[] connectPath = StringUtils.split(
+                        Bindings.requiredLiteral(bindings, "connectPath").stringValue(), " ");
+                rtn.add(Stream.of(connectPath, path).flatMap(Stream::of).map(vf::createIRI)
+                        .collect(Collectors.toList()));
+            }
+        });
+        return rtn;
+    }
+
+    private boolean commitIsReferenced(Resource commitId, List<Resource> deletedCommits, RepositoryConnection conn) {
+        IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
+        IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
+        IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
+
+        boolean isHeadCommit = conn.contains(null, headCommitIRI, commitId);
+        boolean isParent = Stream.of(baseCommitIRI, auxiliaryCommitIRI)
+                .map(iri -> {
+                    List<Resource> temp = new ArrayList<>();
+                    conn.getStatements(null, iri, commitId).forEach(statement -> temp.add(statement.getSubject()));
+                    temp.removeAll(deletedCommits);
+                    return temp.size() > 0;
+                })
+                .reduce(false, (iri1, iri2) -> iri1 || iri2);
+        return isHeadCommit || isParent;
     }
 
     @Override

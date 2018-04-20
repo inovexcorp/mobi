@@ -69,9 +69,7 @@ import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.persistence.utils.Bindings;
-import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.Binding;
 import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
@@ -86,7 +84,6 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -221,8 +218,6 @@ public class SimpleCatalogManager implements CatalogManager {
 
     private static final String FIND_RECORDS_QUERY;
     private static final String COUNT_RECORDS_QUERY;
-    private static final String GET_NEW_LATEST_VERSION;
-    private static final String GET_COMMIT_PATHS;
     private static final String RECORD_BINDING = "record";
     private static final String CATALOG_BINDING = "catalog";
     private static final String RECORD_COUNT_BINDING = "record_count";
@@ -237,14 +232,6 @@ public class SimpleCatalogManager implements CatalogManager {
             );
             COUNT_RECORDS_QUERY = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/count-records.rq"),
-                    "UTF-8"
-            );
-            GET_NEW_LATEST_VERSION = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/get-new-latest-version.rq"),
-                    "UTF-8"
-            );
-            GET_COMMIT_PATHS = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/get-commit-paths.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -552,7 +539,7 @@ public class SimpleCatalogManager implements CatalogManager {
             Distribution distribution = utils.getUnversionedDistribution(catalogId, unversionedRecordId, distributionId,
                     conn);
             conn.begin();
-            removeObjectWithRelationship(distribution.getResource(), unversionedRecordId,
+            utils.removeObjectWithRelationship(distribution.getResource(), unversionedRecordId,
                     UnversionedRecord.unversionedDistribution_IRI, conn);
             conn.commit();
         }
@@ -630,31 +617,9 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             Version version = utils.getVersion(catalogId, versionedRecordId, versionId, versionFactory, conn);
             conn.begin();
-            removeVersion(versionedRecordId, version, conn);
+            utils.removeVersion(versionedRecordId, version, conn);
             conn.commit();
         }
-    }
-
-    private void removeVersion(Resource recordId, Version version, RepositoryConnection conn) {
-        removeObjectWithRelationship(version.getResource(), recordId, VersionedRecord.version_IRI, conn);
-        IRI latestVersionIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
-        if (conn.contains(recordId, latestVersionIRI, version.getResource(), recordId)) {
-            conn.remove(recordId, latestVersionIRI, version.getResource(), recordId);
-            TupleQuery query = conn.prepareTupleQuery(GET_NEW_LATEST_VERSION);
-            query.setBinding(RECORD_BINDING, recordId);
-            TupleQueryResult result = query.evaluate();
-
-            Optional<Binding> binding;
-            if (result.hasNext() && (binding = result.next().getBinding("version")).isPresent()) {
-                conn.add(recordId, latestVersionIRI, binding.get().getValue(), recordId);
-            }
-        }
-        version.getVersionedDistribution_resource().forEach(resource -> utils.remove(resource, conn));
-    }
-
-    private void removeVersion(Resource recordId, Resource versionId, RepositoryConnection conn) {
-        Version version = utils.getObject(versionId, versionFactory, conn);
-        removeVersion(recordId, version, conn);
     }
 
     @Override
@@ -701,7 +666,6 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
-
     @Override
     public void addVersionedDistribution(Resource catalogId, Resource versionedRecordId, Resource versionId,
                                          Distribution distribution) {
@@ -741,12 +705,11 @@ public class SimpleCatalogManager implements CatalogManager {
             Distribution distribution = utils.getVersionedDistribution(catalogId, versionedRecordId, versionId,
                     distributionId, conn);
             conn.begin();
-            removeObjectWithRelationship(distribution.getResource(), versionId, Version.versionedDistribution_IRI,
+            utils.removeObjectWithRelationship(distribution.getResource(), versionId, Version.versionedDistribution_IRI,
                     conn);
             conn.commit();
         }
     }
-
 
     @Override
     public Optional<Distribution> getVersionedDistribution(Resource catalogId, Resource recordId, Resource versionId,
@@ -868,83 +831,8 @@ public class SimpleCatalogManager implements CatalogManager {
                 throw new IllegalStateException("Branch " + branchId + " is the master Branch and cannot be removed.");
             }
             conn.begin();
-            removeBranch(versionedRDFRecordId, branch, conn);
+            utils.removeBranch(versionedRDFRecordId, branch, conn);
             conn.commit();
-        }
-    }
-
-    private void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn) {
-        List<Resource> deletedCommits = new ArrayList<>();
-        removeBranch(recordId, branch, deletedCommits, conn);
-    }
-
-    private void removeBranch(Resource recordId, Branch branch, List<Resource> deletedCommits,
-                              RepositoryConnection conn) {
-        removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
-        Optional<Resource> headCommit = branch.getHead_resource();
-        if (headCommit.isPresent()) {
-            // Explicitly remove this so algorithm works for head commit
-            conn.remove(branch.getResource(), vf.createIRI(Branch.head_IRI), headCommit.get());
-            IRI commitIRI = vf.createIRI(Tag.commit_IRI);
-            Set<Resource> deltaIRIs = new HashSet<>();
-            getCommitPaths(headCommit.get()).forEach(path -> {
-                for (Resource commitId : path) {
-                    if (!deletedCommits.contains(commitId)) {
-                        if (!commitIsReferenced(commitId, deletedCommits, conn)) {
-                            // Get Additions/Deletions Graphs
-                            Revision revision = utils.getRevision(commitId, conn);
-                            revision.getAdditions().ifPresent(deltaIRIs::add);
-                            revision.getDeletions().ifPresent(deltaIRIs::add);
-                            revision.getGraphRevision().forEach(graphRevision -> {
-                                graphRevision.getAdditions().ifPresent(deltaIRIs::add);
-                                graphRevision.getDeletions().ifPresent(deltaIRIs::add);
-                            });
-
-                            // Remove Commit
-                            utils.remove(commitId, conn);
-
-                            // Remove Tags Referencing this Commit
-                            Set<Resource> tags = RepositoryResults.asModel(
-                                    conn.getStatements(null, commitIRI, commitId), mf).subjects();
-                            tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId,
-                                    VersionedRecord.version_IRI, conn));
-                            deletedCommits.add(commitId);
-                        } else {
-                            break;
-                        }
-                    }
-                }
-            });
-            deltaIRIs.forEach(resource -> utils.remove(resource, conn));
-        } else {
-            log.warn("The HEAD Commit was not set on the Branch.");
-        }
-    }
-
-    private void removeBranch(Resource recordId, Resource branchId, List<Resource> deletedCommits,
-                              RepositoryConnection conn) {
-        Branch branch = utils.getObject(branchId, branchFactory, conn);
-        removeBranch(recordId, branch, deletedCommits, conn);
-    }
-
-    private List<List<Resource>> getCommitPaths(Resource commitId) {
-        List<List<Resource>> rtn = new ArrayList<>();
-        try (RepositoryConnection conn = repository.getConnection()) {
-            TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_PATHS);
-            query.setBinding("start", commitId);
-            query.evaluate().forEach(bindings -> {
-                String[] path = StringUtils.split(Bindings.requiredLiteral(bindings, "path").stringValue(), " ");
-                Optional<Binding> parent = bindings.getBinding("parent");
-                if (!parent.isPresent()) {
-                    rtn.add(Stream.of(path).map(vf::createIRI).collect(Collectors.toList()));
-                } else {
-                    String[] connectPath = StringUtils.split(
-                            Bindings.requiredLiteral(bindings, "connectPath").stringValue(), " ");
-                    rtn.add(Stream.of(connectPath, path).flatMap(Stream::of).map(vf::createIRI)
-                            .collect(Collectors.toList()));
-                }
-            });
-            return rtn;
         }
     }
 
@@ -1442,12 +1330,6 @@ public class SimpleCatalogManager implements CatalogManager {
         return record;
     }
 
-    private void removeObjectWithRelationship(Resource objectId, Resource removeFromId, String predicate,
-                                              RepositoryConnection conn) {
-        utils.remove(objectId, conn);
-        conn.remove(removeFromId, vf.createIRI(predicate), objectId, removeFromId);
-    }
-
     /**
      * Removes the UnversionedRecord created from the provided Record along with all associated Distributions.
      *
@@ -1472,7 +1354,7 @@ public class SimpleCatalogManager implements CatalogManager {
         versionedRecordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRecord -> {
                     versionedRecord.getVersion_resource()
-                            .forEach(resource -> removeVersion(versionedRecord.getResource(), resource, conn));
+                            .forEach(resource -> utils.removeVersion(versionedRecord.getResource(), resource, conn));
                     utils.removeObject(versionedRecord, conn);
                 });
     }
@@ -1488,31 +1370,14 @@ public class SimpleCatalogManager implements CatalogManager {
         versionedRDFRecordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRDFRecord -> {
                     versionedRDFRecord.getVersion_resource()
-                            .forEach(resource -> removeVersion(versionedRDFRecord.getResource(), resource, conn));
+                            .forEach(resource -> utils.removeVersion(versionedRDFRecord.getResource(), resource, conn));
                     conn.remove(versionedRDFRecord.getResource(), vf.createIRI(VersionedRDFRecord.masterBranch_IRI),
                             null, versionedRDFRecord.getResource());
                     List<Resource> deletedCommits = new ArrayList<>();
                     versionedRDFRecord.getBranch_resource()
-                            .forEach(resource -> removeBranch(versionedRDFRecord.getResource(), resource,
+                            .forEach(resource -> utils.removeBranch(versionedRDFRecord.getResource(), resource,
                                     deletedCommits, conn));
                     utils.removeObject(versionedRDFRecord, conn);
                 });
-    }
-
-    private boolean commitIsReferenced(Resource commitId, List<Resource> deletedCommits, RepositoryConnection conn) {
-        IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
-        IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
-        IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
-
-        boolean isHeadCommit = conn.contains(null, headCommitIRI, commitId);
-        boolean isParent = Stream.of(baseCommitIRI, auxiliaryCommitIRI)
-                .map(iri -> {
-                    List<Resource> temp = new ArrayList<>();
-                    conn.getStatements(null, iri, commitId).forEach(statement -> temp.add(statement.getSubject()));
-                    temp.removeAll(deletedCommits);
-                    return temp.size() > 0;
-                })
-                .reduce(false, (iri1, iri2) -> iri1 || iri2);
-        return isHeadCommit || isParent;
     }
 }
