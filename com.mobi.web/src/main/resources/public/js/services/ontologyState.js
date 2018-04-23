@@ -108,6 +108,7 @@
                 importedOntologies: [],
                 importedOntologyIds: [],
                 userBranch: false,
+                createdFromExists: true,
                 merge: {
                     active: false,
                     target: undefined,

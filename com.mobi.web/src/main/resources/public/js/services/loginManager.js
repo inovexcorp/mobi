@@ -126,7 +126,7 @@
                         if (response.status === 200 && response.data.scope !== anon) {
                             self.currentUser = response.data.sub;
                             userManagerService.getUser(self.currentUser).then(user => {
-                                self.currentUserIRI = user.iri === 'admin' ? '' : user.iri;
+                                self.currentUserIRI = user.iri;
                             });
                             $state.go('root.home');
                             deferred.resolve(true);
@@ -199,9 +199,6 @@
                 return self.getCurrentLogin().then(data => {
                     if (data.scope !== anon) {
                         self.currentUser = data.sub;
-                        userManagerService.getUser(self.currentUser).then(user => {
-                            self.currentUserIRI = user.iri === 'admin' ? '' : user.iri;
-                        });
                         if (!weGood) {
                             catalogManagerService.initialize().then(() => {
                                 catalogStateService.initialize();
@@ -214,6 +211,9 @@
                             weGood = true;
                         }
                         stateManagerService.initialize();
+                        userManagerService.getUser(self.currentUser).then(user => {
+                            self.currentUserIRI = user.iri;
+                        });
                         return $q.when();
                     } else {
                         return handleError(data);

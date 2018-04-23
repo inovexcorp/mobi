@@ -101,6 +101,10 @@ describe('Login Manager service', function() {
                 password: 'password',
                 username: 'user'
             };
+            var user = {
+                iri: '"http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997"'
+            }
+            userManagerSvc.getUser.and.returnValue($q.when(user));
         });
         it('unless the credentials are wrong', function() {
             $httpBackend.expectGET('/mobirest/user/login' + createQueryString(this.params)).respond(401, {});
@@ -211,6 +215,12 @@ describe('Login Manager service', function() {
         });
     });
     describe('should correctly test authentication', function() {
+        beforeEach(function() {
+            var user = {
+                iri: '"http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997"'
+            }
+            userManagerSvc.getUser.and.returnValue($q.when(user));
+        });
         it('unless an error happened', function() {
             spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.reject({}));
             loginManagerSvc.isAuthenticated()

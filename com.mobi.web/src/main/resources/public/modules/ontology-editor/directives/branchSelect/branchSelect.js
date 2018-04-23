@@ -81,6 +81,9 @@
 
                     dvm.getBranchName = function(branch) {
                         dvm.os.listItem.userBranch = dvm.os.isUserBranch(branch);
+                        if (dvm.os.listItem.userBranch) {
+                            dvm.os.listItem.createdFromExists = _.some(dvm.os.listItem.branches, {'@id': dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom')});
+                        }
                         return dvm.util.getDctermsValue(branch, 'title');
                     }
 
