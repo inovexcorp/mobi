@@ -201,7 +201,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         Decision decision = response.getDecision();
         if (decision != Decision.PERMIT) {
             if (decision == Decision.DENY) {
-                String statusMessage = getMessageOrDefault(response, "Request denied");
+                String statusMessage = getMessageOrDefault(response, "You do not have permission to perform this action");
                 throw ErrorUtils.sendError(statusMessage, javax.ws.rs.core.Response.Status.UNAUTHORIZED);
             }
             if (decision == Decision.INDETERMINATE) {
