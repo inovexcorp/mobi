@@ -132,6 +132,7 @@
             'mappingManager',
             'ontologyManager',
             'ontologyState',
+            'policyManager',
             'prefixes',
             'propertyManager',
             'provManager',

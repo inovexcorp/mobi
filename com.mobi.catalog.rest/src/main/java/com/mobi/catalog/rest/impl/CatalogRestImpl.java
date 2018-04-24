@@ -72,6 +72,10 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
+import com.mobi.rest.security.annotations.ActionAttributes;
+import com.mobi.rest.security.annotations.AttributeValue;
+import com.mobi.rest.security.annotations.ResourceId;
+import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
@@ -256,6 +260,10 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ActionAttributes(
+            @AttributeValue(id = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", value = "type",
+                    type = ValueType.BODY))
+    @ResourceId(id = "catalogId", type = ValueType.PATH)
     public Response createRecord(ContainerRequestContext context, String catalogId, String typeIRI, String title,
                                  String identifierIRI, String description, List<FormDataBodyPart> keywords) {
         checkStringParam(title, "Record title is required");

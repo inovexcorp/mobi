@@ -139,7 +139,7 @@ describe('User Manager service', function() {
                     fail('Promise should have resolved');
                 });
             flushAndVerify($httpBackend);
-            expect(userManagerSvc.getUser).toHaveBeenCalledWith('username');
+            expect(userManagerSvc.getUser).toHaveBeenCalledWith(newUser.username);
             expect(userManagerSvc.users).toContain({iri: 'iri', username: 'username'});
         });
     });
@@ -406,6 +406,9 @@ describe('User Manager service', function() {
         });
     });
     describe('should add a group', function() {
+        beforeEach(function() {
+            spyOn(userManagerSvc, 'getGroup').and.returnValue({iri: 'iri'});
+        });
         it('unless an error occurs', function() {
             $httpBackend.whenPOST('/mobirest/groups').respond(400, null, null, this.error);
             userManagerSvc.addGroup({})
@@ -425,7 +428,8 @@ describe('User Manager service', function() {
                     fail('Promise should have resolved');
                 });
             flushAndVerify($httpBackend);
-            expect(userManagerSvc.groups).toContain(newGroup);
+            expect(userManagerSvc.getGroup).toHaveBeenCalledWith(newGroup.title);
+            expect(userManagerSvc.groups).toContain({title: 'title', iri: 'iri'});
         });
     });
     describe('should retrieve a group', function() {
