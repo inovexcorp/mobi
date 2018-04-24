@@ -3036,4 +3036,26 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.uploadList).toEqual([{id: 'id'}, {id: 'id2'}]);
         });
     });
+    describe('returns boolean value if a branch is a UserBranch when', function() {
+        beforeEach(function() {
+            this.normalBranch = {
+                '@id': 'branch1',
+                '@type': ["http://mobi.com/ontologies/catalog#Branch"],
+                'http://purl.org/dc/terms/publisher': 'user1'
+            };
+            this.userBranch = {
+                '@id': 'user1branch1',
+                '@type': ['http://mobi.com/ontologies/catalog#UserBranch'],
+                'http://purl.org/dc/terms/publisher': 'user1',
+                'http://mobi.com/ontologies/catalog#createdFrom': 'branch1'
+            };
+            prefixes.catalog = 'http://mobi.com/ontologies/catalog#';
+        });
+        it('it is not a UserBranch', function() {
+            expect(ontologyStateSvc.isUserBranch(this.normalBranch)).toBeFalsy();
+        });
+        it('it is a UserBranch', function() {
+            expect(ontologyStateSvc.isUserBranch(this.userBranch)).toBeTruthy();
+        });
+    });
 });

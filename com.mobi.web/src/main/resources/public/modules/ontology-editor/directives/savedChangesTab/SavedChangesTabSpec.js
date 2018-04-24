@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Saved Changes Tab directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, utilSvc, catalogManagerSvc, prefixes;
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, utilSvc, catalogManagerSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -29,13 +29,17 @@ describe('Saved Changes Tab directive', function() {
         mockOntologyState();
         mockUtil();
         mockCatalogManager();
+        mockOntologyManager()
+        mockStateManager();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _utilService_, _catalogManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _stateManagerService_, _utilService_, _catalogManagerService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
+            ontologyManagerSvc = _ontologyManagerService_;
+            stateManagerSvc = _stateManagerService_;
             utilSvc = _utilService_;
             catalogManagerSvc = _catalogManagerService_;
             prefixes = _prefixes_;
@@ -114,7 +118,7 @@ describe('Saved Changes Tab directive', function() {
 
             ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
             scope.$digest();
-            expect(this.element.querySelectorAll('block-header error-display').length).toBe(1);
+            expect(this.element.querySelectorAll('block-header error-display').length).toBe(2);
 
             ontologyStateSvc.listItem.upToDate = true;
             scope.$digest();

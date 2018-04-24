@@ -110,6 +110,12 @@ function injectBeautifyFilter() {
     });
 }
 
+function injectBranchesToDisplayFilter() {
+    module(function($provide) {
+        $provide.value('branchesToDisplayFilter', jasmine.createSpy('branchesToDisplay').and.callFake(_.identity));
+    });
+}
+
 function injectSplitIRIFilter() {
     module(function($provide) {
         $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {
@@ -719,6 +725,7 @@ function mockOntologyState() {
             this.addToClassIRIs = jasmine.createSpy('addToClassIRIs');
             this.removeFromClassIRIs = jasmine.createSpy('removeFromClassIRIs');
             this.addErrorToUploadItem = jasmine.createSpy('addErrorToUploadItem');
+            this.isUserBranch = jasmine.createSpy('isUserBranch');
         });
     });
 }

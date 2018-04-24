@@ -59,7 +59,7 @@
 
     function branchesToDisplay(ontologyStateService, utilService, loginManagerService, prefixes) {
         return function(branches) {
-            var createdFromIRIsToHide =[];
+            var createdFromIRIsToHide = [];
             var displayBranches = [];
             _.forEach(branches, function(branch) {
                 var publisher = utilService.getDctermsId(branch, 'publisher');
