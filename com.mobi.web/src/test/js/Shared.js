@@ -471,7 +471,10 @@ function mockPrefixes() {
             this.dataset = 'dataset:';
             this.matprov = 'matprov:';
             this.prov = 'prov:';
+            this.matprov = 'matprov:';
             this.analytic = 'https://mobi.com/analytic#';
+            this.user = 'user:';
+            this.policy = 'policy:';
         });
     });
 }
@@ -1247,6 +1250,27 @@ function mockProvManager() {
         $provide.service('provManagerService', function($q) {
             this.activityTypes = [];
             this.getActivities = jasmine.createSpy('getActivities').and.returnValue($q.when({}));
+        });
+    });
+}
+
+function mockPolicyManager() {
+    module(function($provide) {
+        $provide.service('policyManagerService', function($q) {
+            this.actionCreate = 'create';
+            this.actionRead = 'read';
+            this.actionUpdate = 'update';
+            this.actionDelete = 'delete';
+            this.subjectId = 'subjectId';
+            this.resourceId = 'resourceId';
+            this.actionId = 'actionId';
+            this.subjectCategory = 'actionCategory';
+            this.resourceCategory = 'resourceCategory';
+            this.actionCategory = 'actionCategory';
+            this.stringEqual = 'stringEqual';
+            this.getPolicies = jasmine.createSpy('getPolicies').and.returnValue($q.when([]));
+            this.getPolicy = jasmine.createSpy('getPolicy').and.returnValue($q.when({}));
+            this.updatePolicy = jasmine.createSpy('getPolicy').and.returnValue($q.when());
         });
     });
 }

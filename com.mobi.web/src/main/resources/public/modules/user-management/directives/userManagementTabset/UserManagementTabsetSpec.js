@@ -56,7 +56,7 @@ describe('User Management Tabset directive', function() {
             expect(tabset.hasClass('centered')).toBe(true);
         });
         it('with tabs', function() {
-            expect(this.element.find('tab').length).toBe(2);
+            expect(this.element.find('tab').length).toBe(3);
         });
     });
 });

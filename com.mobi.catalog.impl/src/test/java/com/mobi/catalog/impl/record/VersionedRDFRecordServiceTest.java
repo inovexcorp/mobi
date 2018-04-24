@@ -23,6 +23,7 @@ package com.mobi.catalog.impl.record;
  * #L%
  */
 
+import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
@@ -38,6 +39,9 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.Distribution;
+import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.config.OperationConfig;
@@ -68,6 +72,7 @@ import org.mockito.MockitoAnnotations;
 import java.io.ByteArrayOutputStream;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -79,6 +84,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private final IRI catalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-test");
     private final IRI branchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch");
     private final IRI commitIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commit");
+    private final IRI tagIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#tag");
+    private final IRI distributionIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/distributions#distribution");
+    private final IRI masterBranchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#master");
 
     private SimpleVersionedRDFRecordService recordService;
     private SimpleSesameTransformer transformer;
@@ -86,13 +94,18 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private Branch branch;
     private Commit headCommit;
     private Difference difference;
+    private User user;
     private DeleteActivity deleteActivity;
+    private Tag tag;
 
     private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
     private OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
+    private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
     private OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+    private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
+    private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
 
     @Mock
     private CatalogUtilsService utilsService;
@@ -113,6 +126,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         transformer = new SimpleSesameTransformer();
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
 
+        user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/user"));
         headCommit = commitFactory.createNew(commitIRI);
         branch = branchFactory.createNew(branchIRI);
         branch.setHead(headCommit);
@@ -127,10 +141,17 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
                 .deletions(deletions)
                 .build();
 
+        tag = tagFactory.createNew(tagIRI);
+        tag.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(distributionIRI)));
+
         testRecord = versionedRDFRecordFactory.createNew(testIRI);
         testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
         testRecord.setBranch(Collections.singleton(branch));
+        testRecord.setVersion(Collections.singleton(tag));
+        testRecord.setLatestVersion(tag);
+        testRecord.setBranch(Collections.singleton(branch));
+        testRecord.setMasterBranch(branchFactory.createNew(masterBranchIRI));
 
 
         MockitoAnnotations.initMocks(this);
@@ -148,6 +169,31 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         recordService.setUtilsService(utilsService);
         recordService.setVf(VALUE_FACTORY);
         recordService.setProvUtils(provUtils);
+    }
+
+    /* delete() */
+
+    @Test
+    public void deleteTest() throws Exception {
+        when(recordFactory.getExisting(eq(testIRI), any(Model.class))).thenReturn(Optional.of(testRecord));
+
+        VersionedRDFRecord deletedRecord = recordService.delete(testIRI, user, connection);
+
+        assertEquals(testRecord, deletedRecord);
+        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
+        verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
+        verify(recordFactory).getExisting(eq(testIRI), eq(testRecord.getModel()));
+        verify(utilsService).removeVersion(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService).removeBranch(eq(testRecord.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
+        verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void deleteRecordDoesNotExistTest() throws Exception {
+        when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.empty());
+
+        recordService.delete(testIRI, user, connection);
+        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
     }
 
     /* export() */

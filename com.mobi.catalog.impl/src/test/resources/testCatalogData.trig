@@ -126,6 +126,7 @@ GRAPH records:versioned-rdf-record {
         mcat:version versions:latest-tag ;
         mcat:latestVersion versions:latest-tag ;
         mcat:branch branches:user-branch ;
+        mcat:branch branches:no-head-branch ;
         mcat:branch branches:branch ;
         mcat:branch branches:master ;
         mcat:masterBranch branches:master .
@@ -210,6 +211,10 @@ GRAPH branches:lone-branch {
 GRAPH branches:branch {
     branches:branch a mcat:Branch ;
         mcat:head commits:conflict2 .
+}
+
+GRAPH branches:no-head-branch {
+    branches:no-head-branch a mcat:Branch .
 }
 
 GRAPH branches:user-branch {

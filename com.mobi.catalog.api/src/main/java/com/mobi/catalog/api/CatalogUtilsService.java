@@ -24,13 +24,14 @@ package com.mobi.catalog.api;
  */
 
 import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
-import com.mobi.catalog.api.ontologies.mcat.Version;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
+import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -130,6 +131,17 @@ public interface CatalogUtilsService {
     <T extends Thing> void removeObject(T object, RepositoryConnection conn);
 
     /**
+     * Removes the provided Object from the Repository along with other relationship statements.
+     *
+     * @param objectId The ID of the Object in the Repository to remove.
+     * @param removeFromId The Subject of the statements to remove
+     * @param predicate The Predicate of the statements to remove
+     * @param conn A RepositoryConnection to use for lookup.
+     */
+    void removeObjectWithRelationship(Resource objectId, Resource removeFromId, String predicate,
+                                      RepositoryConnection conn);
+
+    /**
      * Validates the type and existence of a Record in a Catalog.
      *
      * @param catalogId The Resource identifying the Catalog which should have the Record.
@@ -216,6 +228,24 @@ public interface CatalogUtilsService {
                                      RepositoryConnection conn);
 
     /**
+     * Removes the Version identified by the provided RecordId and Version from the repository.
+     *
+     * @param recordId The Resource identifying the VersionedRecord which has the Version.
+     * @param version The Version object to remove
+     * @param conn A RepositoryConnection to use for lookup.
+     */
+    void removeVersion(Resource recordId, Version version, RepositoryConnection conn);
+
+    /**
+     * Removes the Version identified by the provided Resources from the repository.
+     *
+     * @param recordId The Resource identifying the VersionedRecord which has the Version.
+     * @param versionId The Resource identifying the Version you want to remove.
+     * @param conn A RepositoryConnection to use for lookup.
+     */
+    void removeVersion(Resource recordId, Resource versionId, RepositoryConnection conn);
+
+    /**
      * Validates the existence of a Distribution of a Version.
      *
      * @param catalogId The Resource identifying the Catalog which should have the Record.
@@ -291,6 +321,35 @@ public interface CatalogUtilsService {
      */
     <T extends Branch> T getBranch(VersionedRDFRecord record, Resource branchId, OrmFactory<T> factory,
                                    RepositoryConnection conn);
+
+    /**
+     * Removes the Branch identified by the provided Resources from the repository.  Does not check if branch is master.
+     *
+     * @param recordId The Resource identifying the VersionedRDFRecord which has the Branch.
+     * @param branchId The Resource identifying the Branch you want to remove.
+     * @param conn A RepositoryConnection to use for lookup.
+     */
+    void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn);
+
+    /**
+     * Removes the Branch identified by the provided Resources from the repository. Does not check if branch is master.
+     *
+     * @param recordId The Resource identifying the VersionedRDFRecord which has the Branch.
+     * @param branchId The Resource identifying the Branch you want to remove.
+     * @param deletedCommits A List of commits that have been deleted.
+     * @param conn A RepositoryConnection to use for lookup.
+     */
+    void removeBranch(Resource recordId, Resource branchId, List<Resource> deletedCommits, RepositoryConnection conn);
+
+    /**
+     * Removes Branch identified by the provided Resource and Branch from the repository. Does not check if branch
+     * is master.
+     *
+     * @param recordId The Resource identifying the VersionedRDFRecord which has the Branch.
+     * @param branch The Branch object you want to remove.
+     * @param conn A RepositoryConnection to use for lookup.
+     */
+    void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn);
 
     /**
      * Retrieves the IRI of the head Commit of the provided Branch. Throws an IllegalStateException if the Branch does
@@ -372,7 +431,8 @@ public interface CatalogUtilsService {
      * @param conn A RepositoryConnection to use for lookup.
      * @throws IllegalStateException Thrown if the Commit has no addition or deletion graph.
      */
-    void updateCommit(Resource commitId, @Nullable Model additions, @Nullable Model deletions, RepositoryConnection conn);
+    void updateCommit(Resource commitId, @Nullable Model additions, @Nullable Model deletions,
+                      RepositoryConnection conn);
 
     /**
      * Adds the provided addition and deletion Models to the provided Commit.
@@ -469,23 +529,24 @@ public interface CatalogUtilsService {
      * @param branchId The {@link Resource} of the {@link Branch} which should have the {@link Commit}.
      * @param commitId The {@link Resource} of the {@link Commit}.
      * @param conn A RepositoryConnection to use for lookup.
-     * @throws IllegalArgumentException Thrown if the {@link Catalog} could not be found, the {@link Record} could not 
-     *      be found, the {@link Record} does not belong to the {@link Catalog}, the {@link Branch} does not belong to 
+     * @throws IllegalArgumentException Thrown if the {@link Catalog} could not be found, the {@link Record} could not
+     *      be found, the {@link Record} does not belong to the {@link Catalog}, the {@link Branch} does not belong to
      *      the {@link Record}, or the {@link Commit} does not belong to the {@link Branch}.
      */
     void validateCommitPath(Resource catalogId, Resource recordId, Resource branchId, Resource commitId,
             RepositoryConnection conn);
 
     /**
-     * 
+     * Checks if a Commit exists in a Branch.
+     *
      * @param branchId The {@link Resource} of the {@link Branch} which should have the {@link Commit}.
      * @param commitId The {@link Resource} of the {@link Commit}.
      * @param conn A RepositoryConnection to use for lookup.
-     * @return {@code true} is the (@link Commit} {@link Resource} is in the {@link Branch}'s commit chain and 
+     * @return {@code true} if the (@link Commit} {@link Resource} is in the {@link Branch}'s commit chain and
      *         {@code false} otherwise.
      */
     boolean commitInBranch(Resource branchId, Resource commitId, RepositoryConnection conn);
-    
+
     /**
      * Gets a List which represents the commit chain from the initial commit to the specified commit in either
      * ascending or descending date order.

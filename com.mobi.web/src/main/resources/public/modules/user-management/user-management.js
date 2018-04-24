@@ -34,11 +34,13 @@
             'groupsPage',
             'memberTable',
             'permissionsInput',
+            'permissionsPage',
             'resetPasswordOverlay',
             'userManagementOverlays',
             'userManagementTabset',
             'usersList',
             'usersPage',
+
             /* Custom Filters */
             'usernameSearch'
         ]);
