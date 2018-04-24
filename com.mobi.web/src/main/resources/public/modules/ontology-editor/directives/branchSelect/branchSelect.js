@@ -28,10 +28,10 @@
         .directive('branchSelect', branchSelect);
 
         branchSelect.$inject = ['$filter', '$q', 'catalogManagerService', 'ontologyStateService',
-            'ontologyManagerService', 'utilService', 'stateManagerService', 'loginManagerService', 'prefixes'];
+            'ontologyManagerService', 'utilService', 'stateManagerService', 'prefixes'];
 
         function branchSelect($filter, $q, catalogManagerService, ontologyStateService, ontologyManagerService, utilService,
-            stateManagerService, loginManagerService, prefixes) {
+            stateManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -46,7 +46,6 @@
                     var cm = catalogManagerService;
                     var sm = stateManagerService;
                     var om = ontologyManagerService;
-                    var lm = loginManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
 
                     dvm.os = ontologyStateService;

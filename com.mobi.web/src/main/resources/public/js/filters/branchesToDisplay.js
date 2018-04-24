@@ -30,18 +30,24 @@
          *
          * @description
          * The `branchesToDisplay` module only provides the `branchesToDisplay` filter which filters an array of
-         * branches to display the correct branches for that particular user. If a userBranch exists, will display
-         * it as the normal branch.
+         * branches to display the correct branches for that particular user. If a userBranch exists for that user, the
+         * filter will display that branch as the normal branch. Additionally, the filter will hide other user branches
+         * from users who did not create them.
          */
         .module('branchesToDisplay', [])
         /**
          * @ngdoc filter
          * @name branchesToDisplay.filter:branchesToDisplay
          * @kind function
+         * @requires ontologyState.service:ontologyStateService
+         * @requires util.service:utilService
+         * @requires loginManager.service:loginManagerService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * Takes an array of branch objects and filters that array to to display the correct branches for that
-         * particular user. If a userBranch exists for that user, will display it as the normal branch.
+         * particular user. If a userBranch exists for that user, will display it as the normal branch. Additionally,
+         * it will filter out any user branches that do not belong to the current user.
          * @param {*[]} branches The array of branches to filter
          * @param {*[]} userIRI The IRI of the currently logged in user
          * @param {*[]} os The ontologyStateService
