@@ -23,6 +23,14 @@ package com.mobi.catalog.rest.impl;
  * #L%
  */
 
+import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.getActiveUser;
+import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
+import static com.mobi.rest.util.RestUtils.getRDFFormat;
+import static com.mobi.rest.util.RestUtils.groupedModelToString;
+import static com.mobi.rest.util.RestUtils.jsonldToModel;
+import static com.mobi.rest.util.RestUtils.modelToJsonld;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
@@ -51,8 +59,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
-
-import static com.mobi.rest.util.RestUtils.*;
 
 @Component(immediate = true)
 public class MergeRequestRestImpl implements MergeRequestRest {
@@ -101,7 +107,7 @@ public class MergeRequestRestImpl implements MergeRequestRest {
             JSONArray result = JSONArray.fromObject(manager.getMergeRequests(pred, asc, accepted).stream()
                     .map(request -> modelToJsonld(request.getModel(), transformer))
                     .map(RestUtils::getObjectFromJsonld)
-                    .collect(Collectors.toSet()));
+                    .collect(Collectors.toList()));
             return Response.ok(result).build();
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -166,12 +172,6 @@ public class MergeRequestRestImpl implements MergeRequestRest {
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    private Model removeContext(Model model) {
-        Model result = mf.createModel();
-        model.forEach(statement -> result.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
-        return result;
     }
 
     private MergeRequest jsonToMergeRequest(Resource requestId, String jsonMergeRequest) {

@@ -139,12 +139,12 @@ describe('Open Tab directive', function() {
             expect(this.element.find('block-content').length).toEqual(1);
         });
         it('depending on how many merge requests there are', function() {
-            expect(this.element.querySelectorAll('.no-requests').length).toEqual(1);
+            expect(this.element.find('info-message').length).toEqual(1);
             expect(this.element.querySelectorAll('.request').length).toEqual(0);
 
             this.controller.requests = [{}];
             scope.$digest();
-            expect(this.element.querySelectorAll('.no-requests').length).toEqual(0);
+            expect(this.element.find('info-message').length).toEqual(0);
             expect(this.element.querySelectorAll('.request').length).toEqual(this.controller.requests.length);
         });
     });

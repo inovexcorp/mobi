@@ -25,9 +25,7 @@
         <div class="search-container"></div>
         <block>
             <block-content>
-                <div class="no-requests" ng-if="!dvm.requests.length">
-                    No requests found
-                </div>
+                <info-message ng-if="!dvm.requests.length">No requests found</info-message>
                 <div class="request padding" ng-repeat="request in dvm.requests track by request.request['@id']">
                     <h3>{{request.title}}</h3>
                     <div class="request-info"><small>Created on {{request.date}} by {{request.creator}}</small></div>
