@@ -1,8 +1,11 @@
 prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-select distinct ?entity ?type
-where {
-    ?entity rdf:type ?type .
-    ?entity ?p ?o .
-    filter contains(lcase(?o), ?searchText)
+SELECT DISTINCT ?entity ?type
+WHERE {
+    {
+        ?entity a ?type ;
+            ?p ?o .
+        FILTER ISLITERAL(?o)
+        FILTER CONTAINS(LCASE(STR(?o)), STR(?searchText))
+    }
 }
