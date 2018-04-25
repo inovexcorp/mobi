@@ -35,6 +35,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -122,4 +123,17 @@ public interface MergeRequestRest {
     @RolesAllowed("user")
     @ApiOperation("Updates a MergeRequest by its ID using the provided JSON-LD")
     Response updateMergeRequest(@PathParam("requestId") String requestId, String newMergeRequest);
+
+    /**
+     * Deletes an existing {@link MergeRequest} that has the {@code requestId}.
+     *
+     * @param requestId The String representing the {@link MergeRequest} ID to delete. NOTE: Assumes ID represents an
+     *                  IRI unless String begins with "_:".
+     * @return A Response indicating the status of the delete.
+     */
+    @DELETE
+    @Path("{requestId}")
+    @RolesAllowed("user")
+    @ApiOperation("Deletes a MergeRequest that has the provided requestId")
+    Response deleteMergeRequest(@PathParam("requestId") String requestId);
 }

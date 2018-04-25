@@ -171,6 +171,17 @@ public class MergeRequestRestImpl implements MergeRequestRest {
         }
     }
 
+    @Override
+    public Response deleteMergeRequest(String requestId) {
+        try {
+            Resource requestIdResource = vf.createIRI(requestId);
+            manager.deleteMergeRequest(requestIdResource);
+            return Response.ok().build();
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     private Model removeContext(Model model) {
         Model result = mf.createModel();
         model.forEach(statement -> result.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));

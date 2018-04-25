@@ -23,15 +23,11 @@ package com.mobi.catalog.impl.mergerequest;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
@@ -302,5 +298,16 @@ public class SimpleMergeRequestManagerTest {
         manager.updateMergeRequest(request2.getResource(), request2);
         verify(utilsService).validateResource(eq(request2.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(request2), any(RepositoryConnection.class));
+    }
+
+    /* deleteMergeRequest */
+
+    @Test
+    public void deleteMergeRequestTest() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            manager.deleteMergeRequest(request1.getResource());
+            verify(utilsService).validateResource(eq(request1.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
+            verify(utilsService).remove(eq(request1.getResource()), any(RepositoryConnection.class));
+        }
     }
 }
