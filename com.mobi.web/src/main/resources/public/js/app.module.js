@@ -135,6 +135,7 @@
             'mergeRequestsState',
             'ontologyManager',
             'ontologyState',
+            'policyManager',
             'prefixes',
             'propertyManager',
             'provManager',

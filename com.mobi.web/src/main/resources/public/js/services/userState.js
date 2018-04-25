@@ -105,6 +105,17 @@
             self.showUsers = true;
             /**
              * @ngdoc property
+             * @name userState.service:userStateService#showPermissions
+             * @propertyOf userState.service:userStateService
+             * @type {boolean}
+             *
+             * @description
+             * `showPermissions` holds a boolean indicating whether the
+             * {@link permissionsPage.directive:permissionsPage permissions page} should be shown.
+             */
+            self.showPermissions = false;
+            /**
+             * @ngdoc property
              * @name userState.service:userStateService#selectedGroup
              * @propertyOf userState.service:userStateService
              * @type {object}

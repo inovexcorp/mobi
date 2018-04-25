@@ -71,6 +71,9 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
+import com.mobi.rest.security.annotations.ActionAttributes;
+import com.mobi.rest.security.annotations.AttributeValue;
+import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.util.ErrorUtils;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
@@ -122,7 +125,7 @@ public class OntologyRestImpl implements OntologyRest {
     private static final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
 
     /**
-     * Semaphore for protecting ontology IRI uniqueness checks
+     * Semaphore for protecting ontology IRI uniqueness checks.
      */
     private Semaphore semaphore = new Semaphore(1, true);
 
@@ -177,6 +180,10 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
+    @ActionAttributes(
+            @AttributeValue(id = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+                    value = "http://mobi.com/ontologies/ontology-editor#OntologyRecord"))
+    @ResourceId(id = "http://mobi.com/catalog-local")
     public Response uploadFile(ContainerRequestContext context, InputStream fileInputStream, String title,
                                String description, List<FormDataBodyPart> keywords) {
         checkStringParam(title, "The title is missing.");
@@ -205,6 +212,10 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
+    @ActionAttributes(
+            @AttributeValue(id = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+                    value = "http://mobi.com/ontologies/ontology-editor#OntologyRecord"))
+    @ResourceId(id = "http://mobi.com/catalog-local")
     public Response uploadOntologyJson(ContainerRequestContext context, String title, String description,
                                        List<String> keywords, String ontologyJson) {
         checkStringParam(title, "The title is missing.");
