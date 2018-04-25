@@ -29,6 +29,8 @@
          * @name mergeRequestTabset
          *
          * @description
+         * The `mergeRequestsTabset` module only provides the `mergeRequestsTabset` directive
+         * which creates the main div containing the Merge Requests page.
          */
         .module('mergeRequestsTabset', [])
         /**
@@ -39,6 +41,10 @@
          * @requires mergeRequestsState.service:mergeRequestsStateService
          *
          * @description
+         * `mergeRequestsTabset` is a directive which creates a div containing a
+         * {@link tabset.directive:tabset} with the main tabs of the Merge Requests page. These tabs
+         * are the {@link openTab.directive:openTab}. The directive is replaced by the contents
+         * of its template.
          */
         .directive('mergeRequestsTabset', mergeRequestTabset);
 

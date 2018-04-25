@@ -23,13 +23,6 @@ package com.mobi.catalog.rest.impl;
  * #L%
  */
 
-import static com.mobi.rest.util.RestUtils.checkStringParam;
-import static com.mobi.rest.util.RestUtils.getActiveUser;
-import static com.mobi.rest.util.RestUtils.getRDFFormat;
-import static com.mobi.rest.util.RestUtils.groupedModelToString;
-import static com.mobi.rest.util.RestUtils.jsonldToModel;
-import static com.mobi.rest.util.RestUtils.modelToJsonld;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
@@ -48,6 +41,7 @@ import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.RestUtils;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -57,6 +51,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
+
+import static com.mobi.rest.util.RestUtils.*;
 
 @Component(immediate = true)
 public class MergeRequestRestImpl implements MergeRequestRest {
@@ -103,8 +99,8 @@ public class MergeRequestRestImpl implements MergeRequestRest {
         IRI pred = vf.createIRI(StringUtils.isEmpty(sort) ? _Thing.issued_IRI : sort);
         try {
             JSONArray result = JSONArray.fromObject(manager.getMergeRequests(pred, asc, accepted).stream()
-                    .map(request -> removeContext(request.getModel()))
-                    .map(model -> modelToJsonld(model, transformer))
+                    .map(request -> modelToJsonld(request.getModel(), transformer))
+                    .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toSet()));
             return Response.ok(result).build();
         } catch (IllegalStateException | MobiException ex) {
@@ -154,8 +150,8 @@ public class MergeRequestRestImpl implements MergeRequestRest {
             MergeRequest request = manager.getMergeRequest(vf.createIRI(requestId)).orElseThrow(() ->
                     ErrorUtils.sendError("Merge Request " + requestId + " could not be found",
                             Response.Status.NOT_FOUND));
-            Model cleanModel = removeContext(request.getModel());
-            return Response.ok(groupedModelToString(cleanModel, getRDFFormat("jsonld"), transformer)).build();
+            String json = groupedModelToString(request.getModel(), getRDFFormat("jsonld"), transformer);
+            return Response.ok(getObjectFromJsonld(json)).build();
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }

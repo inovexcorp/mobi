@@ -29,6 +29,8 @@
          * @name openTab
          *
          * @description
+         * The `openTab` module only provides the `openTab` directive which creates a Bootstrap `row`
+         * with a {@link block.directive:block} with the list of open MergeRequests.
          */
         .module('openTab', [])
         /**
@@ -36,14 +38,23 @@
          * @name openTab.directive:openTab
          * @scope
          * @restrict E
+         * @requires mergeRequestManager.service:mergeRequestManagerService
+         * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
+         * @requires userManager.service:userManagerService
+         * @requires catalogManager.service:catalogManagerService
          *
          * @description
+         * `openTab` is a directive which creates a Bootstrap `row` with a single column containing a
+         * {@link block.directive:block} with the list of open MergeRequests retrieved by the
+         * {@link mergeRequestsManager.service:mergeRequestsManagerService}. The directive is replaced
+         * by the contents of its template.
          */
         .directive('openTab', openTab);
 
-        openTab.$inject = ['mergeRequestManagerService', 'utilService'];
+        openTab.$inject = ['mergeRequestManagerService', 'utilService', 'prefixes', 'userManagerService', 'catalogManagerService', '$q'];
 
-        function openTab(mergeRequestManagerService, utilService) {
+        function openTab(mergeRequestManagerService, utilService, prefixes, userManagerService, catalogManagerService, $q) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/merge-requests/directives/openTab/openTab.html',
@@ -53,11 +64,48 @@
                 controller: function() {
                     var dvm = this;
                     var mm = mergeRequestManagerService;
+                    var um = userManagerService;
+                    var cm = catalogManagerService;
+                    var catalogId = _.get(cm.localCatalog, '@id');
                     var util = utilService;
                     dvm.requests = [];
 
-                    mm.getRequests({})
-                        .then(data => dvm.requests = data, util.createErrorToast);
+                    var recordTitles = {};
+
+                    mm.getRequests()
+                        .then(data => {
+                            dvm.requests = _.map(data, request => ({
+                                request,
+                                title: util.getDctermsValue(request, 'title'),
+                                date: getDate(request),
+                                creator: getCreator(request),
+                                recordIri: util.getPropertyId(request, prefixes.mergereq + 'onRecord')
+                            }));
+                            var recordsToRetrieve = _.uniq(_.chain(dvm.requests)
+                                .map('recordIri')
+                                .filter(iri => !_.has(recordTitles, iri))
+                                .value());
+                            return $q.all(_.map(recordsToRetrieve, iri => cm.getRecord(iri, catalogId)));
+                        }, $q.reject)
+                        .then(responses => {
+                            _.forEach(responses, record => {
+                                var title = util.getDctermsValue(record, 'title');
+                                recordTitles[record['@id']] = title;
+                                _.forEach(_.filter(dvm.requests, {recordIri: record['@id']}), request => request.recordTitle = title);
+                            });
+                        }, error => {
+                            dvm.requests = [];
+                            util.createErrorToast(error);
+                        });
+
+                    function getDate(request) {
+                        var dateStr = util.getDctermsValue(request, 'issued');
+                        return util.getDate(dateStr, 'shortDate');
+                    }
+                    function getCreator(request) {
+                        var iri = util.getDctermsId(request, 'creator');
+                        return _.get(_.find(um.users, {iri}), 'username');
+                    }
                 }
             }
         }

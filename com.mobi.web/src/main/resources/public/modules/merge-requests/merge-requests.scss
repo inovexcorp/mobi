@@ -3,4 +3,6 @@
 
 .merge-requests {
     background-color: $gray-lighter;
+    display: flex;
+    flex-direction: column;
 }

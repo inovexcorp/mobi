@@ -29,6 +29,9 @@
          * @name mergeRequestsState
          *
          * @description
+         * The `mergeRequestsState` module only provides the `mergeRequestsStateService` service which
+         * contains various variables to hold the state of the Merge Requests page and utility functions
+         * to update those variables.
          */
         .module('mergeRequestsState', [])
         /**
@@ -36,12 +39,23 @@
          * @name mergeRequestsState.service:mergeRequestsStateService
          *
          * @description
+         * `mergeRequestsStateService` is a service which contains various variables to hold the
+         * state of the Merge Requests page and utility functions to update those variables.
          */
         .service('mergeRequestsStateService', mergeRequestsStateService);
 
         function mergeRequestsStateService() {
             var self = this;
 
+            /**
+             * @ngdoc property
+             * @name open
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             * @type {boolean}
+             *
+             * @description
+             * `open` determines whether or not the {@link openTab.directive:openTab open tab} is displayed.
+             */
             self.open = true;
         }
 })();

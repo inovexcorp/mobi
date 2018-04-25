@@ -208,9 +208,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), 1);
-            JSONArray requestArr = result.getJSONArray(0);
-            assertEquals(requestArr.size(), 1);
-            JSONObject requestObj = requestArr.getJSONObject(0);
+            JSONObject requestObj = result.getJSONObject(0);
             assertFalse(requestObj.containsKey("@graph"));
             assertTrue(requestObj.containsKey("@id"));
             assertEquals(requestObj.getString("@id"), request1.getResource().stringValue());
@@ -396,12 +394,10 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(requestManager).getMergeRequest(request1.getResource());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), 1);
-            JSONObject requestObj = result.getJSONObject(0);
-            assertFalse(requestObj.containsKey("@graph"));
-            assertTrue(requestObj.containsKey("@id"));
-            assertEquals(requestObj.getString("@id"), request1.getResource().stringValue());
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertFalse(result.containsKey("@graph"));
+            assertTrue(result.containsKey("@id"));
+            assertEquals(result.getString("@id"), request1.getResource().stringValue());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }

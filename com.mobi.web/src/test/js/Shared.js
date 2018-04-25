@@ -466,6 +466,7 @@ function mockPrefixes() {
             this.matprov = 'matprov:';
             this.prov = 'prov:';
             this.analytic = 'https://mobi.com/analytic#';
+            this.mergereq = 'mergereq:';
         });
     });
 }
@@ -1240,6 +1241,22 @@ function mockProvManager() {
         $provide.service('provManagerService', function($q) {
             this.activityTypes = [];
             this.getActivities = jasmine.createSpy('getActivities').and.returnValue($q.when({}));
+        });
+    });
+}
+
+function mockMergeRequestManager() {
+    module(function($provide) {
+        $provide.service('mergeRequestManagerService', function($q) {
+            this.getRequests = jasmine.createSpy('getRequests').and.returnValue($q.when([]));
+        });
+    });
+}
+
+function mockMergeRequestsState() {
+    module(function($provide) {
+        $provide.service('mergeRequestsStateService', function() {
+            this.open = true;
         });
     });
 }
