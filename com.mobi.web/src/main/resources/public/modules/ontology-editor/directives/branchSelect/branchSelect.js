@@ -43,20 +43,21 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var cm = catalogManagerService;
                     var sm = stateManagerService;
                     var om = ontologyManagerService;
-                    var catalogId = _.get(cm.localCatalog, '@id', '');
 
                     dvm.os = ontologyStateService;
+                    dvm.cm = catalogManagerService;
                     dvm.util = utilService;
                     dvm.showDeleteConfirmation = false;
                     dvm.showEditOverlay = false;
                     dvm.deleteError = '';
 
+                    var catalogId = _.get(dvm.cm.localCatalog, '@id', '');
+
                     dvm.changeBranch = function(item) {
                         var branchId = item['@id'];
-                        cm.getBranchHeadCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
+                        dvm.cm.getBranchHeadCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(headCommit => {
                                 var commitId = _.get(headCommit, "commit['@id']", '');
                                 $q.all([
@@ -76,14 +77,6 @@
                         $event.stopPropagation();
                         dvm.branch = branch;
                         dvm.showEditOverlay = true;
-                    }
-
-                    dvm.getBranchName = function(branch) {
-                        dvm.os.listItem.userBranch = dvm.os.isUserBranch(branch);
-                        if (dvm.os.listItem.userBranch) {
-                            dvm.os.listItem.createdFromExists = _.some(dvm.os.listItem.branches, {'@id': dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom')});
-                        }
-                        return dvm.util.getDctermsValue(branch, 'title');
                     }
 
                     dvm.delete = function() {

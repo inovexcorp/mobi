@@ -1373,6 +1373,21 @@
 
             /**
              * @ngdoc method
+             * @name isUserBranch
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Tests whether the passed entity is a user branch or not.
+             *
+             * @param {Object} entity A JSON-LD object
+             * @return {boolean} True if the entity contains the UserBranch type; false otherwise
+             */
+            self.isUserBranch = function(entity) {
+                return _.includes(_.get(entity, '@type', []), prefixes.catalog + "UserBranch");
+            }
+
+            /**
+             * @ngdoc method
              * @name isVersion
              * @methodOf catalogManager.service:catalogManagerService
              *

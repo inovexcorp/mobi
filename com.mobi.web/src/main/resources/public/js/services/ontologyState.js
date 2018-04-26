@@ -284,11 +284,9 @@
                     var branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "branch'][0]['@id']");
                     var commitId = _.get(state, "model[0]['" + prefixes.ontologyState + "commit'][0]['@id']");
                     var upToDate = false;
-                    var userBranch = false;
                     return cm.getRecordBranch(branchId, recordId, catalogId)
                         .then(branch => {
                             upToDate = _.get(branch, "['" + prefixes.catalog + "head'][0]['@id']", '') === commitId;
-                            //userBranch = self.getUserBranch
                             return cm.getInProgressCommit(recordId, catalogId);
                         }, $q.reject)
                         .then(response => {
@@ -491,6 +489,11 @@
                     _.concat(pm.ontologyProperties, _.keys(listItem.dataProperties.iris), _.keys(listItem.objectProperties.iris), listItem.derivedSemanticRelations, pm.conceptSchemeRelationshipList, pm.schemeRelationshipList).forEach(iri => delete listItem.annotations.iris[iri]);
                     listItem.failedImports = _.get(response[0], 'failedImports', []);
                     listItem.branches = response[1].data;
+                    var branch = _.find(listItem.branches, { '@id': listItem.ontologyRecord.branchId })
+                    listItem.userBranch = cm.isUserBranch(branch);
+                    if (listItem.userBranch) {
+                        listItem.createdFromExists = _.some(listItem.branches, {'@id': util.getPropertyId(branch, prefixes.catalog + 'createdFrom')});
+                    }
                     return listItem;
                 },  $q.reject);
             }
@@ -1153,9 +1156,6 @@
                     listItem.isVocabulary = false;
                 }
                 delete listItem.classes.iris[iri];
-            }
-            self.isUserBranch = function(branch) {
-                return _.includes(branch['@type'], prefixes.catalog + "UserBranch");
             }
 
             /* Private helper functions */

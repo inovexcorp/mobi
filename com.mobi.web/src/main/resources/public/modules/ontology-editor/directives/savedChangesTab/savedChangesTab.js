@@ -121,7 +121,7 @@
 
                     function changeUserBranchesCreatedFrom(oldCreatedFromId, newCreatedFromId) {
                         _.forEach(dvm.os.listItem.branches, branch => {
-                            if (dvm.os.isUserBranch(branch)) {
+                            if (cm.isUserBranch(branch)) {
                                 var currentCreatedFromId = dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom');
                                 if (currentCreatedFromId === oldCreatedFromId) {
                                     dvm.util.removePropertyId(branch, prefixes.catalog + 'createdFrom', dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom'));

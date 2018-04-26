@@ -165,20 +165,6 @@ describe('Branch Select directive', function() {
             expect(this.controller.branch).toEqual(this.branch);
             expect(this.controller.showEditOverlay).toBe(true);
         });
-        describe('getBranchName calls the correct methods', function() {
-            it('when branch is not a user branch', function() {
-                this.controller.getBranchName(this.branch);
-                expect(ontologyStateSvc.isUserBranch).toHaveBeenCalledWith(this.branch);
-                expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(this.branch, 'title');
-            });
-            it('when branch is a user branch', function() {
-                ontologyStateSvc.isUserBranch.and.returnValue(true);
-                this.controller.getBranchName(this.branch);
-                expect(ontologyStateSvc.isUserBranch).toHaveBeenCalledWith(this.branch);
-                expect(utilSvc.getPropertyId).toHaveBeenCalledWith(this.branch, prefixes.catalog + 'createdFrom');
-                expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(this.branch, 'title');
-            });
-        });
         describe('delete calls the correct methods', function() {
             beforeEach(function() {
                 this.controller.showDeleteConfirmation = true;

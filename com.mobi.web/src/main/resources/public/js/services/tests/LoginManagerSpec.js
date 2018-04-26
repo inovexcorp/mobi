@@ -101,10 +101,6 @@ describe('Login Manager service', function() {
                 password: 'password',
                 username: 'user'
             };
-            var user = {
-                iri: '"http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997"'
-            }
-            userManagerSvc.getUser.and.returnValue($q.when(user));
         });
         it('unless the credentials are wrong', function() {
             $httpBackend.expectGET('/mobirest/user/login' + createQueryString(this.params)).respond(401, {});
@@ -137,6 +133,7 @@ describe('Login Manager service', function() {
             flushAndVerify($httpBackend);
             expect(state.go).not.toHaveBeenCalled();
             expect(loginManagerSvc.currentUser).toBeFalsy();
+            expect(loginManagerSvc.currentUserIRI).toBeFalsy();
         });
         it('unless the account is anonymous', function() {
             $httpBackend.expectGET('/mobirest/user/login' + createQueryString(this.params)).respond(200, {scope: 'self anon'});
@@ -149,9 +146,14 @@ describe('Login Manager service', function() {
             flushAndVerify($httpBackend);
             expect(state.go).not.toHaveBeenCalled();
             expect(loginManagerSvc.currentUser).toBeFalsy();
+            expect(loginManagerSvc.currentUserIRI).toBeFalsy();
         });
         it('if everything was passed correctly', function() {
             var params = this.params;
+            var user = {
+                iri: 'userIRI'
+            }
+            userManagerSvc.getUser.and.returnValue($q.when(user));
             $httpBackend.expectGET('/mobirest/user/login' + createQueryString(params)).respond(200, {sub: params.username});
             loginManagerSvc.login(params.username, params.password)
                 .then(function(response) {
@@ -162,6 +164,7 @@ describe('Login Manager service', function() {
             flushAndVerify($httpBackend);
             expect(state.go).toHaveBeenCalledWith('root.home');
             expect(loginManagerSvc.currentUser).toBe(params.username);
+            expect(loginManagerSvc.currentUserIRI).toBe(user.iri);
         });
     });
     it('should log a user out', function() {
@@ -180,6 +183,7 @@ describe('Login Manager service', function() {
         expect(sparqlManagerSvc.reset).toHaveBeenCalled();
         expect(userStateSvc.reset).toHaveBeenCalled();
         expect(loginManagerSvc.currentUser).toBe('');
+        expect(loginManagerSvc.currentUserIRI).toBe('');
         expect(state.go).toHaveBeenCalledWith('login');
     });
     describe('should get the current login', function() {
@@ -215,12 +219,6 @@ describe('Login Manager service', function() {
         });
     });
     describe('should correctly test authentication', function() {
-        beforeEach(function() {
-            var user = {
-                iri: '"http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997"'
-            }
-            userManagerSvc.getUser.and.returnValue($q.when(user));
-        });
         it('unless an error happened', function() {
             spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.reject({}));
             loginManagerSvc.isAuthenticated()
@@ -231,6 +229,7 @@ describe('Login Manager service', function() {
                 });
             scope.$apply();
             expect(loginManagerSvc.currentUser).toBe('');
+            expect(loginManagerSvc.currentUserIRI).toBe('');
             expect(state.go).toHaveBeenCalledWith('login');
         });
         it('unless no one is logged in', function() {
@@ -243,16 +242,22 @@ describe('Login Manager service', function() {
                 });
             scope.$apply();
             expect(loginManagerSvc.currentUser).toBe('');
+            expect(loginManagerSvc.currentUserIRI).toBe('');
             expect(state.go).toHaveBeenCalledWith('login');
         });
         it('if a user is logged in', function() {
+            var user = {
+                iri: 'userIRI'
+            }
             spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.resolve({sub: 'user'}));
+            userManagerSvc.getUser.and.returnValue($q.when(user));
             loginManagerSvc.isAuthenticated()
                 .then(_.noop, function(response) {
                     fail('Promise should have resolved');
                 });
             scope.$apply();
             expect(loginManagerSvc.currentUser).toBe('user');
+            expect(loginManagerSvc.currentUserIRI).toBe('userIRI');
             expect(catalogManagerSvc.initialize).toHaveBeenCalled();
             expect(catalogStateSvc.initialize).toHaveBeenCalled();
             expect(ontologyManagerSvc.initialize).toHaveBeenCalled();

@@ -728,7 +728,6 @@ function mockOntologyState() {
             this.addToClassIRIs = jasmine.createSpy('addToClassIRIs');
             this.removeFromClassIRIs = jasmine.createSpy('removeFromClassIRIs');
             this.addErrorToUploadItem = jasmine.createSpy('addErrorToUploadItem');
-            this.isUserBranch = jasmine.createSpy('isUserBranch');
         });
     });
 }
@@ -921,6 +920,7 @@ function mockCatalogManager() {
             this.isVersionedRDFRecord = jasmine.createSpy('isVersionedRDFRecord');
             this.isDistribution = jasmine.createSpy('isDistribution');
             this.isBranch = jasmine.createSpy('isBranch');
+            this.isUserBranch = jasmine.createSpy('isUserBranch');
         });
     });
 }

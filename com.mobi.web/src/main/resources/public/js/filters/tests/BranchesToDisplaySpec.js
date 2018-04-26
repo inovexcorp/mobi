@@ -21,18 +21,18 @@
  * #L%
  */
 describe('Branches Filter', function() {
-    var $filter, ontologyStateSvc, utilSvc, loginManagerSvc, prefixes;
+    var $filter, catalogManagerSvc, utilSvc, loginManagerSvc, prefixes;
 
     beforeEach(function() {
         module('branchesToDisplay');
         mockLoginManager();
-        mockOntologyState();
+        mockCatalogManager();
         mockUtil();
         mockPrefixes();
 
-        inject(function(_$filter_, _ontologyStateService_, _utilService_, _loginManagerService_, _prefixes_) {
+        inject(function(_$filter_, _catalogManagerService_, _utilService_, _loginManagerService_, _prefixes_) {
             $filter = _$filter_;
-            ontologyStateSvc = _ontologyStateService_;
+            catalogManagerSvc = _catalogManagerService_;
             utilSvc = _utilService_;
             loginManagerSvc = _loginManagerService_;
             prefixes = _prefixes_;
@@ -67,7 +67,7 @@ describe('Branches Filter', function() {
         };
 
         this.branches = [this.baseBranch, this.userBranch1, this.userBranch2, this.normalBranch];
-        ontologyStateSvc.isUserBranch.and.callFake(function(branch) {
+        catalogManagerSvc.isUserBranch.and.callFake(function(branch) {
             if (branch['@id'] === 'branch1') {
                 return false;
             } else if (branch['@id'] === 'user1branch1') {
@@ -94,7 +94,7 @@ describe('Branches Filter', function() {
 
     afterEach(function() {
         $filter = null;
-        ontologyStateSvc = null;
+        catalogManagerSvc = null;
         utilSvc = null;
         loginManagerSvc = null;
         prefixes = null;
