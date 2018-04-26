@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Branch Select directive', function() {
-    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, utilSvc, prefixes;
+    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -30,19 +30,16 @@ describe('Branch Select directive', function() {
         mockOntologyState();
         mockOntologyManager();
         mockUtil();
-        mockPrefixes();
         mockStateManager();
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyStateService_, _ontologyManagerService_, _$q_, _stateManagerService_, _utilService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyStateService_, _ontologyManagerService_, _$q_, _stateManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
-            utilSvc = _utilService_;
-            prefixes = _prefixes_;
             $q = _$q_;
             stateManagerSvc = _stateManagerService_;
         });
@@ -66,8 +63,6 @@ describe('Branch Select directive', function() {
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
         stateManagerSvc = null;
-        utilSvc = null;
-        prefixes = null;
         this.element.remove();
     });
 

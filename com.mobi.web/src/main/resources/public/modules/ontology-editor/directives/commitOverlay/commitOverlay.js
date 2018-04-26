@@ -51,7 +51,7 @@
                             createCommit(dvm.os.listItem.ontologyRecord.branchId);
                         } else {
                             var branch = _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
-                            var branchConfig = {title: util.getDctermsValue(branch, 'title')};
+                            var branchConfig = {title: 'WIP:' +  util.getDctermsValue(branch, 'title')};
                             var description = util.getDctermsValue(branch, 'description');
                             if (description) {
                                 branchConfig.description = description;
@@ -63,7 +63,6 @@
                                             dvm.os.listItem.branches.push(branch);
                                             dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
                                             dvm.os.listItem.upToDate = true;
-                                            dvm.os.listItem.userBranch = true;
                                             createCommit(branch['@id']);
                                         }, onError), onError);
                         }

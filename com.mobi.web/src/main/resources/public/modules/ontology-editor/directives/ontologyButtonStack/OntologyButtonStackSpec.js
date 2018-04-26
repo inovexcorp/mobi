@@ -36,7 +36,6 @@ describe('Ontology Button Stack directive', function() {
 
         ontologyStateSvc.isCommittable.and.returnValue(false);
         ontologyStateSvc.hasChanges.and.returnValue(false);
-        ontologyStateSvc.listItem.userBranch = false;
         this.element = $compile(angular.element('<ontology-button-stack></ontology-button-stack>'))(scope);
         scope.$digest();
     });
@@ -75,14 +74,6 @@ describe('Ontology Button Stack directive', function() {
             expect(mergeButton.attr('disabled')).toBeFalsy();
 
             ontologyStateSvc.hasChanges.and.returnValue(true);
-            scope.$digest();
-            expect(mergeButton.attr('disabled')).toBeTruthy();
-        });
-        it('depending on whether the branch is a user branch', function() {
-            var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
-            expect(mergeButton.attr('disabled')).toBeFalsy();
-
-            ontologyStateSvc.listItem.userBranch = true;
             scope.$digest();
             expect(mergeButton.attr('disabled')).toBeTruthy();
         });
