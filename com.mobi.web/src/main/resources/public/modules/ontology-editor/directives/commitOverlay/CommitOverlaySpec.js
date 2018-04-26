@@ -76,6 +76,12 @@ describe('Commit Overlay directive', function() {
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
         });
+        it('depending on whether the selected item is up to date', function() {
+            expect(this.element.find('info-message').length).toBe(0);
+            ontologyStateSvc.listItem.upToDate = false;
+            scope.$digest();
+            expect(this.element.find('info-message').length).toBe(1);
+        });
         it('with a text-area', function() {
             expect(this.element.find('text-area').length).toBe(1);
         });

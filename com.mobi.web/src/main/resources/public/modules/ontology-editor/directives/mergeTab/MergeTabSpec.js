@@ -85,6 +85,7 @@ describe('Merge Tab directive', function() {
                 this.compile();
                 expect(this.controller.branch).toEqual(this.branch);
                 expect(ontologyStateSvc.listItem.merge.target).toEqual({'@id': 'previous'});
+                expect(this.controller.isUserBranch).toEqual(true);
                 expect(ontologyStateSvc.listItem.merge.checkbox).toEqual(true);
             });
             it('and has not been set', function() {
@@ -92,6 +93,7 @@ describe('Merge Tab directive', function() {
                 this.compile();
                 expect(this.controller.branch).toEqual(this.branch);
                 expect(ontologyStateSvc.listItem.merge.target).toEqual(this.targetBranch);
+                expect(this.controller.isUserBranch).toEqual(true);
                 expect(ontologyStateSvc.listItem.merge.checkbox).toEqual(true);
             });
         });
@@ -99,6 +101,7 @@ describe('Merge Tab directive', function() {
             this.compile();
             expect(this.controller.branch).toEqual(this.branch);
             expect(ontologyStateSvc.listItem.merge.target).toBeUndefined();
+            expect(this.controller.isUserBranch).toEqual(false);
             expect(ontologyStateSvc.listItem.merge.checkbox).toEqual(false);
         });
     });

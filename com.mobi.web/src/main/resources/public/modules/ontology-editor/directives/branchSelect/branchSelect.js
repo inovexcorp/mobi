@@ -27,11 +27,11 @@
         .module('branchSelect', [])
         .directive('branchSelect', branchSelect);
 
-        branchSelect.$inject = ['$filter', '$q', 'catalogManagerService', 'ontologyStateService',
-            'ontologyManagerService', 'utilService', 'stateManagerService', 'prefixes'];
+        branchSelect.$inject = ['$q', 'catalogManagerService', 'ontologyStateService',
+            'ontologyManagerService', 'utilService', 'stateManagerService'];
 
-        function branchSelect($filter, $q, catalogManagerService, ontologyStateService, ontologyManagerService, utilService,
-            stateManagerService, prefixes) {
+        function branchSelect($q, catalogManagerService, ontologyStateService, ontologyManagerService, utilService,
+            stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -43,21 +43,20 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var cm = catalogManagerService;
                     var sm = stateManagerService;
                     var om = ontologyManagerService;
+                    var catalogId = _.get(cm.localCatalog, '@id', '');
 
                     dvm.os = ontologyStateService;
-                    dvm.cm = catalogManagerService;
                     dvm.util = utilService;
                     dvm.showDeleteConfirmation = false;
                     dvm.showEditOverlay = false;
                     dvm.deleteError = '';
 
-                    var catalogId = _.get(dvm.cm.localCatalog, '@id', '');
-
                     dvm.changeBranch = function(item) {
                         var branchId = item['@id'];
-                        dvm.cm.getBranchHeadCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
+                        cm.getBranchHeadCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(headCommit => {
                                 var commitId = _.get(headCommit, "commit['@id']", '');
                                 $q.all([

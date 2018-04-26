@@ -22,7 +22,7 @@
   -->
 <div class="ontology-editor-tabset">
     <tabset>
-        <tab ng-repeat="item in dvm.os.list track by item.ontologyId" ng-class="{'up-to-date': item.upToDate && !item.userBranch}"
+        <tab ng-repeat="item in dvm.os.list track by item.ontologyId" ng-class="{'up-to-date': item.upToDate}"
              heading="item.ontologyRecord.title"
              on-close="dvm.onClose(item)" active="item.active"
              on-click="dvm.onClick(item)">
