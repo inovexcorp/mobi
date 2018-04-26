@@ -49,8 +49,8 @@
          * logged in user. If a userBranch exists for that user, will display it as the normal branch. Additionally,
          * it will filter out any user branches that do not belong to the current user.
          *
-         * @param {*[]} branches The array of branches to filter
-         * @returns {*[]} an array of branches to display for the logged in user
+         * @param {Object[]} branches The array of branches to filter
+         * @returns {Object[]} an array of branches to display for the logged in user
          */
         .filter('branchesToDisplay', branchesToDisplay);
 
