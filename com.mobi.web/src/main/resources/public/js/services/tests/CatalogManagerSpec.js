@@ -1864,14 +1864,6 @@ describe('Catalog Manager service', function() {
         entity['@type'].push(prefixes.catalog + 'Test');
         expect(catalogManagerSvc.isBranch(entity)).toBe(true);
     });
-    it('should test whether an entity is a UserBranch', function() {
-        var entity = {'@type': []};
-        expect(catalogManagerSvc.isUserBranch(entity)).toBe(false);
-        entity['@type'].push(prefixes.catalog + 'UserBranch');
-        expect(catalogManagerSvc.isUserBranch(entity)).toBe(true);
-        entity['@type'].push(prefixes.catalog + 'Test');
-        expect(catalogManagerSvc.isUserBranch(entity)).toBe(true);
-    });
     it('should test whether an entity is a Version', function() {
         var entity = {'@type': []};
         expect(catalogManagerSvc.isVersion(entity)).toBe(false);

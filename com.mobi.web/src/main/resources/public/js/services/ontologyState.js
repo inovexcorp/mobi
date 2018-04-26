@@ -107,8 +107,6 @@
                 ontology: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
-                userBranch: false,
-                createdFromExists: true,
                 merge: {
                     active: false,
                     target: undefined,
@@ -489,11 +487,6 @@
                     _.concat(pm.ontologyProperties, _.keys(listItem.dataProperties.iris), _.keys(listItem.objectProperties.iris), listItem.derivedSemanticRelations, pm.conceptSchemeRelationshipList, pm.schemeRelationshipList).forEach(iri => delete listItem.annotations.iris[iri]);
                     listItem.failedImports = _.get(response[0], 'failedImports', []);
                     listItem.branches = response[1].data;
-                    var branch = _.find(listItem.branches, { '@id': listItem.ontologyRecord.branchId })
-                    listItem.userBranch = cm.isUserBranch(branch);
-                    if (listItem.userBranch) {
-                        listItem.createdFromExists = _.some(listItem.branches, {'@id': util.getPropertyId(branch, prefixes.catalog + 'createdFrom')});
-                    }
                     return listItem;
                 },  $q.reject);
             }

@@ -27,9 +27,9 @@
         .module('savedChangesTab', [])
         .directive('savedChangesTab', savedChangesTab);
 
-        savedChangesTab.$inject = ['$q', 'ontologyStateService', 'ontologyManagerService', 'stateManagerService', 'utilService', 'catalogManagerService', 'prefixes'];
+        savedChangesTab.$inject = ['$q', 'ontologyStateService', 'utilService', 'catalogManagerService', 'prefixes'];
 
-        function savedChangesTab($q, ontologyStateService, ontologyManagerService, stateManagerService, utilService, catalogManagerService, prefixes) {
+        function savedChangesTab($q, ontologyStateService, utilService, catalogManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,8 +39,6 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     var cm = catalogManagerService;
-                    var om = ontologyManagerService;
-                    var sm = stateManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
                     var typeIRI = prefixes.rdf + 'type';
                     var types = [prefixes.owl + 'Class', prefixes.owl + 'ObjectProperty', prefixes.owl + 'DatatypeProperty', prefixes.owl + 'AnnotationProperty', prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept', prefixes.skos + 'ConceptScheme'];
@@ -67,39 +65,84 @@
                             .then(() => dvm.util.createSuccessToast('Your ontology has been updated.'), dvm.util.createErrorToast);
                     }
 
-                    dvm.restoreBranchWithUserBranch = function() {
-                        var userBranchId = dvm.os.listItem.ontologyRecord.branchId;
-                        var userBranch = _.find(dvm.os.listItem.branches, {'@id': userBranchId})
-                        var createdFromId = dvm.util.getPropertyId(userBranch, prefixes.catalog + 'createdFrom');
-                        var branchConfig = {
-                            title: dvm.util.getDctermsValue(userBranch, 'title'),
-                            description: dvm.util.getDctermsValue(userBranch, 'description')
-                        };
-
-                        cm.createRecordBranch(dvm.os.listItem.ontologyRecord.recordId, catalogId, branchConfig,
-                            dvm.os.listItem.ontologyRecord.commitId).then(branchId =>
-                                cm.getRecordBranch(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
-                                    .then(branch => {
-                                        dvm.os.listItem.branches.push(branch);
-                                        dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
-                                        var commitId = branch[prefixes.catalog + 'head'][0]['@id'];
-                                        sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)
-                                            .then(() => {
-                                                om.deleteOntology(dvm.os.listItem.ontologyRecord.recordId, userBranchId)
-                                                    .then(() => {
-                                                        dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, userBranchId);
-                                                        changeUserBranchesCreatedFrom(createdFromId, branchId);
-                                                    }, dvm.util.createErrorToast);
-                                            }, dvm.util.createErrorToast);
-                                        dvm.util.createSuccessToast('Branch has been restored with changes.');
-                                    }, dvm.util.createErrorToast), dvm.util.createErrorToast);
-                    }
-
                     dvm.removeChanges = function() {
                         cm.deleteInProgressCommit(dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(() => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.upToDate), $q.reject)
                             .then(() => dvm.os.clearInProgressCommit(), errorMessage => dvm.error = errorMessage);
                     }
+
+                    /*dvm.setChecked = function(value) {
+                        _.forEach(dvm.list, item => {
+                            _.forEach(['additions', 'deletions'], attr => {
+                                _.forEach(_.get(item, attr, []), statement => {
+                                    statement.checked = value;
+                                    if (!value) {
+                                        statement.disabled = value;
+                                    } else if (item.disableAll && statement.p !== typeIRI && !_.includes(types, statement.o)) {
+                                        statement.disabled = true;
+                                    }
+                                });
+                            });
+                        });
+                    }
+
+                    dvm.onAdditionCheck = function(subject, predicate, object, isChecked) {
+                        if (predicate === typeIRI && _.includes(types, object)) {
+                            var item = _.find(dvm.list, {id: subject});
+                            _.forEach(_.get(item, 'additions', []), statement => {
+                                if (statement.p !== predicate && statement.o !== object) {
+                                    statement.checked = isChecked;
+                                    statement.disabled = isChecked;
+                                }
+                            });
+                        }
+                    }
+
+                    dvm.onDeletionCheck = function(subject, predicate, object, isChecked) {
+                        if (predicate !== typeIRI || (predicate === typeIRI && !_.includes(types, object))) {
+                            var typeStatement;
+                            var shouldBeDisabled = false;
+                            var item = _.find(dvm.list, {id: subject});
+                            _.forEach(_.get(item, 'deletions', []), statement => {
+                                if (statement.p === typeIRI && _.includes(types, statement.o)) {
+                                    if (isChecked) {
+                                        statement.checked = true;
+                                    }
+                                    statement.disabled = isChecked;
+                                }
+                            });
+                        }
+                    }
+
+                    dvm.removeChecked = function() {
+                        var differenceObj = {
+                            additions: [],
+                            deletions: []
+                        };
+                        _.forEach(dvm.list, item => {
+                            _.forEach(_.filter(item.additions, {checked: true}), addition => {
+                                var predicate = addition.p === typeIRI ? '@type' : addition.p;
+                                differenceObj.deletions.push(dvm.util.createJson(item.id, predicate, addition.o));
+                            });
+                            _.forEach(_.filter(item.deletions, {checked: true}), deletion => {
+                                var predicate = deletion.p === typeIRI ? '@type' : deletion.p;
+                                differenceObj.additions.push(dvm.util.createJson(item.id, predicate, deletion.o));
+                            });
+                        });
+                        dvm.os.saveChanges(dvm.os.listItem.ontologyRecord.recordId, differenceObj)
+                            .then(() => dvm.os.afterSave(), $q.reject)
+                            .then(() => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyStatus.upToDate, dvm.os.listItem.inProgressCommit), $q.reject)
+                            .then(() => dvm.util.createSuccessToast('Checked changes removed'), dvm.util.createErrorToast);
+                    }
+
+                    dvm.getTotalChecked = function() {
+                        var count = 0;
+                        _.forEach(dvm.list, item => {
+                            count += _.filter(item.additions, {checked: true}).length;
+                            count += _.filter(item.deletions, {checked: true}).length;
+                        });
+                        return count;
+                    }*/
 
                     dvm.orderByIRI = function(item) {
                         return dvm.util.getBeautifulIRI(item.id);
@@ -118,20 +161,6 @@
                             }
                         });
                     });
-
-                    function changeUserBranchesCreatedFrom(oldCreatedFromId, newCreatedFromId) {
-                        _.forEach(dvm.os.listItem.branches, branch => {
-                            if (cm.isUserBranch(branch)) {
-                                var currentCreatedFromId = dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom');
-                                if (currentCreatedFromId === oldCreatedFromId) {
-                                    dvm.util.removePropertyId(branch, prefixes.catalog + 'createdFrom', dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom'));
-                                    dvm.util.setPropertyId(branch, prefixes.catalog + 'createdFrom', newCreatedFromId);
-                                    cm.updateRecordBranch(branch['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId, branch)
-                                        .then(dvm.util.createSuccessToast('Updated referenced branch.'), dvm.util.createErrorToast);
-                                }
-                            }
-                        });
-                    }
 
                     function hasSpecificType(array) {
                         return !!_.intersection(_.map(_.filter(array, {p: typeIRI}), 'o'), types).length;

@@ -107,7 +107,7 @@ describe('Create Branch Overlay directive', function() {
                     beforeEach(function() {
                         catalogManagerSvc.getRecordBranch.and.returnValue($q.when(this.branch));
                     });
-                    it('and when updateOntologyState is resolved', function() {
+                    it('and when updateOntologyState is resoled', function() {
                         stateManagerSvc.updateOntologyState.and.returnValue($q.when());
                         this.controller.create();
                         scope.$digest();
