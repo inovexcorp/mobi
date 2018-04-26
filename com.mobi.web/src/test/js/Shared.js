@@ -110,6 +110,12 @@ function injectBeautifyFilter() {
     });
 }
 
+function injectBranchesToDisplayFilter() {
+    module(function($provide) {
+        $provide.value('branchesToDisplayFilter', jasmine.createSpy('branchesToDisplay').and.callFake(_.identity));
+    });
+}
+
 function injectSplitIRIFilter() {
     module(function($provide) {
         $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {
@@ -914,6 +920,7 @@ function mockCatalogManager() {
             this.isVersionedRDFRecord = jasmine.createSpy('isVersionedRDFRecord');
             this.isDistribution = jasmine.createSpy('isDistribution');
             this.isBranch = jasmine.createSpy('isBranch');
+            this.isUserBranch = jasmine.createSpy('isUserBranch');
         });
     });
 }
