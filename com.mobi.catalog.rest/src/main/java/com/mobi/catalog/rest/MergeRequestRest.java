@@ -36,12 +36,14 @@ import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -52,15 +54,21 @@ import javax.ws.rs.core.Response;
 public interface MergeRequestRest {
 
     /**
-     * Retrieves a list of all the {@link MergeRequest}s in Mobi.
+     * Retrieves a list of all the {@link MergeRequest}s in Mobi sorted according to the provided parameters
+     * and optionally filtered by whether or not they are accepted.
      *
-     * @return The list of all {@link MergeRequest}s
+     * @param sort The IRI of the predicate to sort by
+     * @param asc Whether the results should be sorted ascending or descending. Default is false.
+     * @param accepted Whether the results should only be accepted or open requests
+     * @return The list of all {@link MergeRequest}s that match the criteria
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves all MergeRequests in the application")
-    Response getMergeRequests();
+    Response getMergeRequests(@QueryParam("sort") String sort,
+                              @DefaultValue("false") @QueryParam("ascending") boolean asc,
+                              @DefaultValue("false") @QueryParam("accepted") boolean accepted);
 
     /**
      * Creates a new {@link MergeRequest} in the repository with the passed form data. Requires the `title`, `recordId`,

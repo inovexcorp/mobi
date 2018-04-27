@@ -33,18 +33,25 @@ import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFactory;
+import com.mobi.exception.MobiException;
 import com.mobi.ontologies.dcterms._Thing;
+import com.mobi.persistence.utils.Bindings;
+import com.mobi.query.api.TupleQuery;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
+import org.apache.commons.io.IOUtils;
 
+import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Component(name = SimpleMergeRequestManager.COMPONENT_NAME)
 public class SimpleMergeRequestManager implements MergeRequestManager {
@@ -95,14 +102,45 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         this.branchFactory = branchFactory;
     }
 
+
+    private static final String GET_MERGE_REQUESTS_QUERY;
+    private static final String FILTERS = "%FILTERS%";
+    private static final String REQUEST_ID_BINDING = "requestId";
+    private static final String SORT_PRED_BINDING = "sortPred";
+
+    static {
+        try {
+            GET_MERGE_REQUESTS_QUERY = IOUtils.toString(SimpleMergeRequestManager.class
+                    .getResourceAsStream("/get-merge-requests.rq"), "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
+
     @Override
-    public Set<MergeRequest> getMergeRequests() {
+    public List<MergeRequest> getMergeRequests(IRI sortPredicate, boolean asc, boolean accepted) {
+        StringBuilder filters = new StringBuilder("FILTER ");
+        if (!accepted) {
+            filters.append("NOT ");
+        }
+        filters.append("EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:AcceptedMergeRequest . } ");
+
+        filters.append("?").append(REQUEST_ID_BINDING).append(" <").append(sortPredicate).append("> ?")
+                .append(SORT_PRED_BINDING).append(". ");
+        StringBuilder queryBuilder = new StringBuilder(GET_MERGE_REQUESTS_QUERY.replace(FILTERS, filters.toString()));
+        queryBuilder.append(" ORDER BY ");
+        if (asc) {
+            queryBuilder.append("?").append(SORT_PRED_BINDING);
+        } else {
+            queryBuilder.append("DESC(?").append(SORT_PRED_BINDING).append(")");
+        }
         try (RepositoryConnection conn = getCatalogRepo().getConnection()) {
-            Set<MergeRequest> requests = new HashSet<>();
-            conn.getStatements(null, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
-                    vf.createIRI(MergeRequest.TYPE)).forEach(st ->
-                    requests.add(catalogUtils.getExpectedObject(st.getSubject(), mergeRequestFactory, conn)));
-            return requests;
+            TupleQuery query = conn.prepareTupleQuery(queryBuilder.toString());
+            return StreamSupport.stream(query.evaluate().spliterator(), false)
+                    .map(bindings -> Bindings.requiredResource(bindings, REQUEST_ID_BINDING))
+                    .map(resource -> catalogUtils.getExpectedObject(resource, mergeRequestFactory, conn))
+                    .collect(Collectors.toList());
         }
     }
 

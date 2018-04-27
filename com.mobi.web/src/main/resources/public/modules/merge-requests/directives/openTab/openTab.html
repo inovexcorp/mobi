@@ -1,0 +1,37 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="open-tab padding full-height row">
+    <div class="wrapping-column col-xs-8 col-xs-offset-2 full-height">
+        <div class="search-container"></div>
+        <block>
+            <block-content class="padding">
+                <info-message ng-if="!dvm.requests.length">No requests found</info-message>
+                <div class="request padding" ng-repeat="request in dvm.requests track by request.request['@id']">
+                    <h3>{{request.title}}</h3>
+                    <div class="request-info"><small>Created on {{request.date}} by {{request.creator}}</small></div>
+                    <div class="request-record"><span class="field-name">Record: </span>{{request.recordTitle}}</div>
+                </div>
+            </block-content>
+        </block>
+    </div>
+</div>

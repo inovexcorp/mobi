@@ -1,0 +1,10 @@
+PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX mq: <http://mobi.com/ontologies/merge-requests#>
+
+SELECT DISTINCT ?requestId
+WHERE {
+    ?requestId a mq:MergeRequest ;
+        ?p ?o .
+
+    %FILTERS%
+}
