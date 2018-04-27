@@ -33,17 +33,16 @@ import com.mobi.rdf.api.Resource;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public interface MergeRequestManager {
 
     /**
-     * Gets the {@link Set} of all {@link MergeRequest}s in Mobi that match the provided parameters.
+     * Gets the {@link List} of all {@link MergeRequest}s in Mobi that match the provided parameters.
      *
      * @param sortPredicate The IRI of the predicate to sort the results by
      * @param asc Whether the results should be sorted ascending or descending
      * @param accepted Whether the results should be accepted requests or open requests
-     * @return The {@link Set} of all matching {@link MergeRequest}s
+     * @return The {@link List} of all matching {@link MergeRequest}s
      * @throws IllegalStateException If the catalog {@link com.mobi.repository.api.Repository} could not be found
      */
     List<MergeRequest> getMergeRequests(IRI sortPredicate, boolean asc, boolean accepted);

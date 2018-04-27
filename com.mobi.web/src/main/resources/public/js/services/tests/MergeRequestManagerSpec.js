@@ -56,7 +56,7 @@ describe('Merge Request Manager service', function() {
         beforeEach(function() {
             this.params = {};
         });
-        it('unless an error occors', function() {
+        it('unless an error occurs', function() {
             $httpBackend.expectGET('/mobirest/merge-requests').respond(400, null, null, 'Error Message');
             mergeRequestManagerSvc.getRequests(this.params)
                 .then(function(response) {

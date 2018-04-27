@@ -24,7 +24,7 @@
     <div class="wrapping-column col-xs-8 col-xs-offset-2 full-height">
         <div class="search-container"></div>
         <block>
-            <block-content>
+            <block-content class="padding">
                 <info-message ng-if="!dvm.requests.length">No requests found</info-message>
                 <div class="request padding" ng-repeat="request in dvm.requests track by request.request['@id']">
                     <h3>{{request.title}}</h3>
