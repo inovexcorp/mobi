@@ -104,6 +104,8 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     private final String RECORD_ID = "http://mobi.com/records#record";
     private final String BRANCH_ID = "http://mobi.com/branches#branch";
 
+    private final String doesNotExist = "urn:doesNotExist";
+
     @Mock
     private MergeRequestManager requestManager;
 
@@ -186,6 +188,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         when(requestManager.getMergeRequest(any(Resource.class))).thenReturn(Optional.empty());
         when(requestManager.getMergeRequest(request1.getResource())).thenReturn(Optional.of(request1));
 
+        doThrow(new IllegalArgumentException()).when(requestManager).deleteMergeRequest(vf.createIRI(doesNotExist));
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
         when(engineManager.retrieveUser(UsernameTestFilter.USERNAME)).thenReturn(Optional.of(user));
     }
@@ -476,6 +479,30 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
                 .request()
                 .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
         verify(requestManager).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
+        assertEquals(response.getStatus(), 500);
+    }
+
+    /* DELETE merge-requests/{requestId} */
+
+    @Test
+    public void deleteMergeRequestTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
+                .request().delete();
+        verify(requestManager).deleteMergeRequest(eq(request1.getResource()));
+        assertEquals(response.getStatus(), 200);
+    }
+
+    @Test
+    public void deleteMergeRequestWithIRIDoesNotExistTest() {
+        Response response = target().path("merge-requests/" + encode(doesNotExist))
+                .request().delete();
+        assertEquals(response.getStatus(), 404);
+    }
+
+    @Test
+    public void deleteMergeRequestWithInvalidIRITest() {
+        Response response = target().path("merge-requests/" + encode("invalidIRI"))
+                .request().delete();
         assertEquals(response.getStatus(), 500);
     }
 }

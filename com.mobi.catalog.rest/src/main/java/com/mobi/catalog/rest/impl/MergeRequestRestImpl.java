@@ -175,7 +175,12 @@ public class MergeRequestRestImpl implements MergeRequestRest {
     public Response deleteMergeRequest(String requestId) {
         try {
             Resource requestIdResource = vf.createIRI(requestId);
-            manager.deleteMergeRequest(requestIdResource);
+            try {
+                manager.deleteMergeRequest(requestIdResource);
+            } catch (IllegalArgumentException ex) {
+                throw ErrorUtils.sendError("Merge Request " + requestId + " could not be found",
+                        Response.Status.NOT_FOUND);
+            }
             return Response.ok().build();
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
