@@ -1383,7 +1383,7 @@
              * @return {boolean} True if the entity contains the UserBranch type; false otherwise
              */
             self.isUserBranch = function(entity) {
-                return _.includes(_.get(entity, '@type', []), prefixes.catalog + "UserBranch");
+                return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'UserBranch');
             }
 
             /**

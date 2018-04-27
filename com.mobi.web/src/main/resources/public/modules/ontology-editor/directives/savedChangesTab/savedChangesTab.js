@@ -76,13 +76,14 @@
                             description: dvm.util.getDctermsValue(userBranch, 'description')
                         };
 
+//TODO: Remove nesting
                         cm.createRecordBranch(dvm.os.listItem.ontologyRecord.recordId, catalogId, branchConfig,
                             dvm.os.listItem.ontologyRecord.commitId).then(branchId =>
                                 cm.getRecordBranch(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                                     .then(branch => {
                                         dvm.os.listItem.branches.push(branch);
                                         dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
-                                        var commitId = branch[prefixes.catalog + 'head'][0]['@id'];
+                                        var commitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
                                         sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)
                                             .then(() => {
                                                 om.deleteOntology(dvm.os.listItem.ontologyRecord.recordId, userBranchId)
@@ -124,8 +125,7 @@
                             if (cm.isUserBranch(branch)) {
                                 var currentCreatedFromId = dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom');
                                 if (currentCreatedFromId === oldCreatedFromId) {
-                                    dvm.util.removePropertyId(branch, prefixes.catalog + 'createdFrom', dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom'));
-                                    dvm.util.setPropertyId(branch, prefixes.catalog + 'createdFrom', newCreatedFromId);
+                                    dvm.util.replacePropertyId(branch, prefixes.catalog + 'createdFrom', dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom'), newCreatedFromId);
                                     cm.updateRecordBranch(branch['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId, branch)
                                         .then(dvm.util.createSuccessToast('Updated referenced branch.'), dvm.util.createErrorToast);
                                 }

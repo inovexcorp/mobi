@@ -236,6 +236,9 @@ describe('Saved Changes Tab directive', function() {
             describe('when createRecordBranch is resolved', function() {
                 beforeEach(function() {
                     catalogManagerSvc.createRecordBranch.and.returnValue($q.when(this.branchId));
+                    utilSvc.getPropertyId.and.callFake(function(branch, prop) {
+                        _.get(branch, "['" + prop + "'][0]['@id']", '');
+                    });
                 });
                 describe('and when getRecordBranch is resolved', function() {
                     beforeEach(function() {

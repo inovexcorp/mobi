@@ -47,6 +47,10 @@
                     dvm.branch = {};
                     dvm.error = '';
 
+                    if (dvm.os.listItem.userBranch) {
+                        dvm.attemptMergeUserBranch();
+                    }
+
                     dvm.allResolved = function() {
                         return !_.some(dvm.os.listItem.merge.conflicts, {resolved: false});
                     }

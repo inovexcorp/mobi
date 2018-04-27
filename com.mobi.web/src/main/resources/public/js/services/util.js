@@ -198,6 +198,25 @@
             self.removePropertyId = function(entity, propertyIRI, id) {
                 removeValue(entity, propertyIRI, {'@id': id});
             }
+
+            /**
+             * @ngdoc method
+             * @name replacePropertyId
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Remove the passed id value of the passed property from the passed entity.
+             *
+             * @param {Object} entity The entity to remove the property id value from
+             * @param {string} propertyIRI The IRI of a property
+             * @param {string} idToRemove The id value to remove
+             * @param {string} idToAdd The id value to Add
+             */
+            self.replacePropertyId = function(entity, propertyIRI, idToRemove, idToAdd) {
+                removePropertyId(entity, propertyIRI, idToRemove);
+                setPropertyId(entity, propertyIRI, idToAdd);
+            }
+
             /**
              * @ngdoc method
              * @name getDctermsValue
