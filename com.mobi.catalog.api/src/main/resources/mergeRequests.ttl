@@ -50,6 +50,7 @@
 # AcceptedMergeRequest
 
 :AcceptedMergeRequest a owl:Class ;
+    rdfs:subClassOf :MergeRequest ;
     rdfs:label "Merge Request"@en ;
     rdfs:comment "A request to merge a source Branch into a target Branch that has been accepted and the merge performed."@en .
 
