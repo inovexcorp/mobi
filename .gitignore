@@ -23,4 +23,5 @@ node_modules/
 .DS_Store
 */docs/
 dependency-reduced-pom.xml
+**/package-lock.json
 
