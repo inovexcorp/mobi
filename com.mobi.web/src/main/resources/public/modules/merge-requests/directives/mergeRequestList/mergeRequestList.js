@@ -26,41 +26,47 @@
     angular
         /**
          * @ngdoc overview
-         * @name openTab
+         * @name mergeRequestList
          *
          * @description
-         * The `openTab` module only provides the `openTab` directive which creates a Bootstrap `row`
-         * with either a list of MergeRequests or an individual MergeRequest.
+         * The `mergeRequestList` module only provides the `mergeRequestList` directive which creates a div
+         * with a {@link block.directive:block} with the list of open MergeRequests.
          */
-        .module('openTab', [])
+        .module('mergeRequestList', [])
         /**
          * @ngdoc directive
-         * @name openTab.directive:openTab
+         * @name mergeRequestList.directive:mergeRequestList
          * @scope
          * @restrict E
          * @requires mergeRequestState.service:mergeRequestStateService
          *
          * @description
-         * `openTab` is a directive which creates a Bootstrap `row` with a single column with different
-         * contents depending on whether a request is selected or being created. It contains the
-         * {@link mergeRequestList.directive:mergeRequestList},
-         * {@link }
-         * The directive is replaced by the contents of its template.
+         * `mergeRequestList` is a directive which creates a div containing a {@link block.directive:block}
+         * with the list of open MergeRequests retrieved by the
+         * {@link mergeRequestsState.service:mergeRequestsStateService}. The directive is replaced
+         * by the contents of its template.
          */
-        .directive('openTab', openTab);
+        .directive('mergeRequestList', mergeRequestList);
 
-        openTab.$inject = ['mergeRequestsStateService'];
+        mergeRequestList.$inject = ['mergeRequestsStateService'];
 
-        function openTab(mergeRequestsStateService) {
+        function mergeRequestList(mergeRequestsStateService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/merge-requests/directives/openTab/openTab.html',
+                templateUrl: 'modules/merge-requests/directives/mergeRequestList/mergeRequestList.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
                     dvm.state = mergeRequestsStateService;
+
+                    dvm.state.setRequests();
+
+                    dvm.showDeleteOverlay = function(request) {
+                        dvm.state.requestToDelete = request;
+                        dvm.state.showDelete = true;
+                    }
                 }
             }
         }

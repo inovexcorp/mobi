@@ -48,9 +48,9 @@
          */
         .directive('mergeRequestsTabset', mergeRequestTabset);
 
-    mergeRequestTabset.$inject = ['mergeRequestsStateService'];
+    mergeRequestTabset.$inject = ['mergeRequestsStateService', 'mergeRequestManagerService', 'utilService'];
 
-    function mergeRequestTabset(mergeRequestsStateService) {
+    function mergeRequestTabset(mergeRequestsStateService, mergeRequestManagerService, utilService) {
         return {
             restrict: 'E',
             templateUrl: 'modules/merge-requests/directives/mergeRequestsTabset/mergeRequestsTabset.html',
@@ -59,7 +59,29 @@
             controllerAs: 'dvm',
             controller: function() {
                 var dvm = this;
+                var mm = mergeRequestManagerService;
+                var util = utilService;
                 dvm.state = mergeRequestsStateService;
+                dvm.errorMessage = '';
+
+                dvm.cancelDelete = function() {
+                    dvm.state.requestToDelete = undefined;
+                    dvm.state.showDelete = false;
+                    dvm.errorMessage = '';
+                }
+                dvm.deleteRequest = function() {
+                    var currentTab = dvm.state.getCurrentTab();
+                    mm.deleteRequest(dvm.state.requestToDelete.request['@id'])
+                        .then(() => {
+                            var hasSelected = !!currentTab.selected;
+                            currentTab.selected = undefined;
+                            util.createSuccessToast('Request successfully deleted');
+                            dvm.cancelDelete();
+                            if (!hasSelected) {
+                                dvm.state.setRequests(!dvm.state.open.active);
+                            }
+                        }, error => dvm.errorMessage = error);
+                }
             }
         }
     }

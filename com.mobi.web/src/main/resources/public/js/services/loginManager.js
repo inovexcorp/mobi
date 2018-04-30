@@ -61,6 +61,7 @@
             'delimitedManagerService',
             'discoverStateService',
             'mapperStateService',
+            'mergeRequestsStateService',
             'ontologyManagerService',
             'ontologyStateService',
             'sparqlManagerService',
@@ -69,7 +70,7 @@
             'userStateService'
         ];
 
-    function loginManagerService($q, $http, $state, REST_PREFIX, analyticManagerService, analyticStateService, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, ontologyManagerService, ontologyStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService) {
+    function loginManagerService($q, $http, $state, REST_PREFIX, analyticManagerService, analyticStateService, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService) {
             var self = this,
                 anon = 'self anon',
                 prefix = REST_PREFIX + 'user/',
@@ -186,6 +187,7 @@
                         if (!weGood) {
                             catalogManagerService.initialize().then(() => {
                                 catalogStateService.initialize();
+                                mergeRequestsStateService.initialize();
                                 ontologyManagerService.initialize();
                                 ontologyStateService.initialize();
                             });

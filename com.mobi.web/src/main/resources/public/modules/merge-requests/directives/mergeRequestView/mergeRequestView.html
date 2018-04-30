@@ -1,0 +1,53 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="merge-request-view">
+    <block>
+        <block-content class="padding">
+            <div class="main-details">
+                <span class="open-indicator label pull-right" ng-class="dvm.mm.isAccepted(dvm.selected.request) ? 'label-success' : 'label-primary'">{{dvm.mm.isAccepted(dvm.selected.request) ? 'Accepted' : 'Open'}}</span>
+                <div class="title">
+                    <h2>{{dvm.selected.title}}</h2>
+                    <small>Created on {{dvm.selected.date}} by {{dvm.selected.creator}}</small>
+                </div>
+                <div class="description">
+                    {{dvm.util.getDctermsValue(dvm.selected.request, 'description') || 'No description'}}
+                </div>
+                <div class="request-record"><span class="field-name">Record: </span>{{dvm.selected.recordTitle}}</div>
+            </div>
+            <!-- TODO: Need to display these tabs for Accepted requests -->
+            <tabset class="in-overlay" ng-if="!dvm.mm.isAccepted(dvm.selected.request)">
+                <tab heading="'Changes'" active="dvm.tabs.changes">
+                    <commit-changes-display additions="dvm.selected.difference.additions" deletions="dvm.selected.difference.deletions"></commit-changes-display>
+                    <info-message ng-if="!dvm.selected.difference.additions.length && !dvm.selected.difference.deletions.length">No changes to display</info-message>
+                </tab>
+                <tab heading="'Commits'" active="dvm.tabs.commits">
+                    <commit-history-table branch="dvm.selected.sourceBranch" record-id="dvm.selected.recordIri" target-id="dvm.selected.targetBranch['@id']"></commit-history-table>
+                </tab>
+            </tabset>
+        </block-content>
+        <block-footer>
+            <button class="btn btn-danger pull-right" ng-click="dvm.showDelete()">Delete</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.back()">Back</button>
+        </block-footer>
+    </block>
+</div>

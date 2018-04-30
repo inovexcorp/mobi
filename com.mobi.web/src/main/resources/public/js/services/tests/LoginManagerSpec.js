@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Login Manager service', function() {
-    var loginManagerSvc, $httpBackend, state, scope, $q, analyticManagerSvc, analyticStateSvc, catalogManagerSvc, catalogStateSvc, datasetManagerSvc, datasetStateSvc, delimitedManagerSvc, discoverStateSvc, mapperStateSvc, ontologyManagerSvc, ontologyStateSvc, sparqlManagerSvc, stateManagerSvc, userManagerSvc, userStateSvc;
+    var loginManagerSvc, $httpBackend, state, scope, $q, analyticManagerSvc, analyticStateSvc, catalogManagerSvc, catalogStateSvc, datasetManagerSvc, datasetStateSvc, delimitedManagerSvc, discoverStateSvc, mapperStateSvc, mergeRequestsStateSvc, ontologyManagerSvc, ontologyStateSvc, sparqlManagerSvc, stateManagerSvc, userManagerSvc, userStateSvc;
 
     beforeEach(function() {
         module('loginManager');
@@ -34,6 +34,7 @@ describe('Login Manager service', function() {
         mockDelimitedManager();
         mockDiscoverState();
         mockMapperState();
+        mockMergeRequestsState();
         mockOntologyManager();
         mockOntologyState();
         mockSparqlManager();
@@ -48,7 +49,7 @@ describe('Login Manager service', function() {
             });
         });
 
-        inject(function(loginManagerService, _$httpBackend_, _$state_, _$rootScope_, _$q_, _analyticManagerService_, _analyticStateService_, _catalogManagerService_, _catalogStateService_, _datasetManagerService_, _datasetStateService_, _delimitedManagerService_, _discoverStateService_, _mapperStateService_, _ontologyManagerService_, _ontologyStateService_, _sparqlManagerService_, _stateManagerService_, _userManagerService_, _userStateService_) {
+        inject(function(loginManagerService, _$httpBackend_, _$state_, _$rootScope_, _$q_, _analyticManagerService_, _analyticStateService_, _catalogManagerService_, _catalogStateService_, _datasetManagerService_, _datasetStateService_, _delimitedManagerService_, _discoverStateService_, _mapperStateService_, _mergeRequestsStateService_, _ontologyManagerService_, _ontologyStateService_, _sparqlManagerService_, _stateManagerService_, _userManagerService_, _userStateService_) {
             loginManagerSvc = loginManagerService;
             $httpBackend = _$httpBackend_;
             state = _$state_;
@@ -63,6 +64,7 @@ describe('Login Manager service', function() {
             delimitedManagerSvc = _delimitedManagerService_;
             discoverStateSvc = _discoverStateService_;
             mapperStateSvc = _mapperStateService_;
+            mergeRequestsStateSvc = _mergeRequestsStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             sparqlManagerSvc = _sparqlManagerService_;
@@ -87,6 +89,7 @@ describe('Login Manager service', function() {
         delimitedManagerSvc = null;
         discoverStateSvc = null;
         mapperStateSvc = null;
+        mergeRequestsStateSvc = null;
         ontologyManagerSvc = null;
         ontologyStateSvc = null;
         sparqlManagerSvc = null;
@@ -247,6 +250,7 @@ describe('Login Manager service', function() {
             expect(catalogStateSvc.initialize).toHaveBeenCalled();
             expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
             expect(ontologyStateSvc.initialize).toHaveBeenCalled();
+            expect(mergeRequestsStateSvc.initialize).toHaveBeenCalled();
             expect(userManagerSvc.initialize).toHaveBeenCalled();
             expect(stateManagerSvc.initialize).toHaveBeenCalled();
             expect(datasetManagerSvc.initialize).toHaveBeenCalled();

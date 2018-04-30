@@ -65,3 +65,15 @@
     rdfs:comment "The Commit that was the head of the source Branch when the described MergeRequest was accepted."@en ;
     rdfs:domain :AcceptedMergeRequest ;
     rdfs:range mcat:Commit .
+
+:sourceBranchTitle a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "source Branch title"@en ;
+    rdfs:comment "The title of the source Branch when the described MergeRequest was accepted."@en ;
+    rdfs:domain :AcceptedMergeRequest ;
+    rdfs:range xsd:string .
+
+:targetBranchTitle a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "target Branch title"@en ;
+    rdfs:comment "The title of the target Branch when the described MergeRequest was accepted."@en ;
+    rdfs:domain :AcceptedMergeRequest ;
+    rdfs:range xsd:string .

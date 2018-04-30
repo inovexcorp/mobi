@@ -1,0 +1,40 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="merge-request-list">
+    <div class="search-container"></div>
+    <block>
+        <block-content class="padding">
+            <info-message ng-if="!dvm.state.requests.length">No requests found</info-message>
+            <div class="request padding" ng-repeat="request in dvm.state.requests track by request.request['@id']" ng-click="dvm.state.selectRequest(request, dvm.state.getCurrentTab())">
+                <div class="details">
+                    <h3>{{request.title}}</h3>
+                    <div class="request-info"><small>Created on {{request.date}} by {{request.creator}}</small></div>
+                    <div class="request-record"><span class="field-name">Record: </span>{{request.recordTitle}}</div>
+                </div>
+                <div class="action-container">
+                    <a ng-click="dvm.showDeleteOverlay(request); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
+                </div>
+            </div>
+        </block-content>
+    </block>
+</div>

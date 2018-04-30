@@ -37,6 +37,11 @@
         /**
          * @ngdoc service
          * @name mergeRequestsState.service:mergeRequestsStateService
+         * @requires mergeRequestManager.service:mergeRequestManagerService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires userManager.service:userManagerService
+         * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * `mergeRequestsStateService` is a service which contains various variables to hold the
@@ -44,18 +49,111 @@
          */
         .service('mergeRequestsStateService', mergeRequestsStateService);
 
-        function mergeRequestsStateService() {
+        mergeRequestsStateService.$inject = ['mergeRequestManagerService', 'catalogManagerService', 'userManagerService', 'utilService', 'prefixes', '$q'];
+
+        function mergeRequestsStateService(mergeRequestManagerService, catalogManagerService, userManagerService, utilService, prefixes, $q) {
             var self = this;
+            var mm = mergeRequestManagerService;
+            var cm = catalogManagerService;
+            var um = userManagerService;
+            var util = utilService;
+
+            var catalogId = '';
 
             /**
              * @ngdoc property
              * @name open
              * @propertyOf mergeRequestsState.service:mergeRequestsStateService
-             * @type {boolean}
+             * @type {Object}
              *
              * @description
-             * `open` determines whether or not the {@link openTab.directive:openTab open tab} is displayed.
+             * `open` contains an object with the state of the {@link openTab.directive:openTab open tab}. The structure
+             * looks like the following:
+             * ```
+             * {
+             *     active: true // Whether the tab is displayed
+             *     selected: {...} // The currently selected request
+             * }
+             * ```
              */
-            self.open = true;
+            self.open = {
+                active: true,
+                selected: undefined
+            };
+
+            self.showDelete = false;
+
+            self.requestToDelete = undefined;
+
+            self.requests = [];
+
+            self.initialize = function() {
+                catalogId = _.get(cm.localCatalog, '@id', '');
+            }
+            self.setRequests = function(accepted = false) {
+                mm.getRequests()
+                    .then(data => {
+                        self.requests = _.map(data, request => ({
+                            request,
+                            title: util.getDctermsValue(request, 'title'),
+                            date: getDate(request),
+                            creator: getCreator(request),
+                            recordIri: util.getPropertyId(request, prefixes.mergereq + 'onRecord')
+                        }));
+                        var recordsToRetrieve = _.uniq(_.map(self.requests, 'recordIri'));
+                        return $q.all(_.map(recordsToRetrieve, iri => cm.getRecord(iri, catalogId)));
+                    }, $q.reject)
+                    .then(responses => {
+                        _.forEach(responses, record => {
+                            var title = util.getDctermsValue(record, 'title');
+                            _.forEach(_.filter(self.requests, {recordIri: record['@id']}), request => request.recordTitle = title);
+                        });
+                    }, error => {
+                        self.requests = [];
+                        util.createErrorToast(error);
+                    });
+            }
+            self.selectRequest = function(request, tabObj) {
+                if (mm.isAccepted(request.request)) {
+                    request.sourceTitle = util.getPropertyValue(request.request, prefixes.mergereq + 'sourceBranchTitle');
+                    request.targetTitle = util.getPropertyValue(request.request, prefixes.mergereq + 'targetBranchTitle');
+                    request.sourceCommit = util.getPropertyId(request.request, prefixes.mergereq + 'sourceCommit')
+                    request.targetCommit = util.getPropertyId(request.request, prefixes.mergereq + 'targetCommit')
+                    // TODO: Set the difference using the two commits
+                    tabObj.selected = request;
+                } else {
+                    var sourceIri = util.getPropertyId(request.request, prefixes.mergereq + 'sourceBranch');
+                    var targetIri = util.getPropertyId(request.request, prefixes.mergereq + 'targetBranch');
+                    cm.getRecordBranch(sourceIri, request.recordIri, catalogId)
+                        .then(branch => {
+                            request.sourceBranch = branch;
+                            request.sourceCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
+                            request.sourceTitle = util.getDctermsValue(branch, 'title');
+                            return cm.getRecordBranch(targetIri, request.recordIri, catalogId)
+                        }, $q.reject)
+                        .then(branch => {
+                            request.targetBranch = branch;
+                            request.targetCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
+                            request.targetTitle = util.getDctermsValue(branch, 'title');
+                            return cm.getBranchDifference(sourceIri, targetIri, request.recordIri, catalogId);
+                        }, $q.reject)
+                        .then(diff => {
+                            request.difference = diff;
+                            tabObj.selected = request;
+                        }, util.createErrorToast);
+                }
+            }
+            self.getCurrentTab = function() {
+                return _.find([self.open], 'active');
+            }
+
+            function getDate(request) {
+                var dateStr = util.getDctermsValue(request, 'issued');
+                return util.getDate(dateStr, 'shortDate');
+            }
+            function getCreator(request) {
+                var iri = util.getDctermsId(request, 'creator');
+                return _.get(_.find(um.users, {iri}), 'username');
+            }
         }
 })();

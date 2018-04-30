@@ -1252,6 +1252,9 @@ function mockMergeRequestManager() {
     module(function($provide) {
         $provide.service('mergeRequestManagerService', function($q) {
             this.getRequests = jasmine.createSpy('getRequests').and.returnValue($q.when([]));
+            this.getRequests = jasmine.createSpy('getRequest').and.returnValue($q.when({}));
+            this.deleteRequest = jasmine.createSpy('deleteRequest').and.returnValue($q.when());
+            this.isAccepted = jasmine.createSpy('isAccepted').and.returnValue(false);
         });
     });
 }
@@ -1259,7 +1262,17 @@ function mockMergeRequestManager() {
 function mockMergeRequestsState() {
     module(function($provide) {
         $provide.service('mergeRequestsStateService', function() {
-            this.open = true;
+            this.open = {
+                active: true,
+                selected: undefined
+            };
+            this.requests = [];
+            this.showDelete = false;
+            this.requestToDelete = false;
+            this.initialize = jasmine.createSpy('initialize');
+            this.setRequests = jasmine.createSpy('setRequests');
+            this.selectRequest = jasmine.createSpy('selectRequest');
+            this.getCurrentTab = jasmine.createSpy('getCurrentTab').and.returnValue({});
         });
     });
 }

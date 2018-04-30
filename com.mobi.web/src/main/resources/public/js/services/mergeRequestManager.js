@@ -43,9 +43,9 @@
          */
         .service('mergeRequestManagerService', mergeRequestManagerService);
 
-        mergeRequestManagerService.$inject = ['$http', '$q', 'utilService', 'REST_PREFIX'];
+        mergeRequestManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'REST_PREFIX'];
 
-        function mergeRequestManagerService($http, $q, utilService, REST_PREFIX) {
+        function mergeRequestManagerService($http, $q, utilService, prefixes, REST_PREFIX) {
             var self = this,
                 prefix = REST_PREFIX + 'merge-requests';
             var util = utilService;
@@ -70,6 +70,57 @@
                 var config = {params};
                 return $http.get(prefix, config)
                     .then(response => response.data, util.rejectError);
+            }
+
+            /**
+             * @ngdoc method
+             * @name getRequest
+             * @methodOf mergeRequestManager.service:mergeRequestManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/merge-requests/{requestId} endpoint to retrieve a single Merge Request
+             * with a matching IRI.
+             *
+             * @param {string} params An IRI ID of a Merge Request
+             * @returns {Promise} A promise that resolves with Merge Request if found or rejects with an
+             * error message.
+             */
+            self.getRequest = function(requestId) {
+                return $http.get(prefix + '/' + encodeURIComponent(requestId))
+                    .then(response => response.data, util.rejectError);
+            }
+
+            /**
+             * @ngdoc method
+             * @name deleteRequest
+             * @methodOf mergeRequestManager.service:mergeRequestManagerService
+             *
+             * @description
+             * Calls the DELETE /mobirest/merge-requests/{requestId} endpoint to remove a single Merge Request
+             * with a matching IRI from the application.
+             *
+             * @param {string} params An IRI ID of a Merge Request
+             * @returns {Promise} A promise that resolves if the request was deleted or rejects with an
+             * error message.
+             */
+            self.deleteRequest = function(requestId) {
+                return $http.delete(prefix + '/' + encodeURIComponent(requestId))
+                    .then(_.noop, util.rejectError);
+            }
+
+            /**
+             * @ngdoc method
+             * @name isAccepted
+             * @methodOf mergeRequestManager.service:mergeRequestManagerService
+             *
+             * @description
+             * Determines whether the passed request is accepted or not.
+             *
+             * @param {Object} request A MergeRequest JSON-LD object
+             * @return {booelan} True if the MergeRequest is accepted; false otherwise
+             */
+            self.isAccepted = function(request) {
+                return _.includes(request['@type'], prefixes.mergereq + 'AcceptedMergeRequest');
             }
         }
 })();
