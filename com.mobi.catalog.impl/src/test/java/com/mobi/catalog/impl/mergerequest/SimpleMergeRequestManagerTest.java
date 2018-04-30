@@ -315,4 +315,19 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         verify(utilsService).validateResource(eq(request3.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(request3), any(RepositoryConnection.class));
     }
+
+    /* deleteMergeRequest */
+
+    @Test
+    public void deleteMergeRequestTest() throws Exception {
+        manager.deleteMergeRequest(request1.getResource());
+        verify(utilsService).validateResource(eq(request1.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(request1.getResource()), any(RepositoryConnection.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void deleteMergeRequestDoesNotExistTest() throws Exception {
+        manager.deleteMergeRequest(request3.getResource());
+        verify(utilsService).validateResource(eq(request3.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
+    }
 }

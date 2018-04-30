@@ -90,4 +90,11 @@ public interface MergeRequestManager {
      */
     void updateMergeRequest(Resource requestId, MergeRequest request);
 
+    /**
+     * Deletes an existing {@link MergeRequest} identified by the provided the {@link Resource}.
+     *
+     * @param requestId The {@link Resource} representing the {@link MergeRequest} ID to delete.
+     */
+    void deleteMergeRequest(Resource requestId);
+
 }
