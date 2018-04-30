@@ -461,7 +461,7 @@ public class RestUtils {
         try {
             return vf.createIRI(requestId);
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         }
     }
 }
