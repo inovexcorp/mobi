@@ -32,6 +32,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import net.sf.json.JSONObject;
@@ -309,6 +310,22 @@ public class RestUtilsTest {
     public void getObjectFromJsonldThatDoesNotExistTest() {
         assertEquals(new JSONObject(), RestUtils.getObjectFromJsonld("[]"));
         assertEquals(new JSONObject(), RestUtils.getObjectFromJsonld("[{'@graph': []}]"));
+    }
+
+    @Test
+    public void createIRITest() {
+        IRI validIRI = RestUtils.createIRI("urn:test", vf);
+        assertEquals(vf.createIRI("urn:test"), validIRI);
+    }
+
+    @Test
+    public void createIRIInvalidInputTest() {
+        try {
+            RestUtils.createIRI("invalidIRI", vf);
+        } catch (MobiWebException ex) {
+            assertEquals(400, ex.getResponse().getStatus());
+        }
+
     }
 
     private void setUpModel() {

@@ -30,7 +30,9 @@ import com.mobi.persistence.utils.SkolemizedStatementIterable;
 import com.mobi.persistence.utils.StatementIterable;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ValueFactory;
 import com.mobi.web.security.util.AuthenticationProps;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -445,6 +447,21 @@ public class RestUtils {
             return null;
         } finally {
             LOG.trace("getTypedObjectFromJsonld took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    /**
+     * Creates an {@link IRI} with the provided {@code requestId}.
+     *
+     * @param requestId The {@link String} representation of an IRI
+     * @param vf The {@link ValueFactory} used to create an IRI
+     * @return An object representing the IRI; throws a 400 if the {@code requestId} is invalid
+     */
+    public static IRI createIRI(String requestId, ValueFactory vf) {
+        try {
+            return vf.createIRI(requestId);
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
         }
     }
 }
