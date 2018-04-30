@@ -325,7 +325,6 @@ public class RestUtilsTest {
         } catch (MobiWebException ex) {
             assertEquals(400, ex.getResponse().getStatus());
         }
-
     }
 
     private void setUpModel() {
