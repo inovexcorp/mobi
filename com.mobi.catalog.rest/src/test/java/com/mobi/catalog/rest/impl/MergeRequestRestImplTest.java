@@ -107,6 +107,9 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     private final String RECORD_ID = "http://mobi.com/records#record";
     private final String BRANCH_ID = "http://mobi.com/branches#branch";
 
+    private final String doesNotExist = "urn:doesNotExist";
+    private final String invalidIRIString = "invalidIRI";
+
     @Mock
     private MergeRequestManager requestManager;
 
@@ -168,7 +171,6 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         rest.setEngineManager(engineManager);
         rest.setTransformer(transformer);
         rest.setVf(vf);
-        rest.setMf(mf);
         rest.setMergeRequestFactory(mergeRequestFactory);
 
         return new ResourceConfig()
@@ -189,6 +191,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         when(requestManager.getMergeRequest(any(Resource.class))).thenReturn(Optional.empty());
         when(requestManager.getMergeRequest(request1.getResource())).thenReturn(Optional.of(request1));
 
+        doThrow(new IllegalArgumentException()).when(requestManager).deleteMergeRequest(vf.createIRI(doesNotExist));
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
         when(engineManager.retrieveUser(UsernameTestFilter.USERNAME)).thenReturn(Optional.of(user));
     }
@@ -235,6 +238,12 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         Response response = target().path("merge-requests").request().get();
         assertEquals(response.getStatus(), 500);
         verify(requestManager).getMergeRequests(vf.createIRI(_Thing.issued_IRI), false, false);
+    }
+
+    @Test
+    public void getMergeRequestsWithInvalidSortTest() {
+        Response response = target().path("merge-requests").queryParam("sort", invalidIRIString).request().get();
+        assertEquals(response.getStatus(), 400);
     }
 
     /* POST merge-requests */
@@ -353,6 +362,32 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     }
 
     @Test
+    public void createMergeRequestWithInvalidSourceTest() {
+        // Setup:
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "Title");
+        fd.field("recordId", RECORD_ID);
+        fd.field("sourceBranchId", invalidIRIString);
+        fd.field("targetBranchId", BRANCH_ID);
+
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void createMergeRequestWithInvalidTargetTest() {
+        // Setup:
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "Title");
+        fd.field("recordId", RECORD_ID);
+        fd.field("sourceBranchId", BRANCH_ID);
+        fd.field("targetBranchId", invalidIRIString);
+
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
     public void createMergeRequestWithMissingRepoTest() {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart();
@@ -430,6 +465,12 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         verify(requestManager).getMergeRequest(request1.getResource());
     }
 
+    @Test
+    public void getMergeRequestWithInvalidIRITest() {
+        Response response = target().path("merge-requests/" + encode(invalidIRIString)).request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
     /* POST merge-requests/{requestId} */
 
     @Test
@@ -476,5 +517,36 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
                 .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
         verify(requestManager).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
         assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void updateMergeRequestWithInvalidIRITest() {
+        Response response = target().path("merge-requests/" + encode(invalidIRIString)).request()
+                .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    /* DELETE merge-requests/{requestId} */
+
+    @Test
+    public void deleteMergeRequestTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
+                .request().delete();
+        verify(requestManager).deleteMergeRequest(eq(request1.getResource()));
+        assertEquals(response.getStatus(), 200);
+    }
+
+    @Test
+    public void deleteMergeRequestWithIRIDoesNotExistTest() {
+        Response response = target().path("merge-requests/" + encode(doesNotExist))
+                .request().delete();
+        assertEquals(response.getStatus(), 404);
+    }
+
+    @Test
+    public void deleteMergeRequestWithInvalidIRITest() {
+        Response response = target().path("merge-requests/" + encode(invalidIRIString))
+                .request().delete();
+        assertEquals(response.getStatus(), 400);
     }
 }
