@@ -311,7 +311,9 @@ describe('Saved Changes Tab directive', function() {
                         it('and when deleteOntology is resolved', function() {
                             ontologyManagerSvc.deleteOntology.and.returnValue($q.when());
                             ontologyStateSvc.listItem.ontologyRecord.branchId = this.newBranchId;
-                            _.remove(ontologyStateSvc.listItem.branches, branch2 => branch2['@id'] === this.userBranchId);
+                            _.remove(ontologyStateSvc.listItem.branches, function(branch) {
+                                return branch['@id'] === this.userBranchId;
+                            });
                             this.controller.restoreBranchWithUserBranch();
                             scope.$digest();
                             expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem
