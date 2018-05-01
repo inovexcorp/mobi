@@ -47,10 +47,6 @@
                     dvm.branch = {};
                     dvm.error = '';
 
-                    if (dvm.os.listItem.userBranch) {
-                        dvm.attemptMergeUserBranch();
-                    }
-
                     dvm.allResolved = function() {
                         return !_.some(dvm.os.listItem.merge.conflicts, {resolved: false});
                     }
@@ -105,10 +101,6 @@
                             deletions: []
                         };
                     }
-                    dvm.attemptMergeUserBranch = function() {
-                        setupVariables();
-                        dvm.attemptMerge();
-                    }
 
                     function onSuccess() {
                         dvm.util.createSuccessToast('Your merge was successful.');
@@ -133,7 +125,12 @@
                             dvm.os.listItem.merge.resolutions.additions = _.concat(dvm.os.listItem.merge.resolutions.additions, notSelected.deletions);
                         }
                     }
+
                     setupVariables();
+
+                    if (dvm.os.listItem.userBranch) {
+                        dvm.attemptMerge();
+                    }
                 }]
             }
         }

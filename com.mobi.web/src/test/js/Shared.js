@@ -573,6 +573,8 @@ function mockOntologyState() {
                        active: false
                    }
                 },
+                userBranch: false,
+                createdFromExists: true,
                 ontologyRecord: {
                     title: '',
                     recordId: '',

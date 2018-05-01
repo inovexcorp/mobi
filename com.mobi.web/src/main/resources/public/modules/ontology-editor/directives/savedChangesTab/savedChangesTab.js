@@ -76,24 +76,26 @@
                             description: dvm.util.getDctermsValue(userBranch, 'description')
                         };
 
-//TODO: Remove nesting
-                        cm.createRecordBranch(dvm.os.listItem.ontologyRecord.recordId, catalogId, branchConfig,
-                            dvm.os.listItem.ontologyRecord.commitId).then(branchId =>
-                                cm.getRecordBranch(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
-                                    .then(branch => {
-                                        dvm.os.listItem.branches.push(branch);
-                                        dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
-                                        var commitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
-                                        sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)
-                                            .then(() => {
-                                                om.deleteOntology(dvm.os.listItem.ontologyRecord.recordId, userBranchId)
-                                                    .then(() => {
-                                                        dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, userBranchId);
-                                                        changeUserBranchesCreatedFrom(createdFromId, branchId);
-                                                    }, dvm.util.createErrorToast);
-                                            }, dvm.util.createErrorToast);
-                                        dvm.util.createSuccessToast('Branch has been restored with changes.');
-                                    }, dvm.util.createErrorToast), dvm.util.createErrorToast);
+                        var createdBranchId;
+                        cm.createRecordBranch(dvm.os.listItem.ontologyRecord.recordId, catalogId, branchConfig, dvm.os.listItem.ontologyRecord.commitId)
+                            .then(branchId => {
+                                createdBranchId = branchId;
+                                return cm.getRecordBranch(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId);
+                            }, dvm.createErrorToast)
+                            .then(branch => {
+                                dvm.os.listItem.branches.push(branch);
+                                dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
+                                var commitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
+                                return sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, createdBranchId, commitId);
+                            }, dvm.util.createErrorToast)
+                            .then(() => {
+                                return om.deleteOntology(dvm.os.listItem.ontologyRecord.recordId, userBranchId);
+                            }, dvm.createErrorToast)
+                            .then(() => {
+                                dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, userBranchId);
+                                changeUserBranchesCreatedFrom(createdFromId, createdBranchId);
+                                dvm.util.createSuccessToast('Branch has been restored with changes.');
+                            }, dvm.util.createErrorToast);
                     }
 
                     dvm.removeChanges = function() {
@@ -131,6 +133,9 @@
                                 }
                             }
                         });
+                        dvm.os.listItem.upToDate = true;
+                        dvm.os.listItem.userBranch = false;
+                        dvm.os.listItem.createdFromExists = true;
                     }
 
                     function hasSpecificType(array) {

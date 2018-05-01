@@ -213,8 +213,8 @@
              * @param {string} idToAdd The id value to Add
              */
             self.replacePropertyId = function(entity, propertyIRI, idToRemove, idToAdd) {
-                removePropertyId(entity, propertyIRI, idToRemove);
-                setPropertyId(entity, propertyIRI, idToAdd);
+                self.removePropertyId(entity, propertyIRI, idToRemove);
+                self.setPropertyId(entity, propertyIRI, idToAdd);
             }
 
             /**
