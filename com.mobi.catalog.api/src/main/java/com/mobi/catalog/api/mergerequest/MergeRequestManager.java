@@ -28,20 +28,24 @@ import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public interface MergeRequestManager {
 
     /**
-     * Gets the {@link Set} of all {@link MergeRequest}s in Mobi.
+     * Gets the {@link List} of all {@link MergeRequest}s in Mobi that match the provided parameters.
      *
-     * @return The {@link Set} of all {@link MergeRequest}s
+     * @param sortPredicate The IRI of the predicate to sort the results by
+     * @param asc Whether the results should be sorted ascending or descending
+     * @param accepted Whether the results should be accepted requests or open requests
+     * @return The {@link List} of all matching {@link MergeRequest}s
      * @throws IllegalStateException If the catalog {@link com.mobi.repository.api.Repository} could not be found
      */
-    Set<MergeRequest> getMergeRequests();
+    List<MergeRequest> getMergeRequests(IRI sortPredicate, boolean asc, boolean accepted);
 
     /**
      * Creates a {@link MergeRequest} with the metadata within the provided {@link MergeRequestConfig} along with a
@@ -85,5 +89,12 @@ public interface MergeRequestManager {
      * @throws IllegalArgumentException If the provided {@link MergeRequest} does not exist in the repository
      */
     void updateMergeRequest(Resource requestId, MergeRequest request);
+
+    /**
+     * Deletes an existing {@link MergeRequest} identified by the provided the {@link Resource}.
+     *
+     * @param requestId The {@link Resource} representing the {@link MergeRequest} ID to delete.
+     */
+    void deleteMergeRequest(Resource requestId);
 
 }

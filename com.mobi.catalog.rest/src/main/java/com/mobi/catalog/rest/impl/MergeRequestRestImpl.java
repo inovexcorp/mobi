@@ -24,11 +24,13 @@ package com.mobi.catalog.rest.impl;
  */
 
 import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.createIRI;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
+import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
-import static com.mobi.rest.util.RestUtils.modelToJsonld;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
+import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -40,19 +42,20 @@ import com.mobi.catalog.rest.MergeRequestRest;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.RestUtils;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
@@ -65,7 +68,6 @@ public class MergeRequestRestImpl implements MergeRequestRest {
     private EngineManager engineManager;
     private MergeRequestFactory mergeRequestFactory;
     private ValueFactory vf;
-    private ModelFactory mf;
 
     @Reference
     void setManager(MergeRequestManager manager) {
@@ -92,19 +94,14 @@ public class MergeRequestRestImpl implements MergeRequestRest {
         this.vf = vf;
     }
 
-    @Reference
-    void setMf(ModelFactory mf) {
-        this.mf = mf;
-    }
-
     @Override
-    public Response getMergeRequests() {
+    public Response getMergeRequests(String sort, boolean asc, boolean accepted) {
+        IRI pred = createIRI(StringUtils.isEmpty(sort) ? _Thing.issued_IRI : sort, vf);
         try {
-            Set<MergeRequest> requests = manager.getMergeRequests();
-            JSONArray result = JSONArray.fromObject(requests.stream()
-                    .map(request -> removeContext(request.getModel()))
-                    .map(model -> modelToJsonld(model, transformer))
-                    .collect(Collectors.toSet()));
+            JSONArray result = JSONArray.fromObject(manager.getMergeRequests(pred, asc, accepted).stream()
+                    .map(request -> modelToJsonld(request.getModel(), transformer))
+                    .map(RestUtils::getObjectFromJsonld)
+                    .collect(Collectors.toList()));
             return Response.ok(result).build();
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -121,8 +118,8 @@ public class MergeRequestRestImpl implements MergeRequestRest {
         checkStringParam(sourceBranchId, "Merge Request source branch is required");
         checkStringParam(targetBranchId, "Merge Request target branch is required");
         User activeUser = getActiveUser(context, engineManager);
-        MergeRequestConfig.Builder builder = new MergeRequestConfig.Builder(title, vf.createIRI(recordId),
-                vf.createIRI(sourceBranchId), vf.createIRI(targetBranchId), activeUser);
+        MergeRequestConfig.Builder builder = new MergeRequestConfig.Builder(title, createIRI(recordId, vf),
+                createIRI(sourceBranchId, vf), createIRI(targetBranchId, vf), activeUser);
         if (!StringUtils.isBlank(description)) {
             builder.description(description);
         }
@@ -149,12 +146,13 @@ public class MergeRequestRestImpl implements MergeRequestRest {
 
     @Override
     public Response getMergeRequest(String requestId) {
+        Resource requestIdResource = createIRI(requestId, vf);
         try {
-            MergeRequest request = manager.getMergeRequest(vf.createIRI(requestId)).orElseThrow(() ->
+            MergeRequest request = manager.getMergeRequest(requestIdResource).orElseThrow(() ->
                     ErrorUtils.sendError("Merge Request " + requestId + " could not be found",
                             Response.Status.NOT_FOUND));
-            Model cleanModel = removeContext(request.getModel());
-            return Response.ok(groupedModelToString(cleanModel, getRDFFormat("jsonld"), transformer)).build();
+            String json = groupedModelToString(request.getModel(), getRDFFormat("jsonld"), transformer);
+            return Response.ok(getObjectFromJsonld(json)).build();
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -162,8 +160,8 @@ public class MergeRequestRestImpl implements MergeRequestRest {
 
     @Override
     public Response updateMergeRequest(String requestId, String newMergeRequest) {
+        Resource requestIdResource = createIRI(requestId, vf);
         try {
-            Resource requestIdResource = vf.createIRI(requestId);
             manager.updateMergeRequest(requestIdResource, jsonToMergeRequest(requestIdResource, newMergeRequest));
             return Response.ok().build();
         } catch (IllegalStateException | MobiException ex) {
@@ -171,10 +169,18 @@ public class MergeRequestRestImpl implements MergeRequestRest {
         }
     }
 
-    private Model removeContext(Model model) {
-        Model result = mf.createModel();
-        model.forEach(statement -> result.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
-        return result;
+    @Override
+    public Response deleteMergeRequest(String requestId) {
+        Resource requestIdResource = createIRI(requestId, vf);
+        try {
+            manager.deleteMergeRequest(requestIdResource);
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex,"Merge Request " + requestId + " could not be found",
+                    Response.Status.NOT_FOUND);
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 
     private MergeRequest jsonToMergeRequest(Resource requestId, String jsonMergeRequest) {

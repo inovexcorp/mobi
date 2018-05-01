@@ -27,15 +27,16 @@ import static com.mobi.rest.util.RestUtils.encode;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.never;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
@@ -49,7 +50,9 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
+import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -103,6 +106,9 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
 
     private final String RECORD_ID = "http://mobi.com/records#record";
     private final String BRANCH_ID = "http://mobi.com/branches#branch";
+
+    private final String doesNotExist = "urn:doesNotExist";
+    private final String invalidIRIString = "invalidIRI";
 
     @Mock
     private MergeRequestManager requestManager;
@@ -165,7 +171,6 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         rest.setEngineManager(engineManager);
         rest.setTransformer(transformer);
         rest.setVf(vf);
-        rest.setMf(mf);
         rest.setMergeRequestFactory(mergeRequestFactory);
 
         return new ResourceConfig()
@@ -181,11 +186,12 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
 
     @BeforeMethod
     public void setUpMocks() throws Exception {
-        when(requestManager.getMergeRequests()).thenReturn(Collections.singleton(request1));
+        when(requestManager.getMergeRequests(any(IRI.class), anyBoolean(), anyBoolean())).thenReturn(Collections.singletonList(request1));
         when(requestManager.createMergeRequest(any(MergeRequestConfig.class))).thenReturn(request1);
         when(requestManager.getMergeRequest(any(Resource.class))).thenReturn(Optional.empty());
         when(requestManager.getMergeRequest(request1.getResource())).thenReturn(Optional.of(request1));
 
+        doThrow(new IllegalArgumentException()).when(requestManager).deleteMergeRequest(vf.createIRI(doesNotExist));
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
         when(engineManager.retrieveUser(UsernameTestFilter.USERNAME)).thenReturn(Optional.of(user));
     }
@@ -201,13 +207,11 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     public void getMergeRequestsTest() {
         Response response = target().path("merge-requests").request().get();
         assertEquals(response.getStatus(), 200);
-        verify(requestManager).getMergeRequests();
+        verify(requestManager).getMergeRequests(vf.createIRI(_Thing.issued_IRI), false, false);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), 1);
-            JSONArray requestArr = result.getJSONArray(0);
-            assertEquals(requestArr.size(), 1);
-            JSONObject requestObj = requestArr.getJSONObject(0);
+            JSONObject requestObj = result.getJSONObject(0);
             assertFalse(requestObj.containsKey("@graph"));
             assertTrue(requestObj.containsKey("@id"));
             assertEquals(requestObj.getString("@id"), request1.getResource().stringValue());
@@ -219,21 +223,27 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     @Test
     public void getMergeRequestsWithMissingRepoTest() {
         // Setup
-        doThrow(new IllegalStateException()).when(requestManager).getMergeRequests();
+        doThrow(new IllegalStateException()).when(requestManager).getMergeRequests(any(IRI.class), anyBoolean(), anyBoolean());
 
         Response response = target().path("merge-requests").request().get();
         assertEquals(response.getStatus(), 500);
-        verify(requestManager).getMergeRequests();
+        verify(requestManager).getMergeRequests(vf.createIRI(_Thing.issued_IRI), false, false);
     }
 
     @Test
     public void getMergeRequestsWithErrorTest() {
         // Setup
-        doThrow(new MobiException()).when(requestManager).getMergeRequests();
+        doThrow(new MobiException()).when(requestManager).getMergeRequests(any(IRI.class), anyBoolean(), anyBoolean());
 
         Response response = target().path("merge-requests").request().get();
         assertEquals(response.getStatus(), 500);
-        verify(requestManager).getMergeRequests();
+        verify(requestManager).getMergeRequests(vf.createIRI(_Thing.issued_IRI), false, false);
+    }
+
+    @Test
+    public void getMergeRequestsWithInvalidSortTest() {
+        Response response = target().path("merge-requests").queryParam("sort", invalidIRIString).request().get();
+        assertEquals(response.getStatus(), 400);
     }
 
     /* POST merge-requests */
@@ -352,6 +362,32 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     }
 
     @Test
+    public void createMergeRequestWithInvalidSourceTest() {
+        // Setup:
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "Title");
+        fd.field("recordId", RECORD_ID);
+        fd.field("sourceBranchId", invalidIRIString);
+        fd.field("targetBranchId", BRANCH_ID);
+
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void createMergeRequestWithInvalidTargetTest() {
+        // Setup:
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "Title");
+        fd.field("recordId", RECORD_ID);
+        fd.field("sourceBranchId", BRANCH_ID);
+        fd.field("targetBranchId", invalidIRIString);
+
+        Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
     public void createMergeRequestWithMissingRepoTest() {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart();
@@ -393,12 +429,10 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(requestManager).getMergeRequest(request1.getResource());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), 1);
-            JSONObject requestObj = result.getJSONObject(0);
-            assertFalse(requestObj.containsKey("@graph"));
-            assertTrue(requestObj.containsKey("@id"));
-            assertEquals(requestObj.getString("@id"), request1.getResource().stringValue());
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertFalse(result.containsKey("@graph"));
+            assertTrue(result.containsKey("@id"));
+            assertEquals(result.getString("@id"), request1.getResource().stringValue());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -429,6 +463,12 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue())).request().get();
         assertEquals(response.getStatus(), 500);
         verify(requestManager).getMergeRequest(request1.getResource());
+    }
+
+    @Test
+    public void getMergeRequestWithInvalidIRITest() {
+        Response response = target().path("merge-requests/" + encode(invalidIRIString)).request().get();
+        assertEquals(response.getStatus(), 400);
     }
 
     /* POST merge-requests/{requestId} */
@@ -477,5 +517,36 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
                 .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
         verify(requestManager).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
         assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void updateMergeRequestWithInvalidIRITest() {
+        Response response = target().path("merge-requests/" + encode(invalidIRIString)).request()
+                .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    /* DELETE merge-requests/{requestId} */
+
+    @Test
+    public void deleteMergeRequestTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
+                .request().delete();
+        verify(requestManager).deleteMergeRequest(eq(request1.getResource()));
+        assertEquals(response.getStatus(), 200);
+    }
+
+    @Test
+    public void deleteMergeRequestWithIRIDoesNotExistTest() {
+        Response response = target().path("merge-requests/" + encode(doesNotExist))
+                .request().delete();
+        assertEquals(response.getStatus(), 404);
+    }
+
+    @Test
+    public void deleteMergeRequestWithInvalidIRITest() {
+        Response response = target().path("merge-requests/" + encode(invalidIRIString))
+                .request().delete();
+        assertEquals(response.getStatus(), 400);
     }
 }

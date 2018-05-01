@@ -62,6 +62,7 @@
         self.prov = 'http://www.w3.org/ns/prov#';
         self.matprov = 'http://mobi.com/ontologies/prov#';
         self.analytic = 'http://mobi.com/ontologies/analytic#';
+        self.mergereq = 'http://mobi.com/ontologies/merge-requests#';
         self.policy = 'http://mobi.com/ontologies/policy#';
         self.user = 'http://mobi.com/ontologies/user/management#';
     }
