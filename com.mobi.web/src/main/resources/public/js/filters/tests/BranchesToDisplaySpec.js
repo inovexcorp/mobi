@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Branches Filter', function() {
+describe('Branches To Display Filter', function() {
     var $filter, catalogManagerSvc, utilSvc, loginManagerSvc, prefixes;
 
     beforeEach(function() {

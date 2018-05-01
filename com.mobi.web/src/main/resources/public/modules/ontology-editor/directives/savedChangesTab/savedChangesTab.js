@@ -81,16 +81,16 @@
                             .then(branchId => {
                                 createdBranchId = branchId;
                                 return cm.getRecordBranch(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId);
-                            }, dvm.createErrorToast)
+                            }, $q.reject)
                             .then(branch => {
                                 dvm.os.listItem.branches.push(branch);
                                 dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
                                 var commitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
                                 return sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, createdBranchId, commitId);
-                            }, dvm.util.createErrorToast)
+                            }, $q.reject)
                             .then(() => {
                                 return om.deleteOntology(dvm.os.listItem.ontologyRecord.recordId, userBranchId);
-                            }, dvm.createErrorToast)
+                            }, $q.reject)
                             .then(() => {
                                 dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, userBranchId);
                                 changeUserBranchesCreatedFrom(createdFromId, createdBranchId);

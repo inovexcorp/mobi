@@ -204,8 +204,9 @@ describe('Util service', function() {
         var prop = 'property';
         var value = {'@id': 'id'};
         var other = {'@id': 'other'};
-        var entity = {'property': [value, other]};
-        utilSvc.removePropertyId(entity, prop, value['@id'], other['@id']);
+        var entity = {'property': [value]};
+
+        utilSvc.replacePropertyId(entity, prop, value['@id'], other['@id']);
         expect(entity[prop]).toContain(other);
     });
     describe('should get a dcterms property value from an entity', function() {

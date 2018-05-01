@@ -205,7 +205,8 @@
              * @methodOf util.service:utilService
              *
              * @description
-             * Remove the passed id value of the passed property from the passed entity.
+             * Remove the passed idToRemove value of the passed property from the passed entity and replace with
+             * the provided idToAdd value.
              *
              * @param {Object} entity The entity to remove the property id value from
              * @param {string} propertyIRI The IRI of a property
