@@ -1,0 +1,58 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="request-branch-select full-height">
+    <div class="form-container">
+        <form name="dvm.form" class="branch-select-form form-inline" novalidate autocomplete="off">
+            <div class="form-group">
+                <span class="form-control-static">Merge </span>
+            </div>
+            <div class="form-group select-branch">
+                <ui-select ng-model="dvm.state.requestConfig.sourceBranch" ng-required="true" ng-change="dvm.changeSource()">
+                    <ui-select-match placeholder="Select a Branch">
+                        <span>Branch: {{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
+                    </ui-select-match>
+                    <ui-select-choices repeat="branch in dvm.branches | filter:$select.search">
+                        <span ng-bind-html="dvm.util.getDctermsValue(branch, 'title') | highlight:$select.search | trusted"></span>
+                    </ui-select-choices>
+                </ui-select>
+            </div>
+            <div class="form-group">
+                <span class="form-control-static">into</span>
+            </div>
+            <div class="form-group select-branch">
+                <ui-select ng-model="dvm.state.requestConfig.targetBranch" ng-required="true" ng-change="dvm.changeTarget()">
+                    <ui-select-match placeholder="Select a Branch">
+                        <span>Branch: {{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
+                    </ui-select-match>
+                    <ui-select-choices repeat="branch in dvm.branches | filter:$select.search">
+                        <span ng-bind-html="dvm.util.getDctermsValue(branch, 'title') | highlight:$select.search | trusted"></span>
+                    </ui-select-choices>
+                </ui-select>
+            </div>
+            <div class="form-group">
+                <span class="form-control-static">in <strong>{{dvm.util.getDctermsValue(dvm.state.requestConfig.record, 'title')}}</strong></span>
+            </div>
+        </form>
+    </div>
+    <commit-difference-tabset ng-if="dvm.state.requestConfig.difference" difference="dvm.state.requestConfig.difference" source-branch="dvm.state.requestConfig.sourceBranch" target-branch-id="dvm.state.requestConfig.targetBranchId" record-iri="dvm.state.requestConfig.recordId"></commit-difference-tabset>
+</div>

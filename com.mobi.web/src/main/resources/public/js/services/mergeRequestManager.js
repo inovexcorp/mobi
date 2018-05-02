@@ -74,6 +74,46 @@
 
             /**
              * @ngdoc method
+             * @name createRequest
+             * @methodOf mergeRequestManager.service:mergeRequestManagerService
+             *
+             * @description
+             * Calls the POST /mobirest/merge-requests endpoint with the passed metadata and creates a new
+             * MergeRequest. Returns a Promise with the IRI of the new MergeRequest if successful or
+             * rejects with an error message.
+             *
+             * @param {Object} requestConfig A configuration object containing metadata for the new MergeRequest
+             * @param {string} requestConfig.title The required title of the new MergeRequest
+             * @param {string} requestConfig.description The optional description of the new MergeRequest
+             * @param {string} requestConfig.recordId The required IRI of the VersionedRDFRecord of the new MergeRequest
+             * @param {string} requestConfig.sourceBranchId The required IRI of the source Branch for the new MergeRequest
+             * @param {string} requestConfig.targetBranchId The required IRI of the target Branch for the new MergeRequest
+             * @param {string[]} requestConfig.assignees The optional assignees of the new MergeRequest.
+             * @return {Promise} A promise that resolves to the IRI of the new MergeRequest or is rejected with
+             * an error message
+             */
+            self.createRequest = function(requestConfig) {
+                var fd = new FormData(),
+                    config = {
+                        transformRequest: _.identity,
+                        headers: {
+                            'Content-Type': undefined
+                        }
+                    };
+                fd.append('title', requestConfig.title);
+                fd.append('recordId', requestConfig.recordId);
+                fd.append('sourceBranchId', requestConfig.sourceBranchId);
+                fd.append('targetBranchId', requestConfig.targetBranchId);
+                if (_.has(requestConfig, 'description')) {
+                    fd.append('description', requestConfig.description);
+                }
+                _.forEach(_.get(requestConfig, 'assignees', []), username => fd.append('assignees', username));
+                return $http.post(prefix, fd, config)
+                    .then(response => response.data, util.rejectError);
+            }
+
+            /**
+             * @ngdoc method
              * @name getRequest
              * @methodOf mergeRequestManager.service:mergeRequestManagerService
              *

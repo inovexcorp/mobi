@@ -32,18 +32,10 @@
                 <div class="description">
                     {{dvm.util.getDctermsValue(dvm.selected.request, 'description') || 'No description'}}
                 </div>
-                <div class="request-record"><span class="field-name">Record: </span>{{dvm.selected.recordTitle}}</div>
+                <div class="request-summary"><strong>{{dvm.selected.sourceTitle}}</strong> into <strong>{{dvm.selected.targetTitle}}</strong> in <strong>{{dvm.selected.recordTitle}}</strong></div>
             </div>
-            <!-- TODO: Need to display these tabs for Accepted requests -->
-            <tabset class="in-overlay" ng-if="!dvm.mm.isAccepted(dvm.selected.request)">
-                <tab heading="'Changes'" active="dvm.tabs.changes">
-                    <commit-changes-display additions="dvm.selected.difference.additions" deletions="dvm.selected.difference.deletions"></commit-changes-display>
-                    <info-message ng-if="!dvm.selected.difference.additions.length && !dvm.selected.difference.deletions.length">No changes to display</info-message>
-                </tab>
-                <tab heading="'Commits'" active="dvm.tabs.commits">
-                    <commit-history-table branch="dvm.selected.sourceBranch" record-id="dvm.selected.recordIri" target-id="dvm.selected.targetBranch['@id']"></commit-history-table>
-                </tab>
-            </tabset>
+            <!-- TODO: Need to display these tabs for Accepted requests, meaning with just the commits and branch titles -->
+            <commit-difference-tabset ng-if="!dvm.mm.isAccepted(dvm.selected.request)" difference="dvm.selected.difference" record-iri="dvm.selected.recordIri" source-branch="dvm.selected.sourceBranch" target-branch-id="dvm.selected.targetBranch['@id']"></commit-difference-tabset>
         </block-content>
         <block-footer>
             <button class="btn btn-danger pull-right" ng-click="dvm.showDelete()">Delete</button>

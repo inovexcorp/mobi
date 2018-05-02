@@ -21,7 +21,9 @@
   #L%
   -->
 <div class="merge-request-list">
-    <div class="search-container"></div>
+    <div class="search-container">
+        <button class="btn btn-primary" ng-click="dvm.state.startCreate()">Create Request</button>
+    </div>
     <block>
         <block-content class="padding">
             <info-message ng-if="!dvm.state.requests.length">No requests found</info-message>

@@ -72,7 +72,7 @@
              * ```
              * {
              *     active: true // Whether the tab is displayed
-             *     selected: {...} // The currently selected request
+             *     selected: {...} // An object representing the currently selected request
              * }
              * ```
              */
@@ -80,16 +80,140 @@
                 active: true,
                 selected: undefined
             };
-
+            /**
+             * @ngdoc property
+             * @name showDelete
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             * @type {boolean}
+             *
+             * @description
+             * `showDelete` determines whether the Delete Merge Request {@link confirmationOverlay.directive:confirmationOverlay}
+             * should be shown.
+             */
             self.showDelete = false;
-
+            /**
+             * @ngdoc property
+             * @name requestToDelete
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             * @type {Object}
+             *
+             * @description
+             * `requestToDelete` contains an object representing the request that will be deleted from the
+             * Delete Merge Request {@link confirmationOverlay.directive:confirmationOverlay}.
+             */
             self.requestToDelete = undefined;
-
+            /**
+             * @ngdoc property
+             * @name createRequest
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             * @type {boolean}
+             *
+             * @description
+             * `createRequest` determines whether a Merge Request is being created and thus whether the
+             * {@link createMergeRequest.directive:createMergeRequest} should be shown.
+             */
+            self.createRequest = false;
+            /**
+             * @ngdoc property
+             * @name createRequestStep
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             * @type {number}
+             *
+             * @description
+             * `createRequestStep` contains the index of the current step of the Create Merge Request process.
+             * Currently, there are only 3 steps.
+             */
+            self.createRequestStep = 0;
+            /**
+             * @ngdoc property
+             * @name requestConfig
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             * @type {Object}
+             *
+             * @description
+             * `requestConfig` contains an object with the configurations for a new Merge Request. The structure of
+             * the object looks like the following:
+             * ```
+             * {
+             *     recordId: '', // The IRI of the VersionedRDFRecord that the Merge Request is related to,
+             *     sourceBranchId: '', // The IRI of the source Branch for the Merge Request
+             *     targetBranchId: '', // The IRI of the target Branch for the Merge Request
+             *     title: '', // The title for the Merge Request
+             *     description: '' // The description for the Merge Request
+             * }
+             * ```
+             */
+            self.requestConfig = {
+                recordId: '',
+                sourceBranchId: '',
+                targetBranchId: '',
+                title: '',
+                description: ''
+            };
+            /**
+             * @ngdoc property
+             * @name requests
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             * @type {Object[]}
+             *
+             * @description
+             * `requests` contains an array of objects representing the currently displayed list of Merge Requests.
+             * The structure of the objects looks like the following:
+             * ```
+             * {
+             *     request: {...}, // The JSON-LD object of the Merge Request
+             *     title: '', // The title of the Merge Request
+             *     date: '', // A string representation of the date the Merge Request was created
+             *     creator: {...}, // The object representing the user that created the Merge Request
+             *     recordIri: '', // The IRI of the VersionedRDFRecord the Merge Request relates to,
+             *     recordTitle: '' // The title of the related VersionedRDFRecord
+             * }
+             * ```
+             */
             self.requests = [];
 
+            /**
+             * @ngdoc method
+             * @name startCreate
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             *
+             * @description
+             * Starts the Create Merge Request process by setting the appropriate state variables.
+             */
+            self.startCreate = function() {
+                self.createRequest = true;
+                self.createRequestStep = 0;
+                self.requestConfig = {
+                    recordId: '',
+                    sourceBranchId: '',
+                    targetBranchId: '',
+                    title: '',
+                    description: ''
+                };
+            }
+            /**
+             * @ngdoc method
+             * @name initialize
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             *
+             * @description
+             * Initializes the service by retrieving the
+             * {@link catalogManager.service:catalogManagerService local catalog} id.
+             */
             self.initialize = function() {
                 catalogId = _.get(cm.localCatalog, '@id', '');
             }
+            /**
+             * @ngdoc method
+             * @name initialize
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             *
+             * @description
+             * Sets `requests` using the {@link mergeRequestManager.service:mergeRequestManagerService}
+             * and retrieving any needed metadata about the related VersionedRDFRecord and Branches.
+             *
+             * @param {boolean} [accepted=false] Whether the list should be accepted Merge Requests or just open ones.
+             */
             self.setRequests = function(accepted = false) {
                 mm.getRequests()
                     .then(data => {
@@ -113,6 +237,20 @@
                         util.createErrorToast(error);
                     });
             }
+            /**
+             * @ngdoc method
+             * @name selectRequest
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             *
+             * @description
+             * Selects the request represented with the provided object for the provided tab and adds
+             * more metadata to the request object using the {@link catalogManager.service:catalogManagerService}.
+             * This metadata includes the source and target branch with their titles, source and target commits,
+             * and the difference between the two commits.
+             *
+             * @param {Object} request An item from the `requests` arrya that represents the request to select
+             * @param {Object} tabObj Either the `open` tab or the `accepted` tab
+             */
             self.selectRequest = function(request, tabObj) {
                 if (mm.isAccepted(request.request)) {
                     request.sourceTitle = util.getPropertyValue(request.request, prefixes.mergereq + 'sourceBranchTitle');
@@ -143,6 +281,16 @@
                         }, util.createErrorToast);
                 }
             }
+            /**
+             * @ngdoc method
+             * @name getCurrentTab
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             *
+             * @description
+             * Retrieves the current tab of the Merge Requests module, either `open` or `accepted`.
+             *
+             * @return {Object} Either the `open` object or the `accepted` object
+             */
             self.getCurrentTab = function() {
                 return _.find([self.open], 'active');
             }

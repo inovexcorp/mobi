@@ -67,6 +67,7 @@
             'circleButtonStack',
             'clickAnywhereButHere',
             'commitChangesDisplay',
+            'commitDifferenceTabset',
             'commitHistoryTable',
             'commitInfoOverlay',
             'confirmationOverlay',

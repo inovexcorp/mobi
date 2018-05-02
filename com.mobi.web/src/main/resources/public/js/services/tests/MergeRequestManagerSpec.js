@@ -95,6 +95,63 @@ describe('Merge Request Manager service', function() {
             flushAndVerify($httpBackend);
         });
     });
+    describe('should create a new merge request', function() {
+        beforeEach(function() {
+            this.requestConfig = {
+                title: 'Title',
+                description: 'Description',
+                recordId: 'recordId',
+                sourceBranchId: 'branch1',
+                targetBranchId: 'branch2',
+                assignees: ['user1', 'user2']
+            };
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectPOST('/mobirest/merge-requests',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(400, null, null, 'Error Message');
+            mergeRequestManagerSvc.createRequest(this.requestConfig)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
+        });
+        it('with a description and assignees', function() {
+            $httpBackend.expectPOST('/mobirest/merge-requests',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(200, 'requestId');
+            mergeRequestManagerSvc.createRequest(this.requestConfig)
+                .then(function(response) {
+                    expect(response).toBe('requestId');
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('without a description or assignees', function() {
+            delete this.requestConfig.description;
+            delete this.requestConfig.assignees;
+            $httpBackend.expectPOST('/mobirest/merge-requests',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(200, 'requestId');
+            mergeRequestManagerSvc.createRequest(this.requestConfig)
+                .then(function(response) {
+                    expect(response).toBe('requestId');
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
     describe('should get a single merge request', function() {
         beforeEach(function() {
             this.requestId = 'request';

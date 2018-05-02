@@ -133,5 +133,14 @@ describe('Merge Requests Tabset directive', function() {
             scope.$digest();
             expect(this.element.find('confirmation-overlay').length).toBe(1);
         });
+        it('depending on whether a new request is being created', function() {
+            expect(this.element.find('create-request-tabset').length).toBe(0);
+            expect(this.element.find('tabset').length).toBe(1);
+
+            mergeRequestsStateSvc.createRequest = true;
+            scope.$digest();
+            expect(this.element.find('create-request-tabset').length).toBe(1);
+            expect(this.element.find('tabset').length).toBe(0);
+        });
     });
 });

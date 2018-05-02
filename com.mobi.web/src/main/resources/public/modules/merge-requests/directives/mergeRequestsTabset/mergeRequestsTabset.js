@@ -26,7 +26,7 @@
     angular
         /**
          * @ngdoc overview
-         * @name mergeRequestTabset
+         * @name mergeRequestsTabset
          *
          * @description
          * The `mergeRequestsTabset` module only provides the `mergeRequestsTabset` directive
@@ -35,7 +35,7 @@
         .module('mergeRequestsTabset', [])
         /**
          * @ngdoc directive
-         * @name mergeRequestTabset.directive:mergeRequestTabset
+         * @name mergeRequestsTabset.directive:mergeRequestsTabset
          * @scope
          * @restrict E
          * @requires mergeRequestsState.service:mergeRequestsStateService
@@ -46,11 +46,11 @@
          * are the {@link openTab.directive:openTab}. The directive is replaced by the contents
          * of its template.
          */
-        .directive('mergeRequestsTabset', mergeRequestTabset);
+        .directive('mergeRequestsTabset', mergeRequestsTabset);
 
-    mergeRequestTabset.$inject = ['mergeRequestsStateService', 'mergeRequestManagerService', 'utilService'];
+    mergeRequestsTabset.$inject = ['mergeRequestsStateService', 'mergeRequestManagerService', 'utilService'];
 
-    function mergeRequestTabset(mergeRequestsStateService, mergeRequestManagerService, utilService) {
+    function mergeRequestsTabset(mergeRequestsStateService, mergeRequestManagerService, utilService) {
         return {
             restrict: 'E',
             templateUrl: 'modules/merge-requests/directives/mergeRequestsTabset/mergeRequestsTabset.html',

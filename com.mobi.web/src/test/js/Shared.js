@@ -1272,6 +1272,7 @@ function mockMergeRequestsState() {
             this.initialize = jasmine.createSpy('initialize');
             this.setRequests = jasmine.createSpy('setRequests');
             this.selectRequest = jasmine.createSpy('selectRequest');
+            this.startCreate = jasmine.createSpy('startCreate');
             this.getCurrentTab = jasmine.createSpy('getCurrentTab').and.returnValue({});
         });
     });

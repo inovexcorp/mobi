@@ -65,10 +65,6 @@
                     dvm.state = mergeRequestsStateService;
                     var currentTab = dvm.state.getCurrentTab();
                     dvm.selected = currentTab.selected;
-                    dvm.tabs = {
-                        changes: true,
-                        commits: false
-                    };
 
                     dvm.mm.getRequest(dvm.selected.request['@id'])
                         .then(_.noop, error => {

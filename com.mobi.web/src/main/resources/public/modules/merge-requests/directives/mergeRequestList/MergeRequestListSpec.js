@@ -98,4 +98,9 @@ describe('Merge Request List directive', function() {
         link.triggerHandler('click');
         expect(this.controller.showDeleteOverlay).toHaveBeenCalled();
     });
+    it('should call startCreate when the Create Request button is clicked', function() {
+        var button = angular.element(this.element.querySelectorAll('.search-container button')[0]);
+        button.triggerHandler('click');
+        expect(mergeRequestsStateSvc.startCreate).toHaveBeenCalled();
+    });
 });
