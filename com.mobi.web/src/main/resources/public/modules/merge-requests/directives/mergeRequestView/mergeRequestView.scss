@@ -8,6 +8,21 @@
     h2 {
         display: inline-block;
     }
+    .conflict {
+        display: block;
+        
+        .warning:before {
+            content: "\f071"
+        }
+        
+        .warning {
+            padding: 0.5em;
+
+            span {
+                padding-left: 0.5em;
+            }
+        }
+    }
     .block-footer button {
         margin-left: 10px;
     }

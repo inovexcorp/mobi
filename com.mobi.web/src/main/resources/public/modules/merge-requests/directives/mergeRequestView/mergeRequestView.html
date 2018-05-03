@@ -33,6 +33,11 @@
                     {{dvm.util.getDctermsValue(dvm.selected.request, 'description') || 'No description'}}
                 </div>
                 <div class="request-summary"><strong>{{dvm.selected.sourceTitle}}</strong> into <strong>{{dvm.selected.targetTitle}}</strong> in <strong>{{dvm.selected.recordTitle}}</strong></div>
+                <div class="conflict bg-warning text-warning fa fa-2x" ng-if="dvm.selected.hasConflicts">
+                    <h3 class="warning">
+                        <span>This request has conflicts. You can resolve them during the merge process.</span>
+                    </h3>
+                </div>
             </div>
             <!-- TODO: Need to display these tabs for Accepted requests, meaning with just the commits and branch titles -->
             <commit-difference-tabset ng-if="!dvm.mm.isAccepted(dvm.selected.request)" difference="dvm.selected.difference" record-iri="dvm.selected.recordIri" source-branch="dvm.selected.sourceBranch" target-branch-id="dvm.selected.targetBranch['@id']"></commit-difference-tabset>
