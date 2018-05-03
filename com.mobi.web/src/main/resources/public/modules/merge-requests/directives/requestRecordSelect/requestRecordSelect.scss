@@ -13,6 +13,9 @@
         flex: 1;
         overflow-y: auto;
 
+        .row {
+            margin: 0;
+        }
         .card {
             md-card-title-text {
                 width: 100%;

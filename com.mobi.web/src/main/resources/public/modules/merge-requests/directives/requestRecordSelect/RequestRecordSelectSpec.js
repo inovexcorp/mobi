@@ -46,7 +46,7 @@ describe('Request Record Select directive', function() {
         this.getResponse = {data: [{'@id': '1'}, {'@id': '2'}, {'@id': '3'}], headers: jasmine.createSpy('headers').and.returnValue(this.headers)};
         catalogManagerSvc.getRecords.and.returnValue($q.when(this.getResponse));
         utilSvc.getResultsPage.and.returnValue($q.when(this.getResponse));
-        catalogManagerSvc.sortOptions = [{field: prefixes.dcterms + 'title', ascending: true}];
+        catalogManagerSvc.sortOptions = [{field: prefixes.dcterms + 'title', asc: true}];
         utilSvc.parseLinks.and.returnValue({prev: 'prev', next: 'next'});
         this.element = $compile(angular.element('<request-record-select></request-record-select>'))(scope);
         scope.$digest();
