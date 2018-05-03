@@ -32,9 +32,13 @@
                             <request-details-form ng-if="dvm.state.createRequestStep === 2"></request-details-form>
                         </block-content>
                         <block-footer>
-                            <!-- TODO: Add progress steps -->
-                            <button class="btn btn-primary pull-right" ng-click="dvm.next()" ng-disabled="dvm.isDisabled()">{{dvm.state.createRequestStep === 2 ? 'Submit' : 'Next'}}</button>
-                            <button class="btn btn-default pull-right" ng-click="dvm.back()">{{dvm.state.createRequestStep === 0 ? 'Cancel' : 'Back'}}</button>
+                            <div class="progress-bar-container">
+                                <step-progress-bar step-number="3" current-step="dvm.state.createRequestStep"></step-progress-bar>
+                            </div>
+                            <div class="btn-container">
+                                <button class="btn btn-default" ng-click="dvm.back()">{{dvm.state.createRequestStep === 0 ? 'Cancel' : 'Back'}}</button>
+                                <button class="btn btn-primary" ng-click="dvm.next()" ng-disabled="dvm.isDisabled()">{{dvm.state.createRequestStep === 2 ? 'Submit' : 'Next'}}</button>
+                            </div>
                         </block-footer>
                     </block>
                 </div>

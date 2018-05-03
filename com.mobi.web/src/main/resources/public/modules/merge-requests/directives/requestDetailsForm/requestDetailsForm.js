@@ -30,7 +30,7 @@
          *
          * @description
          * The `requestDetailsForm` module only provides the `requestDetailsForm` directive
-         * which creates the main div containing the Merge Requests page.
+         * which creates a form for setting the metadata of a new MergeRequest.
          */
         .module('requestDetailsForm', [])
         /**
@@ -39,12 +39,14 @@
          * @scope
          * @restrict E
          * @requires mergeRequestsState.service:mergeRequestsStateService
+         * @requires util.service:utilService
          *
          * @description
-         * `requestDetailsForm` is a directive which creates a div containing a
-         * {@link tabset.directive:tabset} with the main tabs of the Merge Requests page. These tabs
-         * are the {@link openTab.directive:openTab}. The directive is replaced by the contents
-         * of its template.
+         * `requestDetailsForm` is a directive which creates a div containing a form with inputs for
+         * the title, description, and other metadata about a new MergeRequest. The div also contains
+         * {@link commitDifferenceTabset.directive:commitDifferenceTabset} to display the changes and
+         * commits between the previously selected source and target branch of the Merge Request.
+         * The directive is replaced by the contents of its template.
          */
         .directive('requestDetailsForm', requestDetailsForm);
 

@@ -67,7 +67,6 @@
                     if (dvm.state.createRequestStep < 2) {
                         dvm.state.createRequestStep++;
                     } else {
-                        console.log('Submit', dvm.state.requestConfig);
                         mm.createRequest(dvm.state.requestConfig)
                             .then(iri => {
                                 util.createSuccessToast('Successfully created request');

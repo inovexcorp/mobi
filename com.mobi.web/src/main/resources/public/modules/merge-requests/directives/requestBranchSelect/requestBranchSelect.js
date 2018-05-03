@@ -30,7 +30,7 @@
          *
          * @description
          * The `requestBranchSelect` module only provides the `requestBranchSelect` directive
-         * which creates the main div containing the Merge Requests page.
+         * which creates a form for selecting the source and target Branch of a new MergeRequest.
          */
         .module('requestBranchSelect', [])
         /**
@@ -39,12 +39,16 @@
          * @scope
          * @restrict E
          * @requires mergeRequestsState.service:mergeRequestsStateService
+         * @requires mergeRequestManager.service:mergeRequestManagerService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires util.service:utilService
          *
          * @description
-         * `requestBranchSelect` is a directive which creates a div containing a
-         * {@link tabset.directive:tabset} with the main tabs of the Merge Requests page. These tabs
-         * are the {@link openTab.directive:openTab}. The directive is replaced by the contents
-         * of its template.
+         * `requestBranchSelect` is a directive which creates a div containing a form with ui-selects
+         * to choose the source and target Branch for a new MergeRequest. The Branch list is derived from
+         * the previously selected VersionedRDFRecord for the MergeRequest. The div also contains a
+         * {@link commitDifferenceTabset.directive:commitDifferenceTabset} to display the changes and commits
+         * between the selected branches. The directive is replaced by the contents of its template.
          */
         .directive('requestBranchSelect', requestBranchSelect);
 
@@ -75,7 +79,7 @@
                 // TODO: Sort by title
                 cm.getRecordBranches(dvm.state.requestConfig.recordId, catalogId)
                     .then(response => dvm.branches = response.data, error => {
-                        util.createErrorToast(error);
+                        dvm.util.createErrorToast(error);
                         dvm.branches = [];
                     });
 
