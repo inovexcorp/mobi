@@ -8,22 +8,7 @@
     h2 {
         display: inline-block;
     }
-    .conflict {
-        display: block;
-        
-        .warning:before {
-            content: "\f071"
-        }
-        
-        .warning {
-            padding: 0.5em;
 
-            span {
-                font-family: sans-serif;
-                padding-left: 0.5em;
-            }
-        }
-    }
     .block-footer button {
         margin-left: 10px;
     }
