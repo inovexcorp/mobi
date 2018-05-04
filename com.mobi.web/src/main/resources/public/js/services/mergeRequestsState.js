@@ -280,7 +280,7 @@
                             tabObj.selected = request;
                             return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
                         }, $q.reject)
-                        .then(conflicts => request.hasConflicts = !_.isEmpty(conflicts), util.createErrorToast)
+                        .then(conflicts => request.hasConflicts = !_.isEmpty(conflicts), util.createErrorToast);
                 }
             }
             /**
