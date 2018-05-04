@@ -76,12 +76,6 @@ describe('Commit Overlay directive', function() {
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
         });
-        it('depending on whether the selected item is up to date', function() {
-            expect(this.element.find('info-message').length).toBe(0);
-            ontologyStateSvc.listItem.upToDate = false;
-            scope.$digest();
-            expect(this.element.find('info-message').length).toBe(1);
-        });
         it('with a text-area', function() {
             expect(this.element.find('text-area').length).toBe(1);
         });
@@ -188,6 +182,7 @@ describe('Commit Overlay directive', function() {
                                 expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                                     ontologyStateSvc.listItem.ontologyRecord.branchId, this.commitId);
                                 expect(ontologyStateSvc.listItem.ontologyRecord.commitId).toEqual(this.commitId);
+                                expect(ontologyStateSvc.listItem.userBranch).toEqual(true);
                                 expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
                                 expect(ontologyStateSvc.showCommitOverlay).toBe(false);
                             });

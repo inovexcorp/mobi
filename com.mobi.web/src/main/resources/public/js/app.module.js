@@ -43,6 +43,7 @@
 
             /* Custom Filters */
             'beautify',
+            'branchesToDisplay',
             'camelCase',
             'escapeHTML',
             'inArray',

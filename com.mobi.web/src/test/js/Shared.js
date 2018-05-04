@@ -110,6 +110,12 @@ function injectBeautifyFilter() {
     });
 }
 
+function injectBranchesToDisplayFilter() {
+    module(function($provide) {
+        $provide.value('branchesToDisplayFilter', jasmine.createSpy('branchesToDisplay').and.callFake(_.identity));
+    });
+}
+
 function injectSplitIRIFilter() {
     module(function($provide) {
         $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {
@@ -568,6 +574,8 @@ function mockOntologyState() {
                        active: false
                    }
                 },
+                userBranch: false,
+                createdFromExists: true,
                 ontologyRecord: {
                     title: '',
                     recordId: '',
@@ -915,6 +923,7 @@ function mockCatalogManager() {
             this.isVersionedRDFRecord = jasmine.createSpy('isVersionedRDFRecord');
             this.isDistribution = jasmine.createSpy('isDistribution');
             this.isBranch = jasmine.createSpy('isBranch');
+            this.isUserBranch = jasmine.createSpy('isUserBranch');
         });
     });
 }
@@ -978,6 +987,7 @@ function mockUtil() {
             this.getPropertyId = jasmine.createSpy('getPropertyId').and.returnValue('');
             this.hasPropertyId = jasmine.createSpy('hasPropertyId').and.returnValue(false);
             this.removePropertyId = jasmine.createSpy('removePropertyId');
+            this.replacePropertyId = jasmine.createSpy('replacePropertyId');
             this.getDctermsValue = jasmine.createSpy('getDctermsValue').and.returnValue('');
             this.setDctermsValue = jasmine.createSpy('setDctermsValue').and.returnValue({});
             this.mergingArrays = jasmine.createSpy('mergingArrays');

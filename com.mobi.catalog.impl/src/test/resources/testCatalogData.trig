@@ -218,7 +218,8 @@ GRAPH branches:no-head-branch {
 }
 
 GRAPH branches:user-branch {
-    branches:user-branch a mcat:Branch, mcat:UserBranch .
+    branches:user-branch a mcat:Branch, mcat:UserBranch ;
+        mcat:createdFrom branches:branch .
 }
 
 GRAPH branches:master {

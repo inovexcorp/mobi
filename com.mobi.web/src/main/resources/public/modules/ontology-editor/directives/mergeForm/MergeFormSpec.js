@@ -42,11 +42,10 @@ describe('Merge Form directive', function() {
         });
 
         scope.branch = {'@id': 'branchId'};
-        scope.isUserBranch = false;
         scope.removeBranch = false;
         scope.target = undefined;
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
-        this.element = $compile(angular.element('<merge-form branch="branch" is-user-branch="isUserBranch" target="target" remove-branch="removeBranch"></merge-form>'))(scope);
+        this.element = $compile(angular.element('<merge-form branch="branch" is-user-branch="dvm.os.listItem.userBranch" target="target" remove-branch="removeBranch"></merge-form>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('mergeForm');
     });
@@ -65,11 +64,6 @@ describe('Merge Form directive', function() {
             this.controller.branch = {'@id': 'test'};
             scope.$digest();
             expect(scope.branch).toEqual({'@id': 'branchId'});
-        });
-        it('isUserBranch is one way bound', function() {
-            this.controller.isUserBranch = true;
-            scope.$digest();
-            expect(scope.isUserBranch).toEqual(false);
         });
         it('target is two way bound', function() {
             this.controller.target = {};
@@ -100,7 +94,7 @@ describe('Merge Form directive', function() {
             expect(select.attr('disabled')).toBeFalsy();
             expect(this.element.find('checkbox').length).toEqual(1);
 
-            scope.isUserBranch = true;
+            ontologyStateSvc.listItem.userBranch = true;
             scope.$digest();
             expect(select.attr('disabled')).toBeTruthy();
             expect(this.element.find('checkbox').length).toEqual(0);
@@ -109,7 +103,7 @@ describe('Merge Form directive', function() {
             expect(this.element.find('checkbox').length).toEqual(1);
 
             this.controller.branchTitle = 'MASTER';
-            this.controller.isUserBranch = true;
+            ontologyStateSvc.listItem.userBranch = true;
             scope.$digest();
             expect(this.element.find('checkbox').length).toEqual(0);
         });
