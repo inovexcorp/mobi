@@ -77,7 +77,7 @@
                     recordType: prefixes.ontologyEditor + 'OntologyRecord',
                     limit: 25,
                     searchText: '',
-                    sortOption: _.find(cm.sortOptions, {field: prefixes.dcterms + 'title', ascending: true}),
+                    sortOption: _.find(cm.sortOptions, {field: prefixes.dcterms + 'title', asc: true}),
                     pageIndex: 0,
                 };
 
