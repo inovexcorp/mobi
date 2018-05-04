@@ -46,7 +46,6 @@
                     dvm.util = utilService;
                     dvm.branch = {};
                     dvm.error = '';
-                    dvm.isUserBranch = false;
 
                     dvm.allResolved = function() {
                         return !_.some(dvm.os.listItem.merge.conflicts, {resolved: false});
@@ -116,10 +115,8 @@
                             if (!dvm.os.listItem.merge.target) {
                                 dvm.os.listItem.merge.target = _.find(dvm.os.listItem.branches, {'@id': dvm.util.getPropertyId(dvm.branch, prefixes.catalog + 'createdFrom')});
                             }
-                            dvm.isUserBranch = true;
                             dvm.os.listItem.merge.checkbox = true;
-                        } else {
-                            dvm.isUserBranch = false;
+                            dvm.attemptMerge();
                         }
                     }
                     function addToResolutions(notSelected) {
@@ -129,6 +126,7 @@
                             dvm.os.listItem.merge.resolutions.additions = _.concat(dvm.os.listItem.merge.resolutions.additions, notSelected.deletions);
                         }
                     }
+
                     setupVariables();
                 }]
             }

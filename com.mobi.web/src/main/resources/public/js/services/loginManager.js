@@ -87,6 +87,17 @@
             self.currentUser = '';
 
             /**
+             * @ngdoc property
+             * @name currentUserIRI
+             * @propertyOf loginManager.service:loginManagerService
+             * @type {string}
+             *
+             * @description
+             * `currentUserIRI` holds the IRI of the user that is currenlty logged into Mobi.
+             */
+            self.currentUserIRI = '';
+
+            /**
              * @ngdoc method
              * @name loginManager.loginManagerService#login
              * @methodOf loginManager.service:loginManagerService
@@ -114,6 +125,9 @@
                     .then(response => {
                         if (response.status === 200 && response.data.scope !== anon) {
                             self.currentUser = response.data.sub;
+                            userManagerService.getUser(self.currentUser).then(user => {
+                                self.currentUserIRI = user.iri;
+                            });
                             $state.go('root.home');
                             deferred.resolve(true);
                         } else {
@@ -153,6 +167,7 @@
                 $http.get(prefix + 'logout')
                     .then(response => {
                         self.currentUser = '';
+                        self.currentUserIRI = '';
                         userStateService.reset();
                     });
                 $state.go('login');
@@ -177,6 +192,7 @@
             self.isAuthenticated = function() {
                 var handleError = function(data) {
                     self.currentUser = '';
+                    self.currentUserIRI = '';
                     $state.go('login');
                     return $q.reject(data);
                 };
@@ -195,6 +211,9 @@
                             weGood = true;
                         }
                         stateManagerService.initialize();
+                        userManagerService.getUser(self.currentUser).then(user => {
+                            self.currentUserIRI = user.iri;
+                        });
                         return $q.when();
                     } else {
                         return handleError(data);

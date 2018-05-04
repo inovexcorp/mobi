@@ -37,7 +37,6 @@
                 scope: {},
                 bindToController: {
                     branch: '<',
-                    isUserBranch: '<',
                     target: '=',
                     removeBranch: '='
                 },
