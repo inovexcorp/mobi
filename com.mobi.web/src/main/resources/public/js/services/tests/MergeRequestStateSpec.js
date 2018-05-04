@@ -165,6 +165,7 @@ describe('Merge Requests State service', function() {
                     this.expected.targetBranch = {};
                     this.expected.targetTitle = 'title';
                     this.expected.targetCommit = prefixes.catalog + 'head';
+                    this.expected.hasConflicts = false;
                 });
                 it('and getBranchDifference resolves', function() {
                     catalogManagerSvc.getBranchDifference.and.returnValue($q.when({}));
@@ -192,6 +193,7 @@ describe('Merge Requests State service', function() {
             });
             it('unless getRecordBranch rejects', function() {
                 this.expected = angular.copy(this.request);
+                this.expected.hasConflicts = false;
                 catalogManagerSvc.getRecordBranch.and.returnValue($q.reject('Error Message'));
                 mergeRequestsStateSvc.selectRequest(this.request, this.tabObj);
                 scope.$apply();
