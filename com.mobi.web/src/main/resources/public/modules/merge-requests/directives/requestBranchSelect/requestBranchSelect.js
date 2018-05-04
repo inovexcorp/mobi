@@ -76,7 +76,6 @@
                     updateDifference();
                 }
 
-                // TODO: Sort by title
                 cm.getRecordBranches(dvm.state.requestConfig.recordId, catalogId)
                     .then(response => dvm.branches = response.data, error => {
                         dvm.util.createErrorToast(error);

@@ -38,7 +38,6 @@
                     This request has conflicts. You can resolve them during the merge process.
                 </div>
             </div>
-            <!-- TODO: Need to display these tabs for Accepted requests, meaning with just the commits and branch titles -->
             <commit-difference-tabset ng-if="!dvm.mm.isAccepted(dvm.selected.request)" difference="dvm.selected.difference" record-id="dvm.selected.recordIri" source-branch="dvm.selected.sourceBranch" target-branch-id="dvm.selected.targetBranch['@id']"></commit-difference-tabset>
         </block-content>
         <block-footer>
