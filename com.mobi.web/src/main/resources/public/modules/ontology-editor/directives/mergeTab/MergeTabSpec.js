@@ -79,6 +79,8 @@ describe('Merge Tab directive', function() {
         describe('the current branch is a user branch', function() {
             beforeEach(function() {
                 this.branch['@type'] = [prefixes.catalog + 'UserBranch'];
+                ontologyStateSvc.listItem.userBranch = true;
+                catalogManagerSvc.getBranchConflicts.and.returnValue($q.when([{iri: 'conflict1', left: {additions: []}}]))
             });
             it('and has been set before', function() {
                 ontologyStateSvc.listItem.merge.target = {'@id': 'previous'};

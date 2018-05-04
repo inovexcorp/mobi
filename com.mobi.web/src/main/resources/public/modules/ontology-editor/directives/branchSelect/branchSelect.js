@@ -28,10 +28,10 @@
         .directive('branchSelect', branchSelect);
 
         branchSelect.$inject = ['$filter', '$q', 'catalogManagerService', 'ontologyStateService',
-            'ontologyManagerService', 'utilService', 'stateManagerService', 'prefixes'];
+            'ontologyManagerService', 'utilService', 'stateManagerService'];
 
         function branchSelect($filter, $q, catalogManagerService, ontologyStateService, ontologyManagerService, utilService,
-            stateManagerService, prefixes) {
+            stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,

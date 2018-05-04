@@ -116,6 +116,7 @@
                                 dvm.os.listItem.merge.target = _.find(dvm.os.listItem.branches, {'@id': dvm.util.getPropertyId(dvm.branch, prefixes.catalog + 'createdFrom')});
                             }
                             dvm.os.listItem.merge.checkbox = true;
+                            dvm.attemptMerge();
                         }
                     }
                     function addToResolutions(notSelected) {
@@ -127,10 +128,6 @@
                     }
 
                     setupVariables();
-
-                    if (dvm.os.listItem.userBranch) {
-                        dvm.attemptMerge();
-                    }
                 }]
             }
         }

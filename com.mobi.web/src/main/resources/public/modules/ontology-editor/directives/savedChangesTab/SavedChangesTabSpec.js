@@ -274,22 +274,21 @@ describe('Saved Changes Tab directive', function() {
                     description: this.branchDescription
                 };
 
-                dvm = this;
                 utilSvc.getPropertyId.and.callFake(function(branch, prop) {
                     if (prop === prefixes.catalog + 'createdFrom') {
-                        return dvm.createdFromId;
+                        return this.createdFromId;
                     } else if (prop === prefixes.catalog + 'head') {
-                       return dvm.commitId;
+                       return this.commitId;
                    }
-                });
+                }.bind(this));
 
                 utilSvc.getDctermsValue.and.callFake(function(branch, prop) {
                     if (prop === 'title') {
-                        return dvm.branchTitle;
+                        return this.branchTitle;
                     } else if (prop === 'description') {
-                        return dvm.branchDescription;
+                        return this.branchDescription;
                     }
-                });
+                }.bind(this));
             });
             describe('when createRecordBranch is resolved', function() {
                 beforeEach(function() {
@@ -303,10 +302,10 @@ describe('Saved Changes Tab directive', function() {
                         beforeEach(function() {
                             stateManagerSvc.updateOntologyState.and.returnValue($q.when());
                             catalogManagerSvc.isUserBranch.and.callFake(function(branchToCheck) {
-                                if (branchToCheck['@id'] === dvm.otherUserBranchId) {
+                                if (branchToCheck['@id'] === this.otherUserBranchId) {
                                     return true;
                                 }
-                            });
+                            }.bind(this));
                         });
                         it('and when deleteOntology is resolved', function() {
                             ontologyManagerSvc.deleteOntology.and.returnValue($q.when());

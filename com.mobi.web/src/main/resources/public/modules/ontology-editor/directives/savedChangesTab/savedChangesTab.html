@@ -25,7 +25,7 @@
         <block>
             <block-header ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length">
                 <error-display ng-if="!dvm.os.listItem.upToDate">There have been other commits made on this Branch.
-                    <span ng-if="!dvm.os.listItem.userBranch"> This branch is behind HEAD. Please either commit any in progress work or remove any changes to be able to resync your working branch with HEAD.</span>
+                    <span ng-if="!dvm.os.listItem.userBranch"> Please either commit your changes or remove them to resync your working branch with the HEAD.</span>
                 </error-display>
                 <div class="btn-container clearfix">
                     <button class="btn btn-danger pull-left" ng-click="dvm.removeChanges()" ng-disabled="!dvm.os.isCommittable(dvm.os.listItem)">Remove All Changes</button>

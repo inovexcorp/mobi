@@ -37,8 +37,8 @@
     <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Branch'" confirm-click="dvm.delete()"
                           cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Submit'" cancel-text="'Cancel'">
         <error-message ng-if="dvm.deleteError">{{deleteError}}</error-message>
-        <p ng-if="!dvm.cm.isUserBranch(dvm.branch)">Are you sure that you want to delete Branch: <strong>{{dvm.util.getDctermsValue(dvm.branch, 'title')}}</strong>?</p>
-        <p ng-if="dvm.cm.isUserBranch(dvm.branch)">You have made diverging changes from the head of Branch: <strong>{{dvm.util.getDctermsValue(dvm.branch, 'title')}}</strong>. Continuing with this operation will only delete your diverging changes.</p>
+        <p class="branch-delete-message" ng-if="!dvm.cm.isUserBranch(dvm.branch)">Are you sure that you want to delete Branch: <strong>{{dvm.util.getDctermsValue(dvm.branch, 'title')}}</strong>?</p>
+        <p class="user-branch-delete-message" ng-if="dvm.cm.isUserBranch(dvm.branch)">You have made diverging changes from the head of Branch: <strong>{{dvm.util.getDctermsValue(dvm.branch, 'title')}}</strong>. Continuing with this operation will only delete your diverging changes.</p>
     </confirmation-overlay>
     <edit-branch-overlay ng-if="dvm.showEditOverlay" overlay-flag="dvm.showEditOverlay" branch="dvm.branch"></edit-branch-overlay>
 </div>

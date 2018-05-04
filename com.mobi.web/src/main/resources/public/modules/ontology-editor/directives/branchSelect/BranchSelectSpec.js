@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Branch Select directive', function() {
-    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, utilSvc, prefixes;
+    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -30,19 +30,16 @@ describe('Branch Select directive', function() {
         mockOntologyState();
         mockOntologyManager();
         mockUtil();
-        mockPrefixes();
         mockStateManager();
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyStateService_, _ontologyManagerService_, _$q_, _stateManagerService_, _utilService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyStateService_, _ontologyManagerService_, _$q_, _stateManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
-            utilSvc = _utilService_;
-            prefixes = _prefixes_;
             $q = _$q_;
             stateManagerSvc = _stateManagerService_;
         });
@@ -66,8 +63,6 @@ describe('Branch Select directive', function() {
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
         stateManagerSvc = null;
-        utilSvc = null;
-        prefixes = null;
         this.element.remove();
     });
 
@@ -104,12 +99,35 @@ describe('Branch Select directive', function() {
             scope.$digest();
             expect(select.attr('disabled')).toBeTruthy();
         });
-        it('depending on whether a branch is being deleted', function() {
-            expect(this.element.find('confirmation-overlay').length).toBe(0);
-
-            this.controller.showDeleteConfirmation = true;
+        it('depending on whether the current branch is a user branch', function() {
+            catalogManagerSvc.isUserBranch.and.returnValue(true);
+            expect(this.element.querySelectorAll('.fa.fa-exclamation-triangle.fa-fw-red').length).toBe(0);
             scope.$digest();
-            expect(this.element.find('confirmation-overlay').length).toBe(1);
+            expect(this.element.querySelectorAll('.fa.fa-exclamation-triangle.fa-fw-red').length).toBe(1);
+        });
+        describe('depending on whether a branch is being deleted', function() {
+            it('and it is not a user branch', function() {
+                catalogManagerSvc.isUserBranch.and.returnValue(false);
+                expect(this.element.find('confirmation-overlay').length).toBe(0);
+                expect(this.element.querySelectorAll('.branch-delete-message').length).toBe(0);
+                expect(this.element.querySelectorAll('.user-branch-delete-message').length).toBe(0);
+                this.controller.showDeleteConfirmation = true;
+                scope.$digest();
+                expect(this.element.find('confirmation-overlay').length).toBe(1);
+                expect(this.element.querySelectorAll('.branch-delete-message').length).toBe(1);
+                expect(this.element.querySelectorAll('.user-branch-delete-message').length).toBe(0);
+            });
+            it('and it is a user branch', function() {
+                catalogManagerSvc.isUserBranch.and.returnValue(true);
+                expect(this.element.find('confirmation-overlay').length).toBe(0);
+                expect(this.element.querySelectorAll('.branch-delete-message').length).toBe(0);
+                expect(this.element.querySelectorAll('.user-branch-delete-message').length).toBe(0);
+                this.controller.showDeleteConfirmation = true;
+                scope.$digest();
+                expect(this.element.find('confirmation-overlay').length).toBe(1);
+                expect(this.element.querySelectorAll('.branch-delete-message').length).toBe(0);
+                expect(this.element.querySelectorAll('.user-branch-delete-message').length).toBe(1);
+            });
         });
         it('depending on whether an error occurred while deleting a branch', function() {
             this.controller.showDeleteConfirmation = true;

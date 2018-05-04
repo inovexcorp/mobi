@@ -129,7 +129,7 @@
                                 if (currentCreatedFromId === oldCreatedFromId) {
                                     dvm.util.replacePropertyId(branch, prefixes.catalog + 'createdFrom', dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom'), newCreatedFromId);
                                     cm.updateRecordBranch(branch['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId, branch)
-                                        .then(dvm.util.createSuccessToast('Updated referenced branch.'), dvm.util.createErrorToast);
+                                        .then(() => dvm.util.createSuccessToast('Updated referenced branch.'), dvm.util.createErrorToast);
                                 }
                             }
                         });

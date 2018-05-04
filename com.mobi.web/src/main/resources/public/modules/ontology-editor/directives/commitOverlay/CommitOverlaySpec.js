@@ -182,6 +182,7 @@ describe('Commit Overlay directive', function() {
                                 expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                                     ontologyStateSvc.listItem.ontologyRecord.branchId, this.commitId);
                                 expect(ontologyStateSvc.listItem.ontologyRecord.commitId).toEqual(this.commitId);
+                                expect(ontologyStateSvc.listItem.userBranch).toEqual(true);
                                 expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
                                 expect(ontologyStateSvc.showCommitOverlay).toBe(false);
                             });
