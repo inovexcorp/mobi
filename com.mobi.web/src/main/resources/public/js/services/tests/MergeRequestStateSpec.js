@@ -213,48 +213,17 @@ describe('Merge Requests State service', function() {
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                     });
                 });
-                describe('unless getBranchDifference rejects', function () {
-                    describe('and getBranchConflicts resolves', function () {
-                        it('with no conflicts', function () {
-                            catalogManagerSvc.getBranchDifference.and.returnValue($q.reject('Error Message'));
-                            mergeRequestsStateSvc.selectRequest(this.request, this.tabObj);
-                            scope.$apply();
-                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', 'recordIri', 'catalogId');
-                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
-                            expect(_.has(this.tabObj, 'selected')).toEqual(false);
-                            expect(this.request).toEqual(this.expected);
-                            expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
-                            expect(catalogManagerSvc.getBranchConflicts).not.toHaveBeenCalled();
-                            expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
-                        });
-                        it('with conflicts', function () {
-                            catalogManagerSvc.getBranchDifference.and.returnValue($q.reject('Error Message'));
-                            catalogManagerSvc.getBranchConflicts.and.returnValue($q.when([{'@id': 'recordId'}]));
-                            mergeRequestsStateSvc.selectRequest(this.request, this.tabObj);
-                            scope.$apply();
-                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', 'recordIri', 'catalogId');
-                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
-                            expect(_.has(this.tabObj, 'selected')).toEqual(false);
-                            expect(this.request).toEqual(this.expected);
-                            expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
-                            expect(catalogManagerSvc.getBranchConflicts).not.toHaveBeenCalled();
-                            expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
-                        });
-                    });
-                    it('and getBranchConflicts rejects', function () {
-                        catalogManagerSvc.getBranchDifference.and.returnValue($q.when({}));
-                        catalogManagerSvc.getBranchConflicts.and.returnValue($q.reject('Error Message'));
-                        this.expected.difference = {};
-                        mergeRequestsStateSvc.selectRequest(this.request, this.tabObj);
-                        scope.$apply();
-                        expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', 'recordIri', 'catalogId');
-                        expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
-                        expect(this.tabObj.selected).toEqual(this.expected);
-                        expect(this.request).toEqual(this.expected);
-                        expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
-                        expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
-                        expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
-                    });
+                it('unless getBranchDifference rejects', function () {
+                    catalogManagerSvc.getBranchDifference.and.returnValue($q.reject('Error Message'));
+                    mergeRequestsStateSvc.selectRequest(this.request, this.tabObj);
+                    scope.$apply();
+                    expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', 'recordIri', 'catalogId');
+                    expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
+                    expect(_.has(this.tabObj, 'selected')).toEqual(false);
+                    expect(this.request).toEqual(this.expected);
+                    expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
+                    expect(catalogManagerSvc.getBranchConflicts).not.toHaveBeenCalled();
+                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                 });
             });
             it('unless getRecordBranch rejects', function() {
@@ -267,6 +236,7 @@ describe('Merge Requests State service', function() {
                 expect(_.has(this.tabObj, 'selected')).toEqual(false);
                 expect(this.request).toEqual(this.expected);
                 expect(catalogManagerSvc.getBranchDifference).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.getBranchConflicts).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
             });
         });
