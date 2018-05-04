@@ -117,6 +117,16 @@ describe('Merge Request View directive', function() {
             expect(indicator.text().trim()).toEqual('Accepted');
             expect(this.element.find('commit-difference-tabset').length).toEqual(0);
         });
+        it('depending on whether the merge request has merge conflicts', function() {
+            expect(angular.element(this.element.querySelectorAll('.alert')).length).toEqual(0);
+            mergeRequestsStateSvc.open.selected.hasConflicts = true;
+            scope.$apply();
+            var indicator = angular.element(this.element.querySelectorAll('.alert')[0]);
+            expect(indicator.hasClass('alert-warning')).toEqual(true);
+            expect(indicator.text().trim()).toEqual('This request has conflicts. You can resolve them during the merge process.');
+            expect(indicator.children().hasClass('fa')).toEqual(true);
+            expect(indicator.children().hasClass('fa-exclamation-triangle')).toEqual(true);
+        });
     });
     it('should call showDelete when the delete button is clicked', function() {
         spyOn(this.controller, 'showDelete');
