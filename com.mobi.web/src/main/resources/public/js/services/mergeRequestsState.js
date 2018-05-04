@@ -230,9 +230,7 @@
                     .then(responses => {
                         _.forEach(responses, record => {
                             var title = util.getDctermsValue(record, 'title');
-                            _.forEach(_.filter(self.requests, {recordIri: record['@id']}), request => { 
-                                request.recordTitle = title;
-                            });
+                            _.forEach(_.filter(self.requests, {recordIri: record['@id']}), request => request.recordTitle = title);
                         });
                     }, error => {
                         self.requests = [];
