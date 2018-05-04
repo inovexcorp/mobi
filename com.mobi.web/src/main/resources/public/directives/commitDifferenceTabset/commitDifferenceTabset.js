@@ -30,7 +30,8 @@
          *
          * @description
          * The `commitDifferenceTabset` module only provides the `commitDifferenceTabset` directive
-         * which creates 
+         * which creates a {@link tabset.directive:tabset} with tabs related to the difference between
+         * two commits.
          */
         .module('commitDifferenceTabset', [])
         /**
@@ -41,8 +42,15 @@
          *
          * @description
          * `commitDifferenceTabset` is a directive which creates a div containing a
-         * {@link tabset.directive:tabset} with tabs for the changes and commits between two branches.
+         * {@link tabset.directive:tabset} with tabs for the
+         * {@link commitChangesDisplay.directive:commitChangesDisplay changes} and
+         * {@link commitHistoryTable.directive:commitHistoryTable commits} between two branches.
          * The directive is replaced by the contents of its template.
+         *
+         * @param {string} recordId The IRI of the VersionedRDFRecord that the Commits belong to
+         * @param {Object} sourceBranch The JSON-LD of the soruce branch of the difference
+         * @param {string} targetBranchId The IRI of the target branch of the difference
+         * @param {Object} difference The object representing the difference between the two Commits
          */
         .directive('commitDifferenceTabset', commitDifferenceTabset);
 
@@ -52,7 +60,7 @@
             templateUrl: 'directives/commitDifferenceTabset/commitDifferenceTabset.html',
             replace: true,
             scope: {
-                recordIri: '<',
+                recordId: '<',
                 sourceBranch: '<',
                 targetBranchId: '<',
                 difference: '<'

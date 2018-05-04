@@ -31,7 +31,7 @@
     </form>
     <div class="records">
         <div ng-repeat="chunk in dvm.records" class="row">
-            <div ng-repeat="record in chunk" class="card-container col-xs-6">
+            <div ng-repeat="record in chunk track by record['@id']" class="card-container record col-xs-6">
                 <md-card class="card" ng-click="dvm.selectRecord(record)" ng-class="{'selected': record['@id'] === dvm.state.requestConfig.recordId}">
                     <md-card-title>
                         <md-card-title-text>

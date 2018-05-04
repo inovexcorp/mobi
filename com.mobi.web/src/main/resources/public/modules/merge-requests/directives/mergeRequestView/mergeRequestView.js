@@ -29,8 +29,8 @@
          * @name mergeRequestView
          *
          * @description
-         * The `mergeRequestView` module only provides the `mergeRequestView` directive which creates a div
-         * with a {@link block.directive:block} with 
+         * The `mergeRequestView` module only provides the `mergeRequestView` directive which creates a
+         * {@link block.directive:block} with a display of a selected MergeRequest.
          */
         .module('mergeRequestView', [])
         /**
@@ -45,7 +45,12 @@
          *
          * @description
          * `mergeRequestView` is a directive which creates a div containing a {@link block.directive:block}
-         * with 
+         * which displays metadata about the
+         * {@link mergeRequestsState.service:mergeRequestsStateService selected MergeRequest} including a
+         * {@link commitDifferenceTabset.directive:commitDifferenceTabset} to display the changes and commits
+         * between the source and target branch of the MergeRequest. The block also contains buttons to delete
+         * the MergeRequest and go back to the {@link mergeRequestList.directive:mergeRequestList} of the current
+         * tab. This directive is replaced by the contents of its template.
          */
         .directive('mergeRequestView', mergeRequestView);
 
@@ -68,7 +73,7 @@
 
                     dvm.mm.getRequest(dvm.selected.request['@id'])
                         .then(_.noop, error => {
-                            util.createWarningToast('The request you had selected no longer exists');
+                            dvm.util.createWarningToast('The request you had selected no longer exists');
                             dvm.back();
                         });
 
