@@ -280,9 +280,9 @@
                         .then(diff => {
                             request.difference = diff;
                             tabObj.selected = request;
-                        }, util.createErrorToast);
-                    cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId)
-                            .then(conflicts => request.hasConflicts = !_.isEmpty(conflicts), util.createErrorToast)
+                            return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
+                        }, $q.reject)
+                        .then(conflicts => request.hasConflicts = !_.isEmpty(conflicts), util.createErrorToast)
                 }
             }
             /**
