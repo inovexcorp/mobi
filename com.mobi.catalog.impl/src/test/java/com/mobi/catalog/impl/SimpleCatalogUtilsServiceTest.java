@@ -35,6 +35,7 @@ import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
+import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
@@ -1128,13 +1129,55 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     @Test
     public void removeBranchWithNoHeadTest() {
         // Setup:
-        IRI branchIRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
         IRI noHeadBranchIRI = VALUE_FACTORY.createIRI(BRANCHES + "no-head-branch");
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, noHeadBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, noHeadBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
 
             service.removeBranch(VERSIONED_RDF_RECORD_IRI, noHeadBranchIRI, conn);
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, noHeadBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, noHeadBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+        }
+    }
+
+    @Test
+    public void testRemoveBranchWhenUserBranchExists() {
+        // Setup:
+        IRI userBranchIRI = VALUE_FACTORY.createIRI(BRANCHES + "user-branch");
+        IRI createdFromIRI = VALUE_FACTORY.createIRI(UserBranch.createdFrom_IRI);
+
+        try (RepositoryConnection conn = repo.getConnection()){
+            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(BRANCH_IRI, null, null).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, userBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(userBranchIRI, createdFromIRI, BRANCH_IRI, userBranchIRI).hasNext());
+
+            service.removeBranch(VERSIONED_RDF_RECORD_IRI, BRANCH_IRI, conn);
+
+            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertFalse(conn.getStatements(BRANCH_IRI, null, null).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, userBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(userBranchIRI, createdFromIRI, BRANCH_IRI, userBranchIRI).hasNext());
+            assertTrue(conn.getStatements(userBranchIRI, createdFromIRI, BRANCH_IRI, userBranchIRI).next().getObject().equals(BRANCH_IRI));
+        }
+    }
+
+    @Test
+    public void testRemoveBranchUserBranch() {
+        // Setup:
+        IRI userBranchIRI = VALUE_FACTORY.createIRI(BRANCHES + "user-branch");
+        IRI createdFromIRI = VALUE_FACTORY.createIRI(UserBranch.createdFrom_IRI);
+
+        try (RepositoryConnection conn = repo.getConnection()){
+            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(BRANCH_IRI, null, null).hasNext());
+            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, userBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(userBranchIRI, createdFromIRI, BRANCH_IRI, userBranchIRI).hasNext());
+
+            service.removeBranch(VERSIONED_RDF_RECORD_IRI, userBranchIRI, conn);
+
+            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertTrue(conn.getStatements(BRANCH_IRI, null, null).hasNext());
+            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, userBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+            assertFalse(conn.getStatements(userBranchIRI, createdFromIRI, BRANCH_IRI, userBranchIRI).hasNext());
         }
     }
 

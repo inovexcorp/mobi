@@ -21,15 +21,15 @@
   #L%
   -->
 <div class="merge-tab">
-    <div class="actions">
+    <div class="actions" ng-if="!dvm.os.listItem.userBranch || dvm.os.listItem.merge.conflicts.length">
         <span class="header active">Merge Branches</span>
     </div>
-    <div class="row row-container">
+    <div class="row row-container" ng-if="!dvm.os.listItem.userBranch || dvm.os.listItem.merge.conflicts.length">
         <div class="col-xs-12">
             <block>
                 <block-content class="padding">
                     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-                    <merge-form ng-if="!dvm.os.listItem.merge.conflicts.length" branch="dvm.branch" is-user-branch="dvm.isUserBranch" target="dvm.os.listItem.merge.target" remove-branch="dvm.os.listItem.merge.checkbox"></merge-form>
+                    <merge-form ng-if="!dvm.os.listItem.merge.conflicts.length" branch="dvm.branch" target="dvm.os.listItem.merge.target" remove-branch="dvm.os.listItem.merge.checkbox"></merge-form>
                     <resolve-conflicts-form ng-if="dvm.os.listItem.merge.conflicts.length" branch-title="dvm.util.getDctermsValue(dvm.branch, 'title')" target-title="dvm.util.getDctermsValue(dvm.os.listItem.merge.target, 'title')" conflicts="dvm.os.listItem.merge.conflicts" resolutions="dvm.os.listItem.merge.resolutions"></resolve-conflicts-form>
                 </block-content>
                 <block-footer>
