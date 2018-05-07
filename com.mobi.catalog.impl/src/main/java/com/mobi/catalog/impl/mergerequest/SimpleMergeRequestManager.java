@@ -28,12 +28,12 @@ import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
+import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFactory;
-import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFilterParams;
 import com.mobi.exception.MobiException;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.Bindings;
@@ -134,7 +134,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         params.getSortBy().ifPresent(sortBy -> filters.append("?").append(REQUEST_ID_BINDING).append(" <")
                 .append(sortBy).append("> ?").append(SORT_PRED_BINDING).append(". "));
 
-        if (params.hasFilter()) {
+        if (params.hasFilters()) {
             filters.append("FILTER (");
             params.getAssignee().ifPresent(assignee -> filters.append("?").append(ASSIGNEE_BINDING).append(" = <")
                     .append(assignee).append("> && "));
@@ -156,7 +156,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         if(params.getSortBy().isPresent()) {
             queryBuilder.append(" ORDER BY ");
 
-            if (params.getAscending()) {
+            if (params.sortAscending()) {
                 queryBuilder.append("?").append(SORT_PRED_BINDING);
             } else {
                 queryBuilder.append("DESC(?").append(SORT_PRED_BINDING).append(")");
