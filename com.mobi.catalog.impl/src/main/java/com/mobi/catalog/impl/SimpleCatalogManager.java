@@ -37,6 +37,7 @@ import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
 import com.mobi.catalog.api.builder.RecordConfig;
+import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
@@ -115,6 +116,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private ValueFactory vf;
     private ModelFactory mf;
     private CatalogUtilsService utils;
+    private MergeRequestManager mergeRequestManager;
     private CatalogFactory catalogFactory;
     private RecordFactory recordFactory;
     private DistributionFactory distributionFactory;
@@ -147,6 +149,11 @@ public class SimpleCatalogManager implements CatalogManager {
     @Reference
     void setUtils(CatalogUtilsService utils) {
         this.utils = utils;
+    }
+
+    @Reference
+    void setMergeRequestManager(MergeRequestManager mergeRequestManager) {
+        this.mergeRequestManager = mergeRequestManager;
     }
 
     @Reference
@@ -1377,6 +1384,7 @@ public class SimpleCatalogManager implements CatalogManager {
                     versionedRDFRecord.getBranch_resource()
                             .forEach(resource -> utils.removeBranch(versionedRDFRecord.getResource(), resource,
                                     deletedCommits, conn));
+//                    mergeRequestManager.removeRecords();
                     utils.removeObject(versionedRDFRecord, conn);
                 });
     }

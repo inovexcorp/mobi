@@ -1027,3 +1027,31 @@ GRAPH additions:quad-in-progress-commit%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%
 GRAPH deletions:quad-in-progress-commit%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1 {
     <http://mobi.com/test/delete> dc:title "Delete" ;
 }
+
+# MergeRequests
+
+GRAPH mergereqs:mergereq {
+    mergereqs:mergereq a owl:Thing, mergereqs:MergeRequest ;
+        dc:title "MergeRequest Title" ;
+        dc:description "MergeRequest Description" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-10T00:00:00Z"^^xsd:dateTime ;
+        mergereqs:assignee muser:tester ;
+        mergereqs:onRecord records:versioned-rdf-record ;
+        mergereqs:sourceBranch branches:branch ;
+        mergereqs:targetBranch branches:master ;
+        dc:creator muser:tester .
+}
+
+GRAPH mergereqs:mergereq2 {
+    mergereqs:mergereq2 a owl:Thing, mergereqs:MergeRequest ;
+        dc:title "MergeRequest Title" ;
+        dc:description "MergeRequest Description" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-10T00:00:00Z"^^xsd:dateTime ;
+        mergereqs:assignee muser:tester ;
+        mergereqs:onRecord records:versioned-rdf-record ;
+        mergereqs:sourceBranch branches:master ;
+        mergereqs:targetBranch branches:branch ;
+        dc:creator muser:tester .
+}

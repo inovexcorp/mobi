@@ -33,11 +33,11 @@ import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFactory;
+import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFilterParams;
 import com.mobi.exception.MobiException;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
@@ -106,6 +106,12 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     private static final String GET_MERGE_REQUESTS_QUERY;
     private static final String FILTERS = "%FILTERS%";
     private static final String REQUEST_ID_BINDING = "requestId";
+    private static final String ASSIGNEE_BINDING = "assignee";
+    private static final String ON_RECORD_BINDING = "onRecord";
+    private static final String SOURCE_BRANCH_BINDING = "sourceBranch";
+    private static final String TARGET_BRANCH_BINDING = "targetBranch";
+    private static final String SOURCE_COMMIT_BINDING = "sourceCommit";
+    private static final String TARGET_COMMIT_BINDING = "targetCommit";
     private static final String SORT_PRED_BINDING = "sortPred";
 
     static {
@@ -119,21 +125,42 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     }
 
     @Override
-    public List<MergeRequest> getMergeRequests(IRI sortPredicate, boolean asc, boolean accepted) {
+    public List<MergeRequest> getMergeRequests(MergeRequestFilterParams params) {
         StringBuilder filters = new StringBuilder("FILTER ");
-        if (!accepted) {
+        if (!params.getAccepted()) {
             filters.append("NOT ");
         }
         filters.append("EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:AcceptedMergeRequest . } ");
+        params.getSortBy().ifPresent(sortBy -> filters.append("?").append(REQUEST_ID_BINDING).append(" <")
+                .append(sortBy).append("> ?").append(SORT_PRED_BINDING).append(". "));
 
-        filters.append("?").append(REQUEST_ID_BINDING).append(" <").append(sortPredicate).append("> ?")
-                .append(SORT_PRED_BINDING).append(". ");
+        if (params.hasFilter()) {
+            filters.append("FILTER (");
+            params.getAssignee().ifPresent(assignee -> filters.append("?").append(ASSIGNEE_BINDING).append(" = <")
+                    .append(assignee).append("> && "));
+            params.getOnRecord().ifPresent(onRecord -> filters.append("?").append(ON_RECORD_BINDING).append(" = <")
+                    .append(onRecord).append("> && "));
+            params.getSourceBranch().ifPresent(sourceBranch -> filters.append("?").append(SOURCE_BRANCH_BINDING)
+                    .append(" = <").append(sourceBranch).append("> && "));
+            params.getTargetBranch().ifPresent(targetBranch -> filters.append("?").append(TARGET_BRANCH_BINDING)
+                    .append(" = <").append(targetBranch).append("> && "));
+            params.getSourceCommit().ifPresent(sourceCommit -> filters.append("?").append(SOURCE_COMMIT_BINDING)
+                    .append(" = <").append(sourceCommit).append("> && "));
+            params.getTargetCommit().ifPresent(targetCommit -> filters.append("?").append(TARGET_COMMIT_BINDING)
+                    .append(" = <").append(targetCommit).append("> && "));
+            filters.delete(filters.lastIndexOf(" && "), filters.length());
+            filters.append(")");
+        }
+
         StringBuilder queryBuilder = new StringBuilder(GET_MERGE_REQUESTS_QUERY.replace(FILTERS, filters.toString()));
-        queryBuilder.append(" ORDER BY ");
-        if (asc) {
-            queryBuilder.append("?").append(SORT_PRED_BINDING);
-        } else {
-            queryBuilder.append("DESC(?").append(SORT_PRED_BINDING).append(")");
+        if(params.getSortBy().isPresent()) {
+            queryBuilder.append(" ORDER BY ");
+
+            if (params.getAscending()) {
+                queryBuilder.append("?").append(SORT_PRED_BINDING);
+            } else {
+                queryBuilder.append("DESC(?").append(SORT_PRED_BINDING).append(")");
+            }
         }
         try (RepositoryConnection conn = getCatalogRepo().getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(queryBuilder.toString());

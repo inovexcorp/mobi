@@ -27,7 +27,6 @@ import static com.mobi.rest.util.RestUtils.encode;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -46,13 +45,12 @@ import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFactory;
+import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFilterParams;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -186,7 +184,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
 
     @BeforeMethod
     public void setUpMocks() throws Exception {
-        when(requestManager.getMergeRequests(any(IRI.class), anyBoolean(), anyBoolean())).thenReturn(Collections.singletonList(request1));
+        when(requestManager.getMergeRequests(any(MergeRequestFilterParams.class))).thenReturn(Collections.singletonList(request1));
         when(requestManager.createMergeRequest(any(MergeRequestConfig.class))).thenReturn(request1);
         when(requestManager.getMergeRequest(any(Resource.class))).thenReturn(Optional.empty());
         when(requestManager.getMergeRequest(request1.getResource())).thenReturn(Optional.of(request1));
@@ -207,7 +205,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     public void getMergeRequestsTest() {
         Response response = target().path("merge-requests").request().get();
         assertEquals(response.getStatus(), 200);
-        verify(requestManager).getMergeRequests(vf.createIRI(_Thing.issued_IRI), false, false);
+        verify(requestManager).getMergeRequests(any(MergeRequestFilterParams.class));
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), 1);
@@ -223,21 +221,21 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     @Test
     public void getMergeRequestsWithMissingRepoTest() {
         // Setup
-        doThrow(new IllegalStateException()).when(requestManager).getMergeRequests(any(IRI.class), anyBoolean(), anyBoolean());
+        doThrow(new IllegalStateException()).when(requestManager).getMergeRequests(any(MergeRequestFilterParams.class));
 
         Response response = target().path("merge-requests").request().get();
         assertEquals(response.getStatus(), 500);
-        verify(requestManager).getMergeRequests(vf.createIRI(_Thing.issued_IRI), false, false);
+        verify(requestManager).getMergeRequests(any(MergeRequestFilterParams.class));
     }
 
     @Test
     public void getMergeRequestsWithErrorTest() {
         // Setup
-        doThrow(new MobiException()).when(requestManager).getMergeRequests(any(IRI.class), anyBoolean(), anyBoolean());
+        doThrow(new MobiException()).when(requestManager).getMergeRequests(any(MergeRequestFilterParams.class));
 
         Response response = target().path("merge-requests").request().get();
         assertEquals(response.getStatus(), 500);
-        verify(requestManager).getMergeRequests(vf.createIRI(_Thing.issued_IRI), false, false);
+        verify(requestManager).getMergeRequests(any(MergeRequestFilterParams.class));
     }
 
     @Test

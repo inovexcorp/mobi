@@ -38,13 +38,13 @@ import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFactory;
+import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFilterParams;
 import com.mobi.catalog.rest.MergeRequestRest;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
@@ -96,9 +96,11 @@ public class MergeRequestRestImpl implements MergeRequestRest {
 
     @Override
     public Response getMergeRequests(String sort, boolean asc, boolean accepted) {
-        IRI pred = createIRI(StringUtils.isEmpty(sort) ? _Thing.issued_IRI : sort, vf);
+        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
+        builder.setSortBy(createIRI(StringUtils.isEmpty(sort) ? _Thing.issued_IRI : sort, vf));
+        builder.setAscending(asc).setAccepted(accepted);
         try {
-            JSONArray result = JSONArray.fromObject(manager.getMergeRequests(pred, asc, accepted).stream()
+            JSONArray result = JSONArray.fromObject(manager.getMergeRequests(builder.build()).stream()
                     .map(request -> modelToJsonld(request.getModel(), transformer))
                     .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));

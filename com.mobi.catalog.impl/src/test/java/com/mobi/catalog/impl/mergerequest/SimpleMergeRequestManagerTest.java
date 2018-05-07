@@ -36,8 +36,12 @@ import static org.mockito.Mockito.when;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
+import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
+import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFilterParams;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.rdf.api.IRI;
@@ -60,9 +64,11 @@ import org.mockito.MockitoAnnotations;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     private Repository repo;
@@ -71,12 +77,27 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     private OrmFactory<MergeRequest> mergeRequestFactory = getRequiredOrmFactory(MergeRequest.class);
     private OrmFactory<AcceptedMergeRequest> acceptedMergeRequestFactory = getRequiredOrmFactory(AcceptedMergeRequest.class);
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+    private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+    private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
 
     private MergeRequest request1;
     private MergeRequest request2;
     private MergeRequest request3;
     private AcceptedMergeRequest request4;
-    private User user;
+    private AcceptedMergeRequest request5;
+    private User user1;
+    private User user2;
+    private VersionedRDFRecord versionedRDFRecord1;
+    private VersionedRDFRecord versionedRDFRecord2;
+    private Branch sourceBranch1;
+    private Branch sourceBranch2;
+    private Branch targetBranch1;
+    private Branch targetBranch2;
+    private Commit sourceCommit1;
+    private Commit targetCommit1;
+    private Commit sourceCommit2;
+    private Commit targetCommit2;
 
     private final IRI LOCAL_CATALOG_IRI = vf.createIRI("http://mobi.com/catalogs#local");
     private final IRI RECORD_IRI = vf.createIRI("http://mobi.com/test/records#versioned-rdf-record");
@@ -97,24 +118,65 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
+        versionedRDFRecord1 = versionedRDFRecordFactory.createNew(vf.createIRI("http://mobi.com/test/records#versioned-rdf-record1"));
+        versionedRDFRecord2 = versionedRDFRecordFactory.createNew(vf.createIRI("http://mobi.com/test/records#versioned-rdf-record2"));
+        sourceBranch1 = branchFactory.createNew(SOURCE_BRANCH_IRI);
+        sourceBranch2 = branchFactory.createNew(vf.createIRI("http://mobi.com/test/branches#source2"));
+        targetBranch1 = branchFactory.createNew(TARGET_BRANCH_IRI);
+        targetBranch2 = branchFactory.createNew(vf.createIRI("http://mobi.com/test/branches#target2"));
+        sourceCommit1 = commitFactory.createNew(vf.createIRI("http://mobi.com/test/commits#source-commit1"));
+        targetCommit1 = commitFactory.createNew(vf.createIRI("http://mobi.com/test/commits#target-commit1"));
+        sourceCommit2 = commitFactory.createNew(vf.createIRI("http://mobi.com/test/commits#source-commit2"));
+        targetCommit2 = commitFactory.createNew(vf.createIRI("http://mobi.com/test/commits#target-commit2"));
+
+        user1 = userFactory.createNew(vf.createIRI("http://mobi.com/users#user1"));
+        user2 = userFactory.createNew(vf.createIRI("http://mobi.com/users#user2"));
+        Set<User> userSet1 = new HashSet<>();
+        userSet1.add(user1);
+        Set<User> userSet2 = new HashSet<>();
+        userSet2.add(user2);
+
         request1 = mergeRequestFactory.createNew(vf.createIRI("http://mobi.com/test/merge-requests#1"));
         request1.setProperty(vf.createLiteral("Request 1"), vf.createIRI(_Thing.title_IRI));
         request1.setProperty(vf.createLiteral(OffsetDateTime.of(2018, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)), vf.createIRI(_Thing.issued_IRI));
+        request1.setAssignee(userSet1);
+        request1.setOnRecord(versionedRDFRecord1);
+        request1.setSourceBranch(sourceBranch1);
+        request1.setTargetBranch(targetBranch1);
         request2 = mergeRequestFactory.createNew(vf.createIRI("http://mobi.com/test/merge-requests#2"));
         request2.setProperty(vf.createLiteral(OffsetDateTime.of(2018, 1, 2, 0, 0, 0, 0, ZoneOffset.UTC)), vf.createIRI(_Thing.issued_IRI));
         request2.setProperty(vf.createLiteral("Request 2"), vf.createIRI(_Thing.title_IRI));
+        request2.setAssignee(userSet2);
+        request2.setOnRecord(versionedRDFRecord2);
+        request2.setSourceBranch(sourceBranch2);
+        request2.setTargetBranch(targetBranch2);
         request3 = mergeRequestFactory.createNew(vf.createIRI("http://mobi.com/test/merge-requests#3"));
         request3.setProperty(vf.createLiteral(OffsetDateTime.of(2018, 1, 3, 0, 0, 0, 0, ZoneOffset.UTC)), vf.createIRI(_Thing.issued_IRI));
         request3.setProperty(vf.createLiteral("Request 3"), vf.createIRI(_Thing.title_IRI));
         request4 = acceptedMergeRequestFactory.createNew(vf.createIRI("http://mobi.com/test/merge-requests#4"));
         request4.setProperty(vf.createLiteral(OffsetDateTime.of(2018, 1, 4, 0, 0, 0, 0, ZoneOffset.UTC)), vf.createIRI(_Thing.issued_IRI));
         request4.setProperty(vf.createLiteral("Request 4"), vf.createIRI(_Thing.title_IRI));
-        user = userFactory.createNew(vf.createIRI("http://mobi.com/users#user"));
+        request4.setAssignee(userSet1);
+        request4.setOnRecord(versionedRDFRecord1);
+        request4.setSourceBranch(sourceBranch1);
+        request4.setTargetBranch(targetBranch1);
+        request4.setSourceCommit(sourceCommit1);
+        request4.setTargetCommit(targetCommit1);
+        request5 = acceptedMergeRequestFactory.createNew(vf.createIRI("http://mobi.com/test/merge-requests#5"));
+        request5.setProperty(vf.createLiteral(OffsetDateTime.of(2018, 1, 5, 0, 0, 0, 0, ZoneOffset.UTC)), vf.createIRI(_Thing.issued_IRI));
+        request5.setProperty(vf.createLiteral("Request 5"), vf.createIRI(_Thing.title_IRI));
+        request5.setAssignee(userSet2);
+        request5.setOnRecord(versionedRDFRecord2);
+        request5.setSourceBranch(sourceBranch2);
+        request5.setTargetBranch(targetBranch2);
+        request5.setSourceCommit(sourceCommit2);
+        request5.setTargetCommit(targetCommit2);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(request1.getModel(), request1.getResource());
             conn.add(request2.getModel(), request2.getResource());
             conn.add(request4.getModel(), request4.getResource());
+            conn.add(request5.getModel(), request5.getResource());
         }
 
         MockitoAnnotations.initMocks(this);
@@ -134,6 +196,8 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
                 return request3;
             } else if (iri.equals(request4.getResource())) {
                 return request4;
+            } else if (iri.equals(request5.getResource())) {
+                return request5;
             }
             return mergeRequestFactory.createNew(vf.createIRI("urn:test"));
         });
@@ -153,8 +217,20 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     /* getMergeRequests */
 
     @Test
-    public void getOpenMergeRequestsByTitleTest() {
-        List<MergeRequest> result = manager.getMergeRequests(vf.createIRI(_Thing.title_IRI), false, false);
+    public void getOpenMergeRequestsSortByNotSet() {
+        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
+        List<MergeRequest> result = manager.getMergeRequests(builder.build());
+        assertEquals(2, result.size());
+        assertTrue(result.contains(request1));
+        assertTrue(result.contains(request2));
+        verify(utilsService).getExpectedObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(request2.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void getOpenMergeRequestsSortByTitleTest() {
+        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(vf.createIRI(_Thing.title_IRI));
+        List<MergeRequest> result = manager.getMergeRequests(builder.build());
         assertEquals(2, result.size());
         Iterator<MergeRequest> it = result.iterator();
         assertEquals(request2.getResource(), it.next().getResource());
@@ -162,7 +238,8 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getExpectedObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
         verify(utilsService).getExpectedObject(eq(request2.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
 
-        result = manager.getMergeRequests(vf.createIRI(_Thing.title_IRI), true, false);
+        builder.setAscending(true);
+        result = manager.getMergeRequests(builder.build());
         assertEquals(2, result.size());
         it = result.iterator();
         assertEquals(request1.getResource(), it.next().getResource());
@@ -170,8 +247,9 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void getOpenMergeRequestsByIssuedTest() {
-        List<MergeRequest> result = manager.getMergeRequests(vf.createIRI(_Thing.issued_IRI), false, false);
+    public void getOpenMergeRequestsSortByIssuedTest() {
+        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(vf.createIRI(_Thing.issued_IRI));
+        List<MergeRequest> result = manager.getMergeRequests(builder.build());
         assertEquals(2, result.size());
         Iterator<MergeRequest> it = result.iterator();
         assertEquals(request2.getResource(), it.next().getResource());
@@ -179,19 +257,120 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getExpectedObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
         verify(utilsService).getExpectedObject(eq(request2.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
 
-        result = manager.getMergeRequests(vf.createIRI(_Thing.title_IRI), true, false);
+        builder.setAscending(true);
+        result = manager.getMergeRequests(builder.build());
         assertEquals(2, result.size());
         it = result.iterator();
         assertEquals(request1.getResource(), it.next().getResource());
         assertEquals(request2.getResource(), it.next().getResource());
+    }
+
+    @Test
+    public void getOpenMergeRequestsAssignee() {
+        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(vf.createIRI(_Thing.title_IRI));
+        builder.setAssignee(user1.getResource());
+        List<MergeRequest> result = manager.getMergeRequests(builder.build());
+        assertEquals(1, result.size());
+        assertEquals(request1.getResource(), result.get(0).getResource());
+        verify(utilsService).getExpectedObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+
+        builder.setAssignee(user2.getResource());
+        result = manager.getMergeRequests(builder.build());
+        assertEquals(1, result.size());
+        assertEquals(request2.getResource(), result.get(0).getResource());
+        verify(utilsService).getExpectedObject(eq(request2.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void getOpenMergeRequestsOnRecord() {
+        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(vf.createIRI(_Thing.title_IRI));
+        builder.setOnRecord(versionedRDFRecord1.getResource());
+        List<MergeRequest> result = manager.getMergeRequests(builder.build());
+        assertEquals(1, result.size());
+        assertEquals(request1.getResource(), result.get(0).getResource());
+        verify(utilsService).getExpectedObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+
+        builder.setOnRecord(versionedRDFRecord2.getResource());
+        result = manager.getMergeRequests(builder.build());
+        assertEquals(1, result.size());
+        assertEquals(request2.getResource(), result.get(0).getResource());
+        verify(utilsService).getExpectedObject(eq(request2.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void getOpenMergeRequestsSourceBranch() {
+        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(vf.createIRI(_Thing.title_IRI));
+        builder.setSourceBranch(sourceBranch1.getResource());
+        List<MergeRequest> result = manager.getMergeRequests(builder.build());
+        assertEquals(1, result.size());
+        assertEquals(request1.getResource(), result.get(0).getResource());
+        verify(utilsService).getExpectedObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+
+        builder.setSourceBranch(sourceBranch2.getResource());
+        result = manager.getMergeRequests(builder.build());
+        assertEquals(1, result.size());
+        assertEquals(request2.getResource(), result.get(0).getResource());
+        verify(utilsService).getExpectedObject(eq(request2.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void getOpenMergeRequestsTargetBranch() {
+        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(vf.createIRI(_Thing.title_IRI));
+        builder.setTargetBranch(targetBranch1.getResource());
+        List<MergeRequest> result = manager.getMergeRequests(builder.build());
+        assertEquals(1, result.size());
+        assertEquals(request1.getResource(), result.get(0).getResource());
+        verify(utilsService).getExpectedObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+
+        builder.setTargetBranch(targetBranch2.getResource());
+        result = manager.getMergeRequests(builder.build());
+        assertEquals(1, result.size());
+        assertEquals(request2.getResource(), result.get(0).getResource());
+        verify(utilsService).getExpectedObject(eq(request2.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
     }
 
     @Test
     public void getAcceptedMergeRequestsTest() {
-        List<MergeRequest> result = manager.getMergeRequests(vf.createIRI(_Thing.title_IRI), false, true);
-        assertEquals(1, result.size());
-        assertEquals(request4.getResource(), result.iterator().next().getResource());
+        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
+        builder.setSortBy(vf.createIRI(_Thing.title_IRI)).setAccepted(true);
+        List<MergeRequest> result = manager.getMergeRequests(builder.build());
+        assertEquals(2, result.size());
+        Iterator<MergeRequest> it = result.iterator();
+        assertEquals(request5.getResource(), it.next().getResource());
+        assertEquals(request4.getResource(), it.next().getResource());
         verify(utilsService).getExpectedObject(eq(request4.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void getAcceptedMergeRequestsSourceCommit() {
+        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(vf.createIRI(_Thing.title_IRI));
+        builder.setAccepted(true).setSourceCommit(sourceCommit1.getResource());
+        List<MergeRequest> result = manager.getMergeRequests(builder.build());
+        assertEquals(1, result.size());
+        assertEquals(request4.getResource(), result.get(0).getResource());
+        verify(utilsService).getExpectedObject(eq(request4.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+
+        builder.setSourceCommit(sourceCommit2.getResource());
+        result = manager.getMergeRequests(builder.build());
+        assertEquals(1, result.size());
+        assertEquals(request5.getResource(), result.get(0).getResource());
+        verify(utilsService).getExpectedObject(eq(request5.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void getAcceptedMergeRequestsTargetCommit() {
+        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(vf.createIRI(_Thing.title_IRI));
+        builder.setAccepted(true).setTargetCommit(targetCommit1.getResource());
+        List<MergeRequest> result = manager.getMergeRequests(builder.build());
+        assertEquals(1, result.size());
+        assertEquals(request4.getResource(), result.get(0).getResource());
+        verify(utilsService).getExpectedObject(eq(request4.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+
+        builder.setTargetCommit(targetCommit2.getResource());
+        result = manager.getMergeRequests(builder.build());
+        assertEquals(1, result.size());
+        assertEquals(request5.getResource(), result.get(0).getResource());
+        verify(utilsService).getExpectedObject(eq(request5.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -199,7 +378,8 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         // Setup:
         when(catalogManager.getRepositoryId()).thenReturn("error");
 
-        manager.getMergeRequests(vf.createIRI(_Thing.title_IRI), false, false);
+        MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder().setSortBy(vf.createIRI(_Thing.title_IRI));
+        manager.getMergeRequests(builder.build());
     }
 
     /* createMergeRequest */
@@ -207,9 +387,9 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void createMergeRequestTest() {
         // Setup:
-        MergeRequestConfig config = new MergeRequestConfig.Builder("title", RECORD_IRI, SOURCE_BRANCH_IRI, TARGET_BRANCH_IRI, user)
+        MergeRequestConfig config = new MergeRequestConfig.Builder("title", RECORD_IRI, SOURCE_BRANCH_IRI, TARGET_BRANCH_IRI, user1)
                 .description("description")
-                .addAssignee(user)
+                .addAssignee(user1)
                 .build();
 
         MergeRequest result = manager.createMergeRequest(config);
@@ -230,7 +410,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         assertEquals(TARGET_BRANCH_IRI, targetBranch.get());
         Optional<Value> creator = result.getProperty(vf.createIRI(_Thing.creator_IRI));
         assertTrue(creator.isPresent());
-        assertEquals(user.getResource().stringValue(), creator.get().stringValue());
+        assertEquals(user1.getResource().stringValue(), creator.get().stringValue());
         assertEquals(1, result.getAssignee_resource().size());
     }
 
@@ -238,7 +418,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void createMergeRequestWithInvalidBranchTest() {
         // Setup:
         doThrow(new IllegalArgumentException()).when(utilsService).validateBranch(eq(LOCAL_CATALOG_IRI), eq(RECORD_IRI), eq(SOURCE_BRANCH_IRI), any(RepositoryConnection.class));
-        MergeRequestConfig config = new MergeRequestConfig.Builder("title", RECORD_IRI, SOURCE_BRANCH_IRI, TARGET_BRANCH_IRI, user).build();
+        MergeRequestConfig config = new MergeRequestConfig.Builder("title", RECORD_IRI, SOURCE_BRANCH_IRI, TARGET_BRANCH_IRI, user1).build();
 
         manager.createMergeRequest(config);
     }
@@ -247,7 +427,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void createMergeRequestWithNoRepoTest() {
         // Setup:
         when(catalogManager.getRepositoryId()).thenReturn("error");
-        MergeRequestConfig config = new MergeRequestConfig.Builder("title", RECORD_IRI, SOURCE_BRANCH_IRI, TARGET_BRANCH_IRI, user).build();
+        MergeRequestConfig config = new MergeRequestConfig.Builder("title", RECORD_IRI, SOURCE_BRANCH_IRI, TARGET_BRANCH_IRI, user1).build();
 
         manager.createMergeRequest(config);
     }

@@ -27,8 +27,8 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
+import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFilterParams;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
 
 import java.util.List;
@@ -39,13 +39,11 @@ public interface MergeRequestManager {
     /**
      * Gets the {@link List} of all {@link MergeRequest}s in Mobi that match the provided parameters.
      *
-     * @param sortPredicate The IRI of the predicate to sort the results by
-     * @param asc Whether the results should be sorted ascending or descending
-     * @param accepted Whether the results should be accepted requests or open requests
+     * @param params The {@link MergeRequestFilterParams} to filter the MergeRequests by
      * @return The {@link List} of all matching {@link MergeRequest}s
      * @throws IllegalStateException If the catalog {@link com.mobi.repository.api.Repository} could not be found
      */
-    List<MergeRequest> getMergeRequests(IRI sortPredicate, boolean asc, boolean accepted);
+    List<MergeRequest> getMergeRequests(MergeRequestFilterParams params);
 
     /**
      * Creates a {@link MergeRequest} with the metadata within the provided {@link MergeRequestConfig} along with a
