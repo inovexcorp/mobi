@@ -94,4 +94,15 @@ public interface MergeRequestManager {
      */
     void deleteMergeRequest(Resource requestId);
 
+    /**
+     * Removes all MergeRequests that are linked to the VersionedRDFRecord identified by the provided Resource.
+     *
+     * @param recordId Removes all MergeRequests that are linked to the VersionedRDFRecord identified by the provided
+     *                 Resource.
+     */
+    //TODO: COME UP WITH A BETTER METHOD NAME
+    void deleteMergeRequestsWithRecordId(Resource recordId);
+
+    //TODO:
+    void cleanMergeRequests(Resource recordId, Resource branchId);
 }

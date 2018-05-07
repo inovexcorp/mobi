@@ -839,6 +839,7 @@ public class SimpleCatalogManager implements CatalogManager {
             }
             conn.begin();
             utils.removeBranch(versionedRDFRecordId, branch, conn);
+            mergeRequestManager.cleanMergeRequests(versionedRDFRecordId, branchId);
             conn.commit();
         }
     }
@@ -1384,7 +1385,7 @@ public class SimpleCatalogManager implements CatalogManager {
                     versionedRDFRecord.getBranch_resource()
                             .forEach(resource -> utils.removeBranch(versionedRDFRecord.getResource(), resource,
                                     deletedCommits, conn));
-//                    mergeRequestManager.removeRecords();
+                    mergeRequestManager.deleteMergeRequestsWithRecordId(versionedRDFRecord.getResource());
                     utils.removeObject(versionedRDFRecord, conn);
                 });
     }
