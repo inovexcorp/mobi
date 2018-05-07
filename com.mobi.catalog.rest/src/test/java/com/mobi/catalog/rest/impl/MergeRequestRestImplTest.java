@@ -42,10 +42,10 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
+import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFactory;
-import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFilterParams;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;

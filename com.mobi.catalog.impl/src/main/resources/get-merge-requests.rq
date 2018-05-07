@@ -7,9 +7,9 @@ WHERE {
     OPTIONAL { ?requestId mq:onRecord ?onRecord }
     OPTIONAL { ?requestId mq:sourceBranch ?sourceBranch }
     OPTIONAL { ?requestId mq:assignee ?assignee }
-	OPTIONAL { ?requestId mq:targetBranch ?targetBranch }
-	OPTIONAL { ?requestId mq:sourceCommit ?sourceCommit }
-	OPTIONAL { ?requestId mq:targetCommit ?targetCommit }
+    OPTIONAL { ?requestId mq:targetBranch ?targetBranch }
+    OPTIONAL { ?requestId mq:sourceCommit ?sourceCommit }
+    OPTIONAL { ?requestId mq:targetCommit ?targetCommit }
 
     %FILTERS%
 }

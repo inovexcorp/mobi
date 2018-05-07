@@ -15,6 +15,7 @@
 @prefix additions: <https://mobi.com/additions#> .
 @prefix deletions: <https://mobi.com/deletions#> .
 @prefix graphs: <http://mobi.com/test/graphs#> .
+@prefix mergereqs: <http://mobi.com/ontologies/merge-requests#> .
 
 GRAPH <http://mobi.com/test#empty> { }
 

@@ -27,7 +27,6 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
-import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFilterParams;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.Resource;
 
