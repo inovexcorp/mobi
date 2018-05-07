@@ -27,7 +27,12 @@ import com.mobi.rdf.api.Resource;
 
 import java.util.Optional;
 
-// TODO: THIS DOCUMENTATION AGAIN...... UGHHHHHHH
+/**
+ * MergeRequestFilterParams class to help query getMergeRequests. Allows equality filtering on a particular Resource.
+ * Equality filtering options include assignee, onRecord, sourceBranch, and targetBranch. AcceptedMergeRequests can
+ * additionally filter on sourceCommit and targetCommit. Also provides a way to sort (ascending or descending) the
+ * getMergeRequest query results by a provided sortBy Resource.
+ */
 public class MergeRequestFilterParams {
     private Resource assignee;
     private Resource onRecord;
@@ -107,52 +112,106 @@ public class MergeRequestFilterParams {
 
         public Builder() {}
 
+        /**
+         * Set the filter on assignee of the MergeRequest.
+         *
+         * @param assignee The Resource of the assignee
+         * @return MergeRequestFilterParams.Builder
+         */
         public Builder setAssignee(Resource assignee) {
             this.assignee = assignee;
             filters = true;
             return this;
         }
 
+        /**
+         * Set the filter on onRecord associated with the MergeRequest.
+         *
+         * @param onRecord The Resource of the VersionedRDFRecord for the MergeRequest
+         * @return MergeRequestFilterParams.Builder
+         */
         public Builder setOnRecord(Resource onRecord) {
             this.onRecord = onRecord;
             filters = true;
             return this;
         }
 
+        /**
+         * Set the filter on sourceBranch of the MergeRequest.
+         *
+         * @param sourceBranch The Resource identifying the Branch that is being merged
+         * @return MergeRequestFilterParams.Builder
+         */
         public Builder setSourceBranch(Resource sourceBranch) {
             this.sourceBranch = sourceBranch;
             filters = true;
             return this;
         }
 
+        /**
+         * Set the filter on targetBranch of the MergeRequest.
+         *
+         * @param targetBranch The Resource identifying the Branch that is being merged into
+         * @return MergeRequestFilterParams.Builder
+         */
         public Builder setTargetBranch(Resource targetBranch) {
             this.targetBranch = targetBranch;
             filters = true;
             return this;
         }
 
+        /**
+         * For AcceptedMergeRequests, set the filter on the sourceCommit associated with the MergeRequest.
+         *
+         * @param sourceCommit The Resource identifying the sourceCommit of the MergeRequest
+         * @return MergeRequestFilterParams.Builder
+         */
         public Builder setSourceCommit(Resource sourceCommit) {
             this.sourceCommit = sourceCommit;
             filters = true;
             return this;
         }
 
+        /**
+         * For AcceptedMergeRequests, set the filter on the targetCommit associated with the MergeRequest.
+         *
+         * @param targetCommit The Resource identifying the targetCommit of the MergeRequest
+         * @return MergeRequestFilterParams.Builder
+         */
         public Builder setTargetCommit(Resource targetCommit) {
             this.targetCommit = targetCommit;
             filters = true;
             return this;
         }
 
+        /**
+         * Set the Resource by which the results of the query should be sorted.
+         *
+         * @param sortBy The Resource to sort query results by
+         * @return MergeRequestFilterParams.Builder
+         */
         public Builder setSortBy(Resource sortBy) {
             this.sortBy = sortBy;
             return this;
         }
 
+        /**
+         * Set whether to sort the query results by ascending. Default is false (descending).
+         *
+         * @param ascending Boolean to sort ascending
+         * @return MergeRequestFilterParams.Builder
+         */
         public Builder setAscending(boolean ascending) {
             this.ascending = ascending;
             return this;
         }
 
+        /**
+         * Set whether to query only AcceptedMergeRequests. Default is false (MergeRequests only).
+         *
+         * @param accepted Boolean to only retrieve AcceptedMergeRequests
+         * @return MergeRequestFilterParams.Builder
+         */
         public Builder setAccepted(boolean accepted) {
             this.accepted = accepted;
             return this;
