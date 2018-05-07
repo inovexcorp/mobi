@@ -30,6 +30,7 @@ import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -42,6 +43,7 @@ import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -113,7 +115,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
     private OrmFactory<UserBranch> userBranchFactory = getRequiredOrmFactory(UserBranch.class);
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
-    private OrmFactory<GraphRevision> graphRevisionFactory = getRequiredOrmFactory(GraphRevision.class);
 
     private IRI distributedCatalogId;
     private IRI localCatalogId;
@@ -150,6 +151,9 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     @Mock
     private CatalogUtilsService utilsService;
 
+    @Mock
+    private MergeRequestManager mergeRequestManager;
+
     @Before
     public void setUp() throws Exception {
         SesameRepositoryWrapper repositoryWrapper = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
@@ -167,6 +171,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         manager.setValueFactory(VALUE_FACTORY);
         manager.setModelFactory(MODEL_FACTORY);
         manager.setUtils(utilsService);
+        manager.setMergeRequestManager(mergeRequestManager);
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
@@ -597,9 +602,12 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         record.setBranch(Collections.singleton(branch));
         record.setMasterBranch(branch);
         doReturn(Optional.of(record)).when(utilsService).optObject(eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+        doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(VERSIONED_RDF_RECORD_IRI));
+
 
         Record result = manager.removeRecord(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, versionedRDFRecordFactory);
         assertEquals(record, result);
+        verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(VERSIONED_RDF_RECORD_IRI));
         verify(utilsService).removeVersion(eq(record.getResource()), any(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).removeBranch(eq(record.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
         verify(utilsService).removeObject(any(VersionedRDFRecord.class), any(RepositoryConnection.class));
@@ -1213,9 +1221,13 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveBranch() throws Exception {
+        // Setup:
+        doNothing().when(mergeRequestManager).cleanMergeRequests(eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI));
+
         manager.removeBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, BRANCH_IRI);
         verify(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
         verify(utilsService).removeBranch(eq(VERSIONED_RDF_RECORD_IRI), any(Branch.class), any(RepositoryConnection.class));
+        verify(mergeRequestManager).cleanMergeRequests(eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI));
     }
 
     @Test

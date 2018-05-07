@@ -43,7 +43,6 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
-import jdk.management.resource.ResourceContext;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -235,6 +234,10 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
 
         List<MergeRequest> mergeRequests = getMergeRequests(builder.build());
         mergeRequests.forEach(mergeRequest -> deleteMergeRequest(mergeRequest.getResource()));
+
+        builder.setAccepted(true);
+        mergeRequests = getMergeRequests(builder.build());
+        mergeRequests.forEach(mergeRequest -> deleteMergeRequest(mergeRequest.getResource()));
     }
 
     @Override
@@ -244,14 +247,16 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
 
         List<MergeRequest> mergeRequests = getMergeRequests(builder.build());
         mergeRequests.forEach(mergeRequest -> {
+            mergeRequest.getTargetBranch_resource().ifPresent(targetResource -> {
+                if (targetResource.equals(branchId)) {
+                    mergeRequest.getModel().remove(mergeRequest.getResource(),
+                            vf.createIRI(MergeRequest.targetBranch_IRI), targetResource);
+                    updateMergeRequest(mergeRequest.getResource(), mergeRequest);
+                }
+            });
             mergeRequest.getSourceBranch_resource().ifPresent(sourceResource -> {
                 if (sourceResource.equals(branchId)) {
                     deleteMergeRequest(mergeRequest.getResource());
-                }
-            });
-            mergeRequest.getTargetBranch_resource().ifPresent(targetResource -> {
-                if (targetResource.equals(branchId)) {
-                    // TODO: FIND OUT WHY THERE IS ONLY A REMOVE ASSIGNEEEEEEEEEEEE
                 }
             });
         });

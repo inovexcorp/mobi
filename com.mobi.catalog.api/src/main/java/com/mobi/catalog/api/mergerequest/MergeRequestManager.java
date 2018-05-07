@@ -100,9 +100,15 @@ public interface MergeRequestManager {
      * @param recordId Removes all MergeRequests that are linked to the VersionedRDFRecord identified by the provided
      *                 Resource.
      */
-    //TODO: COME UP WITH A BETTER METHOD NAME
     void deleteMergeRequestsWithRecordId(Resource recordId);
 
-    //TODO:
+    /**
+     * Updates any existing MergeRequest that references the provided branchId that is being removed. If a deleted
+     * branch is the target of an open MergeRequest, the target will be removed from the MergeRequest. If a deleted
+     * branch is the source of an open MergeRequest, the MergeRequest will be deleted.
+     *
+     * @param recordId A Resource of the recordId representing a VersionedRDFRecord
+     * @param branchId A Resource of the branchId representing a deleted Branch
+     */
     void cleanMergeRequests(Resource recordId, Resource branchId);
 }

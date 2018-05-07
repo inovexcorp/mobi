@@ -30,6 +30,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -499,15 +501,61 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     /* deleteMergeRequest */
 
     @Test
-    public void deleteMergeRequestTest() throws Exception {
+    public void deleteMergeRequestTest() {
         manager.deleteMergeRequest(request1.getResource());
         verify(utilsService).validateResource(eq(request1.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).remove(eq(request1.getResource()), any(RepositoryConnection.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void deleteMergeRequestDoesNotExistTest() throws Exception {
+    public void deleteMergeRequestDoesNotExistTest() {
         manager.deleteMergeRequest(request3.getResource());
         verify(utilsService).validateResource(eq(request3.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
+    }
+
+    /* cleanMergeRequests */
+
+    @Test
+    public void cleanMergeRequestsSourceBranch() {
+        manager.cleanMergeRequests(versionedRDFRecord1.getResource(), sourceBranch1.getResource());
+        verify(utilsService).remove(eq(request1.getResource()), any(RepositoryConnection.class));
+        verify(utilsService, times(0)).remove(eq(request2.getResource()), any(RepositoryConnection.class));
+        verify(utilsService, times(0)).remove(eq(request3.getResource()), any(RepositoryConnection.class));
+        verify(utilsService, times(0)).remove(eq(request4.getResource()), any(RepositoryConnection.class));
+        verify(utilsService, times(0)).updateObject(any(MergeRequest.class), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void cleanMergeRequestsTargetBranch() {
+        manager.cleanMergeRequests(versionedRDFRecord1.getResource(), targetBranch1.getResource());
+        verify(utilsService).validateResource(eq(request1.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService, times(0)).validateResource(eq(request2.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService, times(0)).validateResource(eq(request3.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService, times(0)).validateResource(eq(request4.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService, times(0)).remove(any(Resource.class), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void cleanMergeRequestsRecordWithNoMR() {
+        manager.cleanMergeRequests(vf.createIRI("http://mobi.com/test/records#versioned-rdf-record3"), targetBranch1.getResource());
+        verify(utilsService, times(0)).updateObject(any(MergeRequest.class), any(RepositoryConnection.class));
+        verify(utilsService, times(0)).remove(any(Resource.class), any(RepositoryConnection.class));
+    }
+
+    /* deleteMergeRequestsWithRecordId */
+
+    @Test
+    public void deleteMergeRequestsWithRecordId() {
+        manager.deleteMergeRequestsWithRecordId(versionedRDFRecord1.getResource());
+        verify(utilsService).remove(eq(request1.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(request4.getResource()), any(RepositoryConnection.class));
+        verify(utilsService, times(0)).remove(eq(request2.getResource()), any(RepositoryConnection.class));
+        verify(utilsService, times(0)).remove(eq(request3.getResource()), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void deleteMergeRequestsWithRecordIdRecordWithNoMR() {
+        manager.deleteMergeRequestsWithRecordId(vf.createIRI("http://mobi.com/test/records#versioned-rdf-record3"));
+        verify(utilsService, times(0)).remove(any(Resource.class), any(RepositoryConnection.class));
     }
 }
