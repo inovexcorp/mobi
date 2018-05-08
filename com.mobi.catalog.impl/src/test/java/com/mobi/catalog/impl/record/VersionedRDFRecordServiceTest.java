@@ -168,7 +168,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         when(utilsService.getExpectedObject(eq(commitIRI), any(OrmFactory.class), eq(connection))).thenReturn(headCommit);
         when(utilsService.getRevisionChanges(eq(commitIRI), eq(connection))).thenReturn(difference);
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
-        doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI));
+        doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.setRecordFactory(recordFactory);
@@ -190,7 +190,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
         verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
         verify(recordFactory).getExisting(eq(testIRI), eq(testRecord.getModel()));
-        verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI));
+        verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
         verify(utilsService).removeVersion(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).removeBranch(eq(testRecord.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
         verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));

@@ -80,7 +80,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     protected void deleteVersionedRDFData(T record, RepositoryConnection conn) {
         recordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRDFRecord -> {
-                    mergeRequestManager.deleteMergeRequestsWithRecordId(versionedRDFRecord.getResource());
+                    mergeRequestManager.deleteMergeRequestsWithRecordId(versionedRDFRecord.getResource(), conn);
                     versionedRDFRecord.getVersion_resource()
                             .forEach(resource -> utilsService.removeVersion(versionedRDFRecord.getResource(),
                                     resource, conn));

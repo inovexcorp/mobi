@@ -1,4 +1,4 @@
-@Version("2.0.1.${build}")
+@Version("2.1.0.${build}")
 
 package com.mobi.catalog.api.mergerequest;
 

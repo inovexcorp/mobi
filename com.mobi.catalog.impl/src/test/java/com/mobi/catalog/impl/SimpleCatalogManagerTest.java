@@ -602,12 +602,12 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         record.setBranch(Collections.singleton(branch));
         record.setMasterBranch(branch);
         doReturn(Optional.of(record)).when(utilsService).optObject(eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(VERSIONED_RDF_RECORD_IRI));
+        doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(VERSIONED_RDF_RECORD_IRI), any(RepositoryConnection.class));
 
 
         Record result = manager.removeRecord(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, versionedRDFRecordFactory);
         assertEquals(record, result);
-        verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(VERSIONED_RDF_RECORD_IRI));
+        verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(VERSIONED_RDF_RECORD_IRI), any(RepositoryConnection.class));
         verify(utilsService).removeVersion(eq(record.getResource()), any(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).removeBranch(eq(record.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
         verify(utilsService).removeObject(any(VersionedRDFRecord.class), any(RepositoryConnection.class));
@@ -1222,12 +1222,12 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     @Test
     public void testRemoveBranch() throws Exception {
         // Setup:
-        doNothing().when(mergeRequestManager).cleanMergeRequests(eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI));
+        doNothing().when(mergeRequestManager).cleanMergeRequests(eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), any(RepositoryConnection.class));
 
         manager.removeBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, BRANCH_IRI);
         verify(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
         verify(utilsService).removeBranch(eq(VERSIONED_RDF_RECORD_IRI), any(Branch.class), any(RepositoryConnection.class));
-        verify(mergeRequestManager).cleanMergeRequests(eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI));
+        verify(mergeRequestManager).cleanMergeRequests(eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), any(RepositoryConnection.class));
     }
 
     @Test

@@ -839,7 +839,7 @@ public class SimpleCatalogManager implements CatalogManager {
             }
             conn.begin();
             utils.removeBranch(versionedRDFRecordId, branch, conn);
-            mergeRequestManager.cleanMergeRequests(versionedRDFRecordId, branchId);
+            mergeRequestManager.cleanMergeRequests(versionedRDFRecordId, branchId, conn);
             conn.commit();
         }
     }
@@ -1377,7 +1377,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private void removeVersionedRDFRecord(Record record, RepositoryConnection conn) {
         versionedRDFRecordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRDFRecord -> {
-                    mergeRequestManager.deleteMergeRequestsWithRecordId(versionedRDFRecord.getResource());
+                    mergeRequestManager.deleteMergeRequestsWithRecordId(versionedRDFRecord.getResource(), conn);
                     versionedRDFRecord.getVersion_resource()
                             .forEach(resource -> utils.removeVersion(versionedRDFRecord.getResource(), resource, conn));
                     conn.remove(versionedRDFRecord.getResource(), vf.createIRI(VersionedRDFRecord.masterBranch_IRI),

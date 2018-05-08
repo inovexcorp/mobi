@@ -34,9 +34,11 @@ import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
+import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFactory;
 import com.mobi.catalog.rest.MergeRequestRest;
@@ -48,6 +50,9 @@ import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.RepositoryManager;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import net.sf.json.JSONArray;
@@ -64,6 +69,8 @@ import javax.ws.rs.core.Response;
 public class MergeRequestRestImpl implements MergeRequestRest {
 
     private MergeRequestManager manager;
+    private CatalogManager catalogManager;
+    private RepositoryManager repositoryManager;
     private SesameTransformer transformer;
     private EngineManager engineManager;
     private MergeRequestFactory mergeRequestFactory;
@@ -72,6 +79,16 @@ public class MergeRequestRestImpl implements MergeRequestRest {
     @Reference
     void setManager(MergeRequestManager manager) {
         this.manager = manager;
+    }
+
+    @Reference
+    void setCatalogManager(CatalogManager catalogManager) {
+        this.catalogManager = catalogManager;
+    }
+
+    @Reference
+    void setRepositoryManager(RepositoryManager repositoryManager) {
+        this.repositoryManager = repositoryManager;
     }
 
     @Reference
@@ -99,8 +116,8 @@ public class MergeRequestRestImpl implements MergeRequestRest {
         MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
         builder.setSortBy(createIRI(StringUtils.isEmpty(sort) ? _Thing.issued_IRI : sort, vf));
         builder.setAscending(asc).setAccepted(accepted);
-        try {
-            JSONArray result = JSONArray.fromObject(manager.getMergeRequests(builder.build()).stream()
+        try (RepositoryConnection conn = getCatalogRepo().getConnection()) {
+            JSONArray result = JSONArray.fromObject(manager.getMergeRequests(builder.build(), conn).stream()
                     .map(request -> modelToJsonld(request.getModel(), transformer))
                     .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));
@@ -135,9 +152,10 @@ public class MergeRequestRestImpl implements MergeRequestRest {
                 builder.addAssignee(assignee.get());
             });
         }
-        try {
-            MergeRequest request = manager.createMergeRequest(builder.build());
-            manager.addMergeRequest(request);
+        try (RepositoryConnection conn = getCatalogRepo().getConnection()) {
+            MergeRequest request = manager.createMergeRequest(builder.build(), catalogManager.getLocalCatalogIRI(),
+                    conn);
+            manager.addMergeRequest(request, conn);
             return Response.status(201).entity(request.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -149,8 +167,8 @@ public class MergeRequestRestImpl implements MergeRequestRest {
     @Override
     public Response getMergeRequest(String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
-        try {
-            MergeRequest request = manager.getMergeRequest(requestIdResource).orElseThrow(() ->
+        try (RepositoryConnection conn = getCatalogRepo().getConnection()) {
+            MergeRequest request = manager.getMergeRequest(requestIdResource, conn).orElseThrow(() ->
                     ErrorUtils.sendError("Merge Request " + requestId + " could not be found",
                             Response.Status.NOT_FOUND));
             String json = groupedModelToString(request.getModel(), getRDFFormat("jsonld"), transformer);
@@ -163,8 +181,8 @@ public class MergeRequestRestImpl implements MergeRequestRest {
     @Override
     public Response updateMergeRequest(String requestId, String newMergeRequest) {
         Resource requestIdResource = createIRI(requestId, vf);
-        try {
-            manager.updateMergeRequest(requestIdResource, jsonToMergeRequest(requestIdResource, newMergeRequest));
+        try (RepositoryConnection conn = getCatalogRepo().getConnection()) {
+            manager.updateMergeRequest(requestIdResource, jsonToMergeRequest(requestIdResource, newMergeRequest), conn);
             return Response.ok().build();
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -174,8 +192,8 @@ public class MergeRequestRestImpl implements MergeRequestRest {
     @Override
     public Response deleteMergeRequest(String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
-        try {
-            manager.deleteMergeRequest(requestIdResource);
+        try (RepositoryConnection conn = getCatalogRepo().getConnection()) {
+            manager.deleteMergeRequest(requestIdResource, conn);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex,"Merge Request " + requestId + " could not be found",
@@ -189,5 +207,10 @@ public class MergeRequestRestImpl implements MergeRequestRest {
         Model mergeReqModel = jsonldToModel(jsonMergeRequest, transformer);
         return mergeRequestFactory.getExisting(requestId, mergeReqModel).orElseThrow(() ->
                 ErrorUtils.sendError("MergeRequest IDs must match", Response.Status.BAD_REQUEST));
+    }
+
+    private Repository getCatalogRepo() {
+        return repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
+                new IllegalStateException("Cannot retrieve Catalog repository"));
     }
 }
