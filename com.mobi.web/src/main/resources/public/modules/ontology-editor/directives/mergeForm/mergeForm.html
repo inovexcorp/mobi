@@ -24,14 +24,15 @@
     <div class="form-container">
         <form name="dvm.form" novalidate autocomplete="off">
             <span class="merge-message">Merge <strong>Branch: {{dvm.util.getDctermsValue(dvm.branch, 'title')}}</strong> into</span>
-            <ui-select ng-model="dvm.target" ng-required="true" class="select-branch" ng-disabled="dvm.os.listItem.userBranch" ng-change="dvm.changeTarget()">
+            <branch-select bind-model="dvm.target" required="true" class="select-branch" disabled="dvm.os.listItem.userBranch" change-event="dvm.changeTarget()" branches="dvm.branches"></branch-select>
+            <!-- <ui-select ng-model="dvm.target" ng-required="true" class="select-branch" ng-disabled="dvm.os.listItem.userBranch" ng-change="dvm.changeTarget()">
                 <ui-select-match placeholder="Select a Branch">
                     <span>Branch: {{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
                 </ui-select-match>
                 <ui-select-choices repeat="branch in dvm.os.listItem.branches | branchesToDisplay | filter:dvm.matchesCurrent | filter:$select.search">
                     <span ng-bind-html="dvm.util.getDctermsValue(branch, 'title') | highlight:$select.search | trusted"></span>
                 </ui-select-choices>
-            </ui-select>
+            </ui-select> -->
             <checkbox ng-if="dvm.util.getDctermsValue(dvm.branch, 'title') !== 'MASTER' && !dvm.os.listItem.userBranch" ng-model="dvm.removeBranch" display-text="'Remove Branch: ' + dvm.util.getDctermsValue(dvm.branch, 'title') + ' after merge.'"></checkbox>
         </form>
     </div>

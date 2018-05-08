@@ -51,7 +51,7 @@
                         changes: true,
                         commits: false
                     };
-
+                    dvm.branches = _.reject(dvm.os.listItem.branches, {'@id': dvm.branch['@id']});
                     dvm.branchTitle = dvm.util.getDctermsValue(dvm.branch, 'title');
 
                     dvm.matchesCurrent = function(branch) {

@@ -62,6 +62,7 @@
             'blockFooter',
             'blockHeader',
             'blockSearch',
+            'branchSelect',
             'breadcrumbs',
             'checkbox',
             'circleButton',
