@@ -181,6 +181,7 @@ describe('Login Manager service', function() {
         expect(discoverStateSvc.reset).toHaveBeenCalled();
         expect(mapperStateSvc.initialize).toHaveBeenCalled();
         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+        expect(mergeRequestsStateSvc.reset).toHaveBeenCalled();
         expect(ontologyManagerSvc.reset).toHaveBeenCalled();
         expect(ontologyStateSvc.reset).toHaveBeenCalled();
         expect(sparqlManagerSvc.reset).toHaveBeenCalled();

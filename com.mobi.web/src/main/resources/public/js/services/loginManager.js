@@ -162,6 +162,7 @@
                 discoverStateService.reset();
                 mapperStateService.initialize();
                 mapperStateService.resetEdit();
+                mergeRequestsStateService.reset();
                 ontologyManagerService.reset();
                 ontologyStateService.reset();
                 sparqlManagerService.reset();

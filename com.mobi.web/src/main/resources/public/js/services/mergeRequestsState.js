@@ -205,6 +205,29 @@
             }
             /**
              * @ngdoc method
+             * @name reset
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             *
+             * @description
+             * Resets important state variables.
+             */
+            self.reset = function() {
+                self.requestConfig = {
+                    recordId: '',
+                    sourceBranchId: '',
+                    targetBranchId: '',
+                    title: '',
+                    description: ''
+                };
+                self.createRequest = false;
+                self.createRequestStep = 0;
+                self.open = {
+                    active: true,
+                    selected: undefined
+                };
+            }
+            /**
+             * @ngdoc method
              * @name initialize
              * @propertyOf mergeRequestsState.service:mergeRequestsStateService
              *

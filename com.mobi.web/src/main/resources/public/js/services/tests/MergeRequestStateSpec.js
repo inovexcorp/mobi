@@ -58,6 +58,35 @@ describe('Merge Requests State service', function() {
         scope = null;
     });
 
+    it('should reset important variables', function() {
+        mergeRequestsStateSvc.requestConfig = {
+            title: 'title',
+            description: 'description',
+            sourceBranchId: 'id',
+            targetBranchId: 'id',
+            recordId: 'id'
+        };
+        mergeRequestsStateSvc.createRequestStep = 1;
+        mergeRequestsStateSvc.createRequest = true;
+        mergeRequestsStateSvc.open = {
+            active: true,
+            selected: {}
+        };
+        mergeRequestsStateSvc.reset();
+        expect(mergeRequestsStateSvc.requestConfig).toEqual({
+            title: '',
+            description: '',
+            sourceBranchId: '',
+            targetBranchId: '',
+            recordId: ''
+        });
+        expect(mergeRequestsStateSvc.createRequest).toEqual(false);
+        expect(mergeRequestsStateSvc.createRequestStep).toEqual(0);
+        expect(mergeRequestsStateSvc.open).toEqual({
+            active: true,
+            selected: undefined
+        });
+    });
     describe('should set the requests list properly if getRequests', function() {
         describe('resolves', function() {
             beforeEach(function() {

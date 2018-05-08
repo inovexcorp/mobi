@@ -204,10 +204,10 @@ describe('Request Branch Select directive', function() {
             expect(this.element.find('commit-difference-tabset').length).toEqual(1);
         });
         it('with .form-groups', function() {
-            expect(this.element.querySelectorAll('.form-group').length).toEqual(5);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(3);
         });
-        it('with ui-selects', function() {
-            expect(this.element.find('ui-select').length).toEqual(2);
+        it('with branch-selects', function() {
+            expect(this.element.find('branch-select').length).toEqual(2);
         });
     });
 });
