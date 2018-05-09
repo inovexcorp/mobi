@@ -2,20 +2,5 @@
 @import "./src/main/resources/public/css/variables";
 
 .open-tab {
-    .wrapping-column {
-        display: flex;
-        flex-direction: column;
-
-        block {
-            flex: 1;
-        }
-    }
-
-    .request {
-        border-bottom: 1px solid $gray-lighter;
-
-        h3 {
-            margin-bottom: 0;
-        }
-    }
+    
 }

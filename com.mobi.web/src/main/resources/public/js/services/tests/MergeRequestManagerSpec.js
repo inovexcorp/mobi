@@ -21,12 +21,13 @@
  * #L%
  */
 describe('Merge Request Manager service', function() {
-    var mergeRequestManagerSvc, $httpBackend, $httpParamSerializer, ontologyManagerSvc, utilSvc, uuidSvc, prefixes, splitIRI, camelCase, $q, scope;
+    var mergeRequestManagerSvc, $httpBackend, $httpParamSerializer, utilSvc, prefixes, $q, scope;
 
     beforeEach(function() {
         module('mergeRequestManager');
         mockPrefixes();
         mockUtil();
+        mockPrefixes();
         injectRestPathConstant();
 
         inject(function(mergeRequestManagerService, _utilService_, _$httpBackend_, _$httpParamSerializer_, _prefixes_, _$q_, _$rootScope_) {
@@ -93,5 +94,122 @@ describe('Merge Request Manager service', function() {
                 });
             flushAndVerify($httpBackend);
         });
+    });
+    describe('should create a new merge request', function() {
+        beforeEach(function() {
+            this.requestConfig = {
+                title: 'Title',
+                description: 'Description',
+                recordId: 'recordId',
+                sourceBranchId: 'branch1',
+                targetBranchId: 'branch2',
+                assignees: ['user1', 'user2']
+            };
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectPOST('/mobirest/merge-requests',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(400, null, null, 'Error Message');
+            mergeRequestManagerSvc.createRequest(this.requestConfig)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
+        });
+        it('with a description and assignees', function() {
+            $httpBackend.expectPOST('/mobirest/merge-requests',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(200, 'requestId');
+            mergeRequestManagerSvc.createRequest(this.requestConfig)
+                .then(function(response) {
+                    expect(response).toBe('requestId');
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('without a description or assignees', function() {
+            delete this.requestConfig.description;
+            delete this.requestConfig.assignees;
+            $httpBackend.expectPOST('/mobirest/merge-requests',
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(200, 'requestId');
+            mergeRequestManagerSvc.createRequest(this.requestConfig)
+                .then(function(response) {
+                    expect(response).toBe('requestId');
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
+    describe('should get a single merge request', function() {
+        beforeEach(function() {
+            this.requestId = 'request';
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectGET('/mobirest/merge-requests/' + this.requestId).respond(400, null, null, 'Error Message');
+            mergeRequestManagerSvc.getRequest(this.requestId)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
+        });
+        it('successfully', function() {
+          $httpBackend.expectGET('/mobirest/merge-requests/' + this.requestId).respond(200, {});
+          mergeRequestManagerSvc.getRequest(this.requestId)
+              .then(function(response) {
+                  expect(response).toEqual({});
+              }, function(response) {
+                  fail('Promise should have resolved');
+              });
+          flushAndVerify($httpBackend);
+        });
+    });
+    describe('should remove a single merge request', function() {
+        beforeEach(function() {
+            this.requestId = 'request';
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectDELETE('/mobirest/merge-requests/' + this.requestId).respond(400, null, null, 'Error Message');
+            mergeRequestManagerSvc.deleteRequest(this.requestId)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
+        });
+        it('successfully', function() {
+          $httpBackend.expectDELETE('/mobirest/merge-requests/' + this.requestId).respond(200, {});
+          mergeRequestManagerSvc.deleteRequest(this.requestId)
+              .then(_.noop, function(response) {
+                  fail('Promise should have resolved');
+              });
+          flushAndVerify($httpBackend);
+        });
+    });
+    it('should determine whether a request is accepted', function() {
+        expect(mergeRequestManagerSvc.isAccepted({'@type': []})).toEqual(false);
+        expect(mergeRequestManagerSvc.isAccepted({'@type': [prefixes.mergereq + 'AcceptedMergeRequest']})).toEqual(true);
     });
 });
