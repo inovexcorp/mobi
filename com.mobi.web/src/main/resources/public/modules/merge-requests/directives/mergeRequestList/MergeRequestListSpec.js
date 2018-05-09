@@ -81,14 +81,14 @@ describe('Merge Request List directive', function() {
             expect(this.element.querySelectorAll('.request').length).toEqual(mergeRequestsStateSvc.requests.length);
         });
     });
-    it('should call selectRequest when one is clicked', function() {
+    it('should set the correct state when a request is clicked', function() {
         mergeRequestsStateSvc.requests = [{}];
         scope.$digest();
         mergeRequestsStateSvc.getCurrentTab.and.returnValue(mergeRequestsStateSvc.open);
 
         var request = angular.element(this.element.querySelectorAll('.request')[0]);
         request.triggerHandler('click');
-        expect(mergeRequestsStateSvc.selectRequest).toHaveBeenCalledWith({}, mergeRequestsStateSvc.open);
+        expect(mergeRequestsStateSvc.open.selected).toEqual({});
     });
     it('should call showDeleteOverlay when the delete link is clicked', function() {
         mergeRequestsStateSvc.requests = [{}];

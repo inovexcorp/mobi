@@ -262,26 +262,23 @@
             }
             /**
              * @ngdoc method
-             * @name selectRequest
+             * @name setRequestDetails
              * @propertyOf mergeRequestsState.service:mergeRequestsStateService
              *
              * @description
-             * Selects the request represented with the provided object for the provided tab and adds
-             * more metadata to the request object using the {@link catalogManager.service:catalogManagerService}.
-             * This metadata includes the source and target branch with their titles, source and target commits,
-             * and the difference between the two commits.
+             * Adds more metadata on the provided object that represents a merge request using the
+             * {@link catalogManager.service:catalogManagerService}. This metadata includes the source and target
+             * branch with their titles, source and target commits, and the difference between the two commits.
              *
-             * @param {Object} request An item from the `requests` arrya that represents the request to select
-             * @param {Object} tabObj Either the `open` tab or the `accepted` tab
+             * @param {Object} request An item from the `requests` array that represents the request to select
              */
-            self.selectRequest = function(request, tabObj) {
+            self.setRequestDetails = function(request) {
                 if (mm.isAccepted(request.request)) {
                     request.sourceTitle = util.getPropertyValue(request.request, prefixes.mergereq + 'sourceBranchTitle');
                     request.targetTitle = util.getPropertyValue(request.request, prefixes.mergereq + 'targetBranchTitle');
                     request.sourceCommit = util.getPropertyId(request.request, prefixes.mergereq + 'sourceCommit')
                     request.targetCommit = util.getPropertyId(request.request, prefixes.mergereq + 'targetCommit')
                     // TODO: Set the difference using the two commits
-                    tabObj.selected = request;
                 } else {
                     var sourceIri = util.getPropertyId(request.request, prefixes.mergereq + 'sourceBranch');
                     var targetIri = util.getPropertyId(request.request, prefixes.mergereq + 'targetBranch');
@@ -300,7 +297,6 @@
                         }, $q.reject)
                         .then(diff => {
                             request.difference = diff;
-                            tabObj.selected = request;
                             return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
                         }, $q.reject)
                         .then(conflicts => request.hasConflicts = !_.isEmpty(conflicts), util.createErrorToast);

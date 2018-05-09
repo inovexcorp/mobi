@@ -62,12 +62,14 @@ describe('Merge Request View directive', function() {
         it('resolves', function() {
             this.getDefer.resolve();
             scope.$apply();
+            expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.open.selected);
             expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
             expect(mergeRequestsStateSvc.open.selected).toBeDefined();
         });
         it('rejects', function() {
             this.getDefer.reject();
             scope.$apply();
+            expect(mergeRequestsStateSvc.setRequestDetails).not.toHaveBeenCalled();
             expect(utilSvc.createWarningToast).toHaveBeenCalled();
             expect(mergeRequestsStateSvc.open.selected).toBeUndefined();
         });

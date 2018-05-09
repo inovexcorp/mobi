@@ -1286,7 +1286,7 @@ function mockMergeRequestsState() {
             this.initialize = jasmine.createSpy('initialize');
             this.reset = jasmine.createSpy('reset');
             this.setRequests = jasmine.createSpy('setRequests');
-            this.selectRequest = jasmine.createSpy('selectRequest');
+            this.setRequestDetails = jasmine.createSpy('setRequestDetails');
             this.startCreate = jasmine.createSpy('startCreate');
             this.getCurrentTab = jasmine.createSpy('getCurrentTab').and.returnValue(this.open);
         });

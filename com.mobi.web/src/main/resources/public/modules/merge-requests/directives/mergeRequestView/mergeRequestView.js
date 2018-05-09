@@ -72,7 +72,10 @@
                     dvm.selected = currentTab.selected;
 
                     dvm.mm.getRequest(dvm.selected.request['@id'])
-                        .then(_.noop, error => {
+                        .then(request => {
+                            dvm.selected.request = request;
+                            dvm.state.setRequestDetails(dvm.selected);
+                        }, error => {
                             dvm.util.createWarningToast('The request you had selected no longer exists');
                             dvm.back();
                         });

@@ -48,7 +48,7 @@
          * The directive is replaced by the contents of its template.
          *
          * @param {string} recordId The IRI of the VersionedRDFRecord that the Commits belong to
-         * @param {Object} sourceBranch The JSON-LD of the soruce branch of the difference
+         * @param {Object} sourceBranch The JSON-LD of the source branch of the difference
          * @param {string} targetBranchId The IRI of the target branch of the difference
          * @param {Object} difference The object representing the difference between the two Commits
          */
