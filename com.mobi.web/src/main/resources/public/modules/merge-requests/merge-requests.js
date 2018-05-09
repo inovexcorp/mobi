@@ -26,7 +26,13 @@
     angular
         .module('merge-requests', [
             /* Custom Directives */
+            'createRequestTabset',
+            'mergeRequestList',
             'mergeRequestsTabset',
-            'openTab'
+            'mergeRequestView',
+            'openTab',
+            'requestBranchSelect',
+            'requestDetailsForm',
+            'requestRecordSelect'
         ]);
 })();

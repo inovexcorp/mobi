@@ -31,7 +31,7 @@
         return {
             restrict: 'E',
             controllerAs: 'dvm',
-            reaplce: true,
+            replace: true,
             scope: {
                 stepNumber: '<',
                 currentStep: '<'

@@ -24,18 +24,18 @@
     'use strict';
 
     angular
-        .module('branchSelect', [])
-        .directive('branchSelect', branchSelect);
+        .module('ontologyBranchSelect', [])
+        .directive('ontologyBranchSelect', ontologyBranchSelect);
 
-        branchSelect.$inject = ['$filter', '$q', 'catalogManagerService', 'ontologyStateService',
+        ontologyBranchSelect.$inject = ['$filter', '$q', 'catalogManagerService', 'ontologyStateService',
             'ontologyManagerService', 'utilService', 'stateManagerService'];
 
-        function branchSelect($filter, $q, catalogManagerService, ontologyStateService, ontologyManagerService, utilService,
+        function ontologyBranchSelect($filter, $q, catalogManagerService, ontologyStateService, ontologyManagerService, utilService,
             stateManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/branchSelect/branchSelect.html',
+                templateUrl: 'modules/ontology-editor/directives/ontologyBranchSelect/ontologyBranchSelect.html',
                 scope: {},
                 bindToController: {
                     bindModel: '=ngModel'
