@@ -30,7 +30,6 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReference
 import static com.mobi.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -40,35 +39,16 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.builder.DistributionConfig;
-import com.mobi.catalog.api.builder.RecordConfig;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.Distribution;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.ontologies.mcat.Tag;
-import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
-import com.mobi.catalog.api.ontologies.mcat.UserBranch;
-import com.mobi.catalog.api.ontologies.mcat.Version;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
-import com.mobi.catalog.api.versioning.VersioningManager;
-import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
-import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -96,66 +76,31 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
 public class CommitRestImplTest extends MobiRestTestNg {
+    private static final String USER_IRI = "http://mobi.com/users/tester";
+    private static final String RECORD_IRI = "http://mobi.com/records/test";
+    private static final String ERROR_IRI = "http://mobi.com/error";
+    private static final String[] COMMIT_IRIS = new String[]{
+        "http://mobi.com/commits/0",
+        "http://mobi.com/commits/1",
+        "http://mobi.com/commits/2"
+    };
+
     private CommitRestImpl rest;
     private ValueFactory vf;
     private ModelFactory mf;
     private OrmFactory<Record> recordFactory;
-    private OrmFactory<UnversionedRecord> unversionedRecordFactory;
-    private OrmFactory<VersionedRecord> versionedRecordFactory;
-    private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory;
-    private OrmFactory<MappingRecord> mappingRecordFactory;
-    private OrmFactory<Distribution> distributionFactory;
-    private OrmFactory<Version> versionFactory;
-    private OrmFactory<Tag> tagFactory;
-    private OrmFactory<Branch> branchFactory;
-    private OrmFactory<UserBranch> userBranchFactory;
-    private Catalog localCatalog;
-    private Catalog distributedCatalog;
     private Record testRecord;
-    private UnversionedRecord testUnversionedRecord;
-    private VersionedRecord testVersionedRecord;
-    private VersionedRDFRecord testVersionedRDFRecord;
-    private MappingRecord testMappingRecord;
-    private Distribution testDistribution;
-    private Version testVersion;
-    private Tag testTag;
     private List<Commit> testCommits;
-    private InProgressCommit testInProgressCommit;
-    private Branch testBranch;
-    private UserBranch testUserBranch;
     private User user;
-    private CreateActivity createActivity;
-    private DeleteActivity deleteActivity;
-    private Model compiledResource;
-    private Model compiledResourceWithChanges;
-    private static final String ERROR_IRI = "http://mobi.com/error";
-    private static final String LOCAL_IRI = "http://mobi.com/catalogs/local";
-    private static final String DISTRIBUTED_IRI = "http://mobi.com/catalogs/distributed";
-    private static final String RECORD_IRI = "http://mobi.com/records/test";
-    private static final String DISTRIBUTION_IRI = "http://mobi.com/distributions/test";
-    private static final String VERSION_IRI = "http://mobi.com/versions/test";
-    private static final String[] COMMIT_IRIS = new String[]{
-            "http://mobi.com/commits/0",
-            "http://mobi.com/commits/1",
-            "http://mobi.com/commits/2"
-    };
-    private static final String BRANCH_IRI = "http://mobi.com/branches/test";
-    private static final String USER_IRI = "http://mobi.com/users/tester";
-    private static final String ACTIVITY_IRI = "http://mobi.com/activity/test";
-    private static final String CONFLICT_IRI = "http://mobi.com/conflicts/test";
 
     @Mock
     private CatalogManager catalogManager;
-
-    @Mock
-    private VersioningManager versioningManager;
 
     @Mock
     private EngineManager engineManager;
@@ -175,69 +120,23 @@ public class CommitRestImplTest extends MobiRestTestNg {
     @Mock
     private BNodeService bNodeService;
 
-    @Mock
-    private CatalogProvUtils provUtils;
-
     @Override
     protected Application configureApp() throws Exception {
         vf = getValueFactory();
         mf = getModelFactory();
 
-        OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
         recordFactory = getRequiredOrmFactory(Record.class);
-        unversionedRecordFactory = getRequiredOrmFactory(UnversionedRecord.class);
-        versionedRecordFactory = getRequiredOrmFactory(VersionedRecord.class);
-        versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
-        mappingRecordFactory = getRequiredOrmFactory(MappingRecord.class);
-        distributionFactory = getRequiredOrmFactory(Distribution.class);
-        versionFactory = getRequiredOrmFactory(Version.class);
-        tagFactory = getRequiredOrmFactory(Tag.class);
-        branchFactory = getRequiredOrmFactory(Branch.class);
-        userBranchFactory = getRequiredOrmFactory(UserBranch.class);
         OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
-        OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
         OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
-        OrmFactory<CreateActivity> createActivityFactory = getRequiredOrmFactory(CreateActivity.class);
-        OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
 
-        localCatalog = catalogFactory.createNew(vf.createIRI(LOCAL_IRI));
-        distributedCatalog = catalogFactory.createNew(vf.createIRI(DISTRIBUTED_IRI));
         testCommits = Arrays.stream(COMMIT_IRIS)
                 .map(s -> commitFactory.createNew(vf.createIRI(s)))
                 .collect(Collectors.toList());
-        testInProgressCommit = inProgressCommitFactory.createNew(vf.createIRI(COMMIT_IRIS[0]));
-        testBranch = branchFactory.createNew(vf.createIRI(BRANCH_IRI));
-        testBranch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
-        testBranch.setProperty(vf.createLiteral(USER_IRI), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
-        testBranch.setHead(testCommits.get(0));
-        testUserBranch = userBranchFactory.createNew(vf.createIRI(BRANCH_IRI + "/user"));
-        testUserBranch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
-        testUserBranch.setProperty(vf.createLiteral(USER_IRI), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
-        testDistribution = distributionFactory.createNew(vf.createIRI(DISTRIBUTION_IRI));
-        testDistribution.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
-        testVersion = versionFactory.createNew(vf.createIRI(VERSION_IRI));
-        testVersion.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
-        testVersion.setVersionedDistribution(Collections.singleton(testDistribution));
-        testTag = tagFactory.createNew(vf.createIRI(VERSION_IRI));
-        testTag.setCommit(testCommits.get(0));
+
         testRecord = recordFactory.createNew(vf.createIRI(RECORD_IRI));
         testRecord.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
-        testUnversionedRecord = unversionedRecordFactory.createNew(vf.createIRI(RECORD_IRI));
-        testUnversionedRecord.setUnversionedDistribution(Collections.singleton(testDistribution));
-        testVersionedRecord = versionedRecordFactory.createNew(vf.createIRI(RECORD_IRI));
-        testVersionedRecord.setLatestVersion(testVersion);
-        testVersionedRecord.setVersion(Collections.singleton(testVersion));
-        testVersionedRDFRecord = versionedRDFRecordFactory.createNew(vf.createIRI(RECORD_IRI));
-        testVersionedRDFRecord.setMasterBranch(testBranch);
-        testVersionedRDFRecord.setBranch(Stream.of(testBranch, testUserBranch).collect(Collectors.toSet()));
-        testMappingRecord = mappingRecordFactory.createNew(vf.createIRI(RECORD_IRI));
+
         user = userFactory.createNew(vf.createIRI(USER_IRI));
-        createActivity = createActivityFactory.createNew(vf.createIRI(ACTIVITY_IRI + "/create"));
-        deleteActivity = deleteActivityFactory.createNew(vf.createIRI(ACTIVITY_IRI + "/delete"));
-        compiledResource = mf.createModel();
-        compiledResourceWithChanges = mf.createModel(compiledResource);
-        compiledResourceWithChanges.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()),
-                vf.createLiteral("Title"));
 
         MockitoAnnotations.initMocks(this);
         when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
@@ -278,96 +177,19 @@ public class CommitRestImplTest extends MobiRestTestNg {
         when(results.getPageSize()).thenReturn(10);
         when(results.getTotalSize()).thenReturn(50);
 
-        when(catalogManager.getLocalCatalog()).thenReturn(localCatalog);
-        when(catalogManager.getDistributedCatalog()).thenReturn(distributedCatalog);
-        when(catalogManager.getLocalCatalogIRI()).thenReturn(vf.createIRI(LOCAL_IRI));
-        when(catalogManager.getDistributedCatalogIRI()).thenReturn(vf.createIRI(DISTRIBUTED_IRI));
-        when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(testRecord.getResource()));
-        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(results);
-        when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(recordFactory)))
-                .thenReturn(Optional.of(testRecord));
-        when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(unversionedRecordFactory)))
-                .thenReturn(Optional.of(testUnversionedRecord));
-        when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(versionedRecordFactory)))
-                .thenReturn(Optional.of(testVersionedRecord));
-        when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(versionedRDFRecordFactory)))
-                .thenReturn(Optional.of(testVersionedRDFRecord));
-        when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(mappingRecordFactory)))
-                .thenReturn(Optional.of(testMappingRecord));
-        when(catalogManager.createRecord(any(RecordConfig.class), eq(recordFactory))).thenReturn(testRecord);
-        when(catalogManager.createRecord(any(RecordConfig.class), eq(unversionedRecordFactory)))
-                .thenReturn(testUnversionedRecord);
-        when(catalogManager.createRecord(any(RecordConfig.class), eq(versionedRecordFactory)))
-                .thenReturn(testVersionedRecord);
-        when(catalogManager.createRecord(any(RecordConfig.class), eq(versionedRDFRecordFactory)))
-                .thenReturn(testVersionedRDFRecord);
-        when(catalogManager.createRecord(any(RecordConfig.class), eq(mappingRecordFactory)))
-                .thenReturn(testMappingRecord);
-        when(catalogManager.getUnversionedDistributions(any(Resource.class), any(Resource.class))).thenReturn(Collections.singleton(testDistribution));
-        when(catalogManager.createDistribution(any(DistributionConfig.class))).thenReturn(testDistribution);
-        when(catalogManager.getUnversionedDistribution(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(testDistribution));
-        when(catalogManager.getVersions(any(Resource.class), any(Resource.class))).thenReturn(Collections.singleton(testVersion));
-        when(catalogManager.getVersion(any(Resource.class), any(Resource.class), any(Resource.class), eq(versionFactory))).thenReturn(Optional.of(testVersion));
-        when(catalogManager.getVersion(any(Resource.class), any(Resource.class), any(Resource.class), eq(tagFactory))).thenReturn(Optional.of(testTag));
-        when(catalogManager.getLatestVersion(any(Resource.class), any(Resource.class), eq(versionFactory))).thenReturn(Optional.of(testVersion));
-        when(catalogManager.createVersion(anyString(), anyString(), eq(versionFactory))).thenReturn(testVersion);
-        when(catalogManager.createVersion(anyString(), anyString(), eq(tagFactory))).thenReturn(testTag);
-        when(catalogManager.getTaggedCommit(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(testCommits.get(0));
-        when(catalogManager.getVersionedDistributions(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Collections.singleton(testDistribution));
-        when(catalogManager.getVersionedDistribution(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(testDistribution));
-        when(catalogManager.getBranches(any(Resource.class), any(Resource.class))).thenReturn(Stream.of(testBranch, testUserBranch).collect(Collectors.toSet()));
-        when(catalogManager.getBranch(any(Resource.class), any(Resource.class), any(Resource.class), eq(branchFactory))).thenReturn(Optional.of(testBranch));
-        when(catalogManager.getBranch(any(Resource.class), any(Resource.class), eq(testUserBranch.getResource()), eq(branchFactory))).thenReturn(Optional.of(testUserBranch));
-        when(catalogManager.getBranch(any(Resource.class), any(Resource.class), any(Resource.class), eq(userBranchFactory))).thenReturn(Optional.of(testUserBranch));
-        when(catalogManager.getMasterBranch(any(Resource.class), any(Resource.class))).thenReturn(testBranch);
-        when(catalogManager.createBranch(anyString(), anyString(), eq(branchFactory))).thenReturn(testBranch);
-        when(catalogManager.createBranch(anyString(), anyString(), eq(userBranchFactory))).thenReturn(testUserBranch);
-        when(catalogManager.getCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class))).thenAnswer(i -> {
-            Resource iri = i.getArgumentAt(3, Resource.class);
-            Commit found = null;
-            for (Commit commit : testCommits) {
-                if (iri.equals(commit.getResource())) {
-                    found = commit;
-                }
-            }
-            return Optional.ofNullable(found);
-        });
-        when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(testInProgressCommit));
-        when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class))).thenReturn(Optional.of(testInProgressCommit));
-        when(catalogManager.getConflicts(any(Resource.class), any(Resource.class))).thenReturn(Collections.singleton(conflict));
         when(catalogManager.getCommitChain(any(Resource.class))).thenReturn(testCommits);
-        when(catalogManager.getCommitChain(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(testCommits);
-        when(catalogManager.getCommitChain(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(testCommits);
-        when(catalogManager.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class))).thenReturn(testCommits.get(0));
-        when(catalogManager.getHeadCommit(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(testCommits.get(0));
-        when(catalogManager.getCompiledResource(any(Resource.class))).thenReturn(compiledResource);
-        when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class))).thenReturn(Optional.of(testInProgressCommit));
-        when(catalogManager.applyInProgressCommit(any(Resource.class), any(Model.class))).thenReturn(compiledResourceWithChanges);
-        when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(testInProgressCommit);
         when(catalogManager.getCommitDifference(any(Resource.class))).thenReturn(difference);
-        when(catalogManager.getDifference(any(Resource.class), any(Resource.class))).thenReturn(difference);
-        when(catalogManager.removeRecord(any(Resource.class), eq(vf.createIRI(RECORD_IRI)), any(OrmFactory.class))).thenReturn(testRecord);
-
-        when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString())).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
-        when(versioningManager.merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(Model.class), any(Model.class))).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
-
-        when(conflict.getIRI()).thenReturn(vf.createIRI(CONFLICT_IRI));
-        when(conflict.getLeftDifference()).thenReturn(difference);
-        when(conflict.getRightDifference()).thenReturn(difference);
 
         when(difference.getAdditions()).thenReturn(mf.createModel());
         when(difference.getDeletions()).thenReturn(mf.createModel());
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.of(user.getResource().stringValue()));
-
-        when(provUtils.startCreateActivity(any(User.class))).thenReturn(createActivity);
-        when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
     }
 
     @AfterMethod
     public void resetMocks() {
-        reset(catalogManager, versioningManager, engineManager, transformer, conflict, difference, results, bNodeService, provUtils);
+        reset(catalogManager, engineManager, transformer, conflict, difference, results, bNodeService);
     }
 
     // GET commits/{commitId}
