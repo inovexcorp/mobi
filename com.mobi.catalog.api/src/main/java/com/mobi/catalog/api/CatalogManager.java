@@ -832,4 +832,12 @@ public interface CatalogManager {
      * @return The Difference between the two Models.
      */
     Difference getDiff(Model original, Model changed);
+
+    /**
+     * Exports the record data based on the record type and associated configurations. Export implementation is defined
+     * by available RecordServices.
+     *
+     * @param recordIRI
+     */
+    void export(IRI recordIRI);
 }

@@ -61,6 +61,9 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
+import com.mobi.catalog.api.record.AbstractRecordService;
+import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.versioning.VersioningService;
 import com.mobi.catalog.config.CatalogConfig;
 import com.mobi.catalog.util.SearchResults;
 import com.mobi.exception.MobiException;
@@ -130,6 +133,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private com.mobi.rdf.api.Resource distributedCatalogIRI;
     private com.mobi.rdf.api.Resource localCatalogIRI;
     private Map<com.mobi.rdf.api.Resource, String> sortingOptions = new HashMap<>();
+    private Map<String, RecordService<Record>> recordServices = new HashMap<>();
 
     public SimpleCatalogManager() {
     }
@@ -212,6 +216,11 @@ public class SimpleCatalogManager implements CatalogManager {
     @Reference
     void setTagFactory(TagFactory tagFactory) {
         this.tagFactory = tagFactory;
+    }
+
+    @Reference(type = '*', dynamic = true)
+    void addRecordService(RecordService<Record> recordService) {
+        recordServices.put(recordService.getType().toString(), recordService);
     }
 
     private static final String PROV_AT_TIME = "http://www.w3.org/ns/prov#atTime";
@@ -1240,7 +1249,17 @@ public class SimpleCatalogManager implements CatalogManager {
                 .deletions(originalCopy)
                 .build();
     }
-       
+
+    @Override
+    public void export(IRI recordIRI) {
+        // TODO: Figure out the class type of the Record
+        // things
+
+        // TODO: call export on the appropriate service
+        RecordService<Record> service = recordServices.get(Record.class.toString());
+        service.export(recordIRI, null, null);
+    }
+
     /**
      * Creates a conflict using the provided parameters as the data to construct it.
      *

@@ -56,6 +56,8 @@ import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
+import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
@@ -150,6 +152,9 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     @Mock
     private CatalogUtilsService utilsService;
 
+    @Mock
+    private RecordService<Record> recordService;
+
     @Before
     public void setUp() throws Exception {
         SesameRepositoryWrapper repositoryWrapper = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
@@ -161,12 +166,16 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         repo.initialize();
 
         MockitoAnnotations.initMocks(this);
+
+        when(recordService.getType()).thenReturn(Record.class);
+
         manager = new SimpleCatalogManager();
         injectOrmFactoryReferencesIntoService(manager);
         manager.setRepository(repo);
         manager.setValueFactory(VALUE_FACTORY);
         manager.setModelFactory(MODEL_FACTORY);
         manager.setUtils(utilsService);
+        manager.addRecordService(recordService);
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
@@ -2118,6 +2127,14 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
             assertEquals(0, diff.getAdditions().size());
             assertEquals(0, diff.getDeletions().size());
         }
+    }
+
+    /* export() */
+
+    @Test
+    public void testExport() throws Exception {
+        manager.export(RECORD_IRI);
+        verify(recordService).export(eq(RECORD_IRI), any(RecordOperationConfig.class), any(RepositoryConnection.class));
     }
 
     private void setUpConflictTest(Resource leftId, Resource rightId, Difference leftDiff, Difference rightDiff, Model originalModel) {
