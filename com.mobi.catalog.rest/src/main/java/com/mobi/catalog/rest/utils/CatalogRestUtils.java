@@ -59,7 +59,9 @@ public class CatalogRestUtils {
      * Creates the JSONObject to be returned in the commit chain to more easily work with the data associated with the
      * Commit.
      *
-     * @param commit The Commit object to parse data from.
+     * @param commit        The Commit object to parse data from.
+     * @param vf            The {@link ValueFactory} to use.
+     * @param engineManager The {@link EngineManager} to use.
      * @return JSONObject with the necessary information set.
      */
     public static JSONObject createCommitJson(Commit commit, ValueFactory vf, EngineManager engineManager) {
@@ -125,8 +127,11 @@ public class CatalogRestUtils {
      * in the Response has key "commit" with value of the Commit's JSON-LD and the keys and values of the result of
      * getCommitDifferenceObject.
      *
-     * @param commit The Commit to create a response for
+     * @param commit       The Commit to create a response for
+     * @param difference   The {@link Difference} for the specified commit.
      * @param format The RDF format to return the addition and deletion statements in.
+     * @param transformer  The {@link SesameTransformer} to use.
+     * @param bNodeService The {@link BNodeService} to use.
      * @return A Response containing a JSONObject with the Commit JSON-LD and its addition and deletion statements
      */
     public static Response createCommitResponse(Commit commit, Difference difference, String format, SesameTransformer transformer, BNodeService bNodeService) {
@@ -137,12 +142,14 @@ public class CatalogRestUtils {
     }
 
     /**
-     * Creates a JSONObject for the Difference statements in the specified RDF format of the Commit with the specified
+     * Creates a JSON string for the Difference statements in the specified RDF format of the Commit with the specified
      * id. Key "additions" has value of the Commit's addition statements and key "deletions" has value of the Commit's
      * deletion statements.
      *
-     * @param commitId The id of the Commit to retrieve the Difference of.
+     * @param difference   The {@link Difference} for the {@link Commit} of interest.
      * @param format   A string representing the RDF format to return the statements in.
+     * @param transformer  The {@link SesameTransformer} to use.
+     * @param bNodeService The {@link BNodeService} to use.
      * @return A JSONObject with a key for the Commit's addition statements and a key for the Commit's deletion
      *         statements.
      */
@@ -151,11 +158,13 @@ public class CatalogRestUtils {
     }
 
     /**
-     * Creates a JSONObject for the Difference statements in the specified RDF format. Key "additions" has value of the
+     * Creates a JSON string for the Difference statements in the specified RDF format. Key "additions" has value of the
      * Difference's addition statements and key "deletions" has value of the Difference's deletion statements.
      *
      * @param difference The Difference to convert into a JSONObject.
      * @param format     A String representing the RDF format to return the statements in.
+     * @param transformer  The {@link SesameTransformer} to use.
+     * @param bNodeService The {@link BNodeService} to use.
      * @return A JSONObject with a key for the Difference's addition statements and a key for the Difference's deletion
      *         statements.
      */
@@ -169,6 +178,8 @@ public class CatalogRestUtils {
      * Thing's Model.
      *
      * @param thing The Thing to convert into a JSONObject.
+     * @param transformer  The {@link SesameTransformer} to use.
+     * @param bNodeService The {@link BNodeService} to use.
      * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
      */
     public static JSONObject thingToJsonObject(Thing thing, String type, SesameTransformer transformer, BNodeService bNodeService) {
@@ -179,6 +190,8 @@ public class CatalogRestUtils {
      * Converts a Thing into a JSON-LD string.
      *
      * @param thing The Thing whose Model will be converted.
+     * @param transformer  The {@link SesameTransformer} to use.
+     * @param bNodeService The {@link BNodeService} to use.
      * @return A JSON-LD string for the Thing's Model.
      */
     public static String thingToJsonld(Thing thing, SesameTransformer transformer, BNodeService bNodeService) {
@@ -189,6 +202,8 @@ public class CatalogRestUtils {
      * Converts a Model into a JSON-LD string.
      *
      * @param model The Model to convert.
+     * @param transformer  The {@link SesameTransformer} to use.
+     * @param bNodeService The {@link BNodeService} to use.
      * @return A JSON-LD string for the Model.
      */
     public static String modelToJsonld(Model model, SesameTransformer transformer, BNodeService bNodeService) {
@@ -200,6 +215,8 @@ public class CatalogRestUtils {
      *
      * @param model  The Model to convert.
      * @param format A string representing the RDF format to return the Model in.
+     * @param transformer  The {@link SesameTransformer} to use.
+     * @param bNodeService The {@link BNodeService} to use.
      * @return A String of the converted Model in the requested RDF format.
      */
     public static String getModelInFormat(Model model, String format, SesameTransformer transformer, BNodeService bNodeService) {
