@@ -177,6 +177,9 @@ public class CommitRestImplTest extends MobiRestTestNg {
         when(results.getPageSize()).thenReturn(10);
         when(results.getTotalSize()).thenReturn(50);
 
+        when(catalogManager.getCommit(vf.createIRI(COMMIT_IRIS[0]))).thenReturn(Optional.of(testCommits.get(0)));
+        when(catalogManager.getCommit(vf.createIRI(COMMIT_IRIS[1]))).thenReturn(Optional.of(testCommits.get(1)));
+        when(catalogManager.getCommit(vf.createIRI(COMMIT_IRIS[2]))).thenReturn(Optional.of(testCommits.get(2)));
         when(catalogManager.getCommitChain(any(Resource.class))).thenReturn(testCommits);
         when(catalogManager.getCommitDifference(any(Resource.class))).thenReturn(difference);
 
@@ -198,7 +201,7 @@ public class CommitRestImplTest extends MobiRestTestNg {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]))
                 .request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]));
+        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
             assertTrue(result.containsKey("commit"));
@@ -215,36 +218,11 @@ public class CommitRestImplTest extends MobiRestTestNg {
     @Test
     public void getMissingCommitTest() {
         // Setup:
-        when(catalogManager.getCommitChain(vf.createIRI(ERROR_IRI))).thenReturn(Collections.EMPTY_LIST);
+        when(catalogManager.getCommit(vf.createIRI(ERROR_IRI))).thenReturn(Optional.empty());
 
         Response response = target().path("commits/" + encode(ERROR_IRI))
                 .request().get();
         assertEquals(response.getStatus(), 404);
-    }
-
-    @Test
-    public void getCommitWithIncorrectPathTest() {
-        // Setup:
-        doThrow(new IllegalArgumentException()).when(catalogManager).getCommitChain(vf.createIRI(ERROR_IRI));
-
-        Response response = target().path("commits/" + encode(ERROR_IRI))
-                .request().get();
-        assertEquals(response.getStatus(), 400);
-    }
-
-    @Test
-    public void getCommitWithErrorTest() {
-        // Setup:
-        doThrow(new MobiException()).when(catalogManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]));
-
-        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]))
-                .request().get();
-        assertEquals(response.getStatus(), 500);
-
-        doThrow(new IllegalStateException()).when(catalogManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]));
-        response = target().path("commits/" + encode(COMMIT_IRIS[1]))
-                .request().get();
-        assertEquals(response.getStatus(), 500);
     }
 
     // GET commits/{commitId}/history

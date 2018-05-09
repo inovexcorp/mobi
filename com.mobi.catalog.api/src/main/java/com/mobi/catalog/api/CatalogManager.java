@@ -605,19 +605,30 @@ public interface CatalogManager {
     void addInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, InProgressCommit inProgressCommit);
 
     /**
-     * Gets the Commit identified by the provided Resources. Returns an empty Optional if the Commit does not belong
-     * to the Branch. The Model backing the commit will contain all the data in the commit named graph. This includes
-     * the commit and revision metadata.
+     * Gets the Commit identified by the provided Resource. Returns an empty Optional if the Commit does not exist. The
+     * Model backing the commit will contain all the data in the commit named graph. This includes the commit and
+     * revision metadata.
      *
-     * @param catalogId The Resource identifying the Catalog which contains the Record.
-     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
-     * @param branchId The Resource identifying the Branch which has the Commit.
      * @param commitId The Resource identifying the Commit to get.
      * @return The Commit if it exists.
+     */
+    Optional<Commit> getCommit(Resource commitId);
+
+    /**
+     * Gets the Commit identified by the provided Resources. Returns an empty Optional if the Commit does not belong to
+     * the Branch. The Model backing the commit will contain all the data in the commit named graph. This includes the
+     * commit and revision metadata.
+     *
+     * @param catalogId            The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
+     * @param branchId             The Resource identifying the Branch which has the Commit.
+     * @param commitId             The Resource identifying the Commit to get.
+     * @return The Commit if it exists.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *      Record does not belong to the Catalog, or the Branch does not belong to the Record.
-     * @throws IllegalStateException Thrown if the Branch could not be found, the Branch does not have a head Commit,
-     *      or the Commit could not be found.
+     *                                  Record does not belong to the Catalog, or the Branch does not belong to the
+     *                                  Record.
+     * @throws IllegalStateException    Thrown if the Branch could not be found, the Branch does not have a head Commit,
+     *                                  or the Commit could not be found.
      */
     Optional<Commit> getCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Resource commitId);
 

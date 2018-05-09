@@ -971,6 +971,18 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public Optional<Commit> getCommit(Resource commitId) {
+        long start = System.currentTimeMillis();
+        Optional<Commit> rtn = Optional.empty();
+        try (RepositoryConnection conn = repository.getConnection()) {
+            rtn = Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
+        } finally {
+            log.trace("getCommit took {}ms", System.currentTimeMillis() - start);
+        }
+        return rtn;
+    }
+
+    @Override
     public Optional<Commit> getCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
                                       Resource commitId) {
         long start = System.currentTimeMillis();

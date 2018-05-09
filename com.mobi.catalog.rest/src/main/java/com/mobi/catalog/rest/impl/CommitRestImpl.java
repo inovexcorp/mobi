@@ -105,18 +105,10 @@ public class CommitRestImpl implements CommitRest {
     @Override
     public Response getCommit(String commitId, String format) {
         Response response = Response.status(Response.Status.NOT_FOUND).build();
-        try {
-            Optional<Commit> optCommit = catalogManager.getCommitChain(vf.createIRI(commitId)).stream()
-                    .filter(commit -> commit.getResource().equals(vf.createIRI(commitId)))
-                    .findFirst();
+        Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(commitId));
 
-            if (optCommit.isPresent()) {
-                response = createCommitResponse(optCommit.get(), format);
-            }
-        } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        if (optCommit.isPresent()) {
+            response = createCommitResponse(optCommit.get(), format);
         }
         return response;
     }
