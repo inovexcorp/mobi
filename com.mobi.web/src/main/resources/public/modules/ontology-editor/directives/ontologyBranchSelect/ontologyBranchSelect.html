@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="branch-select">
+<div class="ontology-branch-select">
     <ui-select ng-model="dvm.bindModel" ng-disabled="dvm.os.hasChanges(dvm.os.listItem) || dvm.os.isCommittable(dvm.os.listItem)" on-select="dvm.changeBranch($item)">
         <ui-select-match placeholder="Select a Branch">
             <span>Branch: {{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
