@@ -605,12 +605,12 @@ public interface CatalogManager {
     void addInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, InProgressCommit inProgressCommit);
 
     /**
-     * Gets the Commit identified by the provided Resource. Returns an empty Optional if the Commit does not exist. The
-     * Model backing the commit will contain all the data in the commit named graph. This includes the commit and
-     * revision metadata.
+     * Gets the Commit identified by the provided Resource. The Model backing the commit will contain all the data in
+     * the commit named graph. This includes the commit and revision metadata.
      *
      * @param commitId The Resource identifying the Commit to get.
      * @return The Commit if it exists.
+     * @throws IllegalStateException Thrown if the Commit could not be found.
      */
     Optional<Commit> getCommit(Resource commitId);
 
