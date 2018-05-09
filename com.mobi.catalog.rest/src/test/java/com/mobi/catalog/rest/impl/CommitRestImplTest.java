@@ -216,13 +216,13 @@ public class CommitRestImplTest extends MobiRestTestNg {
     }
 
     @Test
-    public void getMissingCommitTest() {
+    public void getCommitWithErrorTest() {
         // Setup:
-        when(catalogManager.getCommit(vf.createIRI(ERROR_IRI))).thenReturn(Optional.empty());
+        when(catalogManager.getCommit(vf.createIRI(ERROR_IRI))).thenThrow(new IllegalArgumentException());
 
         Response response = target().path("commits/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(response.getStatus(), 500);
     }
 
     // GET commits/{commitId}/history
