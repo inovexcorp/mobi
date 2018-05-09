@@ -25,7 +25,6 @@ package com.mobi.catalog.impl.mergerequest;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
@@ -117,8 +116,9 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             filters.append("NOT ");
         }
         filters.append("EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:AcceptedMergeRequest . } ");
-        params.getSortBy().ifPresent(sortBy -> filters.append("?").append(REQUEST_ID_BINDING).append(" <")
-                .append(sortBy).append("> ?").append(SORT_PRED_BINDING).append(". "));
+        Resource sortBy = params.getSortBy().orElseGet(() -> vf.createIRI(_Thing.issued_IRI));
+        filters.append("?").append(REQUEST_ID_BINDING).append(" <").append(sortBy).append("> ?")
+                .append(SORT_PRED_BINDING).append(". ");
 
         if (params.hasFilters()) {
             filters.append("FILTER (");
@@ -139,14 +139,11 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         }
 
         StringBuilder queryBuilder = new StringBuilder(GET_MERGE_REQUESTS_QUERY.replace(FILTERS, filters.toString()));
-        if(params.getSortBy().isPresent()) {
-            queryBuilder.append(" ORDER BY ");
-
-            if (params.sortAscending()) {
-                queryBuilder.append("?").append(SORT_PRED_BINDING);
-            } else {
-                queryBuilder.append("DESC(?").append(SORT_PRED_BINDING).append(")");
-            }
+        queryBuilder.append(" ORDER BY ");
+        if (params.sortAscending()) {
+            queryBuilder.append("?").append(SORT_PRED_BINDING);
+        } else {
+            queryBuilder.append("DESC(?").append(SORT_PRED_BINDING).append(")");
         }
 
         TupleQuery query = conn.prepareTupleQuery(queryBuilder.toString());

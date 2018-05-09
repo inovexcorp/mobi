@@ -215,8 +215,9 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
             MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
             List<MergeRequest> result = manager.getMergeRequests(builder.build(), conn);
             assertEquals(2, result.size());
-            assertTrue(result.contains(request1));
-            assertTrue(result.contains(request2));
+            Iterator<MergeRequest> it = result.iterator();
+            assertEquals(request2.getResource(), it.next().getResource());
+            assertEquals(request1.getResource(), it.next().getResource());
             verify(utilsService).getExpectedObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
             verify(utilsService).getExpectedObject(eq(request2.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
         }

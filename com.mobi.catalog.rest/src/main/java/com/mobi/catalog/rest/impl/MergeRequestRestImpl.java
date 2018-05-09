@@ -114,7 +114,9 @@ public class MergeRequestRestImpl implements MergeRequestRest {
     @Override
     public Response getMergeRequests(String sort, boolean asc, boolean accepted) {
         MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
-        builder.setSortBy(createIRI(StringUtils.isEmpty(sort) ? _Thing.issued_IRI : sort, vf));
+        if (!StringUtils.isEmpty(sort)) {
+            builder.setSortBy(createIRI(sort, vf));
+        }
         builder.setAscending(asc).setAccepted(accepted);
         try (RepositoryConnection conn = getCatalogRepo().getConnection()) {
             JSONArray result = JSONArray.fromObject(manager.getMergeRequests(builder.build(), conn).stream()
