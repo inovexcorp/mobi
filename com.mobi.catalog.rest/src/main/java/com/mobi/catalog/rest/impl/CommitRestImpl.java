@@ -25,6 +25,7 @@ package com.mobi.catalog.rest.impl;
 
 import static com.mobi.rest.util.RestUtils.getTypedObjectFromJsonld;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
@@ -52,6 +53,7 @@ import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -102,9 +104,11 @@ public class CommitRestImpl implements CommitRest {
 
     @Override
     public Response getCommit(String commitId, String format) {
-        Response response = Response.noContent().build();
+        Response response = Response.status(Response.Status.NOT_FOUND).build();
         try {
-            Optional<Commit> optCommit = catalogManager.getCommitChain(vf.createIRI(commitId)).stream().findFirst();
+            Optional<Commit> optCommit = catalogManager.getCommitChain(vf.createIRI(commitId)).stream()
+                    .filter(commit -> commit.getResource().equals(vf.createIRI(commitId)))
+                    .findFirst();
 
             if (optCommit.isPresent()) {
                 response = createCommitResponse(optCommit.get(), format);
