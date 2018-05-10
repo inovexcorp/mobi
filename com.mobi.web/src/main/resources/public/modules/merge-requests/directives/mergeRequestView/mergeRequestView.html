@@ -32,10 +32,11 @@
                 <div class="description">
                     {{dvm.util.getDctermsValue(dvm.selected.request, 'description') || 'No description'}}
                 </div>
-                <div class="request-summary"><strong>{{dvm.selected.sourceTitle}}</strong> into <strong>{{dvm.selected.targetTitle}}</strong> in <strong>{{dvm.selected.recordTitle}}</strong></div>
-                <div class="alert alert-warning" role="alert" ng-if="dvm.selected.hasConflicts">
+                <div class="request-summary"><strong>{{dvm.selected.sourceTitle}}</strong> into <strong>{{dvm.selected.targetTitle ? dvm.selected.targetTitle : 'NO TARGET'}}</strong> in <strong>{{dvm.selected.recordTitle}}</strong></div>
+                <div class="alert alert-warning" role="alert" ng-if="dvm.selected.hasConflicts || !dvm.selected.targetTitle">
                     <span class="fa fa-exclamation-triangle" />
-                    This request has conflicts. You can resolve them during the merge process.
+                    <span ng-if="dvm.selected.hasConflicts">This request has conflicts. You can resolve them during the merge process.</span>
+                    <span ng-if="!dvm.selected.targetTitle">The target branch for this merge request has been deleted.</span>
                 </div>
             </div>
             <commit-difference-tabset ng-if="!dvm.mm.isAccepted(dvm.selected.request)" difference="dvm.selected.difference" record-id="dvm.selected.recordIri" source-branch="dvm.selected.sourceBranch" target-branch-id="dvm.selected.targetBranch['@id']"></commit-difference-tabset>

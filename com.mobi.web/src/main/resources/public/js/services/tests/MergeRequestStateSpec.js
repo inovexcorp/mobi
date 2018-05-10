@@ -183,7 +183,7 @@ describe('Merge Requests State service', function() {
                 mergeRequestManagerSvc.isAccepted.and.returnValue(false);
                 this.expected = angular.copy(this.request);
             });
-            describe('and getRecordBranch resolves', function() {
+            describe('and getRecordBranch resolves for source branch', function() {
                 beforeEach(function() {
                     catalogManagerSvc.getRecordBranch.and.returnValue($q.when({}));
                     this.expected.sourceBranch = {};
@@ -236,6 +236,25 @@ describe('Merge Requests State service', function() {
                         expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                     });
+                });
+                it('unless target IRI is not set', function () {
+                    utilSvc.getPropertyId.and.callFake(function(obj, prop) {
+                        if (prop === 'mergereq:targetBranch') {
+                            return '';
+                        }
+                        return prop;
+                    });
+                    delete this.expected.targetBranch;
+                    delete this.expected.targetTitle;
+                    delete this.expected.targetCommit
+                    mergeRequestsStateSvc.setRequestDetails(this.request);
+                    scope.$apply();
+                    expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', 'recordIri', 'catalogId');
+                    expect(catalogManagerSvc.getRecordBranch.calls.count()).toEqual(1);
+                    expect(this.request).toEqual(this.expected);
+                    expect(catalogManagerSvc.getBranchDifference).not.toHaveBeenCalled();
+                    expect(catalogManagerSvc.getBranchConflicts).not.toHaveBeenCalled();
+                    expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                 });
                 it('unless getBranchDifference rejects', function () {
                     catalogManagerSvc.getBranchDifference.and.returnValue($q.reject('Error Message'));

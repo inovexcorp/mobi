@@ -282,24 +282,27 @@
                 } else {
                     var sourceIri = util.getPropertyId(request.request, prefixes.mergereq + 'sourceBranch');
                     var targetIri = util.getPropertyId(request.request, prefixes.mergereq + 'targetBranch');
-                    cm.getRecordBranch(sourceIri, request.recordIri, catalogId)
+                    var promise = cm.getRecordBranch(sourceIri, request.recordIri, catalogId)
                         .then(branch => {
                             request.sourceBranch = branch;
                             request.sourceCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
                             request.sourceTitle = util.getDctermsValue(branch, 'title');
-                            return cm.getRecordBranch(targetIri, request.recordIri, catalogId)
-                        }, $q.reject)
-                        .then(branch => {
-                            request.targetBranch = branch;
-                            request.targetCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
-                            request.targetTitle = util.getDctermsValue(branch, 'title');
-                            return cm.getBranchDifference(sourceIri, targetIri, request.recordIri, catalogId);
-                        }, $q.reject)
-                        .then(diff => {
-                            request.difference = diff;
-                            return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
-                        }, $q.reject)
-                        .then(conflicts => request.hasConflicts = !_.isEmpty(conflicts), util.createErrorToast);
+                        }, $q.reject);
+
+                    if (targetIri) {
+                        promise.then(() => cm.getRecordBranch(targetIri, request.recordIri, catalogId), $q.reject)
+                            .then(branch => {
+                                request.targetBranch = branch;
+                                request.targetCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
+                                request.targetTitle = util.getDctermsValue(branch, 'title');
+                                return cm.getBranchDifference(sourceIri, targetIri, request.recordIri, catalogId);
+                            }, $q.reject)
+                            .then(diff => {
+                                request.difference = diff;
+                                return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
+                            }, $q.reject)
+                            .then(conflicts => request.hasConflicts = !_.isEmpty(conflicts), util.createErrorToast);
+                    }
                 }
             }
             /**
