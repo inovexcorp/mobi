@@ -130,7 +130,8 @@ public class CatalogRestUtils {
      * @param bNodeService The {@link BNodeService} to use.
      * @return A Response containing a JSONObject with the Commit JSON-LD and its addition and deletion statements
      */
-    public static Response createCommitResponse(Commit commit, Difference difference, String format, SesameTransformer transformer, BNodeService bNodeService) {
+    public static Response createCommitResponse(Commit commit, Difference difference, String format,
+                                                SesameTransformer transformer, BNodeService bNodeService) {
         String differences = getCommitDifferenceJsonString(difference, format, transformer, bNodeService);
         String response = differences.subSequence(0, differences.length() - 1) + ", \"commit\": "
                 + thingToJsonObject(commit, Commit.TYPE, transformer, bNodeService).toString() + "}";
@@ -149,7 +150,8 @@ public class CatalogRestUtils {
      * @return A JSONObject with a key for the Commit's addition statements and a key for the Commit's deletion
      *         statements.
      */
-    public static String getCommitDifferenceJsonString(Difference difference, String format, SesameTransformer transformer, BNodeService bNodeService) {
+    public static String getCommitDifferenceJsonString(Difference difference, String format,
+                                                       SesameTransformer transformer, BNodeService bNodeService) {
         return getDifferenceJsonString(difference, format, transformer, bNodeService);
     }
 
@@ -164,8 +166,10 @@ public class CatalogRestUtils {
      * @return A JSONObject with a key for the Difference's addition statements and a key for the Difference's deletion
      *         statements.
      */
-    public static String getDifferenceJsonString(Difference difference, String format, SesameTransformer transformer, BNodeService bNodeService) {
-        return "{ \"additions\": " + getModelInFormat(difference.getAdditions(), format, transformer, bNodeService) + ", \"deletions\": "
+    public static String getDifferenceJsonString(Difference difference, String format, SesameTransformer transformer,
+                                                 BNodeService bNodeService) {
+        return "{ \"additions\": " + getModelInFormat(difference.getAdditions(), format, transformer, bNodeService)
+                + ", \"deletions\": "
                 + getModelInFormat(difference.getDeletions(), format, transformer, bNodeService) + "}";
     }
 
@@ -178,7 +182,8 @@ public class CatalogRestUtils {
      * @param bNodeService The {@link BNodeService} to use.
      * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
      */
-    public static JSONObject thingToJsonObject(Thing thing, String type, SesameTransformer transformer, BNodeService bNodeService) {
+    public static JSONObject thingToJsonObject(Thing thing, String type, SesameTransformer transformer,
+                                               BNodeService bNodeService) {
         return getTypedObjectFromJsonld(thingToJsonld(thing, transformer, bNodeService), type);
     }
 
@@ -215,7 +220,8 @@ public class CatalogRestUtils {
      * @param bNodeService The {@link BNodeService} to use.
      * @return A String of the converted Model in the requested RDF format.
      */
-    public static String getModelInFormat(Model model, String format, SesameTransformer transformer, BNodeService bNodeService) {
+    public static String getModelInFormat(Model model, String format, SesameTransformer transformer,
+                                          BNodeService bNodeService) {
         return modelToSkolemizedString(model, format, transformer, bNodeService);
     }
 }

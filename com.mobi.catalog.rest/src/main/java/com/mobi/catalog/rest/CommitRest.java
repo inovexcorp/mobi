@@ -42,6 +42,14 @@ import javax.ws.rs.core.UriInfo;
 @Api(value = "/commits")
 public interface CommitRest {
 
+    /**
+     * Gets the Commit identified by the provided ID.
+     *
+     * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @param format the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @return A Response with the Commit identified by the provided IDs.
+     */
     @GET
     @Path("{commitId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -50,6 +58,18 @@ public interface CommitRest {
     Response getCommit(@PathParam("commitId") String commitId,
             @DefaultValue("jsonld") @QueryParam("format") String format);
 
+    /**
+     * Gets a List of Commits ordered by date descending within the repository which represents the Commit chain for a
+     * branch. The Commit identified by the provided commitId is the first item in the List and it was informed by the
+     * previous Commit in the List. If a limit is passed which is greater than zero, will paginate the results.
+     *
+     * @param uriInfo The UriInfo of the request.
+     * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param offset An optional offset for the results.
+     * @param limit An optional limit for the results.
+     * @return A list of Commits starting with the provided commitId which represents the Commit chain.
+     */
     @GET
     @Path("{commitId}/history")
     @Produces(MediaType.APPLICATION_JSON)

@@ -47,9 +47,6 @@ import javax.ws.rs.core.UriInfo;
 
 @Component(immediate = true)
 public class CommitRestImpl implements CommitRest {
-
-    private static final Logger logger = LoggerFactory.getLogger(CommitRestImpl.class);
-
     private BNodeService bNodeService;
     private CatalogManager catalogManager;
     private SesameTransformer transformer;
@@ -97,8 +94,6 @@ public class CommitRestImpl implements CommitRest {
 
     @Override
     public Response getCommitHistory(UriInfo uriInfo, String commitId, int offset, int limit) {
-        Response response = Response.noContent().build();
-
         if (offset < 0) {
             throw ErrorUtils.sendError("Offset cannot be negative.", Response.Status.BAD_REQUEST);
         }
@@ -118,12 +113,12 @@ public class CommitRestImpl implements CommitRest {
                         .limit(limit);
             }
             result.map(r -> CatalogRestUtils.createCommitJson(r, vf, engineManager)).forEach(commitChain::add);
-            response = CatalogRestUtils.createPaginatedResponseWithJson(uriInfo, commitChain, commits.size(), limit, offset);
+            return CatalogRestUtils.createPaginatedResponseWithJson(uriInfo, commitChain, commits.size(), limit,
+                    offset);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-        return response;
     }
 }
