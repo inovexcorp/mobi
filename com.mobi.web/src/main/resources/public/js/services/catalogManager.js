@@ -53,7 +53,8 @@
         function catalogManagerService($http, $httpParamSerializer, httpService, $q, prefixes, utilService, REST_PREFIX) {
             var self = this,
                 util = utilService,
-                prefix = REST_PREFIX + 'catalogs';
+                prefix = REST_PREFIX + 'catalogs',
+                commitsPrefix = REST_PREFIX + 'commits';
 
             /**
              * @ngdoc property
@@ -968,6 +969,43 @@
             self.deleteRecordBranch = function(branchId, recordId, catalogId) {
                 return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId))
                     .then(response => $q.resolve(), util.rejectError);
+            }
+
+            /**
+             * @ngdoc method
+             * @name getCommit
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/commits/{commitId} endpoint with the passed Commit id.
+             *
+             * @param {string} commitId The id of the Commit to retrieve
+             * @param {string='jsonld'} format The RDF format to return the Commit additions and deletions in
+             * @return {Promise} A promise that resolves with the Commit or rejects with an error message
+             */
+            self.getCommit = function(commitId, format = 'jsonld') {
+                var config = {
+                    params: { format }
+                };
+
+                return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId), config)
+                    .then(response => response.data, util.rejectError);
+            }
+
+            /**
+             * @ngdoc method
+             * @name getCommitHistory
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/commits/{commitId}/history endpoint with the passed Commit id.
+             * 
+             * @param {type} commitId
+             * @return {Promise} A promise that resolves with the list of Commits or rejects with an error message
+             */
+            self.getCommitHistory = function(commitId) {
+                return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/history')
+                    .then(response => response.data, util.rejectError);
             }
 
             /**

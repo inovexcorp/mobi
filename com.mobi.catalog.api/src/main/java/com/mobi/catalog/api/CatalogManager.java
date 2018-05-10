@@ -145,9 +145,9 @@ public interface CatalogManager {
      * Removes the Record identified by the provided Resources from the repository.
      *
      * @param catalogId The Resource identifying the Catalog which contains the Record.
-     * @param recordId  The Resource identifying the Record which you want to remove.
-     * @param factory   The OrmFactory of the Type of Record you want to get back.
-     * @param <T>       An Object which extends Record.
+     * @param recordId The Resource identifying the Record which you want to remove.
+     * @param factory The OrmFactory of the Type of Record you want to get back.
+     * @param <T> An Object which extends Record.
      * @return The Record object which was removed.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or
      *      the Record does not belong to the Catalog.
@@ -597,7 +597,7 @@ public interface CatalogManager {
      *
      * @param catalogId The Resource identifying the Catalog which contains the Record.
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which will get the new
-     *                             InProgressCommit.
+     *      InProgressCommit.
      * @param inProgressCommit The InProgressCommit to add to the VersionedRDFRecord.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
      *      Record does not belong to the Catalog, or the InProgressCommit already exists in the repository.
@@ -605,9 +605,19 @@ public interface CatalogManager {
     void addInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, InProgressCommit inProgressCommit);
 
     /**
-     * Gets the Commit identified by the provided Resources. Returns an empty Optional if the Commit does not belong
-     * to the Branch. The Model backing the commit will contain all the data in the commit named graph. This includes
-     * the commit and revision metadata.
+     * Gets the Commit identified by the provided Resource. The Model backing the commit will contain all the data in
+     * the commit named graph. This includes the commit and revision metadata.
+     *
+     * @param commitId The Resource identifying the Commit to get.
+     * @return The Commit if it exists.
+     * @throws IllegalStateException Thrown if the Commit could not be found.
+     */
+    Optional<Commit> getCommit(Resource commitId);
+
+    /**
+     * Gets the Commit identified by the provided Resources. Returns an empty Optional if the Commit does not belong to
+     * the Branch. The Model backing the commit will contain all the data in the commit named graph. This includes the
+     * commit and revision metadata.
      *
      * @param catalogId The Resource identifying the Catalog which contains the Record.
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
@@ -616,8 +626,8 @@ public interface CatalogManager {
      * @return The Commit if it exists.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
      *      Record does not belong to the Catalog, or the Branch does not belong to the Record.
-     * @throws IllegalStateException Thrown if the Branch could not be found, the Branch does not have a head Commit,
-     *      or the Commit could not be found.
+     * @throws IllegalStateException Thrown if the Branch could not be found, the Branch does not have a head Commit, or
+     *      the Commit could not be found.
      */
     Optional<Commit> getCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Resource commitId);
 

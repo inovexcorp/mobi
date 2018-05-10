@@ -1490,6 +1490,19 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testGetCommit() throws Exception {
+        // Setup:
+        Resource commitId = VALUE_FACTORY.createIRI(COMMITS + "test0");
+        Commit commit = commitFactory.createNew(commitId);
+        doReturn(commit).when(utilsService).getExpectedObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
+
+        Optional<Commit> result = manager.getCommit(commitId);
+        verify(utilsService).getExpectedObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
+        assertTrue(result.isPresent());
+        assertEquals(commit, result.get());
+    }
+
+    @Test
     public void testGetCommitThatIsTheHead() throws Exception {
         // Setup:
         Resource commitId = VALUE_FACTORY.createIRI(COMMITS + "test4a");
