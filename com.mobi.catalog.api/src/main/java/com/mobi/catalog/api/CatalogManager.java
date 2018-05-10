@@ -625,7 +625,7 @@ public interface CatalogManager {
      * @param commitId             The Resource identifying the Commit to get.
      * @return The Commit if it exists.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, or the Branch does not belong to the
+     *      Record does not belong to the Catalog, or the Branch does not belong to the
      *                                  Record.
      * @throws IllegalStateException    Thrown if the Branch could not be found, the Branch does not have a head Commit,
      *                                  or the Commit could not be found.

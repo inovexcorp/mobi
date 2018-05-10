@@ -45,10 +45,6 @@ import java.util.stream.Stream;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-/**
- *
- * @author Sean Smitz &lt;sean.smitz@inovexcorp.com&gt;
- */
 @Component(immediate = true)
 public class CommitRestImpl implements CommitRest {
 
