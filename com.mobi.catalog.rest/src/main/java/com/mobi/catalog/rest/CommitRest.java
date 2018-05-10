@@ -38,10 +38,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-/**
- *
- * @author Sean Smitz &lt;sean.smitz@inovexcorp.com&gt;
- */
 @Path("/commits")
 @Api(value = "/commits")
 public interface CommitRest {
