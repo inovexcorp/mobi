@@ -23,7 +23,7 @@
 <div class="ontology-tab full-height">
     <merge-tab ng-if="dvm.sm.listItem.merge.active"></merge-tab>
     <div class="main-tabs full-height" ng-if="!dvm.sm.listItem.merge.active">
-        <branch-select ng-model="dvm.sm.listItem.ontologyRecord.branchId"></branch-select>
+        <ontology-branch-select ng-model="dvm.sm.listItem.ontologyRecord.branchId"></ontology-branch-select>
         <tabset class="centered">
             <tab heading="'Project'" active="dvm.sm.listItem.editorTabStates.project.active"
                  on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.project.entityIRI, false)">
