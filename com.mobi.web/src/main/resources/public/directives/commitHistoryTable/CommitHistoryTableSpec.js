@@ -161,13 +161,13 @@ describe('Commit History Table directive', function() {
             describe('if a branch has been passed', function() {
                 describe('successfully', function() {
                     beforeEach(function() {
-                        catalogManagerSvc.getBranchCommits.and.returnValue($q.when(this.commits));
+                        catalogManagerSvc.getCommitHistory.and.returnValue($q.when(this.commits));
                     });
                     it('drawing the graph', function() {
                         this.isolatedScope.graph = true;
                         this.controller.getCommits();
                         scope.$apply();
-                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, this.catalogId, scope.targetId);
+                        expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(scope.targetId);
                         expect(this.controller.error).toEqual('');
                         expect(this.controller.commits).toEqual(this.commits);
                         expect(this.controller.drawGraph).toHaveBeenCalled();
@@ -176,7 +176,7 @@ describe('Commit History Table directive', function() {
                         this.isolatedScope.graph = false;
                         this.controller.getCommits();
                         scope.$apply();
-                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, this.catalogId, scope.targetId);
+                        expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(scope.targetId);
                         expect(this.controller.error).toEqual('');
                         expect(this.controller.commits).toEqual(this.commits);
                         expect(this.controller.drawGraph).not.toHaveBeenCalled();
@@ -184,13 +184,13 @@ describe('Commit History Table directive', function() {
                 });
                 describe('unless an error occurs', function() {
                     beforeEach(function() {
-                        catalogManagerSvc.getBranchCommits.and.returnValue($q.reject(this.error));
+                        catalogManagerSvc.getCommitHistory.and.returnValue($q.reject(this.error));
                     });
                     it('with a graph', function() {
                         this.isolatedScope.graph = true;
                         this.controller.getCommits();
                         scope.$apply();
-                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, this.catalogId, scope.targetId);
+                        expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(scope.targetId);
                         expect(this.controller.error).toEqual(this.error);
                         expect(this.controller.commits).toEqual([]);
                         expect(this.controller.reset).toHaveBeenCalled();
@@ -199,7 +199,7 @@ describe('Commit History Table directive', function() {
                         this.isolatedScope.graph = false;
                         this.controller.getCommits();
                         scope.$apply();
-                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, this.catalogId, scope.targetId);
+                        expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(scope.targetId);
                         expect(this.controller.error).toEqual(this.error);
                         expect(this.controller.commits).toEqual([]);
                         expect(this.controller.reset).not.toHaveBeenCalled();
@@ -234,9 +234,8 @@ describe('Commit History Table directive', function() {
         scope.$apply();
         this.controller.commits = this.commits;
         scope.$digest();
-        spyOn(this.controller, 'openCommitOverlay');
         var id = angular.element(this.element.querySelectorAll('table tr td.commit-id a')[0]);
         id.triggerHandler('click');
-        expect(this.controller.openCommitOverlay).toHaveBeenCalledWith(this.commits[0].id);
+        expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commits[0].id);
     });
 });
