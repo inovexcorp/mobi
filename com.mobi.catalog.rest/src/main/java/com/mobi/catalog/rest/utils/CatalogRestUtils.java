@@ -59,8 +59,8 @@ public class CatalogRestUtils {
      * Creates the JSONObject to be returned in the commit chain to more easily work with the data associated with the
      * Commit.
      *
-     * @param commit        The Commit object to parse data from.
-     * @param vf            The {@link ValueFactory} to use.
+     * @param commit The Commit object to parse data from.
+     * @param vf The {@link ValueFactory} to use.
      * @param engineManager The {@link EngineManager} to use.
      * @return JSONObject with the necessary information set.
      */
@@ -101,11 +101,11 @@ public class CatalogRestUtils {
      * number of Things, the limit for each page, and the offset for the current page. Sets the "X-Total-Count" header
      * to the total size and the "Links" header to the next and prev URLs if present.
      *
-     * @param uriInfo   The URI information of the request.
-     * @param items     The limited and sorted Collection of items for the current page
+     * @param uriInfo The URI information of the request.
+     * @param items The limited and sorted Collection of items for the current page
      * @param totalSize The total number of items.
-     * @param limit     The limit for each page.
-     * @param offset    The offset for the current page.
+     * @param limit The limit for each page.
+     * @param offset The offset for the current page.
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
      *         pages if present.
      */
@@ -127,10 +127,10 @@ public class CatalogRestUtils {
      * in the Response has key "commit" with value of the Commit's JSON-LD and the keys and values of the result of
      * getCommitDifferenceObject.
      *
-     * @param commit       The Commit to create a response for
-     * @param difference   The {@link Difference} for the specified commit.
+     * @param commit The Commit to create a response for
+     * @param difference The {@link Difference} for the specified commit.
      * @param format The RDF format to return the addition and deletion statements in.
-     * @param transformer  The {@link SesameTransformer} to use.
+     * @param transformer The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return A Response containing a JSONObject with the Commit JSON-LD and its addition and deletion statements
      */
@@ -146,9 +146,9 @@ public class CatalogRestUtils {
      * id. Key "additions" has value of the Commit's addition statements and key "deletions" has value of the Commit's
      * deletion statements.
      *
-     * @param difference   The {@link Difference} for the {@link Commit} of interest.
-     * @param format   A string representing the RDF format to return the statements in.
-     * @param transformer  The {@link SesameTransformer} to use.
+     * @param difference The {@link Difference} for the {@link Commit} of interest.
+     * @param format A string representing the RDF format to return the statements in.
+     * @param transformer The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return A JSONObject with a key for the Commit's addition statements and a key for the Commit's deletion
      *         statements.
@@ -162,8 +162,8 @@ public class CatalogRestUtils {
      * Difference's addition statements and key "deletions" has value of the Difference's deletion statements.
      *
      * @param difference The Difference to convert into a JSONObject.
-     * @param format     A String representing the RDF format to return the statements in.
-     * @param transformer  The {@link SesameTransformer} to use.
+     * @param format A String representing the RDF format to return the statements in.
+     * @param transformer The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return A JSONObject with a key for the Difference's addition statements and a key for the Difference's deletion
      *         statements.
@@ -178,7 +178,7 @@ public class CatalogRestUtils {
      * Thing's Model.
      *
      * @param thing The Thing to convert into a JSONObject.
-     * @param transformer  The {@link SesameTransformer} to use.
+     * @param transformer The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
      */
@@ -190,7 +190,7 @@ public class CatalogRestUtils {
      * Converts a Thing into a JSON-LD string.
      *
      * @param thing The Thing whose Model will be converted.
-     * @param transformer  The {@link SesameTransformer} to use.
+     * @param transformer The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return A JSON-LD string for the Thing's Model.
      */
@@ -202,7 +202,7 @@ public class CatalogRestUtils {
      * Converts a Model into a JSON-LD string.
      *
      * @param model The Model to convert.
-     * @param transformer  The {@link SesameTransformer} to use.
+     * @param transformer The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return A JSON-LD string for the Model.
      */
@@ -215,7 +215,7 @@ public class CatalogRestUtils {
      *
      * @param model  The Model to convert.
      * @param format A string representing the RDF format to return the Model in.
-     * @param transformer  The {@link SesameTransformer} to use.
+     * @param transformer The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return A String of the converted Model in the requested RDF format.
      */
