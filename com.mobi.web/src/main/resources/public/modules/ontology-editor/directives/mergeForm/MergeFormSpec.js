@@ -81,7 +81,7 @@ describe('Merge Form directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('merge-form')).toBe(true);
         });
-        _.forEach(['ui-select', 'checkbox'], function(item) {
+        _.forEach(['branch-select', 'checkbox'], function(item) {
             it('for ' + item, function() {
                 expect(this.element.find(item).length).toBe(1);
             });
@@ -90,13 +90,10 @@ describe('Merge Form directive', function() {
             expect(this.element.querySelectorAll('.merge-message').length).toBe(1);
         });
         it('depending on whether the branch is a UserBranch', function() {
-            var select = angular.element(this.element.find('ui-select')[0]);
-            expect(select.attr('disabled')).toBeFalsy();
             expect(this.element.find('checkbox').length).toEqual(1);
 
             ontologyStateSvc.listItem.userBranch = true;
             scope.$digest();
-            expect(select.attr('disabled')).toBeTruthy();
             expect(this.element.find('checkbox').length).toEqual(0);
         });
         it('depending on whether the branch is the master branch', function() {
@@ -134,14 +131,6 @@ describe('Merge Form directive', function() {
         });
     });
     describe('controller methods', function() {
-        describe('matchesCurrent returns', function() {
-            it('true if it does not match branch["@id"]', function() {
-                expect(this.controller.matchesCurrent({'@id': 'differentId'})).toBe(true);
-            });
-            it('false if it does match ontologyStateService.listItem.ontologyRecord.branchId', function() {
-                expect(this.controller.matchesCurrent({'@id': 'branchId'})).toBe(false);
-            });
-        });
         describe('should collect differences when changing the target branch', function() {
             beforeEach(function() {
                 ontologyStateSvc.listItem.merge.difference = {};

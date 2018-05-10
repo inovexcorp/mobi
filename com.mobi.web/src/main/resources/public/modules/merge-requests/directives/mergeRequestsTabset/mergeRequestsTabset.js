@@ -26,7 +26,7 @@
     angular
         /**
          * @ngdoc overview
-         * @name mergeRequestTabset
+         * @name mergeRequestsTabset
          *
          * @description
          * The `mergeRequestsTabset` module only provides the `mergeRequestsTabset` directive
@@ -35,7 +35,7 @@
         .module('mergeRequestsTabset', [])
         /**
          * @ngdoc directive
-         * @name mergeRequestTabset.directive:mergeRequestTabset
+         * @name mergeRequestsTabset.directive:mergeRequestsTabset
          * @scope
          * @restrict E
          * @requires mergeRequestsState.service:mergeRequestsStateService
@@ -46,11 +46,11 @@
          * are the {@link openTab.directive:openTab}. The directive is replaced by the contents
          * of its template.
          */
-        .directive('mergeRequestsTabset', mergeRequestTabset);
+        .directive('mergeRequestsTabset', mergeRequestsTabset);
 
-    mergeRequestTabset.$inject = ['mergeRequestsStateService'];
+    mergeRequestsTabset.$inject = ['mergeRequestsStateService', 'mergeRequestManagerService', 'utilService'];
 
-    function mergeRequestTabset(mergeRequestsStateService) {
+    function mergeRequestsTabset(mergeRequestsStateService, mergeRequestManagerService, utilService) {
         return {
             restrict: 'E',
             templateUrl: 'modules/merge-requests/directives/mergeRequestsTabset/mergeRequestsTabset.html',
@@ -59,7 +59,29 @@
             controllerAs: 'dvm',
             controller: function() {
                 var dvm = this;
+                var mm = mergeRequestManagerService;
+                var util = utilService;
                 dvm.state = mergeRequestsStateService;
+                dvm.errorMessage = '';
+
+                dvm.cancelDelete = function() {
+                    dvm.state.requestToDelete = undefined;
+                    dvm.state.showDelete = false;
+                    dvm.errorMessage = '';
+                }
+                dvm.deleteRequest = function() {
+                    var currentTab = dvm.state.getCurrentTab();
+                    mm.deleteRequest(dvm.state.requestToDelete.request['@id'])
+                        .then(() => {
+                            var hasSelected = !!currentTab.selected;
+                            currentTab.selected = undefined;
+                            util.createSuccessToast('Request successfully deleted');
+                            dvm.cancelDelete();
+                            if (!hasSelected) {
+                                dvm.state.setRequests(!dvm.state.open.active);
+                            }
+                        }, error => dvm.errorMessage = error);
+                }
             }
         }
     }

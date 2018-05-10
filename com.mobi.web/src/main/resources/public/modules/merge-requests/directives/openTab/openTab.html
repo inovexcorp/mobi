@@ -22,16 +22,7 @@
   -->
 <div class="open-tab padding full-height row">
     <div class="wrapping-column col-xs-8 col-xs-offset-2 full-height">
-        <div class="search-container"></div>
-        <block>
-            <block-content class="padding">
-                <info-message ng-if="!dvm.requests.length">No requests found</info-message>
-                <div class="request padding" ng-repeat="request in dvm.requests track by request.request['@id']">
-                    <h3>{{request.title}}</h3>
-                    <div class="request-info"><small>Created on {{request.date}} by {{request.creator}}</small></div>
-                    <div class="request-record"><span class="field-name">Record: </span>{{request.recordTitle}}</div>
-                </div>
-            </block-content>
-        </block>
+        <merge-request-list ng-if="!dvm.state.open.selected" class="full-height"></merge-request-list>
+        <merge-request-view ng-if="dvm.state.open.selected" class="full-height"></merge-request-view>
     </div>
 </div>

@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Branch Select directive', function() {
+describe('Ontology Branch Select directive', function() {
     var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc;
 
     beforeEach(function() {
         module('templates');
-        module('branchSelect');
+        module('ontologyBranchSelect');
         mockCatalogManager();
         mockOntologyState();
         mockOntologyManager();
@@ -50,9 +50,9 @@ describe('Branch Select directive', function() {
         this.commitId = 'commitId';
 
         scope.bindModel = {};
-        this.element = $compile(angular.element('<branch-select ng-model="bindModel"></branch-select>'))(scope);
+        this.element = $compile(angular.element('<ontology-branch-select ng-model="bindModel"></ontology-branch-select>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('branchSelect');
+        this.controller = this.element.controller('ontologyBranchSelect');
     });
 
     afterEach(function() {
@@ -76,7 +76,7 @@ describe('Branch Select directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('branch-select')).toBe(true);
+            expect(this.element.hasClass('ontology-branch-select')).toBe(true);
         });
         it('with a ui-select', function() {
             expect(this.element.find('ui-select').length).toBe(1);
