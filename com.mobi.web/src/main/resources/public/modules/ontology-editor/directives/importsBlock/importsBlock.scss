@@ -9,13 +9,19 @@
     .import {
         margin: 0;
         padding: 10px;
-
+        @include textOverflow;
+        
         &:hover {
             background: $gray-lighter;
         }
 
         .error-display {
             font-weight: normal;
+        }
+        
+        .btn-link {
+            position: absolute;
+            right: 0;
         }
     }
 
