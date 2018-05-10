@@ -50,10 +50,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-/**
- *
- * @author Sean Smitz &lt;sean.smitz@inovexcorp.com&gt;
- */
 public class CatalogRestUtils {
     /**
      * Creates the JSONObject to be returned in the commit chain to more easily work with the data associated with the
