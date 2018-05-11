@@ -115,23 +115,37 @@
                     }
                     dvm.getCommits = function() {
                         if (dvm.branch) {
-                            if (!dvm.targetId) {
-                                dvm.targetId = dvm.commitId;
+                            if (dvm.commitId) {
+                                cm.getCommitHistory(dvm.commitId)
+                                    .then(commits => {
+                                        dvm.commits = commits;
+                                        dvm.error = '';
+                                        if ($scope.graph) {
+                                            dvm.drawGraph();
+                                        }
+                                    }, errorMessage => {
+                                        dvm.error = errorMessage;
+                                        dvm.commits = [];
+                                        if ($scope.graph) {
+                                            dvm.reset();
+                                        }
+                                    });
+                            } else {
+                                cm.getBranchCommits(dvm.branch['@id'], dvm.recordId, catalogId, dvm.targetId)
+                                    .then(commits => {
+                                        dvm.commits = commits;
+                                        dvm.error = '';
+                                        if ($scope.graph) {
+                                            dvm.drawGraph();
+                                        }
+                                    }, errorMessage => {
+                                        dvm.error = errorMessage;
+                                        dvm.commits = [];
+                                        if ($scope.graph) {
+                                            dvm.reset();
+                                        }
+                                    });
                             }
-                            cm.getCommitHistory(dvm.targetId)
-                                .then(commits => {
-                                    dvm.commits = commits;
-                                    dvm.error = '';
-                                    if ($scope.graph) {
-                                        dvm.drawGraph();
-                                    }
-                                }, errorMessage => {
-                                    dvm.error = errorMessage;
-                                    dvm.commits = [];
-                                    if ($scope.graph) {
-                                        dvm.reset();
-                                    }
-                                });
                         } else {
                             dvm.commits = [];
                             if ($scope.graph) {

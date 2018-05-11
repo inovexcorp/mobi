@@ -59,9 +59,10 @@ public interface CommitRest {
             @DefaultValue("jsonld") @QueryParam("format") String format);
 
     /**
-     * Gets a List of Commits ordered by date descending within the repository which represents the Commit chain for a
-     * branch. The Commit identified by the provided commitId is the first item in the List and it was informed by the
-     * previous Commit in the List. If a limit is passed which is greater than zero, will paginate the results.
+     * Gets a List of Commits ordered by date descending within the repository which represents the Commit chain from
+     * the specified commit. The Commit identified by the provided commitId is the first item in the List and it was
+     * informed by the previous Commit in the List. If a limit is passed which is greater than zero, will paginate the
+     * results.
      *
      * @param uriInfo The UriInfo of the request.
      * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless

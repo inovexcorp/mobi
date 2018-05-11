@@ -273,6 +273,13 @@
              * @param {Object} request An item from the `requests` array that represents the request to select
              */
             self.setRequestDetails = function(request) {
+                request.sourceTitle = '';
+                request.targetTitle = '';
+                request.sourceBranch = '';
+                request.targetBranch = '';
+                request.sourceCommit = '';
+                request.targetCommit = '';
+                request.difference = '';
                 if (mm.isAccepted(request.request)) {
                     request.sourceTitle = util.getPropertyValue(request.request, prefixes.mergereq + 'sourceBranchTitle');
                     request.targetTitle = util.getPropertyValue(request.request, prefixes.mergereq + 'targetBranchTitle');
@@ -302,6 +309,8 @@
                                 return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
                             }, $q.reject)
                             .then(conflicts => request.hasConflicts = !_.isEmpty(conflicts), util.createErrorToast);
+                    } else {
+                        promise.then(_.noop, util.createErrorToast);
                     }
                 }
             }
