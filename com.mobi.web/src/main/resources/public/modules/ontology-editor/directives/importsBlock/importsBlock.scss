@@ -9,19 +9,19 @@
     .import {
         margin: 0;
         padding: 10px;
-        @include textOverflow;
+        display: flex;
         
         &:hover {
             background: $gray-lighter;
         }
 
-        .error-display {
-            font-weight: normal;
+        .import-iri {
+            @include textOverflow;
+            flex: 1;
         }
         
-        .btn-link {
-            position: absolute;
-            right: 0;
+        .error-display {
+            font-weight: normal;
         }
     }
 
