@@ -9,11 +9,17 @@
     .import {
         margin: 0;
         padding: 10px;
-
+        display: flex;
+        
         &:hover {
             background: $gray-lighter;
         }
 
+        .import-iri {
+            @include textOverflow;
+            flex: 1;
+        }
+        
         .error-display {
             font-weight: normal;
         }
