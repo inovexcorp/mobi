@@ -1,0 +1,1 @@
+[{"@id":"http://example.com/test/0","@type":["urn:test"],"http://example.com/test#prop":[{"@value":"VALUE 1"}]},{"@id":"http://example.com/test/1","@type":["urn:test"],"http://example.com/test#prop":[{"@value":"VALUE 2"}]},{"@id":"http://example.com/test/2","@type":["urn:test"],"http://example.com/test#prop":[{"@value":"VALUE 3"}]}]

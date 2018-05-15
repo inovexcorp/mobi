@@ -34,10 +34,10 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
-
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
@@ -182,6 +182,7 @@ public class CommitRestImplTest extends MobiRestTestNg {
         when(catalogManager.getCommit(vf.createIRI(COMMIT_IRIS[2]))).thenReturn(Optional.of(testCommits.get(2)));
         when(catalogManager.getCommitChain(any(Resource.class))).thenReturn(testCommits);
         when(catalogManager.getCommitDifference(any(Resource.class))).thenReturn(difference);
+        when(catalogManager.getDifference(any(Resource.class), any(Resource.class))).thenReturn(difference);
 
         when(difference.getAdditions()).thenReturn(mf.createModel());
         when(difference.getDeletions()).thenReturn(mf.createModel());
@@ -236,13 +237,13 @@ public class CommitRestImplTest extends MobiRestTestNg {
         assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
         assertEquals(response.getLinks().size(), 0);
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), COMMIT_IRIS.length);
-            for (Object aResult : result) {
-                JSONObject commitObj = JSONObject.fromObject(aResult);
+            JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(array.size(), COMMIT_IRIS.length);
+            array.forEach(result -> {
+                JSONObject commitObj = JSONObject.fromObject(result);
                 assertTrue(commitObj.containsKey("id"));
                 assertTrue(Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id")));
-            }
+            });
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -260,13 +261,13 @@ public class CommitRestImplTest extends MobiRestTestNg {
         assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
         assertEquals(response.getLinks().size(), 0);
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), COMMIT_IRIS.length);
-            for (Object aResult : result) {
-                JSONObject commitObj = JSONObject.fromObject(aResult);
+            JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(array.size(), COMMIT_IRIS.length);
+            array.forEach(result -> {
+                JSONObject commitObj = JSONObject.fromObject(result);
                 assertTrue(commitObj.containsKey("id"));
                 assertTrue(Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id")));
-            }
+            });
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -321,6 +322,46 @@ public class CommitRestImplTest extends MobiRestTestNg {
         doThrow(new IllegalStateException()).when(catalogManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
                 .request().get();
+        assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void getDifferenceTest() {
+        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
+                .queryParam("target", encode(COMMIT_IRIS[0])).request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getDifference(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]));
+        try {
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertTrue(result.containsKey("additions"));
+            assertTrue(result.containsKey("deletions"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getDifferenceWithoutTargetTest() {
+        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference").request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getDifferenceWithErrorTest() {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(catalogManager).getDifference(vf.createIRI(ERROR_IRI), vf.createIRI(COMMIT_IRIS[0]));
+        Response response = target().path("commits/" + encode(ERROR_IRI) + "/difference")
+                .queryParam("target", encode(COMMIT_IRIS[0])).request().get();
+        assertEquals(response.getStatus(), 400);
+
+        doThrow(new MobiException()).when(catalogManager).getDifference(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]));
+        response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
+                .queryParam("target", encode(COMMIT_IRIS[0])).request().get();
+        assertEquals(response.getStatus(), 500);
+
+        doThrow(new IllegalStateException()).when(catalogManager).getDifference(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]));
+        response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
+                .queryParam("target", encode(COMMIT_IRIS[0])).request().get();
         assertEquals(response.getStatus(), 500);
     }
 }

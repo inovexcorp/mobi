@@ -23,7 +23,6 @@ package com.mobi.catalog.rest.utils;
  * #L%
  */
 
-import static com.mobi.rest.util.RestUtils.getTypedObjectFromJsonld;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 
 import com.mobi.catalog.api.builder.Difference;
@@ -35,20 +34,15 @@ import com.mobi.ontologies.provo.InstantaneousEvent;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.orm.Thing;
-import com.mobi.rest.util.LinksUtils;
-import com.mobi.rest.util.jaxb.Links;
-import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import static com.mobi.rest.util.RestUtils.thingToSkolemizedJsonObject;
 
 public class CatalogRestUtils {
     /**
@@ -93,32 +87,6 @@ public class CatalogRestUtils {
     }
 
     /**
-     * Creates a Response for a list of paginated Things based on the passed URI information, page of items, the total
-     * number of Things, the limit for each page, and the offset for the current page. Sets the "X-Total-Count" header
-     * to the total size and the "Links" header to the next and prev URLs if present.
-     *
-     * @param uriInfo The URI information of the request.
-     * @param items The limited and sorted Collection of items for the current page
-     * @param totalSize The total number of items.
-     * @param limit The limit for each page.
-     * @param offset The offset for the current page.
-     * @return A Response with the current page of Things and headers for the total size and links to the next and prev
-     *         pages if present.
-     */
-    public static Response createPaginatedResponseWithJson(UriInfo uriInfo, JSONArray items, int totalSize, int limit,
-            int offset) {
-        Links links = LinksUtils.buildLinks(uriInfo, items.size(), totalSize, limit, offset);
-        Response.ResponseBuilder response = Response.ok(items).header("X-Total-Count", totalSize);
-        if (links.getNext() != null) {
-            response = response.link(links.getBase() + links.getNext(), "next");
-        }
-        if (links.getPrev() != null) {
-            response = response.link(links.getBase() + links.getPrev(), "prev");
-        }
-        return response.build();
-    }
-
-    /**
      * Creates a Response for a Commit and its addition and deletion statements in the specified format. The JSONObject
      * in the Response has key "commit" with value of the Commit's JSON-LD and the keys and values of the result of
      * getCommitDifferenceObject.
@@ -133,24 +101,8 @@ public class CatalogRestUtils {
     public static Response createCommitResponse(Commit commit, Difference difference, String format, SesameTransformer transformer, BNodeService bNodeService) {
         String differences = getCommitDifferenceJsonString(difference, format, transformer, bNodeService);
         String response = differences.subSequence(0, differences.length() - 1) + ", \"commit\": "
-                + thingToJsonObject(commit, Commit.TYPE, transformer, bNodeService).toString() + "}";
+                + thingToSkolemizedJsonObject(commit, Commit.TYPE, transformer, bNodeService).toString() + "}";
         return Response.ok(response, MediaType.APPLICATION_JSON).build();
-    }
-
-    /**
-     * Creates a JSON string for the Difference statements in the specified RDF format of the Commit with the specified
-     * id. Key "additions" has value of the Commit's addition statements and key "deletions" has value of the Commit's
-     * deletion statements.
-     *
-     * @param difference The {@link Difference} for the {@link Commit} of interest.
-     * @param format A string representing the RDF format to return the statements in.
-     * @param transformer The {@link SesameTransformer} to use.
-     * @param bNodeService The {@link BNodeService} to use.
-     * @return A JSONObject with a key for the Commit's addition statements and a key for the Commit's deletion
-     *         statements.
-     */
-    public static String getCommitDifferenceJsonString(Difference difference, String format, SesameTransformer transformer, BNodeService bNodeService) {
-        return getDifferenceJsonString(difference, format, transformer, bNodeService);
     }
 
     /**
@@ -165,57 +117,23 @@ public class CatalogRestUtils {
      *         statements.
      */
     public static String getDifferenceJsonString(Difference difference, String format, SesameTransformer transformer, BNodeService bNodeService) {
-        return "{ \"additions\": " + getModelInFormat(difference.getAdditions(), format, transformer, bNodeService) + ", \"deletions\": "
-                + getModelInFormat(difference.getDeletions(), format, transformer, bNodeService) + "}";
+        return "{ \"additions\": " + modelToSkolemizedString(difference.getAdditions(), format, transformer, bNodeService) + ", \"deletions\": "
+                + modelToSkolemizedString(difference.getDeletions(), format, transformer, bNodeService) + "}";
     }
 
     /**
-     * Converts a Thing into a JSONObject by the first object of a specific type in the JSON-LD serialization of the
-     * Thing's Model.
+     * Creates a JSON string for the Difference statements in the specified RDF format of the Commit with the specified
+     * id. Key "additions" has value of the Commit's addition statements and key "deletions" has value of the Commit's
+     * deletion statements.
      *
-     * @param thing The Thing to convert into a JSONObject.
+     * @param difference The {@link Difference} for the {@link Commit} of interest.
+     * @param format A string representing the RDF format to return the statements in.
      * @param transformer The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
-     * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
+     * @return A JSONObject with a key for the Commit's addition statements and a key for the Commit's deletion
+     * statements.
      */
-    public static JSONObject thingToJsonObject(Thing thing, String type, SesameTransformer transformer, BNodeService bNodeService) {
-        return getTypedObjectFromJsonld(thingToJsonld(thing, transformer, bNodeService), type);
-    }
-
-    /**
-     * Converts a Thing into a JSON-LD string.
-     *
-     * @param thing The Thing whose Model will be converted.
-     * @param transformer The {@link SesameTransformer} to use.
-     * @param bNodeService The {@link BNodeService} to use.
-     * @return A JSON-LD string for the Thing's Model.
-     */
-    public static String thingToJsonld(Thing thing, SesameTransformer transformer, BNodeService bNodeService) {
-        return modelToJsonld(thing.getModel(), transformer, bNodeService);
-    }
-
-    /**
-     * Converts a Model into a JSON-LD string.
-     *
-     * @param model The Model to convert.
-     * @param transformer The {@link SesameTransformer} to use.
-     * @param bNodeService The {@link BNodeService} to use.
-     * @return A JSON-LD string for the Model.
-     */
-    public static String modelToJsonld(Model model, SesameTransformer transformer, BNodeService bNodeService) {
-        return getModelInFormat(model, "jsonld", transformer, bNodeService);
-    }
-
-    /**
-     * Converts a Model into a string of the provided RDF format, grouping statements by subject and predicate.
-     *
-     * @param model  The Model to convert.
-     * @param format A string representing the RDF format to return the Model in.
-     * @param transformer The {@link SesameTransformer} to use.
-     * @param bNodeService The {@link BNodeService} to use.
-     * @return A String of the converted Model in the requested RDF format.
-     */
-    public static String getModelInFormat(Model model, String format, SesameTransformer transformer, BNodeService bNodeService) {
-        return modelToSkolemizedString(model, format, transformer, bNodeService);
+    private static String getCommitDifferenceJsonString(Difference difference, String format, SesameTransformer transformer, BNodeService bNodeService) {
+        return getDifferenceJsonString(difference, format, transformer, bNodeService);
     }
 }

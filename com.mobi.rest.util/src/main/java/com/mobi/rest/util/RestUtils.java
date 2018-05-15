@@ -33,6 +33,8 @@ import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.orm.Thing;
+import com.mobi.rest.util.jaxb.Links;
 import com.mobi.web.security.util.AuthenticationProps;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -50,11 +52,19 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 public class RestUtils {
 
@@ -258,10 +268,13 @@ public class RestUtils {
      * @return A Model containing the RDF from the JSON-LD string.
      */
     public static Model jsonldToModel(String jsonld, SesameTransformer transformer) {
+        long start = System.currentTimeMillis();
         try {
             return transformer.mobiModel(Rio.parse(IOUtils.toInputStream(jsonld), "", RDFFormat.JSONLD));
         } catch (Exception e) {
             throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
+        } finally {
+            LOG.trace("jsonldToModel took {}ms", System.currentTimeMillis() - start);
         }
     }
 
@@ -463,5 +476,217 @@ public class RestUtils {
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         }
+    }
+
+    /**
+     * Converts a Thing into a JSONObject by the first object of a specific type in the JSON-LD serialization of the
+     * Thing's Model.
+     *
+     * @param thing The Thing to convert into a JSONObject.
+     * @param transformer The {@link SesameTransformer} to use.
+     * @param bNodeService The {@link BNodeService} to use.
+     * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
+     */
+    public static JSONObject thingToJsonObject(Thing thing, String type, SesameTransformer transformer) {
+        return getTypedObjectFromJsonld(modelToString(thing.getModel(), getRDFFormat("jsonld"), transformer), type);
+    }
+
+    /**
+     * Converts a Thing into a JSONObject by the first object of a specific type in the JSON-LD serialization of the
+     * Thing's Model.
+     *
+     * @param thing The Thing to convert into a JSONObject.
+     * @param transformer The {@link SesameTransformer} to use.
+     * @param bNodeService The {@link BNodeService} to use.
+     * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
+     */
+    public static JSONObject thingToSkolemizedJsonObject(Thing thing, String type, SesameTransformer transformer, BNodeService bNodeService) {
+        return getTypedObjectFromJsonld(modelToSkolemizedString(thing.getModel(), getRDFFormat("jsonld"), transformer, bNodeService), type);
+    }
+
+    /**
+     * Creates a {@link Response} for a page of a sorted limited offset {@link Set} of {@link Thing}s based on the
+     * return type of the passed function using the passed full {@link Set} of {@link Resource}s.
+     *
+     * @param <T> A class that extends {@link Thing}.
+     * @param uriInfo The URI information of the request.
+     * @param things The {@link Set} of {@link Thing}s.
+     * @param sortIRI The property {@link IRI} to sort the {@link Set} of {@link Thing}s by.
+     * @param sortResources The {@link Set} of allowed values for the sortIRI.
+     * @param offset The number of {@link Thing}s to skip.
+     * @param limit The size of the page of {@link Thing}s to the return.
+     * @param asc Whether the sorting should be ascending or descending.
+     * @param filterFunction A {@link Function} to filter the {@link Set} of {@link Thing}s.
+     * @param type The type of the {@link Thing} to be returned
+     * @param transformer The {@link SesameTransformer} to use.
+     * @return A {@link Response} with a page of {@link Thing}s that has been filtered, sorted, and limited and headers
+     * for the total size and links to the next and prev pages if present.
+     */
+    public static <T extends Thing> Response createPaginatedThingResponse(UriInfo uriInfo, Set<T> things,
+            IRI sortIRI, Set<String> sortResources, int offset, int limit, boolean asc,
+            Function<T, Boolean> filterFunction, String type, SesameTransformer transformer) {
+        return createPaginatedThingResponse(uriInfo, things, sortIRI, sortResources, offset, limit, asc, filterFunction, type, transformer, null);
+    }
+
+    /**
+     * Creates a {@link Response} for a page of a sorted limited offset {@link Set} of {@link Thing}s based on the
+     * return type of the passed function using the passed full {@link Set} of {@link Resource}s.
+     *
+     * @param <T> A class that extends {@link Thing}.
+     * @param uriInfo The URI information of the request.
+     * @param things The {@link Set} of {@link Thing}s.
+     * @param sortIRI The property {@link IRI} to sort the {@link Set} of {@link Thing}s by.
+     * @param sortResources The {@link Set} of allowed values for the sortIRI.
+     * @param offset The number of {@link Thing}s to skip.
+     * @param limit The size of the page of {@link Thing}s to the return.
+     * @param asc Whether the sorting should be ascending or descending.
+     * @param filterFunction A {@link Function} to filter the {@link Set} of {@link Thing}s.
+     * @param type The type of the {@link Thing} to be returned
+     * @param transformer The {@link SesameTransformer} to use.
+     * @param bNodeService The {@link BNodeService} to use.
+     * @return A {@link Response} with a page of {@link Thing}s that has been filtered, sorted, and limited and headers
+     * for the total size and links to the next and prev pages if present.
+     */
+    public static <T extends Thing> Response createPaginatedThingResponse(UriInfo uriInfo, Set<T> things,
+            IRI sortIRI, Set<String> sortResources, int offset, int limit, boolean asc,
+            Function<T, Boolean> filterFunction, String type, SesameTransformer transformer, BNodeService bNodeService) {
+        long start = System.currentTimeMillis();
+        try {
+            if (offset > things.size()) {
+                throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
+            }
+
+            Comparator<T> comparator = Comparator.comparing(dist -> dist.getProperty(sortIRI).get().stringValue());
+
+            Stream<T> stream = things.stream();
+
+            if (!asc) {
+                comparator = comparator.reversed();
+            }
+
+            if (filterFunction != null) {
+                stream = stream.filter(filterFunction::apply);
+            }
+
+            List<T> filteredThings = stream.collect(Collectors.toList());
+            List<T> result = filteredThings.stream()
+                    .sorted(comparator)
+                    .skip(offset)
+                    .limit(limit)
+                    .collect(Collectors.toList());
+
+            return createPaginatedResponse(uriInfo, result, filteredThings.size(), limit, offset, type, transformer, bNodeService);
+        } finally {
+            LOG.trace("createPaginatedThingResponse took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    /**
+     * Creates a Response for a list of paginated Things based on the passed URI information, page of items, the total
+     * number of Things, the limit for each page, and the offset for the current page. Sets the "X-Total-Count" header
+     * to the total size and the "Links" header to the next and prev URLs if present.
+     *
+     * @param <T> A class that extends Thing
+     * @param uriInfo The URI information of the request.
+     * @param items The limited and sorted Collection of items for the current page
+     * @param totalSize The total number of items.
+     * @param limit The limit for each page.
+     * @param offset The offset for the current page.
+     * @param type The type of the {@link Thing} to be returned
+     * @param transformer The {@link SesameTransformer} to use.
+     * @return A Response with the current page of Things and headers for the total size and links to the next and prev
+     * pages if present.
+     */
+    public static <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items,
+            int totalSize, int limit, int offset, String type, SesameTransformer transformer) {
+        return createPaginatedResponse(uriInfo, items, totalSize, limit, offset, type, transformer, null);
+    }
+
+    /**
+     * Creates a Response for a list of paginated Things based on the passed URI information, page of items, the total
+     * number of Things, the limit for each page, and the offset for the current page. Sets the "X-Total-Count" header
+     * to the total size and the "Links" header to the next and prev URLs if present.
+     *
+     * @param <T> A class that extends Thing
+     * @param uriInfo The URI information of the request.
+     * @param items The limited and sorted Collection of items for the current page
+     * @param totalSize The total number of items.
+     * @param limit The limit for each page.
+     * @param offset The offset for the current page.
+     * @param type The type of the {@link Thing} to be returned
+     * @param transformer The {@link SesameTransformer} to use.
+     * @param bNodeService The {@link BNodeService} to use.
+     * @return A Response with the current page of Things and headers for the total size and links to the next and prev
+     * pages if present.
+     */
+    public static <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items, int totalSize,
+            int limit, int offset, String type, SesameTransformer transformer, BNodeService bNodeService) {
+        JSONArray results;
+        long start = System.currentTimeMillis();
+
+        try {
+            if (bNodeService == null) {
+                results = JSONArray.fromObject(items.stream()
+                        .map(thing -> thingToJsonObject(thing, type, transformer))
+                        .collect(Collectors.toList()));
+            } else {
+                results = JSONArray.fromObject(items.stream()
+                        .map(thing -> thingToSkolemizedJsonObject(thing, type, transformer, bNodeService))
+                        .collect(Collectors.toList()));
+            }
+            return createPaginatedResponseWithJson(uriInfo, results, totalSize, limit, offset);
+        } finally {
+            LOG.trace("createPaginatedResponse took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    /**
+     * Creates a Response for a list of paginated Things based on the passed URI information, page of items, the total
+     * number of Things, the limit for each page, and the offset for the current page. Sets the "X-Total-Count" header
+     * to the total size and the "Links" header to the next and prev URLs if present.
+     *
+     * @param uriInfo The URI information of the request.
+     * @param items The limited and sorted Collection of items for the current page
+     * @param totalSize The total number of items.
+     * @param limit The limit for each page.
+     * @param offset The offset for the current page.
+     * @return A Response with the current page of Things and headers for the total size and links to the next and prev
+     * pages if present.
+     */
+    public static Response createPaginatedResponseWithJson(UriInfo uriInfo, JSONArray items, int totalSize, int limit,
+            int offset) {
+        long start = System.currentTimeMillis();
+        try {
+            validatePaginationParams(Optional.empty(), Collections.EMPTY_SET, limit, offset);
+            Links links = LinksUtils.buildLinks(uriInfo, items.size(), totalSize, limit, offset);
+            Response.ResponseBuilder response = Response.ok(items).header("X-Total-Count", totalSize);
+            if (links.getNext() != null) {
+                response = response.link(links.getBase() + links.getNext(), "next");
+            }
+            if (links.getPrev() != null) {
+                response = response.link(links.getBase() + links.getPrev(), "prev");
+            }
+            return response.build();
+        } finally {
+            LOG.trace("createPaginatedResponseWithJson took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    /**
+     * Validates the sort property IRI, offset, and limit parameters for pagination. The sort IRI string must be a valid
+     * sort property. The offset must be greater than or equal to 0. The limit must be postitive. If any parameters are
+     * invalid, throws a 400 Response.
+     *
+     * @param sortIRI The sort property string to test.
+     * @param offset The offset for the paginated response.
+     * @param limit The limit of the paginated response.
+     */
+    public static void validatePaginationParams(Optional<String> sortIRI, Set<String> sortResources, int limit, int offset) {
+        sortIRI.ifPresent(sortIri -> {
+            if (!sortResources.contains(sortIri)) {
+                throw ErrorUtils.sendError("Invalid sort property IRI", Response.Status.BAD_REQUEST);
+            }
+        });
+        LinksUtils.validateParams(limit, offset);
     }
 }

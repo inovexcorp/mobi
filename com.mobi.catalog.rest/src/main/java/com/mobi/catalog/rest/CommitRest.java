@@ -59,4 +59,13 @@ public interface CommitRest {
             @PathParam("commitId") String commitId,
             @QueryParam("offset") int offset,
             @QueryParam("limit") int limit);
+
+    @GET
+    @Path("{source}/difference")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves the Commit history specified by the provided ID.")
+    Response getDifference(@PathParam("source") String source,
+            @QueryParam("target") String target,
+            @DefaultValue("jsonld") @QueryParam("format") String rdfFormat);
 }
