@@ -27,7 +27,7 @@
             <info-message ng-if="!difference.additions.length && !difference.deletions.length">No changes to display</info-message>
         </tab>
         <tab heading="'Commits'" active="dvm.tabs.commits">
-            <commit-history-table branch="sourceBranch" record-id="recordId" target-id="targetBranchId"></commit-history-table>
+            <commit-history-table branch-title="dvm.util.getDctermsValue(sourceBranch, 'title')" commit-id="recordId" target-id="targetBranchId"></commit-history-table>
         </tab>
     </tabset>
 </div>
