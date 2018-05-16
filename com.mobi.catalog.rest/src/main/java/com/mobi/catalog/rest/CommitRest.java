@@ -67,8 +67,6 @@ public interface CommitRest {
      * @param uriInfo The UriInfo of the request.
      * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
      * with "_:".
-     * @param targetId The String representing the Commit ID to terminate the history. NOTE: Optional param - defaults
-     * to an empty String.
      * @param offset An optional offset for the results.
      * @param limit An optional limit for the results.
      * @return A list of Commits starting with the provided commitId which represents the Commit chain.
@@ -80,7 +78,6 @@ public interface CommitRest {
     @ApiOperation("Retrieves the Commit history specified by the provided ID.")
     Response getCommitHistory(@Context UriInfo uriInfo,
             @PathParam("commitId") String commitId,
-            @DefaultValue("") @QueryParam("targetId") String targetId,
             @QueryParam("offset") int offset,
             @QueryParam("limit") int limit);
 
