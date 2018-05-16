@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Request Branch Select directive', function() {
+fdescribe('Request Branch Select directive', function() {
     var $compile, scope, $q, catalogManagerSvc, mergeRequestsStateSvc, utilSvc;
 
     beforeEach(function() {
@@ -30,6 +30,7 @@ describe('Request Branch Select directive', function() {
         mockMergeRequestsState();
         mockMergeRequestManager();
         mockUtil();
+        mockPrefixes();
         injectTrustedFilter();
         injectHighlightFilter();
 

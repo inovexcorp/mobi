@@ -34,5 +34,5 @@
             </form>
         </div>
     </div>
-    <commit-difference-tabset difference="dvm.state.requestConfig.difference" source-branch="dvm.state.requestConfig.sourceBranch" target-branch-id="dvm.state.requestConfig.targetBranchId" record-id="dvm.state.requestConfig.recordId"></commit-difference-tabset>
+    <commit-difference-tabset difference="dvm.state.requestConfig.difference" branch-title="dvm.state.requestConfig.title" target-id="dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head')" commit-id="dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head')"></commit-difference-tabset>
 </div>

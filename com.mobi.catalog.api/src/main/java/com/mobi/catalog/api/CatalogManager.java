@@ -743,14 +743,27 @@ public interface CatalogManager {
     /**
      * Gets a List of Commits ordered by date descending within the repository. The Commit identified by the provided
      * Resource is the first item in the List and it was informed by the previous Commit in the List. This association
-     * is repeated until you get to the beginning of the List. The resulting List can then be thought about the chain
-     * of Commits on a Branch starting with the Commit identified by the provided Resource.
+     * is repeated until you get to the beginning of the List. The resulting List can then be thought about the chain of
+     * Commits on a Branch starting with the Commit identified by the provided Resource.
      *
      * @param commitId The Resource identifying the Commit for the desired chain.
      * @return List of Commits which make up the commit chain for the provided Commit.
      * @throws IllegalArgumentException Thrown if any of the Commits could not be found.
      */
     List<Commit> getCommitChain(Resource commitId);
+
+    /**
+     * Gets a List of Commits ordered by date descending within the repository. The Commit identified by the provided
+     * Resource is the first item in the List and it was informed by the previous Commit in the List. This association
+     * is repeated until you get to the beginning of the List. The resulting List can then be thought about the chain of
+     * Commits on a Branch starting with the Commit identified by the provided Resource.
+     *
+     * @param commitId The Resource identifying the Commit for the desired chain.
+     * @param targetId The Resource identifying the Commit to terminate the chain.
+     * @return List of Commits which make up the commit chain for the provided Commit.
+     * @throws IllegalArgumentException Thrown if any of the Commits could not be found.
+     */
+    List<Commit> getCommitChain(Resource commitId, Resource targetId);
 
     /**
      * Gets the list of commits between the HEAD of a branch and the HEAD of a target branch.

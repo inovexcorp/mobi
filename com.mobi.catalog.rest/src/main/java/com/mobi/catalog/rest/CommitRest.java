@@ -46,7 +46,7 @@ public interface CommitRest {
      * Gets the Commit identified by the provided ID.
      *
      * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
+     with "_:".
      * @param format the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
      * @return A Response with the Commit identified by the provided IDs.
      */
@@ -65,8 +65,10 @@ public interface CommitRest {
      * results.
      *
      * @param uriInfo The UriInfo of the request.
-     * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
+     * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
+     * with "_:".
+     * @param targetId The String representing the Commit ID to terminate the history. NOTE: Optional param - defaults
+     * to an empty String.
      * @param offset An optional offset for the results.
      * @param limit An optional limit for the results.
      * @return A list of Commits starting with the provided commitId which represents the Commit chain.
@@ -78,14 +80,24 @@ public interface CommitRest {
     @ApiOperation("Retrieves the Commit history specified by the provided ID.")
     Response getCommitHistory(@Context UriInfo uriInfo,
             @PathParam("commitId") String commitId,
+            @DefaultValue("") @QueryParam("targetId") String targetId,
             @QueryParam("offset") int offset,
             @QueryParam("limit") int limit);
 
+    /**
+     * Retrieves the difference between the commit histories specified by the provided IDs.
+     *
+     * @param source The string representing the source Commit ID.
+     * @param target The string representing the target Commit ID (optional).
+     * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @return A list of Commits starting with the provided source Commit ID which represents the Commit chain that
+     * terminates at the target Commit ID.
+     */
     @GET
     @Path("{source}/difference")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the Commit history specified by the provided ID.")
+    @ApiOperation("Retrieves the difference between the commit histories specified by the provided IDs.")
     Response getDifference(@PathParam("source") String source,
             @QueryParam("target") String target,
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat);

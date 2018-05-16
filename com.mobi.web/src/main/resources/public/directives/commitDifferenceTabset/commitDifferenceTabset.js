@@ -60,9 +60,9 @@
             templateUrl: 'directives/commitDifferenceTabset/commitDifferenceTabset.html',
             replace: true,
             scope: {
-                recordId: '<',
-                sourceBranch: '<',
-                targetBranchId: '<',
+                branchTitle: '<',
+                commitId: '<',
+                targetId: '<',
                 difference: '<'
             },
             controllerAs: 'dvm',

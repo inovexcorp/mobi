@@ -51,8 +51,6 @@
          *
          * @param {string} commitId The IRI string of a commit in the local catalog
          * @param {string} branchTitle The title of the branch the user is currently on.
-         * @param {string=''} headCommitId The IRI string of the head commit of the Branch to be used when determining 
-         * whether the table should be updated.
          * @param {string=''} targetId limits the commits displpayed to only go as far back as this specified commit.
          */
         .directive('commitHistoryTable', commitHistoryTable);
@@ -68,7 +66,6 @@
                 bindToController: {
                     commitId: '<',
                     branchTitle: '<',
-                    headCommitId: '<?',
                     targetId: '<?'
                 },
                 templateUrl: 'directives/commitHistoryTable/commitHistoryTable.html',
@@ -102,7 +99,7 @@
                     dvm.deltaX = 5 + dvm.circleRadius;
                     dvm.deltaY = 37;
 
-                    $scope.$watchGroup(['dvm.branchTitle', 'dvm.headCommitId', 'dvm.commitId', 'dvm.targetId'], () => dvm.getCommits());
+                    $scope.$watchGroup(['dvm.branchTitle', 'dvm.commitId', 'dvm.targetId'], () => dvm.getCommits());
 
                     dvm.openCommitOverlay = function(commitId) {
                         cm.getCommit(commitId)
@@ -114,20 +111,27 @@
                             }, errorMessage => dvm.error = errorMessage);
                     }
                     dvm.getCommits = function() {
-                        var promise = cm.getCommitHistory(dvm.commitId);
-                        promise.then(commits => {
-                            dvm.commits = commits;
-                            dvm.error = '';
-                            if ($scope.graph) {
-                                dvm.drawGraph();
-                            }
-                        }, errorMessage => {
-                            dvm.error = errorMessage;
+                        if (dvm.commitId) {
+                            var promise = dvm.targetId ? cm.getCommitHistory(dvm.commitId, dvm.targetId) : cm.getCommitHistory(dvm.commitId);
+                            promise.then(commits => {
+                                dvm.commits = commits;
+                                dvm.error = '';
+                                if ($scope.graph) {
+                                    dvm.drawGraph();
+                                }
+                            }, errorMessage => {
+                                dvm.error = errorMessage;
+                                dvm.commits = [];
+                                if ($scope.graph) {
+                                    dvm.reset();
+                                }
+                            });
+                        } else {
                             dvm.commits = [];
                             if ($scope.graph) {
                                 dvm.reset();
                             }
-                        });
+                        }
                     }
                     dvm.drawGraph = function() {
                         dvm.reset();
