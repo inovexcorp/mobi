@@ -112,7 +112,7 @@
                     }
                     dvm.getCommits = function() {
                         if (dvm.commitId) {
-                            var promise = dvm.targetId ? cm.getCommitHistory(dvm.commitId, dvm.targetId) : cm.getCommitHistory(dvm.commitId);
+                            var promise = dvm.targetId ? cm.getDifference(dvm.commitId, dvm.targetId) : cm.getCommitHistory(dvm.commitId);
                             promise.then(commits => {
                                 dvm.commits = commits;
                                 dvm.error = '';

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Commit History Table directive', function() {
+fdescribe('Commit History Table directive', function() {
     var $compile, scope, $q, catalogManagerSvc, Snap;
 
     beforeEach(function() {
@@ -180,13 +180,13 @@ describe('Commit History Table directive', function() {
                     });
                     describe('for a difference between commits', function() {
                         beforeEach(function() {
-                            catalogManagerSvc.getCommitHistory.and.returnValue($q.when(this.commits));
+                            catalogManagerSvc.getDifference.and.returnValue($q.when(this.commits));
                         });
                         it('drawing the graph', function() {
                             this.isolatedScope.graph = true;
                             this.controller.getCommits();
                             scope.$apply();
-                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(scope.commitId, scope.targetId);
+                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(scope.commitId, scope.targetId);
                             expect(this.controller.error).toEqual('');
                             expect(this.controller.commits).toEqual(this.commits);
                             expect(this.controller.drawGraph).toHaveBeenCalled();
@@ -195,7 +195,7 @@ describe('Commit History Table directive', function() {
                             this.isolatedScope.graph = false;
                             this.controller.getCommits();
                             scope.$apply();
-                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(scope.commitId, scope.targetId);
+                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(scope.commitId, scope.targetId);
                             expect(this.controller.error).toEqual('');
                             expect(this.controller.commits).toEqual(this.commits);
                             expect(this.controller.drawGraph).not.toHaveBeenCalled();
@@ -236,7 +236,7 @@ describe('Commit History Table directive', function() {
         });
     });
     describe('$scope.$watch triggers when changing the', function() {
-        beforeEach(function() {
+        beforeEach(function() { 
             spyOn(this.controller, 'getCommits');
         });
         it('commitId', function() {

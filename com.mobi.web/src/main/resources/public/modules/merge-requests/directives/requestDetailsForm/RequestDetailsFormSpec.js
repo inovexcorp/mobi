@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Request Details Form directive', function() {
+describe('Request Details Form directive', function() {
     var $compile, scope, catalogManagerSvc, mergeRequestsStateSvc, utilSvc;
 
     beforeEach(function() {
@@ -39,9 +39,6 @@ fdescribe('Request Details Form directive', function() {
 
         utilSvc.getDctermsValue.and.callFake(function(obj, prop) {
             return prop;
-        });
-        utilSvc.getPropertyId.and.callFake(function(obj, prop) {
-            return "ID";
         });
         
         this.element = $compile(angular.element('<request-details-form></request-details-form>'))(scope);

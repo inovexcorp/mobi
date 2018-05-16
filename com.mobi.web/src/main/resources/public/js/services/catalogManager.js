@@ -1010,7 +1010,7 @@
 
             /**
              * @ngdoc method
-             * @name getCommitHistory
+             * @name getDifference
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
@@ -1020,11 +1020,11 @@
              * @param {string} targetId The commit id of the commit at which to terminate the history.
              * @return {Promise} A promise that resolves with the list of Commits or rejects with an error message
              */
-            self.getCommitHistory = function(commitId, targetId) {
+            self.getDifference = function(commitId, targetId) {
                 var config = {
                     params: { targetId }
                 };
-                return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/history', config)
+                return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference', config)
                     .then(response => response.data, util.rejectError);
             }
 
