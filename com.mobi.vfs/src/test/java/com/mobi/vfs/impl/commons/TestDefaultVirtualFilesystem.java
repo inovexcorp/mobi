@@ -61,6 +61,8 @@ public class TestDefaultVirtualFilesystem extends TestCase {
 
     private static String writeFileRelative;
 
+    private static String writeFileNestedRelative;
+
     private static SimpleVirtualFilesystem fs;
 
     @BeforeClass
@@ -71,6 +73,7 @@ public class TestDefaultVirtualFilesystem extends TestCase {
         testFileRelative = "./test.txt";
         testResourcesRelative = "../test-classes/";
         writeFileRelative = "./testFile.txt";
+        writeFileNestedRelative = "./test/nested/directory/testFile.txt";
         fs = new SimpleVirtualFilesystem();
 
         Map<String, Object> config = new HashMap<>();
@@ -174,6 +177,32 @@ public class TestDefaultVirtualFilesystem extends TestCase {
         }
     }
 
+    @Test
+    public void testWriteFileNestedRelative() {
+        String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
+        try {
+            VirtualFile file = fs.resolveVirtualFile(writeFileNestedRelative);
+            assertFalse(file.exists());
+            assertFalse(file.isFile());
+            assertFalse(file.isFolder());
+            file.create();
+            assertFalse(file.isFolder());
+            assertTrue(file.exists());
+            assertTrue(file.isFile());
+            try (OutputStream os = file.writeContent()) {
+                os.write(testString.getBytes());
+            }
+            try (InputStream is = file.readContent()) {
+                final String content = IOUtils.toString(is, Charset.defaultCharset());
+                assertEquals(testString, content);
+            }
+            assertTrue(file.delete());
+            assertFalse(file.delete());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        }
+    }
 
     @Test
     public void testReadFolder() {
