@@ -41,6 +41,7 @@ import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import net.sf.json.JSONArray;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,7 +107,7 @@ public class CommitRestImpl implements CommitRest {
     }
 
     @Override
-    public Response getCommitHistory(UriInfo uriInfo, String commitId, int offset, int limit) {
+    public Response getCommitHistory(UriInfo uriInfo, String commitId, String targetId, int offset, int limit) {
         long start = System.currentTimeMillis();
         try {
             Response response = Response.status(Response.Status.NOT_FOUND).build();
@@ -123,8 +124,11 @@ public class CommitRestImpl implements CommitRest {
                 JSONArray commitChain = new JSONArray();
 
                 final List<Commit> commits;
-
-                commits = catalogManager.getCommitChain(vf.createIRI(commitId));
+                if (StringUtils.isBlank(targetId)) {
+                    commits = catalogManager.getCommitChain(vf.createIRI(commitId));
+                } else {
+                    commits = catalogManager.getCommitChain(vf.createIRI(commitId), vf.createIRI(targetId));
+                }
 
                 Stream<Commit> result = commits.stream();
                 if (limit > 0) {

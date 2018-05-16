@@ -1000,12 +1000,22 @@
              * @description
              * Calls the GET /mobirest/commits/{commitId}/history endpoint with the passed Commit id.
              * 
-             * @param {type} commitId
+             * @param {string} commitId
+             * @param {string=''} targetId
              * @return {Promise} A promise that resolves with the list of Commits or rejects with an error message
              */
-            self.getCommitHistory = function(commitId) {
-                return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/history')
-                    .then(response => response.data, util.rejectError);
+            self.getCommitHistory = function(commitId, targetId = '') {
+                var config = {
+                    params: { targetId }
+                };
+
+                if (targetId) {
+                    return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/history', config)
+                        .then(response => response.data, util.rejectError);
+                } else {
+                    return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/history')
+                        .then(response => response.data, util.rejectError);
+                }
             }
 
             /**
@@ -1020,9 +1030,9 @@
              * @param {string} targetId The commit id of the commit at which to terminate the history.
              * @return {Promise} A promise that resolves with the list of Commits or rejects with an error message
              */
-            self.getDifference = function(commitId, targetId) {
+            self.getDifference = function(commitId, target) {
                 var config = {
-                    params: { targetId }
+                    params: { target }
                 };
                 return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference', config)
                     .then(response => response.data, util.rejectError);

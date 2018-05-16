@@ -23,11 +23,11 @@
 <div class="commit-difference-tabset">
     <tabset class="in-overlay full-height">
         <tab heading="'Changes'" active="dvm.tabs.changes">
-            <commit-changes-display additions="difference.additions" deletions="difference.deletions"></commit-changes-display>
-            <info-message ng-if="!difference.additions.length && !difference.deletions.length">No changes to display</info-message>
+            <commit-changes-display additions="dvm.difference.additions" deletions="dvm.difference.deletions"></commit-changes-display>
+            <info-message ng-if="!dvm.difference.additions.length && !dvm.difference.deletions.length">No changes to display</info-message>
         </tab>
         <tab heading="'Commits'" active="dvm.tabs.commits">
-            <commit-history-table branch-title="branchTitle" commit-id="commitId" target-id="targetId"></commit-history-table>
+            <commit-history-table branch-title="dvm.branchTitle" commit-id="dvm.commitId" target-id="dvm.targetId"></commit-history-table>
         </tab>
     </tabset>
 </div>

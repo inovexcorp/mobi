@@ -78,6 +78,7 @@ public interface CommitRest {
     @ApiOperation("Retrieves the Commit history specified by the provided ID.")
     Response getCommitHistory(@Context UriInfo uriInfo,
             @PathParam("commitId") String commitId,
+            @DefaultValue("") String targetId,
             @QueryParam("offset") int offset,
             @QueryParam("limit") int limit);
 

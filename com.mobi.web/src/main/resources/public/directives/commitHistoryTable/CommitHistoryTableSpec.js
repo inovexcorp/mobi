@@ -180,13 +180,13 @@ fdescribe('Commit History Table directive', function() {
                     });
                     describe('for a difference between commits', function() {
                         beforeEach(function() {
-                            catalogManagerSvc.getDifference.and.returnValue($q.when(this.commits));
+                            catalogManagerSvc.getCommitHistory.and.returnValue($q.when(this.commits));
                         });
                         it('drawing the graph', function() {
                             this.isolatedScope.graph = true;
                             this.controller.getCommits();
                             scope.$apply();
-                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(scope.commitId, scope.targetId);
+                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(scope.commitId, scope.targetId);
                             expect(this.controller.error).toEqual('');
                             expect(this.controller.commits).toEqual(this.commits);
                             expect(this.controller.drawGraph).toHaveBeenCalled();
@@ -195,7 +195,7 @@ fdescribe('Commit History Table directive', function() {
                             this.isolatedScope.graph = false;
                             this.controller.getCommits();
                             scope.$apply();
-                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(scope.commitId, scope.targetId);
+                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(scope.commitId, scope.targetId);
                             expect(this.controller.error).toEqual('');
                             expect(this.controller.commits).toEqual(this.commits);
                             expect(this.controller.drawGraph).not.toHaveBeenCalled();

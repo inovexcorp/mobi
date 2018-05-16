@@ -109,7 +109,7 @@
                 }
 
                 function updateDifference() {
-                    cm.getBranchDifference(dvm.state.requestConfig.sourceBranchId, dvm.state.requestConfig.targetBranchId, dvm.state.requestConfig.recordId, catalogId)
+                    cm.getDifference(dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head'), dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head'))
                         .then(diff => {
                             dvm.state.requestConfig.difference = diff;
                         }, errorMessage => {

@@ -112,7 +112,7 @@
                     }
                     dvm.getCommits = function() {
                         if (dvm.commitId) {
-                            var promise = dvm.targetId ? cm.getDifference(dvm.commitId, dvm.targetId) : cm.getCommitHistory(dvm.commitId);
+                            var promise = dvm.targetId ? cm.getCommitHistory(dvm.commitId, dvm.targetId) : cm.getCommitHistory(dvm.commitId);
                             promise.then(commits => {
                                 dvm.commits = commits;
                                 dvm.error = '';
@@ -296,7 +296,8 @@
                         triangle.attr({
                             'fill-opacity': '0.5'
                         });
-                        var title = Snap.parse('<title>' + dvm.branchTitle + '</title>');
+                        var displayText = dvm.branchTitle;
+                        var title = Snap.parse('<title>' + displayText + '</title>');
                         var text = snap.text(rect.asPX('x') + (rect.asPX('width'))/2, rect.asPX('y') + (rect.asPX('height')/2), displayText);
                         text.attr({
                             'text-anchor': 'middle',

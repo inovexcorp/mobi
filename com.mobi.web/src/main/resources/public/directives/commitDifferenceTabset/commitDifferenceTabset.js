@@ -59,20 +59,21 @@
             restrict: 'E',
             templateUrl: 'directives/commitDifferenceTabset/commitDifferenceTabset.html',
             replace: true,
-            scope: {
+            scope: {},
+            bindToController: {
                 branchTitle: '<',
                 commitId: '<',
                 targetId: '<',
                 difference: '<'
             },
             controllerAs: 'dvm',
-            controller: function() {
+            controller: ['$scope', function($scope) {
                 var dvm = this;
                 dvm.tabs = {
                     changes: true,
                     commits: false
                 };
-            }
+            }]
         }
     }
 })();
