@@ -98,7 +98,8 @@ public class CatalogRestUtils {
      * @param bNodeService The {@link BNodeService} to use.
      * @return A Response containing a JSONObject with the Commit JSON-LD and its addition and deletion statements
      */
-    public static Response createCommitResponse(Commit commit, Difference difference, String format, SesameTransformer transformer, BNodeService bNodeService) {
+    public static Response createCommitResponse(Commit commit, Difference difference, String format,
+                                                SesameTransformer transformer, BNodeService bNodeService) {
         String differences = getCommitDifferenceJsonString(difference, format, transformer, bNodeService);
         String response = differences.subSequence(0, differences.length() - 1) + ", \"commit\": "
                 + thingToSkolemizedJsonObject(commit, Commit.TYPE, transformer, bNodeService).toString() + "}";

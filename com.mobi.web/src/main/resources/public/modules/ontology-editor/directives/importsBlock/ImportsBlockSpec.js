@@ -86,8 +86,8 @@ describe('Imports Block directive', function() {
             scope.$apply();
             expect(this.element.querySelectorAll('.error-display').length).toBe(1);
         });
-        it('with a p a.pull-right', function() {
-            expect(this.element.querySelectorAll('p a.pull-right').length).toBe(1);
+        it('with a p a.btn-link', function() {
+            expect(this.element.querySelectorAll('p a.btn-link').length).toBe(1);
         });
         it('with a imports-overlay', function() {
             expect(this.element.find('imports-overlay').length).toBe(0);

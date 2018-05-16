@@ -24,6 +24,7 @@ package com.mobi.catalog.api.record;
  */
 
 import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -52,6 +53,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
 
     protected CommitFactory commitFactory;
     protected BranchFactory branchFactory;
+    protected MergeRequestManager mergeRequestManager;
 
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
@@ -78,6 +80,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     protected void deleteVersionedRDFData(T record, RepositoryConnection conn) {
         recordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRDFRecord -> {
+                    mergeRequestManager.deleteMergeRequestsWithRecordId(versionedRDFRecord.getResource(), conn);
                     versionedRDFRecord.getVersion_resource()
                             .forEach(resource -> utilsService.removeVersion(versionedRDFRecord.getResource(),
                                     resource, conn));

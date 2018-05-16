@@ -28,6 +28,7 @@ import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -36,6 +37,7 @@ import static org.mockito.Mockito.when;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -119,6 +121,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     @Mock
     private CatalogProvUtils provUtils;
 
+    @Mock
+    private MergeRequestManager mergeRequestManager;
+
     @Before
     public void setUp() throws Exception {
 
@@ -163,12 +168,14 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         when(utilsService.getExpectedObject(eq(commitIRI), any(OrmFactory.class), eq(connection))).thenReturn(headCommit);
         when(utilsService.getRevisionChanges(eq(commitIRI), eq(connection))).thenReturn(difference);
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
+        doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.setRecordFactory(recordFactory);
         recordService.setUtilsService(utilsService);
         recordService.setVf(VALUE_FACTORY);
         recordService.setProvUtils(provUtils);
+        recordService.setMergeRequestManager(mergeRequestManager);
     }
 
     /* delete() */
@@ -183,6 +190,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
         verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
         verify(recordFactory).getExisting(eq(testIRI), eq(testRecord.getModel()));
+        verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
         verify(utilsService).removeVersion(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).removeBranch(eq(testRecord.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
         verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));

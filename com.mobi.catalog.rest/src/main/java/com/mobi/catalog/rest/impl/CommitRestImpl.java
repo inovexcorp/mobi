@@ -53,7 +53,6 @@ import javax.ws.rs.core.UriInfo;
 
 @Component(immediate = true)
 public class CommitRestImpl implements CommitRest {
-
     private static final Logger logger = LoggerFactory.getLogger(CommitRestImpl.class);
 
     private BNodeService bNodeService;

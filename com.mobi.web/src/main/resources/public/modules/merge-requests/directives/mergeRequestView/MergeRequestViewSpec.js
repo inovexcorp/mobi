@@ -120,12 +120,27 @@ describe('Merge Request View directive', function() {
             expect(this.element.find('commit-difference-tabset').length).toEqual(0);
         });
         it('depending on whether the merge request has merge conflicts', function() {
+            mergeRequestsStateSvc.open.selected.targetTitle = 'targetBranch';
+            scope.$apply();
             expect(angular.element(this.element.querySelectorAll('.alert')).length).toEqual(0);
             mergeRequestsStateSvc.open.selected.hasConflicts = true;
             scope.$apply();
             var indicator = angular.element(this.element.querySelectorAll('.alert')[0]);
             expect(indicator.hasClass('alert-warning')).toEqual(true);
             expect(indicator.text().trim()).toEqual('This request has conflicts. You can resolve them during the merge process.');
+            expect(indicator.children().hasClass('fa')).toEqual(true);
+            expect(indicator.children().hasClass('fa-exclamation-triangle')).toEqual(true);
+        });
+        it('depending on whether the merge request has does not have a target branch set', function() {
+            mergeRequestsStateSvc.open.selected.targetTitle = 'targetBranch';
+            mergeRequestsStateSvc.open.selected.hasConflicts = false;
+            scope.$apply();
+            expect(angular.element(this.element.querySelectorAll('.alert')).length).toEqual(0);
+            mergeRequestsStateSvc.open.selected.targetTitle = '';
+            scope.$apply();
+            var indicator = angular.element(this.element.querySelectorAll('.alert')[0]);
+            expect(indicator.hasClass('alert-warning')).toEqual(true);
+            expect(indicator.text().trim()).toEqual('The target branch for this merge request has been deleted.');
             expect(indicator.children().hasClass('fa')).toEqual(true);
             expect(indicator.children().hasClass('fa-exclamation-triangle')).toEqual(true);
         });
