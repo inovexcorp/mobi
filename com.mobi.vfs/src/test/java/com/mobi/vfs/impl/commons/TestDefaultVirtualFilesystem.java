@@ -31,7 +31,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFileUtilities;
-import com.mobi.vfs.impl.commons.SimpleVirtualFilesystem;
 
 import java.io.File;
 import java.io.InputStream;
@@ -54,7 +53,7 @@ public class TestDefaultVirtualFilesystem extends TestCase {
 
     private static URI testResources;
 
-    private static URI writeFileAbsolute;
+    private static URI writeFile;
 
     private static String testFileRelative;
 
@@ -68,7 +67,7 @@ public class TestDefaultVirtualFilesystem extends TestCase {
     public static void initializeUri() throws Exception {
         testFile = TestDefaultVirtualFilesystem.class.getResource("/test.txt").toURI();
         testResources = TestDefaultVirtualFilesystem.class.getResource("/").toURI();
-        writeFileAbsolute = new File(testResources.toString() + "testFile").toURI();
+        writeFile = new File(testResources.toString() + "testFile").toURI();
         testFileRelative = "./test.txt";
         testResourcesRelative = "../test-classes/";
         writeFileRelative = "./testFile.txt";
@@ -125,7 +124,7 @@ public class TestDefaultVirtualFilesystem extends TestCase {
     public void testWriteFile() {
         String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
         try {
-            VirtualFile file = fs.resolveVirtualFile(writeFileAbsolute);
+            VirtualFile file = fs.resolveVirtualFile(writeFile);
             assertFalse(file.exists());
             assertFalse(file.isFile());
             assertFalse(file.isFolder());
