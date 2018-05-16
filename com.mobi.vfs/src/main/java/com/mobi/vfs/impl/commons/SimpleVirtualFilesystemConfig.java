@@ -37,4 +37,7 @@ public interface SimpleVirtualFilesystemConfig {
     @Meta.AD(required = false)
     String defaultTemporaryDirectory();
 
+    @Meta.AD(deflt = "/data/") // TODO: Determine directory
+    String defaultRootDirectory();
+
 }

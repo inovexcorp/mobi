@@ -29,9 +29,11 @@ import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.metatype.Configurable;
+import com.mobi.exception.MobiException;
 import com.mobi.vfs.api.TemporaryVirtualFile;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
@@ -40,9 +42,13 @@ import com.mobi.vfs.api.TemporaryVirtualFile;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.api.VirtualFilesystemException;
+import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
+import org.apache.commons.vfs2.impl.StandardFileSystemManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.time.temporal.TemporalUnit;
 import java.util.Map;
@@ -162,11 +168,13 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
     void activate(Map<String, Object> configuration) throws VirtualFilesystemException {
         SimpleVirtualFilesystemConfig conf = Configurable.createConfigurable(SimpleVirtualFilesystemConfig.class, configuration);
         try {
-            this.fsManager = VFS.getManager();
+            FileSystemManager manager = VFS.getManager();
+            ((DefaultFileSystemManager) manager).setBaseFile(new File(conf.defaultRootDirectory()));
+            this.fsManager = manager;
         } catch (FileSystemException e) {
             throw new VirtualFilesystemException("Issue initializing virtual file system.", e);
         }
-        //Set of queues.
+        // Set of queues.
         tempFiles = new ArrayBlockingQueue<TemporaryVirtualFile>(conf.maxNumberOfTempFiles());
 
         // Schedule our temp file cleanup service.
@@ -175,7 +183,7 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
                 conf.secondsBetweenTempCleanup(), conf.secondsBetweenTempCleanup(), TimeUnit.SECONDS);
         LOGGER.debug("Configured scheduled cleanup of temp files to run every {} seconds", conf.secondsBetweenTempCleanup());
 
-        //Set default temp url template
+        // Set default temp url template
         this.baseTempUrlTemplate = conf.defaultTemporaryDirectory() != null ? conf.defaultTemporaryDirectory() : ("file://" + System.getProperty("java.io.tmpdir"));
         LOGGER.debug("Going to use {} for our base temp directory template", this.baseTempUrlTemplate);
     }

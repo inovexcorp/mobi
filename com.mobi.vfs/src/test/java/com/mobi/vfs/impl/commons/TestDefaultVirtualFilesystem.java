@@ -1,4 +1,4 @@
-package com.mobi.vfs.com.mobi.vfs.impl;
+package com.mobi.vfs.impl.commons;
 
 /*-
  * #%L
@@ -24,6 +24,7 @@ package com.mobi.vfs.com.mobi.vfs.impl;
  */
 
 import junit.framework.TestCase;
+import org.apache.commons.io.IOUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,7 +54,13 @@ public class TestDefaultVirtualFilesystem extends TestCase {
 
     private static URI testResources;
 
-    private static URI writeFile;
+    private static URI writeFileAbsolute;
+
+    private static String testFileRelative;
+
+    private static String testResourcesRelative;
+
+    private static String writeFileRelative;
 
     private static SimpleVirtualFilesystem fs;
 
@@ -61,12 +68,16 @@ public class TestDefaultVirtualFilesystem extends TestCase {
     public static void initializeUri() throws Exception {
         testFile = TestDefaultVirtualFilesystem.class.getResource("/test.txt").toURI();
         testResources = TestDefaultVirtualFilesystem.class.getResource("/").toURI();
-        writeFile = new File(testResources.toString() + "testFile").toURI();
+        writeFileAbsolute = new File(testResources.toString() + "testFile").toURI();
+        testFileRelative = "./test.txt";
+        testResourcesRelative = "../test-classes/";
+        writeFileRelative = "./testFile.txt";
         fs = new SimpleVirtualFilesystem();
 
         Map<String, Object> config = new HashMap<>();
         config.put("maxNumberOfTempFiles", 10000);
         config.put("secondsBetweenTempCleanup", 60000);
+        config.put("defaultRootDirectory", testResources.getRawPath());
 
         Method m = fs.getClass().getDeclaredMethod("activate", Map.class);
         m.setAccessible(true);
@@ -93,10 +104,28 @@ public class TestDefaultVirtualFilesystem extends TestCase {
     }
 
     @Test
+    public void testReadFileRelative() {
+        try {
+            VirtualFile vf = fs.resolveVirtualFile(testFileRelative);
+            assertTrue(vf.exists());
+            assertTrue(vf.isFile());
+            assertFalse(vf.isFolder());
+            String content;
+            try (InputStream is = vf.readContent()) {
+                content = org.apache.commons.io.IOUtils.toString(is, Charset.defaultCharset());
+            }
+            assertEquals("This is a simple test text file.", content);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
     public void testWriteFile() {
         String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
         try {
-            VirtualFile file = fs.resolveVirtualFile(writeFile);
+            VirtualFile file = fs.resolveVirtualFile(writeFileAbsolute);
             assertFalse(file.exists());
             assertFalse(file.isFile());
             assertFalse(file.isFolder());
@@ -108,7 +137,7 @@ public class TestDefaultVirtualFilesystem extends TestCase {
                 os.write(testString.getBytes());
             }
             try (InputStream is = file.readContent()) {
-                final String content = org.apache.commons.io.IOUtils.toString(is, Charset.defaultCharset());
+                final String content = IOUtils.toString(is, Charset.defaultCharset());
                 assertEquals(testString, content);
             }
             assertTrue(file.delete());
@@ -120,9 +149,55 @@ public class TestDefaultVirtualFilesystem extends TestCase {
     }
 
     @Test
+    public void testWriteFileRelative() {
+        String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
+        try {
+            VirtualFile file = fs.resolveVirtualFile(writeFileRelative);
+            assertFalse(file.exists());
+            assertFalse(file.isFile());
+            assertFalse(file.isFolder());
+            file.create();
+            assertFalse(file.isFolder());
+            assertTrue(file.exists());
+            assertTrue(file.isFile());
+            try (OutputStream os = file.writeContent()) {
+                os.write(testString.getBytes());
+            }
+            try (InputStream is = file.readContent()) {
+                final String content = IOUtils.toString(is, Charset.defaultCharset());
+                assertEquals(testString, content);
+            }
+            assertTrue(file.delete());
+            assertFalse(file.delete());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        }
+    }
+
+
+    @Test
     public void testReadFolder() {
         try {
             final VirtualFile targetDir = fs.resolveVirtualFile(testResources);
+            assertTrue(targetDir.exists());
+            assertFalse(targetDir.isFile());
+            assertTrue(targetDir.isFolder());
+            assertNotNull(targetDir.getChildren());
+            assertFalse(targetDir.getChildren().isEmpty());
+            final String[] data = new File(testResources).list();
+            assertNotNull(data);
+            assertEquals(data.length, targetDir.getChildren().size());
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testReadFolderRelative() {
+        try {
+            final VirtualFile targetDir = fs.resolveVirtualFile(testResourcesRelative);
             assertTrue(targetDir.exists());
             assertFalse(targetDir.isFile());
             assertTrue(targetDir.isFolder());
