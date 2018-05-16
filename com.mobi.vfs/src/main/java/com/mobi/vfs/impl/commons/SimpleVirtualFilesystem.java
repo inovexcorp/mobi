@@ -148,9 +148,9 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
                     final String id = directory.getIdentifier();
                     final FileObject obj = this.fsManager.resolveFile(id.endsWith("/") ? id : id + "/" + UUID.randomUUID() + "-" + System.currentTimeMillis());
                     final SimpleTemporaryVirtualFile tvf = new SimpleTemporaryVirtualFile(obj, timeToLive, timeToLiveUnit);
-                    if(tempFiles.offer(tvf, createDuration, createTimeUnit)) {
+                    if (tempFiles.offer(tvf, createDuration, createTimeUnit)) {
                         return tvf;
-                    }else{
+                    } else{
                         throw new VirtualFilesystemException("Despite waiting, no more temporary files can be created, already have max of " + this.tempFiles.size());
                     }
                 } catch (FileSystemException | InterruptedException e) {
@@ -169,7 +169,11 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
         SimpleVirtualFilesystemConfig conf = Configurable.createConfigurable(SimpleVirtualFilesystemConfig.class, configuration);
         try {
             FileSystemManager manager = VFS.getManager();
-            ((DefaultFileSystemManager) manager).setBaseFile(new File(conf.defaultRootDirectory()));
+            File rootDirectory = new File(conf.defaultRootDirectory());
+            if (!rootDirectory.exists()) {
+                rootDirectory.mkdirs();
+            }
+            ((DefaultFileSystemManager) manager).setBaseFile(rootDirectory);
             this.fsManager = manager;
         } catch (FileSystemException e) {
             throw new VirtualFilesystemException("Issue initializing virtual file system.", e);
