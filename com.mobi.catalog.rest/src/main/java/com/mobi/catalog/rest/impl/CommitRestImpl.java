@@ -1,26 +1,16 @@
 package com.mobi.catalog.rest.impl;
 
-/*-
- * #%L
- * com.mobi.catalog.rest
- * $Id:$
- * $HeadURL:$
- * %%
- * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
- * %%
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * #L%
+/* -
+ * #%L com.mobi.catalog.rest $Id:$ $HeadURL:$ %% Copyright (C) 2016 - 2018 iNovex Information Systems, Inc. %% This
+ * program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>. #L%
  */
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitJson;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitResponse;
@@ -40,6 +30,7 @@ import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.LinksUtils;
 import net.sf.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +44,7 @@ import javax.ws.rs.core.UriInfo;
 
 @Component(immediate = true)
 public class CommitRestImpl implements CommitRest {
+
     private static final Logger logger = LoggerFactory.getLogger(CommitRestImpl.class);
 
     private BNodeService bNodeService;
@@ -109,13 +101,7 @@ public class CommitRestImpl implements CommitRest {
     public Response getCommitHistory(UriInfo uriInfo, String commitId, int offset, int limit) {
         long start = System.currentTimeMillis();
         try {
-            if (offset < 0) {
-                throw ErrorUtils.sendError("Offset cannot be negative.", Response.Status.BAD_REQUEST);
-            }
-
-            if (limit < 0 || (offset > 0 && limit == 0)) {
-                throw ErrorUtils.sendError("Limit must be positive.", Response.Status.BAD_REQUEST);
-            }
+            LinksUtils.validateParams(limit, offset);
 
             try {
                 final List<Commit> commits = catalogManager.getCommitChain(vf.createIRI(commitId));

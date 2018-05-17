@@ -1,41 +1,30 @@
 package com.mobi.catalog.rest.impl;
 
-/*-
- * #%L
- * com.mobi.catalog.rest
- * $Id:$
- * $HeadURL:$
- * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
- * %%
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * #L%
+/* -
+ * #%L com.mobi.catalog.rest $Id:$ $HeadURL:$ %% Copyright (C) 2016 iNovex Information Systems, Inc. %% This program is
+ * free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>. #L%
  */
-
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitJson;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitResponse;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.getDifferenceJsonString;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.createPaginatedResponse;
-import static com.mobi.rest.util.RestUtils.createPaginatedThingResponse;
 import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJson;
+import static com.mobi.rest.util.RestUtils.createPaginatedThingResponse;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToDeskolemizedModel;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 import static com.mobi.rest.util.RestUtils.thingToSkolemizedJsonObject;
+import static com.mobi.rest.util.RestUtils.validatePaginationParams;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -111,6 +100,7 @@ import javax.ws.rs.core.UriInfo;
 
 @Component(immediate = true)
 public class CatalogRestImpl implements CatalogRest {
+
     private static final Logger LOG = LoggerFactory.getLogger(CatalogRestImpl.class);
     private static final Set<String> SORT_RESOURCES;
 
@@ -236,8 +226,10 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getRecords(UriInfo uriInfo, String catalogId, String sort, String recordType, int offset, int limit,
                                boolean asc, String searchText) {
         try {
-            LinksUtils.validateParams(limit, offset);
+            validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
+
             PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder().offset(offset).ascending(asc);
+
             if (limit > 0) {
                 builder.limit(limit);
             }
@@ -250,8 +242,10 @@ public class CatalogRestImpl implements CatalogRest {
             if (searchText != null) {
                 builder.searchText(searchText);
             }
+
             PaginatedSearchResults<Record> records = catalogManager.findRecord(vf.createIRI(catalogId),
                     builder.build());
+
             return createPaginatedResponse(uriInfo, records.getPage(), records.getTotalSize(), limit, offset,
                     Record.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -356,9 +350,11 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getUnversionedDistributions(UriInfo uriInfo, String catalogId, String recordId, String sort,
                                                 int offset, int limit, boolean asc) {
         try {
+            validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Distribution> distributions = catalogManager.getUnversionedDistributions(vf.createIRI(catalogId),
                     vf.createIRI(recordId));
-            return createPaginatedThingResponse(uriInfo, distributions, vf.createIRI(sort), SORT_RESOURCES, offset, limit, asc, null,
+            return createPaginatedThingResponse(uriInfo, distributions, vf.createIRI(sort), SORT_RESOURCES, offset,
+                    limit, asc, null,
                     Distribution.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -390,7 +386,8 @@ public class CatalogRestImpl implements CatalogRest {
                     vf.createIRI(recordId), vf.createIRI(distributionId)).orElseThrow(() ->
                     ErrorUtils.sendError("Distribution " + distributionId + " could not be found",
                             Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedJsonObject(distribution, Distribution.TYPE, transformer, bNodeService)).build();
+            return Response.ok(thingToSkolemizedJsonObject(distribution, Distribution.TYPE, transformer, bNodeService))
+                    .build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -431,8 +428,10 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getVersions(UriInfo uriInfo, String catalogId, String recordId, String sort, int offset,
                                 int limit, boolean asc) {
         try {
+            validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Version> versions = catalogManager.getVersions(vf.createIRI(catalogId), vf.createIRI(recordId));
-            return createPaginatedThingResponse(uriInfo, versions, vf.createIRI(sort), SORT_RESOURCES, offset, limit, asc, null, Version.TYPE, transformer, bNodeService);
+            return createPaginatedThingResponse(uriInfo, versions, vf.createIRI(sort), SORT_RESOURCES, offset, limit,
+                    asc, null, Version.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -520,9 +519,11 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getVersionedDistributions(UriInfo uriInfo, String catalogId, String recordId, String versionId,
                                               String sort, int offset, int limit, boolean asc) {
         try {
+            validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Distribution> distributions = catalogManager.getVersionedDistributions(vf.createIRI(catalogId),
                     vf.createIRI(recordId), vf.createIRI(versionId));
-            return createPaginatedThingResponse(uriInfo, distributions, vf.createIRI(sort), SORT_RESOURCES, offset, limit, asc, null,
+            return createPaginatedThingResponse(uriInfo, distributions, vf.createIRI(sort), SORT_RESOURCES, offset,
+                    limit, asc, null,
                     Distribution.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -556,7 +557,8 @@ public class CatalogRestImpl implements CatalogRest {
                     vf.createIRI(recordId), vf.createIRI(versionId), vf.createIRI(distributionId)).orElseThrow(() ->
                     ErrorUtils.sendError("Distribution " + distributionId + " could not be found",
                             Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedJsonObject(distribution, Distribution.TYPE, transformer, bNodeService)).build();
+            return Response.ok(thingToSkolemizedJsonObject(distribution, Distribution.TYPE, transformer, bNodeService))
+                    .build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -600,7 +602,8 @@ public class CatalogRestImpl implements CatalogRest {
         try {
             Commit commit = catalogManager.getTaggedCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(versionId));
-            return createCommitResponse(commit, catalogManager.getCommitDifference(commit.getResource()), format, transformer, bNodeService);
+            return createCommitResponse(commit, catalogManager.getCommitDifference(commit.getResource()), format,
+                    transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -611,10 +614,10 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response getBranches(ContainerRequestContext context, UriInfo uriInfo, String catalogId, String
-            recordId,
+    public Response getBranches(ContainerRequestContext context, UriInfo uriInfo, String catalogId, String recordId,
                                 String sort, int offset, int limit, boolean asc, boolean applyUserFilter) {
         try {
+            validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Branch> branches = catalogManager.getBranches(vf.createIRI(catalogId), vf.createIRI(recordId));
             Function<Branch, Boolean> filterFunction = null;
             if (applyUserFilter) {
@@ -624,11 +627,12 @@ public class CatalogRestImpl implements CatalogRest {
                             .map(Value::stringValue)
                             .collect(Collectors.toSet());
                     return !types.contains(UserBranch.TYPE)
-                            || branch.getProperty(vf.createIRI(DCTERMS.PUBLISHER.stringValue())).get()
-                            .stringValue().equals(activeUser.getResource().stringValue());
+                           || branch.getProperty(vf.createIRI(DCTERMS.PUBLISHER.stringValue())).get()
+                                    .stringValue().equals(activeUser.getResource().stringValue());
                 };
             }
-            return createPaginatedThingResponse(uriInfo, branches, vf.createIRI(sort), SORT_RESOURCES, offset, limit, asc, filterFunction,
+            return createPaginatedThingResponse(uriInfo, branches, vf.createIRI(sort), SORT_RESOURCES, offset, limit,
+                    asc, filterFunction,
                     Branch.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -663,7 +667,8 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getMasterBranch(String catalogId, String recordId) {
         try {
             Branch masterBranch = catalogManager.getMasterBranch(vf.createIRI(catalogId), vf.createIRI(recordId));
-            return Response.ok(thingToSkolemizedJsonObject(masterBranch, Branch.TYPE, transformer, bNodeService)).build();
+            return Response.ok(thingToSkolemizedJsonObject(masterBranch, Branch.TYPE, transformer, bNodeService))
+                    .build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -714,12 +719,8 @@ public class CatalogRestImpl implements CatalogRest {
     @Override
     public Response getCommitChain(UriInfo uriInfo, String catalogId, String recordId, String branchId, String targetId,
                                    int offset, int limit) {
-        if (offset < 0) {
-            throw ErrorUtils.sendError("Offset cannot be negative.", Response.Status.BAD_REQUEST);
-        }
-        if (limit < 0 || (offset > 0 && limit == 0)) {
-            throw ErrorUtils.sendError("Limit must be positive.", Response.Status.BAD_REQUEST);
-        }
+        LinksUtils.validateParams(limit, offset);
+
         try {
             JSONArray commitChain = new JSONArray();
 
@@ -767,7 +768,8 @@ public class CatalogRestImpl implements CatalogRest {
         try {
             Commit headCommit = catalogManager.getHeadCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId));
-            return createCommitResponse(headCommit, catalogManager.getCommitDifference(headCommit.getResource()), format, transformer, bNodeService);
+            return createCommitResponse(headCommit, catalogManager.getCommitDifference(headCommit.getResource()), format,
+                    transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -785,7 +787,8 @@ public class CatalogRestImpl implements CatalogRest {
             Commit commit = catalogManager.getCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId), vf.createIRI(commitId)).orElseThrow(() ->
                     ErrorUtils.sendError("Commit " + commitId + " could not be found", Response.Status.NOT_FOUND));
-            return createCommitResponse(commit, catalogManager.getCommitDifference(commit.getResource()), format, transformer, bNodeService);
+            return createCommitResponse(commit, catalogManager.getCommitDifference(commit.getResource()), format,
+                    transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -805,7 +808,8 @@ public class CatalogRestImpl implements CatalogRest {
             Commit sourceHead = catalogManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(branchId));
             Commit targetHead = catalogManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(targetBranchId));
             Difference diff = catalogManager.getDifference(sourceHead.getResource(), targetHead.getResource());
-            return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService), MediaType.APPLICATION_JSON).build();
+            return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
+                    MediaType.APPLICATION_JSON).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -905,7 +909,7 @@ public class CatalogRestImpl implements CatalogRest {
             };
 
             return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
-                    + "." + getRDFFormatFileExtension(rdfFormat))
+                                                                     + "." + getRDFFormatFileExtension(rdfFormat))
                     .header("Content-Type", getRDFFormatMimeType(rdfFormat)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -993,7 +997,6 @@ public class CatalogRestImpl implements CatalogRest {
         }
     }
 
-
     /**
      * Creates a JSONObject for the Difference statements in the specified RDF format of the Commit with the specified
      * id. Key "additions" has value of the Commit's addition statements and key "deletions" has value of the Commit's
@@ -1001,8 +1004,9 @@ public class CatalogRestImpl implements CatalogRest {
      *
      * @param commitId The id of the Commit to retrieve the Difference of.
      * @param format   A string representing the RDF format to return the statements in.
+     *
      * @return A JSONObject with a key for the Commit's addition statements and a key for the Commit's deletion
-     *      statements.
+     *         statements.
      */
     private JSONObject getCommitDifferenceObject(Resource commitId, String format) {
         long start = System.currentTimeMillis();
@@ -1019,14 +1023,17 @@ public class CatalogRestImpl implements CatalogRest {
      *
      * @param difference The Difference to convert into a JSONObject.
      * @param format     A String representing the RDF format to return the statements in.
+     *
      * @return A JSONObject with a key for the Difference's addition statements and a key for the Difference's deletion
-     *      statements.
+     *         statements.
      */
     private JSONObject getDifferenceJson(Difference difference, String format) {
         long start = System.currentTimeMillis();
         try {
-            return new JSONObject().element("additions", modelToSkolemizedString(difference.getAdditions(), format, transformer, bNodeService))
-                    .element("deletions", modelToSkolemizedString(difference.getDeletions(), format, transformer, bNodeService));
+            return new JSONObject().element("additions", modelToSkolemizedString(difference.getAdditions(), format,
+                    transformer, bNodeService))
+                    .element("deletions", modelToSkolemizedString(difference.getDeletions(), format, transformer,
+                            bNodeService));
         } finally {
             LOG.trace("getDifferenceJson took {}ms", System.currentTimeMillis() - start);
         }
@@ -1040,6 +1047,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @param format      The optional format string for the new Distribution.
      * @param accessURL   The optional access URL for the new Distribution.
      * @param downloadURL The optional download URL for the Distribution.
+     *
      * @return The new Distribution if passed a title.
      */
     private Distribution createDistribution(String title, String description, String format, String accessURL,
@@ -1072,6 +1080,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @param thingId      The ID Resource to confirm.
      * @param factory      The OrmFactory to use when creating the new Thing.
      * @param <T>          A class that extends Thing.
+     *
      * @return The new Thing if the JSON-LD contains the correct ID Resource; throws a 400 otherwise.
      */
     private <T extends Thing> T getNewThing(String newThingJson, Resource thingId, OrmFactory<T> factory) {
@@ -1087,8 +1096,9 @@ public class CatalogRestImpl implements CatalogRest {
      *
      * @param conflict  The Conflict to turn into a JSONObject
      * @param rdfFormat A string representing the RDF format to return the statements in.
-     * @return A JSONObject with a key for the Conflict's original Model, a key for the Conflict's left Difference,
-     *      and a key for the Conflict's right Difference.
+     *
+     * @return A JSONObject with a key for the Conflict's original Model, a key for the Conflict's left Difference, and
+     *         a key for the Conflict's right Difference.
      */
     private JSONObject conflictToJson(Conflict conflict, String rdfFormat) {
         JSONObject object = new JSONObject();
@@ -1102,6 +1112,7 @@ public class CatalogRestImpl implements CatalogRest {
      * Converts a JSON-LD string into a Model.
      *
      * @param jsonld The string of JSON-LD to convert.
+     *
      * @return A Model containing the statements from the JSON-LD string.
      */
     private Model convertJsonld(String jsonld) {
