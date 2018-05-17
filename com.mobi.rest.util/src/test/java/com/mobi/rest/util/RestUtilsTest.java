@@ -526,15 +526,14 @@ public class RestUtilsTest {
 
     @Test
     public void validatePaginationParamsTest() {
-        RestUtils.validatePaginationParams(Optional.empty(), Collections.EMPTY_SET, 10, 0);
-        RestUtils.validatePaginationParams(Optional.of("urn:no-error"), Collections.singleton("urn:no-error"), 10, 0);
+        RestUtils.validatePaginationParams("urn:no-error", Collections.singleton("urn:no-error"), 10, 0);
         assert (true);
     }
 
     @Test
     public void validatePaginationParamsInvalidSortResourceTest() {
         try {
-            RestUtils.validatePaginationParams(Optional.of("urn:error"), Collections.singleton("urn:no-error"), 10, 0);
+            RestUtils.validatePaginationParams("urn:error", Collections.singleton("urn:no-error"), 10, 0);
         } catch (MobiWebException ex) {
             assertEquals(400, ex.getResponse().getStatus());
         }

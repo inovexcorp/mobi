@@ -91,15 +91,15 @@ public class CommitRestImpl implements CommitRest {
     public Response getCommit(String commitId, String format) {
         long start = System.currentTimeMillis();
         try {
-            Response response = Response.status(Response.Status.NOT_FOUND).build();
             Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(commitId));
 
             if (optCommit.isPresent()) {
-                response = createCommitResponse(optCommit.get(),
+                return createCommitResponse(optCommit.get(),
                         catalogManager.getCommitDifference(optCommit.get().getResource()),
                         format, transformer, bNodeService);
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
             }
-            return response;
         } finally {
             logger.trace("getCommit took {}ms", System.currentTimeMillis() - start);
         }
@@ -109,8 +109,6 @@ public class CommitRestImpl implements CommitRest {
     public Response getCommitHistory(UriInfo uriInfo, String commitId, int offset, int limit) {
         long start = System.currentTimeMillis();
         try {
-            Response response = Response.status(Response.Status.NOT_FOUND).build();
-
             if (offset < 0) {
                 throw ErrorUtils.sendError("Offset cannot be negative.", Response.Status.BAD_REQUEST);
             }
@@ -120,23 +118,24 @@ public class CommitRestImpl implements CommitRest {
             }
 
             try {
-                JSONArray commitChain = new JSONArray();
-
                 final List<Commit> commits = catalogManager.getCommitChain(vf.createIRI(commitId));
 
                 Stream<Commit> result = commits.stream();
+
                 if (limit > 0) {
                     result = result.skip(offset)
                             .limit(limit);
                 }
-                result.map(r -> createCommitJson(r, vf, engineManager)).forEach(commitChain::add);
-                response = createPaginatedResponseWithJson(uriInfo, commitChain, commits.size(), limit, offset);
+
+                JSONArray commitChain = result.map(r -> createCommitJson(r, vf, engineManager))
+                        .collect(JSONArray::new, JSONArray::add, JSONArray::add);
+
+                return createPaginatedResponseWithJson(uriInfo, commitChain, commits.size(), limit, offset);
             } catch (IllegalArgumentException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
             } catch (IllegalStateException | MobiException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
             }
-            return response;
         } finally {
             logger.trace("getCommitHistory took {}ms", System.currentTimeMillis() - start);
         }
@@ -146,19 +145,18 @@ public class CommitRestImpl implements CommitRest {
     public Response getDifference(String source, String target, String rdfFormat) {
         long start = System.currentTimeMillis();
         try {
-            Response response = Response.status(Response.Status.NOT_FOUND).build();
             checkStringParam(source, "Source commit is required");
             checkStringParam(target, "Target commit is required");
 
             try {
                 Difference diff = catalogManager.getDifference(vf.createIRI(source), vf.createIRI(target));
-                response = Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService), MediaType.APPLICATION_JSON).build();
+                return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
+                        MediaType.APPLICATION_JSON).build();
             } catch (IllegalArgumentException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
             } catch (IllegalStateException | MobiException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
             }
-            return response;
         } finally {
             logger.trace("getDifference took {}ms", System.currentTimeMillis() - start);
         }

@@ -53,7 +53,6 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -483,25 +482,28 @@ public class RestUtils {
      * Thing's Model.
      *
      * @param thing The Thing to convert into a JSONObject.
+     * @param type The type of the {@link Thing} passed in.
      * @param transformer The {@link SesameTransformer} to use.
-     * @param bNodeService The {@link BNodeService} to use.
      * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
      */
     public static JSONObject thingToJsonObject(Thing thing, String type, SesameTransformer transformer) {
-        return getTypedObjectFromJsonld(modelToString(thing.getModel(), getRDFFormat("jsonld"), transformer), type);
+        return getTypedObjectFromJsonld(modelToString(thing.getModel(), RDFFormat.JSONLD, transformer), type);
     }
 
     /**
-     * Converts a Thing into a JSONObject by the first object of a specific type in the JSON-LD serialization of the
-     * Thing's Model.
+     * Converts a Thing into a skolemized JSONObject by the first object of a specific type in the JSON-LD serialization
+     * of the Thing's Model.
      *
      * @param thing The Thing to convert into a JSONObject.
+     * @param type The type of the {@link Thing} passed in.
      * @param transformer The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
      */
-    public static JSONObject thingToSkolemizedJsonObject(Thing thing, String type, SesameTransformer transformer, BNodeService bNodeService) {
-        return getTypedObjectFromJsonld(modelToSkolemizedString(thing.getModel(), getRDFFormat("jsonld"), transformer, bNodeService), type);
+    public static JSONObject thingToSkolemizedJsonObject(Thing thing, String type, SesameTransformer transformer,
+            BNodeService bNodeService) {
+        return getTypedObjectFromJsonld(
+                modelToSkolemizedString(thing.getModel(), RDFFormat.JSONLD, transformer, bNodeService), type);
     }
 
     /**
@@ -525,7 +527,8 @@ public class RestUtils {
     public static <T extends Thing> Response createPaginatedThingResponse(UriInfo uriInfo, Set<T> things,
             IRI sortIRI, Set<String> sortResources, int offset, int limit, boolean asc,
             Function<T, Boolean> filterFunction, String type, SesameTransformer transformer) {
-        return createPaginatedThingResponse(uriInfo, things, sortIRI, sortResources, offset, limit, asc, filterFunction, type, transformer, null);
+        return createPaginatedThingResponse(uriInfo, things, sortIRI, sortResources, offset, limit, asc, filterFunction,
+                type, transformer, null);
     }
 
     /**
@@ -555,6 +558,7 @@ public class RestUtils {
             if (offset > things.size()) {
                 throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
             }
+            validatePaginationParams(sortIRI.stringValue(), sortResources, limit, offset);
 
             Comparator<T> comparator = Comparator.comparing(dist -> dist.getProperty(sortIRI).get().stringValue());
 
@@ -657,7 +661,7 @@ public class RestUtils {
             int offset) {
         long start = System.currentTimeMillis();
         try {
-            validatePaginationParams(Optional.empty(), Collections.EMPTY_SET, limit, offset);
+            LinksUtils.validateParams(limit, offset);
             Links links = LinksUtils.buildLinks(uriInfo, items.size(), totalSize, limit, offset);
             Response.ResponseBuilder response = Response.ok(items).header("X-Total-Count", totalSize);
             if (links.getNext() != null) {
@@ -681,12 +685,10 @@ public class RestUtils {
      * @param offset The offset for the paginated response.
      * @param limit The limit of the paginated response.
      */
-    public static void validatePaginationParams(Optional<String> sortIRI, Set<String> sortResources, int limit, int offset) {
-        sortIRI.ifPresent(sortIri -> {
-            if (!sortResources.contains(sortIri)) {
-                throw ErrorUtils.sendError("Invalid sort property IRI", Response.Status.BAD_REQUEST);
-            }
-        });
+    public static void validatePaginationParams(String sortIRI, Set<String> sortResources, int limit, int offset) {
+        if (!sortResources.contains(sortIRI)) {
+            throw ErrorUtils.sendError("Invalid sort property IRI", Response.Status.BAD_REQUEST);
+        }
         LinksUtils.validateParams(limit, offset);
     }
 }
