@@ -35,7 +35,7 @@ import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToDeskolemizedModel;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
-import static com.mobi.rest.util.RestUtils.validatePaginationParams;
+import static com.mobi.rest.util.RestUtils.thingToSkolemizedJsonObject;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -108,7 +108,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import static com.mobi.rest.util.RestUtils.thingToSkolemizedJsonObject;
 
 @Component(immediate = true)
 public class CatalogRestImpl implements CatalogRest {
@@ -220,9 +219,11 @@ public class CatalogRestImpl implements CatalogRest {
         try {
             Resource catalogIri = vf.createIRI(catalogId);
             if (catalogIri.equals(catalogManager.getLocalCatalogIRI())) {
-                return Response.ok(thingToSkolemizedJsonObject(catalogManager.getLocalCatalog(), Catalog.TYPE, transformer, bNodeService)).build();
+                return Response.ok(thingToSkolemizedJsonObject(catalogManager.getLocalCatalog(),
+                        Catalog.TYPE, transformer, bNodeService)).build();
             } else if (catalogIri.equals(catalogManager.getDistributedCatalogIRI())) {
-                return Response.ok(thingToSkolemizedJsonObject(catalogManager.getDistributedCatalog(), Catalog.TYPE, transformer, bNodeService)).build();
+                return Response.ok(thingToSkolemizedJsonObject(catalogManager.getDistributedCatalog(),
+                        Catalog.TYPE, transformer, bNodeService)).build();
             } else {
                 throw ErrorUtils.sendError("Catalog " + catalogId + " does not exist", Response.Status.NOT_FOUND);
             }
@@ -355,7 +356,6 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getUnversionedDistributions(UriInfo uriInfo, String catalogId, String recordId, String sort,
                                                 int offset, int limit, boolean asc) {
         try {
-            validatePaginationParams(Optional.of(sort), SORT_RESOURCES, limit, offset);
             Set<Distribution> distributions = catalogManager.getUnversionedDistributions(vf.createIRI(catalogId),
                     vf.createIRI(recordId));
             return createPaginatedThingResponse(uriInfo, distributions, vf.createIRI(sort), SORT_RESOURCES, offset, limit, asc, null,
@@ -431,7 +431,6 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getVersions(UriInfo uriInfo, String catalogId, String recordId, String sort, int offset,
                                 int limit, boolean asc) {
         try {
-            validatePaginationParams(Optional.of(sort), SORT_RESOURCES, limit, offset);
             Set<Version> versions = catalogManager.getVersions(vf.createIRI(catalogId), vf.createIRI(recordId));
             return createPaginatedThingResponse(uriInfo, versions, vf.createIRI(sort), SORT_RESOURCES, offset, limit, asc, null, Version.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -521,7 +520,6 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getVersionedDistributions(UriInfo uriInfo, String catalogId, String recordId, String versionId,
                                               String sort, int offset, int limit, boolean asc) {
         try {
-            validatePaginationParams(Optional.of(sort), SORT_RESOURCES, limit, offset);
             Set<Distribution> distributions = catalogManager.getVersionedDistributions(vf.createIRI(catalogId),
                     vf.createIRI(recordId), vf.createIRI(versionId));
             return createPaginatedThingResponse(uriInfo, distributions, vf.createIRI(sort), SORT_RESOURCES, offset, limit, asc, null,
@@ -900,10 +898,10 @@ public class CatalogRestImpl implements CatalogRest {
                 resource = temp;
             }
             StreamingOutput stream = os -> {
-                Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-                writer.write(modelToSkolemizedString(resource, rdfFormat, transformer, bNodeService));
-                writer.flush();
-                writer.close();
+                try (Writer writer = new BufferedWriter(new OutputStreamWriter(os))) {
+                    writer.write(modelToSkolemizedString(resource, rdfFormat, transformer, bNodeService));
+                    writer.flush();
+                }
             };
 
             return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName

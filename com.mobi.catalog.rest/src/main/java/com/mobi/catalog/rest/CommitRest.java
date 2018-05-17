@@ -43,12 +43,12 @@ import javax.ws.rs.core.UriInfo;
 public interface CommitRest {
 
     /**
-     * Gets the Commit identified by the provided ID.
+     * Gets the {@link Commit} identified by the provided ID.
      *
-     * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
-     with "_:".
-     * @param format the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @return A Response with the Commit identified by the provided IDs.
+     * @param commitId {@link String} value of the {@link Commit} ID. NOTE: Assumes an {@link IRI} unless {@link String}
+     * starts with "{@code _:}".
+     * @param format {@link String} representation of the desired {@link RDFFormat}. Default value is {@code "jsonld"}.
+     * @return A {@link Response} with the {@link Commit} identified by the provided ID.
      */
     @GET
     @Path("{commitId}")
@@ -59,17 +59,18 @@ public interface CommitRest {
             @DefaultValue("jsonld") @QueryParam("format") String format);
 
     /**
-     * Gets a List of Commits ordered by date descending within the repository which represents the Commit chain from
-     * the specified commit. The Commit identified by the provided commitId is the first item in the List and it was
-     * informed by the previous Commit in the List. If a limit is passed which is greater than zero, will paginate the
-     * results.
+     * Gets a {@link List} of {@link Commit}s, in descending order by date, within the repository which represents the
+     * {@link Commit} history starting from the specified {@link Commit}. The {@link Commit} identified by the provided
+     * {@code commitId} is the first item in the {@link List} and it was informed by the previous {@link Commit} in the
+     * {@link List}. If a limit is passed which is greater than zero, will paginate the results.
      *
-     * @param uriInfo The UriInfo of the request.
-     * @param commitId The String representing the Commit ID. NOTE: Assumes ID represents an IRI unless String begins
-     * with "_:".
+     * @param uriInfo The {@link UriInfo} of the request.
+     * @param commitId {@link String} value of the {@link Commit} ID. NOTE: Assumes an {@link IRI} unless {@link String}
+     * starts with "{@code _:}".
      * @param offset An optional offset for the results.
      * @param limit An optional limit for the results.
-     * @return A list of Commits starting with the provided commitId which represents the Commit chain.
+     * @return A {@link Response} containing a {@link List} of {@link Commit}s starting with the provided
+     * {@code commitId} which represents the {@link Commit} history.
      */
     @GET
     @Path("{commitId}/history")
@@ -83,13 +84,17 @@ public interface CommitRest {
             @QueryParam("limit") int limit);
 
     /**
-     * Retrieves the difference between the commit histories specified by the provided IDs.
+     * Gets the {@link Difference} between the two specified {@link Commit}s.
      *
-     * @param source The string representing the source Commit ID.
-     * @param target The string representing the target Commit ID (optional).
-     * @param rdfFormat the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @return A list of Commits starting with the provided source Commit ID which represents the Commit chain that
-     * terminates at the target Commit ID.
+     * @param source {@link String} value of the source {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
+     * {@link String} starts with "{@code _:}".
+     * @param target {@link String} value of the target {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
+     * {@link String} starts with "{@code _:}".
+     * @param rdfFormat {@link String} representation of the desired {@link RDFFormat}. Default value is
+     * {@code "jsonld"}.
+     *
+     * @return A {@link Response} containing the {@link Difference} between the {@code source} and {@code target}
+     * {@link Commit}s.
      */
     @GET
     @Path("{source}/difference")
