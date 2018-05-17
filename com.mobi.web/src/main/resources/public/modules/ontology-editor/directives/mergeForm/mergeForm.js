@@ -27,9 +27,9 @@
         .module('mergeForm', [])
         .directive('mergeForm', mergeForm);
 
-        mergeForm.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService'];
+        mergeForm.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', 'prefixes'];
 
-        function mergeForm(utilService, ontologyStateService, catalogManagerService) {
+        function mergeForm(utilService, ontologyStateService, catalogManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -47,6 +47,7 @@
                     var catalogId = _.get(cm.localCatalog, '@id', '');
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
+                    dvm.prefixes = prefixes;
                     dvm.tabs = {
                         changes: true,
                         commits: false

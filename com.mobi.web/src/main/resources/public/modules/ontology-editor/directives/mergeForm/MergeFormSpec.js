@@ -1,4 +1,5 @@
 /*-
+/*-
  * #%L
  * com.mobi.web
  * $Id:$
@@ -27,6 +28,7 @@ describe('Merge Form directive', function() {
         module('templates');
         module('mergeForm');
         mockUtil();
+        mockPrefixes();
         mockOntologyState();
         mockCatalogManager();
         injectTrustedFilter();
