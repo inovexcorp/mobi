@@ -1,15 +1,26 @@
 package com.mobi.rest.util;
 
-/* -
- * #%L com.mobi.rest.util $Id:$ $HeadURL:$ %% Copyright (C) 2016 iNovex Information Systems, Inc. %% This program is
- * free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+/*-
+ * #%L
+ * com.mobi.rest.util
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License along with this program. If not, see
- * <http://www.gnu.org/licenses/>. #L%
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
  */
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -518,34 +529,6 @@ public class RestUtils {
                                                          BNodeService bNodeService) {
         return getTypedObjectFromJsonld(
                 modelToSkolemizedString(thing.getModel(), RDFFormat.JSONLD, transformer, bNodeService), type);
-    }
-
-    /**
-     * Creates a {@link Response} for a page of a sorted limited offset {@link Set} of {@link Thing}s based on the
-     * return type of the passed function using the passed full {@link Set} of {@link Resource}s.
-     *
-     * @param <T>            A class that extends {@link Thing}.
-     * @param uriInfo        The URI information of the request.
-     * @param things         The {@link Set} of {@link Thing}s.
-     * @param sortIRI        The property {@link IRI} to sort the {@link Set} of {@link Thing}s by.
-     * @param sortResources  The {@link Set} of allowed values for the sortIRI.
-     * @param offset         The number of {@link Thing}s to skip.
-     * @param limit          The size of the page of {@link Thing}s to the return.
-     * @param asc            Whether the sorting should be ascending or descending.
-     * @param filterFunction A {@link Function} to filter the {@link Set} of {@link Thing}s.
-     * @param type           The type of the {@link Thing} to be returned
-     * @param transformer    The {@link SesameTransformer} to use.
-     *
-     * @return A {@link Response} with a page of {@link Thing}s that has been filtered, sorted, and limited and headers
-     *         for the total size and links to the next and prev pages if present.
-     */
-    public static <T extends Thing> Response createPaginatedThingResponse(UriInfo uriInfo, Set<T> things,
-                                                                          IRI sortIRI, Set<String> sortResources,
-                                                                          int offset, int limit, boolean asc,
-                                                                          Function<T, Boolean> filterFunction,
-                                                                          String type, SesameTransformer transformer) {
-        return createPaginatedThingResponse(uriInfo, things, sortIRI, sortResources, offset, limit, asc, filterFunction,
-                type, transformer, null);
     }
 
     /**
