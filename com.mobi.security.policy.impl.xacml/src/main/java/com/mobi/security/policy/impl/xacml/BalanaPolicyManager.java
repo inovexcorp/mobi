@@ -57,6 +57,8 @@ import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.api.VirtualFilesystemException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,8 +66,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -149,7 +154,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     }
 
     @Activate
-    protected void start(Map<String, Object> props) {
+    protected void start(BundleContext context, Map<String, Object> props) {
         typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
         policyFileTypeIRI = vf.createIRI(PolicyFile.TYPE);
         PolicyManagerConfig config = Configurable.createConfigurable(PolicyManagerConfig.class, props);
@@ -172,12 +177,12 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             throw new MobiException(e);
         }
 
-        loadPolicies();
+        loadPolicies(context);
     }
 
     @Modified
-    protected void modified(Map<String, Object> props) {
-        start(props);
+    protected void modified(BundleContext context, Map<String, Object> props) {
+        start(context, props);
     }
 
     @Override
@@ -374,7 +379,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         }
     }
 
-    private void loadPolicies() {
+    private void loadPolicies(BundleContext context) {
         LOG.debug("Loading policies");
         Optional<Cache<String, Policy>> cache = policyCache.getPolicyCache();
         cache.ifPresent(Cache::clear);
@@ -388,7 +393,27 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 fileNames.add(getFileName(policyFile));
             });
             VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
-            for (VirtualFile file : directory.getChildren()) {
+            Collection<VirtualFile> children = directory.getChildren();
+            Set<String> existingNames = children.stream()
+                    .map(file -> FilenameUtils.getName(file.getIdentifier()))
+                    .collect(Collectors.toSet());
+
+            // Initialize policies from within the bundle if they don't already exist
+            Bundle bundle = context.getBundle();
+            Enumeration<URL> urls = bundle.findEntries("/policies", "*.xml", false);
+            while (urls.hasMoreElements()) {
+                URL url = urls.nextElement();
+                String fileName =  FilenameUtils.getName(url.getPath());
+                if (!existingNames.contains(fileName)) {
+                    VirtualFile file = vfs.resolveVirtualFile(fileLocation + "/" + fileName);
+                    file.create();
+                    try (OutputStream out = file.writeContent()) {
+                        IOUtils.copy(url.openConnection().getInputStream(), out);
+                    }
+                }
+            }
+
+            for (VirtualFile file : children) {
                 String fileName = FilenameUtils.getName(file.getIdentifier());
                 if (!fileNames.contains(fileName) && fileName.endsWith(".xml")) {
                     LOG.debug("Discovered policy file " + fileName + " in directory that is not in the repository");
@@ -396,7 +421,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                     addPolicyFile(file, fileName, balanaPolicy);
                 }
             }
-        } catch (VirtualFilesystemException e) {
+        } catch (IOException e) {
             throw new MobiException("Error initializing policy files due to: ", e);
         }
     }
