@@ -32,6 +32,7 @@ import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.vfs.api.TemporaryVirtualFile;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
@@ -86,6 +87,9 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
 
     @Override
     public VirtualFile resolveVirtualFile(String uri) throws VirtualFilesystemException {
+        if (StringUtils.isEmpty(uri)) {
+            throw new VirtualFilesystemException("Cannot resolve file with empty name.");
+        }
         try {
             return new SimpleVirtualFile(this.fsManager.resolveFile(uri));
         } catch (FileSystemException e) {

@@ -117,6 +117,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         Map<String, Object> config = new HashMap<>();
         config.put("maxNumberOfTempFiles", 10000);
         config.put("secondsBetweenTempCleanup", 60000);
+        config.put("defaultRootDirectory", fileLocation);
         Method m = vfs.getClass().getDeclaredMethod("activate", Map.class);
         m.setAccessible(true);
         m.invoke(vfs, config);
