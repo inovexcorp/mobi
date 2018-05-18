@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -63,12 +64,15 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Answer;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,6 +92,12 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
 
     @Mock
     private Cache<String, Policy> cache;
+
+    @Mock
+    private BundleContext context;
+
+    @Mock
+    private Bundle bundle;
 
     private static String fileLocation;
     static {
@@ -156,6 +166,9 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
             return policy != null;
         });
 
+        when(context.getBundle()).thenReturn(bundle);
+        when(bundle.findEntries(anyString(), anyString(), anyBoolean())).thenReturn(Collections.enumeration(Collections.emptyList()));
+
         // Setup configuration props
         props = new HashMap<>();
         props.put("policyFileLocation", fileLocation);
@@ -182,7 +195,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         initializeRepo();
 
-        manager.start(props);
+        manager.start(context, props);
         verify(policyCache, atLeastOnce()).getPolicyCache();
         verify(cache).clear();
         assertTrue(entries.containsKey(policyId.stringValue()));
@@ -197,7 +210,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
         initializeRepo();
 
-        manager.start(props);
+        manager.start(context, props);
         verify(policyCache, atLeastOnce()).getPolicyCache();
         verify(cache, times(0)).clear();
         assertFalse(entries.containsKey(policyId.stringValue()));
@@ -208,7 +221,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         props.put("policyFileLocation", "");
 
-        manager.start(props);
+        manager.start(context, props);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -216,7 +229,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         setUpMissingFileTest();
 
-        manager.start(props);
+        manager.start(context, props);
     }
 
     @Test
@@ -230,7 +243,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     @Test
     public void addPolicyWithCacheTest() throws Exception {
         // Setup:
-        manager.start(props);
+        manager.start(context, props);
 
         Resource newPolicyId = manager.addPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -266,7 +279,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void addPolicyWithoutCacheTest() throws Exception {
         // Setup:
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
-        manager.start(props);
+        manager.start(context, props);
 
         Resource newPolicyId = manager.addPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -299,7 +312,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void getPoliciesWithCacheTest() throws Exception {
         // Setup:
         initializeRepo();
-        manager.start(props);
+        manager.start(context, props);
 
         List<XACMLPolicy> policies = manager.getPolicies(new PolicyQueryParams.Builder().build());
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -316,7 +329,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         initializeRepo();
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
-        manager.start(props);
+        manager.start(context, props);
 
         List<XACMLPolicy> policies = manager.getPolicies(new PolicyQueryParams.Builder().build());
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -332,7 +345,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void getPolicyWithCacheTest() throws Exception {
         // Setup:
         initializeRepo();
-        manager.start(props);
+        manager.start(context, props);
 
         Optional<XACMLPolicy> result = manager.getPolicy(policyId);
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -347,7 +360,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     @Test
     public void getPolicyThatDoesNotExistWithCacheTest() {
         // Setup:
-        manager.start(props);
+        manager.start(context, props);
 
         Optional<XACMLPolicy> result = manager.getPolicy(missingPolicyId);
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -359,7 +372,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     @Test(expected = IllegalStateException.class)
     public void getMissingPolicyWithCacheTest() {
         // Setup:
-        manager.start(props);
+        manager.start(context, props);
         setUpMissingFileTest();
 
         manager.getPolicy(missingPolicyFile.getResource());
@@ -370,7 +383,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
         initializeRepo();
-        manager.start(props);
+        manager.start(context, props);
 
         Optional<XACMLPolicy> result = manager.getPolicy(policyId);
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -386,7 +399,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void getPolicyThatDoesNotExistWithoutCacheTest() {
         // Setup:
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
-        manager.start(props);
+        manager.start(context, props);
 
         Optional<XACMLPolicy> result = manager.getPolicy(missingPolicyId);
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -399,7 +412,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void getMissingPolicyWithoutCacheTest() {
         // Setup:
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
-        manager.start(props);
+        manager.start(context, props);
         setUpMissingFileTest();
 
         manager.getPolicy(missingPolicyFile.getResource());
@@ -410,7 +423,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         BalanaPolicy policy = new BalanaPolicy(newPolicyType, VALUE_FACTORY);
         initializeRepo();
-        manager.start(props);
+        manager.start(context, props);
 
         manager.updatePolicy(policy);
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -440,7 +453,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         BalanaPolicy policy = new BalanaPolicy(newPolicyType, VALUE_FACTORY);
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
         initializeRepo();
-        manager.start(props);
+        manager.start(context, props);
 
         manager.updatePolicy(policy);
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -465,7 +478,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void updatePolicyThatDoesNotExistTest() {
         // Setup:
         BalanaPolicy policy = new BalanaPolicy(missingPolicyType, VALUE_FACTORY);
-        manager.start(props);
+        manager.start(context, props);
 
         manager.updatePolicy(policy);
     }
@@ -474,7 +487,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void updateMissingPolicyTest() {
         // Setup:
         BalanaPolicy policy = new BalanaPolicy(missingPolicyType, VALUE_FACTORY);
-        manager.start(props);
+        manager.start(context, props);
         setUpMissingFileTest();
 
         manager.updatePolicy(policy);
@@ -484,7 +497,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void deletePolicyWithCacheTest() throws Exception {
         // Setup:
         initializeRepo();
-        manager.start(props);
+        manager.start(context, props);
 
         manager.deletePolicy(policyId);
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -502,7 +515,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
         initializeRepo();
-        manager.start(props);
+        manager.start(context, props);
 
         manager.deletePolicy(policyId);
         verify(policyCache, atLeastOnce()).getPolicyCache();
@@ -518,7 +531,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void deletePolicyThatDoesNotExistTest() {
         // Setup:
         when(policyCache.getPolicyCache()).thenReturn(Optional.empty());
-        manager.start(props);
+        manager.start(context, props);
 
         manager.deletePolicy(missingPolicyId);
     }
@@ -526,7 +539,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     @Test
     public void deleteMissingPolicyTest() {
         // Setup:
-        manager.start(props);
+        manager.start(context, props);
         setUpMissingFileTest();
 
         manager.deletePolicy(missingPolicyId);

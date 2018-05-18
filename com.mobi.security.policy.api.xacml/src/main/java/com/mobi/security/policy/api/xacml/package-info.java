@@ -1,4 +1,4 @@
-@Version("1.1.0.${build}")
+@Version("1.1.1.${build}")
 
 package com.mobi.security.policy.api.xacml;
 
