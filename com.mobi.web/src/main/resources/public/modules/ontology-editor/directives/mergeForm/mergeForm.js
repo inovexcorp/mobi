@@ -54,21 +54,32 @@
                     };
                     dvm.branches = _.reject(dvm.os.listItem.branches, {'@id': dvm.branch['@id']});
                     dvm.branchTitle = dvm.util.getDctermsValue(dvm.branch, 'title');
+                    dvm.targetHeadCommitId = undefined;
 
                     dvm.changeTarget = function() {
                         if (dvm.target) {
-                            cm.getBranchDifference(dvm.branch['@id'], dvm.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId)
+                            cm.getBranchHeadCommit(dvm.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId)
+                                .then(target => { 
+                                     return target.commit['@id'];
+                                }, errorMessage => {
+                                    dvm.util.createErrorToast(errorMessage);
+                                    dvm.os.listItem.merge.difference = undefined;
+                                }).then(targetId => {
+                                    dvm.targetHeadCommitId = targetId
+                                    cm.getDifference(dvm.os.listItem.ontologyRecord.commitId, targetId)
                                 .then(diff => {
                                     dvm.os.listItem.merge.difference = diff;
                                 }, errorMessage => {
                                     dvm.util.createErrorToast(errorMessage);
                                     dvm.os.listItem.merge.difference = undefined;
                                 });
+                                });
+                            
                         } else {
                             dvm.os.listItem.merge.difference = undefined;
                         }
                     }
-
+                    
                     dvm.changeTarget();
                 }]
             }

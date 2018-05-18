@@ -34,13 +34,14 @@ describe('Merge Form directive', function() {
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _utilService_, _catalogManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _utilService_, _catalogManagerService_, _prefixes_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             util = _utilService_;
             catalogManagerSvc = _catalogManagerService_;
+            prefixes = _prefixes_;
         });
 
         scope.branch = {'@id': 'branchId'};
@@ -139,28 +140,32 @@ describe('Merge Form directive', function() {
             });
             it('unless the target is empty', function() {
                 this.controller.changeTarget();
-                expect(catalogManagerSvc.getBranchDifference).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.merge.difference).toBeUndefined();
             });
             describe('when target is not empty', function() {
                 beforeEach(function() {
-                    this.targetId = 'target';
-                    this.controller.target = {'@id': this.targetId};
+                    this.controller.target = {'@id': 'target'};
                 });
                 it('unless an error occurs', function() {
-                    catalogManagerSvc.getBranchDifference.and.returnValue($q.reject('Error'));
+                    catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({'commit': {'@id': 'targetHead'}}));
+                    catalogManagerSvc.getDifference.and.returnValue($q.reject('Error'));
                     this.controller.changeTarget();
                     scope.$apply();
-                    expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith(scope.branch['@id'], this.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, 'catalogId');
+                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalled();
+                    expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
                     expect(util.createErrorToast).toHaveBeenCalledWith('Error');
                     expect(ontologyStateSvc.listItem.merge.difference).toBeUndefined();
                 });
                 it('successfully', function() {
                     var difference = {additions: [], deletions: []};
-                    catalogManagerSvc.getBranchDifference.and.returnValue($q.when(difference));
+                    catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({'commit': {'@id': 'targetHead'}}));
+                    catalogManagerSvc.getDifference.and.returnValue($q.when(difference));
                     this.controller.changeTarget();
                     scope.$apply();
-                    expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith(scope.branch['@id'], this.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, 'catalogId');
+                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalled();
+                    expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
                     expect(util.createErrorToast).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.listItem.merge.difference).toEqual(difference);
                 });

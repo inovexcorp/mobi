@@ -75,6 +75,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -86,6 +87,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
 import javax.annotation.Nullable;
 
 @Component(immediate = true)
@@ -823,6 +825,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                     + targetCommitId);
         }
         sourceCommits.removeAll(commonCommits);
+        Collections.reverse(sourceCommits);
 
         return sourceCommits;
     }

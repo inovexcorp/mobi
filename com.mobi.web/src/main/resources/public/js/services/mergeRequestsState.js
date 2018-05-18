@@ -302,7 +302,7 @@
                                 request.targetBranch = branch;
                                 request.targetCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
                                 request.targetTitle = util.getDctermsValue(branch, 'title');
-                                return cm.getBranchDifference(sourceIri, targetIri, request.recordIri, catalogId);
+                                return cm.getDifference(util.getPropertyId(request.sourceBranch, prefixes.catalog + 'head'), util.getPropertyId(request.targetBranch, prefixes.catalog + 'head'));
                             }, $q.reject)
                             .then(diff => {
                                 request.difference = diff;

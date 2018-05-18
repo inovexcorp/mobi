@@ -23,9 +23,9 @@
 <div class="merge-form">
     <div class="form-container">
         <form name="dvm.form" novalidate autocomplete="off">
-            <span class="merge-message">Merge <strong>Branch: {{dvm.util.getDctermsValue(dvm.branch, 'title')}}</strong> into</span>
+            <span class="merge-message">Merge <strong>Branch: {{dvm.branchTitle}}</strong> into</span>
             <branch-select ng-model="dvm.target" required="true" class="select-branch" is-disabled-when="dvm.os.listItem.userBranch" change-event="dvm.changeTarget()" branches="dvm.branches"></branch-select>
-            <checkbox ng-if="dvm.util.getDctermsValue(dvm.branch, 'title') !== 'MASTER' && !dvm.os.listItem.userBranch" ng-model="dvm.removeBranch" display-text="'Remove Branch: ' + dvm.util.getDctermsValue(dvm.branch, 'title') + ' after merge.'"></checkbox>
+            <checkbox ng-if="dvm.branchTitle !== 'MASTER' && !dvm.os.listItem.userBranch" ng-model="dvm.removeBranch" display-text="'Remove Branch: ' + dvm.branchTitle + ' after merge.'"></checkbox>
         </form>
     </div>
     <tabset class="in-overlay" ng-if="dvm.os.listItem.merge.difference">
@@ -34,7 +34,7 @@
             <info-message ng-if="!dvm.os.listItem.merge.difference.additions.length && !dvm.os.listItem.merge.difference.deletions.length">No changes to display</info-message>
         </tab>
         <tab heading="'Commits'" active="dvm.tabs.commits">
-            <commit-history-table branch-title="dvm.util.getDctermsValue(dvm.branch, 'title')" commit-id="dvm.util.getPropertyId(dvm.branch, dvm.prefixes.catalog + 'head')" target-id="dvm.util.getPropertyId(dvm.target, dvm.prefixes.catalog + 'head')"></commit-history-table>
+            <commit-history-table branch-title="dvm.branchTitle" commit-id="dvm.os.listItem.ontologyRecord.commitId" target-id="dvm.targetHeadCommitId"></commit-history-table>
         </tab>
     </tabset>
 </div>

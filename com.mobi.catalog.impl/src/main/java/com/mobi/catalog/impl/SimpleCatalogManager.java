@@ -1114,7 +1114,7 @@ public class SimpleCatalogManager implements CatalogManager {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
             utils.validateResource(targetId, commitFactory.getTypeIRI(), conn);
             return utils.getDifferenceChain(commitId, targetId, conn).stream()
-                    .map(res -> utils.getExpectedObject(res, commitFactory, conn))
+                    .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
                     .collect(Collectors.toList());
         }
     }
