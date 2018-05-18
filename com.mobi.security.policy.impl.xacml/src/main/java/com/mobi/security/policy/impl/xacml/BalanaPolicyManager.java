@@ -69,7 +69,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -393,8 +392,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 fileNames.add(getFileName(policyFile));
             });
             VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
-            Collection<VirtualFile> children = directory.getChildren();
-            Set<String> existingNames = children.stream()
+            Set<String> existingNames = directory.getChildren().stream()
                     .map(file -> FilenameUtils.getName(file.getIdentifier()))
                     .collect(Collectors.toSet());
 
@@ -413,7 +411,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 }
             }
 
-            for (VirtualFile file : children) {
+            for (VirtualFile file : directory.getChildren()) {
                 String fileName = FilenameUtils.getName(file.getIdentifier());
                 if (!fileNames.contains(fileName) && fileName.endsWith(".xml")) {
                     LOG.debug("Discovered policy file " + fileName + " in directory that is not in the repository");
