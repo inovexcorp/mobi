@@ -68,14 +68,21 @@
             return {
                 restrict: 'A',
                 require: 'ngModel',
+                scope: {
+                    password: "=samePassword"
+                },
                 link: function(scope, el, attrs, ctrl) {
                     ctrl.$validators.samePassword = function(modelValue, viewValue) {
                         var value = modelValue || viewValue;
                         if (ctrl.$isEmpty(value)) {
                             return true;
                         }
-                        return value === scope.$eval(attrs.samePassword);
-                    }
+                        return modelValue === scope.password;
+                    };
+
+                    scope.$watch("password", function() {
+                        ctrl.$validate();
+                    });
                 }
             }
         }
