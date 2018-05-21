@@ -32,17 +32,17 @@ import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.vfs.api.TemporaryVirtualFile;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.VFS;
-import com.mobi.vfs.api.TemporaryVirtualFile;
-import com.mobi.vfs.api.VirtualFile;
-import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.api.VirtualFilesystemException;
+import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.URI;
 import java.time.temporal.TemporalUnit;
 import java.util.Map;
@@ -87,6 +87,9 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
 
     @Override
     public VirtualFile resolveVirtualFile(String uri) throws VirtualFilesystemException {
+        if (StringUtils.isEmpty(uri)) {
+            throw new VirtualFilesystemException("Cannot resolve file with empty name.");
+        }
         try {
             return new SimpleVirtualFile(this.fsManager.resolveFile(uri));
         } catch (FileSystemException e) {
@@ -142,9 +145,9 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
                     final String id = directory.getIdentifier();
                     final FileObject obj = this.fsManager.resolveFile(id.endsWith("/") ? id : id + "/" + UUID.randomUUID() + "-" + System.currentTimeMillis());
                     final SimpleTemporaryVirtualFile tvf = new SimpleTemporaryVirtualFile(obj, timeToLive, timeToLiveUnit);
-                    if(tempFiles.offer(tvf, createDuration, createTimeUnit)) {
+                    if (tempFiles.offer(tvf, createDuration, createTimeUnit)) {
                         return tvf;
-                    }else{
+                    } else{
                         throw new VirtualFilesystemException("Despite waiting, no more temporary files can be created, already have max of " + this.tempFiles.size());
                     }
                 } catch (FileSystemException | InterruptedException e) {
@@ -158,15 +161,38 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
         }
     }
 
+    @Override
+    public VirtualFile getBaseFile() throws VirtualFilesystemException {
+        try {
+            return new SimpleVirtualFile(this.fsManager.getBaseFile());
+        } catch (FileSystemException e) {
+            throw new VirtualFilesystemException("Issue retrieving baseFile", e);
+        }
+    }
+
+    @Override
+    public String getBaseFilePath() throws VirtualFilesystemException {
+        try {
+            return this.fsManager.getBaseFile().getPublicURIString();
+        } catch (FileSystemException e) {
+            throw new VirtualFilesystemException("Issue retrieving baseFile", e);
+        }
+
+    }
     @Activate
     void activate(Map<String, Object> configuration) throws VirtualFilesystemException {
         SimpleVirtualFilesystemConfig conf = Configurable.createConfigurable(SimpleVirtualFilesystemConfig.class, configuration);
         try {
             this.fsManager = VFS.getManager();
+            File rootDirectory = new File(conf.defaultRootDirectory());
+            if (!rootDirectory.exists()) {
+                rootDirectory.mkdirs();
+            }
+            ((DefaultFileSystemManager) this.fsManager).setBaseFile(rootDirectory);
         } catch (FileSystemException e) {
             throw new VirtualFilesystemException("Issue initializing virtual file system.", e);
         }
-        //Set of queues.
+        // Set of queues.
         tempFiles = new ArrayBlockingQueue<TemporaryVirtualFile>(conf.maxNumberOfTempFiles());
 
         // Schedule our temp file cleanup service.
@@ -175,7 +201,7 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
                 conf.secondsBetweenTempCleanup(), conf.secondsBetweenTempCleanup(), TimeUnit.SECONDS);
         LOGGER.debug("Configured scheduled cleanup of temp files to run every {} seconds", conf.secondsBetweenTempCleanup());
 
-        //Set default temp url template
+        // Set default temp url template
         this.baseTempUrlTemplate = conf.defaultTemporaryDirectory() != null ? conf.defaultTemporaryDirectory() : ("file://" + System.getProperty("java.io.tmpdir"));
         LOGGER.debug("Going to use {} for our base temp directory template", this.baseTempUrlTemplate);
     }
