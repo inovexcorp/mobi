@@ -96,11 +96,10 @@ public class TestDefaultVirtualFilesystem extends TestCase {
             assertFalse(vf.isFolder());
             String content;
             try (InputStream is = vf.readContent()) {
-                content = org.apache.commons.io.IOUtils.toString(is, Charset.defaultCharset());
+                content = IOUtils.toString(is, Charset.defaultCharset());
             }
             assertEquals("This is a simple test text file.", content);
         } catch (Exception e) {
-            e.printStackTrace();
             fail(e.getMessage());
         }
     }
@@ -114,11 +113,10 @@ public class TestDefaultVirtualFilesystem extends TestCase {
             assertFalse(vf.isFolder());
             String content;
             try (InputStream is = vf.readContent()) {
-                content = org.apache.commons.io.IOUtils.toString(is, Charset.defaultCharset());
+                content = IOUtils.toString(is, Charset.defaultCharset());
             }
             assertEquals("This is a simple test text file.", content);
         } catch (Exception e) {
-            e.printStackTrace();
             fail(e.getMessage());
         }
     }
@@ -145,7 +143,6 @@ public class TestDefaultVirtualFilesystem extends TestCase {
             assertTrue(file.delete());
             assertFalse(file.delete());
         } catch (Exception e) {
-            e.printStackTrace();
             fail(e.getMessage());
         }
     }
@@ -172,7 +169,6 @@ public class TestDefaultVirtualFilesystem extends TestCase {
             assertTrue(file.delete());
             assertFalse(file.delete());
         } catch (Exception e) {
-            e.printStackTrace();
             fail(e.getMessage());
         }
     }
@@ -199,7 +195,6 @@ public class TestDefaultVirtualFilesystem extends TestCase {
             assertTrue(file.delete());
             assertFalse(file.delete());
         } catch (Exception e) {
-            e.printStackTrace();
             fail(e.getMessage());
         }
     }
@@ -217,7 +212,6 @@ public class TestDefaultVirtualFilesystem extends TestCase {
             assertNotNull(data);
             assertEquals(data.length, targetDir.getChildren().size());
         } catch (Exception e) {
-            e.printStackTrace();
             fail(e.getMessage());
         }
     }
@@ -235,7 +229,6 @@ public class TestDefaultVirtualFilesystem extends TestCase {
             assertNotNull(data);
             assertEquals(data.length, targetDir.getChildren().size());
         } catch (Exception e) {
-            e.printStackTrace();
             fail(e.getMessage());
         }
     }
@@ -252,12 +245,10 @@ public class TestDefaultVirtualFilesystem extends TestCase {
                                 assertTrue(vf.isFolder());
                             }
                         } catch (Exception e) {
-                            e.printStackTrace();
                             fail(e.getMessage());
                         }
                     });
         } catch (Exception e) {
-            e.printStackTrace();
             fail(e.getMessage());
         }
     }
@@ -280,7 +271,6 @@ public class TestDefaultVirtualFilesystem extends TestCase {
             assertEquals(2, files.size());
             assertTrue(issues.isEmpty());
         } catch (Exception e) {
-            e.printStackTrace();
             fail(e.getMessage());
         }
     }
@@ -292,7 +282,6 @@ public class TestDefaultVirtualFilesystem extends TestCase {
             assertTrue(f.isFolder());
             assertEquals(2, f.getChildren().size());
         } catch (Exception e) {
-            e.printStackTrace();
             fail(e.getMessage());
         }
     }

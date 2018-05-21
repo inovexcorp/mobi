@@ -165,13 +165,12 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
     void activate(Map<String, Object> configuration) throws VirtualFilesystemException {
         SimpleVirtualFilesystemConfig conf = Configurable.createConfigurable(SimpleVirtualFilesystemConfig.class, configuration);
         try {
-            FileSystemManager manager = VFS.getManager();
+            this.fsManager = VFS.getManager();
             File rootDirectory = new File(conf.defaultRootDirectory());
             if (!rootDirectory.exists()) {
                 rootDirectory.mkdirs();
             }
-            ((DefaultFileSystemManager) manager).setBaseFile(rootDirectory);
-            this.fsManager = manager;
+            ((DefaultFileSystemManager) this.fsManager).setBaseFile(rootDirectory);
         } catch (FileSystemException e) {
             throw new VirtualFilesystemException("Issue initializing virtual file system.", e);
         }
