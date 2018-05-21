@@ -77,7 +77,7 @@
                         if (ctrl.$isEmpty(value)) {
                             return true;
                         }
-                        return modelValue === scope.password;
+                        return value === scope.password;
                     };
 
                     scope.$watch("password", function() {
