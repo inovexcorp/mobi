@@ -161,6 +161,24 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
         }
     }
 
+    @Override
+    public VirtualFile getBaseFile() throws VirtualFilesystemException {
+        try {
+            return new SimpleVirtualFile(this.fsManager.getBaseFile());
+        } catch (FileSystemException e) {
+            throw new VirtualFilesystemException("Issue retrieving baseFile", e);
+        }
+    }
+
+    @Override
+    public String getBaseFilePath() throws VirtualFilesystemException {
+        try {
+            return this.fsManager.getBaseFile().getPublicURIString();
+        } catch (FileSystemException e) {
+            throw new VirtualFilesystemException("Issue retrieving baseFile", e);
+        }
+
+    }
     @Activate
     void activate(Map<String, Object> configuration) throws VirtualFilesystemException {
         SimpleVirtualFilesystemConfig conf = Configurable.createConfigurable(SimpleVirtualFilesystemConfig.class, configuration);

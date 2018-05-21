@@ -285,4 +285,26 @@ public class TestDefaultVirtualFilesystem extends TestCase {
             fail(e.getMessage());
         }
     }
+
+    @Test
+    public void testGetBaseFile() {
+        try {
+            VirtualFile testResourceFile = fs.resolveVirtualFile(testResources);
+            VirtualFile baseFile = fs.getBaseFile();
+            assertEquals(testResourceFile.getUrl(), baseFile.getUrl());
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testGetBaseFilePath() {
+        try {
+            VirtualFile testResourceFile = fs.resolveVirtualFile(testResources);
+            String baseFilePath = fs.getBaseFilePath();
+            assertEquals(testResourceFile.getIdentifier(), baseFilePath);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
 }
