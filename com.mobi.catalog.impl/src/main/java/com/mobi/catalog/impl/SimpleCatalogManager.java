@@ -63,6 +63,9 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
 import com.mobi.catalog.api.record.AbstractRecordService;
 import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.record.config.RecordExportSettings;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.config.VersionedRDFRecordExportSettings;
 import com.mobi.catalog.api.versioning.VersioningService;
 import com.mobi.catalog.config.CatalogConfig;
 import com.mobi.catalog.util.SearchResults;
@@ -71,7 +74,10 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
+import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.Bindings;
+import com.mobi.persistence.utils.RepositoryResults;
+import com.mobi.persistence.utils.Statements;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.TupleQuery;
@@ -83,6 +89,7 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -124,6 +131,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private BranchFactory branchFactory;
     private InProgressCommitFactory inProgressCommitFactory;
     private CommitFactory commitFactory;
+    private OrmFactoryRegistry factoryRegistry;
     private RevisionFactory revisionFactory;
     private VersionedRDFRecordFactory versionedRDFRecordFactory;
     private VersionedRecordFactory versionedRecordFactory;
@@ -211,6 +219,11 @@ public class SimpleCatalogManager implements CatalogManager {
     @Reference
     void setVersionFactory(VersionFactory versionFactory) {
         this.versionFactory = versionFactory;
+    }
+
+    @Reference
+    void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
+        this.factoryRegistry = factoryRegistry;
     }
 
     @Reference
@@ -1251,14 +1264,42 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void export(IRI recordIRI) {
+    public void export(IRI recordIRI, RecordOperationConfig config) {
         // TODO: Figure out the class type of the Record
-        // things
-
-        // TODO: call export on the appropriate service
-        RecordService<Record> service = recordServices.get(Record.class.toString());
-        service.export(recordIRI, null, null);
+        try (RepositoryConnection conn = repository.getConnection()) {
+            OrmFactory<? extends Record> correctFactory = getFactory(recordIRI, conn);
+            RecordService<Record> serviceType =
+                    recordServices.get(correctFactory.getTypeIRI().stringValue());
+            conn.begin();
+            serviceType.export(recordIRI, config, conn);
+            conn.close();
+        }
     }
+
+    private OrmFactory<? extends Record> getFactory(com.mobi.rdf.api.Resource recordId, RepositoryConnection conn) {
+        List<com.mobi.rdf.api.Resource> types = RepositoryResults.asList(
+                conn.getStatements(recordId, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
+                .stream()
+                .map(Statements::objectResource)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+
+        List<OrmFactory<? extends Record>> orderedFactories =
+                factoryRegistry.getSortedFactoriesOfType(Record.class)
+                        .stream()
+                        .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
+                        .collect(Collectors.toList());
+
+        for (OrmFactory<? extends Record> factory : orderedFactories) {
+            if (recordServices.keySet().contains(factory.getTypeIRI().stringValue())) {
+                return factory;
+            }
+        }
+
+        throw new IllegalArgumentException("No known factories for this record type.");
+    }
+
 
     /**
      * Creates a conflict using the provided parameters as the data to construct it.

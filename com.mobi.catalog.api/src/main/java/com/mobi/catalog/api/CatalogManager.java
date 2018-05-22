@@ -35,11 +35,13 @@ import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.Version;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.repository.api.RepositoryConnection;
 
 import java.util.List;
 import java.util.Optional;
@@ -837,7 +839,8 @@ public interface CatalogManager {
      * Exports the record data based on the record type and associated configurations. Export implementation is defined
      * by available RecordServices.
      *
-     * @param recordIRI
+     * @param recordIRI The record IRI
+     * @param config The configuration of the record
      */
-    void export(IRI recordIRI);
+    void export(IRI recordIRI, RecordOperationConfig config);
 }

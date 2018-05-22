@@ -57,6 +57,7 @@ import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
@@ -2133,7 +2134,8 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testExport() throws Exception {
-        manager.export(RECORD_IRI);
+        RecordOperationConfig config = new OperationConfig();
+        manager.export(RECORD_IRI, config);
         verify(recordService).export(eq(RECORD_IRI), any(RecordOperationConfig.class), any(RepositoryConnection.class));
     }
 
