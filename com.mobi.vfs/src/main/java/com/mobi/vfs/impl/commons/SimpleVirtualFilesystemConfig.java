@@ -37,4 +37,10 @@ public interface SimpleVirtualFilesystemConfig {
     @Meta.AD(required = false)
     String defaultTemporaryDirectory();
 
+    /**
+     * The absolute path to the root directory
+     */
+    @Meta.AD(deflt = "${karaf.data}/vfs")
+    String defaultRootDirectory();
+
 }

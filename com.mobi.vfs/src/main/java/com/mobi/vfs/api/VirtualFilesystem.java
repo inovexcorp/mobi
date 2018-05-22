@@ -112,4 +112,19 @@ public interface VirtualFilesystem {
                                                     TemporalUnit timeToLiveUnit,
                                                     long createDuration, TimeUnit createTimeUnit) throws VirtualFilesystemException;
 
+    /**
+     * Gets the {@link VirtualFile} used as the baseFile to resolve relative file paths.
+     *
+     * @return The {@link VirtualFile} baseFile
+     * @throws VirtualFilesystemException If there is an issue resolving the baseFile
+     */
+    VirtualFile getBaseFile() throws VirtualFilesystemException;
+
+    /**
+     * Gets the String representation of the baseFile path used to resolve relative file paths.
+     *
+     * @return The String baseFile path
+     * @throws VirtualFilesystemException If there is an issue resolving the baseFile
+     */
+    String getBaseFilePath() throws VirtualFilesystemException;
 }
