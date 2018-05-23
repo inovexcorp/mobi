@@ -364,7 +364,7 @@ public class CatalogRestImpl implements CatalogRest {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Distribution> distributions = catalogManager.getUnversionedDistributions(vf.createIRI(catalogId),
                     vf.createIRI(recordId));
-            return createPaginatedThingResponse(uriInfo, distributions, vf.createIRI(sort), SORT_RESOURCES, offset,
+            return createPaginatedThingResponse(uriInfo, distributions, vf.createIRI(sort), offset,
                     limit, asc, null,
                     Distribution.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -441,7 +441,7 @@ public class CatalogRestImpl implements CatalogRest {
         try {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Version> versions = catalogManager.getVersions(vf.createIRI(catalogId), vf.createIRI(recordId));
-            return createPaginatedThingResponse(uriInfo, versions, vf.createIRI(sort), SORT_RESOURCES, offset, limit,
+            return createPaginatedThingResponse(uriInfo, versions, vf.createIRI(sort), offset, limit,
                     asc, null, Version.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -533,7 +533,7 @@ public class CatalogRestImpl implements CatalogRest {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Distribution> distributions = catalogManager.getVersionedDistributions(vf.createIRI(catalogId),
                     vf.createIRI(recordId), vf.createIRI(versionId));
-            return createPaginatedThingResponse(uriInfo, distributions, vf.createIRI(sort), SORT_RESOURCES, offset,
+            return createPaginatedThingResponse(uriInfo, distributions, vf.createIRI(sort), offset,
                     limit, asc, null,
                     Distribution.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -642,7 +642,7 @@ public class CatalogRestImpl implements CatalogRest {
                                     .stringValue().equals(activeUser.getResource().stringValue());
                 };
             }
-            return createPaginatedThingResponse(uriInfo, branches, vf.createIRI(sort), SORT_RESOURCES, offset, limit,
+            return createPaginatedThingResponse(uriInfo, branches, vf.createIRI(sort), offset, limit,
                     asc, filterFunction,
                     Branch.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
