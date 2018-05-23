@@ -27,9 +27,7 @@ import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
-import static com.mobi.rest.util.RestUtils.getTypedObjectFromJsonld;
 import static com.mobi.rest.util.RestUtils.jsonldToDeskolemizedModel;
-import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -54,17 +52,15 @@ import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.rest.CatalogRest;
+import com.mobi.catalog.rest.utils.CatalogRestUtils;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.provo.Activity;
-import com.mobi.ontologies.provo.InstantaneousEvent;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
@@ -78,7 +74,6 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
-import com.mobi.rest.util.jaxb.Links;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
@@ -206,7 +201,7 @@ public class CatalogRestImpl implements CatalogRest {
             }
 
             JSONArray array = JSONArray.fromObject(catalogs.stream()
-                    .map(catalog -> thingToJsonObject(catalog, Catalog.TYPE))
+                    .map(catalog -> CatalogRestUtils.thingToJsonObject(catalog, Catalog.TYPE, transformer, bNodeService))
                     .collect(Collectors.toList()));
             return Response.ok(array).build();
         } catch (IllegalStateException | MobiException ex) {
@@ -219,9 +214,9 @@ public class CatalogRestImpl implements CatalogRest {
         try {
             Resource catalogIri = vf.createIRI(catalogId);
             if (catalogIri.equals(catalogManager.getLocalCatalogIRI())) {
-                return Response.ok(thingToJsonObject(catalogManager.getLocalCatalog(), Catalog.TYPE)).build();
+                return Response.ok(CatalogRestUtils.thingToJsonObject(catalogManager.getLocalCatalog(), Catalog.TYPE, transformer, bNodeService)).build();
             } else if (catalogIri.equals(catalogManager.getDistributedCatalogIRI())) {
-                return Response.ok(thingToJsonObject(catalogManager.getDistributedCatalog(), Catalog.TYPE)).build();
+                return Response.ok(CatalogRestUtils.thingToJsonObject(catalogManager.getDistributedCatalog(), Catalog.TYPE, transformer, bNodeService)).build();
             } else {
                 throw ErrorUtils.sendError("Catalog " + catalogId + " does not exist", Response.Status.NOT_FOUND);
             }
@@ -308,7 +303,7 @@ public class CatalogRestImpl implements CatalogRest {
             Record record = catalogManager.getRecord(vf.createIRI(catalogId), vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Record.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Record " + recordId + " could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToJsonObject(record, Record.TYPE)).build();
+            return Response.ok(CatalogRestUtils.thingToJsonObject(record, Record.TYPE, transformer, bNodeService)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -389,7 +384,7 @@ public class CatalogRestImpl implements CatalogRest {
                     vf.createIRI(recordId), vf.createIRI(distributionId)).orElseThrow(() ->
                     ErrorUtils.sendError("Distribution " + distributionId + " could not be found",
                             Response.Status.NOT_FOUND));
-            return Response.ok(thingToJsonObject(distribution, Distribution.TYPE)).build();
+            return Response.ok(CatalogRestUtils.thingToJsonObject(distribution, Distribution.TYPE, transformer, bNodeService)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -468,7 +463,7 @@ public class CatalogRestImpl implements CatalogRest {
             Version version = catalogManager.getLatestVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Version.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Latest Version could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToJsonObject(version, Version.TYPE)).build();
+            return Response.ok(CatalogRestUtils.thingToJsonObject(version, Version.TYPE, transformer, bNodeService)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -482,7 +477,7 @@ public class CatalogRestImpl implements CatalogRest {
             Version version = catalogManager.getVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(versionId), factoryRegistry.getFactoryOfType(Version.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Version " + versionId + " could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToJsonObject(version, Version.TYPE)).build();
+            return Response.ok(CatalogRestUtils.thingToJsonObject(version, Version.TYPE, transformer, bNodeService)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -557,7 +552,7 @@ public class CatalogRestImpl implements CatalogRest {
                     vf.createIRI(recordId), vf.createIRI(versionId), vf.createIRI(distributionId)).orElseThrow(() ->
                     ErrorUtils.sendError("Distribution " + distributionId + " could not be found",
                             Response.Status.NOT_FOUND));
-            return Response.ok(thingToJsonObject(distribution, Distribution.TYPE)).build();
+            return Response.ok(CatalogRestUtils.thingToJsonObject(distribution, Distribution.TYPE, transformer, bNodeService)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -601,7 +596,7 @@ public class CatalogRestImpl implements CatalogRest {
         try {
             Commit commit = catalogManager.getTaggedCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(versionId));
-            return createCommitResponse(commit, format);
+            return CatalogRestUtils.createCommitResponse(commit, catalogManager.getCommitDifference(commit.getResource()), format, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -664,7 +659,7 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getMasterBranch(String catalogId, String recordId) {
         try {
             Branch masterBranch = catalogManager.getMasterBranch(vf.createIRI(catalogId), vf.createIRI(recordId));
-            return Response.ok(thingToJsonObject(masterBranch, Branch.TYPE)).build();
+            return Response.ok(CatalogRestUtils.thingToJsonObject(masterBranch, Branch.TYPE, transformer, bNodeService)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -678,7 +673,7 @@ public class CatalogRestImpl implements CatalogRest {
             Branch branch = catalogManager.getBranch(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId), factoryRegistry.getFactoryOfType(Branch.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Branch " + branchId + " could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToJsonObject(branch, Branch.TYPE)).build();
+            return Response.ok(CatalogRestUtils.thingToJsonObject(branch, Branch.TYPE, transformer, bNodeService)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -737,8 +732,8 @@ public class CatalogRestImpl implements CatalogRest {
                 result = result.skip(offset)
                         .limit(limit);
             }
-            result.map(this::createCommitJson).forEach(commitChain::add);
-            return createPaginatedResponseWithJson(uriInfo, commitChain, commits.size(), limit, offset);
+            result.map(r -> CatalogRestUtils.createCommitJson(r, vf, engineManager)).forEach(commitChain::add);
+            return CatalogRestUtils.createPaginatedResponseWithJson(uriInfo, commitChain, commits.size(), limit, offset);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -768,7 +763,7 @@ public class CatalogRestImpl implements CatalogRest {
         try {
             Commit headCommit = catalogManager.getHeadCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId));
-            return createCommitResponse(headCommit, format);
+            return CatalogRestUtils.createCommitResponse(headCommit, catalogManager.getCommitDifference(headCommit.getResource()), format, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -786,7 +781,7 @@ public class CatalogRestImpl implements CatalogRest {
             Commit commit = catalogManager.getCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId), vf.createIRI(commitId)).orElseThrow(() ->
                     ErrorUtils.sendError("Commit " + commitId + " could not be found", Response.Status.NOT_FOUND));
-            return createCommitResponse(commit, format);
+            return CatalogRestUtils.createCommitResponse(commit, catalogManager.getCommitDifference(commit.getResource()), format, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -806,7 +801,7 @@ public class CatalogRestImpl implements CatalogRest {
             Commit sourceHead = catalogManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(branchId));
             Commit targetHead = catalogManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(targetBranchId));
             Difference diff = catalogManager.getDifference(sourceHead.getResource(), targetHead.getResource());
-            return Response.ok(getDifferenceJsonString(diff, rdfFormat), MediaType.APPLICATION_JSON).build();
+            return Response.ok(CatalogRestUtils.getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService), MediaType.APPLICATION_JSON).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -870,7 +865,7 @@ public class CatalogRestImpl implements CatalogRest {
                     resource = catalogManager.applyInProgressCommit(inProgressCommit.get().getResource(), resource);
                 }
             }
-            return Response.ok(getModelInFormat(resource, rdfFormat)).build();
+            return Response.ok(CatalogRestUtils.getModelInFormat(resource, rdfFormat, transformer, bNodeService)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -900,7 +895,7 @@ public class CatalogRestImpl implements CatalogRest {
             }
             StreamingOutput stream = os -> {
                 Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-                writer.write(getModelInFormat(resource, rdfFormat));
+                writer.write(CatalogRestUtils.getModelInFormat(resource, rdfFormat, transformer, bNodeService));
                 writer.flush();
                 writer.close();
             };
@@ -995,45 +990,6 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     /**
-     * Creates the JSONObject to be returned in the commit chain to more easily work with the data associated with the
-     * Commit.
-     *
-     * @param commit The Commit object to parse data from.
-     * @return JSONObject with the necessary information set.
-     */
-    private JSONObject createCommitJson(Commit commit) {
-        Literal emptyLiteral = vf.createLiteral("");
-        Value creatorIRI = commit.getProperty(vf.createIRI(Activity.wasAssociatedWith_IRI))
-                .orElse(null);
-        Value date = commit.getProperty(vf.createIRI(InstantaneousEvent.atTime_IRI))
-                .orElse(emptyLiteral);
-        String message = commit.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue()))
-                .orElse(emptyLiteral).stringValue();
-        String baseCommit = commit.getProperty(vf.createIRI(Commit.baseCommit_IRI))
-                .orElse(emptyLiteral).stringValue();
-        String auxCommit = commit.getProperty(vf.createIRI(Commit.auxiliaryCommit_IRI))
-                .orElse(emptyLiteral).stringValue();
-        User creator = engineManager.retrieveUser(engineManager.getUsername((Resource) creatorIRI)
-                .orElse("")).orElse(null);
-        JSONObject creatorObject = new JSONObject();
-        if (creator != null) {
-            creatorObject.element("firstName", creator.getFirstName().stream().findFirst()
-                    .orElse(emptyLiteral).stringValue())
-                    .element("lastName", creator.getLastName().stream().findFirst().orElse(emptyLiteral)
-                            .stringValue())
-                    .element("username", creator.getUsername().orElse(emptyLiteral).stringValue());
-        }
-
-        return new JSONObject()
-                .element("id", commit.getResource().stringValue())
-                .element("creator", creatorObject)
-                .element("date", date.stringValue())
-                .element("message", message)
-                .element("base", baseCommit)
-                .element("auxiliary", auxCommit);
-    }
-
-    /**
      * Creates a Response for a list of paginated Things based on the passed URI information, page of items, the total
      * number of Things, the limit for each page, and the offset for the current page. Sets the "X-Total-Count" header
      * to the total size and the "Links" header to the next and prev URLs if present.
@@ -1050,22 +1006,9 @@ public class CatalogRestImpl implements CatalogRest {
     private <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items, int totalSize,
                                                                int limit, int offset, String type) {
         JSONArray results = JSONArray.fromObject(items.stream()
-                .map(thing -> thingToJsonObject(thing, type))
+                .map(thing -> CatalogRestUtils.thingToJsonObject(thing, type, transformer, bNodeService))
                 .collect(Collectors.toList()));
-        return createPaginatedResponseWithJson(uriInfo, results, totalSize, limit, offset);
-    }
-
-    private Response createPaginatedResponseWithJson(UriInfo uriInfo, JSONArray items, int totalSize, int limit,
-                                                     int offset) {
-        Links links = LinksUtils.buildLinks(uriInfo, items.size(), totalSize, limit, offset);
-        Response.ResponseBuilder response = Response.ok(items).header("X-Total-Count", totalSize);
-        if (links.getNext() != null) {
-            response = response.link(links.getBase() + links.getNext(), "next");
-        }
-        if (links.getPrev() != null) {
-            response = response.link(links.getBase() + links.getPrev(), "prev");
-        }
-        return response.build();
+        return CatalogRestUtils.createPaginatedResponseWithJson(uriInfo, results, totalSize, limit, offset);
     }
 
     /**
@@ -1108,27 +1051,6 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     /**
-     * Creates a Response for a Commit and its addition and deletion statements in the specified format. The JSONObject
-     * in the Response has key "commit" with value of the Commit's JSON-LD and the keys and values of the result of
-     * getCommitDifferenceObject.
-     *
-     * @param commit The Commit to create a response for
-     * @param format The RDF format to return the addition and deletion statements in.
-     * @return A Response containing a JSONObject with the Commit JSON-LD and its addition and deletion statements
-     */
-    private Response createCommitResponse(Commit commit, String format) {
-        long start = System.currentTimeMillis();
-        try {
-            String differences = getCommitDifferenceJsonString(commit.getResource(), format);
-            String response = differences.subSequence(0, differences.length() - 1) + ", \"commit\": "
-                    + thingToJsonObject(commit, Commit.TYPE).toString() + "}";
-            return Response.ok(response, MediaType.APPLICATION_JSON).build();
-        } finally {
-            LOG.trace("createCommitResponse took {}ms", System.currentTimeMillis() - start);
-        }
-    }
-
-    /**
      * Creates a JSONObject for the Difference statements in the specified RDF format of the Commit with the specified
      * id. Key "additions" has value of the Commit's addition statements and key "deletions" has value of the Commit's
      * deletion statements.
@@ -1147,15 +1069,6 @@ public class CatalogRestImpl implements CatalogRest {
         }
     }
 
-    private String getCommitDifferenceJsonString(Resource commitId, String format) {
-        long start = System.currentTimeMillis();
-        try {
-            return getDifferenceJsonString(catalogManager.getCommitDifference(commitId), format);
-        } finally {
-            LOG.trace("getCommitDifferenceJsonString took {}ms", System.currentTimeMillis() - start);
-        }
-    }
-
     /**
      * Creates a JSONObject for the Difference statements in the specified RDF format. Key "additions" has value of the
      * Difference's addition statements and key "deletions" has value of the Difference's deletion statements.
@@ -1168,20 +1081,10 @@ public class CatalogRestImpl implements CatalogRest {
     private JSONObject getDifferenceJson(Difference difference, String format) {
         long start = System.currentTimeMillis();
         try {
-            return new JSONObject().element("additions", getModelInFormat(difference.getAdditions(), format))
-                    .element("deletions", getModelInFormat(difference.getDeletions(), format));
+            return new JSONObject().element("additions", CatalogRestUtils.getModelInFormat(difference.getAdditions(), format, transformer, bNodeService))
+                    .element("deletions", CatalogRestUtils.getModelInFormat(difference.getDeletions(), format, transformer, bNodeService));
         } finally {
             LOG.trace("getDifferenceJson took {}ms", System.currentTimeMillis() - start);
-        }
-    }
-
-    private String getDifferenceJsonString(Difference difference, String format) {
-        long start = System.currentTimeMillis();
-        try {
-            return "{ \"additions\": " + getModelInFormat(difference.getAdditions(), format) + ", \"deletions\": "
-                    + getModelInFormat(difference.getDeletions(), format) + "}";
-        } finally {
-            LOG.trace("getDifferenceJsonString took {}ms", System.currentTimeMillis() - start);
         }
     }
 
@@ -1268,37 +1171,6 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     /**
-     * Converts a Thing into a JSON-LD string.
-     *
-     * @param thing The Thing whose Model will be converted.
-     * @return A JSON-LD string for the Thing's Model.
-     */
-    private String thingToJsonld(Thing thing) {
-        return modelToJsonld(thing.getModel());
-    }
-
-    /**
-     * Coverts a Model into a JSON-LD string.
-     *
-     * @param model The Model to convert.
-     * @return A JSON-LD string for the Model.
-     */
-    private String modelToJsonld(Model model) {
-        return getModelInFormat(model, "jsonld");
-    }
-
-    /**
-     * Converts a Model into a string of the provided RDF format, grouping statements by subject and predicate.
-     *
-     * @param model  The Model to convert.
-     * @param format A string representing the RDF format to return the Model in.
-     * @return A String of the converted Model in the requested RDF format.
-     */
-    private String getModelInFormat(Model model, String format) {
-        return modelToSkolemizedString(model, format, transformer, bNodeService);
-    }
-
-    /**
      * Converts a JSON-LD string into a Model.
      *
      * @param jsonld The string of JSON-LD to convert.
@@ -1306,23 +1178,6 @@ public class CatalogRestImpl implements CatalogRest {
      */
     private Model convertJsonld(String jsonld) {
         return jsonldToDeskolemizedModel(jsonld, transformer, bNodeService);
-    }
-
-
-    /**
-     * Converts a Thing into a JSONObject by the first object of a specific type in the JSON-LD serialization of the
-     * Thing's Model.
-     *
-     * @param thing The Thing to convert into a JSONObject.
-     * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
-     */
-    private JSONObject thingToJsonObject(Thing thing, String type) {
-        long start = System.currentTimeMillis();
-        try {
-            return getTypedObjectFromJsonld(thingToJsonld(thing), type);
-        } finally {
-            LOG.trace("thingToJsonObject took {}ms", System.currentTimeMillis() - start);
-        }
     }
 
     private Map<String, OrmFactory<? extends Record>> getRecordFactories() {

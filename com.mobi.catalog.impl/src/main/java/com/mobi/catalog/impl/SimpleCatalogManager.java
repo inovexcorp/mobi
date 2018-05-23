@@ -37,6 +37,7 @@ import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
 import com.mobi.catalog.api.builder.RecordConfig;
+import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
@@ -125,6 +126,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private ValueFactory vf;
     private ModelFactory mf;
     private CatalogUtilsService utils;
+    private MergeRequestManager mergeRequestManager;
     private CatalogFactory catalogFactory;
     private RecordFactory recordFactory;
     private DistributionFactory distributionFactory;
@@ -159,6 +161,11 @@ public class SimpleCatalogManager implements CatalogManager {
     @Reference
     void setUtils(CatalogUtilsService utils) {
         this.utils = utils;
+    }
+
+    @Reference
+    void setMergeRequestManager(MergeRequestManager mergeRequestManager) {
+        this.mergeRequestManager = mergeRequestManager;
     }
 
     @Reference
@@ -854,6 +861,7 @@ public class SimpleCatalogManager implements CatalogManager {
             }
             conn.begin();
             utils.removeBranch(versionedRDFRecordId, branch, conn);
+            mergeRequestManager.cleanMergeRequests(versionedRDFRecordId, branchId, conn);
             conn.commit();
         }
     }
@@ -990,6 +998,18 @@ public class SimpleCatalogManager implements CatalogManager {
             inProgressCommit.setOnVersionedRDFRecord(record);
             utils.addObject(inProgressCommit, conn);
         }
+    }
+
+    @Override
+    public Optional<Commit> getCommit(Resource commitId) {
+        long start = System.currentTimeMillis();
+        Optional<Commit> rtn = Optional.empty();
+        try (RepositoryConnection conn = repository.getConnection()) {
+            rtn = Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
+        } finally {
+            log.trace("getCommit took {}ms", System.currentTimeMillis() - start);
+        }
+        return rtn;
     }
 
     @Override
@@ -1425,6 +1445,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private void removeVersionedRDFRecord(Record record, RepositoryConnection conn) {
         versionedRDFRecordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRDFRecord -> {
+                    mergeRequestManager.deleteMergeRequestsWithRecordId(versionedRDFRecord.getResource(), conn);
                     versionedRDFRecord.getVersion_resource()
                             .forEach(resource -> utils.removeVersion(versionedRDFRecord.getResource(), resource, conn));
                     conn.remove(versionedRDFRecord.getResource(), vf.createIRI(VersionedRDFRecord.masterBranch_IRI),

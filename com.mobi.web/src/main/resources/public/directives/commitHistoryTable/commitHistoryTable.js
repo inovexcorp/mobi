@@ -105,9 +105,9 @@
                     $scope.$watchGroup(['dvm.branch', 'dvm.recordId', 'dvm.commitId', 'dvm.targetId'], newValues => dvm.getCommits());
 
                     dvm.openCommitOverlay = function(commitId) {
-                        cm.getBranchCommit(commitId, dvm.branch['@id'], dvm.recordId, catalogId)
+                        cm.getCommit(commitId)
                             .then(commit => {
-                                dvm.commit = _.find(dvm.commits, {id: commitId});
+                                dvm.commit = commit;
                                 dvm.additions = commit.additions;
                                 dvm.deletions = commit.deletions;
                                 dvm.showOverlay = true;
@@ -115,20 +115,20 @@
                     }
                     dvm.getCommits = function() {
                         if (dvm.branch) {
-                            cm.getBranchCommits(dvm.branch['@id'], dvm.recordId, catalogId, dvm.targetId)
-                                .then(commits => {
-                                    dvm.commits = commits;
-                                    dvm.error = '';
-                                    if ($scope.graph) {
-                                        dvm.drawGraph();
-                                    }
-                                }, errorMessage => {
-                                    dvm.error = errorMessage;
-                                    dvm.commits = [];
-                                    if ($scope.graph) {
-                                        dvm.reset();
-                                    }
-                                });
+                            var promise = dvm.commitId ? cm.getCommitHistory(dvm.commitId) : cm.getBranchCommits(dvm.branch['@id'], dvm.recordId, catalogId, dvm.targetId);
+                            promise.then(commits => {
+                                dvm.commits = commits;
+                                dvm.error = '';
+                                if ($scope.graph) {
+                                    dvm.drawGraph();
+                                }
+                            }, errorMessage => {
+                                dvm.error = errorMessage;
+                                dvm.commits = [];
+                                if ($scope.graph) {
+                                    dvm.reset();
+                                }
+                            });
                         } else {
                             dvm.commits = [];
                             if ($scope.graph) {

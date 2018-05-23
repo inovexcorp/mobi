@@ -43,6 +43,7 @@ import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -118,7 +119,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
     private OrmFactory<UserBranch> userBranchFactory = getRequiredOrmFactory(UserBranch.class);
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
-    private OrmFactory<GraphRevision> graphRevisionFactory = getRequiredOrmFactory(GraphRevision.class);
 
     private IRI distributedCatalogId;
     private IRI localCatalogId;
@@ -158,6 +158,9 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     @Mock
     private RecordService<Record> recordService;
 
+    @Mock
+    private MergeRequestManager mergeRequestManager;
+
     @Before
     public void setUp() throws Exception {
         SesameRepositoryWrapper repositoryWrapper = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
@@ -179,6 +182,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         manager.setModelFactory(MODEL_FACTORY);
         manager.setUtils(utilsService);
         manager.addRecordService(recordService);
+        manager.setMergeRequestManager(mergeRequestManager);
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
@@ -613,6 +617,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
         Record result = manager.removeRecord(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, versionedRDFRecordFactory);
         assertEquals(record, result);
+        verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(VERSIONED_RDF_RECORD_IRI), any(RepositoryConnection.class));
         verify(utilsService).removeVersion(eq(record.getResource()), any(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).removeBranch(eq(record.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
         verify(utilsService).removeObject(any(VersionedRDFRecord.class), any(RepositoryConnection.class));
@@ -1229,6 +1234,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         manager.removeBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, BRANCH_IRI);
         verify(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
         verify(utilsService).removeBranch(eq(VERSIONED_RDF_RECORD_IRI), any(Branch.class), any(RepositoryConnection.class));
+        verify(mergeRequestManager).cleanMergeRequests(eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), any(RepositoryConnection.class));
     }
 
     @Test
@@ -1491,6 +1497,19 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         Optional<Commit> result = manager.getCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, MASTER_BRANCH_IRI, commitId);
         verify(utilsService).validateBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(MASTER_BRANCH_IRI), any(RepositoryConnection.class));
         verify(utilsService).commitInBranch(eq(MASTER_BRANCH_IRI), eq(commitId), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
+        assertTrue(result.isPresent());
+        assertEquals(commit, result.get());
+    }
+
+    @Test
+    public void testGetCommit() throws Exception {
+        // Setup:
+        Resource commitId = VALUE_FACTORY.createIRI(COMMITS + "test0");
+        Commit commit = commitFactory.createNew(commitId);
+        doReturn(commit).when(utilsService).getExpectedObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
+
+        Optional<Commit> result = manager.getCommit(commitId);
         verify(utilsService).getExpectedObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(commit, result.get());

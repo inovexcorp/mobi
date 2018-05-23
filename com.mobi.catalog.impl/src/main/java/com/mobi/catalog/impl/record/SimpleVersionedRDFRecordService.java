@@ -27,6 +27,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
@@ -65,6 +66,11 @@ public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordS
     @Reference
     void setBranchFactory(BranchFactory branchFactory) {
         this.branchFactory = branchFactory;
+    }
+
+    @Reference
+    void setMergeRequestManager(MergeRequestManager mergeRequestManager) {
+        this.mergeRequestManager = mergeRequestManager;
     }
 
     @Override

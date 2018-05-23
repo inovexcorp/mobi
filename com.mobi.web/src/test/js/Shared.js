@@ -905,6 +905,8 @@ function mockCatalogManager() {
             this.createRecordUserBranch = jasmine.createSpy('createRecordUserBranch').and.returnValue($q.when());
             this.updateRecordBranch = jasmine.createSpy('updateRecordBranch').and.returnValue($q.when());
             this.deleteRecordBranch = jasmine.createSpy('deleteRecordBranch').and.returnValue($q.when());
+            this.getCommit = jasmine.createSpy('getCommit').and.returnValue($q.when([]));
+            this.getCommitHistory = jasmine.createSpy('getCommitHistory').and.returnValue($q.when([]));
             this.getBranchCommits = jasmine.createSpy('getBranchCommits').and.returnValue($q.when([]));
             this.createBranchCommit = jasmine.createSpy('createBranchCommit').and.returnValue($q.when());
             this.getBranchHeadCommit = jasmine.createSpy('getBranchHeadCommit').and.returnValue($q.when({}));
@@ -1262,6 +1264,10 @@ function mockMergeRequestManager() {
     module(function($provide) {
         $provide.service('mergeRequestManagerService', function($q) {
             this.getRequests = jasmine.createSpy('getRequests').and.returnValue($q.when([]));
+            this.createRequest = jasmine.createSpy('createRequest').and.returnValue($q.when());
+            this.getRequest = jasmine.createSpy('getRequest').and.returnValue($q.when({}));
+            this.deleteRequest = jasmine.createSpy('deleteRequest').and.returnValue($q.when());
+            this.isAccepted = jasmine.createSpy('isAccepted').and.returnValue(false);
         });
     });
 }
@@ -1269,7 +1275,22 @@ function mockMergeRequestManager() {
 function mockMergeRequestsState() {
     module(function($provide) {
         $provide.service('mergeRequestsStateService', function() {
-            this.open = true;
+            this.open = {
+                active: true,
+                selected: undefined
+            };
+            this.requests = [];
+            this.showDelete = false;
+            this.requestToDelete = false;
+            this.createRequest = false;
+            this.createRequestStep = 0;
+            this.requestConfig = {};
+            this.initialize = jasmine.createSpy('initialize');
+            this.reset = jasmine.createSpy('reset');
+            this.setRequests = jasmine.createSpy('setRequests');
+            this.setRequestDetails = jasmine.createSpy('setRequestDetails');
+            this.startCreate = jasmine.createSpy('startCreate');
+            this.getCurrentTab = jasmine.createSpy('getCurrentTab').and.returnValue(this.open);
         });
     });
 }
