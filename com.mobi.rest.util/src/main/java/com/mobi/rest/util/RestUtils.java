@@ -22,6 +22,7 @@ package com.mobi.rest.util;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -50,12 +51,7 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -72,7 +68,6 @@ public class RestUtils {
      * Encodes the passed string using percent encoding for use in a URL.
      *
      * @param str The string to be encoded.
-     *
      * @return The URL encoded version of the passed string.
      */
     public static String encode(String str) {
@@ -94,7 +89,6 @@ public class RestUtils {
      * Decodes the passed string that is encoded using percent encoding.
      *
      * @param str The string to be decoded.
-     *
      * @return The decoded version of the passed URL encoded string.
      */
     public static String decode(String str) {
@@ -111,7 +105,6 @@ public class RestUtils {
      * Returns the specified RDFFormat. Currently supports Turtle, RDF/XML, and JSON-LD.
      *
      * @param format The abbreviated name of a RDFFormat.
-     *
      * @return A RDFFormat object with the requested format.
      */
     public static RDFFormat getRDFFormat(String format) {
@@ -132,7 +125,6 @@ public class RestUtils {
      * @param model       A {@link Model} of RDF to convert.
      * @param format      The RDFFormat the RDF should be serialized into.
      * @param transformer The SesameTransformer for model conversions.
-     *
      * @return A String of the serialized RDF from the Model.
      */
     public static String modelToString(Model model, RDFFormat format, SesameTransformer transformer) {
@@ -152,7 +144,6 @@ public class RestUtils {
      * @param model       A {@link Model} of RDF to convert.
      * @param format      The abbreviated name of a RDFFormat.
      * @param transformer The SesameTransformer for model conversions.
-     *
      * @return A String of the serialized RDF from the Model.
      */
     public static String modelToString(Model model, String format, SesameTransformer transformer) {
@@ -166,7 +157,6 @@ public class RestUtils {
      * @param format      The RDFFormat the RDF should be serialized into.
      * @param transformer The SesameTransformer for model conversions.
      * @param service     The BNodeService for skolemization.
-     *
      * @return A skolemized String of the serialized RDF from the Model.
      */
     public static String modelToSkolemizedString(Model model, RDFFormat format, SesameTransformer transformer,
@@ -188,7 +178,6 @@ public class RestUtils {
      * @param format      The abbreviated name of a RDFFormat.
      * @param transformer The SesameTransformer for model conversions.
      * @param service     The BNodeService for skolemization.
-     *
      * @return A skolemized String of the serialized RDF from the Model.
      */
     public static String modelToSkolemizedString(Model model, String format, SesameTransformer transformer,
@@ -202,7 +191,6 @@ public class RestUtils {
      * @param model       A {@link Model} of RDF to convert.
      * @param format      The RDFFormat the RDF should be serialized into.
      * @param transformer The SesameTransformer for model conversions.
-     *
      * @return A String of the serialized grouped RDF from the Model.
      */
     public static String groupedModelToString(Model model, RDFFormat format, SesameTransformer transformer) {
@@ -223,7 +211,6 @@ public class RestUtils {
      * @param model       A {@link Model} of RDF to convert.
      * @param format      The abbreviated name of a RDFFormat.
      * @param transformer The SesameTransformer for model conversions.
-     *
      * @return A String of the serialized grouped RDF from the Model.
      */
     public static String groupedModelToString(Model model, String format, SesameTransformer transformer) {
@@ -237,7 +224,6 @@ public class RestUtils {
      * @param format      The RDFFormat the RDF should be serialized into.
      * @param transformer The SesameTransformer for model conversions.
      * @param service     The BNodeService for skolemization.
-     *
      * @return A skolemized String of the serialized grouped RDF from the Model.
      */
     public static String groupedModelToSkolemizedString(Model model, RDFFormat format, SesameTransformer transformer,
@@ -261,7 +247,6 @@ public class RestUtils {
      * @param format      The abbreviated name of a RDFFormat.
      * @param transformer The SesameTransformer for model conversions.
      * @param service     The BNodeService for skolemization.
-     *
      * @return A skolemized String of the serialized grouped RDF from the Model.
      */
     public static String groupedModelToSkolemizedString(Model model, String format, SesameTransformer transformer,
@@ -274,7 +259,6 @@ public class RestUtils {
      *
      * @param jsonld      A string of JSON-LD.
      * @param transformer The SesameTransformer for model conversions.
-     *
      * @return A Model containing the RDF from the JSON-LD string.
      */
     public static Model jsonldToModel(String jsonld, SesameTransformer transformer) {
@@ -294,7 +278,6 @@ public class RestUtils {
      * @param jsonld      A string of JSON-LD.
      * @param transformer The SesameTransformer for model conversions.
      * @param service     The BNodeService for skolemization.
-     *
      * @return A deskolemized Model containing the RDF from the JSON-LD string.
      */
     public static Model jsonldToDeskolemizedModel(String jsonld, SesameTransformer transformer, BNodeService service) {
@@ -306,7 +289,6 @@ public class RestUtils {
      *
      * @param model       A {@link Model} containing RDF.
      * @param transformer The SesameTransformer for model conversions.
-     *
      * @return A JSON-LD string containing the converted RDF from the Model.
      */
     public static String modelToJsonld(Model model, SesameTransformer transformer) {
@@ -318,7 +300,6 @@ public class RestUtils {
      *
      * @param model       A {@link Model} containing RDF.
      * @param transformer The SesameTransformer for model conversions.
-     *
      * @return A skolemized JSON-LD string containing the converted RDF from the Model.
      */
     public static String modelToSkolemizedJsonld(Model model, SesameTransformer transformer, BNodeService service) {
@@ -329,7 +310,6 @@ public class RestUtils {
      * Returns the file extension for the specified RDFFormat. Currently supports Turtle, RDF/XML, OWL/XML, and JSON-LD.
      *
      * @param format The abbreviated name of a RDFFormat.
-     *
      * @return The default file extension for the requested format.
      */
     public static String getRDFFormatFileExtension(String format) {
@@ -350,7 +330,6 @@ public class RestUtils {
      * Returns the MIME type for the specified RDFFormat. Currently supports Turtle, RDF/XML, OWL/XML, and JSON-LD.
      *
      * @param format The abbreviated name of a RDFFormat.
-     *
      * @return THe default MIME type for the requested format.
      */
     public static String getRDFFormatMimeType(String format) {
@@ -373,7 +352,6 @@ public class RestUtils {
      *
      * @param context       The context of a Request.
      * @param engineManager The EngineManager to use when attempting to retrieve the User.
-     *
      * @return The User who made the Request if found; throws a 401 otherwise.
      */
     public static User getActiveUser(ContainerRequestContext context, EngineManager engineManager) {
@@ -385,7 +363,6 @@ public class RestUtils {
      * Retrieves the username associated with a Request. If the username cannot be found, throws a 401 Response.
      *
      * @param context The context of a Request.
-     *
      * @return The username of the User who made the Request if found; throws a 401 otherwise.
      */
     public static String getActiveUsername(ContainerRequestContext context) {
@@ -403,7 +380,6 @@ public class RestUtils {
      *
      * @param context       The context of a Request.
      * @param engineManager The EngineManager to use when attempting to retrieve the User.
-     *
      * @return An Optional containing the User who made the Request if found; otherwise empty
      */
     public static Optional<User> optActiveUser(ContainerRequestContext context, EngineManager engineManager) {
@@ -414,7 +390,6 @@ public class RestUtils {
      * Retrieves the username associated with a Request. If the username cannot be found, returns an empty Optional.
      *
      * @param context The context of a Request.
-     *
      * @return An Optional with the username associated with the Request if found; otherwise empty
      */
     public static Optional<String> optActiveUsername(ContainerRequestContext context) {
@@ -438,7 +413,6 @@ public class RestUtils {
      * context object if present.
      *
      * @param json A JSON-LD string
-     *
      * @return The first object representing a single Entity present in the JSON-LD array.
      */
     public static JSONObject getObjectFromJsonld(String json) {
@@ -457,7 +431,6 @@ public class RestUtils {
      *
      * @param json A JSON-LD string
      * @param type The entity type that is required.
-     *
      * @return The first object representing the specified type of entity present in the JSON-LD.
      */
     public static JSONObject getTypedObjectFromJsonld(String json, String type) {
@@ -489,7 +462,6 @@ public class RestUtils {
      *
      * @param requestId The {@link String} representation of an IRI
      * @param vf        The {@link ValueFactory} used to create an IRI
-     *
      * @return An object representing the IRI; throws a 400 if the {@code requestId} is invalid
      */
     public static IRI createIRI(String requestId, ValueFactory vf) {
@@ -507,7 +479,6 @@ public class RestUtils {
      * @param thing       The Thing to convert into a JSONObject.
      * @param type        The type of the {@link Thing} passed in.
      * @param transformer The {@link SesameTransformer} to use.
-     *
      * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
      */
     public static JSONObject thingToJsonObject(Thing thing, String type, SesameTransformer transformer) {
@@ -522,7 +493,6 @@ public class RestUtils {
      * @param type         The type of the {@link Thing} passed in.
      * @param transformer  The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
-     *
      * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
      */
     public static JSONObject thingToSkolemizedJsonObject(Thing thing, String type, SesameTransformer transformer,
@@ -546,12 +516,11 @@ public class RestUtils {
      * @param type           The type of the {@link Thing} to be returned
      * @param transformer    The {@link SesameTransformer} to use.
      * @param bNodeService   The {@link BNodeService} to use.
-     *
      * @return A {@link Response} with a page of {@link Thing}s that has been filtered, sorted, and limited and headers
-     *         for the total size and links to the next and prev pages if present.
+     * for the total size and links to the next and prev pages if present.
      */
     public static <T extends Thing> Response createPaginatedThingResponse(UriInfo uriInfo, Set<T> things,
-                                                                          IRI sortIRI, int offset, int limit, 
+                                                                          IRI sortIRI, int offset, int limit,
                                                                           boolean asc,
                                                                           Function<T, Boolean> filterFunction,
                                                                           String type, SesameTransformer transformer,
@@ -600,9 +569,8 @@ public class RestUtils {
      * @param offset      The offset for the current page.
      * @param type        The type of the {@link Thing} to be returned
      * @param transformer The {@link SesameTransformer} to use.
-     *
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
-     *         pages if present.
+     * pages if present.
      */
     public static <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items,
                                                                      int totalSize, int limit, int offset, String type,
@@ -624,9 +592,8 @@ public class RestUtils {
      * @param type         The type of the {@link Thing} to be returned
      * @param transformer  The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
-     *
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
-     *         pages if present.
+     * pages if present.
      */
     public static <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items, int totalSize,
                                                                      int limit, int offset, String type,
@@ -661,9 +628,8 @@ public class RestUtils {
      * @param totalSize The total number of items.
      * @param limit     The limit for each page.
      * @param offset    The offset for the current page.
-     *
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
-     *         pages if present.
+     * pages if present.
      */
     public static Response createPaginatedResponseWithJson(UriInfo uriInfo, JSONArray items, int totalSize, int limit,
                                                            int offset) {
@@ -697,8 +663,6 @@ public class RestUtils {
         if (sortIRI != null && !sortResources.contains(sortIRI)) {
             throw ErrorUtils.sendError("Invalid sort property IRI", Response.Status.BAD_REQUEST);
         }
-        if (limit > 0) {
-            LinksUtils.validateParams(limit, offset);
-        }
+        LinksUtils.validateParams(limit, offset);
     }
 }
