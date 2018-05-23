@@ -539,7 +539,6 @@ public class RestUtils {
      * @param uriInfo        The URI information of the request.
      * @param things         The {@link Set} of {@link Thing}s.
      * @param sortIRI        The property {@link IRI} to sort the {@link Set} of {@link Thing}s by.
-     * @param sortResources  The {@link Set} of allowed values for the sortIRI.
      * @param offset         The number of {@link Thing}s to skip.
      * @param limit          The size of the page of {@link Thing}s to the return.
      * @param asc            Whether the sorting should be ascending or descending.
@@ -552,8 +551,8 @@ public class RestUtils {
      *         for the total size and links to the next and prev pages if present.
      */
     public static <T extends Thing> Response createPaginatedThingResponse(UriInfo uriInfo, Set<T> things,
-                                                                          IRI sortIRI, Set<String> sortResources,
-                                                                          int offset, int limit, boolean asc,
+                                                                          IRI sortIRI, int offset, int limit, 
+                                                                          boolean asc,
                                                                           Function<T, Boolean> filterFunction,
                                                                           String type, SesameTransformer transformer,
                                                                           BNodeService bNodeService) {
