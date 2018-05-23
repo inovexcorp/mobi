@@ -1265,19 +1265,24 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public void export(IRI recordIRI, RecordOperationConfig config) {
-        // TODO: Figure out the class type of the Record
         try (RepositoryConnection conn = repository.getConnection()) {
-            OrmFactory<? extends Record> correctFactory = getFactory(recordIRI, conn);
-            RecordService<Record> serviceType =
-                    recordServices.get(correctFactory.getTypeIRI().stringValue());
-            conn.begin();
+            RecordService<Record> serviceType = getRecordService(recordIRI, conn);
             serviceType.export(recordIRI, config, conn);
-            conn.close();
         }
     }
 
-    private OrmFactory<? extends Record> getFactory(com.mobi.rdf.api.Resource recordId, RepositoryConnection conn) {
-        List<com.mobi.rdf.api.Resource> types = RepositoryResults.asList(
+    @Override
+    public void export(List<IRI> recordIRIList, RecordOperationConfig config) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            for (int i = 0; i<recordIRIList.size();i++){
+                RecordService<Record> serviceType = getRecordService(recordIRIList.get(i), conn);
+                serviceType.export(recordIRIList.get(i), config, conn);
+            }
+        }
+    }
+
+    private RecordService<Record> getRecordService(Resource recordId, RepositoryConnection conn) {
+        List<Resource> types = RepositoryResults.asList(
                 conn.getStatements(recordId, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
                 .stream()
                 .map(Statements::objectResource)
@@ -1285,19 +1290,15 @@ public class SimpleCatalogManager implements CatalogManager {
                 .map(Optional::get)
                 .collect(Collectors.toList());
 
-        List<OrmFactory<? extends Record>> orderedFactories =
-                factoryRegistry.getSortedFactoriesOfType(Record.class)
-                        .stream()
-                        .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
-                        .collect(Collectors.toList());
+        String classTypeString = factoryRegistry.getSortedFactoriesOfType(Record.class).stream()
+                .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
+                .map(OrmFactory::getImpl)
+                .map(Class::toString)
+                .filter(s -> recordServices.keySet().contains(s))
+                .findFirst().orElseThrow(() ->
+                        new IllegalArgumentException("No known record services for this record type."));
 
-        for (OrmFactory<? extends Record> factory : orderedFactories) {
-            if (recordServices.keySet().contains(factory.getTypeIRI().stringValue())) {
-                return factory;
-            }
-        }
-
-        throw new IllegalArgumentException("No known factories for this record type.");
+        return recordServices.get(classTypeString);
     }
 
 

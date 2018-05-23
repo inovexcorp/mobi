@@ -843,4 +843,13 @@ public interface CatalogManager {
      * @param config The configuration of the record
      */
     void export(IRI recordIRI, RecordOperationConfig config);
+
+    /**
+     * Exports the record data based on the record type and associated configurations. Export implementation is defined
+     * by available RecordServices.
+     *
+     * @param recordIRIList The list of record IRIs
+     * @param config The configuration of the record
+     */
+    void export(List<IRI> recordIRIList, RecordOperationConfig config);
 }
