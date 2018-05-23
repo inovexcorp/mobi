@@ -37,6 +37,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import aQute.bnd.annotation.metatype.Configurable;
+import aQute.lib.collections.SortedList;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
@@ -88,6 +89,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -190,6 +192,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         props.put("iri", "http://mobi.com/test/catalogs#catalog");
 
         manager.start(props);
+        manager.setFactoryRegistry(ORM_FACTORY_REGISTRY);
 
         distributedCatalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-distributed");
         localCatalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-local");
@@ -2133,10 +2136,31 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     /* export() */
 
     @Test
-    public void testExport() throws Exception {
+    public void testExportRecordWithoutList() throws Exception {
         RecordOperationConfig config = new OperationConfig();
+        RepositoryConnection conn = repo.getConnection();
         manager.export(RECORD_IRI, config);
-        verify(recordService).export(eq(RECORD_IRI), any(RecordOperationConfig.class), any(RepositoryConnection.class));
+        verify(recordService).export(eq(RECORD_IRI), config, conn);
+    }
+
+    @Test
+    public void testExportVersionedRecordWithoutList() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        RepositoryConnection conn = repo.getConnection();
+        manager.export(VERSIONED_RECORD_IRI, config);
+        verify(recordService).export(eq(VERSIONED_RECORD_IRI), config, conn);
+    }
+
+    @Test
+    public void testExportWithList() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        RepositoryConnection conn = repo.getConnection();
+        List<IRI> exportList = new SortedList<IRI>();
+        exportList.add(RECORD_IRI);
+        exportList.add(VERSIONED_RECORD_IRI);
+        manager.export(exportList, config);
+        verify(recordService).export(eq(RECORD_IRI), config, conn);
+        verify(recordService).export(eq(VERSIONED_RECORD_IRI), config, conn);
     }
 
     private void setUpConflictTest(Resource leftId, Resource rightId, Difference leftDiff, Difference rightDiff, Model originalModel) {
