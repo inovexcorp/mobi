@@ -2146,7 +2146,16 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     public void testExportVersionedRecordWithoutList() throws Exception {
         RecordOperationConfig config = new OperationConfig();
         manager.export(VERSIONED_RECORD_IRI, config);
-        verify(recordService).export(eq(VERSIONED_RECORD_IRI), any(OperationConfig.class), any(RepositoryConnection.class));
+        verify(recordService).export(eq(VERSIONED_RECORD_IRI), any(OperationConfig.class),
+                any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testExportVersionedRDFRecordWithoutList() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        manager.export(VERSIONED_RDF_RECORD_IRI, config);
+        verify(recordService).export(eq(VERSIONED_RDF_RECORD_IRI), any(OperationConfig.class),
+                any(RepositoryConnection.class));
     }
 
     @Test
