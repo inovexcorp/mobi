@@ -374,7 +374,7 @@ public class RestUtilsTest {
         Set<Thing> set = getTestThings(Collections.singletonMap(testPropIRI, "VALUE"));
 
         // TEST ASC
-        Response response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 1, 
+        Response response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 1,
                 true, (Function<Thing, Boolean>) null,
                 "http://example.com/test#TestThing", transformer, service);
         Object object = response.getEntity();
@@ -388,8 +388,8 @@ public class RestUtilsTest {
         assertEquals(link.getRel(), "next");
         assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
 
-        response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, true, 
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer, 
+        response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, true,
+                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer,
                 service);
         object = response.getEntity();
         assertTrue(object instanceof JSONArray);
@@ -400,10 +400,10 @@ public class RestUtilsTest {
         assertEquals(response.getLinks().size(), 2);
         assertTrue(response.getLinks().stream()
                 .allMatch(lnk -> (lnk.getRel().equals("prev") || lnk.getRel().equals("next"))
-                && lnk.getUri().getRawPath().equals("/rest/tests")));
+                        && lnk.getUri().getRawPath().equals("/rest/tests")));
 
-        response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 2, 1, true, 
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer, 
+        response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 2, 1, true,
+                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer,
                 service);
         object = response.getEntity();
         assertTrue(object instanceof JSONArray);
@@ -417,8 +417,8 @@ public class RestUtilsTest {
         assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
 
         // TEST DESC
-        response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 1, false, 
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer, 
+        response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 1, false,
+                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer,
                 service);
         object = response.getEntity();
         assertTrue(object instanceof JSONArray);
@@ -431,8 +431,8 @@ public class RestUtilsTest {
         assertEquals(link.getRel(), "next");
         assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
 
-        response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, false, 
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer, 
+        response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, false,
+                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer,
                 service);
         object = response.getEntity();
         assertTrue(object instanceof JSONArray);
@@ -443,10 +443,10 @@ public class RestUtilsTest {
         assertEquals(response.getLinks().size(), 2);
         assertTrue(response.getLinks().stream()
                 .allMatch(lnk -> (lnk.getRel().equals("prev") || lnk.getRel().equals("next"))
-                && lnk.getUri().getRawPath().equals("/rest/tests")));
+                        && lnk.getUri().getRawPath().equals("/rest/tests")));
 
-        response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 2, 1, false, 
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer, 
+        response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 2, 1, false,
+                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer,
                 service);
         object = response.getEntity();
         assertTrue(object instanceof JSONArray);
@@ -460,8 +460,8 @@ public class RestUtilsTest {
         assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
 
         // TEST NO PAGING REQUIRED
-        response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 10, true, 
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer, 
+        response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 10, true,
+                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing", transformer,
                 service);
         assertEquals(response.getLinks().size(), 0);
     }
@@ -478,7 +478,7 @@ public class RestUtilsTest {
             }
         };
 
-        Response response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 1, true, 
+        Response response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 1, true,
                 f, "http://example.com/test#TestThing", transformer, service);
         Object object = response.getEntity();
         assertTrue(object instanceof JSONArray);
@@ -491,7 +491,7 @@ public class RestUtilsTest {
         assertEquals(link.getRel(), "next");
         assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
 
-        response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, Collections1, 1, true, 
+        response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, true,
                 f, "http://example.com/test#TestThing", transformer, service);
         object = response.getEntity();
         assertTrue(object instanceof JSONArray);
@@ -519,7 +519,7 @@ public class RestUtilsTest {
         assertEquals(response.getLinks().size(), 2);
         assertTrue(response.getLinks().stream()
                 .allMatch(lnk -> (lnk.getRel().equals("prev") || lnk.getRel().equals("next"))
-                && lnk.getUri().getRawPath().equals("/rest/tests")));
+                        && lnk.getUri().getRawPath().equals("/rest/tests")));
 
         response = RestUtils.createPaginatedResponseWithJson(uriInfo, array, 3, 1, 2);
         assertEquals(response.getLinks().size(), 1);
