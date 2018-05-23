@@ -2138,29 +2138,27 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     @Test
     public void testExportRecordWithoutList() throws Exception {
         RecordOperationConfig config = new OperationConfig();
-        RepositoryConnection conn = repo.getConnection();
         manager.export(RECORD_IRI, config);
-        verify(recordService).export(eq(RECORD_IRI), config, conn);
+        verify(recordService).export(eq(RECORD_IRI), any(OperationConfig.class), any(RepositoryConnection.class));
     }
 
     @Test
     public void testExportVersionedRecordWithoutList() throws Exception {
         RecordOperationConfig config = new OperationConfig();
-        RepositoryConnection conn = repo.getConnection();
         manager.export(VERSIONED_RECORD_IRI, config);
-        verify(recordService).export(eq(VERSIONED_RECORD_IRI), config, conn);
+        verify(recordService).export(eq(VERSIONED_RECORD_IRI), any(OperationConfig.class), any(RepositoryConnection.class));
     }
 
     @Test
     public void testExportWithList() throws Exception {
         RecordOperationConfig config = new OperationConfig();
-        RepositoryConnection conn = repo.getConnection();
-        List<IRI> exportList = new SortedList<IRI>();
+        List<IRI> exportList = new ArrayList<>();
         exportList.add(RECORD_IRI);
         exportList.add(VERSIONED_RECORD_IRI);
         manager.export(exportList, config);
-        verify(recordService).export(eq(RECORD_IRI), config, conn);
-        verify(recordService).export(eq(VERSIONED_RECORD_IRI), config, conn);
+        verify(recordService).export(eq(RECORD_IRI),  any(OperationConfig.class), any(RepositoryConnection.class));
+        verify(recordService).export(eq(VERSIONED_RECORD_IRI),  any(OperationConfig.class),
+                any(RepositoryConnection.class));
     }
 
     private void setUpConflictTest(Resource leftId, Resource rightId, Difference leftDiff, Difference rightDiff, Model originalModel) {

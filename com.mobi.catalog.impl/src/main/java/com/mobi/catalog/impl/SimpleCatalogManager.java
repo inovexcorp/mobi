@@ -1272,13 +1272,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void export(List<IRI> recordIRIList, RecordOperationConfig config) {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            for (int i = 0; i<recordIRIList.size();i++){
-                RecordService<Record> serviceType = getRecordService(recordIRIList.get(i), conn);
-                serviceType.export(recordIRIList.get(i), config, conn);
-            }
-        }
+    public void export(List<IRI> recordIRIs, RecordOperationConfig config) {
+        recordIRIs.forEach(iri -> export(iri, config));
     }
 
     private RecordService<Record> getRecordService(Resource recordId, RepositoryConnection conn) {
@@ -1292,7 +1287,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
         String classTypeString = factoryRegistry.getSortedFactoriesOfType(Record.class).stream()
                 .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
-                .map(OrmFactory::getImpl)
+                .map(OrmFactory::getType)
                 .map(Class::toString)
                 .filter(s -> recordServices.keySet().contains(s))
                 .findFirst().orElseThrow(() ->

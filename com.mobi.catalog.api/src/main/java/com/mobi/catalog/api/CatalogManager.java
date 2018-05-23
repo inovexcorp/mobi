@@ -851,5 +851,5 @@ public interface CatalogManager {
      * @param recordIRIList The list of record IRIs
      * @param config The configuration of the record
      */
-    void export(List<IRI> recordIRIList, RecordOperationConfig config);
+    void export(List<IRI> recordIRIs, RecordOperationConfig config);
 }
