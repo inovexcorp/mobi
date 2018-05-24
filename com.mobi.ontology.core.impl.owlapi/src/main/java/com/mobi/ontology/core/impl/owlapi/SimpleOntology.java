@@ -953,11 +953,7 @@ public class SimpleOntology implements Ontology {
             LOG.error("Unable to read ontology file.", e);
             throw new MobiOntologyException(e);
         } finally {
-            try {
-                inputStream.close();
-            } catch (IOException e) {
-                LOG.warn("Unable to close input stream.", e);
-            }
+            IOUtils.closeQuietly(inputStream);
         }
         return bytes;
     }
@@ -994,9 +990,9 @@ public class SimpleOntology implements Ontology {
             }
         } finally {
             if (markSupported != null) {
-                markSupported.close();
+                IOUtils.closeQuietly(markSupported);
             } else {
-                inputStream.close();
+                IOUtils.closeQuietly(inputStream);
             }
         }
     }
