@@ -12,12 +12,12 @@ package com.mobi.catalog.rest.utils;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -49,8 +49,8 @@ public class CatalogRestUtils {
      * Creates the JSONObject to be returned in the commit chain to more easily work with the data associated with the
      * Commit.
      *
-     * @param commit The Commit object to parse data from.
-     * @param vf The {@link ValueFactory} to use.
+     * @param commit        The Commit object to parse data from.
+     * @param vf            The {@link ValueFactory} to use.
      * @param engineManager The {@link EngineManager} to use.
      * @return JSONObject with the necessary information set.
      */
@@ -91,10 +91,10 @@ public class CatalogRestUtils {
      * in the Response has key "commit" with value of the Commit's JSON-LD and the keys and values of the result of
      * getCommitDifferenceObject.
      *
-     * @param commit The Commit to create a response for
-     * @param difference The {@link Difference} for the specified commit.
-     * @param format The RDF format to return the addition and deletion statements in.
-     * @param transformer The {@link SesameTransformer} to use.
+     * @param commit       The Commit to create a response for
+     * @param difference   The {@link Difference} for the specified commit.
+     * @param format       The RDF format to return the addition and deletion statements in.
+     * @param transformer  The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return A Response containing a JSONObject with the Commit JSON-LD and its addition and deletion statements
      */
@@ -110,18 +110,21 @@ public class CatalogRestUtils {
      * Creates a JSON string for the Difference statements in the specified RDF format. Key "additions" has value of the
      * Difference's addition statements and key "deletions" has value of the Difference's deletion statements.
      *
-     * @param difference The Difference to convert into a JSONObject.
-     * @param format A String representing the RDF format to return the statements in.
-     * @param transformer The {@link SesameTransformer} to use.
+     * @param difference   The Difference to convert into a JSONObject.
+     * @param format       A String representing the RDF format to return the statements in.
+     * @param transformer  The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
      * @return A JSONObject with a key for the Difference's addition statements and a key for the Difference's deletion
-     *         statements.
+     * statements.
      */
     public static String getDifferenceJsonString(Difference difference, String format, SesameTransformer transformer,
-            BNodeService bNodeService) {
+                                                 BNodeService bNodeService) {
+        String additions = modelToSkolemizedString(difference.getAdditions(), format, transformer, bNodeService);
+        String deletions = modelToSkolemizedString(difference.getDeletions(), format, transformer, bNodeService);
+
         return "{ \"additions\": "
-                + modelToSkolemizedString(difference.getAdditions(), format, transformer, bNodeService)
-                + ", \"deletions\": "
-                + modelToSkolemizedString(difference.getDeletions(), format, transformer, bNodeService) + "}";
+                + (additions.startsWith("\"") && additions.endsWith("\"") ? additions : "\"" + additions + "\"")
+                + ", deletions\": "
+                + (deletions.startsWith("\"") && deletions.endsWith("\"") ? deletions : "\"" + deletions + "\"");
     }
 }
