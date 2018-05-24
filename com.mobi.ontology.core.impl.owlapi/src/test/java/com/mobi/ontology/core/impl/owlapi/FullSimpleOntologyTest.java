@@ -74,6 +74,7 @@ import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
 
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Optional;
 import java.util.Set;
 
@@ -357,7 +358,6 @@ public class FullSimpleOntologyTest {
     }
 
 
-
     @Test(expected = IllegalArgumentException.class)
     public void getAllClassObjectPropertiesWhenMissingTest() throws Exception {
         ontology.getAllClassObjectProperties(errorIRI);
@@ -413,7 +413,7 @@ public class FullSimpleOntologyTest {
         Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, true);
 
         String jsonld = listOntology.asJsonLD(true).toString();
-        assertEquals(IOUtils.toString(expected), jsonld);
+        assertEquals(IOUtils.toString(expected, Charset.defaultCharset()), jsonld);
         verify(blankNodeService).skolemize(any(com.mobi.rdf.api.Model.class));
     }
 
@@ -428,7 +428,7 @@ public class FullSimpleOntologyTest {
         Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, true);
 
         String jsonld = listOntology.asJsonLD(false).toString();
-        assertEquals(IOUtils.toString(expected), jsonld);
+        assertEquals(IOUtils.toString(expected, Charset.defaultCharset()), jsonld);
         verify(blankNodeService, times(0)).skolemize(any(com.mobi.rdf.api.Model.class));
     }
 }
