@@ -12,16 +12,19 @@ package com.mobi.ontology.core.impl.owlapi;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+import static java.util.Arrays.asList;
+import static java.util.Arrays.copyOf;
 
 import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.Individual;
@@ -56,6 +59,7 @@ import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
@@ -121,6 +125,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -134,6 +139,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -166,10 +172,10 @@ public class SimpleOntology implements Ontology {
     /**
      * Creates a brand new SimpleOntology using an OntologyId.
      *
-     * @param ontologyId The ID for the new ontology
+     * @param ontologyId      The ID for the new ontology
      * @param ontologyManager An OntologyManager
-     * @param transformer A SesameTransformer
-     * @param bNodeService A BNodeService
+     * @param transformer     A SesameTransformer
+     * @param bNodeService    A BNodeService
      * @throws MobiOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(OntologyId ontologyId, OntologyManager ontologyManager, SesameTransformer transformer,
@@ -201,34 +207,40 @@ public class SimpleOntology implements Ontology {
     /**
      * Creates a SimpleOntology using the ontology data in an InputStream.
      *
-     * @param inputStream An InputStream containing a serialized ontology
+     * @param inputStream     An InputStream containing a serialized ontology
      * @param ontologyManager An OntologyManager
-     * @param transformer A SesameTransformer
-     * @param bNodeService A BNodeService
+     * @param transformer     A SesameTransformer
+     * @param bNodeService    A BNodeService
      * @throws MobiOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(InputStream inputStream, OntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService, boolean resolveImports) throws MobiOntologyException {
         initialize(ontologyManager, transformer, bNodeService, resolveImports);
-
         try {
-            owlOntology = owlManager.loadOntologyFromOntologyDocument(inputStream);
+            byte[] bytes = inputStreamToByteArray(inputStream);
+            try {
+                initializeSesameModel(new ByteArrayInputStream(bytes));
+            } catch (IOException e) {
+                LOG.warn("Unable to initialize sesame model", e);
+            }
+
+            owlOntology = owlManager.loadOntologyFromOntologyDocument(new ByteArrayInputStream(bytes));
             createOntologyId(null);
             owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
         } catch (OWLOntologyCreationException e) {
             throw new MobiOntologyException("Error in ontology creation", e);
-        } finally {
-            IOUtils.closeQuietly(inputStream);
+        } catch (MobiOntologyException e) {
+            LOG.error("Input stream error.", e);
         }
     }
 
     /**
      * Creates a SimpleOntology using the ontology data in a File.
      *
-     * @param file A File containing a serialized ontology
+     * @param file            A File containing a serialized ontology
      * @param ontologyManager An OntologyManager
-     * @param transformer A SesameTransformer
-     * @param bNodeService A BNodeService
+     * @param transformer     A SesameTransformer
+     * @param bNodeService    A BNodeService
      * @throws MobiOntologyException If an error occurs during ontology creation
      * @throws FileNotFoundException If the provided File cannot be found
      */
@@ -241,10 +253,10 @@ public class SimpleOntology implements Ontology {
     /**
      * Creates a SimpleOntology using the ontology data in a File.
      *
-     * @param model A model containing statements that make up an ontology
+     * @param model           A model containing statements that make up an ontology
      * @param ontologyManager An OntologyManager
-     * @param transformer A SesameTransformer
-     * @param bNodeService A BNodeService
+     * @param transformer     A SesameTransformer
+     * @param bNodeService    A BNodeService
      * @throws MobiOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(Model model, OntologyManager ontologyManager, SesameTransformer transformer,
@@ -282,10 +294,10 @@ public class SimpleOntology implements Ontology {
     /**
      * Creates a SimpleOntology using an IRI to collect the document.
      *
-     * @param iri An IRI of an existing ontology
+     * @param iri             An IRI of an existing ontology
      * @param ontologyManager An OntologyManager
-     * @param transformer A SesameTransformer
-     * @param bNodeService A BNodeService
+     * @param transformer     A SesameTransformer
+     * @param bNodeService    A BNodeService
      * @throws MobiOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(IRI iri, SimpleOntologyManager ontologyManager, SesameTransformer transformer,
@@ -305,10 +317,10 @@ public class SimpleOntology implements Ontology {
     /**
      * Creates a SimpleOntology using the ontology data in a JSON-LD string.
      *
-     * @param json A JSON-LD string with a serialized ontology
+     * @param json            A JSON-LD string with a serialized ontology
      * @param ontologyManager An OntologyManager
-     * @param transformer A SesameTransformer
-     * @param bNodeService A BNodeService
+     * @param transformer     A SesameTransformer
+     * @param bNodeService    A BNodeService
      * @throws MobiOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(String json, OntologyManager ontologyManager, SesameTransformer transformer,
@@ -920,6 +932,75 @@ public class SimpleOntology implements Ontology {
         return stream.map(HasDomain::getDomain).count() == 0;
     }
 
+    /**
+     * Reads the provided {@link InputStream} into a {@link byte[]}
+     *
+     * @param inputStream
+     * @return {@link byte[]}
+     */
+    private byte[] inputStreamToByteArray(InputStream inputStream) {
+        int size = 8192;
+        byte[] bytes = new byte[0];
+        try {
+            while (size == 8192) {
+                byte[] read = new byte[size];
+                size = inputStream.read(read);
+                int offset = bytes.length;
+                bytes = copyOf(bytes, offset + size);
+                System.arraycopy(read, 0, bytes, offset, size);
+            }
+        } catch (IOException e) {
+            LOG.error("Unable to read ontology file.", e);
+            throw new MobiOntologyException(e);
+        } finally {
+            try {
+                inputStream.close();
+            } catch (IOException e) {
+                LOG.warn("Unable to close input stream.", e);
+            }
+        }
+        return bytes;
+    }
+
+    /**
+     * Parses and intitializes the {@link org.eclipse.rdf4j.model.Model} for the ontology represented by the
+     * {@link InputStream}.
+     *
+     * @param inputStream
+     * @throws IOException
+     */
+    private void initializeSesameModel(InputStream inputStream) throws IOException {
+        sesameModel = new LinkedHashModel();
+
+        Set<RDFFormat> formats = new HashSet<>(asList(RDFFormat.JSONLD, RDFFormat.TRIG, RDFFormat.TURTLE,
+                RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS));
+
+        Iterator<RDFFormat> rdfFormatIterator = formats.iterator();
+        InputStream markSupported = inputStream.markSupported() ? inputStream : new BufferedInputStream(inputStream);
+
+        try {
+            markSupported.mark(0);
+
+            while (rdfFormatIterator.hasNext()) {
+                RDFFormat format = rdfFormatIterator.next();
+                try {
+                    sesameModel = Rio.parse(markSupported, "", format);
+                    LOG.debug("File is {} formatted.", format.getName());
+                    break;
+                } catch (RDFParseException | UnsupportedRDFormatException e) {
+                    markSupported.reset();
+                    LOG.info("File is not {} formatted.", format.getName());
+                }
+            }
+        } finally {
+            if (markSupported != null) {
+                markSupported.close();
+            } else {
+                inputStream.close();
+            }
+        }
+    }
+
     private class NoImportLoader implements OWLOntologyIRIMapper {
         private static final long serialVersionUID = 1053401035177616554L;
         // Copy and pasted from a blank Protégé document.
@@ -939,7 +1020,8 @@ public class SimpleOntology implements Ontology {
                 BufferedWriter out = new BufferedWriter(new FileWriter(tmp));
                 out.write(blankDocument);
                 out.close();
-            } catch (IOException ignored) { }
+            } catch (IOException ignored) {
+            }
             return org.semanticweb.owlapi.model.IRI.create(tmp); // create blank IRI
         }
     }
