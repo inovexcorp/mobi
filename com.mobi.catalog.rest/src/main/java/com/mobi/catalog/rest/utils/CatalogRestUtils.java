@@ -12,12 +12,12 @@ package com.mobi.catalog.rest.utils;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -38,8 +38,9 @@ import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.apache.commons.lang.StringEscapeUtils;
+import net.sf.json.JSONSerializer;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 
 import javax.ws.rs.core.MediaType;
@@ -123,10 +124,14 @@ public class CatalogRestUtils {
         String additions = modelToSkolemizedString(difference.getAdditions(), format, transformer, bNodeService);
         String deletions = modelToSkolemizedString(difference.getDeletions(), format, transformer, bNodeService);
 
-        return "{ \"additions\": "
-                + (format.toLowerCase().contains("json") ? additions : "\"" + StringEscapeUtils.escapeJava(additions) + "\"")
-                + ", \"deletions\": "
-                + (format.toLowerCase().contains("json") ? deletions : "\"" + StringEscapeUtils.escapeJava(deletions) + "\"")
-                + "}";
+        JSONObject diff = new JSONObject();
+        if (format.toLowerCase().contains("json")) {
+            diff.put("additions", JSONArray.fromObject(additions));
+            diff.put("deletions", JSONArray.fromObject(deletions));
+        } else {
+            diff.put("additions", JSONSerializer.toJSON(additions));
+            diff.put("deletions", JSONSerializer.toJSON(deletions));
+        }
+        return diff.toString();
     }
 }

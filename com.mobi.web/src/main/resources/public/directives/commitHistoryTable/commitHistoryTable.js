@@ -103,10 +103,10 @@
 
                     dvm.openCommitOverlay = function(commitId) {
                         cm.getCommit(commitId)
-                            .then(commit => {
-                                dvm.commit = commit;
-                                dvm.additions = commit.additions;
-                                dvm.deletions = commit.deletions;
+                            .then(response => {
+                                dvm.commit = _.find(dvm.commits, {id: commitId});
+                                dvm.additions = response.additions;
+                                dvm.deletions = response.deletions;
                                 dvm.showOverlay = true;
                             }, errorMessage => dvm.error = errorMessage);
                     }
