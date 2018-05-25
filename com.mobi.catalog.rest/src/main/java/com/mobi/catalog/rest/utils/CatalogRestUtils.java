@@ -125,18 +125,10 @@ public class CatalogRestUtils {
         String additions = modelToSkolemizedString(difference.getAdditions(), format, transformer, bNodeService);
         String deletions = modelToSkolemizedString(difference.getDeletions(), format, transformer, bNodeService);
 
-        JSONObject diff = new JSONObject();
-        if (format.toLowerCase().contains("json")) {
-            diff.put("additions", JSONArray.fromObject(additions));
-            diff.put("deletions", JSONArray.fromObject(deletions));
-        } else {
-            String jsonAdditions = ((JSONArray) JSONSerializer.toJSON(Arrays.asList(additions.trim().split("\n")))).stream()
-                    .reduce("", (a, b) -> a + "\n" + b).toString();
-            String jsonDeletions = ((JSONArray) JSONSerializer.toJSON(Arrays.asList(deletions.trim().split("\n")))).stream()
-                    .reduce("", (a, b) -> a + "\n" + b).toString();
-            diff.put("additions", jsonAdditions + "\n");
-            diff.put("deletions", jsonDeletions + "\n");
-        }
-        return diff.toString();
+
+        return "{ \"additions\": "
+                + format.toLowerCase().contains("json") ? additions : "\"" + JSONValue.escape(additions) + "\", "
+                + \"deletions\": "
+                + format.toLowerCase().contains("json") ? deletions : "\"" + JSONValue.escape(deletions) + "\"}";
     }
 }
