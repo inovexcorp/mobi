@@ -41,7 +41,6 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.repository.api.RepositoryConnection;
 
 import java.util.List;
 import java.util.Optional;
@@ -855,10 +854,10 @@ public interface CatalogManager {
     void export(IRI recordIRI, RecordOperationConfig config);
 
     /**
-     * Exports the record data based on the record type and associated configurations. Export implementation is defined
-     * by available RecordServices.
+     * Exports a list of record data based on the record type and associated configurations. Export implementation is
+     * defined by available RecordServices.
      *
-     * @param recordIRIList The list of record IRIs
+     * @param recordIRIs The list of record IRIs
      * @param config The configuration of the record
      */
     void export(List<IRI> recordIRIs, RecordOperationConfig config);

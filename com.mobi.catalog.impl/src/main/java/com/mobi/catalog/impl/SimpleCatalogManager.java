@@ -62,12 +62,8 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
-import com.mobi.catalog.api.record.AbstractRecordService;
 import com.mobi.catalog.api.record.RecordService;
-import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
-import com.mobi.catalog.api.record.config.VersionedRDFRecordExportSettings;
-import com.mobi.catalog.api.versioning.VersioningService;
 import com.mobi.catalog.config.CatalogConfig;
 import com.mobi.catalog.util.SearchResults;
 import com.mobi.exception.MobiException;
@@ -75,7 +71,6 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
-import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.Statements;
@@ -143,7 +138,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private com.mobi.rdf.api.Resource distributedCatalogIRI;
     private com.mobi.rdf.api.Resource localCatalogIRI;
     private Map<com.mobi.rdf.api.Resource, String> sortingOptions = new HashMap<>();
-    private Map<String, RecordService<Record>> recordServices = new HashMap<>();
+    private Map<String, RecordService<? extends Record>> recordServices = new HashMap<>();
 
     public SimpleCatalogManager() {
     }
@@ -229,18 +224,23 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Reference
-    void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
-        this.factoryRegistry = factoryRegistry;
-    }
-
-    @Reference
     void setTagFactory(TagFactory tagFactory) {
         this.tagFactory = tagFactory;
     }
 
+    @Reference
+    void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
+        this.factoryRegistry = factoryRegistry;
+    }
+
     @Reference(type = '*', dynamic = true)
-    void addRecordService(RecordService<Record> recordService) {
+    void addRecordService(RecordService<? extends Record> recordService) {
         recordServices.put(recordService.getType().toString(), recordService);
+    }
+
+    @Reference
+    void removeRecordService(RecordService<Record> recordService) {
+        recordServices.remove(recordService.getType().toString());
     }
 
     private static final String PROV_AT_TIME = "http://www.w3.org/ns/prov#atTime";
@@ -1286,7 +1286,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public void export(IRI recordIRI, RecordOperationConfig config) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            RecordService<Record> serviceType = getRecordService(recordIRI, conn);
+            RecordService<? extends Record> serviceType = getRecordService(recordIRI, conn);
             serviceType.export(recordIRI, config, conn);
         }
     }
@@ -1296,7 +1296,14 @@ public class SimpleCatalogManager implements CatalogManager {
         recordIRIs.forEach(iri -> export(iri, config));
     }
 
-    private RecordService<Record> getRecordService(Resource recordId, RepositoryConnection conn) {
+    /**
+     * Takes a recordId and returns the IRI type for that record. If failure, it returns the most specific
+     * recordService
+     *
+     * @param recordId The record IRI
+     * @return
+     */
+    private RecordService<? extends Record> getRecordService(Resource recordId, RepositoryConnection conn) {
         List<Resource> types = RepositoryResults.asList(
                 conn.getStatements(recordId, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
                 .stream()
@@ -1315,7 +1322,6 @@ public class SimpleCatalogManager implements CatalogManager {
 
         return recordServices.get(classTypeString);
     }
-
 
     /**
      * Creates a conflict using the provided parameters as the data to construct it.

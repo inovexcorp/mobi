@@ -159,6 +159,9 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private RecordService<Record> recordService;
 
     @Mock
+    private RecordService<VersionedRDFRecord> versionedRDFRecordService;
+
+    @Mock
     private MergeRequestManager mergeRequestManager;
 
     @Before
@@ -174,6 +177,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         MockitoAnnotations.initMocks(this);
 
         when(recordService.getType()).thenReturn(Record.class);
+        when(versionedRDFRecordService.getType()).thenReturn(VersionedRDFRecord.class);
 
         manager = new SimpleCatalogManager();
         injectOrmFactoryReferencesIntoService(manager);
@@ -181,6 +185,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         manager.setValueFactory(VALUE_FACTORY);
         manager.setModelFactory(MODEL_FACTORY);
         manager.setUtils(utilsService);
+        manager.addRecordService(versionedRDFRecordService);
         manager.addRecordService(recordService);
         manager.setMergeRequestManager(mergeRequestManager);
 
