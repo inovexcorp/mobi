@@ -38,12 +38,10 @@ import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
-import net.sf.json.JSONArray;
+import net.minidev.json.JSONValue;
 import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 
-import java.util.Arrays;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -127,8 +125,10 @@ public class CatalogRestUtils {
 
 
         return "{ \"additions\": "
-                + (format.toLowerCase().contains("json") ? additions : "\"" + JSONValue.escape(additions) + "\", ")
-                + "\""deletions\": "
-                + (format.toLowerCase().contains("json") ? deletions : "\"" + JSONValue.escape(deletions) + "\" }");
+                + (format.toLowerCase().contains("json") ? additions : "\"" + JSONValue.escape(additions) + "\"")
+                + ", \"deletions\": "
+                + (format.toLowerCase().contains("json") ? deletions : "\"" + JSONValue.escape(deletions) + "\"")
+                + " }";
+
     }
 }
