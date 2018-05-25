@@ -127,8 +127,8 @@ public class CatalogRestUtils {
 
 
         return "{ \"additions\": "
-                + format.toLowerCase().contains("json") ? additions : "\"" + JSONValue.escape(additions) + "\", "
+                + (format.toLowerCase().contains("json") ? additions : "\"" + JSONValue.escape(additions) + "\", ")
                 + \"deletions\": "
-                + format.toLowerCase().contains("json") ? deletions : "\"" + JSONValue.escape(deletions) + "\"}";
+                + (format.toLowerCase().contains("json") ? deletions : "\"" + JSONValue.escape(deletions) + "\" }");
     }
 }
