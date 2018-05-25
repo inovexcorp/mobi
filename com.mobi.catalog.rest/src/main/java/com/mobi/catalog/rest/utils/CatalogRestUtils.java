@@ -43,6 +43,7 @@ import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 
+import java.util.Arrays;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -129,8 +130,12 @@ public class CatalogRestUtils {
             diff.put("additions", JSONArray.fromObject(additions));
             diff.put("deletions", JSONArray.fromObject(deletions));
         } else {
-            diff.put("additions", JSONSerializer.toJSON(additions));
-            diff.put("deletions", JSONSerializer.toJSON(deletions));
+            String jsonAdditions = ((JSONArray) JSONSerializer.toJSON(Arrays.asList(additions.trim().split("\n")))).stream()
+                    .reduce("", (a, b) -> a + "\n" + b).toString();
+            String jsonDeletions = ((JSONArray) JSONSerializer.toJSON(Arrays.asList(deletions.trim().split("\n")))).stream()
+                    .reduce("", (a, b) -> a + "\n" + b).toString();
+            diff.put("additions", jsonAdditions + "\n");
+            diff.put("deletions", jsonDeletions + "\n");
         }
         return diff.toString();
     }
