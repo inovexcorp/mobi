@@ -146,14 +146,14 @@ public class CommitRestImpl implements CommitRest {
     }
 
     @Override
-    public Response getDifference(String source, String target, String rdfFormat) {
+    public Response getDifference(String sourceId, String targetId, String rdfFormat) {
         long start = System.currentTimeMillis();
         try {
-            checkStringParam(source, "Source commit is required");
-            checkStringParam(target, "Target commit is required");
+            checkStringParam(sourceId, "Source commit is required");
+            checkStringParam(targetId, "Target commit is required");
 
             try {
-                Difference diff = catalogManager.getDifference(vf.createIRI(source), vf.createIRI(target));
+                Difference diff = catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId));
                 return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
                         MediaType.APPLICATION_JSON).build();
             } catch (IllegalArgumentException ex) {

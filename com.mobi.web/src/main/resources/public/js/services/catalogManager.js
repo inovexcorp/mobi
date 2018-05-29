@@ -980,7 +980,7 @@
              * Calls the GET /mobirest/commits/{commitId} endpoint with the passed Commit id.
              *
              * @param {string} commitId The id of the Commit to retrieve
-             * @param {string='jsonld'} format The RDF format to return the Commit additions and deletions in
+             * @param {string} [format='jsonld'] format The RDF format to return the Commit additions and deletions in
              * @return {Promise} A promise that resolves with the Commit or rejects with an error message
              */
             self.getCommit = function(commitId, format = 'jsonld') {
@@ -1002,11 +1002,11 @@
              * 
              * @param {string} commitId - The commit id of the commit which should be the most recent commit in the 
              *      history.
-             * @param {string} [targetId=''] targetId - The commit id of the commit which should be the oldest commit in 
+             * @param {string} targetId - The commit id of the commit which should be the oldest commit in 
              *      the history.
              * @return {Promise} A promise that resolves with the list of Commits or rejects with an error message
              */
-            self.getCommitHistory = function(commitId, targetId = '') {
+            self.getCommitHistory = function(commitId, targetId) {
                 var config = {
                     params: { targetId }
                 };
@@ -1021,17 +1021,18 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /mobirest/commits/{commitId}/history endpoint with the passed Commit ids and returns the 
+             * Calls the GET /mobirest/commits/{commitId}/difference endpoint with the passed Commit ids and returns the 
              * Difference between the source and target Commit chains.
              * 
              * @param {string} commitId The commit id of the commit whose chain will be merged in to the target.
              * @param {string} targetId The commit id of the commit to receive the source commits.
+             * @param {string} [format='jsonld'] format The RDF format to return the Difference in
              * @return {Promise} A promise that resolves with the Difference of the two resulting Commit chains or 
              *      rejects with an error message
              */
-            self.getDifference = function(commitId, target) {
+            self.getDifference = function(commitId, targetId, format='jsonld') {
                 var config = {
-                    params: { target }
+                    params: { targetId, format }
                 };
                 return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference', config)
                     .then(response => response.data, util.rejectError);

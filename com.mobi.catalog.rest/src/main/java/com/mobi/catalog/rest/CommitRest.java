@@ -23,6 +23,7 @@ package com.mobi.catalog.rest;
  * #L%
  */
 
+import com.mobi.catalog.api.ontologies.mcat.Commit;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
@@ -87,21 +88,21 @@ public interface CommitRest {
     /**
      * Gets the {@link Difference} between the two specified {@link Commit}s.
      *
-     * @param source    {@link String} value of the source {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
+     * @param sourceId  {@link String} value of the sourceId {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
      *                  {@link String} starts with "{@code _:}".
-     * @param target    {@link String} value of the target {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
+     * @param targetId  {@link String} value of the targetId {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
      *                  {@link String} starts with "{@code _:}".
      * @param rdfFormat {@link String} representation of the desired {@link RDFFormat}. Default value is
      *                  {@code "jsonld"}.
-     * @return A {@link Response} containing the {@link Difference} between the {@code source} and {@code target}
+     * @return A {@link Response} containing the {@link Difference} between the {@code sourceId} and {@code targetId}
      * {@link Commit}s.
      */
     @GET
-    @Path("{source}/difference")
+    @Path("{sourceId}/difference")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves the Difference of the two specified Commits.")
-    Response getDifference(@PathParam("source") String source,
-                           @QueryParam("target") String target,
+    Response getDifference(@PathParam("sourceId") String sourceId,
+                           @QueryParam("targetId") String targetId,
                            @DefaultValue("jsonld") @QueryParam("format") String rdfFormat);
 }
