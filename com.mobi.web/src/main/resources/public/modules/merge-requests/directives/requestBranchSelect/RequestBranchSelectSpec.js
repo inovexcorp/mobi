@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Request Branch Select directive', function() {
+describe('Request Branch Select directive', function() {
     var $compile, scope, $q, catalogManagerSvc, mergeRequestsStateSvc, utilSvc;
 
     beforeEach(function() {
