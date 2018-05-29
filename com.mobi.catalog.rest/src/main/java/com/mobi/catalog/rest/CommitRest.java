@@ -22,6 +22,7 @@ package com.mobi.catalog.rest;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
@@ -48,7 +49,6 @@ public interface CommitRest {
      *                 starts with "{@code _:}".
      * @param format   {@link String} representation of the desired {@link RDFFormat}. Default value is
      *                 {@code "jsonld"}.
-     *
      * @return A {@link Response} with the {@link Commit} identified by the provided ID.
      */
     @GET
@@ -70,9 +70,8 @@ public interface CommitRest {
      *                 starts with "{@code _:}".
      * @param offset   An optional offset for the results.
      * @param limit    An optional limit for the results.
-     *
      * @return A {@link Response} containing a {@link List} of {@link Commit}s starting with the provided
-     *         {@code commitId} which represents the {@link Commit} history.
+     * {@code commitId} which represents the {@link Commit} history.
      */
     @GET
     @Path("{commitId}/history")
@@ -81,7 +80,7 @@ public interface CommitRest {
     @ApiOperation("Retrieves the Commit history specified by the provided ID.")
     Response getCommitHistory(@Context UriInfo uriInfo,
                               @PathParam("commitId") String commitId,
-                              @DefaultValue("") @QueryParam("targetId") String targetId,
+                              @QueryParam("targetId") String targetId,
                               @QueryParam("offset") int offset,
                               @QueryParam("limit") int limit);
 
@@ -94,9 +93,8 @@ public interface CommitRest {
      *                  {@link String} starts with "{@code _:}".
      * @param rdfFormat {@link String} representation of the desired {@link RDFFormat}. Default value is
      *                  {@code "jsonld"}.
-     *
      * @return A {@link Response} containing the {@link Difference} between the {@code source} and {@code target}
-     *         {@link Commit}s.
+     * {@link Commit}s.
      */
     @GET
     @Path("{source}/difference")

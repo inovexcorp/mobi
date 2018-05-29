@@ -285,7 +285,7 @@
                     request.targetTitle = util.getPropertyValue(request.request, prefixes.mergereq + 'targetBranchTitle');
                     request.sourceCommit = util.getPropertyId(request.request, prefixes.mergereq + 'sourceCommit')
                     request.targetCommit = util.getPropertyId(request.request, prefixes.mergereq + 'targetCommit')
-                    // TODO: Set the difference using the two commits
+                    request.difference = cm.getDifference(request.sourceCommit, request.targetCommit)
                 } else {
                     var sourceIri = util.getPropertyId(request.request, prefixes.mergereq + 'sourceBranch');
                     var targetIri = util.getPropertyId(request.request, prefixes.mergereq + 'targetBranch');

@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,7 +29,6 @@ describe('Merge Request View directive', function() {
         mockMergeRequestsState();
         mockMergeRequestManager();
         mockUtil();
-        mockPrefixes();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _mergeRequestsStateService_, _mergeRequestManagerService_, _utilService_) {
             $compile = _$compile_;

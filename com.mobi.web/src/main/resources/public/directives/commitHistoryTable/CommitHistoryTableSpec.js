@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Commit History Table directive', function() {
+describe('Commit History Table directive', function() {
     var $compile, scope, $q, catalogManagerSvc, Snap;
 
     beforeEach(function() {
@@ -119,7 +119,7 @@ fdescribe('Commit History Table directive', function() {
     });
     describe('controller bound variable', function() {
         it('branchTitle should be one way bound', function() {
-            var original = angular.copy(scope.branchTitle);
+            var original = scope.branchTitle;
             this.controller.branchTitle = '';
             scope.$digest();
             expect(scope.branchTitle).toEqual(original);
@@ -162,7 +162,7 @@ fdescribe('Commit History Table directive', function() {
                             this.controller.getCommits();
                             scope.targetId = undefined;
                             scope.$apply();
-                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId);
+                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined);
                             expect(this.controller.error).toEqual('');
                             expect(this.controller.commits).toEqual(this.commits);
                             expect(this.controller.drawGraph).toHaveBeenCalled();
@@ -172,7 +172,7 @@ fdescribe('Commit History Table directive', function() {
                             this.controller.getCommits();
                             scope.targetId = undefined;
                             scope.$apply();
-                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId);
+                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined);
                             expect(this.controller.error).toEqual('');
                             expect(this.controller.commits).toEqual(this.commits);
                             expect(this.controller.drawGraph).not.toHaveBeenCalled();
@@ -211,7 +211,7 @@ fdescribe('Commit History Table directive', function() {
                         this.controller.getCommits();
                         scope.targetId = undefined;
                         scope.$apply();
-                        expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId);
+                        expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined);
                         expect(this.controller.error).toEqual(this.error);
                         expect(this.controller.commits).toEqual([]);
                         expect(this.controller.reset).toHaveBeenCalled();
@@ -221,7 +221,7 @@ fdescribe('Commit History Table directive', function() {
                         this.controller.getCommits();
                         scope.targetId = undefined;
                         scope.$apply();
-                        expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId);
+                        expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined);
                         expect(this.controller.error).toEqual(this.error);
                         expect(this.controller.commits).toEqual([]);
                         expect(this.controller.reset).not.toHaveBeenCalled();

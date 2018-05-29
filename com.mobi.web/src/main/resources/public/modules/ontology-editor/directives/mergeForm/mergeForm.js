@@ -27,9 +27,9 @@
         .module('mergeForm', [])
         .directive('mergeForm', mergeForm);
 
-        mergeForm.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', 'prefixes'];
+        mergeForm.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', 'prefixes', '$q'];
 
-        function mergeForm(utilService, ontologyStateService, catalogManagerService, prefixes) {
+        function mergeForm(utilService, ontologyStateService, catalogManagerService, prefixes, $q) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -59,22 +59,16 @@
                     dvm.changeTarget = function() {
                         if (dvm.target) {
                             cm.getBranchHeadCommit(dvm.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId)
-                                .then(target => { 
-                                     return target.commit['@id'];
-                                }, errorMessage => {
-                                    dvm.util.createErrorToast(errorMessage);
-                                    dvm.os.listItem.merge.difference = undefined;
-                                }).then(targetId => {
-                                    dvm.targetHeadCommitId = targetId
-                                    cm.getDifference(dvm.os.listItem.ontologyRecord.commitId, targetId)
-                                .then(diff => {
+                                .then(target => {
+                                    dvm.targetHeadCommitId = target.commit['@id'];
+                                    return cm.getDifference(dvm.os.listItem.ontologyRecord.commitId, dvm.targetHeadCommitId);
+                                    }, $q.reject)
+                                .then( diff => {
                                     dvm.os.listItem.merge.difference = diff;
                                 }, errorMessage => {
                                     dvm.util.createErrorToast(errorMessage);
                                     dvm.os.listItem.merge.difference = undefined;
                                 });
-                                });
-                            
                         } else {
                             dvm.os.listItem.merge.difference = undefined;
                         }

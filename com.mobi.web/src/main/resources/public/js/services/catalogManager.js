@@ -1000,8 +1000,10 @@
              * @description
              * Calls the GET /mobirest/commits/{commitId}/history endpoint with the passed Commit id.
              * 
-             * @param {string} commitId
-             * @param {string=''} targetId
+             * @param {string} commitId - The commit id of the commit which should be the most recent commit in the 
+             *      history.
+             * @param {string} [targetId=''] targetId - The commit id of the commit which should be the oldest commit in 
+             *      the history.
              * @return {Promise} A promise that resolves with the list of Commits or rejects with an error message
              */
             self.getCommitHistory = function(commitId, targetId = '') {
@@ -1009,13 +1011,8 @@
                     params: { targetId }
                 };
 
-                if (targetId) {
-                    return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/history', config)
-                        .then(response => response.data, util.rejectError);
-                } else {
-                    return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/history')
-                        .then(response => response.data, util.rejectError);
-                }
+                return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/history', config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1024,11 +1021,13 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /mobirest/commits/{commitId}/history endpoint with the passed Commit id.
+             * Calls the GET /mobirest/commits/{commitId}/history endpoint with the passed Commit ids and returns the 
+             * Difference between the source and target Commit chains.
              * 
-             * @param {string} commitId The commit id of the commit at which to start the history.
-             * @param {string} targetId The commit id of the commit at which to terminate the history.
-             * @return {Promise} A promise that resolves with the list of Commits or rejects with an error message
+             * @param {string} commitId The commit id of the commit whose chain will be merged in to the target.
+             * @param {string} targetId The commit id of the commit to receive the source commits.
+             * @return {Promise} A promise that resolves with the Difference of the two resulting Commit chains or 
+             *      rejects with an error message
              */
             self.getDifference = function(commitId, target) {
                 var config = {

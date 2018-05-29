@@ -67,13 +67,13 @@
                 difference: '<'
             },
             controllerAs: 'dvm',
-            controller: ['$scope', function($scope) {
+            controller: function() {
                 var dvm = this;
                 dvm.tabs = {
                     changes: true,
                     commits: false
                 };
-            }]
+            }
         }
     }
 })();

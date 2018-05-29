@@ -54,9 +54,9 @@
          */
         .directive('mergeRequestView', mergeRequestView);
 
-        mergeRequestView.$inject = ['mergeRequestManagerService', 'mergeRequestsStateService', 'utilService', 'prefixes'];
+        mergeRequestView.$inject = ['mergeRequestManagerService', 'mergeRequestsStateService', 'utilService'];
 
-        function mergeRequestView(mergeRequestManagerService, mergeRequestsStateService, utilService, prefixes) {
+        function mergeRequestView(mergeRequestManagerService, mergeRequestsStateService, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/merge-requests/directives/mergeRequestView/mergeRequestView.html',
@@ -67,7 +67,6 @@
                     var dvm = this;
                     dvm.mm = mergeRequestManagerService;
                     dvm.util = utilService;
-                    dvm.prefixes = prefixes;
                     dvm.state = mergeRequestsStateService;
                     var currentTab = dvm.state.getCurrentTab();
                     dvm.selected = currentTab.selected;
