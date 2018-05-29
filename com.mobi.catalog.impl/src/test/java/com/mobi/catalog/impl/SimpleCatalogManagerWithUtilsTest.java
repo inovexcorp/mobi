@@ -1,5 +1,28 @@
 package com.mobi.catalog.impl;
 
+/*-
+ * #%L
+ * com.mobi.catalog.impl
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
@@ -114,18 +137,19 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
     public void testDuplicateChangeInBranchMerge() throws Exception {
         // Setup:
         IRI commitAIri = VALUE_FACTORY.createIRI(COMMITS + "commit-a");
-        IRI commitCIri = VALUE_FACTORY.createIRI(COMMITS + "commit-c");
+        IRI commitBIri = VALUE_FACTORY.createIRI(COMMITS + "commit-b");
         IRI rightBranchIri = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#right-branch");
         IRI additionIri = VALUE_FACTORY.createIRI("https://mobi.com/additions#commit-a");
 
         try (RepositoryConnection conn = repo.getConnection()) {
             Model additions = RepositoryResults.asModel(conn.getStatements(null, null, null, additionIri), MODEL_FACTORY);
             Model sourceCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitAIri), MODEL_FACTORY);
-            Model targetCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitCIri), MODEL_FACTORY);
+            Model targetCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitBIri), MODEL_FACTORY);
             Model rightBranchModel = RepositoryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
             Commit sourceHead = commitFactory.createNew(commitAIri, sourceCommitModel);
-            Commit targetHead = commitFactory.createNew(commitCIri, targetCommitModel);
-            Branch rightBranch = branchFactory.createNew(rightBranchIri, rightBranchModel);
+            Commit targetHead = commitFactory.createNew(commitBIri, targetCommitModel);
+//            Branch rightBranch = branchFactory.createNew(rightBranchIri, rightBranchModel);
+            Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
 
             List<Resource> sourceCommits = utilsService.getCommitChain(sourceHead.getResource(), true, conn);
             Difference sourceBranchDiff = utilsService.getCommitDifference(sourceCommits, conn);
@@ -134,20 +158,16 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
 
             Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
+            // Resolve conflict and delete statement
+            //<http://mobi.com/test/ClassA> rdfs:comment "This is a duplicate comment." .
+            Model deletions = MODEL_FACTORY.createModel();
+            deletions.add(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"), VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"), VALUE_FACTORY.createLiteral("This is a duplicate comment."));
             utilsService.addCommit(rightBranch, mergeCommit, conn);
-//            rightBranch.setHead(mergeCommit);
-//            conn.remove((Resource) null, null, null, rightBranchIri);
-//            conn.add(rightBranch.getModel(), rightBranchIri);
-//            conn.add(mergeCommit.getModel(), mergeCommit.getResource());
-            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), MODEL_FACTORY.createModel(), conn);
-//            Resource resource = mergeCommit.getGenerated_resource().stream().findFirst().get();
-//            Revision revision = revisionFactory.getExisting(resource, mergeCommit.getModel()).get();
-//
-//            IRI additionsGraph = revision.getAdditions().get();
-//=           additions.forEach(statement -> conn.add(statement, additionsGraph));
+            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), deletions, conn);
 
             List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
             Difference branchDiff = utilsService.getCommitDifference(commitsFromMerge, conn);
+            Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
             branchDiff.getAdditions();
 
 
