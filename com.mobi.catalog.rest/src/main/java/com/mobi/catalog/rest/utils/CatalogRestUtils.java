@@ -38,12 +38,10 @@ import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
-import net.sf.json.JSONArray;
+import net.minidev.json.JSONValue;
 import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 
-import java.util.Arrays;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -125,18 +123,12 @@ public class CatalogRestUtils {
         String additions = modelToSkolemizedString(difference.getAdditions(), format, transformer, bNodeService);
         String deletions = modelToSkolemizedString(difference.getDeletions(), format, transformer, bNodeService);
 
-        JSONObject diff = new JSONObject();
-        if (format.toLowerCase().contains("json")) {
-            diff.put("additions", JSONArray.fromObject(additions));
-            diff.put("deletions", JSONArray.fromObject(deletions));
-        } else {
-            String jsonAdditions = ((JSONArray) JSONSerializer.toJSON(Arrays.asList(additions.trim().split("\n")))).stream()
-                    .reduce("", (a, b) -> a + "\n" + b).toString();
-            String jsonDeletions = ((JSONArray) JSONSerializer.toJSON(Arrays.asList(deletions.trim().split("\n")))).stream()
-                    .reduce("", (a, b) -> a + "\n" + b).toString();
-            diff.put("additions", jsonAdditions + "\n");
-            diff.put("deletions", jsonDeletions + "\n");
-        }
-        return diff.toString();
+
+        return "{ \"additions\": "
+                + (format.toLowerCase().contains("json") ? additions : "\"" + JSONValue.escape(additions) + "\"")
+                + ", \"deletions\": "
+                + (format.toLowerCase().contains("json") ? deletions : "\"" + JSONValue.escape(deletions) + "\"")
+                + " }";
+
     }
 }
