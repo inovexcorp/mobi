@@ -285,7 +285,10 @@
                     request.targetTitle = util.getPropertyValue(request.request, prefixes.mergereq + 'targetBranchTitle');
                     request.sourceCommit = util.getPropertyId(request.request, prefixes.mergereq + 'sourceCommit')
                     request.targetCommit = util.getPropertyId(request.request, prefixes.mergereq + 'targetCommit')
-                    request.difference = cm.getDifference(request.sourceCommit, request.targetCommit)
+                    cm.getDifference(request.sourceCommit, request.targetCommit)
+                        .then(diff => {
+                            request.difference = diff;
+                        }, util.createErrorToast)
                 } else {
                     var sourceIri = util.getPropertyId(request.request, prefixes.mergereq + 'sourceBranch');
                     var targetIri = util.getPropertyId(request.request, prefixes.mergereq + 'targetBranch');
@@ -302,7 +305,7 @@
                                 request.targetBranch = branch;
                                 request.targetCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
                                 request.targetTitle = util.getDctermsValue(branch, 'title');
-                                return cm.getDifference(util.getPropertyId(request.sourceBranch, prefixes.catalog + 'head'), util.getPropertyId(request.targetBranch, prefixes.catalog + 'head'));
+                                return cm.getDifference(request.sourceCommit, request.targetCommit);
                             }, $q.reject)
                             .then(diff => {
                                 request.difference = diff;

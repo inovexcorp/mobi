@@ -51,7 +51,8 @@
          *
          * @param {string} commitId The IRI string of a commit in the local catalog
          * @param {string} branchTitle The title of the branch the user is currently on.
-         * @param {string=''} targetId limits the commits displayed to only go as far back as this specified commit.
+         * @param {string} [targetId=''] targetId limits the commits displayed to only go as far back as this specified 
+         *      commit.
          */
         .directive('commitHistoryTable', commitHistoryTable);
 
