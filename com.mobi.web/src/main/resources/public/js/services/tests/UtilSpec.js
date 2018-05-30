@@ -158,6 +158,15 @@ describe('Util service', function() {
         utilSvc.removePropertyValue(entity, prop, other['@value']);
         expect(_.has(entity, prop)).toEqual(false);
     });
+    it('should replace a property value from an entity', function() {
+        var prop = 'property';
+        var value = {'@value': 'value'};
+        var other = {'@value': 'other'};
+        var entity = {'property': [value]};
+
+        utilSvc.replacePropertyValue(entity, prop, value['@value'], other['@value']);
+        expect(entity[prop]).toContain(other);
+    });
     describe('should get a property id value from an entity', function() {
         it('if it contains the property', function() {
             var entity = {'property': [{'@id': 'id'}]};
@@ -227,6 +236,19 @@ describe('Util service', function() {
         var expected = {};
         expected[prefixes.dcterms + prop] = [{'@value': value}];
         utilSvc.setDctermsValue(entity, prop, value);
+        expect(entity).toEqual(expected);
+    });
+    it('should update a dcterms property value for an entity', function() {
+        var prop = 'prop';
+        var value = 'value';
+        var newValue = 'newValue';
+        var entity = {};
+        var expected = {};
+        expected[prefixes.dcterms + prop] = [{'@value': value}];
+        utilSvc.setDctermsValue(entity, prop, value);
+        expect(entity).toEqual(expected);
+        expected[prefixes.dcterms + prop] = [{'@value': newValue}];
+        utilSvc.updateDctermsValue(entity, prop, newValue);
         expect(entity).toEqual(expected);
     });
     describe('should get a dcterms property id value from an entity', function() {
