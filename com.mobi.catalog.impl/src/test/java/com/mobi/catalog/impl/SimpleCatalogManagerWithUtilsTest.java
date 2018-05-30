@@ -139,33 +139,32 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
         IRI commitAIri = VALUE_FACTORY.createIRI(COMMITS + "commit-a");
         IRI commitBIri = VALUE_FACTORY.createIRI(COMMITS + "commit-b");
         IRI rightBranchIri = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#right-branch");
-        IRI additionIri = VALUE_FACTORY.createIRI("https://mobi.com/additions#commit-a");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            Model additions = RepositoryResults.asModel(conn.getStatements(null, null, null, additionIri), MODEL_FACTORY);
             Model sourceCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitAIri), MODEL_FACTORY);
             Model targetCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitBIri), MODEL_FACTORY);
             Model rightBranchModel = RepositoryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
-            Commit sourceHead = commitFactory.createNew(commitAIri, sourceCommitModel);
-            Commit targetHead = commitFactory.createNew(commitBIri, targetCommitModel);
-//            Branch rightBranch = branchFactory.createNew(rightBranchIri, rightBranchModel);
+            Commit sourceHead = commitFactory.getExisting(commitAIri, sourceCommitModel).get();
+            Commit targetHead = commitFactory.getExisting(commitBIri, targetCommitModel).get();
             Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
 
             List<Resource> sourceCommits = utilsService.getCommitChain(sourceHead.getResource(), true, conn);
             Difference sourceBranchDiff = utilsService.getCommitDifference(sourceCommits, conn);
+            Model sourceCompiled = utilsService.getCompiledResource(sourceCommits, conn);
             List<Resource> targetCommits = utilsService.getCommitChain(targetHead.getResource(), true, conn);
             Difference targetBranchDiff = utilsService.getCommitDifference(targetCommits, conn);
+            Model targetCompiled = utilsService.getCompiledResource(targetCommits, conn);
 
             Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
             // Resolve conflict and delete statement
             //<http://mobi.com/test/ClassA> rdfs:comment "This is a duplicate comment." .
             Model deletions = MODEL_FACTORY.createModel();
-            deletions.add(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"), VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"), VALUE_FACTORY.createLiteral("This is a duplicate comment."));
+            deletions.add(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"), VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"), VALUE_FACTORY.createLiteral("Comment B"));
             utilsService.addCommit(rightBranch, mergeCommit, conn);
             utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), deletions, conn);
 
-            List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
+            List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), false, conn);
             Difference branchDiff = utilsService.getCommitDifference(commitsFromMerge, conn);
             Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
             branchDiff.getAdditions();

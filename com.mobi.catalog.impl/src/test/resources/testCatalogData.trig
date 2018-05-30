@@ -618,7 +618,7 @@ GRAPH records:duplicate-change-record {
         dc:title "Duplicate Change Record" ;
         dc:description "Description" ;
         dc:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2018-01-07T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2018-01-01T00:00:00Z"^^xsd:dateTime ;
         dc:publisher muser:tester ;
         mcat:branch branches:left-branch ;
         mcat:branch branches:right-branch ;
@@ -663,11 +663,11 @@ GRAPH commits:commit-a {
 }
 
 GRAPH additions:commit-a {
-    <http://mobi.com/test/ClassA> rdfs:comment "This is a duplicate comment. Now with a change!" .
+    <http://mobi.com/test/ClassA> rdfs:comment "Comment A" .
 }
 
 GRAPH deletions:commit-a {
-    <http://mobi.com/test/ClassA> rdfs:comment "This is a duplicate comment." .
+    <http://mobi.com/test/ClassA> rdfs:comment "Comment B" .
 }
 
 GRAPH commits:commit-b {
@@ -683,11 +683,11 @@ GRAPH commits:commit-b {
 }
 
 GRAPH additions:commit-b {
-    <http://mobi.com/test/ClassA> rdfs:comment "This is a duplicate comment." .
+    <http://mobi.com/test/ClassA> rdfs:comment "Comment B" .
 }
 
 GRAPH deletions:commit-b {
-    <http://mobi.com/test/ClassA> rdfs:comment "This initial comment." .
+    <http://mobi.com/test/ClassA> rdfs:comment "Comment" .
 }
 
 GRAPH commits:commit-c {
@@ -703,11 +703,11 @@ GRAPH commits:commit-c {
 }
 
 GRAPH additions:commit-c {
-    <http://mobi.com/test/ClassA> rdfs:comment "This is a duplicate comment." .
+    <http://mobi.com/test/ClassA> rdfs:comment "Comment B" .
 }
 
 GRAPH deletions:commit-c {
-    <http://mobi.com/test/ClassA> rdfs:comment "This initial comment." .
+    <http://mobi.com/test/ClassA> rdfs:comment "Comment" .
 }
 
 GRAPH commits:commit-d {
@@ -723,7 +723,7 @@ GRAPH commits:commit-d {
 GRAPH additions:commit-d {
     <http://mobi.com/test/ontology> a owl:Ontology .
     <http://mobi.com/test/ClassA> a owl:Class ;
-        rdfs:comment "This initial comment." .
+        rdfs:comment "Comment" .
 }
 
 # Conflict Scenario 2 - Both altered same title (1 conflict)

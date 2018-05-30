@@ -156,7 +156,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private static final String COMMITS = "http://mobi.com/test/commits#";
     private static final String RECORDS = "http://mobi.com/test/records#";
 
-    private static final int TOTAL_SIZE = 9;
+    private static final int TOTAL_SIZE = 10;
 
     private static final String GET_COMMIT_CHAIN;
 
@@ -420,8 +420,8 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
         // then
         assertTrue(true);
-        assertEquals(6, versionedRecords.getPage().size());
-        assertEquals(6, versionedRecords.getTotalSize());
+        assertEquals(7, versionedRecords.getPage().size());
+        assertEquals(7, versionedRecords.getTotalSize());
         assertEquals(2, unversionedRecords.getPage().size());
         assertEquals(2, unversionedRecords.getTotalSize());
         assertEquals(TOTAL_SIZE, fullRecords.getPage().size());

@@ -876,7 +876,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Model getCompiledResource(Resource commitId, RepositoryConnection conn) {
-        return getCompiledResource(getCommitChain(commitId, false, conn), conn);
+        return getCompiledResource(getCommitChain(commitId, true, conn), conn);
     }
 
     @Override
