@@ -2158,6 +2158,17 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     }
 
     /* export() */
+    @Test
+    public void testExportNonExistingRecord() {
+        RecordOperationConfig config = new OperationConfig();
+        String expected = "No known record services for this record type.";
+        IRI NON_RECORD = VALUE_FACTORY.createIRI("http://mobi.com/test/records#random");
+        try{
+            manager.export(NON_RECORD, config);
+        }catch(Exception e){
+            assertEquals(e.getMessage(), expected);
+        }
+    }
 
     @Test
     public void testExportRecordWithoutList() throws Exception {
