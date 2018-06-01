@@ -27,7 +27,7 @@
                 <h4>Commits</h4>
             </block-header>
             <block-content class="table-container">
-                <p class="padding info-message" ng-if="dvm.state.newMapping">No commits have been made yet.</p>
+                <info-message class="padding" ng-if="dvm.state.newMapping">No commits have been made yet.</info-message>
                 <commit-history-table ng-if="!dvm.state.newMapping" commit-id="dvm.util.getPropertyId(state.mapping.branch, dvm.prefixes.catalog + 'head')" branch-title="dvm.util.getDctermsValue(dvm.state.mapping.branch, 'title')" graph></commit-history-table>
             </block-content>
         </block>
