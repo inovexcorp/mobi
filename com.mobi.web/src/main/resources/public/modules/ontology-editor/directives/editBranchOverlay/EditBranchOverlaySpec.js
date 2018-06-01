@@ -113,7 +113,7 @@ describe('Edit Branch Overlay directive', function() {
             describe('for either case', function() {
                 it('always calls this method', function() {
                     this.controller.edit();
-                    expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(this.controller.branch, 'title',
+                    expect(utilSvc.updateDctermsValue).toHaveBeenCalledWith(this.controller.branch, 'title',
                         this.controller.branchTitle);
                 });
                 it('when controller.branchDescription is empty', function() {
@@ -124,7 +124,7 @@ describe('Edit Branch Overlay directive', function() {
                 it('when controller.branchDescription is not empty', function() {
                     this.controller.branchDescription = 'new description';
                     this.controller.edit();
-                    expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(this.controller.branch, 'description',
+                    expect(utilSvc.updateDctermsValue).toHaveBeenCalledWith(this.controller.branch, 'description',
                         this.controller.branchDescription);
                 });
             });
