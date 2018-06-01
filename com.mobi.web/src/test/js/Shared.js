@@ -985,6 +985,7 @@ function mockUtil() {
             this.setPropertyValue = jasmine.createSpy('setPropertyValue').and.returnValue({});
             this.hasPropertyValue = jasmine.createSpy('hasPropertyValue').and.returnValue(false);
             this.removePropertyValue = jasmine.createSpy('removePropertyValue');
+            this.replacePropertyValue = jasmine.createSpy('replacePropertyValue');
             this.setPropertyId = jasmine.createSpy('setPropertyId').and.returnValue({});
             this.getPropertyId = jasmine.createSpy('getPropertyId').and.returnValue('');
             this.hasPropertyId = jasmine.createSpy('hasPropertyId').and.returnValue(false);
@@ -992,6 +993,7 @@ function mockUtil() {
             this.replacePropertyId = jasmine.createSpy('replacePropertyId');
             this.getDctermsValue = jasmine.createSpy('getDctermsValue').and.returnValue('');
             this.setDctermsValue = jasmine.createSpy('setDctermsValue').and.returnValue({});
+            this.updateDctermsValue = jasmine.createSpy('updateDctermsValue').and.returnValue({});
             this.mergingArrays = jasmine.createSpy('mergingArrays');
             this.getDctermsValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.getDctermsId = jasmine.createSpy('getDctermsId').and.returnValue('');
