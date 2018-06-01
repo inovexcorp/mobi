@@ -89,12 +89,12 @@ describe('Mapping Commits Page directive', function() {
             expect(this.element.find('block-content').length).toBe(1);
         });
         it('depending on whether a new mapping is being created', function() {
-            expect(this.element.find('p').length).toBe(0);
+            expect(this.element.find('info-message').length).toBe(0);
             expect(this.element.find('commit-history-table').length).toBe(1);
 
             mapperStateSvc.newMapping = true;
             scope.$digest();
-            expect(this.element.find('p').length).toBe(1);
+            expect(this.element.find('info-message').length).toBe(1);
             expect(this.element.find('commit-history-table').length).toBe(0);
         });
     });
