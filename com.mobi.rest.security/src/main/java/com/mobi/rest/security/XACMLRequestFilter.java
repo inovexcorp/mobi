@@ -109,12 +109,20 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext context) throws IOException {
-        IRI subjectId = (IRI) RestUtils.optActiveUser(context, engineManager).map(User::getResource)
-                .orElse(vf.createIRI(ANON_USER));
+        log.info("Authorizing...");
+        long start = System.currentTimeMillis();
 
         MultivaluedMap<String, String> pathParameters = uriInfo.getPathParameters();
         MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
         Method method = resourceInfo.getResourceMethod();
+
+        if (method.getAnnotation(ResourceId.class) == null) {
+            log.info(String.format("Request authorization skipped. %dms", System.currentTimeMillis() - start));
+            return;
+        }
+
+        IRI subjectId = (IRI) RestUtils.optActiveUser(context, engineManager).map(User::getResource)
+                .orElse(vf.createIRI(ANON_USER));
 
         // Subject
 
@@ -209,6 +217,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                 throw ErrorUtils.sendError(statusMessage, javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR);
             }
         }
+        log.info(String.format("Request permitted. %dms", System.currentTimeMillis() - start));
     }
 
     private Literal getLiteral(String value, String datatype) {
