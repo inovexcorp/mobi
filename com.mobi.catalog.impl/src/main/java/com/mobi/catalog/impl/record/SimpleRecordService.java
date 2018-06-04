@@ -30,6 +30,7 @@ import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.record.AbstractRecordService;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ValueFactory;
 
 @Component
@@ -59,4 +60,10 @@ public class SimpleRecordService extends AbstractRecordService<Record> {
     public Class<Record> getType() {
         return Record.class;
     }
+
+    @Override
+    public String getTypeIRI() {
+        return Record.TYPE;
+    }
+
 }

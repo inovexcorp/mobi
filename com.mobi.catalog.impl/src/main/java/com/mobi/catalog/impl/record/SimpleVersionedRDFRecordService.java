@@ -33,6 +33,7 @@ import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ValueFactory;
 
 @Component
@@ -76,5 +77,10 @@ public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordS
     @Override
     public Class<VersionedRDFRecord> getType() {
         return VersionedRDFRecord.class;
+    }
+
+    @Override
+    public String getTypeIRI() {
+        return VersionedRDFRecord.TYPE;
     }
 }

@@ -39,6 +39,13 @@ public interface RecordService<T extends Record> {
     Class<T> getType();
 
     /**
+     * Retrieves the IRI of the type of {@link Record} this service versions.
+     *
+     * @return A IRI string of a subclass of VersionedRDFRecord
+     */
+    String getTypeIRI();
+
+    /**
      * Deletes a Record from a Catalog and creates a provenance event for the activity based on the provided user.
      *
      * @param recordId A {@link IRI} of the Record to delete
