@@ -27,10 +27,10 @@
         .module('ontologyBranchSelect', [])
         .directive('ontologyBranchSelect', ontologyBranchSelect);
 
-        ontologyBranchSelect.$inject = ['$filter', '$q', 'catalogManagerService', 'ontologyStateService',
+        ontologyBranchSelect.$inject = ['$filter', '$q', '$timeout', 'catalogManagerService', 'ontologyStateService',
             'ontologyManagerService', 'utilService', 'stateManagerService'];
 
-        function ontologyBranchSelect($filter, $q, catalogManagerService, ontologyStateService, ontologyManagerService, utilService,
+        function ontologyBranchSelect($filter, $q, $timeout, catalogManagerService, ontologyStateService, ontologyManagerService, utilService,
             stateManagerService) {
             return {
                 restrict: 'E',
@@ -85,6 +85,15 @@
                                 dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id']);
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.deleteError = errorMessage);
+                    }
+
+                    dvm.submit = function() {
+                        if (dvm.branch['@id'] === dvm.bindModel) {
+                            dvm.bindModel = '';
+                            $timeout(function() {
+                                dvm.bindModel = dvm.branch['@id'];
+                            });
+                        }
                     }
                 }
             }
