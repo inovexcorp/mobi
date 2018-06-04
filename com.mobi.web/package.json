@@ -31,8 +31,6 @@
     "karma-chrome-launcher": "^2.0.0",
     "karma-html-reporter": "^0.2.7",
     "karma-jasmine": "^1.1.0",
-    "karma-phantomjs-launcher": "^1.0.2",
-    "phantomjs-prebuilt": "^2.1.7",
     "streamqueue": "^1.1.1",
     "strictify": "^0.2.0",
     "vinyl-source-stream": "^1.1.0"
@@ -42,8 +40,8 @@
     "prod": "gulp prod",
     "clean": "gulp clean",
     "prepare-for-bundle": "gulp prepare-for-bundle",
-    "test-prod": "gulp test-minified-6",
-    "test-dev": "gulp test-unminified-6"
+    "test-prod": "gulp test-minified",
+    "test-dev": "gulp test-unminified"
   },
   "author": "Jordan Lewis",
   "license": "UNLICENSED",
