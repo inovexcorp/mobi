@@ -172,6 +172,7 @@ describe('Ontology Branch Select directive', function() {
                     this.controller.changeBranch(this.branch);
                     scope.$digest()
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith(this.errorMessage);
+                    expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
                 });
                 it('and updateOntology does not resolve', function() {
                     stateManagerSvc.updateOntologyState.and.returnValue($q.when());
@@ -179,6 +180,7 @@ describe('Ontology Branch Select directive', function() {
                     this.controller.changeBranch(this.branch);
                     scope.$digest()
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith(this.errorMessage);
+                    expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
                 });
             });
             it('when getBranchHeadCommit does not resolve', function() {
@@ -187,6 +189,7 @@ describe('Ontology Branch Select directive', function() {
                 this.controller.changeBranch(this.branch);
                 scope.$digest();
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith(this.errorMessage);
+                expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
             });
         });
         it('openDeleteConfirmation calls the correct methods', function() {
