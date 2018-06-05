@@ -65,7 +65,7 @@
                                     dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)
                                 ]);
                             }, $q.reject)
-                            .then(() => dvm.os.resetStateTabs());
+                            .then(() => dvm.os.resetStateTabs(), dvm.util.createErrorToast);
                     }
 
                     dvm.openDeleteConfirmation = function($event, branch) {
