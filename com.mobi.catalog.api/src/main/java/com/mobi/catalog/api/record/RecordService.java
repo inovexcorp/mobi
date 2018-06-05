@@ -39,9 +39,9 @@ public interface RecordService<T extends Record> {
     Class<T> getType();
 
     /**
-     * Retrieves the IRI of the type of {@link Record} this service versions.
+     * Retrieves the IRI of the type of {@link Record}.
      *
-     * @return A IRI string of a subclass of VersionedRDFRecord
+     * @return A IRI string of a subclass of Record
      */
     String getTypeIRI();
 
