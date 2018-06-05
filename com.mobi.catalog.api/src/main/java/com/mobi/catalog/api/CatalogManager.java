@@ -35,6 +35,7 @@ import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.Version;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -842,4 +843,22 @@ public interface CatalogManager {
      * @return The Difference between the two Models.
      */
     Difference getDiff(Model original, Model changed);
+
+    /**
+     * Exports the record data based on the record type and associated configurations. Export implementation is defined
+     * by available RecordServices.
+     *
+     * @param recordIRI The record IRI
+     * @param config The configuration of the record
+     */
+    void export(IRI recordIRI, RecordOperationConfig config);
+
+    /**
+     * Exports a list of record data based on the record type and associated configurations. Export implementation is
+     * defined by available RecordServices.
+     *
+     * @param recordIRIs The list of record IRIs
+     * @param config The configuration of the record
+     */
+    void export(List<IRI> recordIRIs, RecordOperationConfig config);
 }
