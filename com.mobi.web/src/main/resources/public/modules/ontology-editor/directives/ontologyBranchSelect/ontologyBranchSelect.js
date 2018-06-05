@@ -60,11 +60,12 @@
                         dvm.cm.getBranchHeadCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(headCommit => {
                                 var commitId = _.get(headCommit, "commit['@id']", '');
-                                $q.all([
+                                return $q.all([
                                     sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId),
                                     dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)
-                                ]).then(() => dvm.os.resetStateTabs());
-                            });
+                                ]);
+                            })
+                            .then(() => dvm.os.resetStateTabs());
                     }
 
                     dvm.openDeleteConfirmation = function($event, branch) {
