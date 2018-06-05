@@ -64,7 +64,7 @@
                                     sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId),
                                     dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)
                                 ]);
-                            })
+                            }, $q.reject)
                             .then(() => dvm.os.resetStateTabs());
                     }
 
