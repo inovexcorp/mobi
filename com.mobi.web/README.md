@@ -22,4 +22,6 @@ This command will create the web bundle in the target directory.
 
 After installation, the web application will be available at [https://localhost:8443/mobi/index.html](https://localhost:8443/mobi/index.html).
 
+## Testing
 
+[Google Chrome](https://www.google.com/chrome/browser/) is required to run the test suite for the web bundle.
