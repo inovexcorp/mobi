@@ -28,5 +28,5 @@
             <checkbox ng-if="dvm.branchTitle !== 'MASTER' && !dvm.os.listItem.userBranch" ng-model="dvm.removeBranch" display-text="'Remove Branch: ' + dvm.branchTitle + ' after merge.'"></checkbox>
         </form>
     </div>
-    <commit-difference-tabset class="in-overlay" branch-title="dvm.branchTitle" commit-id="dvm.os.listItem.ontologyRecord.commitId" target-id="dvm.targetHeadCommitId" difference="dvm.os.listItem.merge.difference"></commit-difference-tabset>
+    <commit-difference-tabset ng-if="dvm.target" class="in-overlay" branch-title="dvm.branchTitle" commit-id="dvm.os.listItem.ontologyRecord.commitId" target-id="dvm.targetHeadCommitId" difference="dvm.os.listItem.merge.difference"></commit-difference-tabset>
 </div>

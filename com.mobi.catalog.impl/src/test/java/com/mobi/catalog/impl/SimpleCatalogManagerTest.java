@@ -1750,7 +1750,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         Difference diff = manager.getDifference(sourceId, targetId);
         assertEquals(sourceDiff, diff);
         verify(utilsService).getCommitDifference(eq(Collections.singletonList(sourceId)), any(RepositoryConnection.class));
-        verify(utilsService).getDifferenceChain(eq(sourceId), eq(targetId), any(RepositoryConnection.class), anyBoolean());
+        verify(utilsService).getDifferenceChain(eq(sourceId), eq(targetId), any(RepositoryConnection.class), eq(true));
     }
 
     @Test

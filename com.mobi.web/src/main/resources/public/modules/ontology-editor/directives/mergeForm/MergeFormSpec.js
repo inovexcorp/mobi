@@ -106,7 +106,11 @@ describe('Merge Form directive', function() {
             scope.$digest();
             expect(this.element.find('checkbox').length).toEqual(0);
         });
-        it('with a commit-difference-tabset', function() {
+        it('depending on whether a target has been selected', function() {
+            expect(this.element.find('commit-difference-tabset').length).toBe(0);
+
+            this.controller.target = {};
+            scope.$digest();
             expect(this.element.find('commit-difference-tabset').length).toBe(1);
         });
     });

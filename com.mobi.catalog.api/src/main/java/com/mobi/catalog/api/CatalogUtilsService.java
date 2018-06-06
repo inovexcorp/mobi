@@ -591,7 +591,7 @@ public interface CatalogUtilsService {
 
     /**
      * Gets the commit chain between two commits, i.e. the list of commits between {@code sourceCommitId} and
-     * {@code targetCommitId}.
+     * {@code targetCommitId} in descending order.
      *
      * @param sourceCommitId Source commit
      * @param targetCommitId Target commit
@@ -604,7 +604,7 @@ public interface CatalogUtilsService {
 
     /**
      * Gets the commit chain between two commits, i.e. the list of commits between {@code sourceCommitId} and
-     * {@code targetCommitId}.
+     * {@code targetCommitId} in the order specified.
      *
      * @param sourceCommitId Source commit
      * @param targetCommitId Target commit
@@ -614,7 +614,8 @@ public interface CatalogUtilsService {
      * @throws IllegalArgumentException Thrown if either Commit could not be found or the Commits have no common parent.
      * @throws IllegalStateException    Thrown if a Commit in either chain does not have the additions/deletions set.
      */
-    List<Resource> getDifferenceChain(Resource sourceCommitId, Resource targetCommitId, RepositoryConnection conn, boolean asc);
+    List<Resource> getDifferenceChain(Resource sourceCommitId, Resource targetCommitId, RepositoryConnection conn,
+                                      boolean asc);
 
     /**
      * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference. The

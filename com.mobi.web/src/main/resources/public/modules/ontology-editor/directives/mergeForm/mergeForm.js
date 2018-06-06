@@ -73,7 +73,7 @@
                             dvm.os.listItem.merge.difference = undefined;
                         }
                     }
-                    
+
                     dvm.changeTarget();
                 }]
             }
