@@ -235,12 +235,11 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Reference(type = '*', dynamic = true)
     void addRecordService(RecordService<? extends Record> recordService) {
-        recordServices.put(recordService.getType().toString(), recordService);
+        recordServices.put(recordService.getTypeIRI(), recordService);
     }
 
-    @Reference
     void removeRecordService(RecordService<Record> recordService) {
-        recordServices.remove(recordService.getType().toString());
+        recordServices.remove(recordService.getTypeIRI());
     }
 
     private static final String PROV_AT_TIME = "http://www.w3.org/ns/prov#atTime";
@@ -1312,15 +1311,18 @@ public class SimpleCatalogManager implements CatalogManager {
                 .map(Optional::get)
                 .collect(Collectors.toList());
 
-        String classTypeString = factoryRegistry.getSortedFactoriesOfType(Record.class).stream()
+
+        String classType = factoryRegistry.getSortedFactoriesOfType(Record.class).stream()
                 .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
+                //.collect(Collectors.toList())
                 .map(OrmFactory::getType)
                 .map(Class::toString)
                 .filter(s -> recordServices.keySet().contains(s))
                 .findFirst().orElseThrow(() ->
                         new IllegalArgumentException("No known record services for this record type."));
 
-        return recordServices.get(classTypeString);
+        return recordServices.get(classType);
+
     }
 
     /**

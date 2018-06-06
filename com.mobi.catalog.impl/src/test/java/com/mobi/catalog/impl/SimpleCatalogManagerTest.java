@@ -176,8 +176,8 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
         MockitoAnnotations.initMocks(this);
 
-        when(recordService.getType()).thenReturn(Record.class);
-        when(versionedRDFRecordService.getType()).thenReturn(VersionedRDFRecord.class);
+        when(recordService.getTypeIRI()).thenReturn(Record.TYPE);
+        when(versionedRDFRecordService.getTypeIRI()).thenReturn(VersionedRDFRecord.TYPE);
 
         manager = new SimpleCatalogManager();
         injectOrmFactoryReferencesIntoService(manager);
