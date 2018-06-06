@@ -1297,7 +1297,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     /**
-     * Takes a recordId and returns the IRI type factory for that record. If failure, it returns the most specific
+     * Takes a recordId and returns the factory IRI type for that record. If failure, it returns the most specific
      * recordService
      *
      * @param recordId The record IRI
