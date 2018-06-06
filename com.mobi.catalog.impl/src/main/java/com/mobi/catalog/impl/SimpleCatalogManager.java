@@ -1322,15 +1322,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 return factory;
             }
         }
-
         throw new IllegalArgumentException("No known record services for this record type.");
-
-                //.filter(s -> recordServices.keySet().contains(s))
-                //.findFirst().orElseThrow(() ->
-                //        new IllegalArgumentException("No known record services for this record type."));
-
-        //return recordServices.get(classType);
-
     }
 
     /**

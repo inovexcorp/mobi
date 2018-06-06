@@ -37,7 +37,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import aQute.bnd.annotation.metatype.Configurable;
-import aQute.lib.collections.SortedList;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
@@ -48,7 +47,6 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
-import com.mobi.catalog.api.ontologies.mcat.GraphRevision;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
@@ -2158,13 +2156,14 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     }
 
     /* export() */
+
     @Test
     public void testExportNonExistingRecord() {
         RecordOperationConfig config = new OperationConfig();
         String expected = "No known record services for this record type.";
-        IRI NON_RECORD = VALUE_FACTORY.createIRI("http://mobi.com/test/records#random");
+        IRI nonRecord = VALUE_FACTORY.createIRI("http://mobi.com/test/records#random");
         try{
-            manager.export(NON_RECORD, config);
+            manager.export(nonRecord, config);
         }catch(Exception e){
             assertEquals(e.getMessage(), expected);
         }

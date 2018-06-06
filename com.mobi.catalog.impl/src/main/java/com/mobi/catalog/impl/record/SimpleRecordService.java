@@ -64,5 +64,4 @@ public class SimpleRecordService extends AbstractRecordService<Record> {
     public String getTypeIRI() {
         return Record.TYPE;
     }
-
 }
