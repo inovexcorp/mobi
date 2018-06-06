@@ -1285,8 +1285,9 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public void export(IRI recordIRI, RecordOperationConfig config) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            RecordService<? extends Record> serviceType = getRecordService(recordIRI, conn);
-            serviceType.export(recordIRI, config, conn);
+            OrmFactory<? extends Record> serviceType = getRecordService(recordIRI, conn);
+            RecordService<? extends Record> service = recordServices.get(serviceType.getTypeIRI().stringValue());
+            service.export(recordIRI, config, conn);
         }
     }
 
@@ -1302,7 +1303,7 @@ public class SimpleCatalogManager implements CatalogManager {
      * @param recordId The record IRI
      * @return
      */
-    private RecordService<? extends Record> getRecordService(Resource recordId, RepositoryConnection conn) {
+    private OrmFactory<? extends Record> getRecordService(Resource recordId, RepositoryConnection conn) {
         List<Resource> types = RepositoryResults.asList(
                 conn.getStatements(recordId, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
                 .stream()
@@ -1312,16 +1313,23 @@ public class SimpleCatalogManager implements CatalogManager {
                 .collect(Collectors.toList());
 
 
-        String classType = factoryRegistry.getSortedFactoriesOfType(Record.class).stream()
+        List<OrmFactory<? extends Record>> classType = factoryRegistry.getSortedFactoriesOfType(Record.class).stream()
                 .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
-                //.collect(Collectors.toList())
-                .map(OrmFactory::getType)
-                .map(Class::toString)
-                .filter(s -> recordServices.keySet().contains(s))
-                .findFirst().orElseThrow(() ->
-                        new IllegalArgumentException("No known record services for this record type."));
+                .collect(Collectors.toList());
 
-        return recordServices.get(classType);
+        for (OrmFactory<? extends Record> factory : classType) {
+            if (recordServices.keySet().contains(factory.getTypeIRI().stringValue())) {
+                return factory;
+            }
+        }
+
+        throw new IllegalArgumentException("No known record services for this record type.");
+
+                //.filter(s -> recordServices.keySet().contains(s))
+                //.findFirst().orElseThrow(() ->
+                //        new IllegalArgumentException("No known record services for this record type."));
+
+        //return recordServices.get(classType);
 
     }
 
