@@ -21,7 +21,7 @@
     "gulp-ignore": "^2.0.1",
     "gulp-imagemin": "^2.3.0",
     "gulp-inject": "^3.0.0",
-    "gulp-ng-annotate": "^2.0.0",
+    "gulp-ng-annotate": "^2.1.0",
     "gulp-rename": "^1.2.2",
     "gulp-sass": "^3.1.0",
     "gulp-strip-comments": "^2.4.3",
@@ -42,8 +42,8 @@
     "prod": "gulp prod",
     "clean": "gulp clean",
     "prepare-for-bundle": "gulp prepare-for-bundle",
-    "test-prod": "gulp test-minified-6",
-    "test-dev": "gulp test-unminified-6"
+    "test-prod": "gulp test-minified",
+    "test-dev": "gulp test-unminified"
   },
   "author": "Jordan Lewis",
   "license": "UNLICENSED",

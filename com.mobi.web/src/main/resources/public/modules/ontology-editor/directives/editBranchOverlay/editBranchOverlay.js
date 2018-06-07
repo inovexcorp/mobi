@@ -37,7 +37,8 @@
                 scope: {},
                 bindToController: {
                     branch: '=',
-                    overlayFlag: '='
+                    overlayFlag: '=',
+                    onSubmit: '&'
                 },
                 controllerAs: 'dvm',
                 controller: function() {
@@ -59,7 +60,10 @@
                             util.updateDctermsValue(dvm.branch, 'description', dvm.branchDescription);
                         }
                         cm.updateRecordBranch(dvm.branch['@id'], os.listItem.ontologyRecord.recordId, catalogId, dvm.branch)
-                            .then(() => dvm.overlayFlag = false, errorMessage => dvm.error = errorMessage);
+                            .then(() => {
+                                dvm.overlayFlag = false;
+                                dvm.onSubmit();
+                            }, errorMessage => dvm.error = errorMessage);
                     }
                 }
             }
