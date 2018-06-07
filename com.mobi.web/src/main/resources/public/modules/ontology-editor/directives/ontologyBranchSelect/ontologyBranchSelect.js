@@ -27,10 +27,10 @@
         .module('ontologyBranchSelect', [])
         .directive('ontologyBranchSelect', ontologyBranchSelect);
 
-        ontologyBranchSelect.$inject = ['$filter', '$q', 'catalogManagerService', 'ontologyStateService',
+        ontologyBranchSelect.$inject = ['$filter', '$q', '$timeout', 'catalogManagerService', 'ontologyStateService',
             'ontologyManagerService', 'utilService', 'stateManagerService'];
 
-        function ontologyBranchSelect($filter, $q, catalogManagerService, ontologyStateService, ontologyManagerService, utilService,
+        function ontologyBranchSelect($filter, $q, $timeout, catalogManagerService, ontologyStateService, ontologyManagerService, utilService,
             stateManagerService) {
             return {
                 restrict: 'E',
@@ -60,11 +60,12 @@
                         dvm.cm.getBranchHeadCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(headCommit => {
                                 var commitId = _.get(headCommit, "commit['@id']", '');
-                                $q.all([
+                                return $q.all([
                                     sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId),
                                     dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)
-                                ]).then(() => dvm.os.resetStateTabs());
-                            });
+                                ]);
+                            }, $q.reject)
+                            .then(() => dvm.os.resetStateTabs(), dvm.util.createErrorToast);
                     }
 
                     dvm.openDeleteConfirmation = function($event, branch) {
@@ -85,6 +86,15 @@
                                 dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id']);
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.deleteError = errorMessage);
+                    }
+
+                    dvm.submit = function() {
+                        if (dvm.branch['@id'] === dvm.bindModel) {
+                            dvm.bindModel = '';
+                            $timeout(function() {
+                                dvm.bindModel = dvm.branch['@id'];
+                            });
+                        }
                     }
                 }
             }
