@@ -43,6 +43,7 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import net.sf.json.JSONArray;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,13 +110,19 @@ public class CommitRestImpl implements CommitRest {
     }
 
     @Override
-    public Response getCommitHistory(UriInfo uriInfo, String commitId, int offset, int limit) {
+    public Response getCommitHistory(UriInfo uriInfo, String commitId, String targetId, int offset, int limit) {
         long start = System.currentTimeMillis();
         try {
             LinksUtils.validateParams(limit, offset);
 
             try {
-                final List<Commit> commits = catalogManager.getCommitChain(vf.createIRI(commitId));
+                final List<Commit> commits;
+
+                if (StringUtils.isBlank(targetId)) {
+                    commits = catalogManager.getCommitChain(vf.createIRI(commitId));
+                } else {
+                    commits = catalogManager.getCommitChain(vf.createIRI(commitId), vf.createIRI(targetId));
+                }
 
                 Stream<Commit> result = commits.stream();
 
@@ -139,14 +146,14 @@ public class CommitRestImpl implements CommitRest {
     }
 
     @Override
-    public Response getDifference(String source, String target, String rdfFormat) {
+    public Response getDifference(String sourceId, String targetId, String rdfFormat) {
         long start = System.currentTimeMillis();
         try {
-            checkStringParam(source, "Source commit is required");
-            checkStringParam(target, "Target commit is required");
+            checkStringParam(sourceId, "Source commit is required");
+            checkStringParam(targetId, "Target commit is required");
 
             try {
-                Difference diff = catalogManager.getDifference(vf.createIRI(source), vf.createIRI(target));
+                Difference diff = catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId));
                 return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
                         MediaType.APPLICATION_JSON).build();
             } catch (IllegalArgumentException ex) {
