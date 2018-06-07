@@ -57,31 +57,22 @@ import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
-import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
-import com.mobi.ontologies.provo.Collection;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.ontologies.provo.InstantaneousEvent;
-import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.persistence.utils.Statements;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -94,21 +85,16 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.naming.spi.ResolveResult;
 
 public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
@@ -156,20 +142,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private static final String COMMITS = "http://mobi.com/test/commits#";
     private static final String RECORDS = "http://mobi.com/test/records#";
 
-    private static final int TOTAL_SIZE = 10;
-
-    private static final String GET_COMMIT_CHAIN;
-
-    static {
-        try {
-            GET_COMMIT_CHAIN = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-chain.rq"),
-                    "UTF-8"
-            );
-        } catch (IOException e) {
-            throw new MobiException(e);
-        }
-    }
+    private static final int TOTAL_SIZE = 9;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -420,8 +393,8 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
         // then
         assertTrue(true);
-        assertEquals(7, versionedRecords.getPage().size());
-        assertEquals(7, versionedRecords.getTotalSize());
+        assertEquals(6, versionedRecords.getPage().size());
+        assertEquals(6, versionedRecords.getTotalSize());
         assertEquals(2, unversionedRecords.getPage().size());
         assertEquals(2, unversionedRecords.getTotalSize());
         assertEquals(TOTAL_SIZE, fullRecords.getPage().size());
@@ -2165,8 +2138,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
             assertEquals(0, diff.getDeletions().size());
         }
     }
-
-
 
     private void setUpConflictTest(Resource leftId, Resource rightId, Difference leftDiff, Difference rightDiff, Model originalModel) {
         doReturn(Stream.of(leftId, COMMIT_IRI).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));

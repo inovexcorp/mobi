@@ -1,0 +1,165 @@
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix muser: <http://mobi.com/ontologies/user/management#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix catalogs: <http://mobi.com/test/catalogs#> .
+@prefix records: <http://mobi.com/test/records#> .
+@prefix branches: <http://mobi.com/test/branches#> .
+@prefix commits: <http://mobi.com/test/commits#> .
+@prefix revisions: <http://mobi.com/test/revisions#> .
+@prefix additions: <https://mobi.com/additions#> .
+@prefix deletions: <https://mobi.com/deletions#> .
+@prefix graphs: <http://mobi.com/test/graphs#> .
+
+# Duplicate Addition Test
+
+GRAPH records:duplicate-change-record {
+    records:duplicate-change-record a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
+        mcat:catalog catalogs:catalog-distributed ;
+        dc:title "Duplicate Change Record" ;
+        dc:description "Description" ;
+        dc:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher muser:tester ;
+        mcat:branch branches:left-branch ;
+        mcat:branch branches:right-branch1 ;
+        mcat:branch branches:right-branch2 ;
+        mcat:branch branches:right-branch3 ;
+        mcat:branch branches:master-duplicate ;
+        mcat:masterBranch branches:master-duplicate .
+}
+
+GRAPH branches:master-duplicate {
+    branches:master-duplicate a mcat:Branch ;
+        dc:title "Duplicate Change Master Branch" ;
+        dc:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2018-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:head commits:commit-a .
+}
+
+GRAPH branches:left-branch {
+    branches:left-branch a mcat:Branch ;
+        dc:title "Left Branch" ;
+        dc:issued "2018-01-03T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2018-01-07T00:00:00Z"^^xsd:dateTime ;
+        mcat:head commits:commit-d .
+}
+
+GRAPH branches:right-branch1 {
+    branches:right-branch1 a mcat:Branch ;
+        dc:title "Right Branch" ;
+        dc:issued "2018-01-04T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2018-01-06T00:00:00Z"^^xsd:dateTime ;
+        mcat:head commits:commit-c .
+}
+
+GRAPH branches:right-branch2 {
+    branches:right-branch2 a mcat:Branch ;
+        dc:title "Right Branch" ;
+        dc:issued "2018-01-04T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2018-01-06T00:00:00Z"^^xsd:dateTime ;
+        mcat:head commits:commit-e .
+}
+
+GRAPH branches:right-branch3 {
+    branches:right-branch3 a mcat:Branch ;
+        dc:title "Right Branch" ;
+        dc:issued "2018-01-04T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2018-01-06T00:00:00Z"^^xsd:dateTime ;
+        mcat:head commits:commit-f .
+}
+
+GRAPH commits:commit-a {
+    commits:commit-a a mcat:Commit ;
+        dc:title "Initial Commit" ;
+        prov:atTime "2018-01-02T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:commit-a .
+
+    revisions:commit-a a mcat:Revision ;
+        mcat:additions additions:commit-a .
+}
+
+GRAPH additions:commit-a {
+    <http://mobi.com/test/ontology> a owl:Ontology .
+    <http://mobi.com/test/ClassA> a owl:Class ;
+        rdfs:comment "Comment" .
+}
+
+GRAPH commits:commit-b {
+    commits:commit-b a mcat:Commit ;
+        dc:title "Commit B" ;
+        prov:atTime "2018-01-06T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:commit-a ;
+        prov:generated revisions:commit-b .
+
+    revisions:commit-b a mcat:Revision ;
+        mcat:additions additions:comment-b;
+        mcat:deletions deletions:comment .
+}
+
+GRAPH commits:commit-c {
+    commits:commit-c a mcat:Commit ;
+        dc:title "Commit C" ;
+        prov:atTime "2018-01-07T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:commit-a ;
+        prov:generated revisions:commit-c .
+
+    revisions:commit-c a mcat:Revision ;
+        mcat:additions additions:comment-b ;
+        mcat:deletions deletions:comment .
+}
+
+GRAPH commits:commit-d {
+    commits:commit-d a mcat:Commit ;
+        dc:title "Commit D" ;
+        prov:atTime "2018-01-08T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:commit-b ;
+        prov:generated revisions:commit-d .
+
+    revisions:commit-d a mcat:Revision ;
+        mcat:additions additions:comment-a ;
+        mcat:deletions deletions:comment-b .
+}
+
+GRAPH commits:commit-e {
+    commits:commit-e a mcat:Commit ;
+        dc:title "Commit E" ;
+        prov:atTime "2018-01-09T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:commit-a ;
+        prov:generated revisions:commit-e .
+
+    revisions:commit-e a mcat:Revision ;
+        mcat:additions additions:comment-b ;
+        mcat:deletions deletions:comment .
+}
+
+GRAPH commits:commit-f {
+    commits:commit-f a mcat:Commit ;
+        dc:title "Commit F" ;
+        prov:atTime "2018-01-05T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:commit-a ;
+        prov:generated revisions:commit-f .
+
+    revisions:commit-f a mcat:Revision ;
+        mcat:additions additions:comment-b ;
+        mcat:deletions deletions:comment .
+}
+
+GRAPH additions:comment-b {
+    <http://mobi.com/test/ClassA> rdfs:comment "Comment B" .
+}
+
+GRAPH additions:comment-a {
+    <http://mobi.com/test/ClassA> rdfs:comment "Comment A" .
+}
+
+GRAPH deletions:comment {
+    <http://mobi.com/test/ClassA> rdfs:comment "Comment" .
+}
+
+GRAPH deletions:comment-b {
+    <http://mobi.com/test/ClassA> rdfs:comment "Comment B" .
+}

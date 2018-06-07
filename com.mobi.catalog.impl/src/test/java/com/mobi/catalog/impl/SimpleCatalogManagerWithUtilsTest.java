@@ -23,63 +23,37 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
+
 import aQute.bnd.annotation.metatype.Configurable;
-import com.mobi.catalog.api.CatalogUtilsService;
-import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.Distribution;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.ontologies.mcat.Revision;
-import com.mobi.catalog.api.ontologies.mcat.Tag;
-import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
-import com.mobi.catalog.api.ontologies.mcat.UserBranch;
-import com.mobi.catalog.api.ontologies.mcat.Version;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
-import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
-import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 
 public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
 
@@ -88,8 +62,11 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
     private SimpleCatalogUtilsService utilsService;
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
-    private OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+
+    private Statement initialComment;
+    private Statement commentA;
+    private Statement commentB;
 
     private final IRI USER_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test#user");
 
@@ -119,7 +96,7 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
         utilsService.setMf(MODEL_FACTORY);
         utilsService.setVf(VALUE_FACTORY);
 
-        InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
+        InputStream testData = getClass().getResourceAsStream("/testCommitChainData.trig");
 
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
@@ -131,46 +108,129 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
         props.put("iri", "http://mobi.com/test/catalogs#catalog");
 
         manager.start(props);
+
+        initialComment = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"),
+                VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"),
+                VALUE_FACTORY.createLiteral("Comment"));
+        commentA = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"),
+                VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"),
+                VALUE_FACTORY.createLiteral("Comment A"));
+        commentB = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"),
+                VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"),
+                VALUE_FACTORY.createLiteral("Comment B"));
     }
 
     @Test
-    public void testDuplicateChangeInBranchMerge() throws Exception {
+    public void testDuplicateChangeInBranchMergeCase1() throws Exception {
+        //  Commit  Left Branch                      Right Branch
+        //      A       + Comment                       + Comment
+        //      B       - Comment + Comment B
+        //      C                                       - Comment + Comment B
+        //      D       - Comment B + Comment A
+
         // Setup:
-        IRI commitAIri = VALUE_FACTORY.createIRI(COMMITS + "commit-a");
-        IRI commitBIri = VALUE_FACTORY.createIRI(COMMITS + "commit-b");
-        IRI rightBranchIri = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#right-branch");
+        IRI commitDIri = VALUE_FACTORY.createIRI(COMMITS + "commit-d");
+        IRI commitCIri = VALUE_FACTORY.createIRI(COMMITS + "commit-c");
+        IRI rightBranchIri = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#right-branch1");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            Model sourceCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitAIri), MODEL_FACTORY);
-            Model targetCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitBIri), MODEL_FACTORY);
+            Model sourceCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitDIri), MODEL_FACTORY);
+            Model targetCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitCIri), MODEL_FACTORY);
             Model rightBranchModel = RepositoryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
-            Commit sourceHead = commitFactory.getExisting(commitAIri, sourceCommitModel).get();
-            Commit targetHead = commitFactory.getExisting(commitBIri, targetCommitModel).get();
+            Commit sourceHead = commitFactory.getExisting(commitDIri, sourceCommitModel).get();
+            Commit targetHead = commitFactory.getExisting(commitCIri, targetCommitModel).get();
             Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
-
-            List<Resource> sourceCommits = utilsService.getCommitChain(sourceHead.getResource(), true, conn);
-            Difference sourceBranchDiff = utilsService.getCommitDifference(sourceCommits, conn);
-            Model sourceCompiled = utilsService.getCompiledResource(sourceCommits, conn);
-            List<Resource> targetCommits = utilsService.getCommitChain(targetHead.getResource(), true, conn);
-            Difference targetBranchDiff = utilsService.getCommitDifference(targetCommits, conn);
-            Model targetCompiled = utilsService.getCompiledResource(targetCommits, conn);
 
             Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
             // Resolve conflict and delete statement
-            //<http://mobi.com/test/ClassA> rdfs:comment "This is a duplicate comment." .
             Model deletions = MODEL_FACTORY.createModel();
-            deletions.add(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"), VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"), VALUE_FACTORY.createLiteral("Comment B"));
+            deletions.add(commentB);
             utilsService.addCommit(rightBranch, mergeCommit, conn);
             utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), deletions, conn);
 
-            List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), false, conn);
-            Difference branchDiff = utilsService.getCommitDifference(commitsFromMerge, conn);
+            List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
             Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
-            branchDiff.getAdditions();
 
-
+            assertFalse(branchCompiled.contains(initialComment));
+            assertTrue(branchCompiled.contains(commentA));
+            assertFalse(branchCompiled.contains(commentB));
         }
+    }
 
+    @Test
+    public void testDuplicateChangeInBranchMergeCase2() throws Exception {
+        //  Commit  Left Branch                      Right Branch
+        //      A       + Comment                       + Comment
+        //      B       - Comment + Comment B
+        //      D       - Comment B + Comment A
+        //      E                                       - Comment + Comment B
+
+        // Setup:
+        IRI commitDIri = VALUE_FACTORY.createIRI(COMMITS + "commit-d");
+        IRI commitEIri = VALUE_FACTORY.createIRI(COMMITS + "commit-e");
+        IRI rightBranchIri = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#right-branch2");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Model sourceCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitDIri), MODEL_FACTORY);
+            Model targetCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitEIri), MODEL_FACTORY);
+            Model rightBranchModel = RepositoryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
+            Commit sourceHead = commitFactory.getExisting(commitDIri, sourceCommitModel).get();
+            Commit targetHead = commitFactory.getExisting(commitEIri, targetCommitModel).get();
+            Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
+
+            Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
+
+            // Resolve conflict and delete statement
+            Model deletions = MODEL_FACTORY.createModel();
+            deletions.add(commentB);
+            utilsService.addCommit(rightBranch, mergeCommit, conn);
+            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), deletions, conn);
+
+            List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
+            Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
+
+            assertFalse(branchCompiled.contains(initialComment));
+            assertTrue(branchCompiled.contains(commentA));
+            assertFalse(branchCompiled.contains(commentB));
+        }
+    }
+
+    @Test
+    public void testDuplicateChangeInBranchMergeCase3() throws Exception {
+        //  Commit  Left Branch                      Right Branch
+        //      A       + Comment                       + Comment
+        //      F                                       - Comment + Comment B
+        //      B       - Comment + Comment B
+        //      D       - Comment B + Comment A
+
+        // Setup:
+        IRI commitDIri = VALUE_FACTORY.createIRI(COMMITS + "commit-d");
+        IRI commitFIri = VALUE_FACTORY.createIRI(COMMITS + "commit-f");
+        IRI rightBranchIri = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#right-branch3");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Model sourceCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitDIri), MODEL_FACTORY);
+            Model targetCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitFIri), MODEL_FACTORY);
+            Model rightBranchModel = RepositoryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
+            Commit sourceHead = commitFactory.getExisting(commitDIri, sourceCommitModel).get();
+            Commit targetHead = commitFactory.getExisting(commitFIri, targetCommitModel).get();
+            Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
+
+            Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
+
+            // Resolve conflict and delete statement
+            Model deletions = MODEL_FACTORY.createModel();
+            deletions.add(commentB);
+            utilsService.addCommit(rightBranch, mergeCommit, conn);
+            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), deletions, conn);
+
+            List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
+            Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
+
+            assertFalse(branchCompiled.contains(initialComment));
+            assertTrue(branchCompiled.contains(commentA));
+            assertFalse(branchCompiled.contains(commentB));
+        }
     }
 }
