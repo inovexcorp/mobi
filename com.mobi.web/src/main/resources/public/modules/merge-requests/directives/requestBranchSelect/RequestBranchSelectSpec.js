@@ -30,6 +30,7 @@ describe('Request Branch Select directive', function() {
         mockMergeRequestsState();
         mockMergeRequestManager();
         mockUtil();
+        mockPrefixes();
         injectTrustedFilter();
         injectHighlightFilter();
 
@@ -42,12 +43,16 @@ describe('Request Branch Select directive', function() {
             utilSvc = _utilService_;
         });
 
+        utilSvc.getPropertyId.and.callFake(function(obj, prop) {
+            return "head";
+        });
+
         this.difference = {
             additions: [],
             deletions: []
         };
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
-        catalogManagerSvc.getBranchDifference.and.returnValue($q.when(this.difference));
+        catalogManagerSvc.getDifference.and.returnValue($q.when(this.difference));
         this.branchDefer = $q.defer();
         catalogManagerSvc.getRecordBranches.and.returnValue(this.branchDefer.promise);
         mergeRequestsStateSvc.requestConfig.recordId = 'recordId';
@@ -73,11 +78,11 @@ describe('Request Branch Select directive', function() {
                 mergeRequestsStateSvc.requestConfig.targetBranch = {};
                 this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
                 scope.$digest();
-                expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalled();
+                expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
             });
             it('not selected', function() {
                 scope.$apply();
-                expect(catalogManagerSvc.getBranchDifference).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
             });
         });
         describe('branches', function() {
@@ -106,7 +111,7 @@ describe('Request Branch Select directive', function() {
                 beforeEach(function() {
                     mergeRequestsStateSvc.requestConfig.targetBranch = {'@id': 'target'};
                 });
-                describe('set and getBranchDifference', function() {
+                describe('set and getDifference', function() {
                     beforeEach(function() {
                         mergeRequestsStateSvc.requestConfig.sourceBranch = {'@id': 'source'};
                         mergeRequestsStateSvc.requestConfig.sourceBranchId = 'source';
@@ -115,16 +120,16 @@ describe('Request Branch Select directive', function() {
                         this.controller.changeTarget();
                         scope.$apply();
                         expect(mergeRequestsStateSvc.requestConfig.targetBranchId).toEqual('target');
-                        expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith('source', 'target', 'recordId', 'catalogId');
+                        expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head');
                         expect(mergeRequestsStateSvc.requestConfig.difference).toEqual(this.difference);
                         expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                     });
                     it('rejects', function() {
-                        catalogManagerSvc.getBranchDifference.and.returnValue($q.reject('Error Message'));
+                        catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'));
                         this.controller.changeTarget();
                         scope.$apply();
                         expect(mergeRequestsStateSvc.requestConfig.targetBranchId).toEqual('target');
-                        expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith('source', 'target', 'recordId', 'catalogId');
+                        expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head');
                         expect(mergeRequestsStateSvc.requestConfig.difference).toBeUndefined();
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                     });
@@ -132,14 +137,14 @@ describe('Request Branch Select directive', function() {
                 it('not set', function() {
                     this.controller.changeTarget();
                     expect(mergeRequestsStateSvc.requestConfig.targetBranchId).toEqual('target');
-                    expect(catalogManagerSvc.getBranchDifference).not.toHaveBeenCalled();
+                    expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
                     expect(mergeRequestsStateSvc.requestConfig.difference).toBeUndefined();
                     expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                 });
             });
             it('if one has not been selected', function() {
                 this.controller.changeTarget();
-                expect(catalogManagerSvc.getBranchDifference).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
                 expect(mergeRequestsStateSvc.requestConfig.difference).toBeUndefined();
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
@@ -152,7 +157,7 @@ describe('Request Branch Select directive', function() {
                 beforeEach(function() {
                     mergeRequestsStateSvc.requestConfig.sourceBranch = {'@id': 'source'};
                 });
-                describe('set and getBranchDifference', function() {
+                describe('set and getDifference', function() {
                     beforeEach(function() {
                         mergeRequestsStateSvc.requestConfig.targetBranch = {'@id': 'target'};
                         mergeRequestsStateSvc.requestConfig.targetBranchId = 'target';
@@ -161,16 +166,16 @@ describe('Request Branch Select directive', function() {
                         this.controller.changeSource();
                         scope.$apply();
                         expect(mergeRequestsStateSvc.requestConfig.sourceBranchId).toEqual('source');
-                        expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith('source', 'target', 'recordId', 'catalogId');
+                        expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head');
                         expect(mergeRequestsStateSvc.requestConfig.difference).toEqual(this.difference);
                         expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                     });
                     it('rejects', function() {
-                        catalogManagerSvc.getBranchDifference.and.returnValue($q.reject('Error Message'));
+                        catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'));
                         this.controller.changeSource();
                         scope.$apply();
                         expect(mergeRequestsStateSvc.requestConfig.sourceBranchId).toEqual('source');
-                        expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith('source', 'target', 'recordId', 'catalogId');
+                        expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head');
                         expect(mergeRequestsStateSvc.requestConfig.difference).toBeUndefined();
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                     });
@@ -178,14 +183,14 @@ describe('Request Branch Select directive', function() {
                 it('not set', function() {
                     this.controller.changeSource();
                     expect(mergeRequestsStateSvc.requestConfig.sourceBranchId).toEqual('source');
-                    expect(catalogManagerSvc.getBranchDifference).not.toHaveBeenCalled();
+                    expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
                     expect(mergeRequestsStateSvc.requestConfig.difference).toBeUndefined();
                     expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                 });
             });
             it('if one has not been selected', function() {
                 this.controller.changeSource();
-                expect(catalogManagerSvc.getBranchDifference).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
                 expect(mergeRequestsStateSvc.requestConfig.difference).toBeUndefined();
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });

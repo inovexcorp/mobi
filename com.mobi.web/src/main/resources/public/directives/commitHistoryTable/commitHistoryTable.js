@@ -49,10 +49,10 @@
          * circle in the graph will open up a {@link commitInfoOverlay.directive:commitInfoOverlay commit info overlay}.
          * The directive is replaced by the content of the template.
          *
-         * @param {string} recordId The IRI string of a record in the local catalog
-         * @param {string} branch The JSON-LD object of a branch
-         * @param {string=''} commitId The IRI string of the head commit of the Branch to be used when determining whether
-         * the table should be updated.
+         * @param {string} commitId The IRI string of a commit in the local catalog
+         * @param {string} branchTitle The title of the branch the user is currently on.
+         * @param {string} [targetId=''] targetId limits the commits displayed to only go as far back as this specified 
+         *      commit.
          */
         .directive('commitHistoryTable', commitHistoryTable);
 
@@ -65,9 +65,8 @@
                 transclude: true,
                 scope: {},
                 bindToController: {
-                    recordId: '<',
-                    branch: '<',
-                    commitId: '<?',
+                    commitId: '<',
+                    branchTitle: '<',
                     targetId: '<?'
                 },
                 templateUrl: 'directives/commitHistoryTable/commitHistoryTable.html',
@@ -79,7 +78,6 @@
                     var dvm = this;
                     var titleWidth = 75;
                     var cm = catalogManagerService;
-                    var catalogId = _.get(cm.localCatalog, '@id', '');
                     var snap = Snap('.commit-graph');
                     var graphCommits = [];
                     var cols = [];
@@ -102,7 +100,7 @@
                     dvm.deltaX = 5 + dvm.circleRadius;
                     dvm.deltaY = 37;
 
-                    $scope.$watchGroup(['dvm.branch', 'dvm.recordId', 'dvm.commitId', 'dvm.targetId'], newValues => dvm.getCommits());
+                    $scope.$watchGroup(['dvm.branchTitle', 'dvm.commitId', 'dvm.targetId'], () => dvm.getCommits());
 
                     dvm.openCommitOverlay = function(commitId) {
                         cm.getCommit(commitId)
@@ -114,8 +112,8 @@
                             }, errorMessage => dvm.error = errorMessage);
                     }
                     dvm.getCommits = function() {
-                        if (dvm.branch) {
-                            var promise = dvm.commitId ? cm.getCommitHistory(dvm.commitId) : cm.getBranchCommits(dvm.branch['@id'], dvm.recordId, catalogId, dvm.targetId);
+                        if (dvm.commitId) {
+                            var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId);
                             promise.then(commits => {
                                 dvm.commits = commits;
                                 dvm.error = '';
@@ -299,7 +297,7 @@
                         triangle.attr({
                             'fill-opacity': '0.5'
                         });
-                        var displayText = dvm.util.getDctermsValue(dvm.branch, 'title');
+                        var displayText = dvm.branchTitle;
                         var title = Snap.parse('<title>' + displayText + '</title>');
                         var text = snap.text(rect.asPX('x') + (rect.asPX('width'))/2, rect.asPX('y') + (rect.asPX('height')/2), displayText);
                         text.attr({
