@@ -10,7 +10,7 @@
                 </bitrate>
             </version>
             <version id="2.37">
-                <bitrate thirtytwobit="true">
+                <bitrate thirtytwobit="true" sixtyfourbit="true">
                     <filelocation>https://chromedriver.storage.googleapis.com/2.37/chromedriver_win32.zip</filelocation>
                     <hash>00c991baa1e51abf6d582aedae91291f</hash>
                     <hashtype>md5</hashtype>

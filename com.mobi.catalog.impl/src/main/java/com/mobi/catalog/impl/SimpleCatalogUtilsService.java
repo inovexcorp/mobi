@@ -75,6 +75,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -386,7 +387,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public void removeBranch(Resource recordId, Resource branchId, List<Resource> deletedCommits,
-                              RepositoryConnection conn) {
+                             RepositoryConnection conn) {
         Branch branch = getObject(branchId, branchFactory, conn);
         removeBranch(recordId, branch, deletedCommits, conn);
     }
@@ -576,8 +577,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
                 new IllegalStateException("Deletions not set on Commit " + commitId));
 
-        Model filteredAdditions = additions == null ? null : additions.filter(null, null, null, (Resource)null);
-        Model filteredDeletions = deletions == null ? null : deletions.filter(null, null, null, (Resource)null);
+        Model filteredAdditions = additions == null ? null : additions.filter(null, null, null, (Resource) null);
+        Model filteredDeletions = deletions == null ? null : deletions.filter(null, null, null, (Resource) null);
         addChanges(additionsGraph, deletionsGraph, filteredAdditions, conn);
         addChanges(deletionsGraph, additionsGraph, filteredDeletions, conn);
 
@@ -678,11 +679,11 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
      * Gets the addition statements for the provided Revision. Assumes additions are stored in the Repository.
      *
      * @param revision The Revision containing change statements.
-     * @param conn The RepositoryConnection used to query the Repository.
+     * @param conn     The RepositoryConnection used to query the Repository.
      * @return A Stream of change Statements.
      */
     private Stream<Statement> getAdditions(Revision revision, RepositoryConnection conn) {
-        List<Stream<Statement>> streams =  new ArrayList<>();
+        List<Stream<Statement>> streams = new ArrayList<>();
 
         // Get Triples
         revision.getAdditions().ifPresent(changesGraph -> collectChanges(streams, changesGraph, null, conn));
@@ -715,11 +716,11 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
      * Gets the deletion statements for the provided Revision. Assumes deletions are stored in the Repository.
      *
      * @param revision The Revision containing change statements.
-     * @param conn The RepositoryConnection used to query the Repository.
+     * @param conn     The RepositoryConnection used to query the Repository.
      * @return A Stream of change Statements.
      */
     private Stream<Statement> getDeletions(Revision revision, RepositoryConnection conn) {
-        List<Stream<Statement>> streams =  new ArrayList<>();
+        List<Stream<Statement>> streams = new ArrayList<>();
 
         // Get Triples
         revision.getDeletions().ifPresent(changesGraph -> collectChanges(streams, changesGraph, null, conn));
@@ -737,10 +738,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     /**
      * Collects the change statements from the provided GraphRevision and adds them to the provided List of Streams.
      *
-     * @param streams The List of Streams that collects the change statements.
+     * @param streams       The List of Streams that collects the change statements.
      * @param graphRevision The GraphRevision from which to collect change statements.
-     * @param changesGraph The context that contains the change statements.
-     * @param conn The RepositoryConnection used to query the Repository.
+     * @param changesGraph  The context that contains the change statements.
+     * @param conn          The RepositoryConnection used to query the Repository.
      */
     private void collectRevisionedGraphChanges(List<Stream<Statement>> streams, GraphRevision graphRevision,
                                                IRI changesGraph, RepositoryConnection conn) {
@@ -753,10 +754,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
      * Collects the change statements from the provided context and adds them to the provided List of Streams using the
      * provided context. Note, the versionedGraph is optional with null representing a changed triple instead of quad.
      *
-     * @param streams The List of Streams that collects the change statements.
-     * @param changesGraph The context that contains the change statements.
+     * @param streams        The List of Streams that collects the change statements.
+     * @param changesGraph   The context that contains the change statements.
      * @param versionedGraph The context to use for the collected statements.
-     * @param conn The RepositoryConnection used to query the Repository.
+     * @param conn           The RepositoryConnection used to query the Repository.
      */
     private void collectChanges(List<Stream<Statement>> streams, IRI changesGraph, Resource versionedGraph,
                                 RepositoryConnection conn) {
@@ -797,7 +798,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         Resource head = getHeadCommitIRI(branch);
         return (head.equals(commitId) || getCommitChain(head, false, conn).contains(commitId));
     }
-    
+
     @Override
     public List<Resource> getCommitChain(Resource commitId, boolean asc, RepositoryConnection conn) {
         List<Resource> results = new ArrayList<>();
@@ -809,6 +810,12 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     @Override
     public List<Resource> getDifferenceChain(final Resource sourceCommitId, final Resource targetCommitId,
                                              final RepositoryConnection conn) {
+        return getDifferenceChain(sourceCommitId, targetCommitId, conn, false);
+    }
+
+    @Override
+    public List<Resource> getDifferenceChain(final Resource sourceCommitId, final Resource targetCommitId,
+                                             final RepositoryConnection conn, boolean asc) {
         validateResource(sourceCommitId, commitFactory.getTypeIRI(), conn);
         validateResource(targetCommitId, commitFactory.getTypeIRI(), conn);
 
@@ -823,6 +830,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                     + targetCommitId);
         }
         sourceCommits.removeAll(commonCommits);
+
+        if (!asc) {
+            Collections.reverse(sourceCommits);
+        }
 
         return sourceCommits;
     }
@@ -908,9 +919,9 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         });
 
         return new Difference.Builder()
-            .additions(addModel)
-            .deletions(deleteModel)
-            .build();
+                .additions(addModel)
+                .deletions(deleteModel)
+                .build();
     }
 
     @Override
@@ -967,9 +978,9 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
      * removed from the Difference additions model if they exist, otherwise they are added to the Difference deletions
      * model.
      *
-     * @param difference    The Difference object to update.
-     * @param commitId      The Resource identifying the Commit.
-     * @param conn          The RepositoryConnection to query the repository.
+     * @param difference The Difference object to update.
+     * @param commitId   The Resource identifying the Commit.
+     * @param conn       The RepositoryConnection to query the repository.
      */
     private void aggregateDifferences(Difference difference, Resource commitId, RepositoryConnection conn) {
         Model additions = difference.getAdditions();

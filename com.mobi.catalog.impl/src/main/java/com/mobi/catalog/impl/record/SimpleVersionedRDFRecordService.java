@@ -77,4 +77,9 @@ public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordS
     public Class<VersionedRDFRecord> getType() {
         return VersionedRDFRecord.class;
     }
+
+    @Override
+    public String getTypeIRI() {
+        return VersionedRDFRecord.TYPE;
+    }
 }

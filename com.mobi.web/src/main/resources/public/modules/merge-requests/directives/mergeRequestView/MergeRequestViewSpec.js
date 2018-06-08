@@ -29,7 +29,6 @@ describe('Merge Request View directive', function() {
         mockMergeRequestsState();
         mockMergeRequestManager();
         mockUtil();
-        mockPrefixes();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _mergeRequestsStateService_, _mergeRequestManagerService_, _utilService_) {
             $compile = _$compile_;

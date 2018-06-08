@@ -28,6 +28,7 @@ describe('Request Details Form directive', function() {
         module('requestDetailsForm');
         mockMergeRequestsState();
         mockUtil();
+        mockPrefixes();
 
         inject(function(_$compile_, _$rootScope_, _mergeRequestsStateService_, _utilService_) {
             $compile = _$compile_;
@@ -39,6 +40,7 @@ describe('Request Details Form directive', function() {
         utilSvc.getDctermsValue.and.callFake(function(obj, prop) {
             return prop;
         });
+        
         this.element = $compile(angular.element('<request-details-form></request-details-form>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('requestDetailsForm');

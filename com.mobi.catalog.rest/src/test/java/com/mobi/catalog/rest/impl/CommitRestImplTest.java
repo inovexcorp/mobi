@@ -85,10 +85,10 @@ public class CommitRestImplTest extends MobiRestTestNg {
     private static final String USER_IRI = "http://mobi.com/users/tester";
     private static final String RECORD_IRI = "http://mobi.com/records/test";
     private static final String ERROR_IRI = "http://mobi.com/error";
-    private static final String[] COMMIT_IRIS = new String[]{
-        "http://mobi.com/commits/0",
-        "http://mobi.com/commits/1",
-        "http://mobi.com/commits/2"
+    private static final String[] COMMIT_IRIS = new String[] {
+            "http://mobi.com/commits/0",
+            "http://mobi.com/commits/1",
+            "http://mobi.com/commits/2"
     };
 
     private CommitRestImpl rest;
@@ -328,7 +328,7 @@ public class CommitRestImplTest extends MobiRestTestNg {
     @Test
     public void getDifferenceTest() {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
-                .queryParam("target", encode(COMMIT_IRIS[0])).request().get();
+                .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getDifference(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]));
         try {
@@ -351,17 +351,17 @@ public class CommitRestImplTest extends MobiRestTestNg {
         // Setup:
         doThrow(new IllegalArgumentException()).when(catalogManager).getDifference(vf.createIRI(ERROR_IRI), vf.createIRI(COMMIT_IRIS[0]));
         Response response = target().path("commits/" + encode(ERROR_IRI) + "/difference")
-                .queryParam("target", encode(COMMIT_IRIS[0])).request().get();
+                .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
         assertEquals(response.getStatus(), 400);
 
         doThrow(new MobiException()).when(catalogManager).getDifference(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
-                .queryParam("target", encode(COMMIT_IRIS[0])).request().get();
+                .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
         assertEquals(response.getStatus(), 500);
 
         doThrow(new IllegalStateException()).when(catalogManager).getDifference(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
-                .queryParam("target", encode(COMMIT_IRIS[0])).request().get();
+                .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
         assertEquals(response.getStatus(), 500);
     }
 }

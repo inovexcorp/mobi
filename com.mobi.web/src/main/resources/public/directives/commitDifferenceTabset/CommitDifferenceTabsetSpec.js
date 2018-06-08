@@ -32,11 +32,11 @@ describe('Commit Difference Tabset directive', function() {
             scope = _$rootScope_;
         });
 
-        scope.recordId = '';
-        scope.sourceBranch = {};
-        scope.targetBranchId = '';
+        scope.branchTitle = '';
+        scope.commitId = '';
+        scope.targetId = '';
         scope.difference = {};
-        this.element = $compile(angular.element('<commit-difference-tabset record-id="recordId" source-branch="sourceBranch" target-branch-id="targetBranchId" difference="difference"></commit-difference-tabset>'))(scope);
+        this.element = $compile(angular.element('<commit-difference-tabset commit-id="commitId" branch-title="branchTitle" target-id="targetId" difference="difference"></commit-difference-tabset>'))(scope);
         scope.$digest();
         this.isolatedScope = this.element.isolateScope();
     });
@@ -48,20 +48,20 @@ describe('Commit Difference Tabset directive', function() {
     });
 
     describe('in isolated scope', function() {
-        it('recordId should be one way bound', function() {
-            this.isolatedScope.recordId = 'record';
+        it('commitId should be one way bound', function() {
+            this.isolatedScope.commitId = 'commit';
             scope.$digest();
-            expect(scope.recordId).toEqual('');
+            expect(scope.commitId).toEqual('');
         });
-        it('sourceBranch should be one way bound', function() {
-            this.isolatedScope.sourceBranch = {test: true};
+        it('branchTitle should be one way bound', function() {
+            this.isolatedScope.branchTitle = 'branch';
             scope.$digest();
-            expect(scope.sourceBranch).toEqual({});
+            expect(scope.branchTitle).toEqual('');
         });
-        it('targetBranchId should be one way bound', function() {
-            this.isolatedScope.targetBranchId = 'branch';
+        it('targetId should be one way bound', function() {
+            this.isolatedScope.targetId = 'target';
             scope.$digest();
-            expect(scope.targetBranchId).toEqual('');
+            expect(scope.targetId).toEqual('');
         });
         it('difference should be one way bound', function() {
             this.isolatedScope.difference = {test: true};

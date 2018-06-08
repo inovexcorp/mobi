@@ -62,6 +62,8 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
+import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.config.CatalogConfig;
 import com.mobi.catalog.util.SearchResults;
 import com.mobi.exception.MobiException;
@@ -70,6 +72,8 @@ import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.persistence.utils.Bindings;
+import com.mobi.persistence.utils.RepositoryResults;
+import com.mobi.persistence.utils.Statements;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.TupleQuery;
@@ -81,6 +85,7 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -123,6 +128,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private BranchFactory branchFactory;
     private InProgressCommitFactory inProgressCommitFactory;
     private CommitFactory commitFactory;
+    private OrmFactoryRegistry factoryRegistry;
     private RevisionFactory revisionFactory;
     private VersionedRDFRecordFactory versionedRDFRecordFactory;
     private VersionedRecordFactory versionedRecordFactory;
@@ -132,6 +138,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private com.mobi.rdf.api.Resource distributedCatalogIRI;
     private com.mobi.rdf.api.Resource localCatalogIRI;
     private Map<com.mobi.rdf.api.Resource, String> sortingOptions = new HashMap<>();
+    private Map<String, RecordService<? extends Record>> recordServices = new HashMap<>();
 
     public SimpleCatalogManager() {
     }
@@ -219,6 +226,20 @@ public class SimpleCatalogManager implements CatalogManager {
     @Reference
     void setTagFactory(TagFactory tagFactory) {
         this.tagFactory = tagFactory;
+    }
+
+    @Reference
+    void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
+        this.factoryRegistry = factoryRegistry;
+    }
+
+    @Reference(type = '*', dynamic = true)
+    void addRecordService(RecordService<? extends Record> recordService) {
+        recordServices.put(recordService.getTypeIRI(), recordService);
+    }
+
+    void removeRecordService(RecordService<Record> recordService) {
+        recordServices.remove(recordService.getTypeIRI());
     }
 
     private static final String PROV_AT_TIME = "http://www.w3.org/ns/prov#atTime";
@@ -998,7 +1019,7 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateBranch(catalogId, versionedRDFRecordId, branchId, conn);
             if (utils.commitInBranch(branchId, commitId, conn)) {
-                rtn =  Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
+                rtn = Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
             }
         } finally {
             log.trace("getCommit took {}ms", System.currentTimeMillis() - start);
@@ -1109,6 +1130,17 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public List<Commit> getCommitChain(Resource commitId, Resource targetId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            utils.validateResource(targetId, commitFactory.getTypeIRI(), conn);
+            return utils.getDifferenceChain(commitId, targetId, conn).stream()
+                    .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Override
     public List<Commit> getCommitChain(Resource catalogId, Resource versionedRDFRecordId, Resource branchId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
@@ -1154,7 +1186,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Difference getDifference(Resource sourceCommitId, Resource targetCommitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            return utils.getCommitDifference(utils.getDifferenceChain(sourceCommitId, targetCommitId, conn), conn);
+            return utils.getCommitDifference(utils.getDifferenceChain(sourceCommitId, targetCommitId, conn, true), conn);
         }
     }
 
@@ -1260,7 +1292,50 @@ public class SimpleCatalogManager implements CatalogManager {
                 .deletions(originalCopy)
                 .build();
     }
-       
+
+    @Override
+    public void export(IRI recordIRI, RecordOperationConfig config) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            OrmFactory<? extends Record> serviceType = getRecordService(recordIRI, conn);
+            RecordService<? extends Record> service = recordServices.get(serviceType.getTypeIRI().stringValue());
+            service.export(recordIRI, config, conn);
+        }
+    }
+
+    @Override
+    public void export(List<IRI> recordIRIs, RecordOperationConfig config) {
+        recordIRIs.forEach(iri -> export(iri, config));
+    }
+
+    /**
+     * Takes a recordId and returns the factory IRI type for that record. If failure, it returns the most specific
+     * recordService
+     *
+     * @param recordId The record IRI
+     * @return factory record service
+     */
+    private OrmFactory<? extends Record> getRecordService(Resource recordId, RepositoryConnection conn) {
+        List<Resource> types = RepositoryResults.asList(
+                conn.getStatements(recordId, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
+                .stream()
+                .map(Statements::objectResource)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+
+
+        List<OrmFactory<? extends Record>> classType = factoryRegistry.getSortedFactoriesOfType(Record.class).stream()
+                .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
+                .collect(Collectors.toList());
+
+        for (OrmFactory<? extends Record> factory : classType) {
+            if (recordServices.keySet().contains(factory.getTypeIRI().stringValue())) {
+                return factory;
+            }
+        }
+        throw new IllegalArgumentException("No known record services for this record type.");
+    }
+
     /**
      * Creates a conflict using the provided parameters as the data to construct it.
      *

@@ -27,11 +27,13 @@ describe('Commits Tab directive', function() {
         module('templates');
         module('commitsTab');
         mockOntologyState();
+        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
+            utilSvc = _utilService_;
         });
 
         this.element = $compile(angular.element('<commits-tab></commits-tab>'))(scope);
@@ -65,9 +67,10 @@ describe('Commits Tab directive', function() {
             this.controller = this.element.controller('commitsTab');
         });
         it('should get the currently selected branch', function() {
-            var branch = {'@id': 'branchId'};
+            var branch = {'@id': 'branchId', 'http://purl.org/dc/terms/title': [{'@value': 'title'}]};
             ontologyStateSvc.listItem = {branches: [branch], ontologyRecord: {branchId: branch['@id']}};
-            expect(this.controller.getBranch()).toEqual(branch);
+            this.controller.getBranchTitle();
+            expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(branch, 'title');
         });
     });
 });

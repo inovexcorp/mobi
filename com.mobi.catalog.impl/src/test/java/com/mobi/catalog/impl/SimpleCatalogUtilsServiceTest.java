@@ -2111,6 +2111,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
 
         // Expected list should have the first commit removed
         List<Resource> expected = commitChain.subList(1, commitChain.size());
+        Collections.reverse(expected);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             List<Resource> actual = service.getDifferenceChain(sourceId, targetId, conn);
