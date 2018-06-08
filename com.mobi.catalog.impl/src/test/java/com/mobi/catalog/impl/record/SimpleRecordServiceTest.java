@@ -169,4 +169,9 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordExportSettings.BATCH_EXPORTER, exporter);
         recordService.export(testIRI, config, connection);
     }
+
+    @Test
+    public void getTypeIRITest() throws Exception {
+        assertEquals(Record.TYPE, recordService.getTypeIRI());
+    }
 }
