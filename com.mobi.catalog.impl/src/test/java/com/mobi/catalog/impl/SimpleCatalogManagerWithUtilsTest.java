@@ -265,7 +265,7 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
 
             assertTrue(branchCompiled.contains(commentA));
-//            assertTrue(branchCompiled.contains(commentB));
+            assertTrue(branchCompiled.contains(commentB));
         }
     }
 
@@ -335,7 +335,7 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
 
             assertTrue(branchCompiled.contains(commentA));
-//            assertTrue(branchCompiled.contains(commentB));
+            assertTrue(branchCompiled.contains(commentB));
         }
     }
 }

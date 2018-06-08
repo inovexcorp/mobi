@@ -840,12 +840,14 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Difference getCommitDifference(List<Resource> commits, RepositoryConnection conn) {
-        Difference difference = new Difference.Builder()
-                .additions(mf.createModel())
-                .deletions(mf.createModel())
+        List<Statement> additions = new ArrayList<>();
+        List<Statement> deletions = new ArrayList<>();
+        commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, conn));
+
+        return new Difference.Builder()
+                .additions(mf.createModel(additions))
+                .deletions(mf.createModel(deletions))
                 .build();
-        commits.forEach(commitId -> aggregateDifferences(difference, commitId, conn));
-        return difference;
     }
 
     @Override
@@ -973,18 +975,17 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     /**
-     * Updates the supplied Difference with statements from the Revision associated with the supplied Commit resource.
-     * Revision addition statements are added to the Difference additions model. Revision deletion statements are
-     * removed from the Difference additions model if they exist, otherwise they are added to the Difference deletions
-     * model.
+     * Updates the supplied Lists of addition and deletions statements with statements from the Revision associated with
+     * the supplied Commit resource. Revision addition statements are added to the additions list. Revision deletion
+     * statements are removed from the additions list if they exist, otherwise they are added to the deletions list.
      *
-     * @param difference The Difference object to update.
-     * @param commitId   The Resource identifying the Commit.
-     * @param conn       The RepositoryConnection to query the repository.
+     * @param additions The List of Statements added to update.
+     * @param additions The List of Statements deleted to update.
+     * @param commitId  The Resource identifying the Commit.
+     * @param conn      The RepositoryConnection to query the repository.
      */
-    private void aggregateDifferences(Difference difference, Resource commitId, RepositoryConnection conn) {
-        Model additions = difference.getAdditions();
-        Model deletions = difference.getDeletions();
+    private void aggregateDifferences(List<Statement> additions, List<Statement> deletions, Resource commitId,
+                                      RepositoryConnection conn) {
         getAdditions(commitId, conn).forEach(statement -> updateModels(statement, additions, deletions));
         getDeletions(commitId, conn).forEach(statement -> updateModels(statement, deletions, additions));
     }
@@ -993,14 +994,15 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
      * Remove the supplied triple from the modelToRemove if it exists, otherwise add the triple to modelToAdd.
      *
      * @param statement     The statement to process
-     * @param modelToAdd    The Model to add the statement to if it does not exist in modelToRemove
-     * @param modelToRemove The Model to remove the statement from if it exists
+     * @param listToAdd    The List of addition statements to add the statement to if it does not exist in
+     *                      modelToRemove
+     * @param listToRemove The List of deletion statements to remove the statement from if it exists
      */
-    private void updateModels(Statement statement, Model modelToAdd, Model modelToRemove) {
-        if (modelToRemove.contains(statement)) {
-            modelToRemove.remove(statement);
+    private void updateModels(Statement statement, List<Statement> listToAdd, List<Statement> listToRemove) {
+        if (listToRemove.contains(statement)) {
+            listToRemove.remove(statement);
         } else {
-            modelToAdd.add(statement);
+            listToAdd.add(statement);
         }
     }
 
