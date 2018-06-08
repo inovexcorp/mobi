@@ -57,6 +57,9 @@ import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
+import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.record.config.OperationConfig;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
@@ -86,6 +89,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -151,6 +155,12 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private CatalogUtilsService utilsService;
 
     @Mock
+    private RecordService<Record> recordService;
+
+    @Mock
+    private RecordService<VersionedRDFRecord> versionedRDFRecordService;
+
+    @Mock
     private MergeRequestManager mergeRequestManager;
 
     @Before
@@ -164,12 +174,18 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         repo.initialize();
 
         MockitoAnnotations.initMocks(this);
+
+        when(recordService.getTypeIRI()).thenReturn(Record.TYPE);
+        when(versionedRDFRecordService.getTypeIRI()).thenReturn(VersionedRDFRecord.TYPE);
+
         manager = new SimpleCatalogManager();
         injectOrmFactoryReferencesIntoService(manager);
         manager.setRepository(repo);
         manager.setValueFactory(VALUE_FACTORY);
         manager.setModelFactory(MODEL_FACTORY);
         manager.setUtils(utilsService);
+        manager.addRecordService(versionedRDFRecordService);
+        manager.addRecordService(recordService);
         manager.setMergeRequestManager(mergeRequestManager);
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
@@ -184,6 +200,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         props.put("iri", "http://mobi.com/test/catalogs#catalog");
 
         manager.start(props);
+        manager.setFactoryRegistry(ORM_FACTORY_REGISTRY);
 
         distributedCatalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-distributed");
         localCatalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-local");
@@ -2137,6 +2154,55 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
             assertEquals(0, diff.getAdditions().size());
             assertEquals(0, diff.getDeletions().size());
         }
+    }
+
+    /* export() */
+
+    @Test
+    public void testExportNonExistingRecord() {
+        RecordOperationConfig config = new OperationConfig();
+        String expected = "No known record services for this record type.";
+        IRI nonRecord = VALUE_FACTORY.createIRI("http://mobi.com/test/records#random");
+        try{
+            manager.export(nonRecord, config);
+        }catch(Exception e){
+            assertEquals(e.getMessage(), expected);
+        }
+    }
+
+    @Test
+    public void testExportRecordWithoutList() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        manager.export(RECORD_IRI, config);
+        verify(recordService).export(eq(RECORD_IRI), any(OperationConfig.class), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testExportVersionedRecordWithoutList() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        manager.export(VERSIONED_RECORD_IRI, config);
+        verify(recordService).export(eq(VERSIONED_RECORD_IRI), any(OperationConfig.class),
+                any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testExportVersionedRDFRecordWithoutList() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        manager.export(VERSIONED_RDF_RECORD_IRI, config);
+        verify(versionedRDFRecordService).export(eq(VERSIONED_RDF_RECORD_IRI), any(OperationConfig.class),
+                any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testExportWithList() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        List<IRI> exportList = new ArrayList<>();
+        exportList.add(RECORD_IRI);
+        exportList.add(VERSIONED_RECORD_IRI);
+        manager.export(exportList, config);
+        verify(recordService).export(eq(RECORD_IRI),  any(OperationConfig.class), any(RepositoryConnection.class));
+        verify(recordService).export(eq(VERSIONED_RECORD_IRI),  any(OperationConfig.class),
+                any(RepositoryConnection.class));
     }
 
     private void setUpConflictTest(Resource leftId, Resource rightId, Difference leftDiff, Difference rightDiff, Model originalModel) {
