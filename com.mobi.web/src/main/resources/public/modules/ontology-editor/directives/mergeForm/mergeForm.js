@@ -27,9 +27,9 @@
         .module('mergeForm', [])
         .directive('mergeForm', mergeForm);
 
-        mergeForm.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService'];
+        mergeForm.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', 'prefixes', '$q'];
 
-        function mergeForm(utilService, ontologyStateService, catalogManagerService) {
+        function mergeForm(utilService, ontologyStateService, catalogManagerService, prefixes, $q) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -47,17 +47,23 @@
                     var catalogId = _.get(cm.localCatalog, '@id', '');
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
+                    dvm.prefixes = prefixes;
                     dvm.tabs = {
                         changes: true,
                         commits: false
                     };
                     dvm.branches = _.reject(dvm.os.listItem.branches, {'@id': dvm.branch['@id']});
                     dvm.branchTitle = dvm.util.getDctermsValue(dvm.branch, 'title');
+                    dvm.targetHeadCommitId = undefined;
 
                     dvm.changeTarget = function() {
                         if (dvm.target) {
-                            cm.getBranchDifference(dvm.branch['@id'], dvm.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId)
-                                .then(diff => {
+                            cm.getBranchHeadCommit(dvm.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId)
+                                .then(target => {
+                                    dvm.targetHeadCommitId = target.commit['@id'];
+                                    return cm.getDifference(dvm.os.listItem.ontologyRecord.commitId, dvm.targetHeadCommitId);
+                                    }, $q.reject)
+                                .then( diff => {
                                     dvm.os.listItem.merge.difference = diff;
                                 }, errorMessage => {
                                     dvm.util.createErrorToast(errorMessage);

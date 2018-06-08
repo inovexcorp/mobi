@@ -1019,7 +1019,7 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateBranch(catalogId, versionedRDFRecordId, branchId, conn);
             if (utils.commitInBranch(branchId, commitId, conn)) {
-                rtn =  Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
+                rtn = Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
             }
         } finally {
             log.trace("getCommit took {}ms", System.currentTimeMillis() - start);
@@ -1130,6 +1130,17 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public List<Commit> getCommitChain(Resource commitId, Resource targetId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            utils.validateResource(targetId, commitFactory.getTypeIRI(), conn);
+            return utils.getDifferenceChain(commitId, targetId, conn).stream()
+                    .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Override
     public List<Commit> getCommitChain(Resource catalogId, Resource versionedRDFRecordId, Resource branchId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
@@ -1175,7 +1186,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Difference getDifference(Resource sourceCommitId, Resource targetCommitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            return utils.getCommitDifference(utils.getDifferenceChain(sourceCommitId, targetCommitId, conn), conn);
+            return utils.getCommitDifference(utils.getDifferenceChain(sourceCommitId, targetCommitId, conn, true), conn);
         }
     }
 

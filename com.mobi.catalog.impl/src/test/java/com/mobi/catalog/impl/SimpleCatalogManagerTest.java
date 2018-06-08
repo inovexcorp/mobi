@@ -26,6 +26,7 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -1761,12 +1762,12 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
                 .deletions(MODEL_FACTORY.createModel())
                 .build();
         doReturn(sourceDiff).when(utilsService).getCommitDifference(eq(Collections.singletonList(sourceId)), any(RepositoryConnection.class));
-        doReturn(Collections.singletonList(sourceId)).when(utilsService).getDifferenceChain(eq(sourceId), eq(targetId), any(RepositoryConnection.class));
+        doReturn(Collections.singletonList(sourceId)).when(utilsService).getDifferenceChain(eq(sourceId), eq(targetId), any(RepositoryConnection.class), anyBoolean());
 
         Difference diff = manager.getDifference(sourceId, targetId);
         assertEquals(sourceDiff, diff);
         verify(utilsService).getCommitDifference(eq(Collections.singletonList(sourceId)), any(RepositoryConnection.class));
-        verify(utilsService).getDifferenceChain(eq(sourceId), eq(targetId), any(RepositoryConnection.class));
+        verify(utilsService).getDifferenceChain(eq(sourceId), eq(targetId), any(RepositoryConnection.class), eq(true));
     }
 
     @Test
@@ -1775,7 +1776,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         Resource sourceId = VALUE_FACTORY.createIRI(COMMITS + "test4a");
         Resource targetId = VALUE_FACTORY.createIRI(COMMITS + "test1");
         thrown.expect(IllegalArgumentException.class);
-        doThrow(new IllegalArgumentException()).when(utilsService).getDifferenceChain(any(Resource.class), any(Resource.class), any(RepositoryConnection.class));
+        doThrow(new IllegalArgumentException()).when(utilsService).getDifferenceChain(any(Resource.class), any(Resource.class), any(RepositoryConnection.class), anyBoolean());
 
         manager.getDifference(sourceId, targetId);
     }
@@ -1832,7 +1833,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testGetConflictsClassDeletionWithModification() throws  Exception {
+    public void testGetConflictsClassDeletionWithModification() throws Exception {
         IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
         Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1");
         Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2");
