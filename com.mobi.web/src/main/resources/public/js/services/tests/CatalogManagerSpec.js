@@ -1390,6 +1390,43 @@ describe('Catalog Manager service', function() {
             flushAndVerify($httpBackend);
         });
     });
+    describe('should retrieve Commit history', function() {
+        beforeEach(function() {
+            this.url = '/mobirest/commits/' + encodeURIComponent(this.commitId) + '/history';
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getCommitHistory(this.commitId)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+        });
+        it('successfully', function() {
+            $httpBackend.whenGET(this.url).respond(200, []);
+            catalogManagerSvc.getCommitHistory(this.commitId)
+                .then(function(response) {
+                    expect(response).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('successfully with target ID', function() {
+            var params = $httpParamSerializer({targetId: this.commitId})
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getCommitHistory(this.commitId, this.commitId)
+                .then(function(response) {
+                    expect(response).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
     describe('should create a new commit on a Branch', function() {
         beforeEach(function() {
             this.message = 'Message';
@@ -1459,6 +1496,45 @@ describe('Catalog Manager service', function() {
             flushAndVerify($httpBackend);
         });
     });
+    describe('should retrieve a Commit', function() {
+        beforeEach(function () {
+            this.url = '/mobirest/commits/' + encodeURIComponent(this.commitId);
+        });
+        it('unless an error occurs', function() {
+            var params = $httpParamSerializer({format: 'jsonld'});
+            $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getCommit(this.commitId, 'jsonld')
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+        });
+        it('with a format', function() {
+            var params = $httpParamSerializer({format: 'turtle'});
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
+            catalogManagerSvc.getCommit(this.commitId, 'turtle')
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('without a format', function() {
+            var params = $httpParamSerializer({format: 'jsonld'});
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
+            catalogManagerSvc.getCommit(this.commitId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
     describe('should retrieve a Branch Commit', function() {
         beforeEach(function () {
             this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/commits/' + encodeURIComponent(this.commitId);
@@ -1492,6 +1568,50 @@ describe('Catalog Manager service', function() {
             catalogManagerSvc.getBranchCommit(this.commitId, this.branchId, this.recordId, this.catalogId)
                 .then(function(response) {
                     expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
+    describe('should get the difference between two commits', function() {
+        beforeEach(function() {
+            this.config = {
+                format: 'jsonld',
+                targetId: this.commitId
+            };
+            this.url = '/mobirest/commits/' + encodeURIComponent(this.commitId) + '/difference';
+        });
+        it('unless an error occurs', function() {
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getDifference(this.commitId, this.commitId, 'jsonld')
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+        });
+        it('with a format', function() {
+            this.config.format = 'turtle';
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getDifference(this.commitId, this.commitId, 'turtle')
+                .then(function(response) {
+                    expect(response).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('without a format', function() {
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getDifference(this.commitId, this.commitId)
+                .then(function(response) {
+                    expect(response).toEqual([]);
                 }, function(response) {
                     fail('Promise should have resolved');
                 });

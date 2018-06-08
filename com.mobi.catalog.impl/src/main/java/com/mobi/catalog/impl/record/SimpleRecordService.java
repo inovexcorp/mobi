@@ -59,4 +59,9 @@ public class SimpleRecordService extends AbstractRecordService<Record> {
     public Class<Record> getType() {
         return Record.class;
     }
+
+    @Override
+    public String getTypeIRI() {
+        return Record.TYPE;
+    }
 }
