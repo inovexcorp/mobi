@@ -64,67 +64,73 @@
 
                 // Set links markers(arrows) default configuration values
                 var markers = {};
-                var markersConfig = {};
-                markersConfig.width = 8;
-                markersConfig.height = 8;
-                markersConfig.refX = 28;
-                markersConfig.refY = 0;
-                markersConfig.color = 'gray';
+                var markersConfig = {
+                    width: 8,
+                    height: 8,
+                    refX: 28,
+                    refY: 0,
+                    color: 'gray'
+                };
 
                 // Set links(connectors) default configuration values
                 var links = {};
-                var linksConfig = {}
-                linksConfig.strokeWidth = 1.25;
-                linksConfig.class = 'links';
-                linksConfig.stroke = 'gray';
-                linksConfig.text = 'predicate';
+                var linksConfig = {
+                    strokeWidth: 1.25,
+                    class: 'links',
+                    stroke: 'gray',
+                    text: 'predicate'
+                };
 
                 // Set EdgePaths(connectors) default configuration values
                 var edgepaths = {};
-                var edgepathsConfig = {};
-                edgepathsConfig.class = 'edge-paths';
-                edgepathsConfig.fillOpacity = 0;
-                edgepathsConfig.strokeOpacity = 0;
+                var edgepathsConfig = {
+                    class: 'edge-paths',
+                    fillOpacity: 0,
+                    strokeOpacity: 0
+                };
 
                 // Set connector labels default configuration values
                 var edgelabels = {};
-                var edgelabelsConfig = {};
-                edgelabelsConfig.fontSize = 8.5;
-                edgelabelsConfig.fontColor = 'gray';
-                edgelabelsConfig.textAnchor = 'middle';
-                edgelabelsConfig.startOffSet = '50%';
+                var edgelabelsConfig = {
+                    fontSize: 8.5,
+                    fontColor: 'gray',
+                    textAnchor: 'middle',
+                    startOffSet: '50%'
+                };
 
                 // Set nodes configuration values
                 var nodes = {};
                 var nodesClass = 'nodes';
                 var nodesRadio = 20;
-                var nodesMouseOverConfig = {};
-                nodesMouseOverConfig.fillColor = '#f7bd4a';
-                nodesMouseOverConfig.strokeWidth = 3;
-                nodesMouseOverConfig.stroke = '#0475d8';
-                nodesMouseOverConfig.connectedLinksColor = '#0475d8';
-                nodesMouseOverConfig.notConnectedLinksColor = 'gray';
-                nodesMouseOverConfig.connectedLinksStrokeWidth = 1.70;
-                nodesMouseOverConfig.notConnectedLinksStrokeWidth = 1.25;
+                var nodesMouseOverConfig = {
+                    fillColor: '#f7bd4a',
+                    strokeWidth: 3,
+                    stroke: '#0475d8',
+                    connectedLinksColor: '#0475d8',
+                    notConnectedLinksColor: 'gray',
+                    connectedLinksStrokeWidth: 1.70,
+                    notConnectedLinksStrokeWidth: 1.25
+                };
 
                 // Set nodes mouse over event config values
-                var nodesMouseOutConfig = {};
-                nodesMouseOutConfig.nodesStrokeWidth = 1.25;
-                nodesMouseOutConfig.nodesStroke = 'gray';
-                nodesMouseOutConfig.nodesFill = '#ccddff';
-                nodesMouseOutConfig.cursor = 'move';
-                nodesMouseOutConfig.linksStroke = 'gray';
-                nodesMouseOutConfig.linksStrokeWidth = 1.25;
+                var nodesMouseOutConfig = {
+                    nodesStrokeWidth: 1.25,
+                    nodesStroke: 'gray',
+                    nodesFill: '#ccddff',
+                    cursor: 'move',
+                    linksStroke: 'gray',
+                    linksStrokeWidth: 1.25
+                };
 
                 // Set nodes mouse over event config values
-                var nodesTextConfig = {};
-                nodesTextConfig.class = 'nodetext';
-                nodesTextConfig.fontSize = 10;
-                nodesTextConfig.dx = 22;
-                nodesTextConfig.dy = '.35em';
-                nodesTextConfig.fontWeight = 'bold';
-                nodesTextConfig.fill = '#0475d8';
-
+                var nodesTextConfig = {
+                    class: 'nodetext',
+                    fontSize: 10,
+                    dx: 22,
+                    dy: '.35em',
+                    fontWeight: 'bold',
+                    fill: '#0475d8'
+                };
 
                 /**
                  * We can also create the SVG container that will hold the
