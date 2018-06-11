@@ -28,6 +28,7 @@
          * @ngdoc overview
          * @name rdfVisualization
          *
+         * @description
          * The `rdfVisualization` module provides the `rdfVisualization` directive which generate
          * a force directed graph from a json ld object using the D3 library capabilities.
          */
