@@ -90,6 +90,7 @@
             'pagingDetails',
             'passwordConfirmInput',
             'radioButton',
+            'rdfVisualization',
             'recordKeywords',
             'spinner',
             'statementContainer',
