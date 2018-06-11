@@ -154,6 +154,7 @@
                 // a size that's convenient for displaying the graphic on
                 var width = svg.attr("width");
                 var height = svg.attr("height");
+                var radius = 5;
 
                 /**
                  * One other parameter for our visualization determines how
@@ -171,9 +172,7 @@
 
                 // Add simulation forces
                 var simulation = d3.forceSimulation()
-                    .force('link', d3.forceLink().id(element => {
-                        return element.id;
-                    }))
+                    .force('link', d3.forceLink().id(element => element.id))
                     .force('charge', d3.forceManyBody())
                     .force('center', d3.forceCenter(width / 2, height / 2));
 
@@ -204,13 +203,9 @@
                     simulation
                         .nodes(formattedData.nodes)
                         .on('tick', tick);
-
-
                     simulation
                         .force('link', d3.forceLink()
-                            .id(element => {
-                                return element.id;
-                            })
+                            .id(element => element.id)
                             .distance(150)
                             .strength(.15))
                         .force('charge', d3.forceManyBody().strength(-30));
@@ -225,37 +220,25 @@
                  */
                 function tick() {
                     nodes.attr("cx", element => {
-                            return element.x = Math.max(5, Math.min(width - 5, element.x));
+                            return element.x = Math.max(radius, Math.min(width - radius, element.x));
                         })
                         .attr("cy", element => {
-                            return element.y = Math.max(5, Math.min(height - 5, element.y));
+                            return element.y = Math.max(radius, Math.min(height - radius, element.y));
                         });
 
-                    links.attr("x1",  element => {
-                            return element.source.x;
-                        })
-                        .attr("y1",  element => {
-                            return element.source.y;
-                        })
-                        .attr("x2",  element => {
-                            return element.target.x;
-                        })
-                        .attr("y2",  element => {
-                            return element.target.y;
-                        })
-                        .attr("marker-end", element => {
-                            return "url(#arrowhead)";
-                        });
-                    nodes.attr("transform", element => {
-                        return "translate(" + element.x + "," + element.y + ")";
-                    });
+                    links.attr("x1",  element => element.source.x)
+                         .attr("y1",  element => element.source.y)
+                         .attr("x2",  element => element.target.x)
+                         .attr("y2",  element => element.target.y)
+                         .attr("marker-end", element => "url(#arrowhead)");
 
-                    edgepaths.attr('d', element => {
-                        return 'M ' + element.source.x + ' ' + element.source.y + ' L ' + element.target.x + ' ' + element.target.y;
-                    });
+                    nodes.attr("transform", element => "translate(" + element.x + "," + element.y + ")");
 
-                    edgelabels.attr('transform', function(d) {
-                        if (d.target.x < d.source.x) {
+                    edgepaths.attr('d', element => 'M ' + element.source.x + ' ' +
+                        element.source.y + ' L ' + element.target.x + ' ' + element.target.y);
+
+                    edgelabels.attr('transform', element => {
+                        if (element.target.x < element.source.x) {
                             var bbox = this.getBBox();
                             var rx = bbox.x + bbox.width / 2;
                             var ry = bbox.y + bbox.height / 2;
@@ -335,9 +318,7 @@
                         .attr("markerWidth", markersConfig.width)
                         .attr("markerHeight", markersConfig.height)
                         .attr("orient", "auto")
-                        .style('fill', element => {
-                            return markersConfig.color;
-                        })
+                        .style('fill', element => markersConfig.color)
                         .append("path")
                         .attr('d', 'M 0,-5 L 10 ,0 L 0,5');
                     return markers;
@@ -356,9 +337,7 @@
                         .attr('stroke-width', linksConfig.strokeWidth);
 
                     links.append("title")
-                        .text(element => {
-                            return element[linksConfig.text];
-                        });
+                        .text(element => element[linksConfig.text]);
                     return links;
                 }
 
@@ -429,7 +408,6 @@
                  * Set force directed graph nodes
                  */
                 function setNodes(nodesClass, nodesRadio) {
-
                     var nodes = graph.append('g')
                         .attr('class', nodesClass)
                         .selectAll('g.node')
@@ -445,14 +423,8 @@
 
                     d3.selectAll(".circle").append("circle")
                         .style("stroke", 'gray')
-                        .attr("class", element => {
-                            return "nodes type" + element.type
-                        }).attr("fill", element => {
-                            return '#ccddff';
-                        })
-                        .attr("r", element => {
-                            return nodesRadio;
-                        });
+                        .attr("class", element => "nodes type" + element.type).attr("fill", element => '#ccddff')
+                        .attr("r", element => nodesRadio);
                     return nodes;
                 }
 
@@ -496,7 +468,7 @@
                             }
                         });
 
-                        links.style('stroke-width', function(l) {
+                        links.style('stroke-width', link => {
                             if (element === link.source || element === link.target) {
                                 return nodesMouseOverConfig.connectedLinksStrokeWidth;
                             } else {
