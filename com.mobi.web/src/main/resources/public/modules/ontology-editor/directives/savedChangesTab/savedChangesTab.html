@@ -1,5 +1,5 @@
 <!--
-  #%L
+#%L
   com.mobi.web
   $Id:$
   $HeadURL:$
@@ -19,7 +19,7 @@
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
-  -->
+-->
 <div class="saved-changes-tab row">
     <div class="col-xs-8 col-xs-offset-2">
         <block>
@@ -40,10 +40,14 @@
                         </h5>
                         <div class="value-container" ng-hide="isClosed">
                             <statement-container ng-if="item.additions.length" additions>
-                                <statement-display ng-repeat="addition in item.additions | orderBy:dvm.util.getPredicateLocalName" predicate="addition.p" object="addition.o" addition/>
+                                <div vs-repeat="{size: 26}">
+                                    <statement-display ng-repeat="addition in item.additions | orderBy:dvm.util.getPredicateLocalName" predicate="addition.p" object="addition.o" addition/>
+                                </div>  
                             </statement-container>
                             <statement-container ng-if="item.deletions.length" deletions>
-                                <statement-display ng-repeat="deletion in item.deletions | orderBy:dvm.util.getPredicateLocalName" predicate="deletion.p" object="deletion.o" deletion/>
+                                <div vs-repeat="{size: 26}">
+                                    <statement-display ng-repeat="deletion in item.deletions | orderBy:dvm.util.getPredicateLocalName" predicate="deletion.p" object="deletion.o" deletion/>
+                                </div>
                             </statement-container>
                         </div>
                     </div>
