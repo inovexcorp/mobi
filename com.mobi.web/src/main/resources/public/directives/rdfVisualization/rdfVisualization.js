@@ -28,6 +28,8 @@
          * @ngdoc overview
          * @name rdfVisualization
          *
+         * The `rdfVisualization` module provides the `rdfVisualization` directive which generate
+         * a force directed graph from a json ld object using the D3 library capabilities.
          */
         .module('rdfVisualization', [])
         /**
@@ -37,7 +39,15 @@
          * @restrict E
          *
          * @description
-         * `rdfVisualization` is a directive that attaches a force directed graph to an svg
+         * `rdfVisualization` is a directive that generates an SVG visualisation from a provided
+         * ontology in a JSON-LD object, this JSON-LD object will be transformed to provide a list
+         * of data objects and uses them as nodes. Think of those nodes as the data bubbles,
+         * it also provides a list of links, they connect nodes to display (complex) relations.
+         * Every link needs to have at least a source and a target. Both are ids referencing a node.
+         * The visualization will have default functionalities like zoom, pan, remove node,
+         * highlight node nearest neighbors and draggin events.
+         *
+         * @param {Object} entity A JSON-LD object
          *
          */
         .directive('rdfVisualization', rdfVisualization);
@@ -51,7 +61,6 @@
             scope: {
                 jsonld: '<'
             },
-
             link: function(scope, element, jsonld) {
 
                /**
