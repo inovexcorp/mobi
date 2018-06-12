@@ -32,23 +32,21 @@
                 </div>
             </block-header>
             <block-content>
-                <div ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length" class="changes">
-                    <div class="property-values" ng-repeat="item in dvm.list | orderBy:dvm.orderByIRI">
-                        <h5 ng-click="isClosed = !isClosed" class="clearfix">
-                            <p class="text">{{dvm.util.getBeautifulIRI(item.id)}} <small><a ng-click="dvm.go($event, item.id)">{{item.id}}</a></small></p>
-                            <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
-                        </h5>
-                        <div class="value-container" ng-hide="isClosed">
-                            <statement-container ng-if="item.additions.length" additions>
-                                <div vs-repeat="{size: 26}">
+                <div class="changes" ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length">
+                    <div class="changes" vs-repeat>
+                        <div class="property-values" ng-repeat="item in dvm.list | orderBy:dvm.orderByIRI">
+                            <h5 ng-click="isClosed = !isClosed" class="clearfix">
+                                <p class="text">{{dvm.util.getBeautifulIRI(item.id)}} <small><a ng-click="dvm.go($event, item.id)">{{item.id}}</a></small></p>
+                                <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+                            </h5>
+                            <div class="value-container" ng-hide="isClosed">
+                                <statement-container ng-if="item.additions.length" additions>
                                     <statement-display ng-repeat="addition in item.additions | orderBy:dvm.util.getPredicateLocalName" predicate="addition.p" object="addition.o" addition/>
-                                </div>  
-                            </statement-container>
-                            <statement-container ng-if="item.deletions.length" deletions>
-                                <div vs-repeat="{size: 26}">
+                                </statement-container>
+                                <statement-container ng-if="item.deletions.length" deletions>
                                     <statement-display ng-repeat="deletion in item.deletions | orderBy:dvm.util.getPredicateLocalName" predicate="deletion.p" object="deletion.o" deletion/>
-                                </div>
-                            </statement-container>
+                                </statement-container>
+                            </div>
                         </div>
                     </div>
                 </div>

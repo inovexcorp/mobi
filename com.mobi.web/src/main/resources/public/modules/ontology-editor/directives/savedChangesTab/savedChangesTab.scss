@@ -6,27 +6,32 @@
         .block-header {
             border: 0;
         }
-
-        .block-content .property-values {
-            &:first-child {
-                margin-top: 0;
-            }
-
-            .value-container {
-                &:hover {
-                    background-color: #fff;
+        
+        .block-content .changes {
+            overflow: auto;
+            height: 100%;
+            
+            .property-values {
+                &:first-child {
+                    margin-top: 0;
                 }
-
-                .checkbox {
-                    margin: 0;
-
-                    label {
+                
+                .value-container {
+                    &:hover {
+                        background-color: #fff;
+                    }
+                    
+                    .checkbox {
                         margin: 0;
-                        padding: 0;
-
-                        input {
+                        
+                        label {
                             margin: 0;
-                            position: relative;
+                            padding: 0;
+                            
+                            input {
+                                margin: 0;
+                                position: relative;
+                            }
                         }
                     }
                 }
