@@ -33,7 +33,7 @@
             </block-header>
             <block-content>
                 <div class="changes" ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length">
-                    <div class="changes" vs-repeat>
+                    <div class="changes" vs-repeat vs-size="listSize">
                         <div class="property-values" ng-repeat="item in dvm.list | orderBy:dvm.orderByIRI">
                             <h5 ng-click="isClosed = !isClosed" class="clearfix">
                                 <p class="text">{{dvm.util.getBeautifulIRI(item.id)}} <small><a ng-click="dvm.go($event, item.id)">{{item.id}}</a></small></p>

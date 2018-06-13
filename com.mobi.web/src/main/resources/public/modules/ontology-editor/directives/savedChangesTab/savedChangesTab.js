@@ -44,7 +44,7 @@
                     var catalogId = _.get(cm.localCatalog, '@id', '');
                     var typeIRI = prefixes.rdf + 'type';
                     var types = [prefixes.owl + 'Class', prefixes.owl + 'ObjectProperty', prefixes.owl + 'DatatypeProperty', prefixes.owl + 'AnnotationProperty', prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept', prefixes.skos + 'ConceptScheme'];
-
+                    
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.list = [];
@@ -113,10 +113,23 @@
                         dvm.list = _.map(ids, id => {
                             var additions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.additions);
                             var deletions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.deletions);
+                            
+                            var listSize = 0;
+                            
+                            if(undefined !== additions) {
+                                listSize += 20;
+                                listSize += (additions.length * 42);
+                            } 
+                            if(undefined !== deletions) {
+                                listSize += 20
+                                listSize += (deletions.length * 42);
+                            }
+                            
                             return {
                                 id,
                                 additions,
                                 deletions,
+                                listSize,
                                 disableAll: hasSpecificType(additions) || hasSpecificType(deletions)
                             }
                         });
