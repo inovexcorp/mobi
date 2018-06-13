@@ -418,10 +418,10 @@
                         listItem.editorTabStates = oldListItem.editorTabStates;
                         if (listItem.ontologyId !== oldListItem.ontologyId) {
                             self.setSelected(listItem.ontologyId, true, listItem);
+                            self.resetStateTabs(listItem);
                         } else {
                             listItem.selected = oldListItem.selected;
                         }
-                        self.resetStateTabs(listItem);
                         return sm.updateOntologyState(recordId, branchId, commitId);
                     }, $q.reject)
                     .then(() => {
