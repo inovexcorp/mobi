@@ -27,16 +27,16 @@
         .module('savedChangesTab', [])
         .directive('savedChangesTab', savedChangesTab);
 
-        savedChangesTab.$inject = ['$q', 'ontologyStateService', 'ontologyManagerService', 'stateManagerService', 'utilService', 'catalogManagerService', 'prefixes'];
+        savedChangesTab.$inject = ['$filter', '$q', 'ontologyStateService', 'ontologyManagerService', 'stateManagerService', 'utilService', 'catalogManagerService', 'prefixes'];
 
-        function savedChangesTab($q, ontologyStateService, ontologyManagerService, stateManagerService, utilService, catalogManagerService, prefixes) {
+        function savedChangesTab($filter, $q, ontologyStateService, ontologyManagerService, stateManagerService, utilService, catalogManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/savedChangesTab/savedChangesTab.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: ['$scope', '$element', function($scope, $element) {
                     var dvm = this;
                     var cm = catalogManagerService;
                     var om = ontologyManagerService;
@@ -113,18 +113,59 @@
                         dvm.list = _.map(ids, id => {
                             var additions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.additions);
                             var deletions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.deletions);
+
+                            var addition, deletion;
+                            var addStr = "", delStr = "";
+                            var parent = angular.element(document.getElementsByClassName('changes'));
+
+                            var div = angular.element("<div></div>");
+                            parent.append(div);
+                            var listSize = 300;
                             
-                            var listSize = 0;
+                            var fullObject, o;
+                            var filter = $filter;
                             
-                            if(undefined !== additions) {
-                                listSize += 20;
-                                listSize += (additions.length * 42);
-                            } 
-                            if(undefined !== deletions) {
-                                listSize += 20
-                                listSize += (deletions.length * 42);
+                            if (additions !== undefined) {
+                                _.forEach(additions, (addition => {
+                                    if (_.has(addition.o, '@id')) {
+                                        fullObject = addition.o['@id'];
+                                        o = filter('splitIRI')(fullObject).end || fullObject;
+                                    } else {
+                                        o = _.get(addition.o, '@value', addition.o)
+                                            + (_.has(addition.o, '@language') ? ' [language: ' + addition.o['@language'] + ']' : '')
+                                            + (_.has(addition.o, '@type') ? ' [type: ' + filter('prefixation')(addition.o['@type']) + ']' : '');
+                                        fullObject = o;
+                                    }
+                                    div.append(o + "<br/>");
+                                })); 
+                            }
+                            div.append("<br/>")
+                            if (deletions !== undefined) {
+                                _.forEach(deletions, (deletion => {
+                                    if (_.has(deletion.o, '@id')) {
+                                        fullObject = deletion.o['@id'];
+                                        o = filter('splitIRI')(fullObject).end || fullObject;
+                                    } else {
+                                        o = _.get(deletion.o, '@value', deletion.o)
+                                            + (_.has(deletion.o, '@language') ? ' [language: ' + deletion.o['@language'] + ']' : '')
+                                            + (_.has(deletion.o, '@type') ? ' [type: ' + filter('prefixation')(deletion.o['@type']) + ']' : '');
+                                        fullObject = o;
+                                    }
+                                    div.append(o + "<br/>");
                             }
                             
+                            if (div !== undefined) {                       
+                                div.css({
+                                    'width': '60%',
+                                    'word-break': 'break-word',
+                                    'padding': '1px 10px'
+                                });
+                               
+                               // This formula was determined through experimentation
+                                listSize = .9061*(div[0].offsetHeight + 50)+ 55.01;
+                            }
+                            div.remove();
+
                             return {
                                 id,
                                 additions,
