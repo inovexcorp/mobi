@@ -27,16 +27,16 @@
         .module('savedChangesTab', [])
         .directive('savedChangesTab', savedChangesTab);
 
-        savedChangesTab.$inject = ['$filter', '$q', 'ontologyStateService', 'ontologyManagerService', 'stateManagerService', 'utilService', 'catalogManagerService', 'prefixes'];
+        savedChangesTab.$inject = ['$q', 'ontologyStateService', 'ontologyManagerService', 'stateManagerService', 'utilService', 'catalogManagerService', 'prefixes'];
 
-        function savedChangesTab($filter, $q, ontologyStateService, ontologyManagerService, stateManagerService, utilService, catalogManagerService, prefixes) {
+        function savedChangesTab($q, ontologyStateService, ontologyManagerService, stateManagerService, utilService, catalogManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/savedChangesTab/savedChangesTab.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: ['$scope', '$element', function($scope, $element) {
+                controller: ['$scope',function($scope) {
                     var dvm = this;
                     var cm = catalogManagerService;
                     var om = ontologyManagerService;
@@ -153,14 +153,15 @@
                     
                     dvm.getMoreResults = function() {
                         dvm.index++;
-                        _.forEach(_.get(dvm.chunks, dvm.index, []), item => dvm.showList.push(item));
+                        var currChunk = _.get(dvm.chunks, dvm.index, []);
+                        dvm.showList = _.concat(dvm.showList, currChunk);
                     }
                     
                     function getList() {
                         var list = dvm.showList || [];
                         dvm.chunks = _.chunk(dvm.list, dvm.size);
-                        dvm.numChunks = dvm.chunks.length === 0 ? 0 : dvm.chunks.length - 1;
-                        _.forEach(_.get(dvm.chunks, dvm.index, []), item => list.push(item));
+                        var currChunk = _.get(dvm.chunks, dvm.index, []);
+                        list = _.concat(list, currChunk);
                         return list;
                     }
                 }]

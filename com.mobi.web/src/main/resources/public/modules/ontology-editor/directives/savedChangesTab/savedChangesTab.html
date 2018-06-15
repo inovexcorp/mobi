@@ -49,7 +49,7 @@
                             </div>
                         </div>
                         <div class="text-center">
-                            <a ng-if="dvm.numChunks !== dvm.index" ng-click="dvm.getMoreResults()"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a>
+                            <a ng-if="dvm.showList.length !== dvm.list.length" ng-click="dvm.getMoreResults()"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a>
                         </div>
                     </div>            
                 </div>
