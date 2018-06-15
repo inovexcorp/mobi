@@ -48,10 +48,14 @@
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.list = [];
+                    dvm.shownList = getList();
                     dvm.checkedStatements = {
                         additions: [],
                         deletions: []
                     };
+                    
+                    dvm.index = 0;
+                    dvm.size = 100;
 
                     dvm.go = function($event, id) {
                         $event.stopPropagation();
@@ -109,71 +113,22 @@
                     }
 
                     $scope.$watchGroup(['dvm.os.listItem.inProgressCommit.additions', 'dvm.os.listItem.inProgressCommit.deletions'], () => {
+                    
                         var ids = _.unionWith(_.map(dvm.os.listItem.inProgressCommit.additions, '@id'), _.map(dvm.os.listItem.inProgressCommit.deletions, '@id'), _.isEqual);
                         dvm.list = _.map(ids, id => {
                             var additions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.additions);
                             var deletions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.deletions);
 
-                            var addition, deletion;
-                            var addStr = "", delStr = "";
-                            var parent = angular.element(document.getElementsByClassName('changes'));
-
-                            var div = angular.element("<div></div>");
-                            parent.append(div);
-                            var listSize = 300;
-                            
-                            var fullObject, o;
-                            var filter = $filter;
-                            
-                            if (additions !== undefined) {
-                                _.forEach(additions, (addition => {
-                                    if (_.has(addition.o, '@id')) {
-                                        fullObject = addition.o['@id'];
-                                        o = filter('splitIRI')(fullObject).end || fullObject;
-                                    } else {
-                                        o = _.get(addition.o, '@value', addition.o)
-                                            + (_.has(addition.o, '@language') ? ' [language: ' + addition.o['@language'] + ']' : '')
-                                            + (_.has(addition.o, '@type') ? ' [type: ' + filter('prefixation')(addition.o['@type']) + ']' : '');
-                                        fullObject = o;
-                                    }
-                                    div.append(o + "<br/>");
-                                })); 
-                            }
-                            div.append("<br/>")
-                            if (deletions !== undefined) {
-                                _.forEach(deletions, (deletion => {
-                                    if (_.has(deletion.o, '@id')) {
-                                        fullObject = deletion.o['@id'];
-                                        o = filter('splitIRI')(fullObject).end || fullObject;
-                                    } else {
-                                        o = _.get(deletion.o, '@value', deletion.o)
-                                            + (_.has(deletion.o, '@language') ? ' [language: ' + deletion.o['@language'] + ']' : '')
-                                            + (_.has(deletion.o, '@type') ? ' [type: ' + filter('prefixation')(deletion.o['@type']) + ']' : '');
-                                        fullObject = o;
-                                    }
-                                    div.append(o + "<br/>");
-                            }
-                            
-                            if (div !== undefined) {                       
-                                div.css({
-                                    'width': '60%',
-                                    'word-break': 'break-word',
-                                    'padding': '1px 10px'
-                                });
-                               
-                               // This formula was determined through experimentation
-                                listSize = .9061*(div[0].offsetHeight + 50)+ 55.01;
-                            }
-                            div.remove();
-
                             return {
                                 id,
                                 additions,
                                 deletions,
-                                listSize,
                                 disableAll: hasSpecificType(additions) || hasSpecificType(deletions)
                             }
                         });
+                        
+                        dvm.list = _.sortBy(dvm.list, dvm.orderByIRI)
+                        dvm.showList = getList();
                     });
 
                     function changeUserBranchesCreatedFrom(oldCreatedFromId, newCreatedFromId) {
@@ -194,6 +149,19 @@
 
                     function hasSpecificType(array) {
                         return !!_.intersection(_.map(_.filter(array, {p: typeIRI}), 'o'), types).length;
+                    }
+                    
+                    dvm.getMoreResults = function() {
+                        dvm.index++;
+                        _.forEach(_.get(dvm.chunks, dvm.index, []), item => dvm.showList.push(item));
+                    }
+                    
+                    function getList() {
+                        var list = dvm.showList || [];
+                        dvm.chunks = _.chunk(dvm.list, dvm.size);
+                        dvm.numChunks = dvm.chunks.length === 0 ? 0 : dvm.chunks.length - 1;
+                        _.forEach(_.get(dvm.chunks, dvm.index, []), item => list.push(item));
+                        return list;
                     }
                 }]
             }

@@ -11,6 +11,10 @@
             overflow: auto;
             height: 100%;
             
+            .text-center {
+                padding-bottom: 10px;
+            }
+            
             .property-values {
                 &:first-child {
                     margin-top: 0;
