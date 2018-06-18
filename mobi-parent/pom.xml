@@ -315,6 +315,11 @@
                 <artifactId>jasypt</artifactId>
                 <version>1.9.0</version>
             </dependency>
+            <dependency>
+                <groupId>net.openhft</groupId>
+                <artifactId>zero-allocation-hashing</artifactId>
+                <version>0.8</version>
+            </dependency>
 
             <!-- Test Dependencies -->
             <dependency>

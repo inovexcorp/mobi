@@ -32,18 +32,22 @@ import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.vfs.api.TemporaryVirtualFile;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
+import com.mobi.vfs.api.VirtualFilesystemException;
+import net.openhft.hashing.LongHashFunction;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.VFS;
-import com.mobi.vfs.api.VirtualFilesystemException;
 import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.temporal.TemporalUnit;
 import java.util.Map;
 import java.util.UUID;
@@ -75,6 +79,36 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
     private BlockingQueue<TemporaryVirtualFile> tempFiles;
 
     private String baseTempUrlTemplate;
+
+    @Override
+    public String contentHashFilePathString(byte[] fileBytes) {
+        String hash = Long.toHexString(LongHashFunction.xx().hashBytes(fileBytes));
+        return hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, hash.length());
+    }
+
+    @Override
+    public URI contentHashFilePath(byte[] fileBytes) throws URISyntaxException {
+        return new URI(contentHashFilePathString(fileBytes));
+    }
+
+    @Override
+    public VirtualFile resolveVirtualFile(byte[] fileBytes, String directory) throws VirtualFilesystemException {
+        if (StringUtils.isEmpty(directory)) {
+            directory = "";
+        } else if (!directory.endsWith("/")) {
+            directory = directory + "/";
+        }
+        VirtualFile virtualFile = resolveVirtualFile(directory + contentHashFilePathString(fileBytes));
+        if (!virtualFile.exists()) {
+            virtualFile.create();
+            try (OutputStream out = virtualFile.writeContent()) {
+                out.write(fileBytes);
+            } catch (IOException e) {
+
+            }
+        }
+        return virtualFile;
+    }
 
     @Override
     public VirtualFile resolveVirtualFile(final URI uri) throws VirtualFilesystemException {
