@@ -36,7 +36,7 @@
                 templateUrl: 'modules/ontology-editor/directives/savedChangesTab/savedChangesTab.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: ['$scope',function($scope) {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var cm = catalogManagerService;
                     var om = ontologyManagerService;
@@ -44,7 +44,7 @@
                     var catalogId = _.get(cm.localCatalog, '@id', '');
                     var typeIRI = prefixes.rdf + 'type';
                     var types = [prefixes.owl + 'Class', prefixes.owl + 'ObjectProperty', prefixes.owl + 'DatatypeProperty', prefixes.owl + 'AnnotationProperty', prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept', prefixes.skos + 'ConceptScheme'];
-                    
+
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.list = [];
