@@ -49,7 +49,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.temporal.TemporalUnit;
 import java.util.Map;
 import java.util.UUID;
@@ -85,7 +84,7 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
     private XXHashFactory hashFactory;
 
     @Override
-    public String contentHashFilePathString(InputStream inputStream) throws VirtualFilesystemException {
+    public String contentHashFilePath(InputStream inputStream) throws VirtualFilesystemException {
         StreamingXXHash64 hash64 = hashFactory.newStreamingHash64(0);
         byte[] buffer = new byte[8192];
         int bytesRead = 0;
@@ -103,30 +102,12 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
     }
 
     @Override
-    public String contentHashFilePathString(byte[] fileBytes) {
+    public String contentHashFilePath(byte[] fileBytes) {
         StreamingXXHash64 hash64 = hashFactory.newStreamingHash64(0);
         hash64.update(fileBytes, 0 , fileBytes.length);
 
         String hash = Long.toHexString(hash64.getValue());
         return hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, hash.length());
-    }
-
-    @Override
-    public URI contentHashFilePath(InputStream inputStream) throws VirtualFilesystemException {
-        try {
-            return new URI(contentHashFilePathString(inputStream));
-        } catch (URISyntaxException e) {
-            throw new VirtualFilesystemException("Issue creating URI from hash.", e);
-        }
-    }
-
-    @Override
-    public URI contentHashFilePath(byte[] fileBytes) throws VirtualFilesystemException {
-        try {
-            return new URI(contentHashFilePathString(fileBytes));
-        } catch (URISyntaxException e) {
-            throw new VirtualFilesystemException("Issue creating URI from hash.", e);
-        }
     }
 
     @Override

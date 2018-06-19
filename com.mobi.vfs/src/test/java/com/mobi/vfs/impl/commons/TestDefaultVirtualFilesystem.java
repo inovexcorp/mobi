@@ -211,7 +211,7 @@ public class TestDefaultVirtualFilesystem extends TestCase {
     public void testWriteFileBytes() {
         String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
         try {
-            String hash = fs.contentHashFilePathString(testString.getBytes());
+            String hash = fs.contentHashFilePath(testString.getBytes());
             VirtualFile file = fs.resolveVirtualFile(hash);
             assertFalse(file.exists());
             assertFalse(file.isFile());
@@ -237,7 +237,7 @@ public class TestDefaultVirtualFilesystem extends TestCase {
     public void testWriteFileStreamNoDirectory() {
         String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
         try {
-            String hash = fs.contentHashFilePathString(new ByteArrayInputStream(testString.getBytes()));
+            String hash = fs.contentHashFilePath(new ByteArrayInputStream(testString.getBytes()));
             VirtualFile file = fs.resolveVirtualFile(hash);
             assertFalse(file.exists());
             assertFalse(file.isFile());
@@ -263,7 +263,7 @@ public class TestDefaultVirtualFilesystem extends TestCase {
     public void testWriteFileStreamNullDirectory() {
         String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
         try {
-            String hash = fs.contentHashFilePathString(new ByteArrayInputStream(testString.getBytes()));
+            String hash = fs.contentHashFilePath(new ByteArrayInputStream(testString.getBytes()));
             VirtualFile file = fs.resolveVirtualFile(hash);
             assertFalse(file.exists());
             assertFalse(file.isFile());
@@ -289,7 +289,7 @@ public class TestDefaultVirtualFilesystem extends TestCase {
     public void testWriteFileStreamWithDirectoryNoSlash() {
         String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
         try {
-            String hash = fs.contentHashFilePathString(new ByteArrayInputStream(testString.getBytes()));
+            String hash = fs.contentHashFilePath(new ByteArrayInputStream(testString.getBytes()));
             VirtualFile file = fs.resolveVirtualFile(hash);
             assertFalse(file.exists());
             assertFalse(file.isFile());
@@ -315,7 +315,7 @@ public class TestDefaultVirtualFilesystem extends TestCase {
     public void testWriteFileStreamWithDirectorySlash() {
         String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
         try {
-            String hash = fs.contentHashFilePathString(new ByteArrayInputStream(testString.getBytes()));
+            String hash = fs.contentHashFilePath(new ByteArrayInputStream(testString.getBytes()));
             VirtualFile file = fs.resolveVirtualFile(hash);
             assertFalse(file.exists());
             assertFalse(file.isFile());
@@ -341,7 +341,7 @@ public class TestDefaultVirtualFilesystem extends TestCase {
     public void testWriteFileStreamIndividual() {
         String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
         try {
-            String hash = fs.contentHashFilePathString(new ByteArrayInputStream(testString.getBytes()));
+            String hash = fs.contentHashFilePath(new ByteArrayInputStream(testString.getBytes()));
             VirtualFile file = fs.resolveVirtualFile(hash);
             assertFalse(file.exists());
             assertFalse(file.isFile());
@@ -474,34 +474,9 @@ public class TestDefaultVirtualFilesystem extends TestCase {
     }
 
     @Test
-    public void testContentHashFilePathStringStream() {
-        try {
-            String hash = fs.contentHashFilePathString(testFileInputStream);
-            String otherHashLib = Long.toHexString(LongHashFunction.xx().hashBytes(fileContents.getBytes()));
-            String expectedHash = otherHashLib.substring(0, 2) + "/" + otherHashLib.substring(2, 4) + "/" + otherHashLib.substring(4, otherHashLib.length());
-            assertEquals(expectedHash, hash);
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
-    }
-
-    @Test
     public void testContentHashFilePathStream() {
         try {
-            // TODO: DOES THIS EVEN MAKE SENSE TO HAVE??????????
-            URI filePath = fs.contentHashFilePath(testFileInputStream);
-            String otherHashLib = Long.toHexString(LongHashFunction.xx().hashBytes(fileContents.getBytes()));
-            String expectedHash = otherHashLib.substring(0, 2) + "/" + otherHashLib.substring(2, 4) + "/" + otherHashLib.substring(4, otherHashLib.length());
-            assertEquals(expectedHash, filePath.getRawPath());
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testContentHashFilePathStringBytes() {
-        try {
-            String hash = fs.contentHashFilePathString(fileContents.getBytes());
+            String hash = fs.contentHashFilePath(testFileInputStream);
             String otherHashLib = Long.toHexString(LongHashFunction.xx().hashBytes(fileContents.getBytes()));
             String expectedHash = otherHashLib.substring(0, 2) + "/" + otherHashLib.substring(2, 4) + "/" + otherHashLib.substring(4, otherHashLib.length());
             assertEquals(expectedHash, hash);
@@ -513,11 +488,10 @@ public class TestDefaultVirtualFilesystem extends TestCase {
     @Test
     public void testContentHashFilePathBytes() {
         try {
-            // TODO: DOES THIS EVEN MAKE SENSE TO HAVE??????????
-            URI filePath = fs.contentHashFilePath(fileContents.getBytes());
+            String hash = fs.contentHashFilePath(fileContents.getBytes());
             String otherHashLib = Long.toHexString(LongHashFunction.xx().hashBytes(fileContents.getBytes()));
             String expectedHash = otherHashLib.substring(0, 2) + "/" + otherHashLib.substring(2, 4) + "/" + otherHashLib.substring(4, otherHashLib.length());
-            assertEquals(expectedHash, filePath.getRawPath());
+            assertEquals(expectedHash, hash);
         } catch (Exception e) {
             fail(e.getMessage());
         }

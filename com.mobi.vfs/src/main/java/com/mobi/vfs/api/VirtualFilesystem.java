@@ -25,7 +25,6 @@ package com.mobi.vfs.api;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.temporal.TemporalUnit;
 import java.util.concurrent.TimeUnit;
 
@@ -41,7 +40,7 @@ public interface VirtualFilesystem {
      * @param inputStream The {@link InputStream} to hash
      * @return A string representation of the hash
      */
-    String contentHashFilePathString(InputStream inputStream) throws VirtualFilesystemException;
+    String contentHashFilePath(InputStream inputStream) throws VirtualFilesystemException;
 
     /**
      * Takes a byte array and hashes using xxHash 64-bit implementation and returns a string value of the
@@ -50,25 +49,7 @@ public interface VirtualFilesystem {
      * @param fileBytes The byte array to hash
      * @return A string representation of the hash
      */
-    String contentHashFilePathString(byte[] fileBytes) throws VirtualFilesystemException;
-
-    /**
-     * Takes an {@link InputStream} and hashes the array using xxHash 64-bit implementation and returns a {@link URI}
-     * value of the hash.
-     *
-     * @param inputStream The {@link InputStream} to hash
-     * @return A URI representation of the hash
-     */
-    URI contentHashFilePath(InputStream inputStream) throws VirtualFilesystemException;
-
-    /**
-     * Takes a byte array and hashes the array using xxHash 64-bit implementation and returns a {@link URI} value of
-     * the hash.
-     *
-     * @param fileBytes The byte array to hash
-     * @return A URI representation of the hash
-     */
-    URI contentHashFilePath(byte[] fileBytes) throws VirtualFilesystemException;
+    String contentHashFilePath(byte[] fileBytes) throws VirtualFilesystemException;
 
     /**
      * Resolve a virtual file representation based upon the provided URI.
