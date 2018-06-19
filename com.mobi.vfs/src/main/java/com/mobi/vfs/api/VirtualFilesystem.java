@@ -35,22 +35,40 @@ import java.util.concurrent.TimeUnit;
 public interface VirtualFilesystem {
 
     /**
-     * Takes a byte array and hashes the array using xxHash 64-bit implementation and returns a string value of the
+     * Takes an {@link InputStream} and hashes using xxHash 64-bit implementation and returns a string value of the
+     * hash.
+     *
+     * @param inputStream The {@link InputStream} to hash
+     * @return A string representation of the hash
+     */
+    String contentHashFilePathString(InputStream inputStream) throws VirtualFilesystemException;
+
+    /**
+     * Takes a byte array and hashes using xxHash 64-bit implementation and returns a string value of the
      * hash.
      *
      * @param fileBytes The byte array to hash
      * @return A string representation of the hash
      */
-    String contentHashFilePathString(byte[] fileBytes);
+    String contentHashFilePathString(byte[] fileBytes) throws VirtualFilesystemException;
 
     /**
-     * Takes a byte array and hashes the array using xxHash 64-bit implementation and returns a {@link URI} value of the
-     * hash.
+     * Takes an {@link InputStream} and hashes the array using xxHash 64-bit implementation and returns a {@link URI}
+     * value of the hash.
+     *
+     * @param inputStream The {@link InputStream} to hash
+     * @return A URI representation of the hash
+     */
+    URI contentHashFilePath(InputStream inputStream) throws VirtualFilesystemException;
+
+    /**
+     * Takes a byte array and hashes the array using xxHash 64-bit implementation and returns a {@link URI} value of
+     * the hash.
      *
      * @param fileBytes The byte array to hash
      * @return A URI representation of the hash
      */
-    URI contentHashFilePath(byte[] fileBytes) throws URISyntaxException;
+    URI contentHashFilePath(byte[] fileBytes) throws VirtualFilesystemException;
 
     /**
      * Resolve a virtual file representation based upon the provided URI.
@@ -69,18 +87,6 @@ public interface VirtualFilesystem {
      * @throws VirtualFilesystemException If there is an issue resolving the virtual file abstraction
      */
     VirtualFile resolveVirtualFile(String uri) throws VirtualFilesystemException;
-
-    /**
-     * Resolves a virtual file representation based on a hash generated from the contents of a file. Uses the provided
-     * directory as a prefix for the file. If a file with the provided contents does not exist, method will create the
-     * file and write the provided bytes to it.
-     *
-     * @param fileBytes The content of a file to hash and resolve to a file
-     * @param directory The directory to prefix the filename with
-     * @return The {@link VirtualFile} representation of the file
-     * @throws VirtualFilesystemException If there is an issue resolving the virtual file abstraction
-     */
-    VirtualFile resolveVirtualFile(byte[] fileBytes, String directory) throws VirtualFilesystemException;
 
     /**
      * Create a temporary virtual file.  This file will be transient, meaning it will be removed upon system shutdown,
