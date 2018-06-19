@@ -27,8 +27,6 @@ import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystemException;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
-import com.mobi.vfs.api.VirtualFile;
-import com.mobi.vfs.api.VirtualFilesystemException;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -23,8 +23,6 @@ package com.mobi.vfs.impl.commons;
  * #L%
  */
 
-import com.mobi.vfs.api.VirtualFilesystemException;
-import jdk.internal.util.xml.impl.Input;
 import junit.framework.TestCase;
 import net.openhft.hashing.LongHashFunction;
 import org.apache.commons.io.IOUtils;
@@ -41,7 +39,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,7 +46,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
-import javax.print.URIException;
 
 
 @RunWith(BlockJUnit4ClassRunner.class)
@@ -238,7 +234,111 @@ public class TestDefaultVirtualFilesystem extends TestCase {
     }
 
     @Test
-    public void testWriteFileStream() {
+    public void testWriteFileStreamNoDirectory() {
+        String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
+        try {
+            String hash = fs.contentHashFilePathString(new ByteArrayInputStream(testString.getBytes()));
+            VirtualFile file = fs.resolveVirtualFile(hash);
+            assertFalse(file.exists());
+            assertFalse(file.isFile());
+            assertFalse(file.isFolder());
+
+            file = fs.resolveVirtualFile(new ByteArrayInputStream(testString.getBytes()), "");
+            assertFalse(file.isFolder());
+            assertTrue(file.exists());
+            assertTrue(file.isFile());
+            try (InputStream is = file.readContent()) {
+                final String content = IOUtils.toString(is, Charset.defaultCharset());
+                assertEquals(testString, content);
+            }
+            assertTrue(file.delete());
+            assertFalse(file.delete());
+            assertTrue(file.getUrl().toString().endsWith(hash));
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testWriteFileStreamNullDirectory() {
+        String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
+        try {
+            String hash = fs.contentHashFilePathString(new ByteArrayInputStream(testString.getBytes()));
+            VirtualFile file = fs.resolveVirtualFile(hash);
+            assertFalse(file.exists());
+            assertFalse(file.isFile());
+            assertFalse(file.isFolder());
+
+            file = fs.resolveVirtualFile(new ByteArrayInputStream(testString.getBytes()), null);
+            assertFalse(file.isFolder());
+            assertTrue(file.exists());
+            assertTrue(file.isFile());
+            try (InputStream is = file.readContent()) {
+                final String content = IOUtils.toString(is, Charset.defaultCharset());
+                assertEquals(testString, content);
+            }
+            assertTrue(file.delete());
+            assertFalse(file.delete());
+            assertTrue(file.getUrl().toString().endsWith(hash));
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testWriteFileStreamWithDirectoryNoSlash() {
+        String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
+        try {
+            String hash = fs.contentHashFilePathString(new ByteArrayInputStream(testString.getBytes()));
+            VirtualFile file = fs.resolveVirtualFile(hash);
+            assertFalse(file.exists());
+            assertFalse(file.isFile());
+            assertFalse(file.isFolder());
+
+            file = fs.resolveVirtualFile(new ByteArrayInputStream(testString.getBytes()), "directory");
+            assertFalse(file.isFolder());
+            assertTrue(file.exists());
+            assertTrue(file.isFile());
+            try (InputStream is = file.readContent()) {
+                final String content = IOUtils.toString(is, Charset.defaultCharset());
+                assertEquals(testString, content);
+            }
+            assertTrue(file.delete());
+            assertFalse(file.delete());
+            assertTrue(file.getUrl().toString().endsWith("directory/" + hash));
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testWriteFileStreamWithDirectorySlash() {
+        String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
+        try {
+            String hash = fs.contentHashFilePathString(new ByteArrayInputStream(testString.getBytes()));
+            VirtualFile file = fs.resolveVirtualFile(hash);
+            assertFalse(file.exists());
+            assertFalse(file.isFile());
+            assertFalse(file.isFolder());
+
+            file = fs.resolveVirtualFile(new ByteArrayInputStream(testString.getBytes()), "directory/");
+            assertFalse(file.isFolder());
+            assertTrue(file.exists());
+            assertTrue(file.isFile());
+            try (InputStream is = file.readContent()) {
+                final String content = IOUtils.toString(is, Charset.defaultCharset());
+                assertEquals(testString, content);
+            }
+            assertTrue(file.delete());
+            assertFalse(file.delete());
+            assertTrue(file.getUrl().toString().endsWith("directory/" + hash));
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testWriteFileStreamIndividual() {
         String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
         try {
             String hash = fs.contentHashFilePathString(new ByteArrayInputStream(testString.getBytes()));

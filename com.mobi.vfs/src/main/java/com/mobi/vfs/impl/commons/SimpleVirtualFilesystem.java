@@ -35,8 +35,6 @@ import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.api.VirtualFilesystemException;
 import net.jpountz.xxhash.StreamingXXHash64;
 import net.jpountz.xxhash.XXHashFactory;
-import net.openhft.hashing.LongHashFunction;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
@@ -46,7 +44,6 @@ import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,7 +58,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.print.URIException;
 
 /**
  * This is a basic implementation of the {@link VirtualFilesystem} backed by the commons-vfs api.
@@ -151,6 +147,72 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
             return new SimpleVirtualFile(this.fsManager.resolveFile(uri));
         } catch (FileSystemException e) {
             throw new VirtualFilesystemException("Issue resolving file with URI: " + uri, e);
+        }
+    }
+
+    @Override
+    public VirtualFile resolveVirtualFile(InputStream inputStream, String directory) throws VirtualFilesystemException {
+        if (StringUtils.isEmpty(directory)) {
+            directory = "";
+        } else if (!directory.endsWith("/")) {
+            directory = directory + "/";
+        }
+
+        try {
+            StreamingXXHash64 hash64 = hashFactory.newStreamingHash64(0);
+            FileObject temp = this.fsManager.resolveFile(UUID.randomUUID().toString());
+
+            byte[] buffer = new byte[8192];
+            int bytesRead = 0;
+            try (OutputStream out = temp.getContent().getOutputStream(true)) {
+                while ((bytesRead = inputStream.read(buffer)) >= 0) {
+                    hash64.update(buffer, 0, bytesRead);
+                    out.write(buffer, 0, bytesRead);
+                }
+            } catch (IOException e) {
+                throw new VirtualFilesystemException("Issue reading file from InputStream.", e);
+            }
+
+            String hash = Long.toHexString(hash64.getValue());
+            hash = hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, hash.length());
+
+            FileObject hashNameFile = this.fsManager.resolveFile(directory + hash);
+            hashNameFile.createFile();
+            temp.moveTo(hashNameFile);
+            return new SimpleVirtualFile(hashNameFile);
+        } catch (FileSystemException e) {
+            throw new VirtualFilesystemException("Issue resolving file.", e);
+        }
+    }
+
+    @Override
+    public VirtualFile resolveVirtualFile(byte[] fileBytes, String directory) throws VirtualFilesystemException {
+        if (StringUtils.isEmpty(directory)) {
+            directory = "";
+        } else if (!directory.endsWith("/")) {
+            directory = directory + "/";
+        }
+
+        try {
+            StreamingXXHash64 hash64 = hashFactory.newStreamingHash64(0);
+            FileObject temp = this.fsManager.resolveFile(UUID.randomUUID().toString());
+
+            try (OutputStream out = temp.getContent().getOutputStream()) {
+                hash64.update(fileBytes, 0, fileBytes.length);
+                out.write(fileBytes);
+            } catch (IOException e) {
+                throw new VirtualFilesystemException("Issue reading file from InputStream.", e);
+            }
+
+            String hash = Long.toHexString(hash64.getValue());
+            hash = hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, hash.length());
+
+            FileObject hashNameFile = this.fsManager.resolveFile(directory + hash);
+            hashNameFile.createFile();
+            temp.moveTo(hashNameFile);
+            return new SimpleVirtualFile(hashNameFile);
+        } catch (FileSystemException e) {
+            throw new VirtualFilesystemException("Issue resolving file.", e);
         }
     }
 

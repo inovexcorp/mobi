@@ -89,6 +89,30 @@ public interface VirtualFilesystem {
     VirtualFile resolveVirtualFile(String uri) throws VirtualFilesystemException;
 
     /**
+     * Resolves a virtual file representation based on a hash generated from the contents of a file. Uses the provided
+     * directory as a prefix for the file. If a file with the provided contents does not exist, method will create the
+     * file and write the provided bytes to it.
+     *
+     * @param inputStream The content of a file to hash and resolve to a file
+     * @param directory The directory to prefix the filename with
+     * @return The {@link VirtualFile} representation of the file
+     * @throws VirtualFilesystemException If there is an issue resolving the virtual file abstraction
+     */
+    VirtualFile resolveVirtualFile(InputStream inputStream, String directory) throws VirtualFilesystemException;
+
+    /**
+     * Resolves a virtual file representation based on a hash generated from the contents of a file. Uses the provided
+     * directory as a prefix for the file. If a file with the provided contents does not exist, method will create the
+     * file and write the provided bytes to it.
+     *
+     * @param fileBytes The content of a file to hash and resolve to a file
+     * @param directory The directory to prefix the filename with
+     * @return The {@link VirtualFile} representation of the file
+     * @throws VirtualFilesystemException If there is an issue resolving the virtual file abstraction
+     */
+    VirtualFile resolveVirtualFile(byte[] fileBytes, String directory) throws VirtualFilesystemException;
+
+    /**
      * Create a temporary virtual file.  This file will be transient, meaning it will be removed upon system shutdown,
      * and this service will only allow it to live for a specified amount of time.
      *
