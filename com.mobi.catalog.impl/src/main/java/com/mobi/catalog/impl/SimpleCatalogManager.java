@@ -1201,9 +1201,6 @@ public class SimpleCatalogManager implements CatalogManager {
             ArrayList<Resource> rightCommits = new ArrayList<>(utils.getCommitChain(rightId, true, conn));
             ArrayList<Resource> commonCommits = new ArrayList<>(leftCommits);
             commonCommits.retainAll(rightCommits);
-            if (commonCommits.size() == 0) {
-                throw new IllegalArgumentException("No common parent between Commit " + leftId + " and " + rightId);
-            }
 
             leftCommits.removeAll(commonCommits);
             rightCommits.removeAll(commonCommits);

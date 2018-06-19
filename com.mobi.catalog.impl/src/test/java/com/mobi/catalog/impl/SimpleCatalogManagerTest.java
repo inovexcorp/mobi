@@ -1775,10 +1775,17 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // Setup
         Resource sourceId = VALUE_FACTORY.createIRI(COMMITS + "test4a");
         Resource targetId = VALUE_FACTORY.createIRI(COMMITS + "test1");
-        thrown.expect(IllegalArgumentException.class);
-        doThrow(new IllegalArgumentException()).when(utilsService).getDifferenceChain(any(Resource.class), any(Resource.class), any(RepositoryConnection.class), anyBoolean());
 
-        manager.getDifference(sourceId, targetId);
+        Difference sourceDiff = new Difference.Builder()
+                .additions(MODEL_FACTORY.createModel())
+                .deletions(MODEL_FACTORY.createModel())
+                .build();
+
+        doReturn(sourceDiff).when(utilsService).getCommitDifference(eq(Collections.singletonList(sourceId)), any(RepositoryConnection.class));
+        doReturn(Collections.singletonList(sourceId)).when(utilsService).getDifferenceChain(eq(sourceId), eq(targetId), any(RepositoryConnection.class), anyBoolean());
+
+        Difference diff = manager.getDifference(sourceId, targetId);
+        assertEquals(sourceDiff, diff);
     }
 
     /* getConflicts */
@@ -2088,12 +2095,29 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     public void testGetConflictsDisconnectedNodes() throws Exception {
         // Setup:
         IRI commitId = VALUE_FACTORY.createIRI(COMMITS + "new");
+
+        Model leftAdds = MODEL_FACTORY.createModel();
+        Difference leftDiff = new Difference.Builder()
+                .additions(leftAdds)
+                .deletions(MODEL_FACTORY.createModel())
+                .build();
+        Difference rightDiff = new Difference.Builder()
+                .additions(MODEL_FACTORY.createModel())
+                .deletions(MODEL_FACTORY.createModel())
+                .build();
+        setUpConflictTest(commitId, COMMIT_IRI, leftDiff, rightDiff, leftAdds);
         doReturn(Collections.singletonList(COMMIT_IRI)).when(utilsService).getCommitChain(eq(COMMIT_IRI), eq(true), any(RepositoryConnection.class));
         doReturn(Collections.singletonList(commitId)).when(utilsService).getCommitChain(eq(commitId), eq(true), any(RepositoryConnection.class));
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("No common parent between Commit " + commitId + " and " + COMMIT_IRI);
 
-        manager.getConflicts(commitId, COMMIT_IRI);
+        Set<Conflict> result = manager.getConflicts(commitId, COMMIT_IRI);
+        verify(utilsService, atLeastOnce()).validateResource(eq(commitId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService, atLeastOnce()).validateResource(eq(COMMIT_IRI), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(commitId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(COMMIT_IRI), eq(true), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
+        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
+        assertEquals(0, result.size());
     }
 
     /* getDiff */
