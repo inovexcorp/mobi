@@ -188,7 +188,9 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
         hash = hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, hash.length());
 
         FileObject hashNameFile = this.fsManager.resolveFile(directory + hash);
-        if (!hashNameFile.exists()) {
+        if (hashNameFile.exists()) {
+            tempFile.delete();
+        } else {
             hashNameFile.createFile();
             tempFile.moveTo(hashNameFile);
         }

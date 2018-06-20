@@ -338,6 +338,40 @@ public class TestDefaultVirtualFilesystem extends TestCase {
     }
 
     @Test
+    public void testWriteFileStreamFileExists() {
+        String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
+        try {
+            VirtualFile file = fs.resolveVirtualFile(new ByteArrayInputStream(testString.getBytes()), "");
+            assertFalse(file.isFolder());
+            assertTrue(file.exists());
+            assertTrue(file.isFile());
+
+            VirtualFile sameFile = fs.resolveVirtualFile(new ByteArrayInputStream(testString.getBytes()), "");
+            assertFalse(sameFile.isFolder());
+            assertTrue(sameFile.exists());
+            assertTrue(sameFile.isFile());
+
+            assertEquals(file.getUrl(), sameFile.getUrl());
+            assertEquals(file.getSize(), sameFile.getSize());
+            try (InputStream is = file.readContent()) {
+                final String content = IOUtils.toString(is, Charset.defaultCharset());
+                assertEquals(testString, content);
+            }
+            try (InputStream is = sameFile.readContent()) {
+                final String content = IOUtils.toString(is, Charset.defaultCharset());
+                assertEquals(testString, content);
+            }
+            assertTrue(sameFile.exists());
+            assertTrue(file.delete());
+            assertFalse(file.delete());
+            assertFalse(sameFile.exists());
+            assertFalse(sameFile.delete());
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
     public void testWriteFileStreamIndividual() {
         String testString = "WHOA, THIS ABSTRACT FILE SYSTEM IS COOL";
         try {
