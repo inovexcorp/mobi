@@ -1066,7 +1066,7 @@ GRAPH commits:conflict2-8 {
         mcat:deletions deletions:conflict2-8 .
 }
 
-GRAPH additions:conflict3-8 {
+GRAPH additions:conflict2-8 {
     <http://mobi.com/test/ontology> a owl:Ontology ;
         dc:title "Title" ;
         dc:description "Description" .

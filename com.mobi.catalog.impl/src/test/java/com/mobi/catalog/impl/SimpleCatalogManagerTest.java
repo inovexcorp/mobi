@@ -1821,7 +1821,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
         assertEquals(1, result.size());
 
         List<Resource> validIRIs = Arrays.asList(typeIRI, descriptionIRI);
@@ -1871,8 +1870,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
         assertEquals(1, result.size());
         result.forEach(conflict -> {
             Difference left = conflict.getLeftDifference();
@@ -1925,8 +1922,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
         assertEquals(1, result.size());
         result.forEach(conflict -> {
             Difference left = conflict.getLeftDifference();
@@ -1974,8 +1969,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
         assertEquals(0, results.size());
     }
 
@@ -2013,8 +2006,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
         assertEquals(0, result.size());
     }
 
@@ -2052,8 +2043,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
         assertEquals(0, result.size());
     }
 
@@ -2086,8 +2075,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(COMMIT_IRI), eq(true), any(RepositoryConnection.class));
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
         assertEquals(0, result.size());
     }
 
@@ -2105,7 +2092,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
                 .additions(MODEL_FACTORY.createModel())
                 .deletions(MODEL_FACTORY.createModel())
                 .build();
-        setUpConflictTest(commitId, COMMIT_IRI, leftDiff, rightDiff, leftAdds);
+        setUpConflictDisconnectedTest(commitId, COMMIT_IRI, leftDiff, rightDiff, leftAdds);
         doReturn(Collections.singletonList(COMMIT_IRI)).when(utilsService).getCommitChain(eq(COMMIT_IRI), eq(true), any(RepositoryConnection.class));
         doReturn(Collections.singletonList(commitId)).when(utilsService).getCommitChain(eq(commitId), eq(true), any(RepositoryConnection.class));
 
@@ -2115,7 +2102,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getCommitChain(eq(commitId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(COMMIT_IRI), eq(true), any(RepositoryConnection.class));
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
         assertEquals(0, result.size());
     }
 
@@ -2147,7 +2133,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
         Model originalModel = MODEL_FACTORY.createModel();
         originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
-        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
+        setUpConflictDisconnectedTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
         verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
@@ -2155,8 +2141,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
         assertEquals(1, result.size());
         result.forEach(conflict -> {
             Difference left = conflict.getLeftDifference();
@@ -2196,15 +2180,13 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
                 .deletions(MODEL_FACTORY.createModel())
                 .build();
 
-        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
-
+        setUpConflictDisconnectedTest(leftId, rightId, leftDiff, rightDiff, originalModel);
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
         verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
         assertEquals(1, result.size());
 
         List<Resource> validIRIs = Arrays.asList(typeIRI, descriptionIRI);
@@ -2245,7 +2227,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
                 .deletions(originalModel)
                 .build();
 
-        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
+        setUpConflictDisconnectedTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         Set<Conflict> results = manager.getConflicts(leftId, rightId);
         verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
@@ -2253,8 +2235,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
         assertEquals(0, results.size());
     }
 
@@ -2284,7 +2264,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
         Model originalModel = MODEL_FACTORY.createModel();
         originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
-        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
+        setUpConflictDisconnectedTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
         verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
@@ -2292,8 +2272,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
         assertEquals(0, result.size());
     }
 
@@ -2323,7 +2301,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
                 .deletions(MODEL_FACTORY.createModel())
                 .build();
 
-        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
+        setUpConflictDisconnectedTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
         verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
@@ -2331,8 +2309,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
         verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
         assertEquals(0, result.size());
     }
     /* getDiff */
@@ -2447,6 +2423,23 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private void setUpConflictTest(Resource leftId, Resource rightId, Difference leftDiff, Difference rightDiff, Model originalModel) {
         doReturn(Stream.of(leftId, COMMIT_IRI).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         doReturn(Stream.of(rightId, COMMIT_IRI).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
+        doAnswer(i -> {
+            List<Resource> commits = i.getArgumentAt(0, List.class);
+            if (commits.isEmpty() || commits.get(0).equals(rightId)) {
+                return rightDiff;
+            } else if (commits.get(0).equals(leftId)) {
+                return leftDiff;
+            } else {
+                return MODEL_FACTORY.createModel();
+            }
+        }).when(utilsService).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
+        doReturn(originalModel).when(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
+        doReturn(originalModel).when(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
+    }
+
+    private void setUpConflictDisconnectedTest(Resource leftId, Resource rightId, Difference leftDiff, Difference rightDiff, Model originalModel) {
+        doReturn(Stream.of(leftId).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
+        doReturn(Stream.of(rightId).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
         doAnswer(i -> {
             List<Resource> commits = i.getArgumentAt(0, List.class);
             if (commits.isEmpty() || commits.get(0).equals(rightId)) {
