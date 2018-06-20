@@ -67,6 +67,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.xml.bind.JAXBContext;
 
 @Component(immediate = true, provide = {PDP.class, BalanaPDP.class})
 public class BalanaPDP implements PDP {
@@ -77,9 +78,12 @@ public class BalanaPDP implements PDP {
 
     private Balana balana;
 
+    private JAXBContext jaxbContext;
+
     @Activate
-    public void setUp() {
-        balana = Balana.getInstance();
+    public void setUp() throws Exception {
+        this.balana = Balana.getInstance();
+        this.jaxbContext = JAXBContext.newInstance("com.mobi.security.policy.api.xacml.jaxb");
     }
 
     @Reference(type = '*', dynamic = true)

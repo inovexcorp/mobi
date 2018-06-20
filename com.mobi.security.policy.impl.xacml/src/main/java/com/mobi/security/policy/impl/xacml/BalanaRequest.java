@@ -45,6 +45,7 @@ import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Set;
 import javax.xml.bind.JAXB;
+import javax.xml.bind.JAXBContext;
 
 public class BalanaRequest extends XACMLRequest {
 
@@ -124,8 +125,9 @@ public class BalanaRequest extends XACMLRequest {
 
     public static class Builder extends XACMLRequest.Builder {
 
-        public Builder(IRI subjectId, IRI resourceId, IRI actionId, OffsetDateTime requestTime, ValueFactory vf) {
-            super(subjectId, resourceId, actionId, requestTime, vf);
+        public Builder(IRI subjectId, IRI resourceId, IRI actionId, OffsetDateTime requestTime, ValueFactory vf,
+                       JAXBContext jaxbContext) {
+            super(subjectId, resourceId, actionId, requestTime, vf, jaxbContext);
         }
 
         public BalanaRequest build() {
