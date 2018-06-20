@@ -43,6 +43,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.xml.bind.JAXB;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.stream.XMLEventReader;
 
 public class XACMLResponse implements Response {
 
@@ -54,11 +57,15 @@ public class XACMLResponse implements Response {
     private ResponseType responseType;
     private ObjectFactory of;
 
+    protected JAXBContext jaxbContext;
+
+
     public XACMLResponse(Builder builder) {
         this.decision = builder.decision;
         this.status = builder.status;
         this.statusMessage = builder.statusMessage;
         this.policyIds = builder.policyIds;
+        this.jaxbContext = builder.jaxbContext;
 
         of = new ObjectFactory();
 
@@ -85,9 +92,12 @@ public class XACMLResponse implements Response {
         this.responseType.getResult().add(resultType);
     }
 
-    public XACMLResponse(String response, ValueFactory vf) {
-        this.responseType = JAXB.unmarshal(new StringReader(response), ResponseType.class);
-
+    public XACMLResponse(String response, ValueFactory vf, JAXBContext jaxbContext) {
+        try {
+            this.responseType = jaxbContext.createUnmarshaller().unmarshal(new StringReader(response), ResponseType.class);
+        } catch (JAXBException e) {
+            e.printStackTrace();
+        }
         of = new ObjectFactory();
 
         ResultType resultType = this.responseType.getResult().get(0);
@@ -132,7 +142,11 @@ public class XACMLResponse implements Response {
     @Override
     public String toString() {
         StringWriter sw = new StringWriter();
-        JAXB.marshal(of.createResponse(responseType), sw);
+        try {
+            jaxbContext.createMarshaller().marshal(of.createResponse(responseType), sw);
+        } catch (JAXBException e) {
+            e.printStackTrace();
+        }
         return sw.toString();
     }
 
@@ -141,10 +155,12 @@ public class XACMLResponse implements Response {
         private Status status;
         private String statusMessage = "";
         private List<IRI> policyIds = new ArrayList<>();
+        public JAXBContext jaxbContext;
 
-        public Builder(Decision decision, Status status) {
+        public Builder(Decision decision, Status status, JAXBContext jaxbContext) {
             this.decision = decision;
             this.status = status;
+            this.jaxbContext = jaxbContext;
         }
 
         public Builder statusMessage(String statusMessage) {

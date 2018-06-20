@@ -83,7 +83,8 @@ public class BalanaPDP implements PDP {
     @Activate
     public void setUp() throws Exception {
         this.balana = Balana.getInstance();
-        this.jaxbContext = JAXBContext.newInstance("com.mobi.security.policy.api.xacml.jaxb");
+        this.jaxbContext = JAXBContext.newInstance("com.mobi.security.policy.api.xacml.jaxb",
+                com.mobi.security.policy.api.xacml.jaxb.ObjectFactory.class.getClassLoader());
     }
 
     @Reference(type = '*', dynamic = true)
@@ -109,7 +110,7 @@ public class BalanaPDP implements PDP {
     public Request createRequest(IRI subjectId, Map<String, Literal> subjectAttrs, IRI resourceId,
                                  Map<String, Literal> resourceAttrs, IRI actionId, Map<String, Literal> actionAttrs) {
         BalanaRequest.Builder builder = new BalanaRequest.Builder(subjectId, resourceId, actionId, OffsetDateTime.now(),
-                vf);
+                vf, jaxbContext);
         if (subjectAttrs != null) {
             subjectAttrs.forEach((key, value) -> {
                 if (value != null) {
@@ -144,9 +145,9 @@ public class BalanaPDP implements PDP {
         try {
             BalanaRequest balanaRequest = getRequest(request);
             org.wso2.balana.PDP pdp = getPDP(policyAlgorithm);
-            return new XACMLResponse(pdp.evaluate(balanaRequest.toString()), vf);
+            return new XACMLResponse(pdp.evaluate(balanaRequest.toString()), vf, jaxbContext);
         } catch (ProcessingException e) {
-            return new XACMLResponse.Builder(Decision.INDETERMINATE, Status.PROCESSING_ERROR)
+            return new XACMLResponse.Builder(Decision.INDETERMINATE, Status.PROCESSING_ERROR, jaxbContext)
                     .statusMessage(e.getMessage()).build();
         }
     }
@@ -178,7 +179,7 @@ public class BalanaPDP implements PDP {
             return (BalanaRequest) request;
         }
         BalanaRequest.Builder builder = new BalanaRequest.Builder(request.getSubjectId(), request.getResourceId(),
-                request.getActionId(), request.getRequestTime(), vf);
+                request.getActionId(), request.getRequestTime(), vf, jaxbContext);
         request.getSubjectAttrs().forEach(builder::addSubjectAttr);
         request.getResourceAttrs().forEach(builder::addResourceAttr);
         request.getActionAttrs().forEach(builder::addActionAttr);
