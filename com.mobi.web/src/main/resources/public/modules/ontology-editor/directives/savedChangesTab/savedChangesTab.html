@@ -32,8 +32,8 @@
                 </div>
             </block-header>
             <block-content>
-                <div ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length" class="changes">
-                    <div class="property-values" ng-repeat="item in dvm.list | orderBy:dvm.orderByIRI">
+                <div class="changes" ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length">
+                    <div class="property-values" ng-repeat="item in dvm.showList">
                         <h5 ng-click="isClosed = !isClosed" class="clearfix">
                             <p class="text">{{dvm.util.getBeautifulIRI(item.id)}} <small><a ng-click="dvm.go($event, item.id)">{{item.id}}</a></small></p>
                             <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
@@ -46,6 +46,9 @@
                                 <statement-display ng-repeat="deletion in item.deletions | orderBy:dvm.util.getPredicateLocalName" predicate="deletion.p" object="deletion.o" deletion/>
                             </statement-container>
                         </div>
+                    </div>
+                    <div class="text-center">
+                        <a ng-if="dvm.showList.length !== dvm.list.length" ng-click="dvm.getMoreResults()"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a>
                     </div>
                 </div>
                 <div ng-if="!dvm.os.listItem.inProgressCommit.additions.length && !dvm.os.listItem.inProgressCommit.deletions.length" class="text-center padding">
