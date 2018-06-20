@@ -153,14 +153,7 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
             } catch (IOException e) {
                 throw new VirtualFilesystemException("Issue reading file from InputStream.", e);
             }
-
-            String hash = Long.toHexString(hash64.getValue());
-            hash = hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, hash.length());
-
-            FileObject hashNameFile = this.fsManager.resolveFile(directory + hash);
-            hashNameFile.createFile();
-            temp.moveTo(hashNameFile);
-            return new SimpleVirtualFile(hashNameFile);
+            return getFileFromHash(temp, hash64, directory);
         } catch (FileSystemException e) {
             throw new VirtualFilesystemException("Issue resolving file.", e);
         }
@@ -184,17 +177,22 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
             } catch (IOException e) {
                 throw new VirtualFilesystemException("Issue reading file from InputStream.", e);
             }
-
-            String hash = Long.toHexString(hash64.getValue());
-            hash = hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, hash.length());
-
-            FileObject hashNameFile = this.fsManager.resolveFile(directory + hash);
-            hashNameFile.createFile();
-            temp.moveTo(hashNameFile);
-            return new SimpleVirtualFile(hashNameFile);
+            return getFileFromHash(temp, hash64, directory);
         } catch (FileSystemException e) {
             throw new VirtualFilesystemException("Issue resolving file.", e);
         }
+    }
+
+    private VirtualFile getFileFromHash(FileObject tempFile, StreamingXXHash64 hash64, String directory) throws FileSystemException {
+        String hash = Long.toHexString(hash64.getValue());
+        hash = hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, hash.length());
+
+        FileObject hashNameFile = this.fsManager.resolveFile(directory + hash);
+        if (!hashNameFile.exists()) {
+            hashNameFile.createFile();
+            tempFile.moveTo(hashNameFile);
+        }
+        return new SimpleVirtualFile(hashNameFile);
     }
 
     @Override
