@@ -34,8 +34,7 @@ import java.util.concurrent.TimeUnit;
 public interface VirtualFilesystem {
 
     /**
-     * Takes an {@link InputStream} and hashes using xxHash 64-bit implementation and returns a string value of the
-     * hash.
+     * Takes an {@link InputStream}, hashes using xxHash 64-bit implementation, and returns a string value of the hash.
      *
      * @param inputStream The {@link InputStream} to hash
      * @return A string representation of the hash
@@ -43,8 +42,7 @@ public interface VirtualFilesystem {
     String contentHashFilePath(InputStream inputStream) throws VirtualFilesystemException;
 
     /**
-     * Takes a byte array and hashes using xxHash 64-bit implementation and returns a string value of the
-     * hash.
+     * Takes a byte array, hashes using xxHash 64-bit implementation, and returns a string value of the hash.
      *
      * @param fileBytes The byte array to hash
      * @return A string representation of the hash
