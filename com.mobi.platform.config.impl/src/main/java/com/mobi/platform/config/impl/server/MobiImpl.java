@@ -26,6 +26,7 @@ package com.mobi.platform.config.impl.server;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.exception.MobiException;
@@ -98,6 +99,17 @@ public class MobiImpl implements Mobi {
     }
 
     /**
+     * Method triggered when the configuration changes for this service.
+     *
+     * @param configuration The configuration map for this service
+     */
+    @Modified
+    void modified(Map<String, Object> configuration) {
+        LOGGER.warn("Modified configuration of service. Going to re-activate with new configuration...");
+        activate(configuration);
+    }
+
+    /**
      * Inject the {@link ConfigurationAdmin} into our service.
      */
     @Reference
@@ -113,6 +125,10 @@ public class MobiImpl implements Mobi {
         return this.serverId;
     }
 
+    /**
+     *
+     * {@inheritDoc}
+     */
     @Override
     public String getHostName() {
         return this.hostName;
