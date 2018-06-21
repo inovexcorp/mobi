@@ -1239,9 +1239,8 @@ public class SimpleCatalogManager implements CatalogManager {
                 // Check for deletion in left and addition in right
                 Model rightSubjectAdd = right.filter(subject, null, null);
                 boolean leftEntityDeleted = !left.subjects().contains(subject)
-                        && leftDeleteSubjectStatements.subjects().contains(subject);
+                        && leftDeleteSubjectStatements.equals(utils.getCompiledResource(rightCommits, conn).filter(subject, null, null));
                 boolean rightEntityDeleted = rightDeletions.containsAll(leftDeleteSubjectStatements);
-
                 if (leftEntityDeleted && !rightEntityDeleted && rightSubjectAdd.size() > 0) {
                     result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
                     statementsToRemove.addAll(rightSubjectAdd);
@@ -1256,7 +1255,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 Model rightDeleteSubjectStatements = rightDeletions.filter(subject, null, null);
                 Model leftSubjectAdd = left.filter(subject, null, null);
                 boolean rightEntityDeleted = !right.subjects().contains(subject)
-                        && rightDeleteSubjectStatements.subjects().contains(subject);
+                        && rightDeleteSubjectStatements.equals(utils.getCompiledResource(leftCommits, conn).filter(subject, null, null));
                 boolean leftEntityDeleted = leftDeletions.containsAll(rightDeleteSubjectStatements);
 
                 if (rightEntityDeleted && !leftEntityDeleted && leftSubjectAdd.size() > 0) {
