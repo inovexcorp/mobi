@@ -56,12 +56,8 @@ import org.mockito.MockitoAnnotations;
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.OffsetDateTime;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -86,8 +82,6 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
     private final IRI PROV_AT_TIME = VALUE_FACTORY.createIRI("http://www.w3.org/ns/prov#atTime");
 
     private static final String COMMITS = "http://mobi.com/test/commits#";
-
-
 
     @Before
     public void setUp() throws Exception {
@@ -358,10 +352,12 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
     @Test
     public void getCompiledResourceTiming() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup
             IRI revisionTypeIRI = VALUE_FACTORY.createIRI(Revision.TYPE);
             IRI additionsTypeIRI = VALUE_FACTORY.createIRI(Revision.additions_IRI);
             IRI deletionsTypeIRI = VALUE_FACTORY.createIRI(Revision.deletions_IRI);
 
+            // Need dates to have an ordered commit list
             Random rand = new Random();
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
             long dayInMs = 86400000;
@@ -369,6 +365,7 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(timeMillis);
 
+            // Build out large commit chain
             Branch branch = branchFactory.createNew(VALUE_FACTORY.createIRI("urn:testBranch"));
             utilsService.addObject(branch, conn);
             Commit previousCommit = null;
@@ -401,6 +398,7 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
                 for (int j = 0; j < 10; j++) {
                     String uuid = UUID.randomUUID().toString();
                     if (j == 0 || j == 1) {
+                        // Keep track of statements to delete in next commit
                         statementsToDelete.add(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"),
                                 VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"),
                                 VALUE_FACTORY.createLiteral(uuid));
@@ -417,6 +415,7 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
                 timeMillis = timeMillis + dayInMs;
                 calendar.setTimeInMillis(timeMillis);
             }
+
             List<Resource> commitChain = utilsService.getCommitChain(previousCommit.getResource(), true, conn);
 
             long start = System.nanoTime();
@@ -425,6 +424,7 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             long opTime = (end - start) / 1000000;
             System.out.println("CatalogUtilsService getCompiledResource operation time (ms): " + opTime);
 
+            assertEquals(numberOfCommits, commitChain.size());
             assertEquals(numberOfCommits * 8 + 2, branchCompiled.size());
         }
     }
