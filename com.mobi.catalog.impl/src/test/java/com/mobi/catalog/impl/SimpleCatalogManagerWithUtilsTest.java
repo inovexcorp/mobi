@@ -382,9 +382,8 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
                 revision.setAdditions(additionsIRI);
                 revision.setDeletions(deletionsIRI);
 
-                String date = df.format(calendar.getTime());
-                commit.getModel().add(commitIRI, VALUE_FACTORY.createIRI(Activity.generated_IRI), revisionIRI, commitIRI);
-                commit.getModel().add(commitIRI, PROV_AT_TIME, VALUE_FACTORY.createLiteral(date), commitIRI);
+                commit.setProperty(revisionIRI, VALUE_FACTORY.createIRI(Activity.generated_IRI));
+                commit.setProperty(VALUE_FACTORY.createLiteral(df.format(calendar.getTime())), PROV_AT_TIME);
 
                 Model additions = MODEL_FACTORY.createModel();
                 Model currentDeletions = MODEL_FACTORY.createModel(statementsToDelete);
