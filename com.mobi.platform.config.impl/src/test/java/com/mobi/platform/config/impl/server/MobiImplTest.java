@@ -41,6 +41,7 @@ import org.osgi.service.cm.ConfigurationAdmin;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -77,6 +78,29 @@ public class MobiImplTest {
         String val = UUID.randomUUID().toString();
         impl.activate(Collections.singletonMap("serverId", val));
         assertEquals(val, impl.getServerIdentifier().toString());
+    }
+
+    @Test
+    public void testHostNameProvided() throws Exception {
+        MobiImpl impl = new MobiImpl();
+        String val = UUID.randomUUID().toString();
+        String hostName = "this.is.a.host.name";
+        Map<String, Object> config = new HashMap<>();
+        config.put("serverId", val);
+        config.put("hostName", hostName);
+
+        impl.activate(config);
+
+        assertEquals(hostName, impl.getHostName());
+    }
+
+    @Test
+    public void testHostNameNotProvided() throws Exception {
+        MobiImpl impl = new MobiImpl();
+        String val = UUID.randomUUID().toString();
+        impl.activate(Collections.singletonMap("serverId", val));
+
+        assertEquals("", impl.getHostName());
     }
 
 }
