@@ -78,7 +78,7 @@ public class MobiImpl implements Mobi {
             updateServiceConfig(data);
         } else {
             final String id = serviceConfig.serverId();
-            LOGGER.info("Server ID already present in service configuration! {}", id);
+            LOGGER.info("Server ID present in service configuration. {}", id);
             try {
                 this.serverId = UUID.fromString(id);
             } catch (IllegalArgumentException e) {
@@ -89,13 +89,12 @@ public class MobiImpl implements Mobi {
         LOGGER.info("Initialized core platform server service with id {}", this.serverId);
 
         if (serviceConfig.hostName() == null) {
-            LOGGER.info("Host Name not present in service configuration.");
+            LOGGER.info("Host Name not present in service configuration. Setting to empty string");
             this.hostName = "";
         } else {
-            LOGGER.info("Host Name already present in service configuration! {}", hostName);
+            LOGGER.info("Host Name present in service configuration. Setting to {}", hostName);
             this.hostName = serviceConfig.hostName();
         }
-        LOGGER.info("Initialized core platform server service with host name {}", this.hostName);
     }
 
     /**
