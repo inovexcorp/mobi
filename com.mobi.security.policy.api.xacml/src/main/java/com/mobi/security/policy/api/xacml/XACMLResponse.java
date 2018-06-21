@@ -94,7 +94,8 @@ public class XACMLResponse implements Response {
 
     public XACMLResponse(String response, ValueFactory vf, JAXBContext jaxbContext) {
         try {
-            this.responseType = jaxbContext.createUnmarshaller().unmarshal(new StringReader(response), ResponseType.class);
+            Object object = jaxbContext.createUnmarshaller().unmarshal(new StringReader(response));
+            this.responseType = (ResponseType) object;
         } catch (JAXBException e) {
             e.printStackTrace();
         }

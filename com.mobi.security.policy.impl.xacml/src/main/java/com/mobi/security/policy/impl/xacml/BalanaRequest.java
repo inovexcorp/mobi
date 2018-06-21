@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.Set;
 import javax.xml.bind.JAXB;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 
 public class BalanaRequest extends XACMLRequest {
 
@@ -59,7 +60,13 @@ public class BalanaRequest extends XACMLRequest {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         context.encode(out);
-        this.requestType = JAXB.unmarshal(new StringReader(new String(out.toByteArray())), RequestType.class);
+        try {
+            this.requestType = (RequestType) jaxbContext.createUnmarshaller().unmarshal(new StringReader
+                    (new String(out.toByteArray())));
+        } catch (JAXBException e) {
+            e.printStackTrace();
+        }
+        //this.requestType = JAXB.unmarshal(new StringReader(new String(out.toByteArray())), RequestType.class);
 
         subjectAttrs = new HashMap<>();
         resourceAttrs = new HashMap<>();
