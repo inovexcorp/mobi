@@ -169,7 +169,8 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
         }
     }
 
-    private VirtualFile getFileFromHash(FileObject tempFile, StreamingXXHash64 hash64, String directory) throws FileSystemException {
+    private VirtualFile getFileFromHash(FileObject tempFile, StreamingXXHash64 hash64, String directory) throws
+            FileSystemException {
         FileObject hashNameFile = this.fsManager.resolveFile(directory + filePathFromHash(hash64));
         if (hashNameFile.exists()) {
             tempFile.delete();
@@ -195,23 +196,29 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
     }
 
     @Override
-    public TemporaryVirtualFile createTemporaryVirtualFile(long timeToLive, TemporalUnit timeToLiveUnit) throws VirtualFilesystemException {
+    public TemporaryVirtualFile createTemporaryVirtualFile(long timeToLive, TemporalUnit timeToLiveUnit)
+            throws VirtualFilesystemException {
         final VirtualFile tmpDir = resolveVirtualFile(baseTempUrlTemplate);
         return createTemporaryVirtualFile(tmpDir, timeToLive, timeToLiveUnit);
     }
 
     @Override
-    public TemporaryVirtualFile createTemporaryVirtualFile(VirtualFile directory, long timeToLive, TemporalUnit timeToLiveUnit) throws VirtualFilesystemException {
+    public TemporaryVirtualFile createTemporaryVirtualFile(VirtualFile directory, long timeToLive,
+                                                           TemporalUnit timeToLiveUnit)
+            throws VirtualFilesystemException {
         if (timeToLive > 0) {
             if (directory.isFolder()) {
                 try {
                     final String id = directory.getIdentifier();
-                    final FileObject obj = this.fsManager.resolveFile(id.endsWith("/") ? id : id + "/" + UUID.randomUUID() + "-" + System.currentTimeMillis());
-                    final SimpleTemporaryVirtualFile tvf = new SimpleTemporaryVirtualFile(obj, timeToLive, timeToLiveUnit);
+                    final FileObject obj = this.fsManager.resolveFile(id.endsWith("/") ? id : id + "/" +
+                            UUID.randomUUID() + "-" + System.currentTimeMillis());
+                    final SimpleTemporaryVirtualFile tvf = new SimpleTemporaryVirtualFile(obj, timeToLive,
+                            timeToLiveUnit);
                     if (tempFiles.offer(tvf)) {
                         return tvf;
                     } else {
-                        throw new VirtualFilesystemException("No more temporary files can be created, already have max of " + this.tempFiles.size());
+                        throw new VirtualFilesystemException("No more temporary files can be created, already have" +
+                                "max of " + this.tempFiles.size());
                     }
                 } catch (FileSystemException e) {
                     throw new VirtualFilesystemException("Issue creating temporary virtual file", e);
@@ -220,13 +227,15 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
                 throw new VirtualFilesystemException("Must specify a virtual directory to write the temp file in");
             }
         } else {
-            throw new VirtualFilesystemException("Must specify a positive timeToLive duration (as opposed to " + timeToLive + ")");
+            throw new VirtualFilesystemException("Must specify a positive timeToLive duration (as opposed to " +
+                    timeToLive + ")");
         }
     }
 
     @Override
     public TemporaryVirtualFile createTemporaryVirtualFile(long timeToLive, TemporalUnit timeToLiveUnit,
-                                                           long createDuration, TimeUnit createTimeUnit) throws VirtualFilesystemException {
+                                                           long createDuration, TimeUnit createTimeUnit)
+            throws VirtualFilesystemException {
         final VirtualFile tmpDir = resolveVirtualFile(baseTempUrlTemplate);
         return createTemporaryVirtualFile(tmpDir, timeToLive, timeToLiveUnit,
                 createDuration, createTimeUnit);
@@ -235,17 +244,21 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
     @Override
     public TemporaryVirtualFile createTemporaryVirtualFile(VirtualFile directory, long timeToLive,
                                                            TemporalUnit timeToLiveUnit,
-                                                           long createDuration, TimeUnit createTimeUnit) throws VirtualFilesystemException {
+                                                           long createDuration, TimeUnit createTimeUnit)
+            throws VirtualFilesystemException {
         if (timeToLive > 0) {
             if (directory.isFolder()) {
                 try {
                     final String id = directory.getIdentifier();
-                    final FileObject obj = this.fsManager.resolveFile(id.endsWith("/") ? id : id + "/" + UUID.randomUUID() + "-" + System.currentTimeMillis());
-                    final SimpleTemporaryVirtualFile tvf = new SimpleTemporaryVirtualFile(obj, timeToLive, timeToLiveUnit);
+                    final FileObject obj = this.fsManager.resolveFile(id.endsWith("/") ? id : id + "/" +
+                            UUID.randomUUID() + "-" + System.currentTimeMillis());
+                    final SimpleTemporaryVirtualFile tvf = new SimpleTemporaryVirtualFile(obj, timeToLive,
+                            timeToLiveUnit);
                     if (tempFiles.offer(tvf, createDuration, createTimeUnit)) {
                         return tvf;
                     } else{
-                        throw new VirtualFilesystemException("Despite waiting, no more temporary files can be created, already have max of " + this.tempFiles.size());
+                        throw new VirtualFilesystemException("Despite waiting, no more temporary files can be created" +
+                                ", already have max of " + this.tempFiles.size());
                     }
                 } catch (FileSystemException | InterruptedException e) {
                     throw new VirtualFilesystemException("Issue creating temporary virtual file", e);
@@ -254,7 +267,8 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
                 throw new VirtualFilesystemException("Must specify a virtual directory to write the temp file in");
             }
         } else {
-            throw new VirtualFilesystemException("Must specify a positive timeToLive duration (as opposed to " + timeToLive + ")");
+            throw new VirtualFilesystemException("Must specify a positive timeToLive duration (as opposed to " +
+                    timeToLive + ")");
         }
     }
 
@@ -278,7 +292,8 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
     }
     @Activate
     void activate(Map<String, Object> configuration) throws VirtualFilesystemException {
-        SimpleVirtualFilesystemConfig conf = Configurable.createConfigurable(SimpleVirtualFilesystemConfig.class, configuration);
+        SimpleVirtualFilesystemConfig conf = Configurable.createConfigurable(SimpleVirtualFilesystemConfig.class,
+                configuration);
         try {
             this.fsManager = VFS.getManager();
             File rootDirectory = new File(conf.defaultRootDirectory());
@@ -290,16 +305,18 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
             throw new VirtualFilesystemException("Issue initializing virtual file system.", e);
         }
         // Set of queues.
-        tempFiles = new ArrayBlockingQueue<TemporaryVirtualFile>(conf.maxNumberOfTempFiles());
+        tempFiles = new ArrayBlockingQueue<>(conf.maxNumberOfTempFiles());
 
         // Schedule our temp file cleanup service.
         this.scheduledExecutorService = Executors.newScheduledThreadPool(1);
         this.scheduledExecutorService.scheduleAtFixedRate(new CleanTempFilesRunnable(LOGGER, tempFiles),
                 conf.secondsBetweenTempCleanup(), conf.secondsBetweenTempCleanup(), TimeUnit.SECONDS);
-        LOGGER.debug("Configured scheduled cleanup of temp files to run every {} seconds", conf.secondsBetweenTempCleanup());
+        LOGGER.debug("Configured scheduled cleanup of temp files to run every {} seconds",
+                conf.secondsBetweenTempCleanup());
 
         // Set default temp url template
-        this.baseTempUrlTemplate = conf.defaultTemporaryDirectory() != null ? conf.defaultTemporaryDirectory() : ("file://" + System.getProperty("java.io.tmpdir"));
+        this.baseTempUrlTemplate = conf.defaultTemporaryDirectory() != null ? conf.defaultTemporaryDirectory() :
+                ("file://" + System.getProperty("java.io.tmpdir"));
         LOGGER.debug("Going to use {} for our base temp directory template", this.baseTempUrlTemplate);
 
         // Initialize HashFactory
