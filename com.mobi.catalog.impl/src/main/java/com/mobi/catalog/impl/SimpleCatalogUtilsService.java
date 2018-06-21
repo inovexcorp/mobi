@@ -993,9 +993,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     /**
-     * Remove the supplied triple from the modelToRemove if it exists, otherwise add the triple to modelToAdd.
+     * Remove the supplied triple from the mapToRemove if one instance of it exists, if more than one, decrement counter.
+     * Otherwise add the triple to mapToAdd. If one already exists in mapToAdd, increment counter.
      *
-     * @param statement     The statement to process
+     * @param statement   The statement to process
      * @param mapToAdd    The Map of addition statements to track number of times a statement has been added and to add
      *                    the statement to if it does not exist in mapToRemove
      * @param mapToRemove The Map of deletion statements to track the number of times a statement has been removed and

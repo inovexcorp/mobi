@@ -267,7 +267,6 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
 
             Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
-            // Resolve conflict and delete statement
             utilsService.addCommit(rightBranch, mergeCommit, conn);
             utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), MODEL_FACTORY.createModel(), conn);
 
@@ -302,7 +301,6 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
 
             Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
-            // Resolve conflict and delete statement
             utilsService.addCommit(rightBranch, mergeCommit, conn);
             utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), MODEL_FACTORY.createModel(), conn);
 
@@ -337,7 +335,6 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
 
             Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
 
-            // Resolve conflict and delete statement
             utilsService.addCommit(rightBranch, mergeCommit, conn);
             utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), MODEL_FACTORY.createModel(), conn);
 
@@ -377,11 +374,12 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
                 if (i != 0) {
                     commit.setBaseCommit(previousCommit);
                 }
-                Model revisions = getModelFactory().createModel();
+                Model revisions = MODEL_FACTORY.createModel();
 
                 IRI revisionIRI = VALUE_FACTORY.createIRI("urn:revision" + i);
                 IRI additionsIRI = VALUE_FACTORY.createIRI(Catalogs.ADDITIONS_NAMESPACE + "addition" + i);
                 IRI deletionsIRI = VALUE_FACTORY.createIRI(Catalogs.DELETIONS_NAMESPACE + "deletion" + i);
+
                 revisions.add(revisionIRI, TYPE_IRI, revisionTypeIRI, commitIRI);
                 revisions.add(revisionIRI, additionsTypeIRI, additionsIRI, commitIRI);
                 revisions.add(revisionIRI, deletionsTypeIRI, deletionsIRI, commitIRI);
@@ -391,8 +389,8 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
                 String date = df.format(calendar.getTime());
                 commit.getModel().add(commitIRI, PROV_AT_TIME, VALUE_FACTORY.createLiteral(date), commitIRI);
 
-                Model additions = getModelFactory().createModel();
-                Model currentDeletions = getModelFactory().createModel(statementsToDelete);
+                Model additions = MODEL_FACTORY.createModel();
+                Model currentDeletions = MODEL_FACTORY.createModel(statementsToDelete);
                 statementsToDelete.clear();
 
                 for (int j = 0; j < 10; j++) {
