@@ -58,6 +58,7 @@ public class MobiImpl implements Mobi {
 
     private ConfigurationAdmin configurationAdmin;
     private UUID serverId;
+    private String hostName;
     private ServerUtils utils;
 
     @Reference
@@ -86,6 +87,15 @@ public class MobiImpl implements Mobi {
             }
         }
         LOGGER.info("Initialized core platform server service with id {}", this.serverId);
+
+        if (serviceConfig.hostName() == null) {
+            LOGGER.info("Host Name not present in service configuration.");
+            this.hostName = "";
+        } else {
+            LOGGER.info("Host Name already present in service configuration! {}", hostName);
+            this.hostName = serviceConfig.hostName();
+        }
+        LOGGER.info("Initialized core platform server service with host name {}", this.hostName);
     }
 
     /**
@@ -102,6 +112,11 @@ public class MobiImpl implements Mobi {
     @Override
     public UUID getServerIdentifier() {
         return this.serverId;
+    }
+
+    @Override
+    public String getHostName() {
+        return this.hostName;
     }
 
     /**
