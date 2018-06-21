@@ -70,7 +70,9 @@ public interface VirtualFilesystem {
     /**
      * Resolves a virtual file representation based on a hash generated from the contents of a file. Uses the provided
      * directory as a prefix for the file. If a file with the provided contents does not exist, method will create the
-     * file and write the provided bytes to it.
+     * file and write the provided bytes to it. The string directory may be the absolute path to use from root
+     * (/Users/user/mobi-distribution/data/policies/) or it may be a directory structure to be resolved using the
+     * default relative directory (policies/).
      *
      * @param inputStream The content of a file to hash and resolve to a file
      * @param directory The directory to prefix the filename with
@@ -82,7 +84,9 @@ public interface VirtualFilesystem {
     /**
      * Resolves a virtual file representation based on a hash generated from the contents of a file. Uses the provided
      * directory as a prefix for the file. If a file with the provided contents does not exist, method will create the
-     * file and write the provided bytes to it.
+     * file and write the provided bytes to it. The string directory may be the absolute path to use from root
+     * (/Users/user/mobi-distribution/data/policies/) or it may be a directory structure to be resolved using the
+     * default relative directory (policies/).
      *
      * @param fileBytes The content of a file to hash and resolve to a file
      * @param directory The directory to prefix the filename with

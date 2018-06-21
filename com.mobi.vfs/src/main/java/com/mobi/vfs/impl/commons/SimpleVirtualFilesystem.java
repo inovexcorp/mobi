@@ -97,8 +97,7 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
             throw new VirtualFilesystemException("Issue reading file from InputStream.", e);
         }
 
-        String hash = Long.toHexString(hash64.getValue());
-        return hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, hash.length());
+        return filePathFromHash(hash64);
     }
 
     @Override
@@ -106,8 +105,7 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
         StreamingXXHash64 hash64 = hashFactory.newStreamingHash64(0);
         hash64.update(fileBytes, 0 , fileBytes.length);
 
-        String hash = Long.toHexString(hash64.getValue());
-        return hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, hash.length());
+        return filePathFromHash(hash64);
     }
 
     @Override
@@ -133,12 +131,6 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
 
     @Override
     public VirtualFile resolveVirtualFile(InputStream inputStream, String directory) throws VirtualFilesystemException {
-        if (StringUtils.isEmpty(directory)) {
-            directory = "";
-        } else if (!directory.endsWith("/")) {
-            directory = directory + "/";
-        }
-
         try {
             StreamingXXHash64 hash64 = hashFactory.newStreamingHash64(0);
             FileObject temp = this.fsManager.resolveFile(UUID.randomUUID().toString());
@@ -153,7 +145,7 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
             } catch (IOException e) {
                 throw new VirtualFilesystemException("Issue reading file from InputStream.", e);
             }
-            return getFileFromHash(temp, hash64, directory);
+            return getFileFromHash(temp, hash64, formatDirectory(directory));
         } catch (FileSystemException e) {
             throw new VirtualFilesystemException("Issue resolving file.", e);
         }
@@ -161,12 +153,6 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
 
     @Override
     public VirtualFile resolveVirtualFile(byte[] fileBytes, String directory) throws VirtualFilesystemException {
-        if (StringUtils.isEmpty(directory)) {
-            directory = "";
-        } else if (!directory.endsWith("/")) {
-            directory = directory + "/";
-        }
-
         try {
             StreamingXXHash64 hash64 = hashFactory.newStreamingHash64(0);
             FileObject temp = this.fsManager.resolveFile(UUID.randomUUID().toString());
@@ -177,17 +163,14 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
             } catch (IOException e) {
                 throw new VirtualFilesystemException("Issue reading file from InputStream.", e);
             }
-            return getFileFromHash(temp, hash64, directory);
+            return getFileFromHash(temp, hash64, formatDirectory(directory));
         } catch (FileSystemException e) {
             throw new VirtualFilesystemException("Issue resolving file.", e);
         }
     }
 
     private VirtualFile getFileFromHash(FileObject tempFile, StreamingXXHash64 hash64, String directory) throws FileSystemException {
-        String hash = Long.toHexString(hash64.getValue());
-        hash = hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, hash.length());
-
-        FileObject hashNameFile = this.fsManager.resolveFile(directory + hash);
+        FileObject hashNameFile = this.fsManager.resolveFile(directory + filePathFromHash(hash64));
         if (hashNameFile.exists()) {
             tempFile.delete();
         } else {
@@ -195,6 +178,20 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
             tempFile.moveTo(hashNameFile);
         }
         return new SimpleVirtualFile(hashNameFile);
+    }
+
+    private String filePathFromHash(StreamingXXHash64 hash64) {
+        String hash = Long.toHexString(hash64.getValue());
+        return hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, hash.length());
+    }
+
+    private String formatDirectory(String directory) {
+        if (StringUtils.isEmpty(directory)) {
+            directory = "";
+        } else if (!directory.endsWith("/")) {
+            directory = directory + "/";
+        }
+        return directory;
     }
 
     @Override
