@@ -60,7 +60,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.UUID;
 
 public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
@@ -355,7 +354,6 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             IRI deletionsTypeIRI = VALUE_FACTORY.createIRI(Revision.deletions_IRI);
 
             // Need dates to have an ordered commit list
-            Random rand = new Random();
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
             long dayInMs = 86400000;
             long timeMillis = System.currentTimeMillis();
@@ -367,26 +365,25 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             utilsService.addObject(branch, conn);
             Commit previousCommit = null;
             Model statementsToDelete = getModelFactory().createModel();
-            int numberOfCommits = 10000;
+            int numberOfCommits = 1000;
             for (int i = 0; i < numberOfCommits; i++) {
                 IRI commitIRI = VALUE_FACTORY.createIRI("urn:commit" + i);
                 Commit commit = commitFactory.createNew(commitIRI);
                 if (i != 0) {
                     commit.setBaseCommit(previousCommit);
                 }
-                Model revisions = MODEL_FACTORY.createModel();
 
                 IRI revisionIRI = VALUE_FACTORY.createIRI("urn:revision" + i);
                 IRI additionsIRI = VALUE_FACTORY.createIRI(Catalogs.ADDITIONS_NAMESPACE + "addition" + i);
                 IRI deletionsIRI = VALUE_FACTORY.createIRI(Catalogs.DELETIONS_NAMESPACE + "deletion" + i);
+                IRI nextDeletionsIRI = VALUE_FACTORY.createIRI(Catalogs.DELETIONS_NAMESPACE + "deletion" + (i + 1));
 
-                revisions.add(revisionIRI, TYPE_IRI, revisionTypeIRI, commitIRI);
-                revisions.add(revisionIRI, additionsTypeIRI, additionsIRI, commitIRI);
-                revisions.add(revisionIRI, deletionsTypeIRI, deletionsIRI, commitIRI);
+                Revision revision = revisionFactory.createNew(revisionIRI, commit.getModel());
+                revision.setAdditions(additionsIRI);
+                revision.setDeletions(deletionsIRI);
 
-                commit.getModel().addAll(revisions);
-                commit.getModel().add(commitIRI, VALUE_FACTORY.createIRI(Activity.generated_IRI), revisionIRI, commitIRI);
                 String date = df.format(calendar.getTime());
+                commit.getModel().add(commitIRI, VALUE_FACTORY.createIRI(Activity.generated_IRI), revisionIRI, commitIRI);
                 commit.getModel().add(commitIRI, PROV_AT_TIME, VALUE_FACTORY.createLiteral(date), commitIRI);
 
                 Model additions = MODEL_FACTORY.createModel();
@@ -399,14 +396,14 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
                         // Keep track of statements to delete in next commit
                         statementsToDelete.add(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"),
                                 VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"),
-                                VALUE_FACTORY.createLiteral(uuid));
+                                VALUE_FACTORY.createLiteral(uuid), nextDeletionsIRI);
                     }
                     additions.add(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"),
                             VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"),
-                            VALUE_FACTORY.createLiteral(uuid));
+                            VALUE_FACTORY.createLiteral(uuid), additionsIRI);
                 }
-                additions.stream().forEach(statement -> conn.add(statement, additionsIRI));
-                currentDeletions.stream().forEach(statement -> conn.add(statement, deletionsIRI));
+                conn.add(additions);
+                conn.add(currentDeletions);
 
                 utilsService.addCommit(branch, commit, conn);
                 previousCommit = commit;
