@@ -29,7 +29,9 @@ import static junit.framework.TestCase.assertTrue;
 import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontologies.provo.Activity;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -51,9 +53,18 @@ import org.junit.Test;
 import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
 
 public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
 
@@ -63,14 +74,18 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+    private OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
 
     private Statement initialComment;
     private Statement commentA;
     private Statement commentB;
 
     private final IRI USER_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test#user");
+    private final IRI TYPE_IRI = VALUE_FACTORY.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
+    private final IRI PROV_AT_TIME = VALUE_FACTORY.createIRI("http://www.w3.org/ns/prov#atTime");
 
     private static final String COMMITS = "http://mobi.com/test/commits#";
+
 
 
     @Before
@@ -96,11 +111,11 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
         utilsService.setMf(MODEL_FACTORY);
         utilsService.setVf(VALUE_FACTORY);
 
-        InputStream testData = getClass().getResourceAsStream("/testCommitChainData.trig");
-
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
-        }
+//        InputStream testData = getClass().getResourceAsStream("/testCommitChainData.trig");
+//
+//        try (RepositoryConnection conn = repo.getConnection()) {
+//            conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+//        }
 
         Map<String, Object> props = new HashMap<>();
         props.put("title", "Mobi Test Catalog");
@@ -336,6 +351,77 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
 
             assertTrue(branchCompiled.contains(commentA));
             assertTrue(branchCompiled.contains(commentB));
+        }
+    }
+
+    @Test
+    public void getCompiledResourceTiming() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            IRI revisionTypeIRI = VALUE_FACTORY.createIRI(Revision.TYPE);
+            IRI additionsTypeIRI = VALUE_FACTORY.createIRI(Revision.additions_IRI);
+            IRI deletionsTypeIRI = VALUE_FACTORY.createIRI(Revision.deletions_IRI);
+
+            Random rand = new Random();
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            long dayInMs = 86400000;
+            long timeMillis = System.currentTimeMillis();
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(timeMillis);
+
+            Branch branch = branchFactory.createNew(VALUE_FACTORY.createIRI("urn:testBranch"));
+            utilsService.addObject(branch, conn);
+            Commit previousCommit = null;
+            Model statementsToDelete = getModelFactory().createModel();
+            for (int i = 0; i < 10000; i++) {
+                IRI commitIRI = VALUE_FACTORY.createIRI("urn:commit" + i);
+                Commit commit = commitFactory.createNew(commitIRI);
+                if (i != 0) {
+                    commit.setBaseCommit(previousCommit);
+                }
+                Model revisions = getModelFactory().createModel();
+
+                IRI revisionIRI = VALUE_FACTORY.createIRI("urn:revision" + i);
+                IRI additionsIRI = VALUE_FACTORY.createIRI(Catalogs.ADDITIONS_NAMESPACE + "addition" + i);
+                IRI deletionsIRI = VALUE_FACTORY.createIRI(Catalogs.DELETIONS_NAMESPACE + "deletion" + i);
+                revisions.add(revisionIRI, TYPE_IRI, revisionTypeIRI, commitIRI);
+                revisions.add(revisionIRI, additionsTypeIRI, additionsIRI, commitIRI);
+                revisions.add(revisionIRI, deletionsTypeIRI, deletionsIRI, commitIRI);
+
+                commit.getModel().addAll(revisions);
+                commit.getModel().add(commitIRI, VALUE_FACTORY.createIRI(Activity.generated_IRI), revisionIRI, commitIRI);
+                String date = df.format(calendar.getTime());
+                commit.getModel().add(commitIRI, PROV_AT_TIME, VALUE_FACTORY.createLiteral(date), commitIRI);
+
+                Model additions = getModelFactory().createModel();
+                Model currentDeletions = getModelFactory().createModel(statementsToDelete);
+                statementsToDelete.clear();
+
+                for (int j = 0; j < rand.nextInt(5) + 1; j++) {
+                    String uuid = UUID.randomUUID().toString();
+                    if (j == 0) {
+                        statementsToDelete.add(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"),
+                                VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"),
+                                VALUE_FACTORY.createLiteral(uuid));
+                    }
+                    additions.add(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"),
+                            VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"),
+                            VALUE_FACTORY.createLiteral(uuid));
+                }
+                additions.stream().forEach(statement -> conn.add(statement, additionsIRI));
+                currentDeletions.stream().forEach(statement -> conn.add(statement, deletionsIRI));
+
+                utilsService.addCommit(branch, commit, conn);
+                previousCommit = commit;
+                timeMillis = timeMillis + dayInMs;
+                calendar.setTimeInMillis(timeMillis);
+            }
+            List<Resource> commitChain = utilsService.getCommitChain(previousCommit.getResource(), true, conn);
+
+            long start = System.nanoTime();
+            Model branchCompiled = utilsService.getCompiledResource(commitChain, conn);
+            long end = System.nanoTime();
+            long opTime = (end - start) / 1000000;
+            System.out.println("GetCompiledResource operation time (ms): " + opTime);
         }
     }
 }
