@@ -840,13 +840,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Difference getCommitDifference(List<Resource> commits, RepositoryConnection conn) {
-        List<Statement> additions = new ArrayList<>();
-        List<Statement> deletions = new ArrayList<>();
+        Map<Statement, Integer> additions = new HashMap<>();
+        Map<Statement, Integer> deletions = new HashMap<>();
         commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, conn));
 
         return new Difference.Builder()
-                .additions(mf.createModel(additions))
-                .deletions(mf.createModel(deletions))
+                .additions(mf.createModel(additions.keySet()))
+                .deletions(mf.createModel(deletions.keySet()))
                 .build();
     }
 
@@ -975,16 +975,18 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     /**
-     * Updates the supplied Lists of addition and deletions statements with statements from the Revision associated with
-     * the supplied Commit resource. Revision addition statements are added to the additions list. Revision deletion
-     * statements are removed from the additions list if they exist, otherwise they are added to the deletions list.
+     * Updates the supplied Maps of addition and deletions statements with statements from the Revision associated with
+     * the supplied Commit resource. Revision addition statements are added to the additions map if not present. If
+     * present, the counter of the times the statement has been added is incremented. Revision deletion
+     * statements are removed from the additions map if only one exists, if more than one exists the counter is
+     * decremented, otherwise the statements are added to the deletions list.
      *
-     * @param additions The List of Statements added to update.
-     * @param additions The List of Statements deleted to update.
+     * @param additions The Map of Statements added to update.
+     * @param additions The Map of Statements deleted to update.
      * @param commitId  The Resource identifying the Commit.
      * @param conn      The RepositoryConnection to query the repository.
      */
-    private void aggregateDifferences(List<Statement> additions, List<Statement> deletions, Resource commitId,
+    private void aggregateDifferences(Map<Statement, Integer> additions, Map<Statement, Integer> deletions, Resource commitId,
                                       RepositoryConnection conn) {
         getAdditions(commitId, conn).forEach(statement -> updateModels(statement, additions, deletions));
         getDeletions(commitId, conn).forEach(statement -> updateModels(statement, deletions, additions));
@@ -994,15 +996,24 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
      * Remove the supplied triple from the modelToRemove if it exists, otherwise add the triple to modelToAdd.
      *
      * @param statement     The statement to process
-     * @param listToAdd    The List of addition statements to add the statement to if it does not exist in
-     *                      modelToRemove
-     * @param listToRemove The List of deletion statements to remove the statement from if it exists
+     * @param mapToAdd    The Map of addition statements to track number of times a statement has been added and to add
+     *                    the statement to if it does not exist in mapToRemove
+     * @param mapToRemove The Map of deletion statements to track the number of times a statement has been removed and
+     *                    to remove the statement from if it exists
      */
-    private void updateModels(Statement statement, List<Statement> listToAdd, List<Statement> listToRemove) {
-        if (listToRemove.contains(statement)) {
-            listToRemove.remove(statement);
+    private void updateModels(Statement statement, Map<Statement, Integer> mapToAdd, Map<Statement, Integer> mapToRemove) {
+        if (mapToRemove.containsKey(statement)) {
+            int count = mapToRemove.get(statement);
+            if (count == 1) {
+                mapToRemove.remove(statement);
+            } else {
+                mapToRemove.put(statement, count - 1);
+            }
+        } else if (mapToAdd.containsKey(statement)) {
+           int count = mapToAdd.get(statement);
+           mapToAdd.put(statement, count + 1);
         } else {
-            listToAdd.add(statement);
+            mapToAdd.put(statement, 1);
         }
     }
 

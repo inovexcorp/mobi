@@ -23,6 +23,7 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
+import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
@@ -111,11 +112,11 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
         utilsService.setMf(MODEL_FACTORY);
         utilsService.setVf(VALUE_FACTORY);
 
-//        InputStream testData = getClass().getResourceAsStream("/testCommitChainData.trig");
-//
-//        try (RepositoryConnection conn = repo.getConnection()) {
-//            conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
-//        }
+        InputStream testData = getClass().getResourceAsStream("/testCommitChainData.trig");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+        }
 
         Map<String, Object> props = new HashMap<>();
         props.put("title", "Mobi Test Catalog");
@@ -372,7 +373,8 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             utilsService.addObject(branch, conn);
             Commit previousCommit = null;
             Model statementsToDelete = getModelFactory().createModel();
-            for (int i = 0; i < 10000; i++) {
+            int numberOfCommits = 10000;
+            for (int i = 0; i < numberOfCommits; i++) {
                 IRI commitIRI = VALUE_FACTORY.createIRI("urn:commit" + i);
                 Commit commit = commitFactory.createNew(commitIRI);
                 if (i != 0) {
@@ -396,9 +398,9 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
                 Model currentDeletions = getModelFactory().createModel(statementsToDelete);
                 statementsToDelete.clear();
 
-                for (int j = 0; j < rand.nextInt(5) + 1; j++) {
+                for (int j = 0; j < 10; j++) {
                     String uuid = UUID.randomUUID().toString();
-                    if (j == 0) {
+                    if (j == 0 || j == 1) {
                         statementsToDelete.add(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"),
                                 VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"),
                                 VALUE_FACTORY.createLiteral(uuid));
@@ -421,7 +423,9 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             Model branchCompiled = utilsService.getCompiledResource(commitChain, conn);
             long end = System.nanoTime();
             long opTime = (end - start) / 1000000;
-            System.out.println("GetCompiledResource operation time (ms): " + opTime);
+            System.out.println("CatalogUtilsService getCompiledResource operation time (ms): " + opTime);
+
+            assertEquals(numberOfCommits * 8 + 2, branchCompiled.size());
         }
     }
 }
