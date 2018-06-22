@@ -84,6 +84,22 @@ public interface VirtualFile extends AutoCloseable {
     OutputStream writeContent(boolean append) throws VirtualFilesystemException;
 
     /**
+     * Writes the provided byte array to the output stream for this {@link VirtualFile}.
+     *
+     * @param fileBytes The byte array to write
+     * @throws VirtualFilesystemException
+     */
+    void writeToContent(byte[] fileBytes) throws VirtualFilesystemException;
+
+    /**
+     * Writes the provided input stream to the output stream for this {@link VirtualFile}.
+     *
+     * @param inputStream The {@link InputStream} to write
+     * @throws VirtualFilesystemException
+     */
+    void writeToContent(InputStream inputStream) throws VirtualFilesystemException;
+
+    /**
      * @return Whether or not this {@link VirtualFile} is a folder
      * @throws VirtualFilesystemException If there is an issue determining
      */
