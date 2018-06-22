@@ -1247,6 +1247,57 @@ GRAPH deletions:conflict3-10 {
     <http://mobi.com/test/ontology> dc:title "Title" .
 }
 
+# Conflict Scenario 11 - Right Removes Entire Entity, Left Adds to it, Disconnected Nodes
+
+GRAPH commits:conflict0-11 {
+    commits:conflict0-11 a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict0-11 .
+
+    revisions:conflict0-11 a mcat:Revision ;
+        mcat:additions additions:conflict0-11 ;
+        mcat:deletions deletions:conflict0-11 .
+}
+
+GRAPH additions:conflict0-11 {
+    <http://mobi.com/test/ontology> a owl:Ontology ;
+        dc:title "Title" ;
+        dc:description "Description" .
+    <http://mobi.com/test/class0> a owl:Class .
+}
+
+GRAPH commits:conflict1-11 {
+    commits:conflict1-11 a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict0-11 ;
+        prov:generated revisions:conflict1-11 .
+
+    revisions:conflict1-11 a mcat:Revision ;
+        mcat:additions additions:conflict1-11 ;
+        mcat:deletions deletions:conflict1-11 .
+}
+
+GRAPH additions:conflict1-11 {
+    <http://mobi.com/test/ontology> dc:description "New Description" .
+}
+
+GRAPH commits:conflict2-11 {
+    commits:conflict2-11 a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict2-11 .
+
+    revisions:conflict2-11 a mcat:Revision ;
+        mcat:additions additions:conflict2-11 ;
+        mcat:deletions deletions:conflict2-11 .
+}
+
+GRAPH deletions:conflict2-11 {
+    <http://mobi.com/test/class0> a owl:Class .
+}
+
 # Basic Quad Revisioning
 
 GRAPH records:quad-versioned-rdf-record {
