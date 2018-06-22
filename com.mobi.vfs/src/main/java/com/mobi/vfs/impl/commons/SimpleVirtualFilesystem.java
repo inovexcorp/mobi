@@ -210,15 +210,15 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
             if (directory.isFolder()) {
                 try {
                     final String id = directory.getIdentifier();
-                    final FileObject obj = this.fsManager.resolveFile(id.endsWith("/") ? id : id + "/" +
-                            UUID.randomUUID() + "-" + System.currentTimeMillis());
+                    final FileObject obj = this.fsManager.resolveFile(id.endsWith("/") ? id : id + "/"
+                            + UUID.randomUUID() + "-" + System.currentTimeMillis());
                     final SimpleTemporaryVirtualFile tvf = new SimpleTemporaryVirtualFile(obj, timeToLive,
                             timeToLiveUnit);
                     if (tempFiles.offer(tvf)) {
                         return tvf;
                     } else {
-                        throw new VirtualFilesystemException("No more temporary files can be created, already have" +
-                                "max of " + this.tempFiles.size());
+                        throw new VirtualFilesystemException("No more temporary files can be created, already have"
+                                + "max of " + this.tempFiles.size());
                     }
                 } catch (FileSystemException e) {
                     throw new VirtualFilesystemException("Issue creating temporary virtual file", e);
@@ -227,8 +227,8 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
                 throw new VirtualFilesystemException("Must specify a virtual directory to write the temp file in");
             }
         } else {
-            throw new VirtualFilesystemException("Must specify a positive timeToLive duration (as opposed to " +
-                    timeToLive + ")");
+            throw new VirtualFilesystemException("Must specify a positive timeToLive duration (as opposed to "
+                    + timeToLive + ")");
         }
     }
 
@@ -250,15 +250,15 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
             if (directory.isFolder()) {
                 try {
                     final String id = directory.getIdentifier();
-                    final FileObject obj = this.fsManager.resolveFile(id.endsWith("/") ? id : id + "/" +
-                            UUID.randomUUID() + "-" + System.currentTimeMillis());
+                    final FileObject obj = this.fsManager.resolveFile(id.endsWith("/") ? id : id + "/"
+                            + UUID.randomUUID() + "-" + System.currentTimeMillis());
                     final SimpleTemporaryVirtualFile tvf = new SimpleTemporaryVirtualFile(obj, timeToLive,
                             timeToLiveUnit);
                     if (tempFiles.offer(tvf, createDuration, createTimeUnit)) {
                         return tvf;
-                    } else{
-                        throw new VirtualFilesystemException("Despite waiting, no more temporary files can be created" +
-                                ", already have max of " + this.tempFiles.size());
+                    } else {
+                        throw new VirtualFilesystemException("Despite waiting, no more temporary files can be created"
+                                + ", already have max of " + this.tempFiles.size());
                     }
                 } catch (FileSystemException | InterruptedException e) {
                     throw new VirtualFilesystemException("Issue creating temporary virtual file", e);
@@ -267,8 +267,8 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
                 throw new VirtualFilesystemException("Must specify a virtual directory to write the temp file in");
             }
         } else {
-            throw new VirtualFilesystemException("Must specify a positive timeToLive duration (as opposed to " +
-                    timeToLive + ")");
+            throw new VirtualFilesystemException("Must specify a positive timeToLive duration (as opposed to "
+                    + timeToLive + ")");
         }
     }
 
@@ -290,6 +290,7 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
         }
 
     }
+
     @Activate
     void activate(Map<String, Object> configuration) throws VirtualFilesystemException {
         SimpleVirtualFilesystemConfig conf = Configurable.createConfigurable(SimpleVirtualFilesystemConfig.class,
