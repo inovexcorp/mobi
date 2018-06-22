@@ -357,7 +357,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
             }
             assertTrue(file.delete());
             assertFalse(file.delete());
-            assertEquals(testResources.toString().replaceFirst("/", "///") + hash, file.getUrl().toString());
+            assertEquals(testResources.getPath().replaceFirst("/", "///") + hash, file.getUrl().getPath());
         } catch (Exception e) {
             fail(e.getMessage());
         }
