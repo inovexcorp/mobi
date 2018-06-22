@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 
 
 @RunWith(BlockJUnit4ClassRunner.class)
-public class TestDefaultVirtualFilesystem extends TestCase {
+public class DefaultVirtualFilesystemTest extends TestCase {
 
     private static URI testFile;
 
@@ -73,15 +73,15 @@ public class TestDefaultVirtualFilesystem extends TestCase {
 
     @BeforeClass
     public static void initializeUri() throws Exception {
-        testFile = TestDefaultVirtualFilesystem.class.getResource("/test.txt").toURI();
-        testResources = TestDefaultVirtualFilesystem.class.getResource("/").toURI();
+        testFile = DefaultVirtualFilesystemTest.class.getResource("/test.txt").toURI();
+        testResources = DefaultVirtualFilesystemTest.class.getResource("/").toURI();
         writeFile = new File(testResources.toString() + "testFile").toURI();
         testFileRelative = "./test.txt";
         testResourcesRelative = "../test-classes/";
         writeFileRelative = "./testFile.txt";
         writeFileNestedRelative = "./test/nested/directory/testFile.txt";
-        testFileInputStream = TestDefaultVirtualFilesystem.class.getResourceAsStream("/test.txt");
-        fileContents = IOUtils.toString(TestDefaultVirtualFilesystem.class.getResourceAsStream("/test.txt"), "UTF-8");
+        testFileInputStream = DefaultVirtualFilesystemTest.class.getResourceAsStream("/test.txt");
+        fileContents = IOUtils.toString(DefaultVirtualFilesystemTest.class.getResourceAsStream("/test.txt"), "UTF-8");
         fs = new SimpleVirtualFilesystem();
 
         Map<String, Object> config = new HashMap<>();
