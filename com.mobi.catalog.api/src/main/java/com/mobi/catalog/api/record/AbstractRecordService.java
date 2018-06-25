@@ -68,10 +68,8 @@ public abstract class AbstractRecordService<T extends Record & Resource> impleme
         CreateActivity createActivity = provUtils.startCreateActivity(user);
         conn.begin();
         OffsetDateTime now = OffsetDateTime.now();
-        addPropertiesToRecord(recordFactory.createNew(valueFactory.createIRI(Catalog.influenced_IRI + UUID.randomUUID())),
-                config, now,
-                now);
-        this.record = createRecord(config, conn);
+        this.record = addPropertiesToRecord(recordFactory.createNew(valueFactory.createIRI(Catalog.influenced_IRI +
+                        UUID.randomUUID())), config, now, now);
         conn.commit();
         IRI recordID = (IRI) record;
         provUtils.endCreateActivity(createActivity, recordID);
