@@ -75,7 +75,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
     public static void initializeUri() throws Exception {
         testFile = DefaultVirtualFilesystemTest.class.getResource("/test.txt").toURI();
         testResources = DefaultVirtualFilesystemTest.class.getResource("/").toURI();
-        writeFile = new File(testResources.toString() + "testFile").toURI();
+        writeFile = new URI(testResources.toString() + "testFile");
         testFileRelative = "./test.txt";
         testResourcesRelative = "../test-classes/";
         writeFileRelative = "./testFile.txt";
@@ -87,7 +87,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
         Map<String, Object> config = new HashMap<>();
         config.put("maxNumberOfTempFiles", 10000);
         config.put("secondsBetweenTempCleanup", 60000);
-        config.put("defaultRootDirectory", testResources.getRawPath());
+        config.put("defaultRootDirectory", testResources.getPath());
 
         Method m = fs.getClass().getDeclaredMethod("activate", Map.class);
         m.setAccessible(true);
@@ -521,7 +521,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
             }
             assertTrue(file.delete());
             assertFalse(file.delete());
-            assertEquals(testResources.toString().replaceFirst("/", "///") + hash, file.getUrl().toString());
+            assertEquals(testResources.getPath().replaceFirst("/", "///") + hash, file.getUrl().getPath());
         } catch (Exception e) {
             fail(e.getMessage());
         }
