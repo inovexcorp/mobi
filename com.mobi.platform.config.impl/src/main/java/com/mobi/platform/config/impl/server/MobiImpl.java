@@ -33,12 +33,15 @@ import com.mobi.exception.MobiException;
 import com.mobi.platform.config.api.server.Mobi;
 import com.mobi.platform.config.api.server.MobiConfig;
 import com.mobi.platform.config.api.server.ServerUtils;
+import org.apache.commons.validator.routines.UrlValidator;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
@@ -83,13 +86,19 @@ public class MobiImpl implements Mobi {
         }
         LOGGER.info("Initialized core platform server service with id {}", this.serverId);
 
+        String[] schemes = {"http", "https"};
+        UrlValidator urlValidator = new UrlValidator(schemes, UrlValidator.ALLOW_LOCAL_URLS);
         if (serviceConfig.hostName() == null) {
-            LOGGER.info("Host Name not present in service configuration. Setting to empty string");
+            LOGGER.info("Host Name not present in service configuration. Setting to empty string.");
             this.hostName = "";
-        } else {
-            LOGGER.info("Host Name present in service configuration. Setting to {}", hostName);
+        } else if (urlValidator.isValid(serviceConfig.hostName())) {
+            LOGGER.info("Host Name present in service configuration. Setting to {}", serviceConfig.hostName());
             this.hostName = serviceConfig.hostName();
+        } else {
+            LOGGER.info("Host Name in service configuration is invalid. Setting to empty string.");
+            this.hostName = "";
         }
+
     }
 
     /**

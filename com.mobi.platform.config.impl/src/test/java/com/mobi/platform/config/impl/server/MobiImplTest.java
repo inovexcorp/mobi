@@ -84,7 +84,7 @@ public class MobiImplTest {
     public void testHostNameProvided() throws Exception {
         MobiImpl impl = new MobiImpl();
         String val = UUID.randomUUID().toString();
-        String hostName = "this.is.a.host.name";
+        String hostName = "https://www.google.com";
         Map<String, Object> config = new HashMap<>();
         config.put("serverId", val);
         config.put("hostName", hostName);
@@ -92,6 +92,71 @@ public class MobiImplTest {
         impl.activate(config);
 
         assertEquals(hostName, impl.getHostName());
+    }
+
+    @Test
+    public void testHostNameIPProvided() throws Exception {
+        MobiImpl impl = new MobiImpl();
+        String val = UUID.randomUUID().toString();
+        String hostName = "http://8.8.8.8";
+        Map<String, Object> config = new HashMap<>();
+        config.put("serverId", val);
+        config.put("hostName", hostName);
+
+        impl.activate(config);
+        assertEquals(hostName, impl.getHostName());
+    }
+
+    @Test
+    public void testHostNameIPNoProtocolProvided() throws Exception {
+        MobiImpl impl = new MobiImpl();
+        String val = UUID.randomUUID().toString();
+        String hostName = "8.8.8.8";
+        Map<String, Object> config = new HashMap<>();
+        config.put("serverId", val);
+        config.put("hostName", hostName);
+
+        impl.activate(config);
+        assertEquals("", impl.getHostName());
+    }
+
+    @Test
+    public void testHostNameLocalHostProvided() throws Exception {
+        MobiImpl impl = new MobiImpl();
+        String val = UUID.randomUUID().toString();
+        String hostName = "https://localhost:8443";
+        Map<String, Object> config = new HashMap<>();
+        config.put("serverId", val);
+        config.put("hostName", hostName);
+
+        impl.activate(config);
+        assertEquals(hostName, impl.getHostName());
+    }
+
+    @Test
+    public void testHostNameLocalHostIPProvided() throws Exception {
+        MobiImpl impl = new MobiImpl();
+        String val = UUID.randomUUID().toString();
+        String hostName = "http://127.0.0.1";
+        Map<String, Object> config = new HashMap<>();
+        config.put("serverId", val);
+        config.put("hostName", hostName);
+
+        impl.activate(config);
+        assertEquals(hostName, impl.getHostName());
+    }
+
+    @Test
+    public void testHostNameProvidedInvalid() throws Exception {
+        MobiImpl impl = new MobiImpl();
+        String val = UUID.randomUUID().toString();
+        String hostName = "someBadHostName";
+        Map<String, Object> config = new HashMap<>();
+        config.put("serverId", val);
+        config.put("hostName", hostName);
+
+        impl.activate(config);
+        assertEquals("", impl.getHostName());
     }
 
     @Test

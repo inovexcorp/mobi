@@ -38,8 +38,8 @@ public interface Mobi {
 
     /**
      *
-     * @return The configured host name for the server if present. If no host name is configured, returns an empty
-     * string.
+     * @return The configured host name for the server if present. If no host name is configured or if the host name is
+     * not a valid URL with protocol, returns an empty string.
      */
     String getHostName();
 
