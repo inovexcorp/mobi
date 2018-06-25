@@ -30,8 +30,11 @@ import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.BatchExporter;
+import com.mobi.persistence.utils.BatchInserter;
+import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
@@ -41,12 +44,35 @@ import com.mobi.repository.api.RepositoryConnection;
  * Subclasses of Record can override exportRecord() and deleteRecord() to perform Record specific operations.
  * @param <T> of Record
  */
-public abstract class AbstractRecordService<T extends Record> implements RecordService<T> {
+public abstract class AbstractRecordService<T extends Record & Resource> implements RecordService<T> {
 
     protected CatalogUtilsService utilsService;
     protected CatalogProvUtils provUtils;
     protected ValueFactory valueFactory;
     protected OrmFactory<T> recordFactory;
+    private T record;
+
+    @Override
+    public T create(User user, RecordOperationConfig config, RepositoryConnection conn){
+        validateSettings(config);
+
+        BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
+        boolean exporterIsActive = exporter.isActive();
+        if (!exporterIsActive) {
+            exporter.startRDF();
+        }
+        CreateActivity createActivity = provUtils.startCreateActivity(user);
+        conn.begin();
+        this.record = createRecord(config, conn);
+        conn.commit();
+        IRI recordID = (IRI) record;
+        provUtils.endCreateActivity(createActivity, recordID);
+        if (!exporterIsActive) {
+            exporter.endRDF();
+        }
+
+        return record;
+    }
 
     @Override
     public T delete(IRI recordId, User user, RepositoryConnection conn) {
@@ -75,6 +101,16 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
         if (!exporterIsActive) {
             exporter.endRDF();
         }
+    }
+
+    protected T createRecord(RecordOperationConfig config, RepositoryConnection conn){
+        T record = recordFactory;
+        BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
+        utilsService.addObject(record, conn);
+        record.getModel().forEach(exporter::handleStatement);
+        IRI recordID = recordFactory.getTypeIRI();
+        return utilsService.optObject(recordID, recordFactory, conn).orElseThrow(()
+                -> new IllegalArgumentException("Record " + recordID + " does not exist"));
     }
 
     /**
