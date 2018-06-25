@@ -28,7 +28,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>mobi-parent</artifactId>
-    <version>1.13.12</version>
+    <version>1.13.13</version>
 
     <packaging>pom</packaging>
 
@@ -315,6 +315,11 @@
                 <artifactId>jasypt</artifactId>
                 <version>1.9.0</version>
             </dependency>
+            <dependency>
+                <groupId>org.lz4</groupId>
+                <artifactId>lz4-java</artifactId>
+                <version>1.4.1</version>
+            </dependency>
 
             <!-- Test Dependencies -->
             <dependency>
@@ -381,6 +386,12 @@
                 <groupId>com.mobi</groupId>
                 <artifactId>rdf-orm-test</artifactId>
                 <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.openhft</groupId>
+                <artifactId>zero-allocation-hashing</artifactId>
+                <version>0.8</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
