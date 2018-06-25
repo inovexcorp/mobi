@@ -23,18 +23,47 @@ package com.mobi.catalog.api.record.config;
  * #L%
  */
 
+import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.query.api.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class OperationConfig implements RecordOperationConfig {
+    private String title;
+    private String description;
+    private Set<String> keywords;
+    private Set<User> publishers;
 
     private static final long serialVersionUID = -3749564958548504905L;
 
     protected final ConcurrentMap<OperationSetting<Object>, Object> settings = new ConcurrentHashMap<>();
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
+
+    protected OperationConfig(Builder builder) {
+        title = builder.title;
+        description = builder.description;
+        keywords = builder.keywords;
+        publishers = builder.publishers;
+    }
+    public String getTitle() {
+        return title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public Set<String> getKeywords() {
+        return keywords;
+    }
+
+    public Set<User> getPublishers() {
+        return publishers;
+    }
 
     public OperationConfig() {
         super();
@@ -77,5 +106,37 @@ public class OperationConfig implements RecordOperationConfig {
     public RecordOperationConfig useDefaults() {
         settings.clear();
         return this;
+    }
+
+    public static class Builder {
+        private String title;
+        private String description;
+        private Set<String> keywords;
+        private Set<User> publishers;
+
+        /**
+         * The constructor for the builder.
+         *
+         * @param title The title String.
+         * @param publishers The Set of publisher Users.
+         */
+        public Builder(String title, Set<User> publishers) {
+            this.title = title;
+            this.publishers = publishers;
+        }
+
+        public Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder keywords(Set<String> keywords) {
+            this.keywords = keywords;
+            return this;
+        }
+
+        public OperationConfig build() {
+            return new OperationConfig(this);
+        }
     }
 }

@@ -23,12 +23,16 @@ package com.mobi.catalog.api.record;
  * #L%
  */
 
+import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.BatchInserter;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
@@ -38,6 +42,11 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
+import com.sun.org.apache.xml.internal.resolver.CatalogEntry;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Defines basic functionality of a RecordService. Provides common methods for exporting and deleting a Record.
@@ -54,22 +63,18 @@ public abstract class AbstractRecordService<T extends Record & Resource> impleme
 
     @Override
     public T create(User user, RecordOperationConfig config, RepositoryConnection conn){
-        validateSettings(config);
+        validateInserterSettings(config);
 
-        BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
-        boolean exporterIsActive = exporter.isActive();
-        if (!exporterIsActive) {
-            exporter.startRDF();
-        }
         CreateActivity createActivity = provUtils.startCreateActivity(user);
         conn.begin();
+        OffsetDateTime now = OffsetDateTime.now();
+        addPropertiesToRecord(recordFactory.createNew(valueFactory.createIRI(Catalog.influenced_IRI + UUID.randomUUID())),
+                config, now,
+                now);
         this.record = createRecord(config, conn);
         conn.commit();
         IRI recordID = (IRI) record;
         provUtils.endCreateActivity(createActivity, recordID);
-        if (!exporterIsActive) {
-            exporter.endRDF();
-        }
 
         return record;
     }
@@ -103,14 +108,31 @@ public abstract class AbstractRecordService<T extends Record & Resource> impleme
         }
     }
 
-    protected T createRecord(RecordOperationConfig config, RepositoryConnection conn){
-        T record = recordFactory;
-        BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
-        utilsService.addObject(record, conn);
-        record.getModel().forEach(exporter::handleStatement);
-        IRI recordID = recordFactory.getTypeIRI();
-        return utilsService.optObject(recordID, recordFactory, conn).orElseThrow(()
-                -> new IllegalArgumentException("Record " + recordID + " does not exist"));
+    /**
+     * Adds the properties provided by the parameters to the provided Record.
+     *
+     * @param record   The Record to add the properties to.
+     * @param config   The RecordConfig which contains the properties to set.
+     * @param issued   The OffsetDateTime of when the Record was issued.
+     * @param modified The OffsetDateTime of when the Record was modified.
+     * @param <T>      An Object which extends the Record class.
+     * @return T which contains all of the properties provided by the parameters.
+     */
+    private <T extends Record> T addPropertiesToRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
+                                                       OffsetDateTime modified) {
+        record.setProperty(valueFactory.createLiteral(config.getTitle()), valueFactory.createIRI(_Thing.title_IRI));
+        record.setProperty(valueFactory.createLiteral(issued), valueFactory.createIRI(_Thing.issued_IRI));
+        record.setProperty(valueFactory.createLiteral(modified), valueFactory.createIRI(_Thing.modified_IRI));
+        record.setProperties(config.getPublishers().stream().map(User::getResource).collect(Collectors.toSet()),
+                valueFactory.createIRI(_Thing.publisher_IRI));
+        if (config.getDescription() != null) {
+            record.setProperty(valueFactory.createLiteral(config.getDescription()),
+                    valueFactory.createIRI(_Thing.description_IRI));
+        }
+        if (config.getKeywords() != null) {
+            record.setKeyword(config.getKeywords().stream().map(valueFactory::createLiteral).collect(Collectors.toSet()));
+        }
+        return record;
     }
 
     /**
@@ -136,6 +158,19 @@ public abstract class AbstractRecordService<T extends Record & Resource> impleme
         BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
         if (exporter == null) {
             throw new IllegalArgumentException("BatchExporter must not be null");
+        }
+    }
+
+    /**
+     * Checks that the required passed in settings for a {@link RecordOperationConfig} are valid.
+     *
+     * @param config The {@link RecordOperationConfig} to validate settings
+     * @throws IllegalArgumentException If a setting is not valid
+     */
+    protected void validateInserterSettings(RecordOperationConfig config) {
+        BatchInserter inserter = config.get(RecordCreateSettings.BATCH_INSERTER);
+        if (inserter == null) {
+            throw new IllegalArgumentException("BatchInserter must not be null");
         }
     }
 
