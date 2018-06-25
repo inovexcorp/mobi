@@ -37,15 +37,18 @@ import com.mobi.security.policy.api.xacml.jaxb.ResultType;
 import com.mobi.security.policy.api.xacml.jaxb.StatusCodeType;
 import com.mobi.security.policy.api.xacml.jaxb.StatusType;
 
+import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.xml.bind.JAXB;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
-import javax.xml.stream.XMLEventReader;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 public class XACMLResponse implements Response {
 
@@ -93,10 +96,14 @@ public class XACMLResponse implements Response {
     }
 
     public XACMLResponse(String response, ValueFactory vf, JAXBContext jaxbContext) {
+        this.jaxbContext = jaxbContext;
         try {
-            Object object = jaxbContext.createUnmarshaller().unmarshal(new StringReader(response));
-            this.responseType = (ResponseType) object;
-        } catch (JAXBException e) {
+            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+            final XMLInputFactory xmlInputFactory = XMLInputFactory.newFactory();
+            final Reader reader = new StringReader(response);
+            final XMLStreamReader xmlStreamReader = xmlInputFactory.createXMLStreamReader(reader);
+            this.responseType = unmarshaller.unmarshal(xmlStreamReader, ResponseType.class).getValue();
+        } catch (JAXBException | XMLStreamException e) {
             e.printStackTrace();
         }
         of = new ObjectFactory();

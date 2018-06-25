@@ -78,7 +78,7 @@ public class BalanaPDP implements PDP {
 
     private Balana balana;
 
-    private JAXBContext jaxbContext;
+    protected JAXBContext jaxbContext;
 
     @Activate
     public void setUp() throws Exception {
@@ -165,7 +165,7 @@ public class BalanaPDP implements PDP {
         AttributeFinder attributeFinder = config.getAttributeFinder();
         List<AttributeFinderModule> attributeFinderModules = attributeFinder.getModules();
         pips.forEach(pip -> {
-            MobiAttributeFinder mobiAttributeFinder = new MobiAttributeFinder(vf, pip);
+            MobiAttributeFinder mobiAttributeFinder = new MobiAttributeFinder(vf, pip, jaxbContext);
             attributeFinderModules.add(mobiAttributeFinder);
         });
         attributeFinder.setModules(attributeFinderModules);

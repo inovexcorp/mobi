@@ -203,11 +203,8 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         Request request = pdp.createRequest(subjectId, subjectAttributes, resourceId, resourceAttributes, actionId,
                 actionAttributes);
         log.debug(request.toString());
-        log.info(String.format("Request processed. %dms", System.currentTimeMillis() - start));
         Response response = pdp.evaluate(request);
-        log.info(String.format("eval. %dms", System.currentTimeMillis() - start));
         log.debug(response.toString());
-        log.info(String.format("Response. %dms", System.currentTimeMillis() - start));
 
         Decision decision = response.getDecision();
         if (decision != Decision.PERMIT) {

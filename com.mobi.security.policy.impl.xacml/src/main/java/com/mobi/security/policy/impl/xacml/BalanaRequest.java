@@ -39,30 +39,34 @@ import org.wso2.balana.attr.AttributeValue;
 import org.wso2.balana.ctx.AbstractRequestCtx;
 import org.wso2.balana.ctx.Attribute;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.StringReader;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Set;
-import javax.xml.bind.JAXB;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.transform.stream.StreamSource;
 
 public class BalanaRequest extends XACMLRequest {
 
-    public BalanaRequest(AbstractRequestCtx context, ValueFactory vf) {
+    public BalanaRequest(AbstractRequestCtx context, ValueFactory vf, JAXBContext jaxbContext) {
         subjectCategory = vf.createIRI(SUBJECT_CATEGORY);
         resourceCategory = vf.createIRI(RESOURCE_CATEGORY);
         actionCategory = vf.createIRI(ACTION_CATEGORY);
         requestTimeAttribute = vf.createIRI(CURRENT_DATETIME);
+        this.jaxbContext = jaxbContext;
 
         of = new ObjectFactory();
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         context.encode(out);
         try {
-            this.requestType = (RequestType) jaxbContext.createUnmarshaller().unmarshal(new StringReader
-                    (new String(out.toByteArray())));
+            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+            JAXBElement<RequestType> requestType = unmarshaller.unmarshal(new StreamSource(new ByteArrayInputStream(out.toByteArray())), RequestType.class);
+            this.requestType = requestType.getValue();
         } catch (JAXBException e) {
             e.printStackTrace();
         }
