@@ -75,7 +75,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
     public static void initializeUri() throws Exception {
         testFile = DefaultVirtualFilesystemTest.class.getResource("/test.txt").toURI();
         testResources = DefaultVirtualFilesystemTest.class.getResource("/").toURI();
-        writeFile = new File(testResources.toString() + "testFile").toURI();
+        writeFile = new URI(testResources.toString() + "testFile");
         testFileRelative = "./test.txt";
         testResourcesRelative = "../test-classes/";
         writeFileRelative = "./testFile.txt";
