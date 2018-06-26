@@ -46,12 +46,12 @@ public interface RecordService<T extends Record> {
     String getTypeIRI();
 
     /**
-     * Creates a Record to a Catalog and creates a provenance event for the activity based on the provided user.
+     * Creates a Record based on a provided configuration.
      *
-     * @param recordId A {@link IRI} of the Record to delete
-     * @param user The {@link User} that is deleting the Record
+     * @param user The {@link User} that is creating the Record
+     * @param config A {@link RecordOperationConfig} that contains the insert configuration.
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
-     * @return The deleted Record
+     * @return The created Record
      */
     T create(User user, RecordOperationConfig config, RepositoryConnection conn);
 
