@@ -103,6 +103,7 @@
                     }
 
                     function onSuccess() {
+                        dvm.os.resetStateTabs();
                         dvm.util.createSuccessToast('Your merge was successful.');
                         dvm.cancel();
                     }

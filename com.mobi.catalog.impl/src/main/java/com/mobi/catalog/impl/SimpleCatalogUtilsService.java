@@ -840,12 +840,14 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Difference getCommitDifference(List<Resource> commits, RepositoryConnection conn) {
-        Difference difference = new Difference.Builder()
-                .additions(mf.createModel())
-                .deletions(mf.createModel())
+        Map<Statement, Integer> additions = new HashMap<>();
+        Map<Statement, Integer> deletions = new HashMap<>();
+        commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, conn));
+
+        return new Difference.Builder()
+                .additions(mf.createModel(additions.keySet()))
+                .deletions(mf.createModel(deletions.keySet()))
                 .build();
-        commits.forEach(commitId -> aggregateDifferences(difference, commitId, conn));
-        return difference;
     }
 
     @Override
@@ -887,7 +889,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Model getCompiledResource(Resource commitId, RepositoryConnection conn) {
-        return getCompiledResource(getCommitChain(commitId, false, conn), conn);
+        return getCompiledResource(getCommitChain(commitId, true, conn), conn);
     }
 
     @Override
@@ -973,34 +975,46 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     /**
-     * Updates the supplied Difference with statements from the Revision associated with the supplied Commit resource.
-     * Revision addition statements are added to the Difference additions model. Revision deletion statements are
-     * removed from the Difference additions model if they exist, otherwise they are added to the Difference deletions
-     * model.
+     * Updates the supplied Maps of addition and deletions statements with statements from the Revision associated with
+     * the supplied Commit resource. Revision addition statements are added to the additions map if not present. If
+     * present, the counter of the times the statement has been added is incremented. Revision deletion
+     * statements are removed from the additions map if only one exists, if more than one exists the counter is
+     * decremented, otherwise the statements are added to the deletions list.
      *
-     * @param difference The Difference object to update.
-     * @param commitId   The Resource identifying the Commit.
-     * @param conn       The RepositoryConnection to query the repository.
+     * @param additions The Map of Statements added to update.
+     * @param additions The Map of Statements deleted to update.
+     * @param commitId  The Resource identifying the Commit.
+     * @param conn      The RepositoryConnection to query the repository.
      */
-    private void aggregateDifferences(Difference difference, Resource commitId, RepositoryConnection conn) {
-        Model additions = difference.getAdditions();
-        Model deletions = difference.getDeletions();
+    private void aggregateDifferences(Map<Statement, Integer> additions, Map<Statement, Integer> deletions, Resource commitId,
+                                      RepositoryConnection conn) {
         getAdditions(commitId, conn).forEach(statement -> updateModels(statement, additions, deletions));
         getDeletions(commitId, conn).forEach(statement -> updateModels(statement, deletions, additions));
     }
 
     /**
-     * Remove the supplied triple from the modelToRemove if it exists, otherwise add the triple to modelToAdd.
+     * Remove the supplied triple from the mapToRemove if one instance of it exists, if more than one, decrement counter.
+     * Otherwise add the triple to mapToAdd. If one already exists in mapToAdd, increment counter.
      *
-     * @param statement     The statement to process
-     * @param modelToAdd    The Model to add the statement to if it does not exist in modelToRemove
-     * @param modelToRemove The Model to remove the statement from if it exists
+     * @param statement   The statement to process
+     * @param mapToAdd    The Map of addition statements to track number of times a statement has been added and to add
+     *                    the statement to if it does not exist in mapToRemove
+     * @param mapToRemove The Map of deletion statements to track the number of times a statement has been removed and
+     *                    to remove the statement from if it exists
      */
-    private void updateModels(Statement statement, Model modelToAdd, Model modelToRemove) {
-        if (modelToRemove.contains(statement)) {
-            modelToRemove.remove(statement);
+    private void updateModels(Statement statement, Map<Statement, Integer> mapToAdd, Map<Statement, Integer> mapToRemove) {
+        if (mapToRemove.containsKey(statement)) {
+            int count = mapToRemove.get(statement);
+            if (count == 1) {
+                mapToRemove.remove(statement);
+            } else {
+                mapToRemove.put(statement, count - 1);
+            }
+        } else if (mapToAdd.containsKey(statement)) {
+           int count = mapToAdd.get(statement);
+           mapToAdd.put(statement, count + 1);
         } else {
-            modelToAdd.add(statement);
+            mapToAdd.put(statement, 1);
         }
     }
 
