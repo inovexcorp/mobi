@@ -28,6 +28,7 @@ import static com.mobi.security.policy.api.xacml.XACML.CURRENT_DATETIME;
 import static com.mobi.security.policy.api.xacml.XACML.RESOURCE_CATEGORY;
 import static com.mobi.security.policy.api.xacml.XACML.SUBJECT_CATEGORY;
 
+import com.mobi.exception.MobiException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
@@ -65,12 +66,12 @@ public class BalanaRequest extends XACMLRequest {
         context.encode(out);
         try {
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            JAXBElement<RequestType> requestType = unmarshaller.unmarshal(new StreamSource(new ByteArrayInputStream(out.toByteArray())), RequestType.class);
+            JAXBElement<RequestType> requestType = unmarshaller.unmarshal(new StreamSource(
+                    new ByteArrayInputStream(out.toByteArray())), RequestType.class);
             this.requestType = requestType.getValue();
         } catch (JAXBException e) {
-            e.printStackTrace();
+            throw new MobiException(e);
         }
-        //this.requestType = JAXB.unmarshal(new StringReader(new String(out.toByteArray())), RequestType.class);
 
         subjectAttrs = new HashMap<>();
         resourceAttrs = new HashMap<>();

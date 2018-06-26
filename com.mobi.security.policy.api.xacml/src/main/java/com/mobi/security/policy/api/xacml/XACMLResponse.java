@@ -23,6 +23,7 @@ package com.mobi.security.policy.api.xacml;
  * #L%
  */
 
+import com.mobi.exception.MobiException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.security.policy.api.Decision;
@@ -61,7 +62,6 @@ public class XACMLResponse implements Response {
     private ObjectFactory of;
 
     protected JAXBContext jaxbContext;
-
 
     public XACMLResponse(Builder builder) {
         this.decision = builder.decision;
@@ -104,7 +104,7 @@ public class XACMLResponse implements Response {
             final XMLStreamReader xmlStreamReader = xmlInputFactory.createXMLStreamReader(reader);
             this.responseType = unmarshaller.unmarshal(xmlStreamReader, ResponseType.class).getValue();
         } catch (JAXBException | XMLStreamException e) {
-            e.printStackTrace();
+            throw new MobiException(e);
         }
         of = new ObjectFactory();
 
@@ -153,7 +153,7 @@ public class XACMLResponse implements Response {
         try {
             jaxbContext.createMarshaller().marshal(of.createResponse(responseType), sw);
         } catch (JAXBException e) {
-            e.printStackTrace();
+            throw new MobiException(e);
         }
         return sw.toString();
     }

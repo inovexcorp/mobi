@@ -143,11 +143,7 @@ public class BalanaPDP implements PDP {
     @Override
     public Response evaluate(Request request, IRI policyAlgorithm) {
         try {
-            BalanaRequest balanaRequest = getRequest(request);
-            org.wso2.balana.PDP pdp = getPDP(policyAlgorithm);
-            String reqStr = balanaRequest.toString();
-            String evaluate = pdp.evaluate(reqStr);
-            return new XACMLResponse(evaluate, vf, jaxbContext);
+            return new XACMLResponse(getPDP(policyAlgorithm).evaluate(getRequest(request).toString()), vf, jaxbContext);
         } catch (ProcessingException e) {
             return new XACMLResponse.Builder(Decision.INDETERMINATE, Status.PROCESSING_ERROR, jaxbContext)
                     .statusMessage(e.getMessage()).build();

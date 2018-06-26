@@ -70,7 +70,6 @@ public class XACMLRequest implements Request {
 
     protected RequestType requestType;
     protected ObjectFactory of;
-
     protected JAXBContext jaxbContext;
 
     protected XACMLRequest() {}

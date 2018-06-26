@@ -29,6 +29,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.mobi.exception.MobiException;
 import com.mobi.ontologies.rdfs.Resource;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
@@ -77,14 +78,6 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     private Literal actionType = VALUE_FACTORY.createLiteral("http://mobi.com/ontologies/ontology-editor#OntologyRecord");
     private JAXBContext jaxbContext;
 
-    {
-        try {
-            jaxbContext = JAXBContext.newInstance("com.mobi.security.policy.api.xacml.jaxb");
-        } catch (JAXBException e) {
-            e.printStackTrace();
-        }
-    }
-
     @Mock
     private PIP pip;
 
@@ -100,7 +93,11 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     public void setUp() throws Exception {
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
-
+        try {
+            jaxbContext = JAXBContext.newInstance("com.mobi.security.policy.api.xacml.jaxb");
+        } catch (JAXBException e) {
+            throw new MobiException(e);
+        }
         MockitoAnnotations.initMocks(this);
         when(pip.findAttribute(any(AttributeDesignator.class), any(Request.class))).thenReturn(Collections.emptyList());
 
