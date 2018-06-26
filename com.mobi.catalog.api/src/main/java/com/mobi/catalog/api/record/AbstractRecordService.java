@@ -23,7 +23,6 @@ package com.mobi.catalog.api.record;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
@@ -38,11 +37,9 @@ import com.mobi.persistence.utils.BatchInserter;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
-import com.sun.org.apache.xml.internal.resolver.CatalogEntry;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -53,7 +50,7 @@ import java.util.stream.Collectors;
  * Subclasses of Record can override exportRecord() and deleteRecord() to perform Record specific operations.
  * @param <T> of Record
  */
-public abstract class AbstractRecordService<T extends Record & Resource> implements RecordService<T> {
+public abstract class AbstractRecordService<T extends Record> implements RecordService<T> {
 
     protected CatalogUtilsService utilsService;
     protected CatalogProvUtils provUtils;
@@ -69,7 +66,7 @@ public abstract class AbstractRecordService<T extends Record & Resource> impleme
         conn.begin();
         OffsetDateTime now = OffsetDateTime.now();
         this.record = addPropertiesToRecord(recordFactory.createNew(valueFactory.createIRI(Catalog.influenced_IRI +
-                        UUID.randomUUID())), config, now, now);
+                        UUID.randomUUID())), config, now, now, conn);
         conn.commit();
         IRI recordID = (IRI) record;
         provUtils.endCreateActivity(createActivity, recordID);
@@ -109,15 +106,16 @@ public abstract class AbstractRecordService<T extends Record & Resource> impleme
     /**
      * Adds the properties provided by the parameters to the provided Record.
      *
+     * @param <T>      An Object which extends the Record class.
      * @param record   The Record to add the properties to.
      * @param config   The RecordConfig which contains the properties to set.
      * @param issued   The OffsetDateTime of when the Record was issued.
      * @param modified The OffsetDateTime of when the Record was modified.
-     * @param <T>      An Object which extends the Record class.
+     * @param conn
      * @return T which contains all of the properties provided by the parameters.
      */
     private <T extends Record> T addPropertiesToRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
-                                                       OffsetDateTime modified) {
+                                                       OffsetDateTime modified, RepositoryConnection conn) {
         record.setProperty(valueFactory.createLiteral(config.getTitle()), valueFactory.createIRI(_Thing.title_IRI));
         record.setProperty(valueFactory.createLiteral(issued), valueFactory.createIRI(_Thing.issued_IRI));
         record.setProperty(valueFactory.createLiteral(modified), valueFactory.createIRI(_Thing.modified_IRI));
@@ -130,6 +128,7 @@ public abstract class AbstractRecordService<T extends Record & Resource> impleme
         if (config.getKeywords() != null) {
             record.setKeyword(config.getKeywords().stream().map(valueFactory::createLiteral).collect(Collectors.toSet()));
         }
+        createRecordObject(record, conn);
         return record;
     }
 
@@ -182,6 +181,16 @@ public abstract class AbstractRecordService<T extends Record & Resource> impleme
     protected T getRecord(IRI recordId, RepositoryConnection conn) {
         return utilsService.optObject(recordId, recordFactory, conn).orElseThrow(()
                 -> new IllegalArgumentException("Record " + recordId + " does not exist"));
+    }
+
+    /**
+     * Adds the Record object to the repository.
+     *
+     * @param record Record to add
+     * @param conn A RepositoryConnection to use for lookup
+     */
+    protected void createRecordObject(T record, RepositoryConnection conn){
+        utilsService.addObject(record, conn);
     }
 
     /**

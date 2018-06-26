@@ -23,6 +23,7 @@ package com.mobi.catalog.api.record;
  * #L%
  */
 
+import checkers.oigj.quals.O;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
@@ -63,6 +64,12 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             writeVersionedRDFData(record, config.get(VersionedRDFRecordExportSettings.BRANCHES_TO_EXPORT),
                     exporter, conn);
         }
+    }
+
+    @Override
+    protected void createRecord(T record, RecordOperationConfig config, RepositoryConnection conn){
+        createRecordObject(record, conn);
+        createVersionedRDFData(record, conn);
     }
 
     @Override
