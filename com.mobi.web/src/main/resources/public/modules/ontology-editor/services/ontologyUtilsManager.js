@@ -386,9 +386,7 @@
                 }));
                 var sorted = _.sortBy(mapped, item => _.trim(item.name.toUpperCase()));
                 _.forEach(sorted, item => {
-                    if (array.length == 100) {
-                        return;
-                    } else if (_.includes(item.name.toUpperCase(), searchText.toUpperCase())) {
+                    if (_.includes(item.name.toUpperCase(), searchText.toUpperCase())) {
                         array.push(item.item);
                     }
                 });
