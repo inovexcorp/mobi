@@ -35,7 +35,7 @@
             <block>
                 <block-content class="open-ontology-content">
                     <div class="ontologies">
-                        <div class="ontology" ng-click="dvm.open(record)" ng-repeat="record in dvm.filteredList | limitTo:dvm.limit:dvm.begin">
+                        <div class="ontology" ng-click="dvm.open(record)" ng-repeat="record in dvm.filteredList">
                             <div class="details">
                                 <h2 class="header" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></h2>
                                 <small class="ontology-iri text-muted">{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small>
@@ -51,8 +51,8 @@
                 </block-content>
                 <block-footer>
                     <div class="paging-container clearfix">
-                        <paging-details total-size="dvm.filteredList.length" page-index="dvm.begin / dvm.limit" limit="dvm.limit"></paging-details>
-                        <pagination links="{'prev': dvm.begin !== 0, 'next': (dvm.begin + dvm.limit) < dvm.filteredList.length}" current-page="dvm.begin / dvm.limit" get-page="dvm.getPage(direction)"></pagination>
+                        <paging-details total-size="dvm.totalSize" page-index="dvm.begin" limit="dvm.limit"></paging-details>
+                        <pagination links="{'prev': dvm.begin !== 0, 'next': ((dvm.begin + 1) * dvm.limit) < dvm.totalSize}" current-page="dvm.begin" get-page="dvm.getPage(direction)"></pagination>
                     </div>
                 </block-footer>
             </block>

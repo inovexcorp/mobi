@@ -28,10 +28,10 @@
         .directive('openOntologyTab', openOntologyTab);
 
         openOntologyTab.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
-            'stateManagerService', 'utilService', 'mapperStateService'];
+            'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService'];
 
         function openOntologyTab($filter, ontologyManagerService, ontologyStateService, prefixes,
-            stateManagerService, utilService, mapperStateService) {
+            stateManagerService, utilService, mapperStateService, catalogManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -49,9 +49,11 @@
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ms = mapperStateService;
+                    dvm.cm = catalogManagerService;
                     dvm.util = utilService;
                     dvm.begin = 0;
                     dvm.limit = 10;
+                    dvm.totalSize = 0;
                     dvm.filteredList = [];
 
                     dvm.open = function(record) {
@@ -75,11 +77,13 @@
                         dvm.os.showNewTab = true;
                     }
                     dvm.getPage = function(direction) {
+                        
                         if (direction === 'next') {
-                            dvm.begin += dvm.limit;
+                            dvm.begin++;
                         } else {
-                            dvm.begin -= dvm.limit;
+                            dvm.begin--;
                         }
+                        dvm.filteredList = dvm.getPageOntologyRecords();
                     }
                     dvm.showDeleteConfirmationOverlay = function(record) {
                         dvm.recordId = _.get(record, '@id', '');
@@ -105,12 +109,24 @@
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
-                    dvm.getAllOntologyRecords = function(sortingOption) {
-                        dvm.om.getAllOntologyRecords(sortingOption)
-                            .then(records => {
-                                ontologyRecords = records;
-                                dvm.filteredList = getFilteredRecords(ontologyRecords);
-                            });
+                    
+                    dvm.getPageOntologyRecords = function(sortingOption)
+                    {
+                        var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
+                        var catalogId = _.get(dvm.cm.localCatalog, '@id', '');
+                        var paginatedConfig = {
+                            pageIndex: dvm.begin,
+                            limit: dvm.limit,
+                            recordType: ontologyRecordType,
+                            sortingOption
+                        };
+                        dvm.cm.getRecords(catalogId, paginatedConfig, '').then(response => { 
+                            ontologyRecords = response.data;
+                            dvm.filteredList = getFilteredRecords(ontologyRecords);
+                            if(response.headers() !== undefined) {
+                                dvm.totalSize = _.get(response.headers(), 'x-total-count');
+                            }
+                        });
                     }
 
                     $scope.$watch(function() {
@@ -125,7 +141,7 @@
                             });
                     });
 
-                    dvm.getAllOntologyRecords();
+                    dvm.getPageOntologyRecords();
 
                     function getFilteredRecords(records) {
                         return _.reject(records, record => _.find(dvm.os.list, {ontologyRecord: {recordId: record['@id']}}));
