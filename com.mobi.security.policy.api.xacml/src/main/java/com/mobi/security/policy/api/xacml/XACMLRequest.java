@@ -32,6 +32,7 @@ import static com.mobi.security.policy.api.xacml.XACML.RESOURCE_ID;
 import static com.mobi.security.policy.api.xacml.XACML.SUBJECT_CATEGORY;
 import static com.mobi.security.policy.api.xacml.XACML.SUBJECT_ID;
 
+import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.LiteralUtils;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
@@ -50,7 +51,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.xml.bind.JAXB;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 
 public class XACMLRequest implements Request {
 
@@ -68,6 +70,7 @@ public class XACMLRequest implements Request {
 
     protected RequestType requestType;
     protected ObjectFactory of;
+    protected JAXBContext jaxbContext;
 
     protected XACMLRequest() {}
 
@@ -83,6 +86,7 @@ public class XACMLRequest implements Request {
         this.actionAttrs = builder.actionAttrs;
         this.requestTime = builder.requestTime;
         this.requestTimeAttribute = builder.requestTimeAttribute;
+        this.jaxbContext = builder.jaxbContext;
 
         of = new ObjectFactory();
 
@@ -164,7 +168,11 @@ public class XACMLRequest implements Request {
     @Override
     public String toString() {
         StringWriter sw = new StringWriter();
-        JAXB.marshal(of.createRequest(requestType), sw);
+        try {
+            jaxbContext.createMarshaller().marshal(of.createRequest(requestType), sw);
+        } catch (JAXBException e) {
+            throw new MobiException(e);
+        }
         return sw.toString();
     }
 
@@ -184,8 +192,10 @@ public class XACMLRequest implements Request {
         private Map<String, Literal> actionAttrs = new HashMap<>();
         private IRI requestTimeAttribute;
         private OffsetDateTime requestTime;
+        private JAXBContext jaxbContext;
 
-        public Builder(IRI subjectId, IRI resourceId, IRI actionId, OffsetDateTime requestTime, ValueFactory vf) {
+        public Builder(IRI subjectId, IRI resourceId, IRI actionId, OffsetDateTime requestTime, ValueFactory vf,
+                       JAXBContext jaxbContext) {
             this.subjectId = subjectId;
             this.resourceId = resourceId;
             this.actionId = actionId;
@@ -194,6 +204,7 @@ public class XACMLRequest implements Request {
             this.resourceCategory = vf.createIRI(RESOURCE_CATEGORY);
             this.actionCategory = vf.createIRI(ACTION_CATEGORY);
             this.requestTimeAttribute = vf.createIRI(CURRENT_DATETIME);
+            this.jaxbContext = jaxbContext;
         }
 
         public Builder addSubjectAttr(String attributeId, Literal value) {

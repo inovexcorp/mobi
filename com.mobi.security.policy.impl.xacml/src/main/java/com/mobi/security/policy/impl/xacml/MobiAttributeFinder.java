@@ -51,17 +51,20 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.xml.bind.JAXBContext;
 
 public class MobiAttributeFinder extends AttributeFinderModule {
 
     private ValueFactory vf;
     private PIP pip;
+    protected JAXBContext jaxbContext;
 
     private Set<String> categoryIds = new HashSet<>();
 
-    public MobiAttributeFinder(ValueFactory vf, PIP pip) {
+    public MobiAttributeFinder(ValueFactory vf, PIP pip, JAXBContext jaxbContext) {
         this.vf = vf;
         this.pip = pip;
+        this.jaxbContext = jaxbContext;
         categoryIds.add(XACML.SUBJECT_CATEGORY);
         categoryIds.add(XACML.RESOURCE_CATEGORY);
         categoryIds.add(XACML.ACTION_CATEGORY);
@@ -88,7 +91,7 @@ public class MobiAttributeFinder extends AttributeFinderModule {
 
         BasicAttributeDesignator designator = new BasicAttributeDesignator(vf.createIRI(attributeId.toString()),
                 vf.createIRI(category.toString()), vf.createIRI(attributeType.toString()));
-        List<Literal> values = pip.findAttribute(designator, new BalanaRequest(context.getRequestCtx(), vf));
+        List<Literal> values = pip.findAttribute(designator, new BalanaRequest(context.getRequestCtx(), vf, jaxbContext));
         List<AttributeValue> attributeValues = new ArrayList<>();
         if (values.size() == 0) {
             return new EvaluationResult(new Status(Collections.singletonList(Status.STATUS_MISSING_ATTRIBUTE)));
