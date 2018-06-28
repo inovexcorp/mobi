@@ -125,14 +125,14 @@
                         dvm.cm.getRecords(catalogId, paginatedConfig, '').then(response => { 
                             ontologyRecords = response.data;
                             dvm.filteredList = getFilteredRecords(ontologyRecords);
-                            if(response.headers() !== undefined) {
+                            if (response.headers() !== undefined) {
                                 dvm.totalSize = _.get(response.headers(), 'x-total-count');
                             }
                         });
                     }
 
                     dvm.search = function() {
-                        if(dvm.inputChangedPromise) {
+                        if (dvm.inputChangedPromise) {
                             $timeout.cancel(dvm.inputChangedPromise);
                         }
                         dvm.inputChangedPromise = $timeout(dvm.getPageOntologyRecords, 200, false, 'sort');

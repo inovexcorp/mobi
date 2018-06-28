@@ -99,6 +99,7 @@ describe('Open Ontology Tab directive', function() {
         prefixes = null;
         utilSvc = null;
         mapperStateSvc = null;
+        catalogManagerSvc = null;
         this.element.remove();
     });
 
@@ -140,13 +141,11 @@ describe('Open Ontology Tab directive', function() {
         it('depending on how many unopened ontologies there are, the limit, and the offset', function() {
             this.controller.limit = 10;
             this.controller.begin = 0;
-            scope.$digest();
             scope.$apply();
             expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(10);
             expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(0);
 
             this.controller.getPage('next');
-            scope.$digest();
             scope.$apply();
             expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(1);
             expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(0);
