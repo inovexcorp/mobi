@@ -27,10 +27,10 @@
         .module('openOntologyTab', [])
         .directive('openOntologyTab', openOntologyTab);
 
-        openOntologyTab.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
+        openOntologyTab.$inject = ['$filter', '$timeout', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
             'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService'];
 
-        function openOntologyTab($filter, ontologyManagerService, ontologyStateService, prefixes,
+        function openOntologyTab($filter, $timeout, ontologyManagerService, ontologyStateService, prefixes,
             stateManagerService, utilService, mapperStateService, catalogManagerService) {
             return {
                 restrict: 'E',
@@ -55,6 +55,7 @@
                     dvm.limit = 10;
                     dvm.totalSize = 0;
                     dvm.filteredList = [];
+                    dvm.inputChangedPromise;
 
                     dvm.open = function(record) {
                         dvm.os.openOntology(record['@id'], dvm.util.getDctermsValue(record, 'title'))
@@ -118,7 +119,8 @@
                             pageIndex: dvm.begin,
                             limit: dvm.limit,
                             recordType: ontologyRecordType,
-                            sortingOption
+                            sortingOption,
+                            searchText: dvm.filterText
                         };
                         dvm.cm.getRecords(catalogId, paginatedConfig, '').then(response => { 
                             ontologyRecords = response.data;
@@ -129,18 +131,13 @@
                         });
                     }
 
-                    $scope.$watch(function() {
-                        return dvm.filterText + dvm.os.list + ontologyRecords;
-                    }, function handleFilterTextChange(newValue, oldValue) {
-                        dvm.filteredList = $filter('filter')(getFilteredRecords(ontologyRecords), dvm.filterText,
-                            (actual, expected) => {
-                                expected = _.lowerCase(expected);
-                                return _.includes(_.lowerCase(dvm.util.getDctermsValue(actual, 'title')), expected)
-                                    || _.includes(_.lowerCase(dvm.util.getDctermsValue(actual, 'description')), expected)
-                                    || _.includes(_.lowerCase(dvm.util.getDctermsValue(actual, 'identifier')), expected);
-                            });
-                    });
-
+                    dvm.search = function() {
+                        if(dvm.inputChangedPromise) {
+                            $timeout.cancel(dvm.inputChangedPromise);
+                        }
+                        dvm.inputChangedPromise = $timeout(dvm.getPageOntologyRecords, 200, false, 'sort');
+                    }
+                    
                     dvm.getPageOntologyRecords();
 
                     function getFilteredRecords(records) {

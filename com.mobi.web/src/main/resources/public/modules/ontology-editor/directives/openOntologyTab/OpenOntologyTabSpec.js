@@ -140,7 +140,6 @@ describe('Open Ontology Tab directive', function() {
         it('depending on how many unopened ontologies there are, the limit, and the offset', function() {
             this.controller.limit = 10;
             this.controller.begin = 0;
-            
             scope.$digest();
             scope.$apply();
             expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(10);
@@ -149,9 +148,6 @@ describe('Open Ontology Tab directive', function() {
             this.controller.getPage('next');
             scope.$digest();
             scope.$apply();
-            console.log(this.controller.filteredList);
-
-
             expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(1);
             expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(0);
         });
@@ -266,7 +262,8 @@ describe('Open Ontology Tab directive', function() {
                 pageIndex: 0,
                 limit: 10,
                 recordType: ontologyRecordType,
-                sortingOption
+                sortingOption,
+                searchText: undefined
             };
             ontologyStateSvc.list = [{ontologyRecord: {'recordId': 'recordA'}}];
             this.controller.getPageOntologyRecords('sort');
