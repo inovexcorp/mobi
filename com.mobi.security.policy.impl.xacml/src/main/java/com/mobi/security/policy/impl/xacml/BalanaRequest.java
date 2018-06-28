@@ -28,6 +28,7 @@ import static com.mobi.security.policy.api.xacml.XACML.CURRENT_DATETIME;
 import static com.mobi.security.policy.api.xacml.XACML.RESOURCE_CATEGORY;
 import static com.mobi.security.policy.api.xacml.XACML.SUBJECT_CATEGORY;
 
+import com.mobi.exception.MobiException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
@@ -39,26 +40,38 @@ import org.wso2.balana.attr.AttributeValue;
 import org.wso2.balana.ctx.AbstractRequestCtx;
 import org.wso2.balana.ctx.Attribute;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.StringReader;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Set;
-import javax.xml.bind.JAXB;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.transform.stream.StreamSource;
 
 public class BalanaRequest extends XACMLRequest {
 
-    public BalanaRequest(AbstractRequestCtx context, ValueFactory vf) {
+    public BalanaRequest(AbstractRequestCtx context, ValueFactory vf, JAXBContext jaxbContext) {
         subjectCategory = vf.createIRI(SUBJECT_CATEGORY);
         resourceCategory = vf.createIRI(RESOURCE_CATEGORY);
         actionCategory = vf.createIRI(ACTION_CATEGORY);
         requestTimeAttribute = vf.createIRI(CURRENT_DATETIME);
+        this.jaxbContext = jaxbContext;
 
         of = new ObjectFactory();
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         context.encode(out);
-        this.requestType = JAXB.unmarshal(new StringReader(new String(out.toByteArray())), RequestType.class);
+        try {
+            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+            JAXBElement<RequestType> requestType = unmarshaller.unmarshal(new StreamSource(
+                    new ByteArrayInputStream(out.toByteArray())), RequestType.class);
+            this.requestType = requestType.getValue();
+        } catch (JAXBException e) {
+            throw new MobiException(e);
+        }
 
         subjectAttrs = new HashMap<>();
         resourceAttrs = new HashMap<>();
@@ -124,8 +137,9 @@ public class BalanaRequest extends XACMLRequest {
 
     public static class Builder extends XACMLRequest.Builder {
 
-        public Builder(IRI subjectId, IRI resourceId, IRI actionId, OffsetDateTime requestTime, ValueFactory vf) {
-            super(subjectId, resourceId, actionId, requestTime, vf);
+        public Builder(IRI subjectId, IRI resourceId, IRI actionId, OffsetDateTime requestTime, ValueFactory vf,
+                       JAXBContext jaxbContext) {
+            super(subjectId, resourceId, actionId, requestTime, vf, jaxbContext);
         }
 
         public BalanaRequest build() {
