@@ -31,8 +31,6 @@ import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -64,13 +62,11 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     private CatalogFactory catalogFactory;
     private CatalogUtilsService utils;
     private T record;
-    private VersionedRDFRecordFactory versionedRDFRecordFactory;
 
     protected CatalogProvUtils provUtils;
     protected CatalogUtilsService utilsService;
     protected OrmFactory<T> recordFactory;
     protected ValueFactory valueFactory;
-
 
     @Reference
     void setBranchFactory(BranchFactory branchFactory) {
@@ -87,40 +83,34 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
         this.utils = utils;
     }
 
-    @Reference
-    void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
-        this.versionedRDFRecordFactory = versionedRDFRecordFactory;
-    }
-
     @Override
-    public T create(User user, RecordCreateSettings config, OrmFactory<T> factory, RepositoryConnection conn){
+    public T createRecord(User user, RecordCreateSettings config, OrmFactory<T> factory, RepositoryConnection conn){
         CreateActivity startActivity = provUtils.startCreateActivity(user);
         OffsetDateTime now = OffsetDateTime.now();
         this.record = addPropertiesToRecord(factory.createNew(valueFactory.createIRI(Catalog.RECORD_NAMESPACE +
-                        UUID.randomUUID())), config, now, now);
+                        UUID.randomUUID())), config, now, now, conn);
         Resource catalogId = record.getResource();
-        addRecord(catalogId, record, conn);
         IRI recordId = valueFactory.createIRI(record.catalog_IRI + catalogId);
         provUtils.endCreateActivity(startActivity, recordId);
         return record;
     }
 
-    private void addRecord(Resource catalogId, T record, RepositoryConnection conn) {
+    protected void addRecord(Resource catalogId, T record, RepositoryConnection conn) {
         conn.begin();
         if (conn.containsContext(record.getResource())) {
             throw utils.throwAlreadyExists(record.getResource(), recordFactory);
         }
         record.setCatalog(utils.getObject(catalogId, catalogFactory, conn));
         if (record.getModel().contains(null, valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
-                versionedRDFRecordFactory.getTypeIRI())) {
-            addMasterBranch((VersionedRDFRecord) record, conn);
+                recordFactory.getTypeIRI())) {
+            addMasterBranch(record, conn);
         } else {
             utils.addObject(record, conn);
             conn.commit();
         }
     }
 
-    private void addMasterBranch(VersionedRDFRecord record, RepositoryConnection conn) {
+    protected void addMasterBranch(Record record, RepositoryConnection conn) {
         if (record.getMasterBranch_resource().isPresent()) {
             throw new IllegalStateException("Record " + record.getResource() + " already has a master Branch.");
         }
@@ -179,17 +169,9 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
         }
     }
 
-    /**
-     * Adds the properties provided by the parameters to the provided Record.
-     *
-     * @param record   The Record to add the properties to.
-     * @param config   The RecordConfig which contains the properties to set.
-     * @param issued   The OffsetDateTime of when the Record was issued.
-     * @param modified The OffsetDateTime of when the Record was modified.
-     * @return T which contains all of the properties provided by the parameters.
-     */
-    private T addPropertiesToRecord(T record, RecordCreateSettings config, OffsetDateTime issued,
-                                                       OffsetDateTime modified) {
+    @Override
+    public T addPropertiesToRecord(T record, RecordCreateSettings config, OffsetDateTime issued,
+                                                       OffsetDateTime modified, RepositoryConnection conn) {
         record.setProperty(valueFactory.createLiteral(config.getTitle()),
                 valueFactory.createIRI(_Thing.title_IRI));
         record.setProperty(valueFactory.createLiteral(issued), valueFactory.createIRI(_Thing.issued_IRI));
@@ -205,6 +187,8 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
             record.setKeyword(config.getKeywords().stream().map(valueFactory::createLiteral).
                     collect(Collectors.toSet()));
         }
+        Resource catalogId = record.getResource();
+        addRecord(catalogId, record, conn);
         return record;
     }
 

@@ -178,6 +178,12 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         recordService.setMergeRequestManager(mergeRequestManager);
     }
 
+    /* create() */
+    @Test
+    public void createTest() throws Exception{
+
+    }
+
     /* delete() */
 
     @Test

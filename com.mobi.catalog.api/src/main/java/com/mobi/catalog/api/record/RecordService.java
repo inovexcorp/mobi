@@ -32,6 +32,7 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
 
+import java.time.OffsetDateTime;
 import javax.annotation.Nonnull;
 
 public interface RecordService<T extends Record> {
@@ -59,7 +60,7 @@ public interface RecordService<T extends Record> {
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      * @return The created Record
      */
-    T create(User user, RecordCreateSettings config, OrmFactory<T> factory, RepositoryConnection conn);
+    T createRecord(User user, RecordCreateSettings config, OrmFactory<T> factory, RepositoryConnection conn);
 
     /**
      * Creates a Branch with the provided metadata using the provided OrmFactory.
@@ -90,4 +91,10 @@ public interface RecordService<T extends Record> {
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      */
     void export(IRI iriRecord, RecordOperationConfig config, RepositoryConnection conn);
+
+    T addPropertiesToRecord(T record, RecordCreateSettings config, OffsetDateTime issued,
+                            OffsetDateTime modified, RepositoryConnection conn);
+
+    T addPropertiesToRecord(T record, VersionedRDFRecordCreateSettings config, OffsetDateTime issued,
+                            OffsetDateTime modified, RepositoryConnection conn);
 }

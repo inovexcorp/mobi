@@ -23,25 +23,37 @@ package com.mobi.catalog.api.record;
  * #L%
  */
 
-import checkers.oigj.quals.O;
+import aQute.bnd.annotation.component.Reference;
+import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
+import com.mobi.catalog.api.ontologies.mcat.Catalog;
+import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
+import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordExportSettings;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 
 /**
  * Defines functionality for VersionedRDFRecordService. Provides common methods for exporting and deleting a Record.
@@ -52,9 +64,32 @@ import java.util.Set;
 public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRecord>
         extends AbstractRecordService<T> implements RecordService<T> {
 
+    protected CatalogFactory catalogFactory;
     protected CommitFactory commitFactory;
     protected BranchFactory branchFactory;
     protected MergeRequestManager mergeRequestManager;
+    protected CatalogUtilsService utils;
+    protected VersionedRDFRecordFactory versionedRDFRecordFactory;
+
+    @Reference
+    void setBranchFactory(BranchFactory branchFactory) {
+        this.branchFactory = branchFactory;
+    }
+
+    @Reference
+    void setCatalogFactory(CatalogFactory catalogFactory) {
+        this.catalogFactory = catalogFactory;
+    }
+
+    @Reference
+    void setUtils(CatalogUtilsService utils) {
+        this.utils = utils;
+    }
+
+    @Reference
+    void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
+        this.versionedRDFRecordFactory = versionedRDFRecordFactory;
+    }
 
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
@@ -64,6 +99,83 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             writeVersionedRDFData(record, config.get(VersionedRDFRecordExportSettings.BRANCHES_TO_EXPORT),
                     exporter, conn);
         }
+    }
+
+    @Override
+    public T addPropertiesToRecord(T record, RecordCreateSettings config, OffsetDateTime issued,
+                                   OffsetDateTime modified, RepositoryConnection conn){
+        record.setProperty(valueFactory.createLiteral(config.getTitle()),
+                valueFactory.createIRI(_Thing.title_IRI));
+        record.setProperty(valueFactory.createLiteral(issued), valueFactory.createIRI(_Thing.issued_IRI));
+        record.setProperty(valueFactory.createLiteral(modified), valueFactory.createIRI(_Thing.modified_IRI));
+        record.setProperties(config.getPublishers().stream().map(User::getResource).
+                        collect(Collectors.toSet()),
+                valueFactory.createIRI(_Thing.publisher_IRI));
+        if (config.getDescription() != null) {
+            record.setProperty(valueFactory.createLiteral(config.getDescription()),
+                    valueFactory.createIRI(_Thing.description_IRI));
+        }
+        if (config.getKeywords() != null) {
+            record.setKeyword(config.getKeywords().stream().map(valueFactory::createLiteral).
+                    collect(Collectors.toSet()));
+        }
+        Resource catalogId = record.getResource();
+        addVersionedRDFRecord(catalogId, record, conn);
+        return record;
+    }
+
+    /**
+     *
+     *
+     */
+    protected void addVersionedRDFRecord(Resource catalogId, T record, RepositoryConnection conn) {
+        conn.begin();
+        if (conn.containsContext(record.getResource())) {
+            throw utils.throwAlreadyExists(record.getResource(), recordFactory);
+        }
+        record.setCatalog(utils.getObject(catalogId, catalogFactory, conn));
+        conn.begin();
+        if (record.getModel().contains(null, valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
+                versionedRDFRecordFactory.getTypeIRI())) {
+            addMasterBranch(record, conn);
+        } else {
+            utils.addObject(record, conn);
+        }
+        conn.commit();
+    }
+
+    /**
+     *
+     *
+     */
+    protected void addMasterBranch(VersionedRDFRecord record, RepositoryConnection conn) {
+        if (record.getMasterBranch_resource().isPresent()) {
+            throw new IllegalStateException("Record " + record.getResource() + " already has a master Branch.");
+        }
+        Branch branch = createBranch("MASTER", "The master branch.", branchFactory);
+        record.setMasterBranch(branch);
+        Set<Branch> branches = record.getBranch_resource().stream()
+                .map(branchFactory::createNew)
+                .collect(Collectors.toSet());
+        branches.add(branch);
+        record.setBranch(branches);
+        utils.updateObject(record, conn);
+        utils.addObject(branch, conn);
+    }
+
+    @Override
+    public <T extends Branch> T createBranch(@Nonnull String title, String description, OrmFactory<T> factory) {
+        OffsetDateTime now = OffsetDateTime.now();
+
+        T branch = factory.createNew(valueFactory.createIRI(Catalog.BRANCH_NAMESPACE + UUID.randomUUID()));
+        branch.setProperty(valueFactory.createLiteral(title), valueFactory.createIRI(_Thing.title_IRI));
+        branch.setProperty(valueFactory.createLiteral(now), valueFactory.createIRI(_Thing.issued_IRI));
+        branch.setProperty(valueFactory.createLiteral(now), valueFactory.createIRI(_Thing.modified_IRI));
+        if (description != null) {
+            branch.setProperty(valueFactory.createLiteral(description), valueFactory.createIRI(_Thing.description_IRI));
+        }
+
+        return branch;
     }
 
     @Override

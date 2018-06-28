@@ -37,8 +37,6 @@ import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.record.config.OperationConfig;
-import com.mobi.catalog.api.record.config.OperationSetting;
-import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -63,9 +61,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.ByteArrayOutputStream;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 
 public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
@@ -122,14 +118,12 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
     /* create() */
 
     @Test
-    public void create() throws Exception {
+    public void createTest() throws Exception {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         BatchInserter inserter =  new BatchInserter(connection,transformer);
         RecordOperationConfig config = new OperationConfig();
 
-        config.set(RecordCreateSettings.BATCH_INSERTER, inserter);
-
-        Record createRecord = recordService.create(user,config, connection);
+       // Record createRecord = recordService.create(user,config, connection);
     }
 
     /* delete() */
