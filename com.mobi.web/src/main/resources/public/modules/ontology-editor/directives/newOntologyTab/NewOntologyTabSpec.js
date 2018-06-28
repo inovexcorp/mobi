@@ -193,20 +193,6 @@ describe('New Ontology Tab directive', function() {
                     expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
                     expect(ontologyStateSvc.showNewTab).toBe(false);
                 });
-                it('over 100 times', function() {
-                    this.description = '';
-                    this.controller.create();
-                    for(var i = 0; i < 150; i++)
-                    {
-                        ontologyStateSvc.newOntology[prefixes.dcterms + 'title'] = [{'@value' : 'title' + i}];
-                        scope.$apply();
-                    }
-                    expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(ontologyStateSvc.newOntology, ontologyStateSvc.newLanguage);
-                    expect(_.has(ontologyStateSvc.newOntology, prefixes.owl + 'imports')).toBe(false);
-                    expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', '', ['one', 'two']);
-                    expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
-                    expect(ontologyStateSvc.showNewTab).toBe(false);
-                });
             });
         });
     });
