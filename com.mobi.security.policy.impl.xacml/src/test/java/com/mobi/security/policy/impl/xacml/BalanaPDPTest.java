@@ -29,6 +29,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.mobi.exception.MobiException;
 import com.mobi.ontologies.rdfs.Resource;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
@@ -59,6 +60,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.cache.Cache;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 public class BalanaPDPTest extends OrmEnabledTestCase {
@@ -73,6 +76,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     private IRI resource = VALUE_FACTORY.createIRI("http://mobi.com/catalog-local");
     private IRI createAction = VALUE_FACTORY.createIRI("http://mobi.com/ontologies/policy#Create");
     private Literal actionType = VALUE_FACTORY.createLiteral("http://mobi.com/ontologies/ontology-editor#OntologyRecord");
+    private JAXBContext jaxbContext;
 
     @Mock
     private PIP pip;
@@ -89,7 +93,11 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     public void setUp() throws Exception {
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
-
+        try {
+            jaxbContext = JAXBContext.newInstance("com.mobi.security.policy.api.xacml.jaxb");
+        } catch (JAXBException e) {
+            throw new MobiException(e);
+        }
         MockitoAnnotations.initMocks(this);
         when(pip.findAttribute(any(AttributeDesignator.class), any(Request.class))).thenReturn(Collections.emptyList());
 
@@ -110,7 +118,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     public void simplePermitTest() throws Exception {
         // Setup:
         loadPolicy(policy1);
-        BalanaRequest request = new BalanaRequest.Builder(userX, resource, createAction, OffsetDateTime.now(), VALUE_FACTORY).build();
+        BalanaRequest request = new BalanaRequest.Builder(userX, resource, createAction, OffsetDateTime.now(), VALUE_FACTORY, jaxbContext).build();
 
         Response result = pdp.evaluate(request);
         assertEquals(Decision.PERMIT, result.getDecision());
@@ -122,7 +130,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     public void missingAttributeTest() throws Exception {
         // Setup:
         loadPolicy(policy2);
-        BalanaRequest.Builder builder = new BalanaRequest.Builder(userX, resource, createAction, OffsetDateTime.now(), VALUE_FACTORY);
+        BalanaRequest.Builder builder = new BalanaRequest.Builder(userX, resource, createAction, OffsetDateTime.now(), VALUE_FACTORY, jaxbContext);
         builder.addActionAttr(Resource.type_IRI, actionType);
 
         Response result = pdp.evaluate(builder.build());
@@ -135,7 +143,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     public void unsupportedCategoryInRuleTest() throws Exception {
         // Setup:
         loadPolicy(policy3);
-        BalanaRequest.Builder builder = new BalanaRequest.Builder(userX, resource, createAction, OffsetDateTime.now(), VALUE_FACTORY);
+        BalanaRequest.Builder builder = new BalanaRequest.Builder(userX, resource, createAction, OffsetDateTime.now(), VALUE_FACTORY, jaxbContext);
         builder.addActionAttr(Resource.type_IRI, actionType);
 
         Response result = pdp.evaluate(builder.build());
@@ -147,7 +155,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     @Test
     public void noPolicyTest() throws Exception {
         // Setup:
-        BalanaRequest request = new BalanaRequest.Builder(userX, resource, createAction, OffsetDateTime.now(), VALUE_FACTORY).build();
+        BalanaRequest request = new BalanaRequest.Builder(userX, resource, createAction, OffsetDateTime.now(), VALUE_FACTORY, jaxbContext).build();
 
         Response result = pdp.evaluate(request);
         assertEquals(Status.OK, result.getStatus());
