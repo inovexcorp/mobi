@@ -50,14 +50,39 @@ describe('Open Ontology Tab directive', function() {
         });
 
         this.records = { 
-            data: [{'@id': 'recordA'}, {'@id': 'recordB'}],
+            data: [],    
             headers: function() {
-                return [{'x-total-count': 2}];
+                return [{'x-total-count': 11}];
             }
         };
-        this.records.data[0][prefixes.dcterms + 'identifier'] = [{'@value': 'A'}];
-        this.records.data[1][prefixes.dcterms + 'identifier'] = [{'@value': 'B'}];
-        catalogManagerSvc.getRecords.and.returnValue($q.when(this.records));
+        this.recordsData = [{'@id': 'recordA'},
+            {'@id': 'recordB'},
+            {'@id': 'recordC'},
+            {'@id': 'recordD'},
+            {'@id': 'recordE'},
+            {'@id': 'recordF'},
+            {'@id': 'recordG'},
+            {'@id': 'recordH'},
+            {'@id': 'recordI'},
+            {'@id': 'recordJ'},
+            {'@id': 'recordK'}];
+        this.recordsData[0][prefixes.dcterms + 'identifier'] = [{'@value': 'A'}];
+        this.recordsData[1][prefixes.dcterms + 'identifier'] = [{'@value': 'B'}];
+        this.recordsData[2][prefixes.dcterms + 'identifier'] = [{'@value': 'C'}];
+        this.recordsData[3][prefixes.dcterms + 'identifier'] = [{'@value': 'D'}];
+        this.recordsData[4][prefixes.dcterms + 'identifier'] = [{'@value': 'E'}];
+        this.recordsData[5][prefixes.dcterms + 'identifier'] = [{'@value': 'F'}];
+        this.recordsData[6][prefixes.dcterms + 'identifier'] = [{'@value': 'G'}];
+        this.recordsData[7][prefixes.dcterms + 'identifier'] = [{'@value': 'H'}];
+        this.recordsData[8][prefixes.dcterms + 'identifier'] = [{'@value': 'I'}];
+        this.recordsData[9][prefixes.dcterms + 'identifier'] = [{'@value': 'J'}];
+        this.recordsData[10][prefixes.dcterms + 'identifier'] = [{'@value': 'K'}];
+
+        catalogManagerSvc.getRecords.and.callFake((catalogId, paginatedConfig, id) => {
+            this.records.data = _.chunk(this.recordsData, paginatedConfig.limit)[paginatedConfig.pageIndex];
+            
+            return $q.when(this.records);
+        });
         utilSvc.getDctermsValue.and.returnValue('A');
         this.element = $compile(angular.element('<open-ontology-tab></open-ontology-tab>'))(scope);
         scope.$digest();
@@ -113,15 +138,20 @@ describe('Open Ontology Tab directive', function() {
             expect(this.element.find('error-display').length).toBe(1);
         });
         it('depending on how many unopened ontologies there are, the limit, and the offset', function() {
-            this.controller.filteredList = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}];
             this.controller.limit = 10;
             this.controller.begin = 0;
+            
             scope.$digest();
+            scope.$apply();
             expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(10);
             expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(0);
 
-            this.controller.begin = 10;
+            this.controller.getPage('next');
             scope.$digest();
+            scope.$apply();
+            console.log(this.controller.filteredList);
+
+
             expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(1);
             expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(0);
         });
