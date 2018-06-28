@@ -23,11 +23,16 @@ package com.mobi.catalog.api.record;
  * #L%
  */
 
+import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
+
+import javax.annotation.Nonnull;
 
 public interface RecordService<T extends Record> {
 
@@ -46,14 +51,26 @@ public interface RecordService<T extends Record> {
     String getTypeIRI();
 
     /**
-     * Creates a Record based on a provided configuration.
+     * Creates and adds a Record based on a provided configuration.
      *
-     * @param user The {@link User} that is creating the Record
-     * @param config A {@link RecordOperationConfig} that contains the insert configuration.
+     * @param user The {@link User} that is deleting the Record
+     * @param config A {@link RecordCreateSettings} that contains the insert configuration.
+     * @param factory The OrmFactory for creating the entity.
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      * @return The created Record
      */
-    T create(User user, RecordOperationConfig config, RepositoryConnection conn);
+    T create(User user, RecordCreateSettings config, OrmFactory<T> factory, RepositoryConnection conn);
+
+    /**
+     * Creates a Branch with the provided metadata using the provided OrmFactory.
+     *
+     * @param title       The title text.
+     * @param description The description text.
+     * @param factory     The OrmFactory identifying the type of Branch you want to get back.
+     * @param <T>         An Object which extends Branch.
+     * @return Branch created with the provided metadata.
+     */
+    <T extends Branch> T createBranch(@Nonnull String title, String description, OrmFactory<T> factory);
 
     /**
      * Deletes a Record from a Catalog and creates a provenance event for the activity based on the provided user.
