@@ -114,9 +114,9 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
      * @param conn
      * @return T which contains all of the properties provided by the parameters.
      */
-    private <T extends Record> T addPropertiesToRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
+    private T addPropertiesToRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
                                                        OffsetDateTime modified, RepositoryConnection conn) {
-        record.setProperty(valueFactory.createLiteral(config.getTitle()), valueFactory.createIRI(_Thing.title_IRI));
+        record.setProperty(valueFactory.createLiteral(config.RecordCreateSettings.getTitle()), valueFactory.createIRI(_Thing.title_IRI));
         record.setProperty(valueFactory.createLiteral(issued), valueFactory.createIRI(_Thing.issued_IRI));
         record.setProperty(valueFactory.createLiteral(modified), valueFactory.createIRI(_Thing.modified_IRI));
         record.setProperties(config.getPublishers().stream().map(User::getResource).collect(Collectors.toSet()),

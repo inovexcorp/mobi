@@ -29,13 +29,6 @@ import java.io.Serializable;
 import java.util.Set;
 
 public interface RecordOperationConfig extends Serializable {
-    String getTitle();
-
-    String getDescription();
-
-    Set<String> getKeywords();
-
-    Set<User> getPublishers();
 
     <T> T get(OperationSetting<T> setting);
 

@@ -69,7 +69,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     @Override
     protected void createRecord(T record, RecordOperationConfig config, RepositoryConnection conn){
         createRecordObject(record, conn);
-        createVersionedRDFData(record, conn);
+        //createVersionedRDFData(record, conn);
     }
 
     @Override
