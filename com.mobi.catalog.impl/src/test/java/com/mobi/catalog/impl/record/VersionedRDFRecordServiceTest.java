@@ -180,7 +180,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
     /* create() */
     @Test
-    public void createTest() throws Exception{
+    public void createRecordTest() throws Exception{
 
     }
 

@@ -37,12 +37,12 @@ import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.record.config.OperationConfig;
+import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
-import com.mobi.persistence.utils.BatchInserter;
 import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
@@ -118,12 +118,9 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
     /* create() */
 
     @Test
-    public void createTest() throws Exception {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        BatchInserter inserter =  new BatchInserter(connection,transformer);
-        RecordOperationConfig config = new OperationConfig();
-
-       // Record createRecord = recordService.create(user,config, connection);
+    public void createRecordTest() throws Exception {
+        RecordCreateSettings config = new RecordCreateSettings();
+        Record creartedRecord = recordService.createRecord(user, config, recordFactory, connection );
     }
 
     /* delete() */

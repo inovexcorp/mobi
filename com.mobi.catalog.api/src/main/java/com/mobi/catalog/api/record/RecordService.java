@@ -94,7 +94,4 @@ public interface RecordService<T extends Record> {
 
     T addPropertiesToRecord(T record, RecordCreateSettings config, OffsetDateTime issued,
                             OffsetDateTime modified, RepositoryConnection conn);
-
-    T addPropertiesToRecord(T record, VersionedRDFRecordCreateSettings config, OffsetDateTime issued,
-                            OffsetDateTime modified, RepositoryConnection conn);
 }

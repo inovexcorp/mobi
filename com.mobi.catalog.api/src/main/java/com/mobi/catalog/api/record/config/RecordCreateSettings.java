@@ -49,7 +49,7 @@ public class RecordCreateSettings {
      */
     public static OperationSetting<BatchInserter> BATCH_INSERTER;
 
-    private RecordCreateSettings() {
+    public RecordCreateSettings() {
     }
 
     static {
