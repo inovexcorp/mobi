@@ -28,7 +28,7 @@
     <parent>
         <artifactId>rdf-orm</artifactId>
         <groupId>com.mobi</groupId>
-        <version>1.13.15-SNAPSHOT</version>
+        <version>1.13.15</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
