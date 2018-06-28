@@ -111,7 +111,7 @@
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
                     
-                    dvm.getPageOntologyRecords = function(sortingOption)
+                    dvm.getPageOntologyRecords = function(sortOption = _.find(dvm.cm.sortOptions, {label: 'Title (asc)'}))
                     {
                         var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
                         var catalogId = _.get(dvm.cm.localCatalog, '@id', '');
@@ -119,7 +119,7 @@
                             pageIndex: dvm.begin,
                             limit: dvm.limit,
                             recordType: ontologyRecordType,
-                            sortingOption,
+                            sortOption,
                             searchText: dvm.filterText
                         };
                         dvm.cm.getRecords(catalogId, paginatedConfig, '').then(response => { 

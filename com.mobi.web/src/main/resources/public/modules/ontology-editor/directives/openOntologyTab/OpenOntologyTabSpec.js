@@ -256,13 +256,13 @@ describe('Open Ontology Tab directive', function() {
         });
         it('should get the list of unopened ontology records', function() {
             var catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
-            var sortingOption = 'sort';
+            var sortOption = 'sort';
             var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
             var paginatedConfig = {
                 pageIndex: 0,
                 limit: 10,
                 recordType: ontologyRecordType,
-                sortingOption,
+                sortOption,
                 searchText: undefined
             };
             ontologyStateSvc.list = [{ontologyRecord: {'recordId': 'recordA'}}];
