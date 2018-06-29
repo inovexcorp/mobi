@@ -24,7 +24,7 @@
     <div class="actions">
         <form class="form-inline">
             <div class="form-group">
-                <input type="text" class="form-control" placeholder="Filter by text" ng-model="dvm.filterText" ng-keydown="$event.keyCode === 13 && dvm.search()" />
+                <input type="text" class="form-control" placeholder="Filter by text" ng-model="dvm.filterText" ng-keydown="dvm.pageIndex = 0; $event.keyCode === 13 && dvm.getPageOntologyRecords()" />
             </div>
             <button type="button" class="btn btn-primary" ng-click="dvm.newOntology()">New Ontology</button>
             <button type="button" class="btn btn-primary" ng-click="dvm.os.showUploadTab = true">Upload Ontology</button>
@@ -51,8 +51,8 @@
                 </block-content>
                 <block-footer>
                     <div class="paging-container clearfix">
-                        <paging-details total-size="dvm.totalSize" page-index="dvm.begin" limit="dvm.limit"></paging-details>
-                        <pagination links="{'prev': dvm.begin !== 0, 'next': ((dvm.begin + 1) * dvm.limit) < dvm.totalSize}" current-page="dvm.begin" get-page="dvm.getPage(direction)"></pagination>
+                        <paging-details total-size="dvm.totalSize" page-index="dvm.pageIndex" limit="dvm.limit"></paging-details>
+                        <pagination links="{'prev': dvm.pageIndex !== 0, 'next': ((dvm.pageIndex + 1) * dvm.limit) < dvm.totalSize}" current-page="dvm.pageIndex" get-page="dvm.getPage(direction)"></pagination>
                     </div>
                 </block-footer>
             </block>

@@ -43,15 +43,16 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     var sm = stateManagerService;
+                    var cm = catalogManagerService;
                     var ontologyRecords = [];
+                    
 
                     dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ms = mapperStateService;
-                    dvm.cm = catalogManagerService;
                     dvm.util = utilService;
-                    dvm.begin = 0;
+                    dvm.pageIndex = 0;
                     dvm.limit = 10;
                     dvm.totalSize = 0;
                     dvm.filteredList = [];
@@ -80,9 +81,9 @@
                     dvm.getPage = function(direction) {
                         
                         if (direction === 'next') {
-                            dvm.begin++;
+                            dvm.pageIndex++;
                         } else {
-                            dvm.begin--;
+                            dvm.pageIndex--;
                         }
                         dvm.filteredList = dvm.getPageOntologyRecords();
                     }
@@ -111,28 +112,24 @@
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
                     
-                    dvm.getPageOntologyRecords = function(sortOption = _.find(dvm.cm.sortOptions, {label: 'Title (asc)'}))
+                    dvm.getPageOntologyRecords = function(sortOption = _.find(cm.sortOptions, {label: 'Title (asc)'}))
                     {
                         var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
-                        var catalogId = _.get(dvm.cm.localCatalog, '@id', '');
+                        var catalogId = _.get(cm.localCatalog, '@id', '');
                         var paginatedConfig = {
-                            pageIndex: dvm.begin,
+                            pageIndex: dvm.pageIndex,
                             limit: dvm.limit,
                             recordType: ontologyRecordType,
                             sortOption,
                             searchText: dvm.filterText
                         };
-                        dvm.cm.getRecords(catalogId, paginatedConfig, '').then(response => { 
+                        cm.getRecords(catalogId, paginatedConfig, '').then(response => { 
                             var ontologyRecords = response.data;
                             dvm.filteredList = getFilteredRecords(ontologyRecords);
                             if (response.headers() !== undefined) {
                                 dvm.totalSize = _.get(response.headers(), 'x-total-count');
                             }
                         });
-                    }
-
-                    dvm.search = function() {
-                        dvm.getPageOntologyRecords();
                     }
                     
                     dvm.getPageOntologyRecords();

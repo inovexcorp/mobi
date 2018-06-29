@@ -140,7 +140,7 @@ describe('Open Ontology Tab directive', function() {
         });
         it('depending on how many unopened ontologies there are, the limit, and the offset', function() {
             this.controller.limit = 10;
-            this.controller.begin = 0;
+            this.controller.pageIndex = 0;
             scope.$apply();
             expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(10);
             expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(0);
@@ -192,13 +192,13 @@ describe('Open Ontology Tab directive', function() {
             expect(ontologyStateSvc.newKeywords).toEqual([]);
         });
         it('should get a page of results', function() {
-            var begin = this.controller.begin;
+            var begin = this.controller.pageIndex;
             this.controller.getPage('next');
-            expect(this.controller.begin).toBe(begin + 1);
+            expect(this.controller.pageIndex).toBe(begin + 1);
 
-            begin = this.controller.begin;
+            begin = this.controller.pageIndex;
             this.controller.getPage('prev');
-            expect(this.controller.begin).toBe(begin - 1);
+            expect(this.controller.pageIndex).toBe(begin - 1);
         });
         describe('should show the delete confirmation overlay', function() {
             beforeEach(function() {
