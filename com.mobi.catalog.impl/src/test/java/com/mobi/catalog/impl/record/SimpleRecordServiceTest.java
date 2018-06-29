@@ -61,7 +61,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.ByteArrayOutputStream;
+import java.util.LinkedHashSet;
 import java.util.Optional;
+import java.util.Set;
 
 public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
@@ -119,8 +121,18 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void createRecordTest() throws Exception {
-        RecordCreateSettings config = new RecordCreateSettings();
-        Record creartedRecord = recordService.createRecord(user, config, recordFactory, connection );
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+
+        Record creartedRecord = recordService.createRecord(user, config, RDFRecordFactory, connection);
     }
 
     /* delete() */

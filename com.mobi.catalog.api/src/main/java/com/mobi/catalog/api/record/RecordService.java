@@ -55,12 +55,12 @@ public interface RecordService<T extends Record> {
      * Creates and adds a Record based on a provided configuration.
      *
      * @param user The {@link User} that is deleting the Record
-     * @param config A {@link RecordCreateSettings} that contains the insert configuration.
+     * @param config A {@link RecordOperationConfig} that contains the insert configuration.
      * @param factory The OrmFactory for creating the entity.
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      * @return The created Record
      */
-    T createRecord(User user, RecordCreateSettings config, OrmFactory<T> factory, RepositoryConnection conn);
+    T createRecord(User user, RecordOperationConfig config, OrmFactory<T> factory, RepositoryConnection conn);
 
     /**
      * Creates a Branch with the provided metadata using the provided OrmFactory.
@@ -92,6 +92,6 @@ public interface RecordService<T extends Record> {
      */
     void export(IRI iriRecord, RecordOperationConfig config, RepositoryConnection conn);
 
-    T addPropertiesToRecord(T record, RecordCreateSettings config, OffsetDateTime issued,
+    T addPropertiesToRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
                             OffsetDateTime modified, RepositoryConnection conn);
 }

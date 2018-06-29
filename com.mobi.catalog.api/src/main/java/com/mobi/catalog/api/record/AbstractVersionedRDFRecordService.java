@@ -82,11 +82,6 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     }
 
     @Reference
-    void setUtils(CatalogUtilsService utils) {
-        this.utils = utils;
-    }
-
-    @Reference
     void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
         this.versionedRDFRecordFactory = versionedRDFRecordFactory;
     }
@@ -102,21 +97,21 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     }
 
     @Override
-    public T addPropertiesToRecord(T record, RecordCreateSettings config, OffsetDateTime issued,
+    public T addPropertiesToRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
                                    OffsetDateTime modified, RepositoryConnection conn){
-        record.setProperty(valueFactory.createLiteral(config.getTitle()),
+        record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_TITLE)),
                 valueFactory.createIRI(_Thing.title_IRI));
         record.setProperty(valueFactory.createLiteral(issued), valueFactory.createIRI(_Thing.issued_IRI));
         record.setProperty(valueFactory.createLiteral(modified), valueFactory.createIRI(_Thing.modified_IRI));
-        record.setProperties(config.getPublishers().stream().map(User::getResource).
+        record.setProperties(config.get(RecordCreateSettings.RECORD_PUBLISHERS).stream().map(User::getResource).
                         collect(Collectors.toSet()),
                 valueFactory.createIRI(_Thing.publisher_IRI));
-        if (config.getDescription() != null) {
-            record.setProperty(valueFactory.createLiteral(config.getDescription()),
+        if (config.get(RecordCreateSettings.RECORD_DESCRIPTION) != null) {
+            record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_DESCRIPTION)),
                     valueFactory.createIRI(_Thing.description_IRI));
         }
-        if (config.getKeywords() != null) {
-            record.setKeyword(config.getKeywords().stream().map(valueFactory::createLiteral).
+        if (config.get(RecordCreateSettings.RECORD_KEYWORDS) != null) {
+            record.setKeyword(config.get(RecordCreateSettings.RECORD_KEYWORDS).stream().map(valueFactory::createLiteral).
                     collect(Collectors.toSet()));
         }
         Resource catalogId = record.getResource();
