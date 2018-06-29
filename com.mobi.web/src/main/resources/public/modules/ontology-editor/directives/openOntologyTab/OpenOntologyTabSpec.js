@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Open Ontology Tab directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, prefixes, utilSvc, mapperStateSvc, catalogManagerSvc;
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, prefixes, utilSvc, mapperStateSvc, catalogManagerSvc, httpSvc;
 
     beforeEach(function() {
         module('templates');
@@ -35,8 +35,9 @@ describe('Open Ontology Tab directive', function() {
         mockStateManager();
         mockUtil();
         mockMapperState();
+        mockHttpService();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _stateManagerService_, _prefixes_, _utilService_, _mapperStateService_, _catalogManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _stateManagerService_, _prefixes_, _utilService_, _mapperStateService_, _catalogManagerService_, _httpService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -47,6 +48,7 @@ describe('Open Ontology Tab directive', function() {
             utilSvc = _utilService_;
             mapperStateSvc = _mapperStateService_;
             catalogManagerSvc = _catalogManagerService_;
+            httpSvc = _httpService_;
         });
 
         this.records = { 
@@ -55,7 +57,7 @@ describe('Open Ontology Tab directive', function() {
                 return [{'x-total-count': 11}];
             }
         };
-        this.recordsData = [{'@id': 'recordA'},
+        this.recordsData = [{'@id': 'recordA', [prefixes.dcterms + 'identifier']: [{}]},
             {'@id': 'recordB'},
             {'@id': 'recordC'},
             {'@id': 'recordD'},
@@ -100,6 +102,7 @@ describe('Open Ontology Tab directive', function() {
         utilSvc = null;
         mapperStateSvc = null;
         catalogManagerSvc = null;
+        httpSvc = null;
         this.element.remove();
     });
 
@@ -113,7 +116,7 @@ describe('Open Ontology Tab directive', function() {
             expect(this.element.querySelectorAll('.ontologies').length).toBe(1);
             expect(this.element.querySelectorAll('.paging-container').length).toBe(1);
         });
-        _.forEach(['block', 'block-content', 'form', 'block-footer', 'pagination'], function(item) {
+        _.forEach(['block', 'block-content', 'form', 'block-footer', 'pagination'], (item) => {
             it('with a ' + item, function() {
                 expect(this.element.find(item).length).toBe(1);
             });
@@ -267,7 +270,7 @@ describe('Open Ontology Tab directive', function() {
             ontologyStateSvc.list = [{ontologyRecord: {'recordId': 'recordA'}}];
             this.controller.getPageOntologyRecords('sort');
             scope.$apply();
-            expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, paginatedConfig, '');
+            expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, paginatedConfig, this.controller.id);
             expect(this.controller.filteredList).not.toContain(jasmine.objectContaining({'@id': 'recordA'}));
         });
     });

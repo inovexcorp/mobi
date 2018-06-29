@@ -27,10 +27,10 @@
         .module('openOntologyTab', [])
         .directive('openOntologyTab', openOntologyTab);
 
-        openOntologyTab.$inject = ['$filter', '$timeout', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
+        openOntologyTab.$inject = ['$timeout', 'httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
             'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService'];
 
-        function openOntologyTab($filter, $timeout, ontologyManagerService, ontologyStateService, prefixes,
+        function openOntologyTab($timeout, httpService, ontologyManagerService, ontologyStateService, prefixes,
             stateManagerService, utilService, mapperStateService, catalogManagerService) {
             return {
                 restrict: 'E',
@@ -44,8 +44,7 @@
                     var dvm = this;
                     var sm = stateManagerService;
                     var cm = catalogManagerService;
-                    var ontologyRecords = [];
-                    
+                    var ontologyRecords = [];                    
 
                     dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
@@ -57,6 +56,7 @@
                     dvm.totalSize = 0;
                     dvm.filteredList = [];
                     dvm.inputChangedPromise;
+                    dvm.id = "openOntologyTabTargetedSpinner";
 
                     dvm.open = function(record) {
                         dvm.os.openOntology(record['@id'], dvm.util.getDctermsValue(record, 'title'))
@@ -123,7 +123,8 @@
                             sortOption,
                             searchText: dvm.filterText
                         };
-                        cm.getRecords(catalogId, paginatedConfig, '').then(response => { 
+                        httpService.cancel(dvm.id);
+                        cm.getRecords(catalogId, paginatedConfig, dvm.id).then(response => { 
                             var ontologyRecords = response.data;
                             dvm.filteredList = getFilteredRecords(ontologyRecords);
                             if (response.headers() !== undefined) {
