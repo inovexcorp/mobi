@@ -37,6 +37,9 @@ public interface EmailServiceConfig {
     @Meta.AD(required = true)
     String emailPassword();
 
+    @Meta.AD(deflt = "25")
+    int port();
+
     @Meta.AD(deflt = "STARTTLS")
     String security();
 }

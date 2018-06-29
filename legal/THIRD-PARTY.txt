@@ -1,5 +1,5 @@
 
-Lists of 329 third-party dependencies.
+Lists of 328 third-party dependencies.
      (Public Domain) AOP alliance (aopalliance:aopalliance:1.0 - http://aopalliance.sourceforge.net)
      (The Apache Software License, Version 2.0) avalon-framework (avalon-framework:avalon-framework:4.1.3 - no url defined)
      (The Apache Software License, Version 2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.1.0 - http://bnd.bndtools.org/)
@@ -329,4 +329,3 @@ Lists of 329 third-party dependencies.
      (The Apache Software License, Version 2.0) WSO2 Balana Utils (org.wso2.balana:org.wso2.balana.utils:1.1.3 - http://wso2.org)
      (The Apache Software License, Version 2.0) StAX API (stax:stax-api:1.0.1 - http://stax.codehaus.org/)
      (The Apache Software License, Version 2.0) standard (taglibs:standard:1.1.2 - no url defined)
-     (Unknown license) xercesImpl (xerces.wso2:xercesImpl:2.8.1.wso2v2 - no url defined)
