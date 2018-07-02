@@ -72,6 +72,7 @@ import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
@@ -117,6 +118,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     private ModelFactory modelFactory;
     private ValueFactory valueFactory;
+    private OrmFactory<T> recordFactory;
     private OntologyManager ontologyManager;
     private CatalogManager catalogManager;
     private EngineManager engineManager;
@@ -125,6 +127,7 @@ public class OntologyRestImpl implements OntologyRest {
     private VersioningManager versioningManager;
     private CatalogProvUtils provUtils;
     private RepositoryManager repositoryManager;
+    private RecordService recordService;
 
     private static final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
 
@@ -182,6 +185,9 @@ public class OntologyRestImpl implements OntologyRest {
     void setRepositoryManager(RepositoryManager repositoryManager) {
         this.repositoryManager = repositoryManager;
     }
+
+    @Reference
+    void setRecordService(RecordService recordService){ this.recordService = recordService;}
 
     @Override
     @ActionAttributes(
@@ -258,22 +264,17 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    public Response createOntology(ContainerRequestContext context, RecordOperationConfig config, String branchIdStr){
+    public Response createOntology(ContainerRequestContext context, RecordOperationConfig config){
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()){
             User user = getActiveUser(context, engineManager);
             CreateActivity createActivity = null;
-            Record record = RecordService.create(user, config, conn);
+            Record record = recordService.create(user, config, recordFactory, conn);
             User activeUser = getActiveUser(context, engineManager);
-            CreateActivity createActivity = null;
             try {
-                if (StringUtils.isBlank(branchIdStr)) {
-                    ontologyManager.createOntology(record);
-                    provUtils.endCreateActivity((CreateActivity) activeUser, recordId);
-                } else {
-
-                }
+                ontologyManager.createOntology(record);
+                provUtils.endCreateActivity((CreateActivity) activeUser, record.getResource());
             } catch (MobiException e) {
                 provUtils.removeActivity(createActivity);
                 throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);

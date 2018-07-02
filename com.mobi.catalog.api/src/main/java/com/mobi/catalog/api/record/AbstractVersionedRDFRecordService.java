@@ -97,7 +97,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     }
 
     @Override
-    public T addPropertiesToRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
+    public T createRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
                                    OffsetDateTime modified, RepositoryConnection conn){
         record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_TITLE)),
                 valueFactory.createIRI(_Thing.title_IRI));
@@ -114,6 +114,9 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             record.setKeyword(config.get(RecordCreateSettings.RECORD_KEYWORDS).stream().map(valueFactory::createLiteral).
                     collect(Collectors.toSet()));
         }
+        conn.begin();
+        utilsService.addObject(record, conn);
+        conn.commit();
         Resource catalogId = record.getResource();
         addVersionedRDFRecord(catalogId, record, conn);
         return record;
@@ -128,7 +131,9 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             throw utils.throwAlreadyExists(record.getResource(), recordFactory);
         }
         record.setCatalog(utils.getObject(catalogId, catalogFactory, conn));
-        conn.begin();
+        if(!conn.isActive()){
+            conn.begin();
+        }
         if (record.getModel().contains(null, valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
                 versionedRDFRecordFactory.getTypeIRI())) {
             addMasterBranch(record, conn);
@@ -157,8 +162,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         utils.addObject(branch, conn);
     }
 
-    @Override
-    public <T extends Branch> T createBranch(@Nonnull String title, String description, OrmFactory<T> factory) {
+    protected  <T extends Branch> T createBranch(@Nonnull String title, String description, OrmFactory<T> factory) {
         OffsetDateTime now = OffsetDateTime.now();
 
         T branch = factory.createNew(valueFactory.createIRI(Catalog.BRANCH_NAMESPACE + UUID.randomUUID()));

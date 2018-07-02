@@ -51,6 +51,7 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -175,6 +176,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     @Mock
     private CatalogProvUtils provUtils;
 
+    @Mock
+    private RecordService recordService;
+
     private ModelFactory mf;
     private ValueFactory vf;
     private OrmFactory<OntologyRecord> ontologyRecordFactory;
@@ -253,6 +257,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         rest.setVersioningManager(versioningManager);
         rest.setProvUtils(provUtils);
         rest.setRepositoryManager(repoManager);
+        rest.setRecordService(recordService);
 
         catalogId = vf.createIRI("http://mobi.com/catalog");
         recordId = vf.createIRI("http://mobi.com/record");

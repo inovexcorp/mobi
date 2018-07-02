@@ -65,7 +65,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
         OffsetDateTime now = OffsetDateTime.now();
         T testRecord = factory.createNew(valueFactory.createIRI(Catalog.RECORD_NAMESPACE +
                 UUID.randomUUID()));
-        T record = addPropertiesToRecord(testRecord, config, now, now, conn);
+        T record = createRecord(testRecord, config, now, now, conn);
         Resource catalogId = record.getResource();
         IRI recordId = valueFactory.createIRI(record.catalog_IRI + catalogId);
         provUtils.endCreateActivity(startActivity, recordId);
@@ -102,7 +102,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     }
 
     @Override
-    public T addPropertiesToRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
+    public T createRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
                                                        OffsetDateTime modified, RepositoryConnection conn) {
         record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_TITLE)),
                 valueFactory.createIRI(_Thing.title_IRI));

@@ -63,17 +63,6 @@ public interface RecordService<T extends Record> {
     T create(User user, RecordOperationConfig config, OrmFactory<T> factory, RepositoryConnection conn);
 
     /**
-     * Creates a Branch with the provided metadata using the provided OrmFactory.
-     *
-     * @param title       The title text.
-     * @param description The description text.
-     * @param factory     The OrmFactory identifying the type of Branch you want to get back.
-     * @param <T>         An Object which extends Branch.
-     * @return Branch created with the provided metadata.
-     */
-    <T extends Branch> T createBranch(@Nonnull String title, String description, OrmFactory<T> factory);
-
-    /**
      * Deletes a Record from a Catalog and creates a provenance event for the activity based on the provided user.
      *
      * @param recordId A {@link IRI} of the Record to delete
@@ -92,6 +81,6 @@ public interface RecordService<T extends Record> {
      */
     void export(IRI iriRecord, RecordOperationConfig config, RepositoryConnection conn);
 
-    T addPropertiesToRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
+    T createRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
                             OffsetDateTime modified, RepositoryConnection conn);
 }

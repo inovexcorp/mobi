@@ -23,6 +23,8 @@ package com.mobi.ontology.rest;
  * #L%
  */
 
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.repository.api.RepositoryConnection;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.eclipse.rdf4j.query.algebra.Str;
@@ -147,8 +149,7 @@ public interface OntologyRest {
     @RolesAllowed("user")
     @ApiOperation("Creates the ontology in the requested format.")
     Response createOntology(@Context ContainerRequestContext context,
-                            @PathParam("recordId") String recordIdStr,
-                            @QueryParam("branchId") String branchIdStr);
+                             RepositoryConnection config);
 
     /**
      * Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is
