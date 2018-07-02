@@ -40,6 +40,9 @@ import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -255,23 +258,29 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    public Response createOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr){
-        IRI recordId = valueFactory.createIRI(recordIdStr);
-        User activeUser = getActiveUser(context, engineManager);
-        CreateActivity createActivity = null;
-        try{
-            if(StringUtils.isBlank(branchIdStr)){
-                ontologyManager.createOntology(recordId);
-                provUtils.endCreateActivity((CreateActivity) activeUser,recordId);
-            }else{
+    public Response createOntology(ContainerRequestContext context, RecordOperationConfig config, String branchIdStr){
+        Repository repo = repositoryManager.createMemoryRepository();
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()){
+            User user = getActiveUser(context, engineManager);
+            CreateActivity createActivity = null;
+            Record record = RecordService.createRecord(user, config, conn);
+            User activeUser = getActiveUser(context, engineManager);
+            CreateActivity createActivity = null;
+            try {
+                if (StringUtils.isBlank(branchIdStr)) {
+                    ontologyManager.createOntology(record);
+                    provUtils.endCreateActivity((CreateActivity) activeUser, recordId);
+                } else {
 
+                }
+            } catch (MobiException e) {
+                provUtils.removeActivity(createActivity);
+                throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            } catch (IllegalArgumentException e) {
+                provUtils.removeActivity(createActivity);
+                throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
             }
-        }catch (MobiException e){
-            provUtils.removeActivity(createActivity);
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        }catch (IllegalArgumentException e) {
-            provUtils.removeActivity(createActivity);
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
         return null;
     }

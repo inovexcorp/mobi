@@ -65,8 +65,6 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     protected ValueFactory valueFactory;
     protected CatalogFactory catalogFactory;
 
-
-
     @Override
     public T createRecord(User user, RecordOperationConfig config, OrmFactory<T> factory, RepositoryConnection conn){
         CreateActivity startActivity = provUtils.startCreateActivity(user);
