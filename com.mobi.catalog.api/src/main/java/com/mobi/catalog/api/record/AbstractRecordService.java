@@ -23,11 +23,8 @@ package com.mobi.catalog.api.record;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Record;
@@ -46,10 +43,8 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
 
 import java.time.OffsetDateTime;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 
 /**
  * Defines basic functionality of a RecordService. Provides common methods for exporting and deleting a Record.
@@ -58,7 +53,6 @@ import javax.annotation.Nonnull;
  */
 public abstract class AbstractRecordService<T extends Record> implements RecordService<T> {
 
-    protected BranchFactory branchFactory;
     protected CatalogProvUtils provUtils;
     protected CatalogUtilsService utilsService;
     protected OrmFactory<T> recordFactory;
@@ -66,7 +60,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     protected CatalogFactory catalogFactory;
 
     @Override
-    public T createRecord(User user, RecordOperationConfig config, OrmFactory<T> factory, RepositoryConnection conn){
+    public T create(User user, RecordOperationConfig config, OrmFactory<T> factory, RepositoryConnection conn){
         CreateActivity startActivity = provUtils.startCreateActivity(user);
         OffsetDateTime now = OffsetDateTime.now();
         T testRecord = factory.createNew(valueFactory.createIRI(Catalog.RECORD_NAMESPACE +
@@ -76,51 +70,6 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
         IRI recordId = valueFactory.createIRI(record.catalog_IRI + catalogId);
         provUtils.endCreateActivity(startActivity, recordId);
         return record;
-    }
-
-    protected void addRecord(Resource catalogId, T record, RepositoryConnection conn) {
-        conn.begin();
-        if (conn.containsContext(record.getResource())) {
-            throw utilsService.throwAlreadyExists(record.getResource(), recordFactory);
-        }
-        record.setCatalog(utilsService.getObject(catalogId, catalogFactory, conn));
-        if (record.getModel().contains(null, valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
-                recordFactory.getTypeIRI())) {
-            addMasterBranch(record, conn);
-        } else {
-            utilsService.addObject(record, conn);
-            conn.commit();
-        }
-    }
-
-    protected void addMasterBranch(Record record, RepositoryConnection conn) {
-        if (record.getMasterBranch_resource().isPresent()) {
-            throw new IllegalStateException("Record " + record.getResource() + " already has a master Branch.");
-        }
-        Branch branch = createBranch("MASTER", "The master branch.", branchFactory);
-        record.setMasterBranch(branch);
-        Set<Branch> branches = record.getBranch_resource().stream()
-                .map(branchFactory::createNew)
-                .collect(Collectors.toSet());
-        branches.add(branch);
-        record.setBranch(branches);
-        utilsService.updateObject(record, conn);
-        utilsService.addObject(branch, conn);
-    }
-
-    @Override
-    public <T extends Branch> T createBranch(@Nonnull String title, String description, OrmFactory<T> factory) {
-        OffsetDateTime now = OffsetDateTime.now();
-
-        T branch = factory.createNew(valueFactory.createIRI(Catalog.BRANCH_NAMESPACE + UUID.randomUUID()));
-        branch.setProperty(valueFactory.createLiteral(title), valueFactory.createIRI(_Thing.title_IRI));
-        branch.setProperty(valueFactory.createLiteral(now), valueFactory.createIRI(_Thing.issued_IRI));
-        branch.setProperty(valueFactory.createLiteral(now), valueFactory.createIRI(_Thing.modified_IRI));
-        if (description != null) {
-            branch.setProperty(valueFactory.createLiteral(description), valueFactory.createIRI(_Thing.description_IRI));
-        }
-
-        return branch;
     }
 
     @Override
@@ -160,8 +109,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
         record.setProperty(valueFactory.createLiteral(issued), valueFactory.createIRI(_Thing.issued_IRI));
         record.setProperty(valueFactory.createLiteral(modified), valueFactory.createIRI(_Thing.modified_IRI));
         record.setProperties(config.get(RecordCreateSettings.RECORD_PUBLISHERS).stream().map(User::getResource).
-                        collect(Collectors.toSet()),
-                valueFactory.createIRI(_Thing.publisher_IRI));
+                        collect(Collectors.toSet()), valueFactory.createIRI(_Thing.publisher_IRI));
         if (config.get(RecordCreateSettings.RECORD_DESCRIPTION) != null) {
             record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_DESCRIPTION)),
                     valueFactory.createIRI(_Thing.description_IRI));
@@ -170,8 +118,9 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
             record.setKeyword(config.get(RecordCreateSettings.RECORD_KEYWORDS).stream().map(valueFactory::createLiteral).
                     collect(Collectors.toSet()));
         }
-        Resource catalogId = record.getResource();
-        addRecord(catalogId, record, conn);
+        conn.begin();
+        utilsService.addObject(record, conn);
+        conn.commit();
         return record;
     }
 

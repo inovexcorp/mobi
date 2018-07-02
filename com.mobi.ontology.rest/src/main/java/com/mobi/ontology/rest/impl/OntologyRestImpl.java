@@ -264,7 +264,7 @@ public class OntologyRestImpl implements OntologyRest {
         try (RepositoryConnection conn = repo.getConnection()){
             User user = getActiveUser(context, engineManager);
             CreateActivity createActivity = null;
-            Record record = RecordService.createRecord(user, config, conn);
+            Record record = RecordService.create(user, config, conn);
             User activeUser = getActiveUser(context, engineManager);
             CreateActivity createActivity = null;
             try {

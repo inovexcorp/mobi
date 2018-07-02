@@ -60,7 +60,7 @@ public interface RecordService<T extends Record> {
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      * @return The created Record
      */
-    T createRecord(User user, RecordOperationConfig config, OrmFactory<T> factory, RepositoryConnection conn);
+    T create(User user, RecordOperationConfig config, OrmFactory<T> factory, RepositoryConnection conn);
 
     /**
      * Creates a Branch with the provided metadata using the provided OrmFactory.

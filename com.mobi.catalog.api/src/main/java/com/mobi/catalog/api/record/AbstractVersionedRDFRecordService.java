@@ -124,7 +124,6 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      *
      */
     protected void addVersionedRDFRecord(Resource catalogId, T record, RepositoryConnection conn) {
-        conn.begin();
         if (conn.containsContext(record.getResource())) {
             throw utils.throwAlreadyExists(record.getResource(), recordFactory);
         }
@@ -169,7 +168,6 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         if (description != null) {
             branch.setProperty(valueFactory.createLiteral(description), valueFactory.createIRI(_Thing.description_IRI));
         }
-
         return branch;
     }
 
