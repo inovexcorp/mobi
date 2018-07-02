@@ -33,6 +33,7 @@ import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import aQute.libg.generics.Create;
 import com.google.common.collect.Iterables;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
@@ -251,6 +252,28 @@ public class OntologyRestImpl implements OntologyRest {
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public Response createOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr){
+        IRI recordId = valueFactory.createIRI(recordIdStr);
+        User activeUser = getActiveUser(context, engineManager);
+        CreateActivity createActivity = null;
+        try{
+            if(StringUtils.isBlank(branchIdStr)){
+                ontologyManager.createOntology(recordId);
+                provUtils.endCreateActivity((CreateActivity) activeUser,recordId);
+            }else{
+
+            }
+        }catch (MobiException e){
+            provUtils.removeActivity(createActivity);
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }catch (IllegalArgumentException e) {
+            provUtils.removeActivity(createActivity);
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+        return null;
     }
 
     @Override

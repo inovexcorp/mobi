@@ -25,8 +25,10 @@ package com.mobi.ontology.rest;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.eclipse.rdf4j.query.algebra.Str;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.springframework.context.annotation.Role;
 
 import java.io.InputStream;
 import java.util.List;
@@ -132,6 +134,21 @@ public interface OntologyRest {
                          @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
                          @DefaultValue("false") @QueryParam("skolemize") boolean skolemize,
                          @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit);
+
+
+    /**
+     * Creates the ontology
+     *
+     *
+     * @return The created ontology.
+     */
+    @POST
+    @Path("{recordId}")
+    @RolesAllowed("user")
+    @ApiOperation("Creates the ontology in the requested format.")
+    Response createOntology(@Context ContainerRequestContext context,
+                            @PathParam("recordId") String recordIdStr,
+                            @QueryParam("branchId") String branchIdStr);
 
     /**
      * Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is
