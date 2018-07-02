@@ -109,8 +109,7 @@
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
-                    dvm.getPageOntologyRecords = function(sortOption = _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', ascending: true}))
-                    {
+                    dvm.getPageOntologyRecords = function(sortOption = _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', ascending: true})) {
                         var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
                         var catalogId = _.get(cm.localCatalog, '@id', '');
                         var paginatedConfig = {
@@ -129,8 +128,7 @@
                             }
                         });
                     }
-                    dvm.search = function(event)
-                    {
+                    dvm.search = function(event) {
                         dvm.pageIndex = 0;
                         // keyCode 13 is the enter key
                         if(event.keyCode === 13) {
