@@ -109,7 +109,6 @@
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
-                    
                     dvm.getPageOntologyRecords = function(sortOption = _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', ascending: true}))
                     {
                         var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
@@ -130,12 +129,13 @@
                             }
                         });
                     }
-                    
                     dvm.search = function(event)
                     {
                         dvm.pageIndex = 0;
                         // keyCode 13 is the enter key
-                        event.keyCode === 13 && dvm.getPageOntologyRecords();
+                        if(event.keyCode === 13) {
+                            dvm.getPageOntologyRecords();
+                        }
                     }
                     
                     dvm.getPageOntologyRecords();
