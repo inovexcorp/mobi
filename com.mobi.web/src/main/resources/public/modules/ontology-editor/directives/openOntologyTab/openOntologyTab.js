@@ -131,7 +131,7 @@
                     dvm.search = function(event) {
                         dvm.pageIndex = 0;
                         // keyCode 13 is the enter key
-                        if(event.keyCode === 13) {
+                        if (event.keyCode === 13) {
                             dvm.getPageOntologyRecords();
                         }
                     }
