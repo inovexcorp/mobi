@@ -55,7 +55,6 @@
                     dvm.limit = 10;
                     dvm.totalSize = 0;
                     dvm.filteredList = [];
-                    dvm.inputChangedPromise;
                     dvm.id = "openOntologyTabTargetedSpinner";
 
                     dvm.open = function(record) {
@@ -79,13 +78,12 @@
                         dvm.os.showNewTab = true;
                     }
                     dvm.getPage = function(direction) {
-                        
                         if (direction === 'next') {
                             dvm.pageIndex++;
                         } else {
                             dvm.pageIndex--;
                         }
-                        dvm.filteredList = dvm.getPageOntologyRecords();
+                        dvm.getPageOntologyRecords();
                     }
                     dvm.showDeleteConfirmationOverlay = function(record) {
                         dvm.recordId = _.get(record, '@id', '');
