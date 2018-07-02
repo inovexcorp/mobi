@@ -53,32 +53,19 @@ describe('Open Ontology Tab directive', function() {
 
         this.records = { 
             data: [],    
-            headers: function() {
-                return [{'x-total-count': 11}];
-            }
+            headers: () => [{'x-total-count': 11}]
         };
-        this.recordsData = [{'@id': 'recordA', [prefixes.dcterms + 'identifier']: [{}]},
-            {'@id': 'recordB'},
-            {'@id': 'recordC'},
-            {'@id': 'recordD'},
-            {'@id': 'recordE'},
-            {'@id': 'recordF'},
-            {'@id': 'recordG'},
-            {'@id': 'recordH'},
-            {'@id': 'recordI'},
-            {'@id': 'recordJ'},
-            {'@id': 'recordK'}];
-        this.recordsData[0][prefixes.dcterms + 'identifier'] = [{'@value': 'A'}];
-        this.recordsData[1][prefixes.dcterms + 'identifier'] = [{'@value': 'B'}];
-        this.recordsData[2][prefixes.dcterms + 'identifier'] = [{'@value': 'C'}];
-        this.recordsData[3][prefixes.dcterms + 'identifier'] = [{'@value': 'D'}];
-        this.recordsData[4][prefixes.dcterms + 'identifier'] = [{'@value': 'E'}];
-        this.recordsData[5][prefixes.dcterms + 'identifier'] = [{'@value': 'F'}];
-        this.recordsData[6][prefixes.dcterms + 'identifier'] = [{'@value': 'G'}];
-        this.recordsData[7][prefixes.dcterms + 'identifier'] = [{'@value': 'H'}];
-        this.recordsData[8][prefixes.dcterms + 'identifier'] = [{'@value': 'I'}];
-        this.recordsData[9][prefixes.dcterms + 'identifier'] = [{'@value': 'J'}];
-        this.recordsData[10][prefixes.dcterms + 'identifier'] = [{'@value': 'K'}];
+        this.recordsData = [{'@id': 'recordA', [prefixes.dcterms + 'identifier']: [{'@value': 'A'}]},
+            {'@id': 'recordB', [prefixes.dcterms + 'identifier']: [{'@value': 'B'}]},
+            {'@id': 'recordC', [prefixes.dcterms + 'identifier']: [{'@value': 'C'}]},
+            {'@id': 'recordD', [prefixes.dcterms + 'identifier']: [{'@value': 'D'}]},
+            {'@id': 'recordE', [prefixes.dcterms + 'identifier']: [{'@value': 'E'}]},
+            {'@id': 'recordF', [prefixes.dcterms + 'identifier']: [{'@value': 'F'}]},
+            {'@id': 'recordG', [prefixes.dcterms + 'identifier']: [{'@value': 'G'}]},
+            {'@id': 'recordH', [prefixes.dcterms + 'identifier']: [{'@value': 'H'}]},
+            {'@id': 'recordI', [prefixes.dcterms + 'identifier']: [{'@value': 'I'}]},
+            {'@id': 'recordJ', [prefixes.dcterms + 'identifier']: [{'@value': 'J'}]},
+            {'@id': 'recordK', [prefixes.dcterms + 'identifier']: [{'@value': 'K'}]}];
 
         catalogManagerSvc.getRecords.and.callFake((catalogId, paginatedConfig, id) => {
             this.records.data = _.chunk(this.recordsData, paginatedConfig.limit)[paginatedConfig.pageIndex];

@@ -30,7 +30,7 @@
         openOntologyTab.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
             'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService'];
 
-        function openOntologyTab($httpService, ontologyManagerService, ontologyStateService, prefixes,
+        function openOntologyTab(httpService, ontologyManagerService, ontologyStateService, prefixes,
             stateManagerService, utilService, mapperStateService, catalogManagerService) {
             return {
                 restrict: 'E',
