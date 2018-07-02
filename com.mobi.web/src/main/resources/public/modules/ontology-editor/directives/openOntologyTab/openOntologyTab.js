@@ -44,7 +44,7 @@
                     var dvm = this;
                     var sm = stateManagerService;
                     var cm = catalogManagerService;
-                    var ontologyRecords = [];                    
+                    var ontologyRecords = [];
 
                     dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
