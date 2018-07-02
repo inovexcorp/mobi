@@ -110,7 +110,7 @@
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
                     
-                    dvm.getPageOntologyRecords = function(sortOption = _.find(cm.sortOptions, {label: 'Title (asc)'}))
+                    dvm.getPageOntologyRecords = function(sortOption = _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', ascending: true}))
                     {
                         var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
                         var catalogId = _.get(cm.localCatalog, '@id', '');
