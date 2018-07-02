@@ -133,6 +133,13 @@
                         });
                     }
                     
+                    dvm.search = function(event)
+                    {
+                        dvm.pageIndex = 0;
+                        // keyCode 13 is the enter key
+                        event.keyCode === 13 && dvm.getPageOntologyRecords();
+                    }
+                    
                     dvm.getPageOntologyRecords();
 
                     function getFilteredRecords(records) {
