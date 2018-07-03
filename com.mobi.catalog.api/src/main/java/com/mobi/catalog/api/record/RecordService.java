@@ -81,6 +81,16 @@ public interface RecordService<T extends Record> {
      */
     void export(IRI iriRecord, RecordOperationConfig config, RepositoryConnection conn);
 
+    /**
+     * Creates
+     *
+     * @param record
+     * @param config
+     * @param issued
+     * @param modified
+     * @param conn
+     * @return
+     */
     T createRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
                             OffsetDateTime modified, RepositoryConnection conn);
 }

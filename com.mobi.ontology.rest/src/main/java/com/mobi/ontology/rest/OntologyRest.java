@@ -148,8 +148,7 @@ public interface OntologyRest {
     @Path("{recordId}")
     @RolesAllowed("user")
     @ApiOperation("Creates the ontology in the requested format.")
-    Response createOntology(@Context ContainerRequestContext context,
-                             RepositoryConnection config);
+    Response createOntology(ContainerRequestContext context, RecordOperationConfig config);
 
     /**
      * Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is

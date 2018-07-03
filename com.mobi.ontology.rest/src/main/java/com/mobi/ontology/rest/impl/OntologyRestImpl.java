@@ -118,7 +118,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     private ModelFactory modelFactory;
     private ValueFactory valueFactory;
-    private OrmFactory<T> recordFactory;
+    private OrmFactory recordFactory;
     private OntologyManager ontologyManager;
     private CatalogManager catalogManager;
     private EngineManager engineManager;
@@ -268,12 +268,16 @@ public class OntologyRestImpl implements OntologyRest {
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()){
+            semaphore.acquire();
             User user = getActiveUser(context, engineManager);
             CreateActivity createActivity = null;
             Record record = recordService.create(user, config, recordFactory, conn);
             User activeUser = getActiveUser(context, engineManager);
             try {
-                ontologyManager.createOntology(record);
+                createActivity = provUtils.startCreateActivity(activeUser);
+                ontologyManager.createOntology((IRI) record);
+                Ontology newOntology = new Ontology(context,record.getResource(), record.getBranch_resource(), record.getKeyword(), true);
+                ontologyCache.generateKey(record.getResource(), record.getBranch_resource(),record.getMasterBranch_resource());
                 provUtils.endCreateActivity((CreateActivity) activeUser, record.getResource());
             } catch (MobiException e) {
                 provUtils.removeActivity(createActivity);
@@ -282,8 +286,13 @@ public class OntologyRestImpl implements OntologyRest {
                 provUtils.removeActivity(createActivity);
                 throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
             }
+        } catch (InterruptedException e) {
+            throw ErrorUtils.sendError(e, "Issue checking creating new OntologyRecord",
+                    Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            semaphore.release();
         }
-        return null;
+        return Response.ok().build();
     }
 
     @Override

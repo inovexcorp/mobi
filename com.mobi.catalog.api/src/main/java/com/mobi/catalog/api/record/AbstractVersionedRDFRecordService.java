@@ -23,7 +23,6 @@ package com.mobi.catalog.api.record;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
@@ -68,23 +67,8 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     protected CommitFactory commitFactory;
     protected BranchFactory branchFactory;
     protected MergeRequestManager mergeRequestManager;
-    protected CatalogUtilsService utils;
-    protected VersionedRDFRecordFactory versionedRDFRecordFactory;
-
-    @Reference
-    void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
-    }
-
-    @Reference
-    void setCatalogFactory(CatalogFactory catalogFactory) {
-        this.catalogFactory = catalogFactory;
-    }
-
-    @Reference
-    void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
-        this.versionedRDFRecordFactory = versionedRDFRecordFactory;
-    }
+    protected CatalogUtilsService utilsService;
+    protected VersionedRDFRecordFactory recordFactory;
 
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
@@ -128,17 +112,17 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      */
     protected void addVersionedRDFRecord(Resource catalogId, T record, RepositoryConnection conn) {
         if (conn.containsContext(record.getResource())) {
-            throw utils.throwAlreadyExists(record.getResource(), recordFactory);
+            throw utilsService.throwAlreadyExists(record.getResource(), recordFactory);
         }
-        record.setCatalog(utils.getObject(catalogId, catalogFactory, conn));
+        record.setCatalog(utilsService.getObject(catalogId, catalogFactory, conn));
         if(!conn.isActive()){
             conn.begin();
         }
         if (record.getModel().contains(null, valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
-                versionedRDFRecordFactory.getTypeIRI())) {
+                recordFactory.getTypeIRI())) {
             addMasterBranch(record, conn);
         } else {
-            utils.addObject(record, conn);
+            utilsService.addObject(record, conn);
         }
         conn.commit();
     }
@@ -158,8 +142,8 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                 .collect(Collectors.toSet());
         branches.add(branch);
         record.setBranch(branches);
-        utils.updateObject(record, conn);
-        utils.addObject(branch, conn);
+        utilsService.updateObject(record, conn);
+        utilsService.addObject(branch, conn);
     }
 
     protected  <T extends Branch> T createBranch(@Nonnull String title, String description, OrmFactory<T> factory) {

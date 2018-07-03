@@ -29,6 +29,7 @@ import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
+import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
@@ -37,6 +38,9 @@ import com.mobi.rdf.api.ValueFactory;
 
 @Component
 public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordService<VersionedRDFRecord> {
+
+    @Reference
+    void setCatalogFactory(CatalogFactory catalogFactory){ this.catalogFactory = catalogFactory;}
 
     @Reference
     void setUtilsService(CatalogUtilsService utilsService) {
