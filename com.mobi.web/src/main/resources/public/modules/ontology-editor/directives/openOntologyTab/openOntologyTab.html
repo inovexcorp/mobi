@@ -24,7 +24,7 @@
     <div class="actions">
         <form class="form-inline">
             <div class="form-group">
-                <input type="text" class="form-control" placeholder="Filter by text" ng-model="dvm.filterText" ng-keyup="dvm.begin = 0" />
+                <input type="text" class="form-control" placeholder="Filter by text" ng-model="dvm.filterText" ng-keydown="dvm.search($event)" />
             </div>
             <button type="button" class="btn btn-primary" ng-click="dvm.newOntology()">New Ontology</button>
             <button type="button" class="btn btn-primary" ng-click="dvm.os.showUploadTab = true">Upload Ontology</button>
@@ -32,10 +32,10 @@
     </div>
     <div class="list row">
         <div class="col-xs-8 col-xs-offset-2">
-            <block>
+            <block targeted-spinner="dvm.id">
                 <block-content class="open-ontology-content">
                     <div class="ontologies">
-                        <div class="ontology" ng-click="dvm.open(record)" ng-repeat="record in dvm.filteredList | limitTo:dvm.limit:dvm.begin">
+                        <div class="ontology" ng-click="dvm.open(record)" ng-repeat="record in dvm.filteredList">
                             <div class="details">
                                 <h2 class="header" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></h2>
                                 <small class="ontology-iri text-muted">{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small>
@@ -51,8 +51,8 @@
                 </block-content>
                 <block-footer>
                     <div class="paging-container clearfix">
-                        <paging-details total-size="dvm.filteredList.length" page-index="dvm.begin / dvm.limit" limit="dvm.limit"></paging-details>
-                        <pagination links="{'prev': dvm.begin !== 0, 'next': (dvm.begin + dvm.limit) < dvm.filteredList.length}" current-page="dvm.begin / dvm.limit" get-page="dvm.getPage(direction)"></pagination>
+                        <paging-details total-size="dvm.totalSize" page-index="dvm.pageIndex" limit="dvm.limit"></paging-details>
+                        <pagination links="{'prev': dvm.pageIndex !== 0, 'next': ((dvm.pageIndex + 1) * dvm.limit) < dvm.totalSize}" current-page="dvm.pageIndex" get-page="dvm.getPage(direction)"></pagination>
                     </div>
                 </block-footer>
             </block>
