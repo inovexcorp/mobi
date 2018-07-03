@@ -25,7 +25,6 @@ package com.mobi.email.impl;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import aQute.configurable.Configurable;
@@ -34,14 +33,14 @@ import com.mobi.email.api.EmailServiceConfig;
 import com.mobi.exception.MobiException;
 import com.mobi.platform.config.api.server.Mobi;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.HtmlEmail;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -49,6 +48,7 @@ import java.util.concurrent.CompletableFuture;
 @Component
 public class SimpleEmailService implements EmailService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(SimpleEmailService.class);
     private static final String EMAIL_TEMPLATE;
     private static final String BODY_BINDING = "!|$BODY!|$";
     private static final String HOSTNAME_BINDING = "!|$HOSTNAME!|$";
@@ -110,6 +110,7 @@ public class SimpleEmailService implements EmailService {
                             email.addBcc(userEmail);
                         } catch (EmailException e) {
                             invalidEmails.add(userEmail);
+                            LOGGER.info("Invalid email address.", e);
                         }
                     }
                     try {
@@ -126,6 +127,7 @@ public class SimpleEmailService implements EmailService {
                             if (--repeatTries < 1) {
                                 throw new MobiException("Could not send email.", e);
                             }
+                            LOGGER.info("Could not send email. Attempting retry.");
                         }
                     }
 

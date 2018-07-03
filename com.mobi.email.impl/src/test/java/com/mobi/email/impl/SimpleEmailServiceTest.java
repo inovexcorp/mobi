@@ -103,8 +103,7 @@ public class SimpleEmailServiceTest {
     @Test (expected = ExecutionException.class)
     public void sendSimpleEmailInvalidAddressTest() throws Exception {
         CompletableFuture<Set<String>> cf = es.sendSimpleEmail(SUBJECT_LINE, TEXT_MESSAGE, "badAddress");
-        Set<String> failedEmails = cf.get();
-        assertEquals(0, failedEmails.size());
+        cf.get();
     }
 
     @Test
@@ -123,8 +122,7 @@ public class SimpleEmailServiceTest {
         m.invoke(es, config);
 
         CompletableFuture<Set<String>> cf = es.sendSimpleEmail(SUBJECT_LINE, TEXT_MESSAGE, TO_EMAIL_ADDRESS);
-        Set<String> failedEmails = cf.get();
-        assertEquals(0, failedEmails.size());
+        cf.get();
     }
 
     @Test
@@ -143,8 +141,7 @@ public class SimpleEmailServiceTest {
     @Test(expected = ExecutionException.class)
     public void sendEmailSingleInvalidAddressTest() throws Exception {
         CompletableFuture<Set<String>> cf = es.sendEmail(SUBJECT_LINE, HTML_MESSAGE, "badAddress");
-        Set<String> failedEmails = cf.get();
-        assertEquals(0, failedEmails.size());
+        cf.get();
     }
 
     @Test
@@ -163,24 +160,6 @@ public class SimpleEmailServiceTest {
         m.invoke(es, config);
 
         CompletableFuture<Set<String>> cf = es.sendEmail(SUBJECT_LINE, HTML_MESSAGE, TO_EMAIL_ADDRESS);
-        Set<String> failedEmails = cf.get();
-        assertEquals(0, failedEmails.size());
+        cf.get();
     }
-
-//    @Test
-//    public void sendSimpleEmailViaGmailTest() throws Exception {
-//        config.replace("port", 587);
-//        config.replace("smtpServer", "smtp.gmail.com");
-//        config.put("security", "STARTTLS");
-//
-//        // Uncomment to send from Outlook
-//        // config.replace("smtpServer", "smtp-mail.outlook.com");
-//        // config.replace("emailAddress", "mobitestuser@outlook.com");
-//        Method m = es.getClass().getDeclaredMethod("modified", Map.class);
-//        m.setAccessible(true);
-//        m.invoke(es, config);
-//
-//        CompletableFuture<Set<String>> cf = es.sendSimpleEmail(SUBJECT_LINE, TEXT_MESSAGE, "mobiemailtestuser@gmail.com");
-//        assertEquals(0, cf.get().size());
-//    }
 }
