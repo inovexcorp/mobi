@@ -71,6 +71,16 @@ public class SimpleEmailService implements EmailService {
         }
     }
 
+    @Activate
+    void activate(Map<String, Object> configuration) {
+        config = Configurable.createConfigurable(EmailServiceConfig.class, configuration);
+    }
+
+    @Modified
+    void modified(Map<String, Object> configuration) {
+        activate(configuration);
+    }
+
     @Override
     public CompletableFuture<Set<String>> sendSimpleEmail(String subject, String message, String... userEmails) {
         String body = "<tr><td style=\"padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px;"
@@ -143,15 +153,5 @@ public class SimpleEmailService implements EmailService {
             throw new MobiException("Invalid 'From' email address.", e);
         }
         return email;
-    }
-
-    @Activate
-    void activate(Map<String, Object> configuration) {
-        config = Configurable.createConfigurable(EmailServiceConfig.class, configuration);
-    }
-
-    @Modified
-    void modified(Map<String, Object> configuration) {
-        activate(configuration);
     }
 }

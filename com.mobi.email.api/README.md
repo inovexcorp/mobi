@@ -1,5 +1,5 @@
 # Mobi Email Service
-This bundle provides the API for the Mobi Email Service. This service provide a common API for sending emails via a configured SMTP server.
+This bundle provides the API for the Mobi Email Service. This service provides a common API for sending emails via a configured SMTP server.
 
 ## Configuration
 The `com.mobi.email.api` package exported by this bundle will provide a configuration interface with properties for the SMTP server to connect to.

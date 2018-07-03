@@ -79,7 +79,6 @@
             <groupId>com.github.kirviq</groupId>
             <artifactId>dumbster</artifactId>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -94,7 +93,7 @@
                         <Bundle-Name>Mobi Email Impl</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.email.impl
+                            com.mobi.email.api;provide=true
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>

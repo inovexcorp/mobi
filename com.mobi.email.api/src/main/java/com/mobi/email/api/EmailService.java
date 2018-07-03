@@ -35,7 +35,7 @@ public interface EmailService {
      * @param subject The message to use as the subject line in the email
      * @param message The simple text message to insert into the email template
      * @param userEmails The email addresses to send the message to
-     * @return
+     * @return If all emails sent properly, an empty Set. Otherwise, a list of invalid email addresses.
      */
     CompletableFuture<Set<String>> sendSimpleEmail(String subject, String message, String... userEmails);
 
@@ -46,7 +46,7 @@ public interface EmailService {
      * @param subject The message to use as the subject line in the email
      * @param htmlMessage The formatted HTML message to insert into the email template
      * @param userEmails The email addresses to send the message to
-     * @return
+     * @return If all emails sent properly, an empty Set. Otherwise, a list of invalid email addresses.
      */
     CompletableFuture<Set<String>> sendEmail(String subject, String htmlMessage, String... userEmails);
 }
