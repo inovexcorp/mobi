@@ -1217,6 +1217,7 @@ public class SimpleCatalogManager implements CatalogManager {
             Model rightDeletions = rightDiff.getDeletions();
 
             Set<Conflict> result = new HashSet<>();
+            Model original = utils.getCompiledResource(commonCommits, conn);
 
             Set<Statement> statementsToRemove = new HashSet<>();
 
@@ -1236,32 +1237,37 @@ public class SimpleCatalogManager implements CatalogManager {
                     }
                 });
 
-                // Check for deletion in left and addition in right
-                Model rightSubjectAdd = right.filter(subject, null, null);
-                boolean leftEntityDeleted = !left.subjects().contains(subject)
-                        && leftDeleteSubjectStatements.equals(utils.getCompiledResource(rightCommits, conn).filter(subject, null, null));
-                boolean rightEntityDeleted = rightDeletions.containsAll(leftDeleteSubjectStatements);
-                if (leftEntityDeleted && !rightEntityDeleted && rightSubjectAdd.size() > 0) {
-                    result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
-                    statementsToRemove.addAll(rightSubjectAdd);
+                // Check for deletion in left and addition in right if there are common parents
+                if (commonCommits.size() != 0) {
+                    Model rightSubjectAdd = right.filter(subject, null, null);
+                    boolean leftEntityDeleted = !left.subjects().contains(subject)
+                            && leftDeleteSubjectStatements.equals(original.filter(subject, null, null));
+                    boolean rightEntityDeleted = rightDeletions.containsAll(leftDeleteSubjectStatements);
+
+                    if (leftEntityDeleted && !rightEntityDeleted && rightSubjectAdd.size() > 0) {
+                        result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
+                        statementsToRemove.addAll(rightSubjectAdd);
+                    }
                 }
             });
 
             statementsToRemove.forEach(statement -> Stream.of(left, leftDeletions, right, rightDeletions)
                     .forEach(model -> model.remove(statement.getSubject(), statement.getPredicate(), null)));
 
-            rightDeletions.subjects().forEach(subject -> {
-                // Check for deletion in right and addition in left
-                Model rightDeleteSubjectStatements = rightDeletions.filter(subject, null, null);
-                Model leftSubjectAdd = left.filter(subject, null, null);
-                boolean rightEntityDeleted = !right.subjects().contains(subject)
-                        && rightDeleteSubjectStatements.equals(utils.getCompiledResource(leftCommits, conn).filter(subject, null, null));
-                boolean leftEntityDeleted = leftDeletions.containsAll(rightDeleteSubjectStatements);
+            if (commonCommits.size() != 0) {
+                rightDeletions.subjects().forEach(subject -> {
+                    // Check for deletion in right and addition in left
+                    Model rightDeleteSubjectStatements = rightDeletions.filter(subject, null, null);
+                    Model leftSubjectAdd = left.filter(subject, null, null);
+                    boolean rightEntityDeleted = !right.subjects().contains(subject)
+                            && rightDeleteSubjectStatements.equals(original.filter(subject, null, null));
+                    boolean leftEntityDeleted = leftDeletions.containsAll(rightDeleteSubjectStatements);
 
-                if (rightEntityDeleted && !leftEntityDeleted && leftSubjectAdd.size() > 0) {
-                    result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
-                }
-            });
+                    if (rightEntityDeleted && !leftEntityDeleted && leftSubjectAdd.size() > 0) {
+                        result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
+                    }
+                });
+            }
 
 
             return result;

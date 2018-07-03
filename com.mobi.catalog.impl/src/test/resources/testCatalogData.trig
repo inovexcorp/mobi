@@ -952,7 +952,7 @@ GRAPH deletions:conflict3-6 {
     <http://mobi.com/test/ontology> dc:title "Title" .
 }
 
-# Conflict Scenario 7 - Class deletion with disconnected nodes (1 conflict)
+# Conflict Scenario 7 - Class deletion with disconnected nodes (0 conflicts)
 
 GRAPH commits:conflict0-7 {
     commits:conflict0-7 a mcat:Commit ;
