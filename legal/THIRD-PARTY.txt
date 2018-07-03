@@ -1,5 +1,5 @@
 
-Lists of 328 third-party dependencies.
+Lists of 331 third-party dependencies.
      (Public Domain) AOP alliance (aopalliance:aopalliance:1.0 - http://aopalliance.sourceforge.net)
      (The Apache Software License, Version 2.0) avalon-framework (avalon-framework:avalon-framework:4.1.3 - no url defined)
      (The Apache Software License, Version 2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.1.0 - http://bnd.bndtools.org/)
@@ -22,6 +22,7 @@ Lists of 328 third-party dependencies.
      (The Apache Software License, Version 2.0) Caffeine cache (com.github.ben-manes.caffeine:caffeine:2.5.6 - https://github.com/ben-manes/caffeine)
      (Revised BSD License) JSONLD Java :: Core (com.github.jsonld-java:jsonld-java:0.8.3 - http://github.com/jsonld-java/jsonld-java/jsonld-java/)
      (Revised BSD License) JSONLD Java :: Core (com.github.jsonld-java:jsonld-java:0.9.0 - http://github.com/jsonld-java/jsonld-java/jsonld-java/)
+     (The Apache Software License, Version 2.0) dumbster (com.github.kirviq:dumbster:1.7.1 - https://github.com/kirviq/dumbster)
      (Revised BSD License) curvesapi (com.github.virtuald:curvesapi:1.03 - https://github.com/virtuald/curvesapi)
      (The Apache Software License, Version 2.0) FindBugs-jsr305 (com.google.code.findbugs:jsr305:1.3.9 - http://findbugs.sourceforge.net/)
      (The Apache Software License, Version 2.0) FindBugs-jsr305 (com.google.code.findbugs:jsr305:2.0.3 - https://code.google.com/p/jsr-305/)
@@ -307,6 +308,7 @@ Lists of 328 third-party dependencies.
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.6.6 - http://www.slf4j.org)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.10 - http://www.slf4j.org)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.12 - http://www.slf4j.org)
+     (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.18 - http://www.slf4j.org)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.21 - http://www.slf4j.org)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.22 - http://www.slf4j.org)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.6 - http://www.slf4j.org)
@@ -329,3 +331,4 @@ Lists of 328 third-party dependencies.
      (The Apache Software License, Version 2.0) WSO2 Balana Utils (org.wso2.balana:org.wso2.balana.utils:1.1.3 - http://wso2.org)
      (The Apache Software License, Version 2.0) StAX API (stax:stax-api:1.0.1 - http://stax.codehaus.org/)
      (The Apache Software License, Version 2.0) standard (taglibs:standard:1.1.2 - no url defined)
+     (Unknown license) xercesImpl (xerces.wso2:xercesImpl:2.8.1.wso2v2 - no url defined)

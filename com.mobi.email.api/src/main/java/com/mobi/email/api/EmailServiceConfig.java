@@ -28,18 +28,43 @@ import aQute.bnd.annotation.metatype.Meta;
 @Meta.OCD
 public interface EmailServiceConfig {
 
+    /**
+     * The Outgoing Mail (SMTP) server address.
+     *
+     * @return The configured SMTP server address
+     */
     @Meta.AD(required = true)
     String smtpServer();
 
+    /**
+     * The email address to send emails from via the configured SMTP server.
+     *
+     * @return The email address to send emails from
+     */
     @Meta.AD(required = true)
     String emailAddress();
 
+    /**
+     * The password associated with the configured email address to send emails from.
+     *
+     * @return The password associated with the provided email address
+     */
     @Meta.AD(required = true)
     String emailPassword();
 
-    @Meta.AD(deflt = "25")
+    /**
+     * The port to use to connect to the SMTP server.
+     *
+     * @return The port used by the SMTP server
+     */
+    @Meta.AD(deflt = "587")
     int port();
 
-    @Meta.AD(deflt = "STARTTLS")
+    /**
+     * The connection security setting (SSL, TLS, STARTTLS) to use to connect to the SMTP server.
+     *
+     * @return The connection security setting to use to connect to the SMTP server
+     */
+    @Meta.AD(deflt = "SSL")
     String security();
 }

@@ -23,25 +23,30 @@ package com.mobi.email.api;
  * #L%
  */
 
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public interface EmailService {
 
     /**
+     * Takes the provided text message, formats it, and inserts it into the default email template. Sends an email to
+     * the provided userEmails with the given subject.
      *
-     * @param subject
-     * @param message
-     * @param userEmails
+     * @param subject The message to use as the subject line in the email
+     * @param message The simple text message to insert into the email template
+     * @param userEmails The email addresses to send the message to
      * @return
      */
-    CompletableFuture<Boolean> sendSimpleEmail(String subject, String message, String... userEmails);
+    CompletableFuture<Set<String>> sendSimpleEmail(String subject, String message, String... userEmails);
 
     /**
+     * Inserts the supplied HTML message into the default email template. Sends an email to the provided userEmails
+     * with the given subject.
      *
-     * @param subject
-     * @param htmlMessage
-     * @param userEmails
+     * @param subject The message to use as the subject line in the email
+     * @param htmlMessage The formatted HTML message to insert into the email template
+     * @param userEmails The email addresses to send the message to
      * @return
      */
-    CompletableFuture<Boolean> sendEmail(String subject, String htmlMessage, String... userEmails);
+    CompletableFuture<Set<String>> sendEmail(String subject, String htmlMessage, String... userEmails);
 }

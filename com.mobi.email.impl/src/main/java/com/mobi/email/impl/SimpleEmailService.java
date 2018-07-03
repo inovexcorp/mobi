@@ -27,17 +27,21 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
+import aQute.bnd.annotation.component.Reference;
 import aQute.configurable.Configurable;
 import com.mobi.email.api.EmailService;
 import com.mobi.email.api.EmailServiceConfig;
 import com.mobi.exception.MobiException;
+import com.mobi.platform.config.api.server.Mobi;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.HtmlEmail;
 
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -46,7 +50,15 @@ import java.util.concurrent.CompletableFuture;
 public class SimpleEmailService implements EmailService {
 
     private static final String EMAIL_TEMPLATE;
+    private static final String BODY_BINDING = "!|$BODY!|$";
+    private static final String HOSTNAME_BINDING = "!|$HOSTNAME!|$";
     private EmailServiceConfig config;
+    private Mobi mobiServer;
+
+    @Reference
+    void setMobiServer(Mobi mobiServer) {
+        this.mobiServer = mobiServer;
+    }
 
     static {
         try {
@@ -60,11 +72,29 @@ public class SimpleEmailService implements EmailService {
     }
 
     @Override
-    public CompletableFuture<Boolean> sendSimpleEmail(String subject, String message, String... userEmails) {
-        CompletableFuture<Boolean> emailSendResult = CompletableFuture.supplyAsync(() -> setUpEmail())
+    public CompletableFuture<Set<String>> sendSimpleEmail(String subject, String message, String... userEmails) {
+        String body = "<tr><td style=\"padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px;"
+                + " color: #555555;\"><p style=\"margin: 0;\">" + message + "</p></td></tr>";
+        return sendEmail(subject, body, userEmails);
+    }
+
+    @Override
+    public CompletableFuture<Set<String>> sendEmail(String subject, String htmlMessage, String... userEmails) {
+        CompletableFuture<Set<String>> emailSendResult = CompletableFuture.supplyAsync(() -> setUpEmail())
                 .thenApply(email -> {
                     Set<String> invalidEmails = new HashSet<>();
                     email.setSubject(subject);
+                    String htmlMsg = EMAIL_TEMPLATE.replace(BODY_BINDING, htmlMessage);
+                    if (mobiServer.getHostName().endsWith("/")) {
+                        htmlMsg = htmlMsg.replace(HOSTNAME_BINDING, mobiServer.getHostName() + "mobi/index.html");
+                    } else {
+                        htmlMsg = htmlMsg.replace(HOSTNAME_BINDING, mobiServer.getHostName() + "/mobi/index.html");
+                    }
+                    try {
+                        email.setHtmlMsg(htmlMsg);
+                    } catch (EmailException e) {
+                        throw new MobiException("Unable to set HTML Message content", e);
+                    }
                     for (String userEmail : userEmails) {
                         try {
                             email.addBcc(userEmail);
@@ -72,16 +102,12 @@ public class SimpleEmailService implements EmailService {
                             invalidEmails.add(userEmail);
                         }
                     }
-                    if (invalidEmails.size() > 0) {
-                        // TODO: determine what to do with invalid emails
-                    }
                     try {
                         email.buildMimeMessage();
                     } catch (EmailException e) {
                         throw new MobiException("Unable to build MIME message.", e);
                     }
-
-                    int repeatTries = 3;
+                    int repeatTries = 2;
                     while (repeatTries > 0) {
                         try {
                             email.sendMimeMessage();
@@ -93,34 +119,30 @@ public class SimpleEmailService implements EmailService {
                         }
                     }
 
-                    return true;
+                    return invalidEmails;
                 });
         return emailSendResult;
     }
 
-    @Override
-    public CompletableFuture<Boolean> sendEmail(String subject, String htmlMessage, String... userEmails) {
-        return null;
-    }
-
     private HtmlEmail setUpEmail() {
         HtmlEmail email = new HtmlEmail();
-        if (config.security().equals("STARTTLS")) {
-            email.setStartTLSRequired(true);
-        }
-        email.setSmtpPort(config.port()); // email.setSslSmtpPort();
-
-        email.setSSLCheckServerIdentity(true);
+        email.setHostName(config.smtpServer());
+        email.setSmtpPort(config.port());
         email.setAuthentication(config.emailAddress(), config.emailPassword());
 
-        email.setHostName(config.smtpServer());
+        if (config.security().equals("SSL") || config.security().equals("TLS")) {
+            email.setSSLOnConnect(true);
+            email.setSSLCheckServerIdentity(true);
+        } else if (config.security().equals("STARTTLS")) {
+            email.setStartTLSRequired(true);
+        }
+
         try {
             email.setFrom(config.emailAddress());
         } catch (EmailException e) {
             throw new MobiException("Invalid 'From' email address.", e);
         }
         return email;
-
     }
 
     @Activate
@@ -130,12 +152,6 @@ public class SimpleEmailService implements EmailService {
 
     @Modified
     void modified(Map<String, Object> configuration) {
-        deactivate();
         activate(configuration);
-    }
-
-    @Deactivate
-    void deactivate() {
-
     }
 }
