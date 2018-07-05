@@ -2250,7 +2250,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Right"));
         Difference rightDiff = new Difference.Builder()
                 .additions(rightAdds)
-                .deletions(MODEL_FACTORY.createModel())
+                .deletions(rightDels)
                 .build();
 
         setUpConflictDisconnectedTest(leftId, rightId, leftDiff, rightDiff, originalModel);
@@ -2267,7 +2267,8 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     @Test
     public void testGetConflictOneFullDeletesOtherAddsToDisconnectedNodes() throws Exception {
         // Setup:
-        // One branch removes property while other adds another to it
+        // One branch removes property entirely while other adds another to it
+        // Defined as not a conflict with disconnected nodes
         IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
         Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-11");
         Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-11");
@@ -2282,11 +2283,11 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
                 .deletions(originalModel)
                 .build();
 
-        Model rightAdds = MODEL_FACTORY.createModel();
-        rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Right"));
+        Model rightDels = MODEL_FACTORY.createModel();
+        rightDels.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
         Difference rightDiff = new Difference.Builder()
-                .additions(rightAdds)
-                .deletions(MODEL_FACTORY.createModel())
+                .additions(MODEL_FACTORY.createModel())
+                .deletions(rightDels)
                 .build();
 
         setUpConflictDisconnectedTest(leftId, rightId, leftDiff, rightDiff, originalModel);
