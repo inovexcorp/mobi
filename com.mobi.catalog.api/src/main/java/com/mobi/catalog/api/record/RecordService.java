@@ -56,7 +56,7 @@ public interface RecordService<T extends Record> {
      *
      * @param user The {@link User} that is deleting the Record
      * @param config A {@link RecordOperationConfig} that contains the insert configuration.
-     * @param factory The OrmFactory for creating the entity.
+     * @param Factory A {@link OrmFactory<T>} that uses the correct factory
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      * @return The created Record
      */

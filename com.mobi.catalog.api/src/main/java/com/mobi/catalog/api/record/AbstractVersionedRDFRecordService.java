@@ -24,11 +24,11 @@ package com.mobi.catalog.api.record;
  */
 
 import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
-import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
@@ -82,21 +82,21 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
 
     @Override
     public T createRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
-                                   OffsetDateTime modified, RepositoryConnection conn){
-        record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_TITLE)),
-                valueFactory.createIRI(_Thing.title_IRI));
+                                   OffsetDateTime modified, RepositoryConnection conn) {
+        record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_TITLE)), valueFactory
+                .createIRI(_Thing.title_IRI));
         record.setProperty(valueFactory.createLiteral(issued), valueFactory.createIRI(_Thing.issued_IRI));
         record.setProperty(valueFactory.createLiteral(modified), valueFactory.createIRI(_Thing.modified_IRI));
-        record.setProperties(config.get(RecordCreateSettings.RECORD_PUBLISHERS).stream().map(User::getResource).
-                        collect(Collectors.toSet()),
+        record.setProperties(config.get(RecordCreateSettings.RECORD_PUBLISHERS).stream().map(User::getResource)
+                        .collect(Collectors.toSet()),
                 valueFactory.createIRI(_Thing.publisher_IRI));
         if (config.get(RecordCreateSettings.RECORD_DESCRIPTION) != null) {
             record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_DESCRIPTION)),
                     valueFactory.createIRI(_Thing.description_IRI));
         }
         if (config.get(RecordCreateSettings.RECORD_KEYWORDS) != null) {
-            record.setKeyword(config.get(RecordCreateSettings.RECORD_KEYWORDS).stream().map(valueFactory::createLiteral).
-                    collect(Collectors.toSet()));
+            record.setKeyword(config.get(RecordCreateSettings.RECORD_KEYWORDS).stream().map(valueFactory::createLiteral)
+                    .collect(Collectors.toSet()));
         }
         conn.begin();
         utilsService.addObject(record, conn);
@@ -113,12 +113,12 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param record The VersionedRDFRecord to delete
      * @param conn A RepositoryConnection to use for lookup
      */
-    protected void addVersionedRDFRecord(Resource catalogId, T record, RepositoryConnection conn) {
+    private void addVersionedRDFRecord(Resource catalogId, T record, RepositoryConnection conn) {
         if (conn.containsContext(record.getResource())) {
             throw utilsService.throwAlreadyExists(record.getResource(), recordFactory);
         }
         record.setCatalog(utilsService.getObject(catalogId, catalogFactory, conn));
-        if(!conn.isActive()){
+        if(!conn.isActive()) {
             conn.begin();
         }
         if (record.getModel().contains(null, valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
@@ -136,7 +136,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param record The VersionedRDFRecord to add to a MasterBranch
      * @param conn A RepositoryConnection to use for lookup
      */
-    protected void addMasterBranch(VersionedRDFRecord record, RepositoryConnection conn) {
+    private void addMasterBranch(VersionedRDFRecord record, RepositoryConnection conn) {
         if (record.getMasterBranch_resource().isPresent()) {
             throw new IllegalStateException("Record " + record.getResource() + " already has a master Branch.");
         }
@@ -161,7 +161,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     protected  <T extends Branch> T createBranch(@Nonnull String title, String description, OrmFactory<T> factory) {
         OffsetDateTime now = OffsetDateTime.now();
 
-        T branch = factory.createNew(valueFactory.createIRI(Catalog.BRANCH_NAMESPACE + UUID.randomUUID()));
+        T branch = factory.createNew(valueFactory.createIRI(Catalogs.BRANCH_NAMESPACE + UUID.randomUUID()));
         branch.setProperty(valueFactory.createLiteral(title), valueFactory.createIRI(_Thing.title_IRI));
         branch.setProperty(valueFactory.createLiteral(now), valueFactory.createIRI(_Thing.issued_IRI));
         branch.setProperty(valueFactory.createLiteral(now), valueFactory.createIRI(_Thing.modified_IRI));
@@ -183,7 +183,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param record The VersionedRDFRecord to delete
      * @param conn A RepositoryConnection to use for lookup
      */
-    protected void deleteVersionedRDFData(T record, RepositoryConnection conn) {
+    private void deleteVersionedRDFData(T record, RepositoryConnection conn) {
         recordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRDFRecord -> {
                     mergeRequestManager.deleteMergeRequestsWithRecordId(versionedRDFRecord.getResource(), conn);
@@ -209,8 +209,8 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param exporter The ExportWriter to write the VersionedRDFRecord to
      * @param conn A RepositoryConnection to use for lookup
      */
-    protected void writeVersionedRDFData(VersionedRDFRecord record, Set<Resource> branchesToWrite,
-                                         BatchExporter exporter, RepositoryConnection conn) {
+    private void writeVersionedRDFData(VersionedRDFRecord record, Set<Resource> branchesToWrite,
+                                       BatchExporter exporter, RepositoryConnection conn) {
         Set<Resource> processedCommits = new HashSet<>();
 
         // Write Branches

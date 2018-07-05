@@ -137,7 +137,7 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        recordService.create(user, config, RDFRecordFactory, connection);
+        recordService.create(user, config, recordFactory, connection);
 
         verify(utilsService).addObject(any(Record.class), any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));

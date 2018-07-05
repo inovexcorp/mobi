@@ -197,7 +197,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        recordService.create(user, config, versionedRDFRecordFactory, connection);
+        recordService.create(user, config, recordFactory, connection);
 
         verify(utilsService).updateObject(any(Record.class),any(RepositoryConnection.class));
         verify(utilsService).getObject(any(Resource.class),eq(catalogFactory),any(RepositoryConnection.class));
