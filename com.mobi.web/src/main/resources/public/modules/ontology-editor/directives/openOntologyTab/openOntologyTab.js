@@ -27,11 +27,11 @@
         .module('openOntologyTab', [])
         .directive('openOntologyTab', openOntologyTab);
 
-        openOntologyTab.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
-            'stateManagerService', 'utilService', 'mapperStateService'];
+        openOntologyTab.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
+            'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService'];
 
-        function openOntologyTab($filter, ontologyManagerService, ontologyStateService, prefixes,
-            stateManagerService, utilService, mapperStateService) {
+        function openOntologyTab(httpService, ontologyManagerService, ontologyStateService, prefixes,
+            stateManagerService, utilService, mapperStateService, catalogManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -43,6 +43,7 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     var sm = stateManagerService;
+                    var cm = catalogManagerService;
                     var ontologyRecords = [];
 
                     dvm.prefixes = prefixes;
@@ -50,9 +51,11 @@
                     dvm.os = ontologyStateService;
                     dvm.ms = mapperStateService;
                     dvm.util = utilService;
-                    dvm.begin = 0;
+                    dvm.pageIndex = 0;
                     dvm.limit = 10;
+                    dvm.totalSize = 0;
                     dvm.filteredList = [];
+                    dvm.id = "openOntologyTabTargetedSpinner";
 
                     dvm.open = function(record) {
                         dvm.os.openOntology(record['@id'], dvm.util.getDctermsValue(record, 'title'))
@@ -76,10 +79,11 @@
                     }
                     dvm.getPage = function(direction) {
                         if (direction === 'next') {
-                            dvm.begin += dvm.limit;
+                            dvm.pageIndex++;
                         } else {
-                            dvm.begin -= dvm.limit;
+                            dvm.pageIndex--;
                         }
+                        dvm.getPageOntologyRecords();
                     }
                     dvm.showDeleteConfirmationOverlay = function(record) {
                         dvm.recordId = _.get(record, '@id', '');
@@ -105,27 +109,34 @@
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
-                    dvm.getAllOntologyRecords = function(sortingOption) {
-                        dvm.om.getAllOntologyRecords(sortingOption)
-                            .then(records => {
-                                ontologyRecords = records;
-                                dvm.filteredList = getFilteredRecords(ontologyRecords);
-                            });
+                    dvm.getPageOntologyRecords = function(sortOption = _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true})) {
+                        var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
+                        var catalogId = _.get(cm.localCatalog, '@id', '');
+                        var paginatedConfig = {
+                            pageIndex: dvm.pageIndex,
+                            limit: dvm.limit,
+                            recordType: ontologyRecordType,
+                            sortOption,
+                            searchText: dvm.filterText
+                        };
+                        httpService.cancel(dvm.id);
+                        cm.getRecords(catalogId, paginatedConfig, dvm.id).then(response => { 
+                            var ontologyRecords = response.data;
+                            dvm.filteredList = getFilteredRecords(ontologyRecords);
+                            if (response.headers() !== undefined) {
+                                dvm.totalSize = _.get(response.headers(), 'x-total-count');
+                            }
+                        });
                     }
-
-                    $scope.$watch(function() {
-                        return dvm.filterText + dvm.os.list + ontologyRecords;
-                    }, function handleFilterTextChange(newValue, oldValue) {
-                        dvm.filteredList = $filter('filter')(getFilteredRecords(ontologyRecords), dvm.filterText,
-                            (actual, expected) => {
-                                expected = _.lowerCase(expected);
-                                return _.includes(_.lowerCase(dvm.util.getDctermsValue(actual, 'title')), expected)
-                                    || _.includes(_.lowerCase(dvm.util.getDctermsValue(actual, 'description')), expected)
-                                    || _.includes(_.lowerCase(dvm.util.getDctermsValue(actual, 'identifier')), expected);
-                            });
-                    });
-
-                    dvm.getAllOntologyRecords();
+                    dvm.search = function(event) {
+                        dvm.pageIndex = 0;
+                        // keyCode 13 is the enter key
+                        if (event.keyCode === 13) {
+                            dvm.getPageOntologyRecords();
+                        }
+                    }
+                    
+                    dvm.getPageOntologyRecords();
 
                     function getFilteredRecords(records) {
                         return _.reject(records, record => _.find(dvm.os.list, {ontologyRecord: {recordId: record['@id']}}));
