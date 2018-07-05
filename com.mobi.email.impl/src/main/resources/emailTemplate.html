@@ -11,342 +11,444 @@
   it under the terms of the GNU Affero General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
 
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="utf-8"> <!-- utf-8 works for most cases -->
-    <meta name="viewport" content="width=device-width"> <!-- Forcing initial-scale shouldn't be necessary -->
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Use the latest (edge) version of IE rendering engine -->
-    <meta name="x-apple-disable-message-reformatting">  <!-- Disable auto-scale in iOS 10 Mail entirely -->
-    <title></title> <!-- The title tag shows in email notifications, like Android 4.4. -->
+    <meta charset="utf-8">
 
-    <!-- Web Font / @font-face : BEGIN -->
-    <!-- NOTE: If web fonts are not required, lines 10 - 27 can be safely removed. -->
+    <meta name="viewport" content="width=device-width">
 
-    <!-- Desktop Outlook chokes on web font references and defaults to Times New Roman, so we force a safe fallback font. -->
-    <!--[if mso]>
-    <style>
-            * {
-                font-family: sans-serif !important;
-            }
-        </style>
-    <![endif]-->
-
-    <!-- All other clients get the webfont reference; some will render the font and others will silently fail to the fallbacks. More on that here: http://stylecampaign.com/blog/2015/02/webfont-support-in-email/ -->
     <!--[if !mso]><!-->
-    <!-- insert web font reference, eg: <link href='https://fonts.googleapis.com/css?family=Roboto:400,700' rel='stylesheet' type='text/css'> -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <!--<![endif]-->
 
-    <!-- Web Font / @font-face : END -->
+    <title></title>
 
-    <!-- CSS Reset : BEGIN -->
-    <style>
-
-        /* What it does: Remove spaces around the email design added by some email clients. */
-        /* Beware: It can remove the padding / margin and add a background color to the compose a reply window. */
-        html,
-        body {
-            margin: 0 auto !important;
-            padding: 0 !important;
-            height: 100% !important;
-            width: 100% !important;
-        }
-
-        /* What it does: Stops email clients resizing small text. */
-        * {
-            -ms-text-size-adjust: 100%;
-            -webkit-text-size-adjust: 100%;
-        }
-
-        /* What it does: Centers email on Android 4.4 */
-        div[style*="margin: 16px 0"] {
-            margin: 0 !important;
-        }
-
-        /* What it does: Stops Outlook from adding extra spacing to tables. */
-        table,
-        td {
-            mso-table-lspace: 0pt !important;
-            mso-table-rspace: 0pt !important;
-        }
-
-        /* What it does: Fixes webkit padding issue. Fix for Yahoo mail table alignment bug. Applies table-layout to the first 2 tables then removes for anything nested deeper. */
-        table {
-            border-spacing: 0 !important;
-            border-collapse: collapse !important;
-            table-layout: fixed !important;
-            margin: 0 auto !important;
-        }
-        table table table {
-            table-layout: auto;
-        }
-
-        /* What it does: Uses a better rendering method when resizing images in IE. */
-        img {
-            -ms-interpolation-mode:bicubic;
-        }
-
-        /* What it does: Prevents Windows 10 Mail from underlining links despite inline CSS. Styles for underlined links should be inline. */
-        a {
-            text-decoration: none;
-        }
-
-        /* What it does: A work-around for email clients meddling in triggered links. */
-        *[x-apple-data-detectors],  /* iOS */
-        .unstyle-auto-detected-links *,
-        .aBn {
-            border-bottom: 0 !important;
-            cursor: default !important;
-            color: inherit !important;
-            text-decoration: none !important;
-            font-size: inherit !important;
-            font-family: inherit !important;
-            font-weight: inherit !important;
-            line-height: inherit !important;
-        }
-
-        /* What it does: Prevents Gmail from displaying a download button on large, non-linked images. */
-        .a6S {
-            display: none !important;
-            opacity: 0.01 !important;
-        }
-        /* If the above doesn't work, add a .g-img class to any image in question. */
-        img.g-img + div {
-            display: none !important;
-        }
-
-        /* What it does: Removes right gutter in Gmail iOS app: https://github.com/TedGoas/Cerberus/issues/89  */
-        /* Create one of these media queries for each additional viewport size you'd like to fix */
-
-        /* iPhone 4, 4S, 5, 5S, 5C, and 5SE */
-        @media only screen and (min-device-width: 320px) and (max-device-width: 374px) {
-            .email-container {
-                min-width: 320px !important;
-            }
-        }
-        /* iPhone 6, 6S, 7, 8, and X */
-        @media only screen and (min-device-width: 375px) and (max-device-width: 413px) {
-            .email-container {
-                min-width: 375px !important;
-            }
-        }
-        /* iPhone 6+, 7+, and 8+ */
-        @media only screen and (min-device-width: 414px) {
-            .email-container {
-                min-width: 414px !important;
-            }
-        }
-
-    </style>
-    <!-- CSS Reset : END -->
-    <!-- Reset list spacing because Outlook ignores much of our inline CSS. -->
-    <!--[if mso]>
+    <!-- Normalize Styles -->
     <style type="text/css">
-		ul,
-		ol {
-			margin: 0 !important;
-		}
-		li {
-			margin-left: 30px !important;
-		}
-		li.list-item-first {
-			margin-top: 0 !important;
-		}
-		li.list-item-last {
-			margin-bottom: 10px !important;
-		}
-	</style>
-    <![endif]-->
+            /* What it does: Remove spaces around the email design added by some email clients. */
+            /* Beware: It can remove the padding / margin and add a background color to the compose a reply window. */
 
-    <!-- Progressive Enhancements : BEGIN -->
-    <style>
+            html,
+            body {
+                margin: 0 auto !important;
+                padding: 0 !important;
+                height: 100% !important;
+                width: 100% !important;
+            }
+            /* What it does: Stops WebKit and Windows mobile clients resizing small text. */
 
-	    /* What it does: Hover styles for buttons */
-	    .button-td,
-	    .button-a {
-	        transition: all 100ms ease-in;
-	    }
-	    .button-td-primary:hover,
-	    .button-a-primary:hover {
-	        background: #555555 !important;
-	        border-color: #555555 !important;
-	    }
+            * {
+                -ms-text-size-adjust: 100%;
+                -webkit-text-size-adjust: 100%;
+            }
+            /* What is does: Centers email on Android 4.4 */
 
-	    /* Media Queries */
-	    @media screen and (max-width: 600px) {
+            div[style*="margin: 16px 0"] {
+                margin: 0 !important;
+            }
+            /* What it does: Remove spacing between tables in Outlook 2007 and up. */
 
-	        /* What it does: Adjust typography on small screens to improve readability */
-	        .email-container p {
-	            font-size: 17px !important;
-	        }
+            table,
+            td {
+                mso-table-lspace: 0pt !important;
+                mso-table-rspace: 0pt !important;
+            }
+            /* What it does: Fixes webkit padding issue. Fix for Yahoo mail table alignment bug. */
 
-	    }
+            table {
+                border-spacing: 0 !important;
+                table-layout: fixed !important;
+                margin: 0 auto !important;
+            }
+            /* What it does: Reset styles. */
+
+            img {
+                line-height: 100%;
+                outline: none;
+                text-decoration: none;
+                /* Uses a smoother rendering method when resizing images in IE. */
+                -ms-interpolation-mode: bicubic;
+                /* Remove border when inside `a` element in IE 8/9/10. */
+                border: 0;
+                /* Sets a maximum width relative to the parent and auto scales the height */
+                max-width: 100%;
+                height: auto;
+                /* Remove the gap between images and the bottom of their containers */
+                vertical-align: middle;
+            }
+            /* What it does: Overrides styles added when Yahoo's auto-senses a link. */
+
+            .yshortcuts a {
+                border-bottom: none !important;
+            }
+            /* What it does: A work-around for iOS meddling in triggered links. */
+
+            a[x-apple-data-detectors] {
+                color: inherit !important;
+                text-decoration: none !important;
+                font-size: inherit !important;
+                font-family: inherit !important;
+                font-weight: inherit !important;
+                line-height: inherit !important;
+            }
+            /* What it does: Neutralize whitespace for inline-block grids on iOS. */
+
+            @media screen and (min-width: 600px) {
+                .ios-responsive-grid {
+                    display: -webkit-box !important;
+                    display: -webkit-flex !important;
+                    display: -moz-box !important;
+                    display: -ms-flexbox !important;
+                    display: flex !important;
+                }
+                /* Alternative method. Not needed if already using the .ios-responsive-grid flex workaround. */
+                /* .ios-responsive-grid__unit class would need to be added to the inline-block <div> grid units  */
+                .ios-responsive-grid__unit {
+                    float: left;
+                }
+            }
+
+            body {
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+            }
 
     </style>
-    <!-- Progressive Enhancements : END -->
 
-    <!-- What it does: Makes background images in 72ppi Outlook render at correct size. -->
     <!--[if gte mso 9]>
-    <xml>
-        <o:OfficeDocumentSettings>
-            <o:AllowPNG/>
-            <o:PixelsPerInch>96</o:PixelsPerInch>
-        </o:OfficeDocumentSettings>
-    </xml>
+    <style type="text/css">
+                /* What it does: Normalize space between bullets and text. */
+                /* https://litmus.com/community/discussions/1093-bulletproof-lists-using-ul-and-li */
+                li {
+                    text-indent: -1em;
+                }
+
+
+    </style>
     <![endif]-->
 
+    <!-- Progressive Enhancements -->
+    <style type="text/css">
+            /* Components */
+            /* What it does: Hover styles for buttons */
+
+            .button__td,
+            .button__a {
+                transition: all 100ms ease;
+            }
+
+            .button__td:hover,
+            .button__a:hover {
+                background: #185de7 !important;
+            }
+            /* What it does: Mobile optimized styles */
+
+            @media screen and (max-width: 599px) {
+                /* Components */
+                .tw-body {
+                    padding: 8px 8px 0 !important;
+                }
+                .tw-card-header,
+                .tw-card-banner,
+                .tw-card-body,
+                .tw-card-footer {
+                    padding-left: 15px !important;
+                    padding-right: 15px !important;
+                }
+                .tw-card-banner {
+                    padding-top: 20px !important;
+                    padding-bottom: 10px !important;
+                }
+                .tw-card-body-xsmall {
+                    padding: 10px !important;
+                }
+                .tw-header-cta {
+                    display: none !important;
+                }
+                .tw-h1 {
+                    font-size: 22px !important;
+                    line height: 30px !important;
+                }
+                .tw-signoff,
+                .tw-footnotes {
+                    margin-top: 30px !important;
+                }
+                /* Utilities */
+                /* Display */
+                .mobile-hidden {
+                    display: none !important;
+                }
+                .mobile-d-block {
+                    display: block !important;
+                }
+                /* Size */
+                .mobile-w-full {
+                    width: 100% !important;
+                }
+                .mobile-h-auto {
+                    height: auto !important;
+                }
+                /* Margin */
+                .mobile-m-h-auto {
+                    margin: 0 auto !important;
+                }
+                /* Padding */
+                .mobile-p-0 {
+                    padding: 0 !important;
+                }
+                .mobile-p-h-0 {
+                    padding-right: 0 !important;
+                    padding-left: 0 !important;
+                }
+                .mobile-p-t-0 {
+                    padding-top: 0 !important;
+                }
+                /* Text */
+                .mobile-text-start {
+                    text-align: left !important;
+                }
+                .mobile-text-end {
+                    text-align: right !important;
+                }
+                /* Images */
+                .mobile-img-fluid {
+                    max-width: 100% !important;
+                    width: 100% !important;
+                    height: auto !important;
+                }
+            }
+
+    </style>
 </head>
-<!--
-	The email background color (#222222) is defined in three places:
-	1. body tag: for most email clients
-	2. center tag: for Gmail and Inbox mobile apps and web versions of Gmail, GSuite, Inbox, Yahoo, AOL, Libero, Comcast, freenet, Mail.ru, Orange.fr
-	3. mso conditional: For Windows 10 Mail
--->
-<body width="100%" style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #222222;">    <center style="width: 100%; background-color: #222222;">
-    <!--[if mso | IE]>
-    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #222222;">
-        <tr>
-            <td>
-    <![endif]-->
-
-    <!-- Visually Hidden Preheader Text : BEGIN -->
-    <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all; font-family: sans-serif;">
-        (Optional) This text will appear in the inbox preview, but not the email body. It can be used to supplement the email subject line or even summarize the email's contents. Extended text preheaders (~490 characters) seems like a better UX for anyone using a screenreader or voice-command apps like Siri to dictate the contents of an email. If this text is not included, email clients will automatically populate it using the text (including image alt text) at the start of the email's body.
-    </div>
-    <!-- Visually Hidden Preheader Text : END -->
-
-    <!-- Create white space after the desired preview text so email clients don’t pull other distracting text into the inbox preview. Extend as necessary. -->
-    <!-- Preview Text Spacing Hack : BEGIN -->
-    <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all; font-family: sans-serif;">
-        &zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
-    </div>
-    <!-- Preview Text Spacing Hack : END -->
-
-    <!--
-        Set the email width. Defined in two places:
-        1. max-width for all clients except Desktop Windows Outlook, allowing the email to squish on narrow but never go wider than 600px.
-        2. MSO tags for Desktop Windows Outlook enforce a 600px width.
-    -->
-    <div style="max-width: 600px; margin: 0 auto;" class="email-container">
-        <!--[if mso]>
-        <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600">
-            <tr>
-                <td>
-        <![endif]-->
-
-        <!-- Email Body : BEGIN -->
-        <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 auto;">
-            <!-- Hero Image, Flush : BEGIN -->
-            <br>
-            <tr>
-                <td style="background-color: #191970;">
-                    <img src="https://mobi.inovexcorp.com/wp-content/uploads/2018/06/mobi-alternate-logo-cropped.png" width="600" height="" alt="mobi_logo" border="0" style="padding: 20px; width: 100%; max-width: 560px; height: auto; background: #191970; font-family: sans-serif; font-size: 15px; line-height: 15px; color: #555555; margin: auto;" class="g-img">
-                </td>
-            </tr>
-            <!-- Hero Image, Flush : END -->
-
-            <!-- 1 Column Text + Button : BEGIN -->
-            <tr>
-                <td style="background-color: #ffffff;">
-                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                        !|$BODY!|$
-                        <tr>
-                            <td style="padding: 0 20px;">
-                                <!-- Button : BEGIN -->
-                                <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: auto;">
-                                    <tr>
-                                        <td class="button-td button-td-primary" style="border-radius: 4px;">
-                                            <a class="button-a button-a-primary" href="!|$HOSTNAME!|$" style="background: #222222; border: 1px solid #000000; font-family: sans-serif; font-size: 15px; line-height: 15px; text-decoration: none; padding: 13px 17px; color: #ffffff; display: block; border-radius: 4px; margin: 5px">Mobi Application</a>
-                                        </td>
-                                        <td class="button-td button-td-primary" style="border-radius: 4px;">
-                                            <a class="button-a button-a-primary" href="https://mobi.inovexcorp.com/docs/" style="background: #222222; border: 1px solid #000000; font-family: sans-serif; font-size: 15px; line-height: 15px; text-decoration: none; padding: 13px 17px; color: #ffffff; display: block; border-radius: 4px; margin: 5px">Mobi Documentation</a>
-                                        </td>
-                                        <td class="button-td button-td-primary" style="border-radius: 4px;">
-                                            <a class="button-a button-a-primary" href="https://google.com/" style="background: #222222; border: 1px solid #000000; font-family: sans-serif; font-size: 15px; line-height: 15px; text-decoration: none; padding: 13px 17px; color: #ffffff; display: block; border-radius: 4px; margin: 5px">Mobi Support Desk</a>
-                                        </td>
-                                    </tr>
-                                </table>
-                                <!-- Button : END -->
-                            </td>
-                    </table>
-                </td>
-            </tr>
-
-            <!-- Two Even Columns : END -->
-
-            <!-- Clear Spacer : BEGIN -->
-            <tr>
-                <td aria-hidden="true" height="40" style="font-size: 0px; line-height: 0px;">
-                    &nbsp;
-                </td>
-            </tr>
-            <!-- Clear Spacer : END -->
-        </table>
-        <!-- Email Body : END -->
-
-        <!-- Email Footer : BEGIN -->
-        <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 auto;">
-            <tr>
-                <td style="padding: 20px; font-family: sans-serif; font-size: 12px; line-height: 15px; text-align: center; color: #888888;">
-                    <a href="!|$HOSTNAME!|$">Visit Mobi</a><br>
-                    iNovex Information Systems<br><span class="unstyle-auto-detected-links">7240 Parkway Dr, Hanover, MD 21076</span>
-                    <br>Copyright © 2018 Mobi All rights reserved
-                    <br><br>
-                </td>
-            </tr>
-        </table>
-        <!-- Email Footer : END -->
-
-        <!--[if mso]>
-        </td>
-        </tr>
-        </table>
-        <![endif]-->
-    </div>
-
-    <!-- Full Bleed Background Section : BEGIN -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #191970;">
-        <tr>
-            <td valign="top">
-                <div style="max-width: 600px; margin: auto;" class="email-container">
-                    <!--[if mso]>
-                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" align="center">
-                        <tr>
-                            <td>
-                    <![endif]-->
-                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                        <tr>
-                            <td style="padding: 20px; text-align: left; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #ffffff;">
-                                <p style="margin: 0;">Mobi is a decentralized, federated, and distributed graph data platform for teams and communities to publish and discover data, data models, and analytics that are instantly consumable.</p>
-                            </td>
-                        </tr>
-                    </table>
-                    <!--[if mso]>
+<body style="background: #ffffff; height: 100% !important; margin: 0 auto !important; padding: 0 !important; width: 100% !important; ">
+<div style="display: none; font-size: 1px; line-height: 1px; max-height: 0; max-width: 0; opacity: 0; overflow: hidden; mso-hide: all;">
+    Plus some quick resources to help make the transition as smooth as possible.
+</div>
+<table cellpadding="0" cellspacing="0" style="background: #F7F8FA; border: 0; border-radius: 0; width: 100%; ">
+    <tbody>
+    <tr>
+        <td align="center" class="tw-body" style="padding: 15px 15px 0;">
+            <table cellpadding="0" cellspacing="0" style="background: #F7F8FA; border: 0; border-radius: 0; ">
+                <tbody>
+                <tr>
+                    <td align="center" class="" style="width: 600px;">
+                        <table cellpadding="0" cellspacing="0"
+                               style="background: #FFFFFF; border: 0; border-radius: 4px; width: 100%; overflow: hidden;">
+                            <tbody>
+                            <tr>
+                                <td align="center" class="" style="padding: 0;">
+                                    <table cellpadding="0" cellspacing="0"
+                                           style="background: #ffffff; border: 0; border-radius: 0; width: 100%; ">
+                                        <tbody>
+                                        <tr>
+                                            <td align="center" class="tw-card-header"
+                                                style="padding: 25px 35px 10px 35px;">
+                                                <table cellpadding="0" cellspacing="0" dir="ltr"
+                                                       style="border: 0; width: 100%;">
+                                                    <tbody>
+                                                    <tr>
+                                                        <td class="" align="center" valign="top" style="width: 103px;">
+                                                            <table cellpadding="0" cellspacing="0" dir="ltr"
+                                                                   style="border: 0; width: 100%; ">
+                                                                <tbody>
+                                                                <tr>
+                                                                    <td class="" style="padding: 0; text-align: left; ">
+                                                                        <a href="!|$HOSTNAME!|$"
+                                                                           style="text-decoration: none; "
+                                                                           universal="true" target="_blank">
+                                                                            <img alt="Mobi" class="  "
+                                                                                 src="https://mobi.inovexcorp.com/docs/images/mobi-primary-logo-cropped.png"
+                                                                                 style="border: 0; height: auto;  max-width: 100%; vertical-align: middle; "
+                                                                                 width="103">
+                                                                        </a>
+                                                                    </td>
+                                                                </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </td>
+                                                        <td class="" align="center" valign="middle"
+                                                            style="width: 100%;">
+                                                            <table cellpadding="0" cellspacing="0" dir="ltr"
+                                                                   style="border: 0; width: 100%; ">
+                                                                <tbody>
+                                                                <tr>
+                                                                    <td class="tw-header-cta"
+                                                                        style="padding: 0 0 0 20px; text-align: right; color: #6F6F6F; font-family: sans-serif;">
+                                                                        <p class=""
+                                                                           style="margin: 20px 0; font-size: 16px; mso-line-height-rule: exactly; line-height: 24px; margin: 20px 0; margin: 0;">
+                                                                            <a href="!|$HOSTNAME!|$"
+                                                                               style="color: #9A9A9A; text-decoration: none; "
+                                                                               universal="true" target="_blank">Launch Mobi</a>
+                                                                        </p>
+                                                                    </td>
+                                                                </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                    <table cellpadding="0" cellspacing="0" dir="ltr" style="border: 0; width: 100%; ">
+                                        <tbody>
+                                        <tr>
+                                            <td class="tw-card-banner" style="padding: 40px 35px; text-align: center; ">
+                                                <img alt="Publish. Subscribe. Connect." class="  "
+                                                     src="https://mobi.inovexcorp.com/wp-content/uploads/2017/08/download_element_single_1.png"
+                                                     style="border: 0; height: auto;  max-width: 100%; vertical-align: middle; "
+                                                     width="391">
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                    <table cellpadding="0" cellspacing="0" dir="ltr" style="border: 0; width: 100%; ">
+                                        <tbody>
+                                        <tr>
+                                            <td class="tw-card-body"
+                                                style="padding: 20px 35px; text-align: left; color: #6F6F6F; font-family: sans-serif; border-top: 0;">
+                                                <h1 class="tw-h1"
+                                                    style="font-size: 36px; font-weight: normal; mso-line-height-rule: exactly; line-height: 38px; margin: 20px 0; color: #474747; font-size: 24px; font-weight: bold; mso-line-height-rule: exactly; line-height: 32px; margin: 0 0 20px; ">
+                                                    Welcome to Twist, Smiles Davis!
+                                                </h1>
+                                                <p class=""
+                                                   style="margin: 20px 0; font-size: 16px; mso-line-height-rule: exactly; line-height: 24px; margin: 20px 0; ">
+                                                    You just created the <span
+                                                        style="color: #474747; font-weight: bold;">Really Good Emails</span>
+                                                    team on Twist. It’s a first step toward helping your team
+                                                    collaborate in a calmer, more productive way (something most of
+                                                    today’s leaders unfortunately <span style="font-style: italic;">don’t</span>
+                                                    do). Congrats!
+                                                </p>
+                                                <p class=""
+                                                   style="margin: 20px 0; font-size: 16px; mso-line-height-rule: exactly; line-height: 24px; margin: 20px 0; ">
+                                                    Changing the way your team communicates isn’t easy, but we’ve got
+                                                    your back. We put together a few resources and best practices for
+                                                    successfully onboarding your team to Twist:
+                                                </p>
+                                                <div class=""
+                                                     style="border-top: 0; font-size: 1px; mso-line-height-rule: exactly; line-height: 1px; max-height: 0; margin: 20px 0; overflow: hidden;">
+                                                    ​
+                                                </div>
+                                                <table cellpadding="0" cellspacing="0" style="border: 0; width: 100%;">
+                                                    <tbody>
+                                                    <tr>
+                                                        <td>
+                                                            <table class="button mobile-w-full" align="center"
+                                                                   cellspacing="0" cellpadding="0"
+                                                                   style="border: 0; margin: 0; margin-left: auto !important; margin-right: auto !important; width: 100%;">
+                                                                <tbody>
+                                                                <tr>
+                                                                    <td class="button__td "
+                                                                        style="background: #303f9f; border-radius: 4px; text-align:center;">
+                                                                        <!--[if mso]>
+                                                                        <a href="https://lnk.twistapp.com/wf/click?upn=3aZdNblVXzQcNhDdVdjpE4U5hsDAE6z-2FHPI-2BSqaT-2FRlzFqiOYIVV3xhZnCTd6ci0B44NNbRUNIhUcT9c12ucNg-3D-3D_eLFMrKDT8iBxZ-2Fbnk-2BZqvRm7gLQf0EF1gz9NAjgHD5V5QzY-2B023FSeyWLfj8rc5L2aYbNyXZTUaub-2BXLVoSFDbsBeU-2FOxINBPPv2ZvPRkMotiXmykOKxmfXVIOEv0JW0TfQ7ZYxwbXiYalG2H6UBccYB6G3tf6LFNhsFkLky3c4ctd4Nqq0CtjJnpYQU3HijtcRQWI2Kdg66WfnVNv3UCdxopoyccMAoHfkGbdZ6NOo-3D"
+                                                                           class="button__a" target="_blank"
+                                                                           style="border-radius: 4px; color: #FFFFFF; display: block; font-family: sans-serif; font-size: 18px; font-weight: bold; mso-height-rule: exactly; line-height: 1.1; padding: 14px 18px; text-decoration: none; text-transform: none; border: 1px solid #303f9f;">&nbsp;Browse
+                                                                            the guides &rarr;&nbsp;</a>
+                                                                        <![endif]-->
+                                                                        <!--[if !mso]><!-->
+                                                                        <a href="https://twist.zendesk.com/hc/en-us/sections/115001138125"
+                                                                           class="button__a" target="_blank"
+                                                                           style="border-radius: 4px; color: #FFFFFF; display: block; font-family: sans-serif; font-size: 18px; font-weight: bold; mso-height-rule: exactly; line-height: 1.1; padding: 14px 18px; text-decoration: none; text-transform: none; border: 0;">Browse
+                                                                            the guides →</a>
+                                                                        <!--<![endif]-->
+                                                                    </td>
+                                                                </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                                <div class=""
+                                                     style="border-top: 0; font-size: 1px; mso-line-height-rule: exactly; line-height: 1px; max-height: 0; margin: 20px 0; overflow: hidden;">
+                                                    ​
+                                                </div>
+                                                <p class=""
+                                                   style="margin: 20px 0; font-size: 16px; mso-line-height-rule: exactly; line-height: 24px; margin: 20px 0; ">
+                                                    We’ll be in touch in the coming days to help make sure your team’s
+                                                    transition to Twist is as smooth as possible. If you have any
+                                                    questions now, simply reply to this email.
+                                                </p>
+                                                <p class=""
+                                                   style="margin: 20px 0; font-size: 16px; mso-line-height-rule: exactly; line-height: 24px; margin: 20px 0; ">
+                                                    We’re glad you’re here!
+                                                </p>
+                                                <p class="tw-signoff"
+                                                   style="margin: 20px 0; font-size: 16px; mso-line-height-rule: exactly; line-height: 24px; margin: 20px 0; margin: 45px 0 5px; ">
+                                                    Our best,
+                                                    <br> Amir and the Twist team
+                                                </p>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <table cellpadding="0" cellspacing="0" dir="ltr" style="border: 0; width: 100%; ">
+                            <tbody>
+                            <tr>
+                                <td class=""
+                                    style="padding: 25px 0; text-align: center; color: #9A9A9A; font-family: sans-serif; font-size: 13px; mso-line-height-rule: exactly; line-height: 20px;">
+                                    <p class="" style="margin: 20px 0; margin: 0;">
+                                        <a href="!|$HOSTNAME!|$"
+                                           style="color: #303f9f; text-decoration: none; " target="_blank">Application</a>
+                                        &nbsp; | &nbsp;
+                                        <a href="https://mobi.inovexcorp.com/docs/"
+                                           style="color: #303f9f; text-decoration: none; " target="_blank">Documentation</a>
+                                        &nbsp; | &nbsp;
+                                        <a href="https://inovexirad.atlassian.net/servicedesk/customer/portal/1"
+                                           style="color: #303f9f; text-decoration: none; " target="_blank">Support Desk</a>
+                                    </p>
+                                    <p class="" style="margin: 20px 0; margin: 0;">
+                                        <br>
+                                        <!--Twitter-->
+                                        <a style="color: #999999; text-decoration: none; border-style: none;" title="Follow iNovex Social on Twitter" href="https://twitter.com/iNovex_IS"
+                                           target="_blank"><img style="color: #303f9f; font-size: 14px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; display: inline;" src="https://mobi.inovexcorp.com/wp-content/uploads/2017/08/tw_icon.png"
+                                                                border="0" alt="" width="15" height="12">&nbsp;<span style="font-weight: bold; font-size: 14px; line-height: 18px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">Twitter</span></a>
+                                        &nbsp;  &nbsp;
+                                        <!--Facebook-->
+                                        <a style="color: #999999; text-decoration: none; border-style: none;" title="Like iNovex Social on Facebook" href="https://www.facebook.com/inovex.is?fref=ts"
+                                           target="_blank"><img style="color: #303f9f; font-size: 14px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; display: inline;" src="https://mobi.inovexcorp.com/wp-content/uploads/2017/08/fb_icon.png"
+                                                                border="0" alt="" width="6" height="12">&nbsp;<span style="font-weight: bold; line-height: 18px; font-size: 14px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">Facebook</span></a>
+                                        &nbsp;  &nbsp;
+                                        <!--LinkedIn-->
+                                        <a style="color: #999999; text-decoration: none; border-style: none;" title="Follow iNovex Social on LinkedIn" href="https://www.linkedin.com/company/inovex-information-systems-inc-/"
+                                           target="_blank"><img style="color: #303f9f; font-size: 14px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; display: inline;" src="https://mobi.inovexcorp.com/wp-content/uploads/2017/08/in_icon.png"
+                                                                border="0" alt="" width="11" height="12">&nbsp;<span style="font-weight: bold; line-height: 18px; font-size: 14px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">LinkedIn</span></a>
+                                    </p>
+                                    <p class="" style="margin: 20px 0; margin: 0;">
+                                        <br>
+                                        iNovex Information Systems<br>7240 Parkway Drive #140, Hanover, MD 21076 US<br>(800) 469-9705<br>mobi@inovexcorp.com<br>Copyright © 2018 MOBI All rights reserved
+                                        <br>
+                                    </p>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
                     </td>
-                    </tr>
-                    </table>
-                    <![endif]-->
-                </div>
-            </td>
-        </tr>
-    </table>
-    <!-- Full Bleed Background Section : END -->
-
-    <!--[if mso | IE]>
-    </td>
+                </tr>
+                </tbody>
+            </table>
+        </td>
     </tr>
-    </table>
-    <![endif]-->
-</center>
+    </tbody>
+</table>
 </body>
 </html>
