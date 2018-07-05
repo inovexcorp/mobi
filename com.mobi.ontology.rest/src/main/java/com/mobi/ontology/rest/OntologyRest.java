@@ -137,19 +137,6 @@ public interface OntologyRest {
                          @DefaultValue("false") @QueryParam("skolemize") boolean skolemize,
                          @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit);
 
-
-    /**
-     * Creates the ontology
-     *
-     *
-     * @return The created ontology.
-     */
-    @POST
-    @Path("{recordId}")
-    @RolesAllowed("user")
-    @ApiOperation("Creates the ontology in the requested format.")
-    Response createOntology(ContainerRequestContext context, RecordOperationConfig config);
-
     /**
      * Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is
      * specified. In which case the branch specified by the branchId query parameter will be removed and nothing else.

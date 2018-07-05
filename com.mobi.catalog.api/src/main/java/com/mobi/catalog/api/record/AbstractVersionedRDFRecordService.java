@@ -107,8 +107,11 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     }
 
     /**
+     * Adds created versionedRDFRecord based on (catalogId, record, conn) from the repository.
      *
-     *
+     * @param catalogId The resource of the created record
+     * @param record The VersionedRDFRecord to delete
+     * @param conn A RepositoryConnection to use for lookup
      */
     protected void addVersionedRDFRecord(Resource catalogId, T record, RepositoryConnection conn) {
         if (conn.containsContext(record.getResource())) {
@@ -128,8 +131,10 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     }
 
     /**
+     * Creates a MasterBranch to be initialized based on (record, conn) from the repository.
      *
-     *
+     * @param record The VersionedRDFRecord to add to a MasterBranch
+     * @param conn A RepositoryConnection to use for lookup
      */
     protected void addMasterBranch(VersionedRDFRecord record, RepositoryConnection conn) {
         if (record.getMasterBranch_resource().isPresent()) {
@@ -146,6 +151,13 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         utilsService.addObject(branch, conn);
     }
 
+    /**
+     * Creates a branch specific to (title, desription, factory).
+     *
+     * @param title Name of desired branch
+     * @param description Short description of the title branch
+     * @param factory Which factory to apply the created branch
+     */
     protected  <T extends Branch> T createBranch(@Nonnull String title, String description, OrmFactory<T> factory) {
         OffsetDateTime now = OffsetDateTime.now();
 

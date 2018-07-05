@@ -44,9 +44,11 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
+import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
@@ -108,6 +110,9 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
         MockitoAnnotations.initMocks(this);
         when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
+
+        when(utilsService.getObject(any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
+                i.getArgumentAt(1, OrmFactory.class).createNew(i.getArgumentAt(0, Resource.class)));
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
 
         injectOrmFactoryReferencesIntoService(recordService);
@@ -132,8 +137,11 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        Record createdRecord = recordService.create(user, config, RDFRecordFactory, connection);
-        System.out.print(createdRecord);
+        recordService.create(user, config, RDFRecordFactory, connection);
+
+        verify(utilsService).addObject(any(Record.class), any(RepositoryConnection.class));
+        verify(provUtils).startCreateActivity(eq(user));
+        verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
     }
 
     /* delete() */

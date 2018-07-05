@@ -76,20 +76,20 @@ public interface RecordService<T extends Record> {
      * Exports a given Record based on a provided configuration.
      *
      * @param iriRecord An {@link IRI} of the record to be exported
-     * @param config A {@link RecordOperationConfig} that contains the export configuration.
+     * @param config A {@link RecordOperationConfig} that contains the export configuration
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      */
     void export(IRI iriRecord, RecordOperationConfig config, RepositoryConnection conn);
 
     /**
-     * Creates
+     * Adds config properties to a newly created record.
      *
-     * @param record
-     * @param config
-     * @param issued
-     * @param modified
-     * @param conn
-     * @return
+     * @param record A newly created record
+     * @param config A {@link RecordOperationConfig} that contains the export configuration
+     * @param issued A timestamp for the created record
+     * @param modified A modified timestamp of changes made to record
+     * @param conn A {@link RepositoryConnection} to the repo where the Record exist
+     * @return the newly created record with added properties
      */
     T createRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
                             OffsetDateTime modified, RepositoryConnection conn);

@@ -27,6 +27,7 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -55,6 +56,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
+import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -165,6 +167,8 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
         when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection))).thenReturn(branch);
         when(utilsService.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
+        when(utilsService.getObject(any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
+                i.getArgumentAt(1, OrmFactory.class).createNew(i.getArgumentAt(0, Resource.class)));
         doReturn(Stream.of(commitIRI).collect(Collectors.toList()))
                 .when(utilsService).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
         when(utilsService.getExpectedObject(eq(commitIRI), any(OrmFactory.class), eq(connection))).thenReturn(headCommit);
@@ -194,8 +198,12 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        Record createdRecord = recordService.create(user, config, versionedRDFRecordFactory, connection);
-        System.out.print(createdRecord);
+        recordService.create(user, config, versionedRDFRecordFactory, connection);
+
+        verify(utilsService).updateObject(any(Record.class),any(RepositoryConnection.class));
+        verify(utilsService).getObject(any(Resource.class),eq(catalogFactory),any(RepositoryConnection.class));
+        verify(provUtils).startCreateActivity(eq(user));
+        verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
     }
 
     /* delete() */

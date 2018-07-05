@@ -33,16 +33,13 @@ import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import aQute.libg.generics.Create;
 import com.google.common.collect.Iterables;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.record.RecordService;
-import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -261,38 +258,6 @@ public class OntologyRestImpl implements OntologyRest {
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    @Override
-    public Response createOntology(ContainerRequestContext context, RecordOperationConfig config){
-        Repository repo = repositoryManager.createMemoryRepository();
-        repo.initialize();
-        try (RepositoryConnection conn = repo.getConnection()){
-            semaphore.acquire();
-            User user = getActiveUser(context, engineManager);
-            CreateActivity createActivity = null;
-            Record record = recordService.create(user, config, recordFactory, conn);
-            User activeUser = getActiveUser(context, engineManager);
-            try {
-                createActivity = provUtils.startCreateActivity(activeUser);
-                ontologyManager.createOntology((IRI) record);
-                Ontology newOntology = new Ontology(context,record.getResource(), record.getBranch_resource(), record.getKeyword(), true);
-                ontologyCache.generateKey(record.getResource(), record.getBranch_resource(),record.getMasterBranch_resource());
-                provUtils.endCreateActivity((CreateActivity) activeUser, record.getResource());
-            } catch (MobiException e) {
-                provUtils.removeActivity(createActivity);
-                throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-            } catch (IllegalArgumentException e) {
-                provUtils.removeActivity(createActivity);
-                throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
-            }
-        } catch (InterruptedException e) {
-            throw ErrorUtils.sendError(e, "Issue checking creating new OntologyRecord",
-                    Response.Status.INTERNAL_SERVER_ERROR);
-        } finally {
-            semaphore.release();
-        }
-        return Response.ok().build();
     }
 
     @Override
