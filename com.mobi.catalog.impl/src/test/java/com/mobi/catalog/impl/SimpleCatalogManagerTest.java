@@ -2111,7 +2111,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // Both altered same title, no common parents
         IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
         Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-6");
-        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict3-6");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-6");
 
         Model leftAdds = MODEL_FACTORY.createModel();
         Model leftDels = MODEL_FACTORY.createModel();
@@ -2163,7 +2163,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // Class deletion
         IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
         Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-7");
-        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict3-7");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-7");
 
         Model originalModel = MODEL_FACTORY.createModel();
         originalModel.add(sub, descriptionIRI, VALUE_FACTORY.createLiteral("Description"));
@@ -2191,46 +2191,12 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testGetConflictsChainAddsAndRemovesStatementDisconnectedNodes() throws Exception {
-        // Setup:
-        // Second chain has two commits which adds then removes something
-        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
-        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-8");
-        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict3-8");
-
-        Model originalModel = MODEL_FACTORY.createModel();
-        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
-
-        Model leftAdds = MODEL_FACTORY.createModel();
-        leftAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Left"));
-        Difference leftDiff = new Difference.Builder()
-                .additions(leftAdds)
-                .deletions(originalModel)
-                .build();
-
-        Difference rightDiff = new Difference.Builder()
-                .additions(MODEL_FACTORY.createModel())
-                .deletions(originalModel)
-                .build();
-
-        setUpConflictDisconnectedTest(leftId, rightId, leftDiff, rightDiff, originalModel);
-
-        Set<Conflict> results = manager.getConflicts(leftId, rightId);
-        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        assertEquals(0, results.size());
-    }
-
-    @Test
     public void testGetConflictsPropertyChangeOnSingleBranchDisconnectedNodes() throws Exception {
         // Setup:
         // Change a property on one branch
         IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
-        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-9");
-        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-9");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-8");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-8");
 
         Model leftAdds = MODEL_FACTORY.createModel();
         leftAdds.add(sub, descriptionIRI, VALUE_FACTORY.createLiteral("Description"));
@@ -2266,8 +2232,8 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // Setup:
         // One branch removes property while other adds another to it
         IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
-        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-10");
-        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-10");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-9");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-9");
 
         Model originalModel = MODEL_FACTORY.createModel();
         originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
