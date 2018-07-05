@@ -37,12 +37,14 @@ import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Literal;
+import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
 
 import java.time.OffsetDateTime;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -60,14 +62,12 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     protected CatalogFactory catalogFactory;
 
     @Override
-    public T create(User user, RecordOperationConfig config, OrmFactory<T> factory, RepositoryConnection conn) {
+    public T create(User user, RecordOperationConfig config, RepositoryConnection conn) {
+        validateCreationConfig(config);
         CreateActivity startActivity = provUtils.startCreateActivity(user);
         OffsetDateTime now = OffsetDateTime.now();
-        T testRecord = factory.createNew(valueFactory.createIRI(Catalogs.RECORD_NAMESPACE + UUID.randomUUID()));
-        T record = createRecord(testRecord, config, now, now, conn);
-        Resource catalogId = record.getResource();
-        IRI recordId = valueFactory.createIRI(record.catalog_IRI + catalogId);
-        provUtils.endCreateActivity(startActivity, recordId);
+        T record = createRecord(config, now, now, conn);
+        provUtils.endCreateActivity(startActivity, record.getResource());
         return record;
     }
 
@@ -99,26 +99,39 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
         }
     }
 
-    @Override
-    public T createRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
-                                                       OffsetDateTime modified, RepositoryConnection conn) {
-        record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_TITLE)),
-                valueFactory.createIRI(_Thing.title_IRI));
-        record.setProperty(valueFactory.createLiteral(issued), valueFactory.createIRI(_Thing.issued_IRI));
-        record.setProperty(valueFactory.createLiteral(modified), valueFactory.createIRI(_Thing.modified_IRI));
-        record.setProperties(config.get(RecordCreateSettings.RECORD_PUBLISHERS).stream().map(User::getResource)
-                .collect(Collectors.toSet()), valueFactory.createIRI(_Thing.publisher_IRI));
+    protected T createRecord(RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
+                             RepositoryConnection conn) {
+        T recordObject = createRecordObject(config, issued, modified);
+        conn.begin();
+        utilsService.addObject(recordObject, conn);
+        conn.commit();
+        return recordObject;
+    }
+
+    protected T createRecordObject(RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified) {
+        T record = recordFactory.createNew(valueFactory.createIRI(Catalogs.RECORD_NAMESPACE + UUID.randomUUID()));
+
+        Literal titleLiteral = valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_TITLE));
+        Literal issuedLiteral = valueFactory.createLiteral(issued);
+        Literal modifiedLiteral = valueFactory.createLiteral(modified);
+        Set<Value> publishers = config.get(RecordCreateSettings.RECORD_PUBLISHERS).stream()
+                .map(user -> (Value) user.getResource())
+                .collect(Collectors.toSet());
+
+        // TODO: Probably need to do this: record.setCatalog();
+
+        record.setProperty(titleLiteral, valueFactory.createIRI(_Thing.title_IRI));
+        record.setProperty(issuedLiteral, valueFactory.createIRI(_Thing.issued_IRI));
+        record.setProperty(modifiedLiteral, valueFactory.createIRI(_Thing.modified_IRI));
+        record.setProperties(publishers, valueFactory.createIRI(_Thing.publisher_IRI));
         if (config.get(RecordCreateSettings.RECORD_DESCRIPTION) != null) {
             record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_DESCRIPTION)),
                     valueFactory.createIRI(_Thing.description_IRI));
         }
-        if (config.get(RecordCreateSettings.RECORD_KEYWORDS) != null) {
+        if (config.get(RecordCreateSettings.RECORD_KEYWORDS).size() > 0) {
             record.setKeyword(config.get(RecordCreateSettings.RECORD_KEYWORDS).stream()
                     .map(valueFactory::createLiteral).collect(Collectors.toSet()));
         }
-        conn.begin();
-        utilsService.addObject(record, conn);
-        conn.commit();
         return record;
     }
 
@@ -189,5 +202,16 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
      */
     protected void writeRecordData(T record, BatchExporter exporter) {
         record.getModel().forEach(exporter::handleStatement);
+    }
+
+    /**
+     *
+     * @param config
+     */
+    protected void validateCreationConfig(RecordOperationConfig config) {
+        // TODO: Throw exception if record already exists
+        if (config.get(RecordCreateSettings.RECORD_TITLE) == null) {
+            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_TITLE.getKey() + " is required.");
+        }
     }
 }

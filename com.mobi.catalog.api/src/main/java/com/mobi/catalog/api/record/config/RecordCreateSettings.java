@@ -25,6 +25,7 @@ package com.mobi.catalog.api.record.config;
 
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -46,8 +47,8 @@ public class RecordCreateSettings {
         RECORD_DESCRIPTION = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.recorddescription"),
                 "The description of a Record object", null);
         RECORD_KEYWORDS = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.recordkeywords"),
-                "The keywords of a Record object", null);
+                "The keywords of a Record object", Collections.emptySet());
         RECORD_PUBLISHERS = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.recordpublishers"),
-                "The publishers of a Record object", null);
+                "The publishers of a Record object", Collections.emptySet());
     }
 }
