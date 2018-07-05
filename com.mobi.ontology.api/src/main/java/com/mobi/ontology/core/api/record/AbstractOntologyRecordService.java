@@ -9,6 +9,7 @@ import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
@@ -21,6 +22,7 @@ import javax.annotation.Nonnull;
 
 public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
+    protected OntologyRecordFactory recordFactory;
 
     @Override
     public T createRecord(T record, RecordOperationConfig config, OffsetDateTime issued,
@@ -44,18 +46,18 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         utilsService.addObject(record, conn);
         conn.commit();
         Resource catalogId = record.getResource();
-        addVersionedRDFRecord(catalogId, record, conn);
+        addOntologyRecord(catalogId, record, conn);
         return record;
     }
 
     /**
-     * Adds created versionedRDFRecord based on (catalogId, record, conn) from the repository.
+     * Adds created OntologyRecord based on (catalogId, record, conn) from the repository.
      *
      * @param catalogId The resource of the created record
-     * @param record The VersionedRDFRecord to delete
+     * @param record The OntologyRecord to delete
      * @param conn A RepositoryConnection to use for lookup
      */
-    protected void addVersionedRDFRecord(Resource catalogId, T record, RepositoryConnection conn) {
+    protected void addOntologyRecord(Resource catalogId, T record, RepositoryConnection conn) {
         if (conn.containsContext(record.getResource())) {
             throw utilsService.throwAlreadyExists(record.getResource(), recordFactory);
         }
@@ -75,7 +77,7 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     /**
      * Creates a MasterBranch to be initialized based on (record, conn) from the repository.
      *
-     * @param record The VersionedRDFRecord to add to a MasterBranch
+     * @param record The OntologyRecord to add to a MasterBranch
      * @param conn A RepositoryConnection to use for lookup
      */
     protected void addMasterBranch(OntologyRecord record, RepositoryConnection conn) {
