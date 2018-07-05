@@ -111,15 +111,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
                 .deletions(deletions)
                 .build();
 
-        testRecord = ontologyRecordFactory.createNew(testIRI);
-        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
-        testRecord.setCatalog(catalogFactory.createNew(catalogId));
-        testRecord.setBranch(Collections.singleton(branch));
-        testRecord.setVersion(Collections.singleton(tag));
-        testRecord.setLatestVersion(tag);
-        testRecord.setBranch(Collections.singleton(branch));
-        testRecord.setMasterBranch(branchFactory.createNew(masterBranchIRI));
-
 
         tag = tagFactory.createNew(tagIRI);
         tag.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(distributionIRI)));
