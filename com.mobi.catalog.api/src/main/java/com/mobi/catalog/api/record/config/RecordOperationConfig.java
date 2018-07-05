@@ -23,10 +23,7 @@ package com.mobi.catalog.api.record.config;
  * #L%
  */
 
-import com.mobi.jaas.api.ontologies.usermanagement.User;
-
 import java.io.Serializable;
-import java.util.Set;
 
 public interface RecordOperationConfig extends Serializable {
 

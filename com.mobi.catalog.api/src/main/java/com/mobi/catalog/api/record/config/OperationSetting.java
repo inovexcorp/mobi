@@ -27,7 +27,6 @@ import java.io.Serializable;
 
 public interface OperationSetting<T> extends Serializable {
 
-
     /**
      * Gets the String representation of a key that identifies a configuration setting.
      *

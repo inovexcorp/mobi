@@ -24,7 +24,6 @@ package com.mobi.catalog.api.record.config;
  */
 
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.BatchInserter;
 
 import java.util.Set;
 
@@ -35,9 +34,8 @@ public class RecordCreateSettings {
 
     public static OperationSetting<String> RECORD_TITLE;
     public static OperationSetting<String> RECORD_DESCRIPTION;
-    public static OperationSetting<Set<String>>RECORD_KEYWORDS;
+    public static OperationSetting<Set<String>> RECORD_KEYWORDS;
     public static OperationSetting<Set<User>> RECORD_PUBLISHERS;
-
 
     public RecordCreateSettings() {
     }

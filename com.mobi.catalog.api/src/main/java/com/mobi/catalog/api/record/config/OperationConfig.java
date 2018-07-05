@@ -23,12 +23,9 @@ package com.mobi.catalog.api.record.config;
  * #L%
  */
 
-import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.query.api.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
