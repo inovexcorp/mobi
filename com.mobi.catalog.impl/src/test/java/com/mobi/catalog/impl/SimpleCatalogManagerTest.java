@@ -2439,7 +2439,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         doReturn(originalModel).when(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
     }
 
-    private void setUpConflictDisconnectedTest(Resource leftId, Resource rightId, Difference leftDiff, Difference rightDiffl) {
+    private void setUpConflictDisconnectedTest(Resource leftId, Resource rightId, Difference leftDiff, Difference rightDiff) {
         doReturn(Stream.of(leftId).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         doReturn(Stream.of(rightId).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
         doAnswer(i -> {
