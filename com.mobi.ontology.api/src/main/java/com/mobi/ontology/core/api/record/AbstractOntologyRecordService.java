@@ -38,6 +38,7 @@ import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
 
@@ -78,13 +79,15 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
             Difference revisionChanges = utilsService.getRevisionChanges(commitId, conn);
             revisionChanges.getAdditions();
         }
-        utilsService.add
+        IRI newOntologyId = OntologyManager.createOntologyId();
+        validateOntology(newOntologyId);
+        utilsService.addObject(newOntologyId, conn);
         conn.commit();
         return record;
     }
 
-    private void validateOntology() {
+    private void validateOntology(IRI newOntologyId) {
         //TODO: Validate that an ontology with the passed in ontology IRI does not exist already
-        OntologyManager.ontologyIriExists();
+        OntologyManager.ontologyIriExists(newOntologyId);
     }
 }
