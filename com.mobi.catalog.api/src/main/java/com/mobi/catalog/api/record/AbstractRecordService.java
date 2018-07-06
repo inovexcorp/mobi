@@ -213,7 +213,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     protected void validateCreationConfig(RecordOperationConfig config, RepositoryConnection conn) {
         // TODO: Throw exception if record already exists
         if (utilsService.getObject(config.get(RecordCreateSettings.RECORD_TITLE), recordFactory, conn) != null) {
-            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_TITLE.getKey() + " is required.");
+            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_TITLE + " already exists.");
         }
         if (config.get(RecordCreateSettings.RECORD_TITLE) == null) {
             throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_TITLE.getKey() + " is required.");
