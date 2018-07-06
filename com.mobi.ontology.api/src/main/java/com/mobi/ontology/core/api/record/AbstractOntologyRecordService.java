@@ -24,18 +24,26 @@ package com.mobi.ontology.core.api.record;
  */
 
 import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
+import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
+import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
+import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
 
 import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
@@ -51,9 +59,32 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     public T createRecord(RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
                           RepositoryConnection conn) {
         // TODO: Do other things + add the ontologyIRI predicate to the record
+        T record = createRecordObject(config, issued, modified);
+        Branch masterBranch = createMasterBranch(record);
+        conn.begin();
+        utilsService.addObject(record, conn);
+        utilsService.addObject(masterBranch, conn);
+        Set<Resource> processedCommits = new HashSet<>();
+        Resource headIRI = utilsService.getHeadCommitIRI(masterBranch);
+        for (Resource commitId : utilsService.getCommitChain(headIRI, false, conn)) {
+
+            if (processedCommits.contains(commitId)) {
+                break;
+            } else {
+                processedCommits.add(commitId);
+            }
+            Commit commit = utilsService.getExpectedObject(commitId, commitFactory, conn);
+            commit.setBaseCommit((Commit) VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA);
+            Difference revisionChanges = utilsService.getRevisionChanges(commitId, conn);
+            revisionChanges.getAdditions();
+        }
+        utilsService.add
+        conn.commit();
+        return record;
     }
 
     private void validateOntology() {
         //TODO: Validate that an ontology with the passed in ontology IRI does not exist already
+        OntologyManager.ontologyIriExists();
     }
 }

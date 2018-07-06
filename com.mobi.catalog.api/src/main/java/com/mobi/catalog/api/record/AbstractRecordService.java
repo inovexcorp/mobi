@@ -26,6 +26,7 @@ package com.mobi.catalog.api.record;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.Catalogs;
+import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
@@ -63,7 +64,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
 
     @Override
     public T create(User user, RecordOperationConfig config, RepositoryConnection conn) {
-        validateCreationConfig(config);
+        validateCreationConfig(config, conn);
         CreateActivity startActivity = provUtils.startCreateActivity(user);
         OffsetDateTime now = OffsetDateTime.now();
         T record = createRecord(config, now, now, conn);
@@ -119,6 +120,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
                 .collect(Collectors.toSet());
 
         // TODO: Probably need to do this: record.setCatalog();
+        record.setCatalog((Catalog) catalogFactory);
 
         record.setProperty(titleLiteral, valueFactory.createIRI(_Thing.title_IRI));
         record.setProperty(issuedLiteral, valueFactory.createIRI(_Thing.issued_IRI));
@@ -208,8 +210,11 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
      *
      * @param config
      */
-    protected void validateCreationConfig(RecordOperationConfig config) {
+    protected void validateCreationConfig(RecordOperationConfig config, RepositoryConnection conn) {
         // TODO: Throw exception if record already exists
+        if (utilsService.getObject(config.get(RecordCreateSettings.RECORD_TITLE), recordFactory, conn) != null) {
+            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_TITLE.getKey() + " is required.");
+        }
         if (config.get(RecordCreateSettings.RECORD_TITLE) == null) {
             throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_TITLE.getKey() + " is required.");
         }

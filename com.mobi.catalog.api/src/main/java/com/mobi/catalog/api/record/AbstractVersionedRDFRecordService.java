@@ -33,8 +33,10 @@ import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
+import com.mobi.catalog.api.record.config.OperationSetting;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordExportSettings;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
@@ -83,8 +85,18 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         conn.begin();
         utilsService.addObject(record, conn);
         utilsService.addObject(masterBranch, conn);
+        utilsService.addCommit(masterBranch, (Commit) VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, conn);
         // TODO: Add initial commit object
         // TODO: Add initial revision object
+        Set<Resource> processedCommits = new HashSet<>();
+        Resource headIRI = utilsService.getHeadCommitIRI(masterBranch);
+        Resource commitId = (Resource) utilsService.getCommitChain(headIRI, false, conn);
+        processedCommits.add(commitId);
+        Commit commit = utilsService.getExpectedObject(commitId, commitFactory, conn);
+        commit.setBaseCommit((Commit) VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA);
+        utilsService.addCommit(masterBranch, (Commit) VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, conn);
+        Difference revisionChanges = utilsService.getRevisionChanges(commitId, conn);
+        revisionChanges.getAdditions();
         conn.commit();
         return record;
     }
