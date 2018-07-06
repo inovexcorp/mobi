@@ -2123,13 +2123,20 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     @Test
     public void testGetDifferenceChainCommonParent() {
         // Setup:
+        List<Resource> commitChain = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4b")).collect(Collectors.toList());
         Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4b");
         Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testLoner");
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage(String.format("No common parent between Commit %s and %s", sourceId.stringValue(), targetId.stringValue()));
+
+        // Expected should contain all commits from the source chain
+        Collections.reverse(commitChain);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             List<Resource> actual = service.getDifferenceChain(sourceId, targetId, conn);
+
+            assertEquals(actual, commitChain);
         }
     }
 
