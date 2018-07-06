@@ -88,6 +88,8 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
 
     private void validateOntology(IRI newOntologyId) {
         //TODO: Validate that an ontology with the passed in ontology IRI does not exist already
-        OntologyManager.ontologyIriExists(newOntologyId);
+        if(OntologyManager.ontologyIriExists(newOntologyId)){
+            throw new IllegalArgumentException("Ontology IRI:  " + newOntologyId + " already exists.");
+        }
     }
 }
