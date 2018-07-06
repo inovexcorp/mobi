@@ -934,7 +934,7 @@ GRAPH deletions:conflict2-6 {
     <http://mobi.com/test/ontology> dc:title "Title" .
 }
 
-# Conflict Scenario 7 - Class deletion with disconnected nodes (0 conflicts)
+# Conflict Scenario 7 - Class deletion with disconnected nodes (no conflicts)
 
 GRAPH commits:conflict0-7 {
     commits:conflict0-7 a mcat:Commit ;
@@ -1076,7 +1076,7 @@ GRAPH deletions:conflict2-8 {
     <http://mobi.com/test/ontology> dc:title "Title" .
 }
 
-# Conflict Scenario 9 - One branch removes property while other adds another to it (1 conflict)
+# Conflict Scenario 9 - One branch removes property while other adds another to it (no conflicts)
 
 GRAPH commits:conflict0-9 {
     commits:conflict0-9 a mcat:Commit ;
@@ -1128,7 +1128,7 @@ GRAPH deletions:conflict2-9 {
     <http://mobi.com/test/ontology> dc:title "Title" .
 }
 
-# Conflict Scenario 10 - Right Removes Entire Entity, Left Adds to it, Disconnected Nodes
+# Conflict Scenario 10 - Right Removes Entire Entity, Left Adds to it, Disconnected Nodes (no conflicts)
 
 GRAPH commits:conflict0-10 {
     commits:conflict0-10 a mcat:Commit ;
