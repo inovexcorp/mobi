@@ -197,11 +197,10 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         String filePath = fileLocation + fileName;
         LOG.debug("Creating new policy file at " + filePath);
         try {
-            VirtualFile file = vfs.resolveVirtualFile(filePath);
+            byte[] fileBytes = balanaPolicy.toString().getBytes();
+            VirtualFile file = vfs.resolveVirtualFile(fileBytes, fileLocation);
             file.create();
-            try (OutputStream out = file.writeContent()) {
-                out.write(balanaPolicy.toString().getBytes());
-            }
+            file.writeToContent(balanaPolicy.toString().getBytes());
             PolicyFile policyFile = addPolicyFile(file, fileName, balanaPolicy);
             return policyFile.getResource();
         } catch (IOException e) {
