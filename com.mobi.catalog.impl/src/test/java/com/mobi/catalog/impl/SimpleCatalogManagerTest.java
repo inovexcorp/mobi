@@ -1775,10 +1775,17 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // Setup
         Resource sourceId = VALUE_FACTORY.createIRI(COMMITS + "test4a");
         Resource targetId = VALUE_FACTORY.createIRI(COMMITS + "test1");
-        thrown.expect(IllegalArgumentException.class);
-        doThrow(new IllegalArgumentException()).when(utilsService).getDifferenceChain(any(Resource.class), any(Resource.class), any(RepositoryConnection.class), anyBoolean());
 
-        manager.getDifference(sourceId, targetId);
+        Difference sourceDiff = new Difference.Builder()
+                .additions(MODEL_FACTORY.createModel())
+                .deletions(MODEL_FACTORY.createModel())
+                .build();
+
+        doReturn(sourceDiff).when(utilsService).getCommitDifference(eq(Collections.singletonList(sourceId)), any(RepositoryConnection.class));
+        doReturn(Collections.singletonList(sourceId)).when(utilsService).getDifferenceChain(eq(sourceId), eq(targetId), any(RepositoryConnection.class), anyBoolean());
+
+        Difference diff = manager.getDifference(sourceId, targetId);
+        assertEquals(sourceDiff, diff);
     }
 
     /* getConflicts */
@@ -2088,14 +2095,224 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     public void testGetConflictsDisconnectedNodes() throws Exception {
         // Setup:
         IRI commitId = VALUE_FACTORY.createIRI(COMMITS + "new");
+
+        Model leftAdds = MODEL_FACTORY.createModel();
+        Difference leftDiff = new Difference.Builder()
+                .additions(leftAdds)
+                .deletions(MODEL_FACTORY.createModel())
+                .build();
+        Difference rightDiff = new Difference.Builder()
+                .additions(MODEL_FACTORY.createModel())
+                .deletions(MODEL_FACTORY.createModel())
+                .build();
+        setUpConflictDisconnectedTest(commitId, COMMIT_IRI, leftDiff, rightDiff);
         doReturn(Collections.singletonList(COMMIT_IRI)).when(utilsService).getCommitChain(eq(COMMIT_IRI), eq(true), any(RepositoryConnection.class));
         doReturn(Collections.singletonList(commitId)).when(utilsService).getCommitChain(eq(commitId), eq(true), any(RepositoryConnection.class));
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("No common parent between Commit " + commitId + " and " + COMMIT_IRI);
 
-        manager.getConflicts(commitId, COMMIT_IRI);
+        Set<Conflict> result = manager.getConflicts(commitId, COMMIT_IRI);
+        verify(utilsService, atLeastOnce()).validateResource(eq(commitId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService, atLeastOnce()).validateResource(eq(COMMIT_IRI), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(commitId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(COMMIT_IRI), eq(true), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
+        assertEquals(0, result.size());
     }
 
+    @Test
+    public void testGetConflictsDisconnectedNodesSamePropertyAltered() throws Exception {
+        // Setup:
+        // Both altered same title, no common parents
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-6");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-6");
+
+        Model leftAdds = MODEL_FACTORY.createModel();
+        Model leftDels = MODEL_FACTORY.createModel();
+        leftAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Left"));
+        leftDels.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
+        Difference leftDiff = new Difference.Builder()
+                .additions(leftAdds)
+                .deletions(leftDels)
+                .build();
+
+        Model rightAdds = MODEL_FACTORY.createModel();
+        Model rightDels = MODEL_FACTORY.createModel();
+        rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Right"));
+        rightDels.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
+        Difference rightDiff = new Difference.Builder()
+                .additions(rightAdds)
+                .deletions(rightDels)
+                .build();
+
+        Model originalModel = MODEL_FACTORY.createModel();
+        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
+        setUpConflictDisconnectedTest(leftId, rightId, leftDiff, rightDiff);
+
+        Set<Conflict> result = manager.getConflicts(leftId, rightId);
+        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
+        assertEquals(1, result.size());
+        result.forEach(conflict -> {
+            Difference left = conflict.getLeftDifference();
+            Difference right = conflict.getRightDifference();
+            assertEquals(1, left.getAdditions().size());
+            assertEquals(1, right.getAdditions().size());
+            assertEquals(1, right.getDeletions().size());
+            assertEquals(1, left.getDeletions().size());
+
+            Stream.of(left.getAdditions(), right.getAdditions()).forEach(model -> model.forEach(statement -> {
+                assertEquals(sub, statement.getSubject());
+                assertEquals(titleIRI, statement.getPredicate());
+            }));
+        });
+    }
+
+    @Test
+    public void testGetConflictsDisconnectedNodesClassDeletion() throws Exception {
+        // Setup:
+        // Class deletion
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-7");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-7");
+
+        Model originalModel = MODEL_FACTORY.createModel();
+        originalModel.add(sub, descriptionIRI, VALUE_FACTORY.createLiteral("Description"));
+
+        Difference leftDiff = new Difference.Builder()
+                .additions(MODEL_FACTORY.createModel())
+                .deletions(originalModel)
+                .build();
+
+        Model rightModel = MODEL_FACTORY.createModel();
+        rightModel.add(sub, typeIRI, VALUE_FACTORY.createIRI("http://test.com#Type"));
+        Difference rightDiff = new Difference.Builder()
+                .additions(rightModel)
+                .deletions(MODEL_FACTORY.createModel())
+                .build();
+
+        setUpConflictDisconnectedTest(leftId, rightId, leftDiff, rightDiff);
+        Set<Conflict> result = manager.getConflicts(leftId, rightId);
+        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
+        assertEquals(0, result.size());
+    }
+
+    @Test
+    public void testGetConflictsPropertyChangeOnSingleBranchDisconnectedNodes() throws Exception {
+        // Setup:
+        // Change a property on one branch
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-8");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-8");
+
+        Model leftAdds = MODEL_FACTORY.createModel();
+        leftAdds.add(sub, descriptionIRI, VALUE_FACTORY.createLiteral("Description"));
+        Difference leftDiff = new Difference.Builder()
+                .additions(leftAdds)
+                .deletions(MODEL_FACTORY.createModel())
+                .build();
+
+        Model rightAdds = MODEL_FACTORY.createModel();
+        Model rightDels = MODEL_FACTORY.createModel();
+        rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Right"));
+        rightDels.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
+        Difference rightDiff = new Difference.Builder()
+                .additions(rightAdds)
+                .deletions(rightDels)
+                .build();
+
+        Model originalModel = MODEL_FACTORY.createModel();
+        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
+        setUpConflictDisconnectedTest(leftId, rightId, leftDiff, rightDiff);
+
+        Set<Conflict> result = manager.getConflicts(leftId, rightId);
+        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
+        assertEquals(0, result.size());
+    }
+
+    @Test
+    public void testGetConflictsOneRemovesOtherAddsToPropertyDisconnectedNodes() throws Exception {
+        // Setup:
+        // One branch removes property while other adds another to it
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-9");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-9");
+
+        Model originalModel = MODEL_FACTORY.createModel();
+        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
+
+        Model leftAdds = MODEL_FACTORY.createModel();
+        leftAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Left"));
+        Difference leftDiff = new Difference.Builder()
+                .additions(leftAdds)
+                .deletions(originalModel)
+                .build();
+
+        Model rightAdds = MODEL_FACTORY.createModel();
+        Model rightDels = MODEL_FACTORY.createModel();
+        rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Right"));
+        Difference rightDiff = new Difference.Builder()
+                .additions(rightAdds)
+                .deletions(rightDels)
+                .build();
+
+        setUpConflictDisconnectedTest(leftId, rightId, leftDiff, rightDiff);
+
+        Set<Conflict> result = manager.getConflicts(leftId, rightId);
+        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
+        assertEquals(0, result.size());
+    }
+
+    @Test
+    public void testGetConflictOneFullDeletesOtherAddsToDisconnectedNodes() throws Exception {
+        // Setup:
+        // One branch removes property entirely while other adds another to it
+        // Defined as not a conflict with disconnected nodes
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-11");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-11");
+
+        Model originalModel = MODEL_FACTORY.createModel();
+        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
+
+        Model leftAdds = MODEL_FACTORY.createModel();
+        leftAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Left"));
+        Difference leftDiff = new Difference.Builder()
+                .additions(leftAdds)
+                .deletions(originalModel)
+                .build();
+
+        Model rightDels = MODEL_FACTORY.createModel();
+        rightDels.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
+        Difference rightDiff = new Difference.Builder()
+                .additions(MODEL_FACTORY.createModel())
+                .deletions(rightDels)
+                .build();
+
+        setUpConflictDisconnectedTest(leftId, rightId, leftDiff, rightDiff);
+
+        Set<Conflict> result = manager.getConflicts(leftId, rightId);
+        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
+        assertEquals(0, result.size());
+    }
     /* getDiff */
 
     @Test
@@ -2220,5 +2437,20 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         }).when(utilsService).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
         doReturn(originalModel).when(utilsService).getCompiledResource(eq(Collections.singletonList(COMMIT_IRI)), any(RepositoryConnection.class));
         doReturn(originalModel).when(utilsService).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
+    }
+
+    private void setUpConflictDisconnectedTest(Resource leftId, Resource rightId, Difference leftDiff, Difference rightDiff) {
+        doReturn(Stream.of(leftId).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
+        doReturn(Stream.of(rightId).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
+        doAnswer(i -> {
+            List<Resource> commits = i.getArgumentAt(0, List.class);
+            if (commits.isEmpty() || commits.get(0).equals(rightId)) {
+                return rightDiff;
+            } else if (commits.get(0).equals(leftId)) {
+                return leftDiff;
+            } else {
+                return MODEL_FACTORY.createModel();
+            }
+        }).when(utilsService).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
     }
 }
