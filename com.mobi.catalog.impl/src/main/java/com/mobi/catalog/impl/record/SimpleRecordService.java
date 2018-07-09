@@ -41,7 +41,7 @@ import javax.annotation.Nonnull;
 @Component
 public class SimpleRecordService extends AbstractRecordService<Record> {
     @Reference
-    void setCatalogFactory(CatalogFactory catalogFactory){ this.catalogFactory = catalogFactory;}
+    void setCatalogFactory(CatalogFactory catalogFactory){ this.catalogFactory = catalogFactory; }
 
     @Reference
     void setUtilsService(CatalogUtilsService utilsService) {
