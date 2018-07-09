@@ -24,71 +24,69 @@ package com.mobi.ontology.core.api.record;
  */
 
 import com.mobi.catalog.api.CatalogUtilsService;
-import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Literal;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
 
 import java.time.OffsetDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
 
-    protected OntologyRecordFactory recordFactory;
-    protected CatalogFactory catalogFactory;
-    protected CommitFactory commitFactory;
     protected BranchFactory branchFactory;
-    protected MergeRequestManager mergeRequestManager;
+    protected CatalogFactory catalogFactory;
     protected CatalogUtilsService utilsService;
+    protected CommitFactory commitFactory;
+    protected MergeRequestManager mergeRequestManager;
+    protected ModelFactory modelFactory;
+    protected Ontology ontology;
+    protected OntologyManager ontologyManager;
+    protected OntologyRecordFactory recordFactory;
 
     @Override
-    public T createRecord(RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
+    public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
                           RepositoryConnection conn) {
-        // TODO: Do other things + add the ontologyIRI predicate to the record
-        T record = createRecordObject(config, issued, modified);
+        T record = createRecordObject(config, issued, modified, conn);
         Branch masterBranch = createMasterBranch(record);
+        setOntologyToRecord(record, config);
         conn.begin();
-        utilsService.addObject(record, conn);
-        utilsService.addObject(masterBranch, conn);
-        Set<Resource> processedCommits = new HashSet<>();
-        Resource headIRI = utilsService.getHeadCommitIRI(masterBranch);
-        for (Resource commitId : utilsService.getCommitChain(headIRI, false, conn)) {
-
-            if (processedCommits.contains(commitId)) {
-                break;
-            } else {
-                processedCommits.add(commitId);
-            }
-            Commit commit = utilsService.getExpectedObject(commitId, commitFactory, conn);
-            commit.setBaseCommit((Commit) VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA);
-            Difference revisionChanges = utilsService.getRevisionChanges(commitId, conn);
-            revisionChanges.getAdditions();
-        }
-        IRI newOntologyId = OntologyManager.createOntologyId();
-        validateOntology(newOntologyId);
-        utilsService.addObject(newOntologyId, conn);
+        addRecord(record, masterBranch, conn);
+        IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
+        Resource masterBranchId = masterBranch.getResource();
+        Model model = ontology.asModel(modelFactory);
+        versioningManager.commit(catalogIdIRI, record.getResource(),
+                masterBranchId, user, "The initial commit.", model, null);
         conn.commit();
         return record;
     }
 
-    private void validateOntology(IRI newOntologyId) {
-        //TODO: Validate that an ontology with the passed in ontology IRI does not exist already
-        if(OntologyManager.ontologyIriExists(newOntologyId)){
+    private void setOntologyToRecord(T record, RecordOperationConfig config) {
+        ontology = ontologyManager.createOntology(
+                config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA));
+        record.setOntologyIRI(ontology.getOntologyId().getOntologyIdentifier());
+        record.getOntologyIRI().ifPresent(this::validateOntology);
+    }
+
+    private void validateOntology(Resource newOntologyId) {
+        if (ontologyManager.ontologyIriExists(newOntologyId)) {
             throw new IllegalArgumentException("Ontology IRI:  " + newOntologyId + " already exists.");
         }
     }

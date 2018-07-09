@@ -24,6 +24,7 @@ package com.mobi.catalog.api.record.config;
  */
 
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontologies.rdfs.Resource;
 
 import java.util.Collections;
 import java.util.Set;
@@ -33,6 +34,7 @@ import java.util.Set;
  */
 public class RecordCreateSettings {
 
+    public static OperationSetting<String> CATALOG_ID;
     public static OperationSetting<String> RECORD_TITLE;
     public static OperationSetting<String> RECORD_DESCRIPTION;
     public static OperationSetting<Set<String>> RECORD_KEYWORDS;
@@ -42,6 +44,8 @@ public class RecordCreateSettings {
     }
 
     static {
+        CATALOG_ID = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.catalogId"),
+                "The catalogId of a Record object", null);
         RECORD_TITLE = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.recordtitle"),
                 "The title of a Record object", null);
         RECORD_DESCRIPTION = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.recorddescription"),

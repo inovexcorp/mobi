@@ -132,12 +132,13 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         names.add("Morty");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        recordService.create(user, config, RDFRecordFactory, connection);
+        recordService.create(user, config, connection);
 
         verify(utilsService).addObject(any(Record.class), any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));

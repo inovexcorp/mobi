@@ -23,23 +23,30 @@ package com.mobi.catalog.api.record;
  * #L%
  */
 
+import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
+import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
-import com.mobi.catalog.api.record.config.OperationSetting;
+import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordExportSettings;
+import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Literal;
+import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
 
@@ -47,6 +54,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -66,6 +74,8 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     protected MergeRequestManager mergeRequestManager;
     protected CatalogUtilsService utilsService;
     protected VersionedRDFRecordFactory recordFactory;
+    protected CatalogManager catalogManager;
+    protected VersioningManager versioningManager;
 
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
@@ -78,27 +88,24 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     }
 
     @Override
-    public T createRecord(RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
+    public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
                           RepositoryConnection conn) {
-        T record = createRecordObject(config, issued, modified);
+        T record = createRecordObject(config, issued, modified, conn);
         Branch masterBranch = createMasterBranch(record);
         conn.begin();
-        utilsService.addObject(record, conn);
-        utilsService.addObject(masterBranch, conn);
-        utilsService.addCommit(masterBranch, (Commit) VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, conn);
-        // TODO: Add initial commit object
-        // TODO: Add initial revision object
-        Set<Resource> processedCommits = new HashSet<>();
-        Resource headIRI = utilsService.getHeadCommitIRI(masterBranch);
-        Resource commitId = (Resource) utilsService.getCommitChain(headIRI, false, conn);
-        processedCommits.add(commitId);
-        Commit commit = utilsService.getExpectedObject(commitId, commitFactory, conn);
-        commit.setBaseCommit((Commit) VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA);
-        utilsService.addCommit(masterBranch, (Commit) VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, conn);
-        Difference revisionChanges = utilsService.getRevisionChanges(commitId, conn);
-        revisionChanges.getAdditions();
+        addRecord(record, masterBranch, conn);
+        IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
+        Resource masterBranchId = masterBranch.getResource();
+        Model model = config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA);
+        versioningManager.commit(catalogIdIRI, record.getResource(),
+                masterBranchId, user, "The initial commit.", model, null);
         conn.commit();
         return record;
+    }
+
+    protected void addRecord(T record, Branch masterBranch, RepositoryConnection conn) {
+        utilsService.addObject(record, conn);
+        utilsService.addObject(masterBranch, conn);
     }
 
     /**

@@ -39,6 +39,7 @@ import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
@@ -64,10 +65,10 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
 
     @Override
     public T create(User user, RecordOperationConfig config, RepositoryConnection conn) {
-        validateCreationConfig(config, conn);
+        validateCreationConfig(config);
         CreateActivity startActivity = provUtils.startCreateActivity(user);
         OffsetDateTime now = OffsetDateTime.now();
-        T record = createRecord(config, now, now, conn);
+        T record = createRecord(user, config, now, now, conn);
         provUtils.endCreateActivity(startActivity, record.getResource());
         return record;
     }
@@ -100,27 +101,25 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
         }
     }
 
-    protected T createRecord(RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
+    protected T createRecord(User user,RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
                              RepositoryConnection conn) {
-        T recordObject = createRecordObject(config, issued, modified);
+        T recordObject = createRecordObject(config, issued, modified, conn);
         conn.begin();
         utilsService.addObject(recordObject, conn);
         conn.commit();
         return recordObject;
     }
 
-    protected T createRecordObject(RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified) {
+    protected T createRecordObject(RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified, RepositoryConnection conn) {
         T record = recordFactory.createNew(valueFactory.createIRI(Catalogs.RECORD_NAMESPACE + UUID.randomUUID()));
-
         Literal titleLiteral = valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_TITLE));
         Literal issuedLiteral = valueFactory.createLiteral(issued);
         Literal modifiedLiteral = valueFactory.createLiteral(modified);
         Set<Value> publishers = config.get(RecordCreateSettings.RECORD_PUBLISHERS).stream()
                 .map(user -> (Value) user.getResource())
                 .collect(Collectors.toSet());
-
-        // TODO: Probably need to do this: record.setCatalog();
-        record.setCatalog((Catalog) catalogFactory);
+        IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
+        record.setCatalog(utilsService.getObject(catalogIdIRI, catalogFactory, conn));
 
         record.setProperty(titleLiteral, valueFactory.createIRI(_Thing.title_IRI));
         record.setProperty(issuedLiteral, valueFactory.createIRI(_Thing.issued_IRI));
@@ -207,13 +206,17 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     }
 
     /**
+     * Verifies if the required config settings have a value
      *
-     * @param config
+     * @param config The {@link RecordOperationConfig} to validate settings
      */
-    protected void validateCreationConfig(RecordOperationConfig config, RepositoryConnection conn) {
-        // TODO: Throw exception if record already exists
-        if (utilsService.getObject(config.get(RecordCreateSettings.RECORD_TITLE), recordFactory, conn) != null) {
-            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_TITLE + " already exists.");
+    protected void validateCreationConfig(RecordOperationConfig config) {
+        if (config.get(RecordCreateSettings.CATALOG_ID) == null) {
+            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.CATALOG_ID + " is required.");
+        }
+        if (config.get(RecordCreateSettings.RECORD_PUBLISHERS).isEmpty()) {
+            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_PUBLISHERS +
+                    " is required.");
         }
         if (config.get(RecordCreateSettings.RECORD_TITLE) == null) {
             throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_TITLE.getKey() + " is required.");
