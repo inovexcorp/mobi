@@ -3,6 +3,7 @@ package com.mobi.email.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 import com.dumbster.smtp.SimpleSmtpServer;
@@ -13,8 +14,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,10 +62,19 @@ public class SimpleEmailServiceTest {
     @Mock
     private Mobi mobi;
 
+    @Mock
+    private BundleContext context;
+
+    @Mock
+    private Bundle bundle;
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         when(mobi.getHostName()).thenReturn("https://localhost:8443/");
+        when(context.getBundle()).thenReturn(bundle);
+        URL path = SimpleEmailService.class.getResource("/emailTemplate.html");
+        when(bundle.getEntry(any(String.class))).thenReturn(path);
 
         es = new SimpleEmailService();
         es.setMobiServer(mobi);
@@ -74,10 +87,11 @@ public class SimpleEmailServiceTest {
         config.put("port", smtpServer.getPort());
         config.put("smtpServer", "localhost");
         config.put("security", "");
+        config.put("imageBasePath", "https://mobi.inovexcorp.com");
 
-        Method m = es.getClass().getDeclaredMethod("activate", Map.class);
+        Method m = es.getClass().getDeclaredMethod("activate", BundleContext.class, Map.class);
         m.setAccessible(true);
-        m.invoke(es, config);
+        m.invoke(es, context, config);
         assertNotNull(es);
     }
 
@@ -117,9 +131,9 @@ public class SimpleEmailServiceTest {
     @Test(expected = ExecutionException.class)
     public void sendSimpleEmailInvalidPortTest() throws Exception {
         config.replace("port", 1);
-        Method m = es.getClass().getDeclaredMethod("modified", Map.class);
+        Method m = es.getClass().getDeclaredMethod("modified", BundleContext.class, Map.class);
         m.setAccessible(true);
-        m.invoke(es, config);
+        m.invoke(es, context, config);
 
         CompletableFuture<Set<String>> cf = es.sendSimpleEmail(SUBJECT_LINE, TEXT_MESSAGE, TO_EMAIL_ADDRESS);
         cf.get();
@@ -155,9 +169,9 @@ public class SimpleEmailServiceTest {
     @Test(expected = ExecutionException.class)
     public void sendEmailInvalidPortTest() throws Exception {
         config.replace("port", 1);
-        Method m = es.getClass().getDeclaredMethod("modified", Map.class);
+        Method m = es.getClass().getDeclaredMethod("modified", BundleContext.class, Map.class);
         m.setAccessible(true);
-        m.invoke(es, config);
+        m.invoke(es, context, config);
 
         CompletableFuture<Set<String>> cf = es.sendEmail(SUBJECT_LINE, HTML_MESSAGE, TO_EMAIL_ADDRESS);
         cf.get();

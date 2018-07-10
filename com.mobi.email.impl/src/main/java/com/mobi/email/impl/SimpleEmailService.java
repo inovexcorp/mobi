@@ -34,12 +34,16 @@ import com.mobi.exception.MobiException;
 import com.mobi.platform.config.api.server.Mobi;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.mail.EmailException;
-import org.apache.commons.mail.HtmlEmail;
+import org.apache.commons.mail.ImageHtmlEmail;
+import org.apache.commons.mail.resolver.DataSourceUrlResolver;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -49,42 +53,44 @@ import java.util.concurrent.CompletableFuture;
 public class SimpleEmailService implements EmailService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleEmailService.class);
-    private static final String EMAIL_TEMPLATE;
     private static final String BODY_BINDING = "!|$BODY!|$";
     private static final String HOSTNAME_BINDING = "!|$HOSTNAME!|$";
     private EmailServiceConfig config;
     private Mobi mobiServer;
+    private String emailTemplate;
 
     @Reference
     void setMobiServer(Mobi mobiServer) {
         this.mobiServer = mobiServer;
     }
 
-    static {
+    @Activate
+    void activate(BundleContext context, Map<String, Object> configuration) {
+        config = Configurable.createConfigurable(EmailServiceConfig.class, configuration);
+        Bundle bundle = context.getBundle();
+        URL path = bundle.getEntry("/emailTemplate.html");
         try {
-            EMAIL_TEMPLATE = IOUtils.toString(
-                    SimpleEmailService.class.getResourceAsStream("/emailTemplate.html"),
-                    "UTF-8"
-            );
+            emailTemplate = IOUtils.toString(path.openStream(), "UTF-8");
         } catch (IOException e) {
             throw new MobiException(e);
         }
     }
 
-    @Activate
-    void activate(Map<String, Object> configuration) {
-        config = Configurable.createConfigurable(EmailServiceConfig.class, configuration);
-    }
-
     @Modified
-    void modified(Map<String, Object> configuration) {
-        activate(configuration);
+    void modified(BundleContext context, Map<String, Object> configuration) {
+        activate(context, configuration);
     }
 
     @Override
     public CompletableFuture<Set<String>> sendSimpleEmail(String subject, String message, String... userEmails) {
-        String body = "<tr><td style=\"padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px;"
-                + " color: #555555;\"><p style=\"margin: 0;\">" + message + "</p></td></tr>";
+        String body = "<table cellpadding=\"0\" cellspacing=\"0\" dir=\"ltr\" style=\"border: 0; width: 100%; \">"
+                + "<tbody><tr><td class=\"tw-card-body\" style=\"padding: 20px 35px; text-align: left; color: #6F6F6F;"
+                + " font-family: sans-serif; border-top: 0;\"><h1 class=\"tw-h1\"style=\"font-size: 36px; "
+                + "font-weight: normal; mso-line-height-rule: exactly; line-height: 38px; margin: 20px 0; "
+                + "color: #474747; font-size: 24px; font-weight: bold; mso-line-height-rule: exactly; "
+                + "line-height: 32px; margin: 0 0 20px; \">"
+                + "Hello from Mobi!</h1><p class=\"\"style=\"margin: 20px 0; font-size: 16px; mso-line-height-rule: "
+                + "exactly; line-height: 24px; margin: 20px 0; \">" + message + "</p></td></tr></tbody></table>";
         return sendEmail(subject, body, userEmails);
     }
 
@@ -94,7 +100,7 @@ public class SimpleEmailService implements EmailService {
                 .thenApply(email -> {
                     Set<String> invalidEmails = new HashSet<>();
                     email.setSubject(subject);
-                    String htmlMsg = EMAIL_TEMPLATE.replace(BODY_BINDING, htmlMessage);
+                    String htmlMsg = emailTemplate.replace(BODY_BINDING, htmlMessage);
                     if (mobiServer.getHostName().endsWith("/")) {
                         htmlMsg = htmlMsg.replace(HOSTNAME_BINDING, mobiServer.getHostName() + "mobi/index.html");
                     } else {
@@ -136,11 +142,20 @@ public class SimpleEmailService implements EmailService {
         return emailSendResult;
     }
 
-    private HtmlEmail setUpEmail() {
-        HtmlEmail email = new HtmlEmail();
+    private ImageHtmlEmail setUpEmail() {
+        ImageHtmlEmail email = new ImageHtmlEmail();
         email.setHostName(config.smtpServer());
         email.setSmtpPort(config.port());
         email.setAuthentication(config.emailAddress(), config.emailPassword());
+
+        URL imageBasePath = null;
+        try {
+            imageBasePath = new URL(config.imageBasePath());
+        } catch (MalformedURLException e) {
+            throw new MobiException(e);
+        }
+
+        email.setDataSourceResolver(new DataSourceUrlResolver(imageBasePath));
 
         if (config.security().equals("SSL") || config.security().equals("TLS")) {
             email.setSSLOnConnect(true);

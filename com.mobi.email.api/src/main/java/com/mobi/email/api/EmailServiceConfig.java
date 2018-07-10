@@ -67,4 +67,12 @@ public interface EmailServiceConfig {
      */
     @Meta.AD(deflt = "SSL")
     String security();
+
+    /**
+     * The default base path to resolve images by when a relative path is used in the email template.
+     *
+     * @return The default base path to use to resolve images
+     */
+    @Meta.AD(deflt = "file://")
+    String imageBasePath();
 }
