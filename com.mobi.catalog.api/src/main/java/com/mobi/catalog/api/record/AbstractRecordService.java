@@ -100,7 +100,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     }
 
     /**
-     * Creates the recordObject then commits that object to the repository
+     * Creates the recordObject then commits that object to the repository.
      *
      * @param user The {@link User} that is creating the Record
      * @param config A {@link RecordOperationConfig} that contains the record configuration.
@@ -121,7 +121,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     /**
      * Generates a new record namespace and adds the properties from the config to that record.
      *
-     * @param config A {@link RecordOperationConfig} that contains the record configuration.
+     * @param config A {@link RecordOperationConfig} that contains the record configuration
      * @param issued Time the record was issued
      * @param modified Time the record was modified
      * @param conn A {@link RepositoryConnection} to use for lookup
@@ -224,7 +224,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     }
 
     /**
-     * Verifies if the required config settings have a value
+     * Verifies if the required config settings have a value.
      *
      * @param config The {@link RecordOperationConfig} to validate settings
      */

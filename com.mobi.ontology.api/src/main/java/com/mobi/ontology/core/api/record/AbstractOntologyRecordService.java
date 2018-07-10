@@ -45,8 +45,6 @@ import java.time.OffsetDateTime;
 public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
 
-    private Ontology ontology;
-
     protected ModelFactory modelFactory;
     protected OntologyManager ontologyManager;
     protected VersioningManager versioningManager;
@@ -69,14 +67,15 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     }
 
     /**
-     * Creates an ontology and sets that new ontology to the record
+     * Creates an ontology and sets that new ontology to the record.
      *
      * @param record Created record
      * @param config A {@link RepositoryConnection} to use for lookup
      * @return created ontology
      */
-    protected Ontology setOntologyToRecord(T record, RecordOperationConfig config) {
-        ontology = ontologyManager.createOntology(config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA));
+    private Ontology setOntologyToRecord(T record, RecordOperationConfig config) {
+        Ontology ontology = ontologyManager.createOntology(config.get(VersionedRDFRecordCreateSettings
+                .INITIAL_COMMIT_DATA));
         record.getOntologyIRI().ifPresent(this::validateOntology);
         record.setOntologyIRI(ontology.getOntologyId().getOntologyIdentifier());
         return ontology;

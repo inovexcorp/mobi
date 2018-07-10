@@ -235,6 +235,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         verify(ontology).asModel(eq(modelFactory));
         verify(ontology).getOntologyId();
         verify(ontologyId).getOntologyIdentifier();
+        verify(ontologyManager).createOntology(any(Model.class));
         verify(utilsService, times(2)).addObject(any(Record.class),
                 any(RepositoryConnection.class));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),
