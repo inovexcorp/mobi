@@ -826,10 +826,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         final List<Resource> commonCommits = new ArrayList<>(sourceCommits);
         commonCommits.retainAll(targetCommits);
 
-        if (commonCommits.size() == 0) {
-            throw new IllegalArgumentException("No common parent between Commit " + sourceCommitId + " and "
-                    + targetCommitId);
-        }
         sourceCommits.removeAll(commonCommits);
 
         if (!asc) {
