@@ -103,7 +103,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private DeleteActivity deleteActivity;
     private Tag tag;
 
-    private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
+    private OrmFactory<VersionedRDFRecord> recordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
     private OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
     private OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
@@ -114,9 +114,6 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private CatalogUtilsService utilsService;
-
-    @Mock
-    private VersionedRDFRecordFactory recordFactory;
 
     @Mock
     private RepositoryConnection connection;
@@ -152,7 +149,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         tag = tagFactory.createNew(tagIRI);
         tag.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(distributionIRI)));
 
-        testRecord = versionedRDFRecordFactory.createNew(testIRI);
+        testRecord = recordFactory.createNew(testIRI);
         testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
         testRecord.setBranch(Collections.singleton(branch));
@@ -176,7 +173,6 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
 
         injectOrmFactoryReferencesIntoService(recordService);
-        recordService.setRecordFactory(recordFactory);
         recordService.setUtilsService(utilsService);
         recordService.setVf(VALUE_FACTORY);
         recordService.setProvUtils(provUtils);

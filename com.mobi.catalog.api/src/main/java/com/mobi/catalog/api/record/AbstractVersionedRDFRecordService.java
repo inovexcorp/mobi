@@ -46,6 +46,7 @@ import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
 
 import java.time.OffsetDateTime;
@@ -70,7 +71,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     protected BranchFactory branchFactory;
     protected MergeRequestManager mergeRequestManager;
     protected CatalogUtilsService utilsService;
-    protected VersionedRDFRecordFactory recordFactory;
+    protected OrmFactory<VersionedRDFRecord> recordFactory;
     protected CatalogManager catalogManager;
     protected VersioningManager versioningManager;
 

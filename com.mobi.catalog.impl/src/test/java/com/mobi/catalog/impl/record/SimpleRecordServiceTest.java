@@ -35,7 +35,6 @@ import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
@@ -78,16 +77,13 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
     private User user;
     private DeleteActivity deleteActivity;
 
-    private OrmFactory<Record> RDFRecordFactory = getRequiredOrmFactory(Record.class);
     private OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
     private OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
+    private OrmFactory<Record> recordFactory = getRequiredOrmFactory(Record.class);
 
     @Mock
     private CatalogUtilsService utilsService;
-
-    @Mock
-    private RecordFactory recordFactory;
 
     @Mock
     private RepositoryConnection connection;
@@ -104,19 +100,17 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
         user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/user"));
 
-        testRecord = RDFRecordFactory.createNew(testIRI);
+        testRecord = recordFactory.createNew(testIRI);
         testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
 
         MockitoAnnotations.initMocks(this);
         when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
-
         when(utilsService.getObject(any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
                 i.getArgumentAt(1, OrmFactory.class).createNew(i.getArgumentAt(0, Resource.class)));
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
 
         injectOrmFactoryReferencesIntoService(recordService);
-        recordService.setRecordFactory(recordFactory);
         recordService.setUtilsService(utilsService);
         recordService.setVf(VALUE_FACTORY);
         recordService.setProvUtils(provUtils);

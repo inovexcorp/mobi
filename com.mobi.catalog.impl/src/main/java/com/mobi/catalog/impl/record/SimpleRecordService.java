@@ -27,16 +27,11 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.record.AbstractRecordService;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.orm.OrmFactory;
-
-import javax.annotation.Nonnull;
 
 @Component
 public class SimpleRecordService extends AbstractRecordService<Record> {
