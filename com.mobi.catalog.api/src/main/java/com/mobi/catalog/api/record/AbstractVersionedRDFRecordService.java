@@ -129,7 +129,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     }
 
     /**
-     * Creates a branch specific to (title, desription, factory).
+     * Creates a branch specific to (title, description, factory).
      *
      * @param title Name of desired branch
      * @param description Short description of the title branch
