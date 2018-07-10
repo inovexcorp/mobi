@@ -56,7 +56,7 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
                           RepositoryConnection conn) {
         T record = createRecordObject(config, issued, modified, conn);
         Branch masterBranch = createMasterBranch(record);
-        setOntologyToRecord(record, config);
+        Ontology ontology = setOntologyToRecord(record, config);
         conn.begin();
         addRecord(record, masterBranch, conn);
         IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
@@ -68,11 +68,18 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         return record;
     }
 
-    private void setOntologyToRecord(T record, RecordOperationConfig config) {
-        ontology = ontologyManager.createOntology(
-                config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA));
+    /**
+     * Creates an ontology and sets that new ontology to the record
+     *
+     * @param record Created record
+     * @param config A {@link RepositoryConnection} to use for lookup
+     * @return created ontology
+     */
+    protected Ontology setOntologyToRecord(T record, RecordOperationConfig config) {
+        ontology = ontologyManager.createOntology(config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA));
         record.getOntologyIRI().ifPresent(this::validateOntology);
         record.setOntologyIRI(ontology.getOntologyId().getOntologyIdentifier());
+        return ontology;
     }
 
     private void validateOntology(Resource newOntologyId) {

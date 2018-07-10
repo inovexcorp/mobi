@@ -28,6 +28,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -87,9 +88,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
     private final IRI testIRI = VALUE_FACTORY.createIRI("urn:test");
     private final IRI catalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-test");
-    private final String CATALOG_IRI = "http://test.org/catalog";
-    private final String MAPPING_RECORD_IRI = "http://test.org/record";
-    private final String BRANCH_IRI = "http://test.org/branch";
     private final IRI branchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch");
     private final IRI commitIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commit");
     private final IRI tagIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#tag");
@@ -215,6 +213,9 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         recordService.setVersioningManager(versioningManager);
         recordService.setMergeRequestManager(mergeRequestManager);
     }
+
+    /* create() */
+
     @Test
     public void createTest() throws Exception{
         RecordOperationConfig config = new OperationConfig();
@@ -232,10 +233,62 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         recordService.create(user, config, connection);
 
         verify(ontology).asModel(eq(modelFactory));
+        verify(ontology).getOntologyId();
+        verify(ontologyId).getOntologyIdentifier();
+        verify(utilsService, times(2)).addObject(any(Record.class),
+                any(RepositoryConnection.class));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),
                         anyString(), any(Model.class), eq(null));
         verify(utilsService).getObject(any(Resource.class),eq(catalogFactory),any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void createRecordWithoutCatalogID() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestDescription");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+
+        recordService.create(user, config, connection);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void createRecordWithoutPublisher() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestDescription");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+
+        recordService.create(user, config, connection);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void createRecordWithoutTitle() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+
+        recordService.create(user, config, connection);
     }
 }
