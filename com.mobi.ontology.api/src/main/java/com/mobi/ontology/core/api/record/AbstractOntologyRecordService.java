@@ -81,6 +81,11 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         return ontology;
     }
 
+    /**
+     * Checks ontologyManager to ensure the new OntologyId doesn't already exist.
+     *
+     * @param newOntologyId newly created ontology to set to record
+     */
     private void validateOntology(Resource newOntologyId) {
         if (ontologyManager.ontologyIriExists(newOntologyId)) {
             throw new IllegalArgumentException("Ontology IRI:  " + newOntologyId + " already exists.");
