@@ -103,11 +103,11 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
      * Creates the recordObject then commits that object to the repository.
      *
      * @param user The {@link User} that is creating the Record
-     * @param config A {@link RecordOperationConfig} that contains the record configuration.
+     * @param config A {@link RecordOperationConfig} that contains the record configuration
      * @param issued Time the record was issued
      * @param modified Time the record was modified
      * @param conn A {@link RepositoryConnection} to use for lookup
-     * @return
+     * @return The record that was added to the repository
      */
     protected T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
                              RepositoryConnection conn) {
