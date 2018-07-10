@@ -38,7 +38,7 @@ public class VersionedRDFRecordCreateSettings {
     private VersionedRDFRecordCreateSettings() {}
 
     static {
-        INITIAL_COMMIT_DATA = new OperationSettingImpl<>("com.mobi.catalog.operation.create.initialcreatedata",
+        INITIAL_COMMIT_DATA = new OperationSettingImpl<>("com.mobi.catalog.operation.create.initialcommitdata",
                 "Data for initial commit", null);
     }
 }

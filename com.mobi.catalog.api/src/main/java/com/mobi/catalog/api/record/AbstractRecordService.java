@@ -28,7 +28,6 @@ import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -100,7 +99,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
         }
     }
 
-    protected T createRecord(User user,RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
+    protected T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
                              RepositoryConnection conn) {
         T recordObject = createRecordObject(config, issued, modified, conn);
         conn.begin();
@@ -109,7 +108,17 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
         return recordObject;
     }
 
-    protected T createRecordObject(RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified, RepositoryConnection conn) {
+    /**
+     * Generates a new record namespace and adds the properties from the config to that record.
+     *
+     * @param config A {@link RecordOperationConfig} that contains the record configuration.
+     * @param issued Time the record was issued
+     * @param modified Time the record was modified
+     * @param conn A {@link RepositoryConnection} to use for lookup
+     * @return A {@link Record} of the provided config
+     */
+    protected T createRecordObject(RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
+                                   RepositoryConnection conn) {
         T record = recordFactory.createNew(valueFactory.createIRI(Catalogs.RECORD_NAMESPACE + UUID.randomUUID()));
         Literal titleLiteral = valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_TITLE));
         Literal issuedLiteral = valueFactory.createLiteral(issued);
@@ -188,7 +197,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
      * Removes the Record object from the repository.
      *
      * @param record Record to remove
-     * @param conn A RepositoryConnection to use for lookup
+     * @param conn A {@link RepositoryConnection} to use for lookup
      */
     protected void deleteRecordObject(T record, RepositoryConnection conn) {
         utilsService.removeObject(record, conn);
@@ -214,11 +223,12 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
             throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.CATALOG_ID + " is required.");
         }
         if (config.get(RecordCreateSettings.RECORD_PUBLISHERS).isEmpty()) {
-            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_PUBLISHERS +
-                    " is required.");
+            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_PUBLISHERS
+                    + " is required.");
         }
         if (config.get(RecordCreateSettings.RECORD_TITLE) == null) {
-            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_TITLE.getKey() + " is required.");
+            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_TITLE.getKey()
+                    + " is required.");
         }
     }
 }

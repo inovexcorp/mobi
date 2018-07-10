@@ -33,7 +33,6 @@ import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -71,7 +70,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     protected BranchFactory branchFactory;
     protected MergeRequestManager mergeRequestManager;
     protected CatalogUtilsService utilsService;
-    protected OrmFactory<VersionedRDFRecord> recordFactory;
+    protected OrmFactory<T> recordFactory;
     protected CatalogManager catalogManager;
     protected VersioningManager versioningManager;
 
@@ -101,6 +100,13 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         return record;
     }
 
+    /**
+     * Adds the record and masterBranch to the repository.
+     *
+     * @param record The VersionedRDFRecord to add to the repository
+     * @param masterBranch The initialized masterBranch to add to the repository
+     * @param conn A RepositoryConnection to use for lookup
+     */
     protected void addRecord(T record, Branch masterBranch, RepositoryConnection conn) {
         utilsService.addObject(record, conn);
         utilsService.addObject(masterBranch, conn);
