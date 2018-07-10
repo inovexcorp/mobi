@@ -27,7 +27,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-
 import java.io.InputStream;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;

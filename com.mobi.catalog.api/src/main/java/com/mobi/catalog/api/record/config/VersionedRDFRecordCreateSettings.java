@@ -1,6 +1,4 @@
-@Version("3.2.0.${build}")
-
-package com.mobi.catalog.api.record;
+package com.mobi.catalog.api.record.config;
 
 /*-
  * #%L
@@ -8,7 +6,7 @@ package com.mobi.catalog.api.record;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,22 @@ package com.mobi.catalog.api.record;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import com.mobi.rdf.api.Model;
+
+/**
+ * {@link com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord} create settings.
+ */
+public class VersionedRDFRecordCreateSettings {
+
+    /**
+     * Boolean setting for whether or not to write out versioned RDF data.
+     */
+    public static OperationSetting<Model> INITIAL_COMMIT_DATA;
+
+    private VersionedRDFRecordCreateSettings() {}
+
+    static {
+        INITIAL_COMMIT_DATA = new OperationSettingImpl<>("com.mobi.catalog.operation.create.initialcommitdata",
+                "Data for initial commit", null);
+    }
+}

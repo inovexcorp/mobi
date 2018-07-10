@@ -1,14 +1,14 @@
-@Version("3.2.0.${build}")
+@Version("1.0.0.${build}")
 
-package com.mobi.catalog.api.record;
+package com.mobi.ontology.core.api.record;
 
 /*-
  * #%L
- * com.mobi.catalog.api
+ * com.mobi.ontology.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
