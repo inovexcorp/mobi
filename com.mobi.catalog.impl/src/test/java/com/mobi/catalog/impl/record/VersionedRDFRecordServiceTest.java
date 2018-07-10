@@ -46,6 +46,7 @@ import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
@@ -213,14 +214,11 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void deleteTest() throws Exception {
-        when(recordFactory.getExisting(eq(testIRI), any(Model.class))).thenReturn(Optional.of(testRecord));
-
         VersionedRDFRecord deletedRecord = recordService.delete(testIRI, user, connection);
 
         assertEquals(testRecord, deletedRecord);
         verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
         verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
-        verify(recordFactory).getExisting(eq(testIRI), eq(testRecord.getModel()));
         verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
         verify(utilsService).removeVersion(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).removeBranch(eq(testRecord.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
