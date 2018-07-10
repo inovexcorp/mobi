@@ -200,7 +200,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             byte[] fileBytes = balanaPolicy.toString().getBytes();
             VirtualFile file = vfs.resolveVirtualFile(fileBytes, fileLocation);
             file.create();
-            file.writeToContent(balanaPolicy.toString().getBytes());
+            file.writeToContent(fileBytes);
             PolicyFile policyFile = addPolicyFile(file, fileName, balanaPolicy);
             return policyFile.getResource();
         } catch (IOException e) {
@@ -249,24 +249,14 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     public void updatePolicy(XACMLPolicy newPolicy) {
         PolicyFile policyFile = validatePolicy(newPolicy.getId());
         try {
-            BalanaPolicy balanaPolicy = getBalanaPolicy(newPolicy);
             IRI filePath = getRetrievalURL(policyFile);
-            VirtualFile virtualFile = vfs.resolveVirtualFile(filePath.stringValue());
-            if (!virtualFile.exists()) {
+            VirtualFile virtualFileOld = vfs.resolveVirtualFile(filePath.stringValue());
+            if (!virtualFileOld.exists()) {
                 throw new IllegalStateException("Policy file does not exist");
             }
             LOG.debug("Updating policy file at " + filePath);
-            try (OutputStream out = virtualFile.writeContent()) {
-                out.write(balanaPolicy.toString().getBytes());
-            }
-            setRelatedProperties(policyFile, balanaPolicy);
-            policyFile.setChecksum(getChecksum(balanaPolicy));
-            try (RepositoryConnection conn = repository.getConnection()) {
-                conn.clear(newPolicy.getId());
-                conn.add(policyFile.getModel(), newPolicy.getId());
-            }
-            policyCache.getPolicyCache()
-                    .ifPresent(cache -> cache.replace(newPolicy.getId().stringValue(), balanaPolicy));
+            this.deletePolicy(newPolicy.getId());
+            this.addPolicy(newPolicy);
         } catch (IOException e) {
             throw new IllegalStateException("Could not save XACML Policy to disk due to: ", e);
         }
