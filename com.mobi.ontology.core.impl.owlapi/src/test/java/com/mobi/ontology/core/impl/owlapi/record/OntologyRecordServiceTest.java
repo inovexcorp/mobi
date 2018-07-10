@@ -87,6 +87,9 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
     private final IRI testIRI = VALUE_FACTORY.createIRI("urn:test");
     private final IRI catalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-test");
+    private final String CATALOG_IRI = "http://test.org/catalog";
+    private final String MAPPING_RECORD_IRI = "http://test.org/record";
+    private final String BRANCH_IRI = "http://test.org/branch";
     private final IRI branchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch");
     private final IRI commitIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commit");
     private final IRI tagIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#tag");
@@ -227,7 +230,10 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         recordService.create(user, config, connection);
-        
+
+        verify(ontology).asModel(eq(modelFactory));
+        verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),
+                        anyString(), any(Model.class), eq(null));
         verify(utilsService).getObject(any(Resource.class),eq(catalogFactory),any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));

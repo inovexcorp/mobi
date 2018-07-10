@@ -202,6 +202,8 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
         recordService.create(user, config, connection);
 
+        verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),
+                anyString(), any(Model.class), eq(null));
         verify(utilsService).getObject(any(Resource.class),eq(catalogFactory),any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
