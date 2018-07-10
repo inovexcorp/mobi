@@ -48,8 +48,8 @@ public interface RecordService<T extends Record> {
     /**
      * Creates and adds a Record based on a provided configuration.
      *
-     * @param user The {@link User} that is deleting the Record
-     * @param config A {@link RecordOperationConfig} that contains the insert configuration
+     * @param user The {@link User} that is creating the Record
+     * @param config A {@link RecordOperationConfig} that contains the create configuration
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      * @return The created Record
      */

@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * Base {@link com.mobi.catalog.api.ontologies.mcat.Record} insert settings.
+ * Base {@link com.mobi.catalog.api.ontologies.mcat.Record} create settings.
  */
 public class RecordCreateSettings {
 
