@@ -428,7 +428,6 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
 
         manager.updatePolicy(policy);
         verify(policyCache, atLeastOnce()).getPolicyCache();
-        verify(cache).replace(eq(policyId.stringValue()), any(Policy.class));
         assertTrue(entries.containsKey(policyId.stringValue()));
         Policy cachedPolicy = entries.get(policyId.stringValue());
         assertTrue(cachedPolicy instanceof BalanaPolicy);
@@ -437,11 +436,14 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
             Optional<PolicyFile> optPolicyFile = policyFileFactory.getExisting(policyId, RepositoryResults.asModel(conn.getStatements(null, null, null, policyId), MODEL_FACTORY));
             assertTrue(optPolicyFile.isPresent());
             PolicyFile newPolicyFile = optPolicyFile.get();
-            Optional<IRI> filePath = policyFile.getRetrievalURL();
-            assertTrue(filePath.isPresent());
+            Optional<IRI> filePathOld = policyFile.getRetrievalURL();
+            Optional<IRI> filePathNew = newPolicyFile.getRetrievalURL();
+            assertTrue(filePathNew.isPresent());
             assertTrue(newPolicyFile.getChecksum().isPresent());
-            VirtualFile virtualFile = vfs.resolveVirtualFile(filePath.get().stringValue());
-            assertTrue(virtualFile.exists() && virtualFile.isFile());
+            VirtualFile virtualFileOld = vfs.resolveVirtualFile(filePathOld.get().stringValue());
+            assertFalse(virtualFileOld.exists());
+            VirtualFile virtualFileNew = vfs.resolveVirtualFile(filePathNew.get().stringValue());
+            assertTrue(virtualFileNew.exists() && virtualFileNew.isFile());
             assertTrue(!newPolicyFile.getRelatedResource().isEmpty() && newPolicyFile.getRelatedResource().contains(relatedResource));
             assertTrue(!newPolicyFile.getRelatedAction().isEmpty() && newPolicyFile.getRelatedAction().contains(relatedAction));
             assertTrue(newPolicyFile.getRelatedSubject().isEmpty());
@@ -464,11 +466,14 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
                     RepositoryResults.asModel(conn.getStatements(null, null, null, policyFile.getResource()), MODEL_FACTORY));
             assertTrue(optPolicyFile.isPresent());
             PolicyFile newPolicyFile = optPolicyFile.get();
-            Optional<IRI> filePath = policyFile.getRetrievalURL();
-            assertTrue(filePath.isPresent());
+            Optional<IRI> filePathOld = policyFile.getRetrievalURL();
+            Optional<IRI> filePathNew = newPolicyFile.getRetrievalURL();
+            assertTrue(filePathNew.isPresent());
             assertTrue(newPolicyFile.getChecksum().isPresent());
-            VirtualFile virtualFile = vfs.resolveVirtualFile(filePath.get().stringValue());
-            assertTrue(virtualFile.exists() && virtualFile.isFile());
+            VirtualFile virtualFileOld = vfs.resolveVirtualFile(filePathOld.get().stringValue());
+            assertFalse(virtualFileOld.exists());
+            VirtualFile virtualFileNew = vfs.resolveVirtualFile(filePathNew.get().stringValue());
+            assertTrue(virtualFileNew.exists() && virtualFileNew.isFile());
             assertTrue(!newPolicyFile.getRelatedResource().isEmpty() && newPolicyFile.getRelatedResource().contains(relatedResource));
             assertTrue(!newPolicyFile.getRelatedAction().isEmpty() && newPolicyFile.getRelatedAction().contains(relatedAction));
             assertTrue(newPolicyFile.getRelatedSubject().isEmpty());
