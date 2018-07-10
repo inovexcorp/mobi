@@ -39,7 +39,6 @@ import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -69,7 +68,6 @@ import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
@@ -115,7 +113,6 @@ public class OntologyRestImpl implements OntologyRest {
 
     private ModelFactory modelFactory;
     private ValueFactory valueFactory;
-    private OrmFactory recordFactory;
     private OntologyManager ontologyManager;
     private CatalogManager catalogManager;
     private EngineManager engineManager;
@@ -124,7 +121,6 @@ public class OntologyRestImpl implements OntologyRest {
     private VersioningManager versioningManager;
     private CatalogProvUtils provUtils;
     private RepositoryManager repositoryManager;
-    private RecordService recordService;
 
     private static final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
 
@@ -182,9 +178,6 @@ public class OntologyRestImpl implements OntologyRest {
     void setRepositoryManager(RepositoryManager repositoryManager) {
         this.repositoryManager = repositoryManager;
     }
-
-    @Reference
-    void setRecordService(RecordService recordService){ this.recordService = recordService;}
 
     @Override
     @ActionAttributes(

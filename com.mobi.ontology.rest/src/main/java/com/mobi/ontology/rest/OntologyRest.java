@@ -23,15 +23,10 @@ package com.mobi.ontology.rest;
  * #L%
  */
 
-import com.mobi.catalog.api.record.config.RecordOperationConfig;
-import com.mobi.repository.api.RepositoryConnection;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.eclipse.rdf4j.query.algebra.Str;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.springframework.context.annotation.Role;
-
 import java.io.InputStream;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
