@@ -1,8 +1,8 @@
-package com.mobi.catalog.impl.record;
+package com.mobi.ontology.core.impl.owlapi.record;
 
 /*-
  * #%L
- * com.mobi.catalog.impl
+ * com.mobi.ontology.core.impl.owlapi
  * $Id:$
  * $HeadURL:$
  * %%
@@ -31,19 +31,16 @@ import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
-import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.ontology.core.api.record.AbstractOntologyRecordService;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 
 @Component
-public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordService<VersionedRDFRecord> {
-
-    @Reference
-    void setCatalogFactory(CatalogFactory catalogFactory) {
-        this.catalogFactory = catalogFactory;
-    }
+public class SimpleOntologyRecordService extends AbstractOntologyRecordService<OntologyRecord> {
 
     @Reference
     void setUtilsService(CatalogUtilsService utilsService) {
@@ -61,7 +58,12 @@ public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordS
     }
 
     @Reference
-    void setRecordFactory(VersionedRDFRecordFactory recordFactory) {
+    void setCatalogFactory(CatalogFactory catalogFactory) {
+        this.catalogFactory = catalogFactory;
+    }
+
+    @Reference
+    void setRecordFactory(OntologyRecordFactory recordFactory) {
         this.recordFactory = recordFactory;
     }
 
@@ -81,17 +83,27 @@ public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordS
     }
 
     @Reference
+    void setOntologyManager(OntologyManager ontologyManager) {
+        this.ontologyManager = ontologyManager;
+    }
+
+    @Reference
     void setVersioningManager(VersioningManager versioningManager) {
         this.versioningManager = versioningManager;
     }
 
+    @Reference
+    void setModelFactory(ModelFactory modelFactory) {
+        this.modelFactory = modelFactory;
+    }
+
     @Override
-    public Class<VersionedRDFRecord> getType() {
-        return VersionedRDFRecord.class;
+    public Class<OntologyRecord> getType() {
+        return OntologyRecord.class;
     }
 
     @Override
     public String getTypeIRI() {
-        return VersionedRDFRecord.TYPE;
+        return OntologyRecord.TYPE;
     }
 }

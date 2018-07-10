@@ -29,6 +29,7 @@ import static junit.framework.TestCase.assertTrue;
 
 import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
