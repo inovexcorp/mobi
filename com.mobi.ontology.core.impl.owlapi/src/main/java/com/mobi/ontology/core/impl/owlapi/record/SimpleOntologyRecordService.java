@@ -29,12 +29,14 @@ import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
-import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
+import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.record.AbstractOntologyRecordService;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 
 @Component
@@ -56,7 +58,9 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
     }
 
     @Reference
-    void setCatalogFactory(CatalogFactory catalogFactory) { this.catalogFactory = catalogFactory; }
+    void setCatalogFactory(CatalogFactory catalogFactory) {
+        this.catalogFactory = catalogFactory;
+    }
 
     @Reference
     void setRecordFactory(OntologyRecordFactory recordFactory) {
@@ -76,6 +80,21 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
     @Reference
     void setMergeRequestManager(MergeRequestManager mergeRequestManager) {
         this.mergeRequestManager = mergeRequestManager;
+    }
+
+    @Reference
+    void setOntologyManager(OntologyManager ontologyManager) {
+        this.ontologyManager = ontologyManager;
+    }
+
+    @Reference
+    void setVersioningManager(VersioningManager versioningManager) {
+        this.versioningManager = versioningManager;
+    }
+
+    @Reference
+    void setModelFactory(ModelFactory modelFactory) {
+        this.modelFactory = modelFactory;
     }
 
     @Override

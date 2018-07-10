@@ -24,6 +24,7 @@ package com.mobi.ontology.core.impl.owlapi.record;
  */
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -43,8 +44,12 @@ import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
+import com.mobi.ontology.core.api.Ontology;
+import com.mobi.ontology.core.api.OntologyId;
+import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
@@ -52,15 +57,25 @@ import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.WriterConfig;
+import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
+import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Optional;
@@ -87,8 +102,12 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     private User user;
     private DeleteActivity deleteActivity;
     private Tag tag;
+    private IRI importedOntologyIRI;
+    private Model ontologyModel;
+    private OutputStream ontologyJsonLd;
+    private ModelFactory modelFactory;
 
-    private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
+    private OrmFactory<OntologyRecord> recordFactory = getRequiredOrmFactory(OntologyRecord.class);
     private OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
     private OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
@@ -101,9 +120,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     private CatalogUtilsService utilsService;
 
     @Mock
-    private OntologyRecordFactory recordFactory;
-
-    @Mock
     private RepositoryConnection connection;
 
     @Mock
@@ -112,12 +128,32 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     @Mock
     private MergeRequestManager mergeRequestManager;
 
+    @Mock
+    private Ontology ontology;
+
+    @Mock
+    private OntologyId ontologyId;
+
+    @Mock
+    private OntologyManager ontologyManager;
+
+    @Mock
+    private VersioningManager versioningManager;
+
     @Before
     public void setUp() throws Exception {
+        modelFactory = getModelFactory();
 
         recordService = new SimpleOntologyRecordService();
         transformer = new SimpleSesameTransformer();
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
+        WriterConfig config = new WriterConfig();
+        config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
+        importedOntologyIRI = VALUE_FACTORY.createIRI("http://test.org/ontology/IRI");
+        InputStream testOntology = getClass().getResourceAsStream("/test-ontology.ttl");
+        ontologyModel = modelFactory.createModel(Values.mobiModel(Rio.parse(testOntology, "", RDFFormat.TURTLE)));
+        ontologyJsonLd = new ByteArrayOutputStream();
+        Rio.write(Values.sesameModel(ontologyModel), ontologyJsonLd, RDFFormat.JSONLD, config);
 
         user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/user"));
         headCommit = commitFactory.createNew(commitIRI);
@@ -125,12 +161,12 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         branch.setHead(headCommit);
         branch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
 
-        Model deletions = MODEL_FACTORY.createModel();
+        Model deletions = modelFactory.createModel();
         deletions.add(VALUE_FACTORY.createIRI("http://test.com#sub"), VALUE_FACTORY.createIRI(_Thing.description_IRI),
                 VALUE_FACTORY.createLiteral("Description"));
 
         difference = new Difference.Builder()
-                .additions(MODEL_FACTORY.createModel())
+                .additions(modelFactory.createModel())
                 .deletions(deletions)
                 .build();
 
@@ -138,7 +174,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         tag = tagFactory.createNew(tagIRI);
         tag.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(distributionIRI)));
 
-        testRecord = ontologyRecordFactory.createNew(testIRI);
+        testRecord = recordFactory.createNew(testIRI);
         testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
         testRecord.setBranch(Collections.singleton(branch));
@@ -149,6 +185,12 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
 
         MockitoAnnotations.initMocks(this);
+        when(ontology.asModel(modelFactory)).thenReturn(ontologyModel);
+        when(ontology.getOntologyId()).thenReturn(ontologyId);
+        when(ontologyId.getOntologyIdentifier()).thenReturn(importedOntologyIRI);
+        when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
+        when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(true);
+        when(versioningManager.commit(eq(catalogId), eq(testIRI), eq(branchIRI), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitIRI);
         when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
         when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection))).thenReturn(branch);
         when(utilsService.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
@@ -162,10 +204,12 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
 
         injectOrmFactoryReferencesIntoService(recordService);
-        recordService.setRecordFactory(recordFactory);
+        recordService.setOntologyManager(ontologyManager);
         recordService.setUtilsService(utilsService);
         recordService.setVf(VALUE_FACTORY);
+        recordService.setModelFactory(modelFactory);
         recordService.setProvUtils(provUtils);
+        recordService.setVersioningManager(versioningManager);
         recordService.setMergeRequestManager(mergeRequestManager);
     }
     @Test
@@ -183,8 +227,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         recordService.create(user, config, connection);
-
-        verify(utilsService).updateObject(any(Record.class),any(RepositoryConnection.class));
+        
         verify(utilsService).getObject(any(Resource.class),eq(catalogFactory),any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));

@@ -24,7 +24,6 @@ package com.mobi.catalog.api.record.config;
  */
 
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.rdfs.Resource;
 
 import java.util.Collections;
 import java.util.Set;

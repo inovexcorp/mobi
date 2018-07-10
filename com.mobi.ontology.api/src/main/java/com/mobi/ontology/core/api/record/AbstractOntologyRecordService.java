@@ -23,24 +23,18 @@ package com.mobi.ontology.core.api.record;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogUtilsService;
-import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
-import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
+import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -51,15 +45,11 @@ import java.time.OffsetDateTime;
 public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
 
-    protected BranchFactory branchFactory;
-    protected CatalogFactory catalogFactory;
-    protected CatalogUtilsService utilsService;
-    protected CommitFactory commitFactory;
-    protected MergeRequestManager mergeRequestManager;
+    private Ontology ontology;
+
     protected ModelFactory modelFactory;
-    protected Ontology ontology;
     protected OntologyManager ontologyManager;
-    protected OntologyRecordFactory recordFactory;
+    protected VersioningManager versioningManager;
 
     @Override
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
@@ -81,8 +71,8 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     private void setOntologyToRecord(T record, RecordOperationConfig config) {
         ontology = ontologyManager.createOntology(
                 config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA));
-        record.setOntologyIRI(ontology.getOntologyId().getOntologyIdentifier());
         record.getOntologyIRI().ifPresent(this::validateOntology);
+        record.setOntologyIRI(ontology.getOntologyId().getOntologyIdentifier());
     }
 
     private void validateOntology(Resource newOntologyId) {

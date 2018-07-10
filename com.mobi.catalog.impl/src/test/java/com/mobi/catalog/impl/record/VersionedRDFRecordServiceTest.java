@@ -27,6 +27,7 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -50,6 +51,7 @@ import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordExportSettings;
+import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
@@ -112,6 +114,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
 
     @Mock
+    private VersioningManager versioningManager;
+
+    @Mock
     private CatalogUtilsService utilsService;
 
     @Mock
@@ -159,6 +164,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
 
         MockitoAnnotations.initMocks(this);
+        when(versioningManager.commit(eq(catalogId), eq(testIRI), eq(branchIRI), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitIRI);
         when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
         when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection))).thenReturn(branch);
         when(utilsService.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
@@ -172,6 +178,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
 
         injectOrmFactoryReferencesIntoService(recordService);
+        recordService.setVersioningManager(versioningManager);
         recordService.setUtilsService(utilsService);
         recordService.setVf(VALUE_FACTORY);
         recordService.setProvUtils(provUtils);
@@ -195,7 +202,6 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
         recordService.create(user, config, connection);
 
-        verify(utilsService).updateObject(any(Record.class),any(RepositoryConnection.class));
         verify(utilsService).getObject(any(Resource.class),eq(catalogFactory),any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));

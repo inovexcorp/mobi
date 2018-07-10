@@ -23,8 +23,6 @@ package com.mobi.catalog.api.record;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
@@ -45,7 +43,6 @@ import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
 
 import java.time.OffsetDateTime;
@@ -69,9 +66,6 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     protected CommitFactory commitFactory;
     protected BranchFactory branchFactory;
     protected MergeRequestManager mergeRequestManager;
-    protected CatalogUtilsService utilsService;
-    protected OrmFactory<T> recordFactory;
-    protected CatalogManager catalogManager;
     protected VersioningManager versioningManager;
 
     @Override
