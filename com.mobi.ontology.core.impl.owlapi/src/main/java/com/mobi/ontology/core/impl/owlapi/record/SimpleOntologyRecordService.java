@@ -36,11 +36,15 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.record.AbstractOntologyRecordService;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
+import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.repository.api.RepositoryConnection;
 
 @Component
 public class SimpleOntologyRecordService extends AbstractOntologyRecordService<OntologyRecord> {
+
+    private OntologyCache ontologyCache;
 
     @Reference
     void setUtilsService(CatalogUtilsService utilsService) {
@@ -50,6 +54,11 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
     @Reference
     void setProvUtils(CatalogProvUtils provUtils) {
         this.provUtils = provUtils;
+    }
+
+    @Reference
+    public void setOntologyCache(OntologyCache ontologyCache) {
+        this.ontologyCache = ontologyCache;
     }
 
     @Reference
@@ -105,5 +114,23 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
     @Override
     public String getTypeIRI() {
         return OntologyRecord.TYPE;
+    }
+
+    @Override
+    protected void deleteRecord(OntologyRecord record, RepositoryConnection conn) {
+        deleteRecordObject(record, conn);
+        deleteVersionedRDFData(record, conn);
+        clearOntologyCache(record);
+    }
+
+    /**
+     * Clears cached ontologies related to the provided {@link OntologyRecord} and clears other cached ontologies that
+     * import the {@link OntologyRecord}.
+     *
+     * @param record The {@link OntologyRecord} to remove from the OntologyCache
+     */
+    protected void clearOntologyCache(OntologyRecord record) {
+        ontologyCache.clearCache(record.getResource(), null);
+        record.getOntologyIRI().ifPresent(ontologyCache::clearCacheImports);
     }
 }
