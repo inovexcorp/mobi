@@ -66,6 +66,7 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.config.CatalogConfig;
+import com.mobi.catalog.impl.record.SimpleRecordService;
 import com.mobi.catalog.util.SearchResults;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -412,6 +413,18 @@ public class SimpleCatalogManager implements CatalogManager {
             conn.getStatements(null, vf.createIRI(Record.catalog_IRI), catalogId)
                     .forEach(statement -> results.add(statement.getSubject()));
             return results;
+        }
+    }
+
+    @Override
+    public <T extends Record> T createRecord(User user, RecordOperationConfig config, OrmFactory<T> factory) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            try {
+                RecordService<? extends Record> service = recordServices.get(factory.getTypeIRI().stringValue());
+                return (T) service.create(user, config, conn);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Service unavailable: " + e);
+            }
         }
     }
 
