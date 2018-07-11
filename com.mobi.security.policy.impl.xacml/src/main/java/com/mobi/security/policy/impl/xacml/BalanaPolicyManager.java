@@ -194,13 +194,10 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         validateUniqueId(policy);
         BalanaPolicy balanaPolicy = getBalanaPolicy(policy);
         String fileName = UUID.randomUUID() + ".xml";
-        String filePath = fileLocation + fileName;
-        LOG.debug("Creating new policy file at " + filePath);
+        LOG.debug("Creating new policy file at ");
         try {
             byte[] fileBytes = balanaPolicy.toString().getBytes();
             VirtualFile file = vfs.resolveVirtualFile(fileBytes, fileLocation);
-            file.create();
-            file.writeToContent(fileBytes);
             PolicyFile policyFile = addPolicyFile(file, fileName, balanaPolicy);
             return policyFile.getResource();
         } catch (IOException e) {
@@ -249,18 +246,29 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     public void updatePolicy(XACMLPolicy newPolicy) {
         PolicyFile policyFile = validatePolicy(newPolicy.getId());
         try {
+            BalanaPolicy balanaPolicy = getBalanaPolicy(newPolicy);
             IRI filePath = getRetrievalURL(policyFile);
             VirtualFile virtualFileOld = vfs.resolveVirtualFile(filePath.stringValue());
             if (!virtualFileOld.exists()) {
                 throw new IllegalStateException("Policy file does not exist");
             }
-            LOG.debug("Updating policy file at " + filePath);
-            this.deletePolicy(newPolicy.getId());
-            this.addPolicy(newPolicy);
+            VirtualFile virtualFileNew = vfs.resolveVirtualFile(balanaPolicy.toString().getBytes(), fileLocation);
+            LOG.debug("Updating policy file at " + filePath + " to file at " + virtualFileNew.getIdentifier());
+            setRelatedProperties(policyFile, balanaPolicy);
+            policyFile.setChecksum(getChecksum(balanaPolicy));
+            policyFile.setRetrievalURL(vf.createIRI(virtualFileNew.getIdentifier()));
+            virtualFileOld.delete();
+            try (RepositoryConnection conn = repository.getConnection()) {
+                conn.clear(newPolicy.getId());
+                conn.add(policyFile.getModel(), newPolicy.getId());
+            }
+            policyCache.getPolicyCache()
+                    .ifPresent(cache -> cache.replace(newPolicy.getId().stringValue(), balanaPolicy));
         } catch (IOException e) {
             throw new IllegalStateException("Could not save XACML Policy to disk due to: ", e);
         }
     }
+
 
     @Override
     public void deletePolicy(Resource policyId) {
