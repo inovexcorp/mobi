@@ -66,7 +66,6 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.config.CatalogConfig;
-import com.mobi.catalog.impl.record.SimpleRecordService;
 import com.mobi.catalog.util.SearchResults;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
