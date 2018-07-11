@@ -194,7 +194,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         validateUniqueId(policy);
         BalanaPolicy balanaPolicy = getBalanaPolicy(policy);
         String fileName = UUID.randomUUID() + ".xml";
-        LOG.debug("Creating new policy file at ");
+        LOG.debug("Creating new policy file");
         try {
             byte[] fileBytes = balanaPolicy.toString().getBytes();
             VirtualFile file = vfs.resolveVirtualFile(fileBytes, fileLocation);
@@ -268,7 +268,6 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             throw new IllegalStateException("Could not save XACML Policy to disk due to: ", e);
         }
     }
-
 
     @Override
     public void deletePolicy(Resource policyId) {
