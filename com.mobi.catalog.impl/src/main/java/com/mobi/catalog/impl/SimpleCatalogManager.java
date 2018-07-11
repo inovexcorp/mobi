@@ -423,7 +423,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 RecordService<? extends Record> service = recordServices.get(factory.getTypeIRI().stringValue());
                 return (T) service.create(user, config, conn);
             } catch (Exception e) {
-                throw new IllegalArgumentException("Service unavailable: " + e);
+                throw new IllegalArgumentException("Service unavailable or doesn't exist: " + e);
             }
         }
     }

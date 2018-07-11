@@ -112,7 +112,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private OrmFactory<UnversionedRecord> unversionedRecordFactory = getRequiredOrmFactory(UnversionedRecord.class);
     private OrmFactory<VersionedRecord> versionedRecordFactory = getRequiredOrmFactory(VersionedRecord.class);
     private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
-    private OrmFactory<OntologyRecord> ontologyRecordOrmFactory = getRequiredOrmFactory(OntologyRecord.class);
+    private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
     private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
@@ -218,11 +218,11 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         testRecord.setCatalog(catalogFactory.createNew(localCatalogId));
 
-        Record testVersionedRDFRecord = versionedRDFRecordFactory.createNew(RECORD_IRI);
+        VersionedRDFRecord testVersionedRDFRecord = versionedRDFRecordFactory.createNew(RECORD_IRI);
         testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         testRecord.setCatalog(catalogFactory.createNew(localCatalogId));
 
-        Record testOntologyRecord = ontologyRecordOrmFactory.createNew(RECORD_IRI);
+        OntologyRecord testOntologyRecord = ontologyRecordFactory.createNew(RECORD_IRI);
         testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         testRecord.setCatalog(catalogFactory.createNew(localCatalogId));
 
@@ -482,8 +482,70 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        Record record = manager.createRecord(user, config, recordFactory);
-        System.out.print(record);
+        manager.createRecord(user, config, recordFactory);
+
+        verify(recordService).create(any(User.class), any(RecordOperationConfig.class),
+                any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testCreateVersionedRDFRecord() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        User user = userFactory.createNew(USER_IRI);
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, localCatalogId.stringValue());
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+
+        manager.createRecord(user, config, versionedRDFRecordFactory);
+
+        verify(versionedRDFRecordService).create(any(User.class), any(RecordOperationConfig.class),
+                any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testCreateOntologyRecord() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        User user = userFactory.createNew(USER_IRI);
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, localCatalogId.stringValue());
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+
+        manager.createRecord(user, config, ontologyRecordFactory);
+
+        verify(ontologyRecordService).create(any(User.class), any(RecordOperationConfig.class),
+                any(RepositoryConnection.class));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void testCreateRecordNullFactory() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        User user = userFactory.createNew(USER_IRI);
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, localCatalogId.stringValue());
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+
+        manager.createRecord(user, config, null);
     }
 
     /* addRecord */
