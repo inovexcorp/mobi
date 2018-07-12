@@ -131,6 +131,6 @@ public class UnversionedRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void getTypeIRITest() throws Exception {
-        assertEquals(VersionedRecord.TYPE, recordService.getTypeIRI());
+        assertEquals(UnversionedRecord.TYPE, recordService.getTypeIRI());
     }
 }

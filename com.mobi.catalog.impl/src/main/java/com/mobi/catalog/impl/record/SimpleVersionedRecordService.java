@@ -7,12 +7,11 @@ import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
-import com.mobi.catalog.api.record.AbstractRecordService;
+import com.mobi.catalog.api.record.AbstractVersionedRecordService;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.RepositoryConnection;
 
 @Component
-public class SimpleVersionedRecordService extends AbstractRecordService<VersionedRecord> {
+public class SimpleVersionedRecordService extends AbstractVersionedRecordService<VersionedRecord> {
 
     @Reference
     void setCatalogFactory(CatalogFactory catalogFactory) {
@@ -47,15 +46,5 @@ public class SimpleVersionedRecordService extends AbstractRecordService<Versione
     @Override
     public String getTypeIRI() {
         return VersionedRecord.TYPE;
-    }
-
-    @Override
-    protected void deleteRecord(VersionedRecord record, RepositoryConnection conn) {
-        recordFactory.getExisting(record.getResource(), record.getModel())
-                .ifPresent(versionedRecord -> {
-                    versionedRecord.getVersion_resource()
-                            .forEach(resource -> utilsService.removeVersion(versionedRecord.getResource(), resource, conn));
-                    deleteRecordObject(record, conn);
-                });
     }
 }
