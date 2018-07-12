@@ -453,6 +453,14 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Record> T removeRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            // TODO: rename recordIRI/recordId to be consistent between RecordService and CatalogManager
+            OrmFactory<? extends Record> serviceType = getRecordService(recordId, conn);
+            RecordService<? extends Record> service = recordServices.get(serviceType.getTypeIRI().stringValue());
+//            return (T) service.delete((IRI) recordId, user, conn);
+        }
+
+
         T record;
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(catalogId, catalogFactory.getTypeIRI(), conn);
@@ -1308,6 +1316,17 @@ public class SimpleCatalogManager implements CatalogManager {
     public void export(List<IRI> recordIRIs, RecordOperationConfig config) {
         recordIRIs.forEach(iri -> export(iri, config));
     }
+
+    // TODO: Different method???
+//    @Override
+//    public <T extends Record> T deleteRecord(User user, Resource recordIRI) {
+//        try (RepositoryConnection conn = repository.getConnection()) {
+//            // TODO: rename recordIRI/recordId to be consistent between RecordService and CatalogManager
+//            OrmFactory<? extends Record> serviceType = getRecordService(recordIRI, conn);
+//            RecordService<? extends Record> service = recordServices.get(serviceType.getTypeIRI().stringValue());
+//            return (T) service.delete((IRI) recordIRI, user, conn);
+//        }
+//    }
 
     /**
      * Takes a recordId and returns the factory IRI type for that record. If failure, it returns the most specific
