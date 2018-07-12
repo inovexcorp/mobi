@@ -28,7 +28,9 @@ import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.exception.MobiException;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
@@ -205,6 +207,11 @@ public class SimpleOntologyManager implements OntologyManager {
     @Reference
     public void setbNodeService(BNodeService bNodeService) {
         this.bNodeService = bNodeService;
+    }
+
+    @Override
+    public OntologyRecord ceateOntologyRecord(User user, RecordOperationConfig config) {
+        return catalogManager.createRecord(user, config, ontologyRecordFactory);
     }
 
     @Override

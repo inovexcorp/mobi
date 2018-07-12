@@ -23,6 +23,8 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
 import com.mobi.ontology.core.utils.MobiOntologyCreationException;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
@@ -39,6 +41,15 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 
 public interface OntologyManager {
+
+    /**
+     * Creates a new OntologyRecord using the provided OntologyRecordCreateSettings.
+     *
+     * @param user the {@link User} that is creating the Record.
+     * @param config the configuration to use when creating the OntologyRecord.
+     * @return a OntologyRecord.
+     */
+    OntologyRecord ceateOntologyRecord(User user, RecordOperationConfig config);
 
     /**
      * Creates a new OntologyRecord using the provided OntologyRecordConfig.

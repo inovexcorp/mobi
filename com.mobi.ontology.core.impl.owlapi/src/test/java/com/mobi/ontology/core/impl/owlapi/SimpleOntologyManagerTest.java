@@ -42,9 +42,13 @@ import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.record.config.OperationConfig;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.api.BNodeService;
@@ -79,6 +83,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -89,6 +94,9 @@ import javax.cache.Cache;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
 public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
+
+
+    private final IRI catalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-test");
 
     @Mock
     private CatalogManager catalogManager;
@@ -118,6 +126,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
     private IRI missingIRI;
     private IRI recordIRI;
     private IRI branchIRI;
@@ -131,6 +140,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     private RepositoryManager repoManager = new SimpleRepositoryManager();
     private Repository repo;
     private Repository vocabRepo;
+    private User user;
 
     @Before
     public void setUp() throws Exception {
@@ -144,6 +154,9 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         owlOntologyIRI = org.semanticweb.owlapi.model.IRI.create("http://mobi.com/ontology");
         owlVersionIRI = org.semanticweb.owlapi.model.IRI.create("http://mobi.com/ontology/1.0");
 
+
+        user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/user"));
+
         record = ontologyRecordFactory.createNew(recordIRI);
         MockitoAnnotations.initMocks(this);
 
@@ -152,7 +165,9 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(catalogManager.getRepositoryId()).thenReturn("system");
         when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogIRI);
         when(catalogManager.getLocalCatalog()).thenReturn(catalog);
+        //TODO: Remove old createRecord
         when(catalogManager.createRecord(any(RecordConfig.class), eq(ontologyRecordFactory))).thenReturn(record);
+        when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(ontologyRecordFactory))).thenReturn(record);
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.removeRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(record);
         doThrow(new IllegalArgumentException()).when(catalogManager).getMasterBranch(catalogIRI, missingIRI);
@@ -215,6 +230,28 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         vocabRepo.shutDown();
     }
 
+    @Test
+    public void testCreateOntologyRecord() throws Exception {
+        IRI ontologyIRI = VALUE_FACTORY.createIRI("http://test.com/ontology");
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(OntologyRecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(OntologyRecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(OntologyRecordCreateSettings.RECORD_DESCRIPTION, "TestDescription");
+        config.set(OntologyRecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(OntologyRecordCreateSettings.RECORD_PUBLISHERS, users);
+
+        OntologyRecord result = manager.createOntologyRecord(user, config);
+
+        verify(catalogManager).createRecord(eq(user), any(RecordOperationConfig.class), ontologyRecordFactory);
+        assertTrue(result.getOntologyIRI().isPresent());
+        assertEquals(ontologyIRI, result.getOntologyIRI().get());
+    }
+    //TODO: Remove old createRecord
     @Test
     public void testCreateOntologyRecordWithOntologyIRI() throws Exception {
         IRI ontologyIRI = VALUE_FACTORY.createIRI("http://test.com/ontology");
