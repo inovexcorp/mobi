@@ -27,7 +27,7 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
-import aQute.configurable.Configurable;
+import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.email.api.EmailService;
 import com.mobi.email.api.EmailServiceConfig;
 import com.mobi.exception.MobiException;
