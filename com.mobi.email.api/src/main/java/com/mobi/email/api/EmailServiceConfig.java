@@ -75,4 +75,12 @@ public interface EmailServiceConfig {
      */
     @Meta.AD(deflt = "file://")
     String imageBasePath();
+
+    /**
+     * The default email template located in the ${karaf.etc} directory to use to send emails.
+     *
+     * @return The default email template filename
+     */
+    @Meta.AD(deflt = "emailTemplate.html")
+    String emailTemplate();
 }

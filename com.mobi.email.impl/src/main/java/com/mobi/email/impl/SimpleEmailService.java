@@ -36,12 +36,12 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.ImageHtmlEmail;
 import org.apache.commons.mail.resolver.DataSourceUrlResolver;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashSet;
@@ -54,6 +54,7 @@ public class SimpleEmailService implements EmailService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleEmailService.class);
     private static final String BODY_BINDING = "!|$BODY!|$";
+    private static final String MESSAGE_BINDING = "!|$MESSAGE!|$";
     private static final String HOSTNAME_BINDING = "!|$HOSTNAME!|$";
     private EmailServiceConfig config;
     private Mobi mobiServer;
@@ -65,33 +66,27 @@ public class SimpleEmailService implements EmailService {
     }
 
     @Activate
-    void activate(BundleContext context, Map<String, Object> configuration) {
+    void activate(Map<String, Object> configuration) {
         config = Configurable.createConfigurable(EmailServiceConfig.class, configuration);
-        Bundle bundle = context.getBundle();
-        URL path = bundle.getEntry("/emailTemplate.html");
         try {
-            emailTemplate = IOUtils.toString(path.openStream(), "UTF-8");
+            InputStream input = new FileInputStream(System.getProperty("karaf.etc") + config.emailTemplate());
+            emailTemplate = IOUtils.toString(input, "UTF-8");
         } catch (IOException e) {
             throw new MobiException(e);
         }
     }
 
     @Modified
-    void modified(BundleContext context, Map<String, Object> configuration) {
-        activate(context, configuration);
+    void modified(Map<String, Object> configuration) {
+        activate(configuration);
     }
 
     @Override
     public CompletableFuture<Set<String>> sendSimpleEmail(String subject, String message, String... userEmails) {
-        String body = "<table cellpadding=\"0\" cellspacing=\"0\" dir=\"ltr\" style=\"border: 0; width: 100%; \">"
-                + "<tbody><tr><td class=\"tw-card-body\" style=\"padding: 20px 35px; text-align: left; color: #6F6F6F;"
-                + " font-family: sans-serif; border-top: 0;\"><h1 class=\"tw-h1\"style=\"font-size: 36px; "
-                + "font-weight: normal; mso-line-height-rule: exactly; line-height: 38px; margin: 20px 0; "
-                + "color: #474747; font-size: 24px; font-weight: bold; mso-line-height-rule: exactly; "
-                + "line-height: 32px; margin: 0 0 20px; \">"
-                + "Hello from Mobi!</h1><p class=\"\"style=\"margin: 20px 0; font-size: 16px; mso-line-height-rule: "
-                + "exactly; line-height: 24px; margin: 20px 0; \">" + message + "</p></td></tr></tbody></table>";
-        return sendEmail(subject, body, userEmails);
+        String htmlBody = emailTemplate.substring(emailTemplate.indexOf(BODY_BINDING) + BODY_BINDING.length(),
+                emailTemplate.lastIndexOf(BODY_BINDING));
+        htmlBody = htmlBody.replace(MESSAGE_BINDING, message);
+        return sendEmail(subject, htmlBody, userEmails);
     }
 
     @Override
@@ -100,7 +95,8 @@ public class SimpleEmailService implements EmailService {
                 .thenApply(email -> {
                     Set<String> invalidEmails = new HashSet<>();
                     email.setSubject(subject);
-                    String htmlMsg = emailTemplate.replace(BODY_BINDING, htmlMessage);
+                    String htmlMsg = emailTemplate.replace(emailTemplate.substring(emailTemplate.indexOf(BODY_BINDING),
+                            emailTemplate.lastIndexOf(BODY_BINDING) + BODY_BINDING.length()), htmlMessage);
                     if (mobiServer.getHostName().endsWith("/")) {
                         htmlMsg = htmlMsg.replace(HOSTNAME_BINDING, mobiServer.getHostName() + "mobi/index.html");
                     } else {

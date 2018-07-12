@@ -63,16 +63,12 @@ public class SimpleEmailServiceTest {
     private Mobi mobi;
 
     @Mock
-    private BundleContext context;
-
-    @Mock
     private Bundle bundle;
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         when(mobi.getHostName()).thenReturn("https://localhost:8443/");
-        when(context.getBundle()).thenReturn(bundle);
         URL path = SimpleEmailService.class.getResource("/emailTemplate.html");
         when(bundle.getEntry(any(String.class))).thenReturn(path);
 
@@ -88,10 +84,13 @@ public class SimpleEmailServiceTest {
         config.put("smtpServer", "localhost");
         config.put("security", "");
         config.put("imageBasePath", "https://mobi.inovexcorp.com");
+        config.put("emailTemplate", "emailTemplate.html");
 
-        Method m = es.getClass().getDeclaredMethod("activate", BundleContext.class, Map.class);
+        System.setProperty("karaf.etc", SimpleEmailServiceTest.class.getResource("/").getPath());
+
+        Method m = es.getClass().getDeclaredMethod("activate", Map.class);
         m.setAccessible(true);
-        m.invoke(es, context, config);
+        m.invoke(es, config);
         assertNotNull(es);
     }
 
@@ -122,7 +121,7 @@ public class SimpleEmailServiceTest {
 
     @Test
     public void sendSimpleEmailInvalidAndValidAddressTest() throws Exception {
-        CompletableFuture<Set<String>> cf = es.sendEmail(SUBJECT_LINE, TEXT_MESSAGE, "badAddress", TO_EMAIL_ADDRESS);
+        CompletableFuture<Set<String>> cf = es.sendSimpleEmail(SUBJECT_LINE, TEXT_MESSAGE, "badAddress", TO_EMAIL_ADDRESS);
         Set<String> failedEmails = cf.get();
         assertEquals(1, failedEmails.size());
         assertEquals("badAddress", failedEmails.iterator().next());
@@ -131,9 +130,9 @@ public class SimpleEmailServiceTest {
     @Test(expected = ExecutionException.class)
     public void sendSimpleEmailInvalidPortTest() throws Exception {
         config.replace("port", 1);
-        Method m = es.getClass().getDeclaredMethod("modified", BundleContext.class, Map.class);
+        Method m = es.getClass().getDeclaredMethod("modified", Map.class);
         m.setAccessible(true);
-        m.invoke(es, context, config);
+        m.invoke(es, config);
 
         CompletableFuture<Set<String>> cf = es.sendSimpleEmail(SUBJECT_LINE, TEXT_MESSAGE, TO_EMAIL_ADDRESS);
         cf.get();
@@ -141,7 +140,7 @@ public class SimpleEmailServiceTest {
 
     @Test
     public void sendEmailTest() throws Exception {
-        CompletableFuture<Set<String>> cf = es.sendSimpleEmail(SUBJECT_LINE, HTML_MESSAGE, TO_EMAIL_ADDRESS);
+        CompletableFuture<Set<String>> cf = es.sendEmail(SUBJECT_LINE, HTML_MESSAGE, TO_EMAIL_ADDRESS);
         assertEquals(0, cf.get().size());
 
         List<SmtpMessage> emails = smtpServer.getReceivedEmails();
@@ -169,9 +168,9 @@ public class SimpleEmailServiceTest {
     @Test(expected = ExecutionException.class)
     public void sendEmailInvalidPortTest() throws Exception {
         config.replace("port", 1);
-        Method m = es.getClass().getDeclaredMethod("modified", BundleContext.class, Map.class);
+        Method m = es.getClass().getDeclaredMethod("modified", Map.class);
         m.setAccessible(true);
-        m.invoke(es, context, config);
+        m.invoke(es, config);
 
         CompletableFuture<Set<String>> cf = es.sendEmail(SUBJECT_LINE, HTML_MESSAGE, TO_EMAIL_ADDRESS);
         cf.get();
