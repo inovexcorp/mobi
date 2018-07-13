@@ -142,7 +142,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private Map<com.mobi.rdf.api.Resource, String> sortingOptions = new HashMap<>();
 
     /**
-     * TODO: explain
+     * A map of the available RecordServices. The string is get typeIRI for the individual RecordService.
      */
     private Map<String, RecordService<? extends Record>> recordServices = new HashMap<>();
 
