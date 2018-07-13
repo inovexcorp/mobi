@@ -1,374 +1,451 @@
-<!DOCTYPE html>
-<!--
-  #%L
-  com.mobi.email.api
-  $Id:$
-  $HeadURL:$
-  %%
-  Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
-  %%
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU Affero General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU Affero General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  #L%
-  -->
-
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width">
-
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1">
     <!--[if !mso]><!-->
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
     <!--<![endif]-->
-
-    <title></title>
-
-    <!-- Normalize Styles -->
+    <!--[if (gte mso 9)|(IE)]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:AllowPNG/>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+    </xml>
+    <![endif]-->
+    <!--[if (gte mso 9)|(IE)]>
     <style type="text/css">
-            /* What it does: Remove spaces around the email design added by some email clients. */
-            /* Beware: It can remove the padding / margin and add a background color to the compose a reply window. */
-
-            html,
-            body {
-                margin: 0 auto !important;
-                padding: 0 !important;
-                height: 100% !important;
-                width: 100% !important;
-            }
-            /* What it does: Stops WebKit and Windows mobile clients resizing small text. */
-
-            * {
-                -ms-text-size-adjust: 100%;
-                -webkit-text-size-adjust: 100%;
-            }
-            /* What is does: Centers email on Android 4.4 */
-
-            div[style*="margin: 16px 0"] {
-                margin: 0 !important;
-            }
-            /* What it does: Remove spacing between tables in Outlook 2007 and up. */
-
-            table,
-            td {
-                mso-table-lspace: 0pt !important;
-                mso-table-rspace: 0pt !important;
-            }
-            /* What it does: Fixes webkit padding issue. Fix for Yahoo mail table alignment bug. */
-
-            table {
-                border-spacing: 0 !important;
-                table-layout: fixed !important;
-                margin: 0 auto !important;
-            }
-            /* What it does: Reset styles. */
-
-            img {
-                line-height: 100%;
-                outline: none;
-                text-decoration: none;
-                /* Uses a smoother rendering method when resizing images in IE. */
-                -ms-interpolation-mode: bicubic;
-                /* Remove border when inside `a` element in IE 8/9/10. */
-                border: 0;
-                /* Sets a maximum width relative to the parent and auto scales the height */
-                max-width: 100%;
-                height: auto;
-                /* Remove the gap between images and the bottom of their containers */
-                vertical-align: middle;
-            }
-            /* What it does: Overrides styles added when Yahoo's auto-senses a link. */
-
-            .yshortcuts a {
-                border-bottom: none !important;
-            }
-            /* What it does: A work-around for iOS meddling in triggered links. */
-
-            a[x-apple-data-detectors] {
-                color: inherit !important;
-                text-decoration: none !important;
-                font-size: inherit !important;
-                font-family: inherit !important;
-                font-weight: inherit !important;
-                line-height: inherit !important;
-            }
-            /* What it does: Neutralize whitespace for inline-block grids on iOS. */
-
-            @media screen and (min-width: 600px) {
-                .ios-responsive-grid {
-                    display: -webkit-box !important;
-                    display: -webkit-flex !important;
-                    display: -moz-box !important;
-                    display: -ms-flexbox !important;
-                    display: flex !important;
-                }
-                /* Alternative method. Not needed if already using the .ios-responsive-grid flex workaround. */
-                /* .ios-responsive-grid__unit class would need to be added to the inline-block <div> grid units  */
-                .ios-responsive-grid__unit {
-                    float: left;
-                }
-            }
-
-            body {
-                -webkit-font-smoothing: antialiased;
-                -moz-osx-font-smoothing: grayscale;
-            }
-
-    </style>
-
-    <!--[if gte mso 9]>
-    <style type="text/css">
-                /* What it does: Normalize space between bullets and text. */
-                /* https://litmus.com/community/discussions/1093-bulletproof-lists-using-ul-and-li */
-                li {
-                    text-indent: -1em;
-                }
-
-
+      body {width: 600px;margin: 0 auto;}
+      table {border-collapse: collapse;}
+      table, td {mso-table-lspace: 0pt;mso-table-rspace: 0pt;}
+      img {-ms-interpolation-mode: bicubic;}
     </style>
     <![endif]-->
 
-    <!-- Progressive Enhancements -->
     <style type="text/css">
-            /* Components */
-            /* What it does: Hover styles for buttons */
+    body,
+    p,
+    div {
+      font-family: arial;
+      font-size: 14px;
+    }
 
-            .button__td,
-            .button__a {
-                transition: all 100ms ease;
-            }
+    body {
+      color: #000000;
+    }
 
-            .button__td:hover,
-            .button__a:hover {
-                background: #185de7 !important;
-            }
-            /* What it does: Mobile optimized styles */
+    body a {
+      color: div><div> <meta http-equiv="Content-Type" content="text/html;
+ text-decoration: none;
+    }
 
-            @media screen and (max-width: 599px) {
-                /* Components */
-                .tw-body {
-                    padding: 8px 8px 0 !important;
-                }
-                .tw-card-header,
-                .tw-card-banner,
-                .tw-card-body,
-                .tw-card-footer {
-                    padding-left: 15px !important;
-                    padding-right: 15px !important;
-                }
-                .tw-card-banner {
-                    padding-top: 20px !important;
-                    padding-bottom: 10px !important;
-                }
-                .tw-card-body-xsmall {
-                    padding: 10px !important;
-                }
-                .tw-header-cta {
-                    display: none !important;
-                }
-                .tw-h1 {
-                    font-size: 22px !important;
-                    line height: 30px !important;
-                }
-                .tw-signoff,
-                .tw-footnotes {
-                    margin-top: 30px !important;
-                }
-                /* Utilities */
-                /* Display */
-                .mobile-hidden {
-                    display: none !important;
-                }
-                .mobile-d-block {
-                    display: block !important;
-                }
-                /* Size */
-                .mobile-w-full {
-                    width: 100% !important;
-                }
-                .mobile-h-auto {
-                    height: auto !important;
-                }
-                /* Margin */
-                .mobile-m-h-auto {
-                    margin: 0 auto !important;
-                }
-                /* Padding */
-                .mobile-p-0 {
-                    padding: 0 !important;
-                }
-                .mobile-p-h-0 {
-                    padding-right: 0 !important;
-                    padding-left: 0 !important;
-                }
-                .mobile-p-t-0 {
-                    padding-top: 0 !important;
-                }
-                /* Text */
-                .mobile-text-start {
-                    text-align: left !important;
-                }
-                .mobile-text-end {
-                    text-align: right !important;
-                }
-                /* Images */
-                .mobile-img-fluid {
-                    max-width: 100% !important;
-                    width: 100% !important;
-                    height: auto !important;
-                }
-            }
+    p {
+      margin: 0;
+      padding: 0;
+    }
 
-    </style>
+    table.wrapper {
+      width: 100% !important;
+      table-layout: fixed;
+      -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;
+      -moz-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+
+    img.max-width {
+      max-width: 100% !important;
+    }
+
+    .column.of-2 {
+      width: 50%;
+    }
+
+    .column.of-3 {
+      width: 33.333%;
+    }
+
+    .column.of-4 {
+      width: 25%;
+    }
+
+    @media screen and (max-width:480px) {
+      .preheader .rightColumnContent,
+      .footer .rightColumnContent {
+        text-align: left !important;
+      }
+      .preheader .rightColumnContent div,
+      .preheader .rightColumnContent span,
+      .footer .rightColumnContent div,
+      .footer .rightColumnContent span {
+        text-align: left !important;
+      }
+      .preheader .rightColumnContent,
+      .preheader .leftColumnContent {
+        font-size: 80% !important;
+        padding: 5px 0;
+      }
+      table.wrapper-mobile {
+        width: 100% !important;
+        table-layout: fixed;
+      }
+      img.max-width {
+        height: auto !important;
+        max-width: 480px !important;
+      }
+      a.bulletproof-button {
+        display: block !important;
+        width: auto !important;
+        font-size: 80%;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+      .columns {
+        width: 100% !important;
+      }
+      .column {
+        display: block !important;
+        width: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+      }
+    }
+  </style>
+  <!--user entered Head Start-->
+
+  <!--End Head user entered-->
 </head>
-<body style="background: #ffffff; height: 100% !important; margin: 0 auto !important; padding: 0 !important; width: 100% !important; ">
-<div style="display: none; font-size: 1px; line-height: 1px; max-height: 0; max-width: 0; opacity: 0; overflow: hidden; mso-hide: all;">
-    Please do not reply to this email.
-</div>
-<table cellpadding="0" cellspacing="0" style="background: #F7F8FA; border: 0; border-radius: 0; width: 100%; ">
-    <tbody>
-    <tr>
-        <td align="center" class="tw-body" style="padding: 15px 15px 0;">
-            <table cellpadding="0" cellspacing="0" style="background: #F7F8FA; border: 0; border-radius: 0; ">
+
+<body>
+  <center class="wrapper" data-link-color="div><div>
+
+
+<meta http-equiv=" content="text/html" data-body-style="font-size: 14px; font-family: arial; color: #000000; background-color: #ffffff;">
+    <div class="webkit">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" class="wrapper" bgcolor="#ffffff">
+        <tbody>
+          <tr>
+            <td valign="top" bgcolor="#ffffff" width="100%">
+              <table width="100%" role="content-container" class="outer" align="center" cellpadding="0" cellspacing="0" border="0">
                 <tbody>
-                <tr>
-                    <td align="center" class="" style="width: 600px;">
-                        <table cellpadding="0" cellspacing="0"
-                               style="background: #FFFFFF; border: 0; border-radius: 4px; width: 100%; overflow: hidden;">
-                            <tbody>
-                            <tr>
-                                <td align="center" class="" style="padding: 0;">
-                                    <table cellpadding="0" cellspacing="0"
-                                           style="background: #ffffff; border: 0; border-radius: 0; width: 100%; ">
+                  <tr>
+                    <td width="100%">
+                      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tbody>
+                          <tr>
+                            <td>
+                              <!--[if mso]>
+                          <center>
+                          <table><tr><td width="600">
+                          <![endif]-->
+                              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width:600px;" align="center">
+                                <tbody>
+                                  <tr>
+                                    <td role="modules-container" style="padding: 0px 0px 0px 0px; color: #000000; text-align: left;" bgcolor="#ffffff" width="100%" align="left">
+
+                                      <table class="module preheader preheader-hide" role="module" data-type="preheader" border="0" cellpadding="0" cellspacing="0" width="100%" style="display: none !important; mso-hide: all; visibility: hidden; opacity: 0; color: transparent; height: 0; width: 0;">
                                         <tbody>
-                                        <tr>
-                                            <td align="center" class="tw-card-header"
-                                                style="padding: 25px 35px 10px 35px;">
-                                                <table cellpadding="0" cellspacing="0" dir="ltr"
-                                                       style="border: 0; width: 100%;">
-                                                    <tbody>
-                                                    <tr>
-                                                        <td class="" align="center" valign="top" style="width: 160px;">
-                                                            <table cellpadding="0" cellspacing="0" dir="ltr"
-                                                                   style="border: 0; width: 100%; ">
-                                                                <tbody>
-                                                                <tr>
-                                                                    <td class="" style="padding: 0; text-align: left; ">
-                                                                        <a style="text-decoration: none; "
-                                                                           universal="true" target="_blank">
-                                                                            <img alt="Mobi" class="  "
-                                                                                 src="https://mobi.inovexcorp.com/docs/images/mobi-primary-logo-cropped.png"
-                                                                                 style="border: 0; height: auto;  max-width: 100%; vertical-align: middle; "
-                                                                                 width="160">
-                                                                        </a>
-                                                                    </td>
-                                                                </tr>
-                                                                </tbody>
-                                                            </table>
-                                                        </td>
-                                                        <td class="" align="center" valign="middle"
-                                                            style="width: 100%;">
-                                                            <table cellpadding="0" cellspacing="0" dir="ltr"
-                                                                   style="border: 0; width: 100%; ">
-                                                                <tbody>
-                                                                <tr>
-                                                                    <td class="tw-header-cta"
-                                                                        style="padding: 0 0 0 20px; text-align: right; color: #6F6F6F; font-family: sans-serif;">
-                                                                        <p class=""
-                                                                           style="margin: 20px 0; font-size: 16px; mso-line-height-rule: exactly; line-height: 24px; margin: 20px 0; margin: 0;">
-                                                                            <a href="!|$HOSTNAME!|$"
-                                                                               style="color: #9A9A9A; text-decoration: none; "
-                                                                               universal="true" target="_blank">Launch Mobi</a>
-                                                                        </p>
-                                                                    </td>
-                                                                </tr>
-                                                                </tbody>
-                                                            </table>
-                                                        </td>
-                                                    </tr>
-                                                    </tbody>
-                                                </table>
+                                          <tr>
+                                            <td role="module-content">
+                                              <p>Your privacy is important to us</p>
                                             </td>
-                                        </tr>
+                                          </tr>
                                         </tbody>
-                                    </table>
-                                    <!-- The body of the message to be inserted by the service -->
-                                    !|$BODY!|$
-                                    <table cellpadding="0" cellspacing="0" dir="ltr" style="border: 0; width: 100%; ">
+                                      </table>
+
+                                      <table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;">
                                         <tbody>
-                                        <tr>
-                                            <td class="tw-card-banner" style="padding: 40px 35px; text-align: center; ">
-                                                <img alt="Publish. Subscribe. Connect." class="  "
-                                                     src="https://mobi.inovexcorp.com/wp-content/uploads/2017/08/download_element_single_1.png"
-                                                     style="border: 0; height: auto;  max-width: 100%; vertical-align: middle; "
-                                                     width="391">
-                                            </td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
-                                    <table cellpadding="0" cellspacing="0" dir="ltr" style="border: 0; width: 100%; ">
-                                        <tbody>
-                                        <tr>
-                                            <td class="tw-card-body" style="padding: 20px 35px; text-align: left; color: #6F6F6F; font-family: sans-serif; border-top: 0;">
-                                                <h1 class="tw-h1"
-                                                    style="font-size: 36px; font-weight: normal; mso-line-height-rule: exactly; line-height: 38px; margin: 20px 0; color: #474747; font-size: 24px; font-weight: bold; mso-line-height-rule: exactly; line-height: 32px; margin: 0 0 20px; ">
+                                          <tr>
+                                            <td style="padding:0px 0px 0px 0px;" height="100%" valign="top" bgcolor="">
+                                              <div>
+                                                <div>
+
+                                                  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+                                                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                                  <!--[if !mso]><!-->
+                                                  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                                                  <!--<![endif]-->
+                                                  <title>Mobi</title>
+                                                  <style type="text/css">
+                                                    /* RESET STYLES */
+
+                                                    .sg-campaigns table {
+                                                      border-collapse: collapse;
+                                                    }
+
+                                                    .sg-campaigns img,
+                                                    .sg-campaigns a img {
+                                                      border: 0;
+                                                      height: auto;
+                                                      outline: none;
+                                                      text-decoration: none;
+                                                    }
+
+                                                    .sg-campaigns body {
+                                                      height: 100% !important;
+                                                      margin: 0 auto !important;
+                                                      padding: 0;
+                                                      width: 100% !important;
+                                                    }
+
+                                                    /* CLIENT-SPECIFIC STYLES */
+
+                                                    .sg-campaigns img {
+                                                      -ms-interpolation-mode: bicubic;
+                                                    }
+
+                                                    /* Force IE to smoothly render resized images. */
+
+                                                    .sg-campaigns #outlook a {
+                                                      padding: 0;
+                                                    }
+
+                                                    /* Force Outlook 2007 and up to provide a "view in browser" message. */
+
+                                                    .sg-campaigns table {
+                                                      mso-table-lspace: 0pt;
+                                                      mso-table-rspace: 0pt;
+                                                    }
+
+                                                    /* Remove spacing between tables in Outlook 2007 and up. */
+
+                                                    .sg-campaigns .ReadMsgBody {
+                                                      width: 100%;
+                                                    }
+
+                                                    .sg-campaigns .ExternalClass {
+                                                      width: 100%;
+                                                    }
+
+                                                    /* Force Outlook.com to display emails at full width. */
+
+                                                    .sg-campaigns p,
+                                                    .sg-campaigns a,
+                                                    .sg-campaigns td {
+                                                      mso-line-height-rule: exactly;
+                                                    }
+
+                                                    /* Force Outlook to render line heights as they're originally set. */
+
+                                                    .sg-campaigns p,
+                                                    .sg-campaigns a,
+                                                    .sg-campaigns td,
+                                                    .sg-campaigns body,
+                                                    .sg-campaigns table {
+                                                      -ms-text-size-adjust: 100%;
+                                                      -webkit-text-size-adjust: 100%;
+                                                    }
+
+                                                    /* Prevent Windows- and Webkit-based mobile platforms from changing declared text sizes. */
+
+                                                    .sg-campaigns .ExternalClass,
+                                                    .sg-campaigns .ExternalClass p,
+                                                    .sg-campaigns .ExternalClass td,
+                                                    .sg-campaigns .ExternalClass div,
+                                                    .sg-campaigns .ExternalClass span,
+                                                    .sg-campaigns .ExternalClass font {
+                                                      line-height: 100%;
+                                                    }
+
+                                                    /* Force Outlook.com to display line heights normally. */
+
+                                                    .sg-campaigns a [x-apple-data-detectors] {
+                                                      color: inherit !important;
+                                                      text-decoration: none !important;
+                                                      font-size: inherit !important;
+                                                      font-family: inherit !important;
+                                                      font-weight: inherit !important;
+                                                      line-height: inherit !important;
+                                                    }
+
+                                                    /* attempt to control apple deata detection */
+
+                                                    /* TEMPLATE STYLES */
+
+                                                    @media screen and (max-width:480px) {
+                                                      .sg-campaigns .mw100 {
+                                                        max-width: 100% !important;
+                                                      }
+                                                      .sg-campaigns .mw95 {
+                                                        max-width: 95% !important;
+                                                      }
+                                                      .sg-campaigns .mw50 {
+                                                        max-width: 50% !important;
+                                                      }
+                                                      .sg-campaigns .w100 {
+                                                        width: 100% !important;
+                                                      }
+                                                      .sg-campaigns .w96 {
+                                                        width: 96% !important;
+                                                      }
+                                                      .sg-campaigns .mblpdrm-r {
+                                                        padding-right: 0 !important;
+                                                      }
+                                                      .sg-campaigns .mblpdrm-l {
+                                                        padding-left: 0 !important;
+                                                      }
+                                                      .sg-campaigns .hide {
+                                                        display: none !important;
+                                                      }
+                                                    }
+                                                  </style>
+    <!--[if gte mso 9]><xml>
+    <o:OfficeDocumentSettings>
+        <o:AllowPNG></o:AllowPNG>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+</xml><![endif]-->
+
+    <table align="center" cellpadding="0" cellspacing="0" border="0" style="width:100%;Margin:0 auto;background-color:#ffffff;">
+        <tbody>
+        <tr>
+            <td style="font-size:0;">&nbsp;</td>
+            <td align="center" valign="top" style="width:580px;">
+                <!--ALL CONTENT STARTS HERE-->
+                <!--table removes gmail bg line between stacked tables-->
+                <table align="center" cellpadding="0" cellspacing="0" border="0" style="width:100%;" class="w96">
+                    <tbody>
+                    <tr>
+                        <td align="center">
+                            <!--header 1 Mobi logo center align-->
+                            <table align="center" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+                                <tbody>
+                                <tr>
+                                    <td align="left" style="padding:40px 0;border-bottom:1px solid #cccccc;">
+                                        <a href="!|$HOSTNAME!|$" alt="Mobi" style="font-family:'Helvetica neue', Helvetica, Arial, Verdana, sans-serif;font-size:16px;color:#205081;text-decoration:none;"
+                                           target="_blank">
+                                            <img src="https://mobi.inovexcorp.com/docs/images/mobi-primary-logo-cropped.png" alt="Mobi" title="Mobi" border="0" width="220" style="display:block;outline:0;padding:0;border:0;width:220px;height:auto;font-family:'Helvetica neue', Helvetica, Arial, Verdana, sans-serif;font-size:16px;color:#205081;"></a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td height="20" style="height:20px;line-height:20px;font-size:0;">
+                                        &nbsp;
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <!--/header 1 Mobi logo center align-->
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center">
+                            <!--primary 1-->
+                            !|$BODY!|$
+                            <table cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+                                <tbody>
+                                <tr>
+                                    <td align="center">
+                                        <!--headline table controls length-->
+                                        <table cellpadding="0" cellspacing="0" border="0" style="width:75%;" class="w100">
+                                            <tbody>
+                                            <tr>
+                                                <td style="padding-top:20px;font-family:'Helvetica neue', Helvetica, Arial, Verdana, sans-serif;font-weight:bold;font-size:24px;line-height:35px;color:#253858;text-align:center;">
                                                     Hello from Mobi!
-                                                </h1>
-                                                <p class=""
-                                                   style="margin: 20px 0; font-size: 16px; mso-line-height-rule: exactly; line-height: 24px; margin: 20px 0; ">
-                                                    <!-- A simple message to replace -->
-                                                    !|$MESSAGE!|$
-                                                </p>
-                                            </td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
-                                    !|$BODY!|$
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                        <table cellpadding="0" cellspacing="0" dir="ltr" style="border: 0; width: 100%; ">
-                            <tbody>
-                            <tr>
-                                <td class=""
-                                    style="padding: 25px 0; text-align: center; color: #9A9A9A; font-family: sans-serif; font-size: 13px; mso-line-height-rule: exactly; line-height: 20px;">
-                                    <p class="" style="margin: 20px 0; margin: 0;">
-                                        <a href="!|$HOSTNAME!|$"
-                                           style="color: #303f9f; text-decoration: none; " target="_blank">Application</a>
-                                        &nbsp; | &nbsp;
-                                        <a href="https://mobi.inovexcorp.com/docs/"
-                                           style="color: #303f9f; text-decoration: none; " target="_blank">Documentation</a>
-                                        &nbsp; | &nbsp;
-                                        <a href="https://inovexirad.atlassian.net/servicedesk/customer/portal/1"
-                                           style="color: #303f9f; text-decoration: none; " target="_blank">Support Desk</a>
-                                    </p>
-                                    <p class="" style="margin: 20px 0; margin: 0;">
-                                        <br>
-                                        iNovex Information Systems<br>7240 Parkway Drive #140, Hanover, MD 21076 US<br>mobi@inovexcorp.com<br>Copyright &copy; 2018 MOBI All rights reserved
-                                        <br>
-                                    </p>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </td>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                        <!--/headline table controls length-->
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-top:40px;font-family:'Helvetica neue', Helvetica, Arial, Verdana, sans-serif;font-size:16px;line-height:22px;color:#42526E;text-align:left;">
+                                        !|$MESSAGE!|$
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            !|$BODY!|$
+                            <!--/primary 1-->
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center">
+                            <!--footer a-->
+                            <table cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+                                <tbody>
+                                <tr>
+                                    <td align="center" style="padding-top:40px;padding-bottom:40px;">
+                                        <!--headline table controls length-->
+                                        <table cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+                                            <tbody>
+                                            <tr>
+                                                <td style="border-top:1px solid #cccccc;padding-top:40px;font-family:'Helvetica neue', Helvetica, Arial, Verdana, sans-serif;font-size:13px;line-height:19px;color:#707070;text-align:center;">
+                                                    <a href="!|$HOSTNAME!|$"
+                                                       style="color: #303f9f; text-decoration: none; " target="_blank">Application</a>
+                                                    &nbsp; | &nbsp;
+                                                    <a href="https://mobi.inovexcorp.com/docs/"
+                                                       style="color: #303f9f; text-decoration: none; " target="_blank">Documentation</a>
+                                                    &nbsp; | &nbsp;
+                                                    <a href="https://inovexirad.atlassian.net/servicedesk/customer/portal/1"
+                                                       style="color: #303f9f; text-decoration: none; " target="_blank">Support Desk</a>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td align="center" style="padding-top:10px;font-family:'Helvetica neue', Helvetica, Arial, Verdana, sans-serif;font-size:13px;line-height:19px;color:#707070;text-align:center;">
+                                                    <br>
+                                                    iNovex Information Systems<br>7240 Parkway Drive #140, Hanover, MD 21076 US<br>mobi@inovexcorp.com<br>Copyright &copy; 2018 MOBI All rights reserved
+                                                    <br>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td align="center" style="padding-top:20px;">
+                                                    <a href="!|$HOSTNAME!|$" style="font-family:'Helvetica neue', Helvetica, Arial, Verdana, sans-serif;font-size:16px;color:#205081;text-decoration:none;"
+                                                       target="_blank"><img src="https://mobi.inovexcorp.com/docs/images/mobi-primary-logo-cropped.png" width="116" border="0" alt="" title="" style="display:block;outline:0;padding:0;border:0;width:116px;height:auto;font-family:'Helvetica neue', Helvetica, Arial, Verdana, sans-serif;font-size:16px;color:#205081;"><custom name="opencounter" type="tracking"></custom></a>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                        <!--/headline table controls length-->
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <!--/footer a-->
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <!--/table removes gmail bg line between stacked tables-->
+                <!--/ALL CONTENT ENDS HERE-->
+            </td>
+            <td style="font-size:0;">&nbsp;</td>
+        </tr>
+        </tbody>
+    </table>
+
+    </div>
+    </div>
+    </td>
     </tr>
     </tbody>
-</table>
-</body>
-</html>
+    </table>
+
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    <!--[if mso]>
+    </td></tr></table>
+    </center>
+    <![endif]-->
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    </td>
+    </tr>
+    </tbody>
+    </table>
+    </div>
+    </center>
+
+    <img src="https://mobi.inovexcorp.com/docs/images/mobi-primary-logo-cropped.png"
+         alt="" width="1" height="1" border="0" style="height:1px !important;width:1px !important;border-width:0 !important;margin-top:0 !important;margin-bottom:0 !important;margin-right:0 !important;margin-left:0 !important;padding-top:0 !important;padding-bottom:0 !important;padding-right:0 !important;padding-left:0 !important;">
+
+    </body>

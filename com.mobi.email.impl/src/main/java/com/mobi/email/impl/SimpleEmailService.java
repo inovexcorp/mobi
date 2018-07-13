@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -117,6 +118,9 @@ public class SimpleEmailService implements EmailService {
                     }
                     try {
                         email.buildMimeMessage();
+                        LOGGER.debug("Sending email to: " + Arrays.toString(userEmails));
+                        LOGGER.debug("With a subject of: " + subject);
+                        LOGGER.debug("And a body of: " + htmlMsg);
                     } catch (EmailException e) {
                         throw new MobiException("Unable to build MIME message.", e);
                     }
