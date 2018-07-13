@@ -529,7 +529,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
                 any(RepositoryConnection.class));
     }
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test (expected = NullPointerException.class)
     public void testCreateRecordNullFactory() throws Exception {
         RecordOperationConfig config = new OperationConfig();
         User user = userFactory.createNew(USER_IRI);
