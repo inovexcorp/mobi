@@ -94,8 +94,11 @@
             }
 
             self.updateOntologyState = function(recordId, branchId, commitId) {
-                var stateId = _.get(self.getOntologyStateByRecordId(recordId), 'id', '');
-                return self.updateState(stateId, makeOntologyState(recordId, branchId, commitId));
+                var ontologyState = self.getOntologyStateByRecordId(recordId);
+                var stateId = _.get(ontologyState, 'id', '');
+                var model = _.get(ontologyState, 'model', '');
+                model[prefixes.ontologyState + 'branches'][branchId] = commitId;
+                return self.updateState(stateId, model);
             }
 
             self.deleteOntologyState = function(recordId) {
@@ -107,6 +110,7 @@
                 return {
                     '@id': 'http://mobi.com/states/ontology-editor/' + uuid.v4(),
                     [prefixes.ontologyState + 'record']: [{'@id': recordId}],
+                    [prefixes.ontologyState + 'branches']: {[branchId]: commitId},
                     [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
                     [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
                 }
