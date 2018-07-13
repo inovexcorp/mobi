@@ -87,6 +87,7 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
+import com.mobi.rdf.orm.Thing;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -139,6 +140,10 @@ public class SimpleCatalogManager implements CatalogManager {
     private com.mobi.rdf.api.Resource distributedCatalogIRI;
     private com.mobi.rdf.api.Resource localCatalogIRI;
     private Map<com.mobi.rdf.api.Resource, String> sortingOptions = new HashMap<>();
+
+    /**
+     * TODO: explain
+     */
     private Map<String, RecordService<? extends Record>> recordServices = new HashMap<>();
 
     public SimpleCatalogManager() {
@@ -418,12 +423,10 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public <T extends Record> T createRecord(User user, RecordOperationConfig config, OrmFactory<T> factory) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            try {
-                RecordService<? extends Record> service = recordServices.get(factory.getTypeIRI().stringValue());
+                RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(factory.getTypeIRI()
+                        .stringValue())).orElseThrow(() -> new IllegalArgumentException(
+                                "Service unavailable or doesn't exist."));
                 return (T) service.create(user, config, conn);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Service unavailable or doesn't exist: " + e);
-            }
         }
     }
 

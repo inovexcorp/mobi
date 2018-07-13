@@ -116,6 +116,7 @@ public interface CatalogManager {
      * @param <T> An Object which extends Record.
      * @param user The User that is creating the Record.
      * @param config The RecordOperationConfig containing the Record's metadata.
+     * @param factory The OrmFactory for creating the entity.
      * @return The Record Object that was added to the repository of type T.
      */
     <T extends Record> T createRecord(User user, RecordOperationConfig config, OrmFactory<T> factory);
