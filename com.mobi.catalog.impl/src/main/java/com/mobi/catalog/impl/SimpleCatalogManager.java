@@ -1310,10 +1310,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Record> T deleteRecord(User user, Resource recordIRI) {
+    public <T extends Record> T deleteRecord(User user, IRI recordIRI) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            // TODO: rename recordIRI/recordId to be consistent between RecordService and CatalogManager
-            // TODO: delete or remove???
             OrmFactory<? extends Record> serviceType = getRecordService(recordIRI, conn);
             RecordService<? extends Record> service = recordServices.get(serviceType.getTypeIRI().stringValue());
             return (T) service.delete((IRI) recordIRI, user, conn);

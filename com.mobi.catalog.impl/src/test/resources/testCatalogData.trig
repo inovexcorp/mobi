@@ -16,6 +16,8 @@
 @prefix deletions: <https://mobi.com/deletions#> .
 @prefix graphs: <http://mobi.com/test/graphs#> .
 @prefix mergereqs: <http://mobi.com/ontologies/merge-requests#> .
+@prefix onteditor: <http://mobi.com/ontologies/ontology-editor#>.
+
 
 GRAPH <http://mobi.com/test#empty> { }
 
@@ -1055,4 +1057,24 @@ GRAPH mergereqs:mergereq2 {
         mergereqs:sourceBranch branches:master ;
         mergereqs:targetBranch branches:branch ;
         dc:creator muser:tester .
+}
+
+# OntologyRecord for RecordService
+
+GRAPH records:ontology-record {
+    records:ontology-record a onteditor:OntologyRecord, mcat:VersionedRecord, mcat:Record ;
+          mcat:catalog catalogs:catalog-distributed ;
+          dc:title "Versioned RDF Record" ;
+          dc:description "Description" ;
+          dc:issued "2017-01-01T00:00:00Z"^^xsd:dateTime ;
+          dc:modified "2017-05-01T00:00:00Z"^^xsd:dateTime ;
+          dc:publisher muser:tester ;
+          mcat:version versions:tag ;
+          mcat:version versions:latest-tag ;
+          mcat:latestVersion versions:latest-tag ;
+          mcat:branch branches:user-branch ;
+          mcat:branch branches:no-head-branch ;
+          mcat:branch branches:branch ;
+          mcat:branch branches:master ;
+          mcat:masterBranch branches:master .
 }

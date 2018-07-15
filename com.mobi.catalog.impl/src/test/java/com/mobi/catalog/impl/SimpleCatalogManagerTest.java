@@ -65,6 +65,7 @@ import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.ontologies.provo.InstantaneousEvent;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -133,6 +134,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private final IRI UNVERSIONED_RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#unversioned-record");
     private final IRI VERSIONED_RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-record");
     private final IRI VERSIONED_RDF_RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record");
+    private final IRI ONTOLOGY_RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#ontology-record");
     private final IRI DISTRIBUTION_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/distributions#distribution");
     private final IRI LATEST_VERSION_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#latest-version");
     private final IRI VERSION_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#version");
@@ -146,7 +148,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private static final String COMMITS = "http://mobi.com/test/commits#";
     private static final String RECORDS = "http://mobi.com/test/records#";
 
-    private static final int TOTAL_SIZE = 9;
+    private static final int TOTAL_SIZE = 10;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -159,6 +161,15 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
     @Mock
     private RecordService<VersionedRDFRecord> versionedRDFRecordService;
+
+    @Mock
+    private RecordService<VersionedRecord> versionedRecordService;
+
+    @Mock
+    private RecordService<UnversionedRecord> unversionedRecordService;
+
+    @Mock
+    private RecordService<OntologyRecord> ontologyRecordService;
 
     @Mock
     private MergeRequestManager mergeRequestManager;
@@ -177,6 +188,9 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
         when(recordService.getTypeIRI()).thenReturn(Record.TYPE);
         when(versionedRDFRecordService.getTypeIRI()).thenReturn(VersionedRDFRecord.TYPE);
+        when(versionedRecordService.getTypeIRI()).thenReturn(VersionedRecord.TYPE);
+        when(unversionedRecordService.getTypeIRI()).thenReturn(UnversionedRecord.TYPE);
+        when(ontologyRecordService.getTypeIRI()).thenReturn(OntologyRecord.TYPE);
 
         manager = new SimpleCatalogManager();
         injectOrmFactoryReferencesIntoService(manager);
@@ -186,6 +200,9 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         manager.setUtils(utilsService);
         manager.addRecordService(versionedRDFRecordService);
         manager.addRecordService(recordService);
+        manager.addRecordService(versionedRecordService);
+        manager.addRecordService(unversionedRecordService);
+        manager.addRecordService(ontologyRecordService);
         manager.setMergeRequestManager(mergeRequestManager);
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
@@ -410,7 +427,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
         // then
         assertTrue(true);
-        assertEquals(6, versionedRecords.getPage().size());
+        assertEquals(7, versionedRecords.getPage().size());
         assertEquals(6, versionedRecords.getTotalSize());
         assertEquals(2, unversionedRecords.getPage().size());
         assertEquals(2, unversionedRecords.getTotalSize());
@@ -2398,7 +2415,15 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     public void testExportVersionedRecordWithoutList() throws Exception {
         RecordOperationConfig config = new OperationConfig();
         manager.export(VERSIONED_RECORD_IRI, config);
-        verify(recordService).export(eq(VERSIONED_RECORD_IRI), any(OperationConfig.class),
+        verify(versionedRecordService).export(eq(VERSIONED_RECORD_IRI), any(OperationConfig.class),
+                any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testExportUnversionedRecordWithoutList() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        manager.export(UNVERSIONED_RECORD_IRI, config);
+        verify(unversionedRecordService).export(eq(UNVERSIONED_RECORD_IRI), any(OperationConfig.class),
                 any(RepositoryConnection.class));
     }
 
@@ -2418,8 +2443,55 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         exportList.add(VERSIONED_RECORD_IRI);
         manager.export(exportList, config);
         verify(recordService).export(eq(RECORD_IRI),  any(OperationConfig.class), any(RepositoryConnection.class));
-        verify(recordService).export(eq(VERSIONED_RECORD_IRI),  any(OperationConfig.class),
+        verify(versionedRecordService).export(eq(VERSIONED_RECORD_IRI),  any(OperationConfig.class),
                 any(RepositoryConnection.class));
+    }
+
+    /* deleteRecord() */
+
+    @Test
+    public void testDeleteRecord() {
+        User user = userFactory.createNew(USER_IRI);
+        manager.deleteRecord(user, RECORD_IRI);
+
+        verify(recordService).delete(eq(RECORD_IRI), eq(user), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testDeleteVersionedRecord() {
+        User user = userFactory.createNew(USER_IRI);
+        manager.deleteRecord(user, VERSIONED_RECORD_IRI);
+
+        verify(versionedRecordService).delete(eq(VERSIONED_RECORD_IRI), eq(user), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testDeleteUnversionedRecord() {
+        User user = userFactory.createNew(USER_IRI);
+        manager.deleteRecord(user, UNVERSIONED_RECORD_IRI);
+
+        verify(unversionedRecordService).delete(eq(UNVERSIONED_RECORD_IRI), eq(user), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testDeleteVersionedRDFRecord() {
+        User user = userFactory.createNew(USER_IRI);
+        manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI);
+
+        verify(versionedRDFRecordService).delete(eq(VERSIONED_RDF_RECORD_IRI), eq(user), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testDeleteOntologyRecord() {
+        User user = userFactory.createNew(USER_IRI);
+        manager.deleteRecord(user, ONTOLOGY_RECORD_IRI);
+
+        verify(ontologyRecordService).delete(eq(ONTOLOGY_RECORD_IRI), eq(user), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testDeleteInvalidRecord() {
+
     }
 
     private void setUpConflictTest(Resource leftId, Resource rightId, Difference leftDiff, Difference rightDiff, Model originalModel) {
