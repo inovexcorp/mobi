@@ -428,7 +428,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // then
         assertTrue(true);
         assertEquals(7, versionedRecords.getPage().size());
-        assertEquals(6, versionedRecords.getTotalSize());
+        assertEquals(7, versionedRecords.getTotalSize());
         assertEquals(2, unversionedRecords.getPage().size());
         assertEquals(2, unversionedRecords.getTotalSize());
         assertEquals(TOTAL_SIZE, fullRecords.getPage().size());
