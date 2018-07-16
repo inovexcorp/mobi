@@ -2489,9 +2489,10 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(ontologyRecordService).delete(eq(ONTOLOGY_RECORD_IRI), eq(user), any(RepositoryConnection.class));
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testDeleteInvalidRecord() {
-
+        User user = userFactory.createNew(USER_IRI);
+        manager.deleteRecord(user, VALUE_FACTORY.createIRI("urn:doesnotexist"));
     }
 
     private void setUpConflictTest(Resource leftId, Resource rightId, Difference leftDiff, Difference rightDiff, Model originalModel) {
