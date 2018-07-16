@@ -390,13 +390,13 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             while (urls.hasMoreElements()) {
                 URL url = urls.nextElement();
                 String fileName =  FilenameUtils.getName(url.getPath());
-
-                if (!conn.contains(vf.createIRI(fileName), null, null)) {
+                Resource fileIRI = vf.createIRI(fileName);
+                if (!conn.contains(fileIRI, null, null)) {
                     byte fileBytes[] = IOUtils.toByteArray(url);
                     VirtualFile file = vfs.resolveVirtualFile(fileBytes, fileLocation);
                     addPolicyFile(file, file.getIdentifier(), getPolicyFromFile(file));
                 } else {
-                    PolicyFile policy = validatePolicy(vf.createIRI(fileName));
+                    PolicyFile policy = validatePolicy(fileIRI);
                     VirtualFile file = vfs.resolveVirtualFile(policy.getRetrievalURL().toString());
                     if (!file.exists()) {
                         byte fileBytes[] = IOUtils.toByteArray(url);
