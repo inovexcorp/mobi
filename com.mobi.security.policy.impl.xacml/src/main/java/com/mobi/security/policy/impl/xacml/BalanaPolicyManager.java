@@ -193,12 +193,11 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     public Resource addPolicy(XACMLPolicy policy) {
         validateUniqueId(policy);
         BalanaPolicy balanaPolicy = getBalanaPolicy(policy);
-        String fileName = UUID.randomUUID() + ".xml";
         LOG.debug("Creating new policy file");
         try {
             byte[] fileBytes = balanaPolicy.toString().getBytes();
             VirtualFile file = vfs.resolveVirtualFile(fileBytes, fileLocation);
-            PolicyFile policyFile = addPolicyFile(file, fileName, balanaPolicy);
+            PolicyFile policyFile = addPolicyFile(file, file.getIdentifier(), balanaPolicy);
             return policyFile.getResource();
         } catch (IOException e) {
             throw new IllegalStateException("Could not save XACML Policy to disk due to: ", e);
@@ -379,14 +378,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         Optional<Cache<String, Policy>> cache = policyCache.getPolicyCache();
         cache.ifPresent(Cache::clear);
         try (RepositoryConnection conn = repository.getConnection()) {
-            Set<String> fileNames = new HashSet<>();
-            conn.getStatements(null, typeIRI, policyFileTypeIRI).forEach(statement -> {
-                Resource policyIRI = statement.getSubject();
-                PolicyFile policyFile = validatePolicy(policyIRI);
-                BalanaPolicy policy = getPolicyFromFile(policyFile);
-                cache.ifPresent(c -> c.put(policyIRI.stringValue(), policy));
-                fileNames.add(getFileName(policyFile));
-            });
+
             VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
             Set<String> existingNames = directory.getChildren().stream()
                     .map(file -> FilenameUtils.getName(file.getIdentifier()))
@@ -398,25 +390,45 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             while (urls.hasMoreElements()) {
                 URL url = urls.nextElement();
                 String fileName =  FilenameUtils.getName(url.getPath());
-                if (!existingNames.contains(fileName)) {
-                    VirtualFile file = vfs.resolveVirtualFile(fileLocation + "/" + fileName);
-                    file.create();
-                    try (OutputStream out = file.writeContent()) {
-                        IOUtils.copy(url.openConnection().getInputStream(), out);
+
+                if (!conn.contains(vf.createIRI(fileName), null, null)) {
+                    byte fileBytes[] = IOUtils.toByteArray(url);
+                    VirtualFile file = vfs.resolveVirtualFile(fileBytes, fileLocation);
+                    addPolicyFile(file, file.getIdentifier(), getPolicyFromFile(file));
+                } else {
+                    PolicyFile policy = validatePolicy(vf.createIRI(fileName));
+                    VirtualFile file = vfs.resolveVirtualFile(policy.getRetrievalURL().toString());
+                    if (!file.exists()) {
+                        byte fileBytes[] = IOUtils.toByteArray(url);
+                        file = vfs.resolveVirtualFile(fileBytes, fileLocation);
+                        addPolicyFile(file, file.getIdentifier(), getPolicyFromFile(file));
                     }
                 }
             }
 
-            for (VirtualFile file : directory.getChildren()) {
-                String fileName = FilenameUtils.getName(file.getIdentifier());
-                if (!fileNames.contains(fileName) && fileName.endsWith(".xml")) {
-                    LOG.debug("Discovered policy file " + fileName + " in directory that is not in the repository");
-                    BalanaPolicy balanaPolicy = getPolicyFromFile(file);
-                    addPolicyFile(file, fileName, balanaPolicy);
-                }
-            }
+            addMissingFilesToRepo(existingNames, directory);
+
+            Set<String> fileNames = new HashSet<>();
+            conn.getStatements(null, typeIRI, policyFileTypeIRI).forEach(statement -> {
+                Resource policyIRI = statement.getSubject();
+                PolicyFile policyFile = validatePolicy(policyIRI);
+                BalanaPolicy policy = getPolicyFromFile(policyFile);
+                cache.ifPresent(c -> c.put(policyIRI.stringValue(), policy));
+                fileNames.add(getFileName(policyFile));
+            });
         } catch (IOException e) {
             throw new MobiException("Error initializing policy files due to: ", e);
+        }
+    }
+
+    private void addMissingFilesToRepo(Set<String> filePaths, VirtualFile baseFolder) throws VirtualFilesystemException{
+        for (VirtualFile file : baseFolder.getChildren()) {
+            if (file.isFolder()) {
+                addMissingFilesToRepo(filePaths, file);
+            } else if (!filePaths.contains(file.getIdentifier())) {
+                BalanaPolicy balanaPolicy = getPolicyFromFile(file);
+                addPolicyFile(file, file.getIdentifier(), balanaPolicy);
+            }
         }
     }
 

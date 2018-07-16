@@ -187,7 +187,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void cleanup() throws Exception {
         VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
         for (VirtualFile child : directory.getChildren()) {
-            child.delete();
+            child.deleteAll();
         }
     }
 
