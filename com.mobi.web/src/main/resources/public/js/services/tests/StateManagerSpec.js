@@ -58,10 +58,12 @@ describe('State Manager service', function() {
         this.branchId = 'branchId';
         this.commitId = 'commitId';
         this.ontologyState = {};
-        this.ontologyState = {[prefixes.ontologyState + 'record']: [{'@id': this.recordId}],
-        [prefixes.ontologyState + 'branches']: {},
-        [prefixes.ontologyState + 'branch']: [{'@id': this.branchId}],
-        [prefixes.ontologyState + 'commit']: [{'@id': this.commitId}]};
+        this.ontologyState = {
+            [prefixes.ontologyState + 'record']: [{'@id': this.recordId}],
+            [prefixes.ontologyState + 'branches']: [{}],
+            [prefixes.ontologyState + 'branch']: [{'@id': this.branchId}],
+            [prefixes.ontologyState + 'commit']: [{'@id': this.commitId}]
+        };
     });
 
     afterEach(function() {
@@ -211,7 +213,7 @@ describe('State Manager service', function() {
         spyOn(stateManagerSvc, 'updateState');
         spyOn(stateManagerSvc, 'getOntologyStateByRecordId').and.returnValue({
             id: this.stateId,
-            model: this.ontologyState
+            model: [this.ontologyState]
         });
         stateManagerSvc.updateOntologyState(this.recordId, this.branchId, this.commitId);
         expect(stateManagerSvc.updateState).toHaveBeenCalledWith(this.stateId, jasmine.any(Object));

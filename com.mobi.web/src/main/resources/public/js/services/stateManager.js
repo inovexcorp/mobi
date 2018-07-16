@@ -97,7 +97,7 @@
                 var ontologyState = self.getOntologyStateByRecordId(recordId);
                 var stateId = _.get(ontologyState, 'id', '');
                 var model = _.get(ontologyState, 'model', '');
-                model[prefixes.ontologyState + 'branches'][branchId] = commitId;
+                model[0][prefixes.ontologyState + 'branches'][0][branchId] = commitId;
                 return self.updateState(stateId, model);
             }
 
@@ -110,7 +110,7 @@
                 return {
                     '@id': 'http://mobi.com/states/ontology-editor/' + uuid.v4(),
                     [prefixes.ontologyState + 'record']: [{'@id': recordId}],
-                    [prefixes.ontologyState + 'branches']: {[branchId]: commitId},
+                    [prefixes.ontologyState + 'branches']: [{[branchId]: commitId}],
                     [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
                     [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
                 }
