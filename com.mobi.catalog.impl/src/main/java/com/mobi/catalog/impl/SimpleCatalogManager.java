@@ -426,7 +426,7 @@ public class SimpleCatalogManager implements CatalogManager {
             if (factory != null) {
                 RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(factory.getTypeIRI()
                         .stringValue())).orElseThrow(() -> new IllegalArgumentException(
-                        "Service for factory " + factory + " is unavailable or doesn't exist."));
+                        "Service for factory " + factory.getType() + " is unavailable or doesn't exist."));
                 return (T) service.create(user, config, conn);
             } else {
                 throw new NullPointerException("Factory can't be null");
