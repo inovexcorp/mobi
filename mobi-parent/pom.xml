@@ -28,7 +28,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>mobi-parent</artifactId>
-    <version>1.13.19</version>
+    <version>1.13.20</version>
 
     <packaging>pom</packaging>
 
@@ -221,6 +221,11 @@
                 <version>3.4</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-email</artifactId>
+                <version>1.5</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
                 <version>${httpclient.version}</version>
@@ -392,6 +397,12 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>zero-allocation-hashing</artifactId>
                 <version>0.8</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.github.kirviq</groupId>
+                <artifactId>dumbster</artifactId>
+                <version>1.7.1</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
