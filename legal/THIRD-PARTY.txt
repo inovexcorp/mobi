@@ -1,5 +1,5 @@
 
-Lists of 326 third-party dependencies.
+Lists of 331 third-party dependencies.
      (Public Domain) AOP alliance (aopalliance:aopalliance:1.0 - http://aopalliance.sourceforge.net)
      (The Apache Software License, Version 2.0) avalon-framework (avalon-framework:avalon-framework:4.1.3 - no url defined)
      (The Apache Software License, Version 2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.1.0 - http://bnd.bndtools.org/)
@@ -22,6 +22,7 @@ Lists of 326 third-party dependencies.
      (The Apache Software License, Version 2.0) Caffeine cache (com.github.ben-manes.caffeine:caffeine:2.5.6 - https://github.com/ben-manes/caffeine)
      (Revised BSD License) JSONLD Java :: Core (com.github.jsonld-java:jsonld-java:0.8.3 - http://github.com/jsonld-java/jsonld-java/jsonld-java/)
      (Revised BSD License) JSONLD Java :: Core (com.github.jsonld-java:jsonld-java:0.9.0 - http://github.com/jsonld-java/jsonld-java/jsonld-java/)
+     (The Apache Software License, Version 2.0) dumbster (com.github.kirviq:dumbster:1.7.1 - https://github.com/kirviq/dumbster)
      (Revised BSD License) curvesapi (com.github.virtuald:curvesapi:1.03 - https://github.com/virtuald/curvesapi)
      (The Apache Software License, Version 2.0) FindBugs-jsr305 (com.google.code.findbugs:jsr305:1.3.9 - http://findbugs.sourceforge.net/)
      (The Apache Software License, Version 2.0) FindBugs-jsr305 (com.google.code.findbugs:jsr305:2.0.3 - https://code.google.com/p/jsr-305/)
@@ -42,6 +43,7 @@ Lists of 326 third-party dependencies.
      (The Apache Software License, Version 2.0) opencsv (com.opencsv:opencsv:3.7 - http://opencsv.sf.net)
      (The Apache Software License, Version 2.0) Spatial4J (com.spatial4j:spatial4j:0.4.1 - https://github.com/spatial4j/spatial4j)
      (CDDL v1.1 / GPL v2 dual license) Codemodel Core (com.sun.codemodel:codemodel:2.6 - http://codemodel.java.net/codemodel/)
+     (CDDL/GPLv2+CE) JavaMail API (com.sun.mail:javax.mail:1.5.6 - http://javamail.java.net/javax.mail)
      (Common Development and Distribution License, Version 1.1, and GNU General Public License, Version 2 with Classpath Exception) Old JAXB Core (com.sun.xml.bind:jaxb-core:2.2.11 - http://jaxb.java.net/jaxb-bundles/jaxb-core)
      (Common Development and Distribution License, Version 1.1, and GNU General Public License, Version 2 with Classpath Exception) Old JAXB Runtime (com.sun.xml.bind:jaxb-impl:2.2.11 - http://jaxb.java.net/jaxb-bundles/jaxb-impl)
      (The Apache Software License, Version 2.0) Commons BeanUtils (commons-beanutils:commons-beanutils:1.8.0 - http://commons.apache.org/beanutils/)
@@ -58,6 +60,7 @@ Lists of 326 third-party dependencies.
      (The Apache Software License, Version 2.0) Apache Commons Validator (commons-validator:commons-validator:1.6 - http://commons.apache.org/proper/commons-validator/)
      (GNU General Public License, version 2, with the Classpath Exception) Checker framework (edu.washington.cs.types.checker:checker-framework:1.7.5 - http://types.cs.washington.edu/checker-framework)
      (The Apache Software License, Version 2.0) swagger-annotations (io.swagger:swagger-annotations:1.5.7 - https://github.com/swagger-api/swagger-core/modules/swagger-annotations)
+     (Common Development and Distribution License (CDDL) v1.0) JavaBeans Activation Framework (JAF) (javax.activation:activation:1.1 - http://java.sun.com/products/javabeans/jaf/index.jsp)
      (Common Development and Distribution License, Version 1.1, and GNU General Public License, Version 2 with Classpath Exception) javax.annotation API (javax.annotation:javax.annotation-api:1.2 - http://jcp.org/en/jsr/detail?id=250)
      (JSR-000107 JCACHE 2.9 Public Review - Updated Specification
                 License) JSR107 API and SPI (javax.cache:cache-api:1.0.0 - https://github.com/jsr107/jsr107spec)
@@ -98,6 +101,7 @@ Lists of 326 third-party dependencies.
      (The Apache Software License, Version 2.0) Camel :: Core XML (org.apache.camel:camel-core-xml:2.18.4 - http://camel.apache.org/camel-parent/components/camel-core-xml)
      (The Apache Software License, Version 2.0) Camel :: Platforms :: Apache Karaf :: Features (org.apache.camel.karaf:apache-camel:2.18.4 - http://camel.apache.org/camel-parent/platforms/karaf/apache-camel)
      (The Apache Software License, Version 2.0) Commons Compress (org.apache.commons:commons-compress:1.4.1 - http://commons.apache.org/compress/)
+     (The Apache Software License, Version 2.0) Apache Commons Email (org.apache.commons:commons-email:1.5 - http://commons.apache.org/proper/commons-email/)
      (The Apache Software License, Version 2.0) Apache Commons Exec (org.apache.commons:commons-exec:1.3 - http://commons.apache.org/proper/commons-exec/)
      (The Apache Software License, Version 2.0) Apache Commons Lang (org.apache.commons:commons-lang3:3.4 - http://commons.apache.org/proper/commons-lang/)
      (The Apache Software License, Version 2.0) Commons RDF: API (org.apache.commons:commons-rdf-api:0.3.0-incubating - http://commonsrdf.incubator.apache.org/commons-rdf-api/)
@@ -304,6 +308,7 @@ Lists of 326 third-party dependencies.
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.6.6 - http://www.slf4j.org)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.10 - http://www.slf4j.org)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.12 - http://www.slf4j.org)
+     (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.18 - http://www.slf4j.org)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.21 - http://www.slf4j.org)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.22 - http://www.slf4j.org)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.7.6 - http://www.slf4j.org)
@@ -326,4 +331,4 @@ Lists of 326 third-party dependencies.
      (The Apache Software License, Version 2.0) WSO2 Balana Utils (org.wso2.balana:org.wso2.balana.utils:1.1.3 - http://wso2.org)
      (The Apache Software License, Version 2.0) StAX API (stax:stax-api:1.0.1 - http://stax.codehaus.org/)
      (The Apache Software License, Version 2.0) standard (taglibs:standard:1.1.2 - no url defined)
-     (Unknown license) xerces.wso2 (xerces.wso2:xercesImpl:2.8.1.wso2v2 - http://wso2.org)
+     (Unknown license) xercesImpl (xerces.wso2:xercesImpl:2.8.1.wso2v2 - no url defined)
