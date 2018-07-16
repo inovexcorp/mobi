@@ -23,6 +23,7 @@ package com.mobi.ontology.core.impl.owlapi.record;
  * #L%
  */
 
+import static junit.framework.TestCase.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -53,6 +54,7 @@ import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
+import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
@@ -79,6 +81,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -125,6 +128,9 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private CatalogProvUtils provUtils;
+
+    @Mock
+    private OntologyCache ontologyCache;
 
     @Mock
     private MergeRequestManager mergeRequestManager;
@@ -183,6 +189,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setLatestVersion(tag);
         testRecord.setBranch(Collections.singleton(branch));
         testRecord.setMasterBranch(branchFactory.createNew(masterBranchIRI));
+        testRecord.setOntologyIRI(testIRI);
 
 
         MockitoAnnotations.initMocks(this);
@@ -203,6 +210,8 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         when(utilsService.getRevisionChanges(eq(commitIRI), eq(connection))).thenReturn(difference);
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
         doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
+        doNothing().when(ontologyCache).clearCache(any(Resource.class), any(Resource.class));
+        doNothing().when(ontologyCache).clearCacheImports(any(Resource.class));
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.setOntologyManager(ontologyManager);
@@ -210,6 +219,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         recordService.setVf(VALUE_FACTORY);
         recordService.setModelFactory(modelFactory);
         recordService.setProvUtils(provUtils);
+        recordService.setOntologyCache(ontologyCache);
         recordService.setVersioningManager(versioningManager);
         recordService.setMergeRequestManager(mergeRequestManager);
     }
@@ -217,7 +227,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     /* create() */
 
     @Test
-    public void createTest() throws Exception{
+    public void createTest() throws Exception {
         RecordOperationConfig config = new OperationConfig();
         Set<String> names = new LinkedHashSet<>();
         names.add("Rick");
@@ -291,5 +301,28 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         recordService.create(user, config, connection);
+    }
+
+    @Test
+    public void deleteTest() throws Exception {
+        OntologyRecord deletedRecord = recordService.delete(testIRI, user, connection);
+
+        assertEquals(testRecord, deletedRecord);
+        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
+        verify(provUtils).startDeleteActivity(eq(user), eq(testIRI));
+        verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
+        verify(utilsService).removeVersion(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService).removeBranch(eq(testRecord.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
+        verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));
+        verify(ontologyCache).clearCache(any(Resource.class), any(Resource.class));
+        verify(ontologyCache).clearCacheImports(any(Resource.class));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void deleteRecordDoesNotExistTest() throws Exception {
+        when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.empty());
+
+        recordService.delete(testIRI, user, connection);
+        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
     }
 }
