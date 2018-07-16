@@ -508,8 +508,8 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
                 any(RepositoryConnection.class));
     }
 
-    @Test
-    public void testCreateOntologyRecord() throws Exception {
+    @Test (expected = IllegalArgumentException.class)
+    public void testCreateNoRecordService() throws Exception {
         RecordOperationConfig config = new OperationConfig();
         User user = userFactory.createNew(USER_IRI);
         Set<String> names = new LinkedHashSet<>();
@@ -523,10 +523,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        manager.createRecord(user, config, ontologyRecordFactory);
-
-        verify(ontologyRecordService).create(any(User.class), any(RecordOperationConfig.class),
-                any(RepositoryConnection.class));
+        manager.createRecord(user, config, versionedRecordFactory);
     }
 
     @Test (expected = NullPointerException.class)
