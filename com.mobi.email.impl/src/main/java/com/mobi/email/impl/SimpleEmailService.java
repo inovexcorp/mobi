@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -70,7 +71,7 @@ public class SimpleEmailService implements EmailService {
     void activate(Map<String, Object> configuration) {
         config = Configurable.createConfigurable(EmailServiceConfig.class, configuration);
         try {
-            InputStream input = new FileInputStream(System.getProperty("karaf.etc") + config.emailTemplate());
+            InputStream input = new FileInputStream(URLDecoder.decode(System.getProperty("karaf.etc"), "UTF-8") + config.emailTemplate());
             emailTemplate = IOUtils.toString(input, "UTF-8");
         } catch (IOException e) {
             throw new MobiException(e);
