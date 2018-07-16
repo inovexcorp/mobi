@@ -279,10 +279,12 @@
              */
             self.getOntology = function(recordId, rdfFormat = 'jsonld') {
                 var state = sm.getOntologyStateByRecordId(recordId);
+                console.log(state);
                 if (!_.isEmpty(state)) {
                     var inProgressCommit = emptyInProgressCommit;
                     var branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "branch'][0]['@id']");
-                    var commitId = _.get(state, "model[0]['" + prefixes.ontologyState + "commit'][0]['@id']");
+                    var commitId = _.get(state, "model[0]['" + prefixes.ontologyState + "branches'][0]['" + branchId + "']");
+                    console.log(commitId);
                     var upToDate = false;
                     return cm.getRecordBranch(branchId, recordId, catalogId)
                         .then(branch => {
