@@ -49,7 +49,7 @@ public interface OntologyManager {
      * @param config the configuration to use when creating the OntologyRecord.
      * @return a OntologyRecord.
      */
-    OntologyRecord ceateOntologyRecord(User user, RecordOperationConfig config);
+    OntologyRecord createOntologyRecord(User user, RecordOperationConfig config);
 
     /**
      * Creates a new OntologyRecord using the provided OntologyRecordConfig.

@@ -210,7 +210,7 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public OntologyRecord ceateOntologyRecord(User user, RecordOperationConfig config) {
+    public OntologyRecord createOntologyRecord(User user, RecordOperationConfig config) {
         return catalogManager.createRecord(user, config, ontologyRecordFactory);
     }
 
