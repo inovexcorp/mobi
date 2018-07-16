@@ -98,6 +98,7 @@
                 var stateId = _.get(ontologyState, 'id', '');
                 var model = _.get(ontologyState, 'model', '');
                 model[0][prefixes.ontologyState + 'branchCommits'][0][branchId] = commitId;
+                model[0][prefixes.ontologyState + 'branch'][0]['@id'] = branchId;
                 console.log(model);
                 return self.updateState(stateId, model[0]);
             }
