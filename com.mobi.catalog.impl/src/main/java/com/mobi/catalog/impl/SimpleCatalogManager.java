@@ -87,6 +87,7 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
+import com.mobi.rdf.orm.Thing;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -139,6 +140,10 @@ public class SimpleCatalogManager implements CatalogManager {
     private com.mobi.rdf.api.Resource distributedCatalogIRI;
     private com.mobi.rdf.api.Resource localCatalogIRI;
     private Map<com.mobi.rdf.api.Resource, String> sortingOptions = new HashMap<>();
+
+    /**
+     * A map of the available RecordServices. The string is get typeIRI for the individual RecordService.
+     */
     private Map<String, RecordService<? extends Record>> recordServices = new HashMap<>();
 
     public SimpleCatalogManager() {
@@ -412,6 +417,20 @@ public class SimpleCatalogManager implements CatalogManager {
             conn.getStatements(null, vf.createIRI(Record.catalog_IRI), catalogId)
                     .forEach(statement -> results.add(statement.getSubject()));
             return results;
+        }
+    }
+
+    @Override
+    public <T extends Record> T createRecord(User user, RecordOperationConfig config, OrmFactory<T> factory) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            if (factory != null) {
+                RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(factory.getTypeIRI()
+                        .stringValue())).orElseThrow(() -> new IllegalArgumentException(
+                        "Service for factory " + factory.getType() + " is unavailable or doesn't exist."));
+                return (T) service.create(user, config, conn);
+            } else {
+                throw new NullPointerException("Factory can't be null");
+            }
         }
     }
 
