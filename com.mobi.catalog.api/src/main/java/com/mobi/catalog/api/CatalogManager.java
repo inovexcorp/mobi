@@ -167,6 +167,17 @@ public interface CatalogManager {
     <T extends Record> T removeRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory);
 
     /**
+     * Deletes a Record using the appropriate {@link com.mobi.catalog.api.record.RecordService}.
+     *
+     * @param user The user performing the deletion activity
+     * @param recordIRI The record IRI to delete
+     * @param factory   The OrmFactory of the Type of Record you want to delete.
+     * @param <T>       An Object which extends Record.
+     * @return The deleted Object
+     */
+    <T extends Record> T deleteRecord(User user, IRI recordIRI, OrmFactory<T> factory);
+
+    /**
      * Gets the Record from the provided Catalog. The Record will be of type T which is determined by the provided
      * OrmFactory. Returns an empty Optional if the Record could not be found, or the Record does not belong to the
      * Catalog.
@@ -886,14 +897,4 @@ public interface CatalogManager {
      * @param config The configuration of the record
      */
     void export(List<IRI> recordIRIs, RecordOperationConfig config);
-
-    /**
-     * Deletes a Record using the appropriate {@link com.mobi.catalog.api.record.RecordService}.
-     *
-     * @param user The user performing the deletion activity
-     * @param recordIRI The record IRI to delete
-     * @param <T> The Object which extends Record
-     * @return The deleted Object
-     */
-    <T extends Record> T deleteRecord(User user, IRI recordIRI);
 }

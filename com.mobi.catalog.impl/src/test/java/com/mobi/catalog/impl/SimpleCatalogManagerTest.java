@@ -136,7 +136,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private final IRI UNVERSIONED_RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#unversioned-record");
     private final IRI VERSIONED_RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-record");
     private final IRI VERSIONED_RDF_RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record");
-    private final IRI ONTOLOGY_RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#ontology-record");
     private final IRI DISTRIBUTION_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/distributions#distribution");
     private final IRI LATEST_VERSION_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#latest-version");
     private final IRI VERSION_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#version");
@@ -150,7 +149,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private static final String COMMITS = "http://mobi.com/test/commits#";
     private static final String RECORDS = "http://mobi.com/test/records#";
 
-    private static final int TOTAL_SIZE = 10;
+    private static final int TOTAL_SIZE = 9;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -444,8 +443,8 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
         // then
         assertTrue(true);
-        assertEquals(7, versionedRecords.getPage().size());
-        assertEquals(7, versionedRecords.getTotalSize());
+        assertEquals(6, versionedRecords.getPage().size());
+        assertEquals(6, versionedRecords.getTotalSize());
         assertEquals(2, unversionedRecords.getPage().size());
         assertEquals(2, unversionedRecords.getTotalSize());
         assertEquals(TOTAL_SIZE, fullRecords.getPage().size());
@@ -533,6 +532,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        manager.removeRecordService(versionedRecordService);
 
         manager.createRecord(user, config, versionedRecordFactory);
     }
@@ -739,6 +739,48 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(utilsService).removeVersion(eq(record.getResource()), any(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).removeBranch(eq(record.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
         verify(utilsService).removeObject(any(VersionedRDFRecord.class), any(RepositoryConnection.class));
+    }
+
+    /* deleteRecord() */
+
+    @Test
+    public void testDeleteRecord() {
+        User user = userFactory.createNew(USER_IRI);
+        manager.deleteRecord(user, RECORD_IRI, recordFactory);
+
+        verify(recordService).delete(eq(RECORD_IRI), eq(user), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testDeleteVersionedRecord() {
+        User user = userFactory.createNew(USER_IRI);
+        manager.deleteRecord(user, VERSIONED_RECORD_IRI, versionedRecordFactory);
+
+        verify(versionedRecordService).delete(eq(VERSIONED_RECORD_IRI), eq(user), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testDeleteUnversionedRecord() {
+        User user = userFactory.createNew(USER_IRI);
+        manager.deleteRecord(user, UNVERSIONED_RECORD_IRI, unversionedRecordFactory);
+
+        verify(unversionedRecordService).delete(eq(UNVERSIONED_RECORD_IRI), eq(user), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testDeleteVersionedRDFRecord() {
+        User user = userFactory.createNew(USER_IRI);
+        manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI,versionedRDFRecordFactory);
+
+        verify(versionedRDFRecordService).delete(eq(VERSIONED_RDF_RECORD_IRI), eq(user), any(RepositoryConnection.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testDeleteVersionedRDFRecordMissingService() {
+        manager.removeRecordService(versionedRDFRecordService);
+        User user = userFactory.createNew(USER_IRI);
+
+        manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI, versionedRDFRecordFactory);
     }
 
     /* getRecord */
@@ -2542,54 +2584,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         verify(recordService).export(eq(RECORD_IRI),  any(OperationConfig.class), any(RepositoryConnection.class));
         verify(versionedRecordService).export(eq(VERSIONED_RECORD_IRI),  any(OperationConfig.class),
                 any(RepositoryConnection.class));
-    }
-
-    /* deleteRecord() */
-
-    @Test
-    public void testDeleteRecord() {
-        User user = userFactory.createNew(USER_IRI);
-        manager.deleteRecord(user, RECORD_IRI);
-
-        verify(recordService).delete(eq(RECORD_IRI), eq(user), any(RepositoryConnection.class));
-    }
-
-    @Test
-    public void testDeleteVersionedRecord() {
-        User user = userFactory.createNew(USER_IRI);
-        manager.deleteRecord(user, VERSIONED_RECORD_IRI);
-
-        verify(versionedRecordService).delete(eq(VERSIONED_RECORD_IRI), eq(user), any(RepositoryConnection.class));
-    }
-
-    @Test
-    public void testDeleteUnversionedRecord() {
-        User user = userFactory.createNew(USER_IRI);
-        manager.deleteRecord(user, UNVERSIONED_RECORD_IRI);
-
-        verify(unversionedRecordService).delete(eq(UNVERSIONED_RECORD_IRI), eq(user), any(RepositoryConnection.class));
-    }
-
-    @Test
-    public void testDeleteVersionedRDFRecord() {
-        User user = userFactory.createNew(USER_IRI);
-        manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI);
-
-        verify(versionedRDFRecordService).delete(eq(VERSIONED_RDF_RECORD_IRI), eq(user), any(RepositoryConnection.class));
-    }
-
-    @Test
-    public void testDeleteOntologyRecord() {
-        User user = userFactory.createNew(USER_IRI);
-        manager.deleteRecord(user, ONTOLOGY_RECORD_IRI);
-
-        verify(ontologyRecordService).delete(eq(ONTOLOGY_RECORD_IRI), eq(user), any(RepositoryConnection.class));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testDeleteInvalidRecord() {
-        User user = userFactory.createNew(USER_IRI);
-        manager.deleteRecord(user, VALUE_FACTORY.createIRI("urn:doesnotexist"));
     }
 
     private void setUpConflictTest(Resource leftId, Resource rightId, Difference leftDiff, Difference rightDiff, Model originalModel) {

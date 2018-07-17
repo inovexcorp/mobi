@@ -87,7 +87,6 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.rdf.orm.Thing;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -244,7 +243,7 @@ public class SimpleCatalogManager implements CatalogManager {
         recordServices.put(recordService.getTypeIRI(), recordService);
     }
 
-    void removeRecordService(RecordService<Record> recordService) {
+    void removeRecordService(RecordService<? extends Record> recordService) {
         recordServices.remove(recordService.getTypeIRI());
     }
 
@@ -499,6 +498,16 @@ public class SimpleCatalogManager implements CatalogManager {
             }
         }
         return record;
+    }
+
+    @Override
+    public <T extends Record> T deleteRecord(User user, IRI recordIRI, OrmFactory<T> factory) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(factory.getTypeIRI()
+                    .stringValue())).orElseThrow(() -> new IllegalArgumentException(
+                    "Service for factory " + factory.getType() + " is unavailable or doesn't exist."));
+            return (T) service.delete((IRI) recordIRI, user, conn);
+        }
     }
 
     @Override
@@ -1326,15 +1335,6 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public void export(List<IRI> recordIRIs, RecordOperationConfig config) {
         recordIRIs.forEach(iri -> export(iri, config));
-    }
-
-    @Override
-    public <T extends Record> T deleteRecord(User user, IRI recordIRI) {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            OrmFactory<? extends Record> serviceType = getRecordService(recordIRI, conn);
-            RecordService<? extends Record> service = recordServices.get(serviceType.getTypeIRI().stringValue());
-            return (T) service.delete((IRI) recordIRI, user, conn);
-        }
     }
 
     /**

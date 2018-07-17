@@ -70,7 +70,6 @@ public class VersionedRecordServiceTest extends OrmEnabledTestCase {
     private OrmFactory<VersionedRecord> recordFactory = getRequiredOrmFactory(VersionedRecord.class);
     private OrmFactory<Version> versionFactory = getRequiredOrmFactory(Version.class);
 
-
     @Mock
     private CatalogUtilsService utilsService;
 
