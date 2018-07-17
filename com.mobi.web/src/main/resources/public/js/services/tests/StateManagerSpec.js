@@ -60,7 +60,7 @@ describe('State Manager service', function() {
         this.ontologyState = [{}];
         this.ontologyState = [{
             [prefixes.ontologyState + 'record']: [{'@id': this.recordId}],
-            [prefixes.ontologyState + 'branches']: [{}],
+            [prefixes.ontologyState + 'branches']: [],
             [prefixes.ontologyState + 'branch']: [{'@id': this.branchId}],
             [prefixes.ontologyState + 'commit']: [{'@id': this.commitId}]
         }];
@@ -136,7 +136,7 @@ describe('State Manager service', function() {
             stateManagerSvc.createState(this.state);
             flushAndVerify($httpBackend);
             expect(stateManagerSvc.states.length).toBe(1);
-            expect(stateManagerSvc.states[0]).toEqual({id: this.stateId, model: [this.state]});
+            expect(stateManagerSvc.states[0]).toEqual({id: this.stateId, model: this.state});
         });
         it('with application', function() {
             var self = this;
@@ -148,7 +148,7 @@ describe('State Manager service', function() {
             stateManagerSvc.createState(this.state, this.application);
             flushAndVerify($httpBackend);
             expect(stateManagerSvc.states.length).toBe(1);
-            expect(stateManagerSvc.states[0]).toEqual({id: this.stateId, model: [this.state]});
+            expect(stateManagerSvc.states[0]).toEqual({id: this.stateId, model: this.state});
         });
     });
     it('getState hits the correct endpoint', function() {
@@ -169,7 +169,7 @@ describe('State Manager service', function() {
         stateManagerSvc.updateState(this.stateId, this.state);
         flushAndVerify($httpBackend);
         expect(stateManagerSvc.states.length).toBe(1);
-        expect(stateManagerSvc.states[0]).toEqual({id: this.stateId, model: [this.state]});
+        expect(stateManagerSvc.states[0]).toEqual({id: this.stateId, model: this.state});
     });
     it('deleteState hits the correct endpoint', function() {
         stateManagerSvc.states = [{id: this.stateId, model: 'old-model'}];
@@ -204,16 +204,16 @@ describe('State Manager service', function() {
             expect(result).toEqual(undefined);
         });
         it('when state is present', function() {
-            stateManagerSvc.states = [{id: this.stateId, model: [this.ontologyState]}];
+            stateManagerSvc.states = [{id: this.stateId, model: this.ontologyState}];
             var result = stateManagerSvc.getOntologyStateByRecordId(this.recordId);
-            expect(result).toEqual({id: this.stateId, model: [this.ontologyState]});
+            expect(result).toEqual({id: this.stateId, model: this.ontologyState});
         });
     });
     it('updateOntologyState calls the correct method', function() {
         spyOn(stateManagerSvc, 'updateState');
         spyOn(stateManagerSvc, 'getOntologyStateByRecordId').and.returnValue({
             id: this.stateId,
-            model: [this.ontologyState]
+            model: this.ontologyState
         });
         stateManagerSvc.updateOntologyState(this.recordId, this.branchId, this.commitId);
         expect(stateManagerSvc.updateState).toHaveBeenCalledWith(this.stateId, jasmine.any(Object));

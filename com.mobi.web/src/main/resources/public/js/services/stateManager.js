@@ -53,7 +53,7 @@
                     config.params = {application};
                 }
                 return $http.post(prefix, angular.toJson(stateJson), config)
-                    .then(response => self.states.push({id: response.data, model: [stateJson]}), util.rejectError);
+                    .then(response => self.states.push({id: response.data, model: stateJson}), util.rejectError);
             }
 
             self.getState = function(stateId) {
@@ -65,7 +65,7 @@
                 return $http.put(prefix + '/' + encodeURIComponent(stateId), angular.toJson(stateJson))
                     .then(() => _.forEach(self.states, state => {
                         if (_.get(state, 'id', '') === stateId) {
-                            _.set(state, 'model', [stateJson]);
+                            _.set(state, 'model', stateJson);
                             return false;
                         }
                     }), util.rejectError);
@@ -87,9 +87,9 @@
 
             self.getOntologyStateByRecordId = function(recordId) {
                 return _.find(self.states, {
-                    model: [[{
+                    model: [{
                         [prefixes.ontologyState + 'record']: [{'@id': recordId}]
-                    }]]
+                    }]
                 });
             }
 
@@ -97,23 +97,24 @@
                 var ontologyState = self.getOntologyStateByRecordId(recordId);
                 var stateId = _.get(ontologyState, 'id', '');
                 var model = _.get(ontologyState, 'model', '');
-                var branchIndex = _.findIndex(model[0], {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
+                var branchIndex = _.findIndex(model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
                 var branchIri = 'http://mobi.com/states/ontology-editor/branch-id/' + uuid.v4();
                 
-                model[0][0][prefixes.ontologyState + 'currentBranch'] = [{'@id': branchId}];
+                model[0][prefixes.ontologyState + 'currentBranch'] = [{'@id': branchId}];
                 if (branchIndex != -1) {
-                    model[0][branchIndex][prefixes.ontologyState + 'commit'] = [{'@id': commitId}];
+                    model[branchIndex][prefixes.ontologyState + 'commit'] = [{'@id': commitId}];
                 } else {
-                    model[0][0][prefixes.ontologyState + 'branches'].push({'@id': branchIri});
-                    model[0].push({
+                    console.log("pizza");
+                    console.log(model[0]);
+                    model[0][prefixes.ontologyState + 'branches'].push({'@id': branchIri});
+                    model.push({
                         '@id': branchIri,
                         [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
                         [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
                     });
                 }
-                console.log(model);
-                // Note that for some reason the model gets nested within another array, meaning that model[0] is really the model
-                return self.updateState(stateId, model[0]);
+                // Note that for some reason the model gets nested within another array, meaning that model is really the model
+                return self.updateState(stateId, model);
             }
 
             self.deleteOntologyState = function(recordId) {
