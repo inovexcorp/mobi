@@ -39,6 +39,7 @@ import org.apache.commons.mail.resolver.DataSourceUrlResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,8 +52,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-@Component
+@Component(
+        designateFactory = EmailServiceConfig.class,
+        name = SimpleEmailService.COMPONENT_NAME
+)
 public class SimpleEmailService implements EmailService {
+
+    static final String COMPONENT_NAME = "com.mobi.email.api.EmailService";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleEmailService.class);
     private static final String BODY_BINDING = "!|$BODY!|$";
@@ -71,7 +77,7 @@ public class SimpleEmailService implements EmailService {
     void activate(Map<String, Object> configuration) {
         config = Configurable.createConfigurable(EmailServiceConfig.class, configuration);
         try {
-            InputStream input = new FileInputStream(URLDecoder.decode(System.getProperty("karaf.etc"), "UTF-8") + config.emailTemplate());
+            InputStream input = new FileInputStream(URLDecoder.decode(System.getProperty("karaf.etc"), "UTF-8") + File.separator + config.emailTemplate());
             emailTemplate = IOUtils.toString(input, "UTF-8");
         } catch (IOException e) {
             throw new MobiException(e);
