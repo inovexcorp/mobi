@@ -20,16 +20,12 @@
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
-  -->
-
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.mobi</groupId>
     <artifactId>root</artifactId>
-    <version>1.13.20-SNAPSHOT</version>
+    <version>1.13.22-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -110,6 +106,8 @@
         <module>com.mobi.security.policy.impl.core</module>
         <module>com.mobi.rest.security</module>
         <module>com.mobi.security.policy.rest</module>
+        <module>com.mobi.email.api</module>
+        <module>com.mobi.email.impl</module>
     </modules>
 
     <properties>
