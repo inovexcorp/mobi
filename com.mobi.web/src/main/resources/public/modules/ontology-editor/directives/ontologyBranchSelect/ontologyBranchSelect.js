@@ -60,9 +60,7 @@
                         var state = sm.getOntologyByRecordId(dvm.os.listItem.ontologyRecord.recordId);
                         var branchIndex = _.findIndex(state.model, {[prefixes.ontologyState + "branch"]: [{'@id': branchId}]});
                         var commitId = _.get(state, "model[" + branchIndex + "]['" + prefixes.ontologyState + "commit'][0]['@id']");
-                        dvm.cm.getBranchHeadCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
-                            .then(headCommit => {
-                                var commitId = _.get(headCommit, "commit['@id']", '');
+                        
                                 return $q.all([
                                     sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId),
                                     dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)
