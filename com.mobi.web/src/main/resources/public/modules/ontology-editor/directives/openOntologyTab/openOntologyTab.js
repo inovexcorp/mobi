@@ -137,8 +137,8 @@
                     }
                     
                     $scope.$watch(() => dvm.os.list.length, () => {
-                            dvm.getPageOntologyRecords();
-                        });
+                        dvm.getPageOntologyRecords();
+                    });
 
                     dvm.getPageOntologyRecords();
 
