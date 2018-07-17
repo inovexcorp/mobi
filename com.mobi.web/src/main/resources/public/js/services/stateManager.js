@@ -102,7 +102,7 @@
                 
                 model[0][0][prefixes.ontologyState + 'currentBranch'] = [{'@id': branchId}];
                 if (branchIndex != -1) {
-                    model[branchIndex][prefixes.ontologyState + 'commit'] = [{'@id': commitId}];
+                    model[0][branchIndex][prefixes.ontologyState + 'commit'] = [{'@id': commitId}];
                 } else {
                     model[0][0][prefixes.ontologyState + 'branches'].push({'@id': branchIri});
                     model[0].push({
