@@ -272,12 +272,14 @@ describe('Ontology State Service', function() {
         });
         describe('if state exists', function() {
             beforeEach(function() {
-                var ontologyState = {'@id': 'id'};
-                ontologyState[prefixes.ontologyState + 'record'] = [{'@id': this.recordId}];
-                ontologyState[prefixes.ontologyState + 'branch'] = [{'@id': this.branchId}];
-                ontologyState[prefixes.ontologyState + 'branchCommits'] = [{[this.branchId]: this.commitId}];
-                ontologyState[prefixes.ontologyState + 'commit'] = [{'@id': this.commitId}];
-                stateManagerSvc.getOntologyStateByRecordId.and.returnValue({model: [ontologyState]});
+                var ontologyState = [{'@id': 'id'}, {'@id': 'id-branch'}];
+                ontologyState[0][prefixes.ontologyState + 'record'] = [{'@id': this.recordId}];
+                ontologyState[0][prefixes.ontologyState + 'currentBranch'] = [{'@id': this.branchId}];
+                ontologyState[0][prefixes.ontologyState + 'branches'] = [{'@id': 'id-branch'}];
+                ontologyState[0][prefixes.ontologyState + 'commit'] = [{'@id': this.commitId}];
+                ontologyState[1][prefixes.ontologyState + 'branch'] = [{'@id': this.branchId}];
+                ontologyState[1][prefixes.ontologyState + 'commit'] = [{'@id': this.commitId}]
+                stateManagerSvc.getOntologyStateByRecordId.and.returnValue({model: ontologyState});
             });
             describe('and getRecordBranch is resolved', function() {
                 beforeEach(function() {
