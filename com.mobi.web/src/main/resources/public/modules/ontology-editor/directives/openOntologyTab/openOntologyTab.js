@@ -136,11 +136,10 @@
                         }
                     }
                     
-                    $scope.$watch(function() {
-                        return dvm.os.list + ontologyRecords;
-                    }, function(newValue, oldValue) {
-                        dvm.getPageOntologyRecords();
-                    })
+                    $scope.$watch(() => dvm.os.list.length, () => {
+                            dvm.getPageOntologyRecords();
+                        });
+
                     dvm.getPageOntologyRecords();
 
                     function getFilteredRecords(records) {
