@@ -87,9 +87,9 @@
 
             self.getOntologyStateByRecordId = function(recordId) {
                 return _.find(self.states, {
-                    model: [{
+                    model: [[{
                         [prefixes.ontologyState + 'record']: [{'@id': recordId}]
-                    }]
+                    }]]
                 });
             }
 
@@ -97,22 +97,23 @@
                 var ontologyState = self.getOntologyStateByRecordId(recordId);
                 var stateId = _.get(ontologyState, 'id', '');
                 var model = _.get(ontologyState, 'model', '');
-                var branchIndex = _.findIndex(model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
+                var branchIndex = _.findIndex(model[0], {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
                 var branchIri = 'http://mobi.com/states/ontology-editor/branch-id/' + uuid.v4();
                 
-                model[0][prefixes.ontologyState + 'currentBranch'] = [{'@id': branchId}];
+                model[0][0][prefixes.ontologyState + 'currentBranch'] = [{'@id': branchId}];
                 if (branchIndex != -1) {
                     model[branchIndex][prefixes.ontologyState + 'commit'] = [{'@id': commitId}];
                 } else {
-                    model[0][prefixes.ontologyState + 'branches'].push({'@id': branchIri});
-                    model.push({
+                    model[0][0][prefixes.ontologyState + 'branches'].push({'@id': branchIri});
+                    model[0].push({
                         '@id': branchIri,
                         [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
                         [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
                     });
                 }
                 console.log(model);
-                return self.updateState(stateId, model);
+                // Note that for some reason the model gets nested within another array, meaning that model[0] is really the model
+                return self.updateState(stateId, model[0]);
             }
 
             self.deleteOntologyState = function(recordId) {
@@ -127,8 +128,7 @@
                         '@id': 'http://mobi.com/states/ontology-editor/' + uuid.v4(),
                         [prefixes.ontologyState + 'record']: [{'@id': recordId}],
                         [prefixes.ontologyState + 'branches']: [{'@id': branchIri}],
-                        [prefixes.ontologyState + 'currentBranch']: [{'@id': branchId}],
-                        [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
+                        [prefixes.ontologyState + 'currentBranch']: [{'@id': branchId}]
                     },
                     {
                         '@id': branchIri,
