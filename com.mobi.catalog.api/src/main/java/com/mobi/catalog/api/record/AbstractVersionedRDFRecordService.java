@@ -153,7 +153,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param record The VersionedRDFRecord to delete
      * @param conn A RepositoryConnection to use for lookup
      */
-    private void deleteVersionedRDFData(T record, RepositoryConnection conn) {
+    protected void deleteVersionedRDFData(T record, RepositoryConnection conn) {
         recordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRDFRecord -> {
                     mergeRequestManager.deleteMergeRequestsWithRecordId(versionedRDFRecord.getResource(), conn);
@@ -179,7 +179,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param exporter The ExportWriter to write the VersionedRDFRecord to
      * @param conn A RepositoryConnection to use for lookup
      */
-    private void writeVersionedRDFData(VersionedRDFRecord record, Set<Resource> branchesToWrite,
+    protected void writeVersionedRDFData(VersionedRDFRecord record, Set<Resource> branchesToWrite,
                                        BatchExporter exporter, RepositoryConnection conn) {
         Set<Resource> processedCommits = new HashSet<>();
 
