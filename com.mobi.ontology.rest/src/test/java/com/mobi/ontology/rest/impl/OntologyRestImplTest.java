@@ -659,7 +659,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     @Test
     public void testUploadFile() {
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         fd.field("catalogId", catalogId.stringValue());
         fd.field("title", "title");
         fd.field("description", "description");
@@ -669,27 +668,15 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
 
-        /**
         assertEquals(response.getStatus(), 201);
         assertGetUserFromContext();
-        verify(ontologyManager).createOntology(any(FileInputStream.class), eq(false));
-        verify(ontology, atLeastOnce()).getOntologyId();
-        verify(ontologyId).getOntologyIdentifier();
-        verify(ontologyId).getOntologyIRI();
-        verify(catalogManager, atLeastOnce()).getLocalCatalogIRI();
-        verify(ontologyManager).createOntologyRecord(any(OntologyRecordConfig.class));
-        verify(catalogManager).addRecord(catalogId, record);
-        verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
-        verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(createActivity, record.getResource());
-         **/
+        verify(ontologyManager).createOntologyRecord(any(User.class), any(RecordOperationConfig.class));
     }
 
     @Test
     public void testUploadFileWithoutTitle() {
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        fd.field("catalogId", catalogId.stringValue());
         fd.field("description", "description");
         fd.field("keywords", "keyword1");
         fd.field("keywords", "keyword2");
@@ -698,91 +685,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), 400);
-        verify(provUtils, times(0)).startCreateActivity(user);
-    }
-
-    @Test
-    public void testUploadFileWithoutFile() {
-        FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("title", "title");
-        fd.field("description", "description");
-        fd.field("keywords", "keyword1");
-        fd.field("keywords", "keyword2");
-
-        Response response = target().path("ontologies").request().post(Entity.entity(fd,
-                MediaType.MULTIPART_FORM_DATA));
-
-        assertEquals(response.getStatus(), 400);
-        verify(provUtils, times(0)).startCreateActivity(user);
-    }
-
-    @Test
-    public void testUploadInvalidOntologyFile() {
-        // Setup:
-        when(ontologyManager.createOntology(any(FileInputStream.class), anyBoolean()))
-                .thenThrow(new MobiOntologyException("Error"));
-
-        FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/search-results.json"),
-                MediaType.APPLICATION_OCTET_STREAM_TYPE);
-        fd.field("title", "title");
-        fd.field("description", "description");
-        fd.field("keywords", "keyword1");
-        fd.field("keywords", "keyword2");
-
-        Response response = target().path("ontologies").request().post(Entity.entity(fd,
-                MediaType.MULTIPART_FORM_DATA));
-
-        assertEquals(response.getStatus(), 500);
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(createActivity);
-    }
-
-    @Test
-    public void testUploadExistingOntologyFile() {
-        // Setup:
-        when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(true);
-        record.setOntologyIRI(ontologyIRI);
-        when(results.getPage()).thenReturn(Collections.singletonList(record));
-        FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
-        fd.field("title", "title");
-        fd.field("description", "description");
-        fd.field("keywords", "keyword1");
-        fd.field("keywords", "keyword2");
-
-        Response response = target().path("ontologies").request().post(Entity.entity(fd,
-                MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(createActivity);
-    }
-
-    @Test
-    public void  testUploadFileCommitFail() {
-        // Setup:
-        when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString(), any(Model.class), any(Model.class))).thenThrow(new IllegalStateException());
-        FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
-        fd.field("catalogId", catalogId.toString());
-        fd.field("title", "title");
-        fd.field("description", "description");
-        fd.field("keywords", "keyword1");
-        fd.field("keywords", "keyword2");
-
-        Response response = target().path("ontologies").request().post(Entity.entity(fd,
-                MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 500);
-        assertGetUserFromContext();
-        verify(ontologyManager).createOntology(any(FileInputStream.class), eq(false));
-        verify(catalogManager, atLeastOnce()).getLocalCatalogIRI();
-        //verify(ontologyManager).createOntologyRecord(any(OntologyRecordConfig.class));
-        verify(catalogManager).addRecord(catalogId, record);
-        verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
-        verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(createActivity);
-        verify(ontologyManager).deleteOntology(recordId);
     }
 
     // Test upload ontology json
@@ -791,73 +693,42 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     public void testUploadOntologyJson() {
         JSONObject ontologyJson = new JSONObject().element("@id", "http://mobi.com/ontology");
 
-        Response response = target().path("ontologies").queryParam("title", "title")
+        Response response = target().path("ontologies").queryParam("catalogId", catalogId.stringValue()).queryParam("title", "title")
                 .queryParam("description", "description").queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
                 .request().post(Entity.json(ontologyJson));
 
+        verify(ontologyManager).createOntologyRecord(any(User.class), any(RecordOperationConfig.class));
         assertEquals(response.getStatus(), 201);
         assertGetUserFromContext();
-        verify(ontologyManager).createOntology(ontologyJson.toString(), false);
-        verify(ontology, atLeastOnce()).getOntologyId();
-        verify(ontologyId).getOntologyIdentifier();
-        verify(ontologyId).getOntologyIRI();
-        verify(catalogManager, atLeastOnce()).getLocalCatalogIRI();
-        //verify(ontologyManager).createOntologyRecord(any(OntologyRecordConfig.class));
-        verify(catalogManager).addRecord(catalogId, record);
-        verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
-        verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(createActivity, record.getResource());
+    }
+
+    @Test
+    public void testUploadOntologyJsonWithoutCatalogId() {
+        JSONObject entity = new JSONObject().element("@id", "http://mobi.com/entity");
+
+        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description", "description")
+                .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
+                .request().post(Entity.json(entity));
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void testUploadOntologyJsonWithoutTitle() {
         JSONObject entity = new JSONObject().element("@id", "http://mobi.com/entity");
 
-        Response response = target().path("ontologies").queryParam("description", "description")
+        Response response = target().path("ontologies").queryParam("catalogId", catalogId.stringValue()).queryParam("description", "description")
                 .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
                 .request().post(Entity.json(entity));
         assertEquals(response.getStatus(), 400);
-        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
     public void testUploadOntologyJsonWithoutJson() {
-        Response response = target().path("ontologies").queryParam("title", "title")
+        Response response = target().path("ontologies").queryParam("catalogId", catalogId.stringValue()).queryParam("title", "title")
                 .queryParam("description", "description").queryParam("keywords", "keyword1")
                 .queryParam("keywords", "keyword2")
                 .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
-        verify(provUtils, times(0)).startCreateActivity(user);
-    }
-
-    @Test
-    public void testUploadInvalidOntologyJson() {
-        when(ontologyManager.createOntology(anyString(), anyBoolean())).thenThrow(new MobiOntologyException("Error"));
-        JSONObject entity = new JSONObject().element("@id", "http://mobi.com/entity");
-
-        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
-                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
-        assertEquals(response.getStatus(), 500);
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(createActivity);
-    }
-
-    @Test
-    public void testUploadExistingOntologyJson() {
-        // Setup:
-        when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(true);
-        record.setOntologyIRI(ontologyIRI);
-        when(results.getPage()).thenReturn(Collections.singletonList(record));
-        JSONObject ontologyJson = new JSONObject().element("@id", "http://mobi.com/ontology");
-
-        Response response = target().path("ontologies").queryParam("title", "title")
-                .queryParam("description", "description")
-                .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
-                .request().post(Entity.json(ontologyJson));
-        assertEquals(response.getStatus(), 400);
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(createActivity);
     }
 
     // Test get ontology

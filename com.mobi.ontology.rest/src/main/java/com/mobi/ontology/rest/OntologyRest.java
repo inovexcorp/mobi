@@ -55,7 +55,6 @@ public interface OntologyRest {
      * containing the data provided in the ontology file.
      *
      * @param context         the context of the request.
-     * @param fileInputStream the ontology file to upload.
      * @param title           the title for the OntologyRecord.
      * @param description     the description for the OntologyRecord.
      * @param keywords        the optional list of keyword strings for the OntologyRecord.
@@ -68,7 +67,6 @@ public interface OntologyRest {
     @RolesAllowed("user")
     @ApiOperation("Uploads an ontology file to the data store.")
     Response uploadFile(@Context ContainerRequestContext context,
-                        @FormDataParam("file") InputStream fileInputStream,
                         @FormDataParam("catalogId") String catalogId,
                         @FormDataParam("title") String title,
                         @FormDataParam("description") String description,

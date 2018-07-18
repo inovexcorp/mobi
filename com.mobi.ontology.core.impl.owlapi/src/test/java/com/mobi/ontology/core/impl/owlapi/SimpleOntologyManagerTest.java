@@ -250,6 +250,23 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         verify(catalogManager).createRecord(eq(user), any(RecordOperationConfig.class), any(RecordFactory.class));
     }
 
+    @Test (expected = IllegalArgumentException.class)
+    public void testCreateNoRecordService() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(OntologyRecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(OntologyRecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(OntologyRecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(OntologyRecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(OntologyRecordCreateSettings.RECORD_PUBLISHERS, users);
+
+        manager.createOntologyRecord(user, config);
+    }
+
     // Testing retrieveOntologyByIRI
 
     @Test(expected = IllegalStateException.class)

@@ -188,12 +188,10 @@ public class OntologyRestImpl implements OntologyRest {
             @AttributeValue(id = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
                     value = "http://mobi.com/ontologies/ontology-editor#OntologyRecord"))
     @ResourceId(id = "http://mobi.com/catalog-local")
-    public Response uploadFile(ContainerRequestContext context, InputStream fileInputStream, String catalogId,
+    public Response uploadFile(ContainerRequestContext context, String catalogId,
                                String title, String description, List<FormDataBodyPart> keywords) {
+        checkStringParam(catalogId, "The catalogId is missing.");
         checkStringParam(title, "The title is missing.");
-        if (fileInputStream == null) {
-            throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
-        }
         Set<String> keywordSet = Collections.emptySet();
         if (keywords != null) {
             keywordSet = keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
@@ -208,11 +206,12 @@ public class OntologyRestImpl implements OntologyRest {
     @ResourceId(id = "http://mobi.com/catalog-local")
     public Response uploadOntologyJson(ContainerRequestContext context, String catalogId, String title,
                                        String description, List<String> keywords, String ontologyJson) {
+        checkStringParam(catalogId, "The catalogId is missing.");
         checkStringParam(title, "The title is missing.");
         checkStringParam(ontologyJson, "The ontologyJson is missing.");
         Set<String> keywordSet = Collections.emptySet();
         if (keywords != null) {
-            keywordSet = keywords.stream().collect(Collectors.toSet());
+            keywordSet = new HashSet<>(keywords);
         }
         return createOntologyRecord(context, catalogId, title, description, keywordSet);
     }
