@@ -177,9 +177,9 @@ describe('Ontology Branch Select directive', function() {
                     expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(this.branchId,
                         ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                     expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                        this.branchId, this.commitId, true);
-                    expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                         this.branchId, this.commitId);
+                    expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
+                        this.branchId, this.commitId, true);
                     expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalled();
                 });
                 it('and updateOntologyState does not resolve', function() {

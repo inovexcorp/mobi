@@ -284,7 +284,6 @@
                     var branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "currentBranch'][0]['@id']");
                     var branchIndex = _.findIndex(state.model, {[prefixes.ontologyState + "branch"]: [{'@id': branchId}]});
                     var commitId = _.get(state, "model[" + branchIndex + "]['" + prefixes.ontologyState + "commit'][0]['@id']");
-                    console.log(branchIndex);
                     var upToDate = false;
                     return cm.getRecordBranch(branchId, recordId, catalogId)
                         .then(branch => {
