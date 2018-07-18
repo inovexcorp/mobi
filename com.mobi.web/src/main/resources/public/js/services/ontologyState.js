@@ -279,7 +279,6 @@
              */
             self.getOntology = function(recordId, rdfFormat = 'jsonld') {
                 var state = sm.getOntologyStateByRecordId(recordId);
-                console.log(state.model);
                 if (!_.isEmpty(state)) {
                     var inProgressCommit = emptyInProgressCommit;
                     var branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "currentBranch'][0]['@id']");
