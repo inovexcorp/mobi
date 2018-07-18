@@ -99,7 +99,7 @@
                 var model = _.get(ontologyState, 'model', '');
                 var branchIndex = _.findIndex(model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
                 var branchIri = 'http://mobi.com/states/ontology-editor/branch-id/' + uuid.v4();
-                
+
                 model[0][prefixes.ontologyState + 'currentBranch'] = [{'@id': branchId}];
                 if (branchIndex != -1) {
                     model[branchIndex][prefixes.ontologyState + 'commit'] = [{'@id': commitId}];

@@ -67,8 +67,8 @@
                                     sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId),
                                     dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId, commitId === headCommitId)
                                 ]);
-                            }, $q.reject).then(() => dvm.os.resetStateTabs(), dvm.util.createErrorToast)
-                        
+                            }, $q.reject)
+                            .then(() => dvm.os.resetStateTabs(), dvm.util.createErrorToast)
                     }
 
                     dvm.openDeleteConfirmation = function($event, branch) {

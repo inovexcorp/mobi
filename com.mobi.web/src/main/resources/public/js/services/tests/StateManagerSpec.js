@@ -61,8 +61,7 @@ describe('State Manager service', function() {
         this.ontologyState = [{
             [prefixes.ontologyState + 'record']: [{'@id': this.recordId}],
             [prefixes.ontologyState + 'branches']: [],
-            [prefixes.ontologyState + 'branch']: [{'@id': this.branchId}],
-            [prefixes.ontologyState + 'commit']: [{'@id': this.commitId}]
+            [prefixes.ontologyState + 'branch']: [{'@id': this.branchId}]
         }];
     });
 
