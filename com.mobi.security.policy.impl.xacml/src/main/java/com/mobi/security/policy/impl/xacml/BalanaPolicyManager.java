@@ -39,6 +39,7 @@ import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
+import com.mobi.rest.util.RestUtils;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.security.policy.api.Policy;
 import com.mobi.security.policy.api.cache.PolicyCache;
@@ -197,7 +198,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         try {
             byte[] fileBytes = balanaPolicy.toString().getBytes();
             VirtualFile file = vfs.resolveVirtualFile(fileBytes, fileLocation);
-            PolicyFile policyFile = addPolicyFile(file, file.getIdentifier(), balanaPolicy);
+            PolicyFile policyFile = addPolicyFile(file, file.getIdentifier() + ".xml", balanaPolicy);
             return policyFile.getResource();
         } catch (IOException e) {
             throw new IllegalStateException("Could not save XACML Policy to disk due to: ", e);
@@ -390,7 +391,8 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             while (urls.hasMoreElements()) {
                 URL url = urls.nextElement();
                 String fileName =  FilenameUtils.getName(url.getPath());
-                Resource fileIRI = vf.createIRI(fileName);
+                String fileId = RestUtils.decode(fileName);
+                Resource fileIRI = vf.createIRI(fileId);
                 if (!conn.contains(fileIRI, null, null)) {
                     byte fileBytes[] = IOUtils.toByteArray(url);
                     VirtualFile file = vfs.resolveVirtualFile(fileBytes, fileLocation);
@@ -427,7 +429,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 addMissingFilesToRepo(filePaths, file);
             } else if (!filePaths.contains(file.getIdentifier())) {
                 BalanaPolicy balanaPolicy = getPolicyFromFile(file);
-                addPolicyFile(file, file.getIdentifier(), balanaPolicy);
+                addPolicyFile(file, file.getIdentifier() + ".xml", balanaPolicy);
             }
         }
     }
