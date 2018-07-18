@@ -104,8 +104,6 @@
                 if (branchIndex != -1) {
                     model[branchIndex][prefixes.ontologyState + 'commit'] = [{'@id': commitId}];
                 } else {
-                    console.log("pizza");
-                    console.log(model[0]);
                     model[0][prefixes.ontologyState + 'branches'].push({'@id': branchIri});
                     model.push({
                         '@id': branchIri,
@@ -113,7 +111,6 @@
                         [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
                     });
                 }
-                // Note that for some reason the model gets nested within another array, meaning that model is really the model
                 return self.updateState(stateId, model);
             }
 
