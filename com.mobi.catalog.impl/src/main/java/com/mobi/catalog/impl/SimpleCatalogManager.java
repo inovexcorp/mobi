@@ -503,12 +503,9 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public <T extends Record> T deleteRecord(User user, IRI recordIRI, OrmFactory<T> factory) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            OrmFactory<? extends Record> serviceType = getRecordService(recordIRI, conn);
-            if (!serviceType.getTypeIRI().equals(factory.getTypeIRI())) {
-                throw new IllegalArgumentException("Service for factory " + factory.getType()
-                        + " is unavailable or doesn't exist.");
-            }
-            RecordService<? extends Record> service = recordServices.get(serviceType.getTypeIRI().stringValue());
+            RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(factory.getTypeIRI()
+                    .stringValue())).orElseThrow(() -> new IllegalArgumentException(
+                    "Service for factory " + factory.getType() + " is unavailable or doesn't exist."));
             return (T) service.delete((IRI) recordIRI, user, conn);
         }
     }
@@ -1329,8 +1326,8 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public void export(IRI recordIRI, RecordOperationConfig config) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            OrmFactory<? extends Record> serviceType = getRecordService(recordIRI, conn);
-            RecordService<? extends Record> service = recordServices.get(serviceType.getTypeIRI().stringValue());
+            OrmFactory<? extends Record> factory = getFactory(recordIRI, conn);
+            RecordService<? extends Record> service = recordServices.get(factory.getTypeIRI().stringValue());
             service.export(recordIRI, config, conn);
         }
     }
@@ -1341,13 +1338,13 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     /**
-     * Takes a recordId and returns the factory IRI type for that record. If failure, it returns the most specific
-     * recordService
+     * Takes a recordId and returns the factory for that record. If a factory for that particular record is not
+     * registered, it returns the most specific factory available.
      *
      * @param recordId The record IRI
-     * @return factory record service
+     * @return the record factory of a given recordId
      */
-    private OrmFactory<? extends Record> getRecordService(Resource recordId, RepositoryConnection conn) {
+    private OrmFactory<? extends Record> getFactory(Resource recordId, RepositoryConnection conn) {
         List<Resource> types = RepositoryResults.asList(
                 conn.getStatements(recordId, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
                 .stream()
@@ -1355,7 +1352,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
-
 
         List<OrmFactory<? extends Record>> classType = factoryRegistry.getSortedFactoriesOfType(Record.class).stream()
                 .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
