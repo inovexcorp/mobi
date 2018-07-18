@@ -27,10 +27,10 @@
         .module('ontologyBranchSelect', [])
         .directive('ontologyBranchSelect', ontologyBranchSelect);
 
-        ontologyBranchSelect.$inject = ['$filter', '$q', '$timeout', 'catalogManagerService', 'ontologyStateService',
+        ontologyBranchSelect.$inject = ['$filter', '$q', '$timeout', 'catalogManagerService', 'ontologyStateService', 'prefixes',
             'ontologyManagerService', 'utilService', 'stateManagerService'];
 
-        function ontologyBranchSelect($filter, $q, $timeout, catalogManagerService, ontologyStateService, ontologyManagerService, utilService,
+        function ontologyBranchSelect($filter, $q, $timeout, catalogManagerService, ontologyStateService, prefixes, ontologyManagerService, utilService,
             stateManagerService) {
             return {
                 restrict: 'E',
@@ -57,16 +57,13 @@
 
                     dvm.changeBranch = function(item) {
                         var branchId = item['@id'];
-                        var state = sm.getOntologyByRecordId(dvm.os.listItem.ontologyRecord.recordId);
+                        var state = sm.getOntologyStateByRecordId(dvm.os.listItem.ontologyRecord.recordId);
                         var branchIndex = _.findIndex(state.model, {[prefixes.ontologyState + "branch"]: [{'@id': branchId}]});
                         var commitId = _.get(state, "model[" + branchIndex + "]['" + prefixes.ontologyState + "commit'][0]['@id']");
-                        
-                                return $q.all([
-                                    sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId),
-                                    dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)
-                                ]);
-                            }, $q.reject)
-                            .then(() => dvm.os.resetStateTabs(), dvm.util.createErrorToast);
+                        $q.all([
+                            sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId),
+                            dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)
+                            ]).then(() => dvm.os.resetStateTabs(), dvm.util.createErrorToast);
                     }
 
                     dvm.openDeleteConfirmation = function($event, branch) {

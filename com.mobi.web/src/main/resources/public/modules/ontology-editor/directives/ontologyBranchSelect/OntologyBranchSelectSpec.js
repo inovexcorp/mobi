@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology Branch Select directive', function() {
-    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, utilSvc;
+    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -31,10 +31,11 @@ describe('Ontology Branch Select directive', function() {
         mockOntologyManager();
         mockUtil();
         mockStateManager();
+        mockPrefixes();
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyStateService_, _ontologyManagerService_, _$q_, _stateManagerService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyStateService_, _ontologyManagerService_, _$q_, _stateManagerService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
@@ -43,6 +44,7 @@ describe('Ontology Branch Select directive', function() {
             $q = _$q_;
             stateManagerSvc = _stateManagerService_;
             utilSvc = _utilService_;
+            prefixes = _prefixes_;
         });
 
         this.catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
@@ -152,15 +154,24 @@ describe('Ontology Branch Select directive', function() {
         describe('changeBranch calls the correct methods', function() {
             describe('when getBranchHeadCommit is resolved', function() {
                 beforeEach(function() {
-                    catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({ commit: { '@id': this.commitId } }));
+                    var ontoState = {
+                        model: [
+                            {
+                                '@id': 'state-id'
+                            },
+                            {
+                                '@id': 'branch-id',
+                                [prefixes.ontologyState + 'branch']: [{'@id': this.branchId}],
+                                [prefixes.ontologyState + 'commit']: [{'@id': this.commitId}]
+                            }
+                        ]}
+                    stateManagerSvc.getOntologyStateByRecordId.and.returnValue(ontoState);
                 });
                 it('when updateOntologyState and updateOntology are resolved', function() {
                     stateManagerSvc.updateOntologyState.and.returnValue($q.when());
                     ontologyStateSvc.updateOntology.and.returnValue($q.when());
                     this.controller.changeBranch(this.branch);
                     scope.$apply();
-                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(this.branchId,
-                        ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                     expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                         this.branchId, this.commitId);
                     expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
@@ -183,14 +194,14 @@ describe('Ontology Branch Select directive', function() {
                     expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
                 });
             });
-            it('when getBranchHeadCommit does not resolve', function() {
-                expect(this.controller.deleteError).toBe('');
-                catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.reject(this.errorMessage));
-                this.controller.changeBranch(this.branch);
-                scope.$digest();
-                expect(utilSvc.createErrorToast).toHaveBeenCalledWith(this.errorMessage);
-                expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
-            });
+            // it('when getBranchHeadCommit does not resolve', function() {
+            //     expect(this.controller.deleteError).toBe('');
+            //     catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.reject(this.errorMessage));
+            //     this.controller.changeBranch(this.branch);
+            //     scope.$digest();
+            //     expect(utilSvc.createErrorToast).toHaveBeenCalledWith(this.errorMessage);
+            //     expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
+            // });
         });
         it('openDeleteConfirmation calls the correct methods', function() {
             var event = scope.$emit('click');
