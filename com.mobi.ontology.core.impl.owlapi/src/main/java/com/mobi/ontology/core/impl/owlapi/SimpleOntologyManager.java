@@ -213,8 +213,8 @@ public class SimpleOntologyManager implements OntologyManager {
     public OntologyRecord createOntologyRecord(User user, RecordOperationConfig config) {
         try {
             return catalogManager.createRecord(user, config, ontologyRecordFactory);
-        } catch (Exception e) {
-            throw new IllegalArgumentException(e);
+        } catch (IllegalArgumentException e) {
+            throw e;
         }
     }
 
