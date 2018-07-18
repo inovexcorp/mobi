@@ -503,9 +503,12 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public <T extends Record> T deleteRecord(User user, IRI recordIRI, OrmFactory<T> factory) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(factory.getTypeIRI()
-                    .stringValue())).orElseThrow(() -> new IllegalArgumentException(
-                    "Service for factory " + factory.getType() + " is unavailable or doesn't exist."));
+            OrmFactory<? extends Record> serviceType = getRecordService(recordIRI, conn);
+            if (!serviceType.getTypeIRI().equals(factory.getTypeIRI())) {
+                throw new IllegalArgumentException("Service for factory " + factory.getType()
+                        + " is unavailable or doesn't exist.");
+            }
+            RecordService<? extends Record> service = recordServices.get(serviceType.getTypeIRI().stringValue());
             return (T) service.delete((IRI) recordIRI, user, conn);
         }
     }

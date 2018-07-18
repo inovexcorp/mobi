@@ -24,8 +24,6 @@ package com.mobi.catalog.impl.record;
  */
 
 import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
@@ -36,39 +34,22 @@ import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
-import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
-import com.mobi.catalog.api.ontologies.mcat.Version;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
-import com.mobi.catalog.api.record.config.OperationConfig;
-import com.mobi.catalog.api.record.config.RecordCreateSettings;
-import com.mobi.catalog.api.record.config.RecordExportSettings;
-import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
-import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
-import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
-import org.apache.commons.io.IOUtils;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.io.ByteArrayOutputStream;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -78,7 +59,6 @@ public class UnversionedRecordServiceTest extends OrmEnabledTestCase {
     private final IRI catalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-test");
 
     private SimpleUnversionedRecordService recordService;
-    private SimpleSesameTransformer transformer;
     private UnversionedRecord testRecord;
     private User user;
     private DeleteActivity deleteActivity;
@@ -102,7 +82,6 @@ public class UnversionedRecordServiceTest extends OrmEnabledTestCase {
     public void setUp() throws Exception {
 
         recordService = new SimpleUnversionedRecordService();
-        transformer = new SimpleSesameTransformer();
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
 
         user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/user"));

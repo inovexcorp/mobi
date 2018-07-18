@@ -37,7 +37,6 @@ import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
-import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
@@ -59,7 +58,6 @@ public class VersionedRecordServiceTest extends OrmEnabledTestCase {
     private final IRI catalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-test");
 
     private SimpleVersionedRecordService recordService;
-    private SimpleSesameTransformer transformer;
     private VersionedRecord testRecord;
     private User user;
     private DeleteActivity deleteActivity;
@@ -83,7 +81,6 @@ public class VersionedRecordServiceTest extends OrmEnabledTestCase {
     public void setUp() throws Exception {
 
         recordService = new SimpleVersionedRecordService();
-        transformer = new SimpleSesameTransformer();
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
 
         user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/user"));

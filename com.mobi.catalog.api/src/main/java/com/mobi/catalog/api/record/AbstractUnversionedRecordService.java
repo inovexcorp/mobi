@@ -26,7 +26,7 @@ package com.mobi.catalog.api.record;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
 import com.mobi.repository.api.RepositoryConnection;
 
-public abstract class AbstractUnversionedRecordService <T extends UnversionedRecord>
+public abstract class AbstractUnversionedRecordService<T extends UnversionedRecord>
         extends AbstractRecordService<T> implements RecordService<T> {
 
     @Override
