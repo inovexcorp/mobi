@@ -52,14 +52,6 @@ public interface OntologyManager {
     OntologyRecord createOntologyRecord(User user, RecordOperationConfig config);
 
     /**
-     * Creates a new OntologyRecord using the provided OntologyRecordConfig.
-     *
-     * @param config the configuration to use when creating the OntologyRecord
-     * @return a OntologyRecord
-     */
-    OntologyRecord createOntologyRecord(OntologyRecordConfig config);
-
-    /**
      * Creates a new Ontology Object using the provided OntologyId.
      *
      * @param ontologyId the ontology id for the Ontology you want to create.

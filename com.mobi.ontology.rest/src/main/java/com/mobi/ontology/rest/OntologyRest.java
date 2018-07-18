@@ -69,6 +69,7 @@ public interface OntologyRest {
     @ApiOperation("Uploads an ontology file to the data store.")
     Response uploadFile(@Context ContainerRequestContext context,
                         @FormDataParam("file") InputStream fileInputStream,
+                        @FormDataParam("catalogId") String catalogId,
                         @FormDataParam("title") String title,
                         @FormDataParam("description") String description,
                         @FormDataParam("keywords") List<FormDataBodyPart> keywords);
@@ -92,6 +93,7 @@ public interface OntologyRest {
     @RolesAllowed("user")
     @ApiOperation("Uploads ontology JSON-LD to the data store.")
     Response uploadOntologyJson(@Context ContainerRequestContext context,
+                                @QueryParam("catalogId") String catalogId,
                                 @QueryParam("title") String title,
                                 @QueryParam("description") String description,
                                 @QueryParam("keywords") List<String> keywords,

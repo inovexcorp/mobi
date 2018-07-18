@@ -39,6 +39,8 @@ import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.record.config.OperationConfig;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -51,6 +53,7 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
+import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.rest.OntologyRest;
 import com.mobi.ontology.utils.cache.OntologyCache;
@@ -95,6 +98,7 @@ import java.io.Writer;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -184,31 +188,17 @@ public class OntologyRestImpl implements OntologyRest {
             @AttributeValue(id = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
                     value = "http://mobi.com/ontologies/ontology-editor#OntologyRecord"))
     @ResourceId(id = "http://mobi.com/catalog-local")
-    public Response uploadFile(ContainerRequestContext context, InputStream fileInputStream, String title,
-                               String description, List<FormDataBodyPart> keywords) {
+    public Response uploadFile(ContainerRequestContext context, InputStream fileInputStream, String catalogId,
+                               String title, String description, List<FormDataBodyPart> keywords) {
         checkStringParam(title, "The title is missing.");
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
-        User user = getActiveUser(context, engineManager);
-        CreateActivity createActivity = null;
-        try {
-            createActivity = provUtils.startCreateActivity(user);
-            Ontology ontology = ontologyManager.createOntology(fileInputStream, false);
-            Set<String> keywordSet = Collections.emptySet();
-            if (keywords != null) {
-                keywordSet = keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
-            }
-            return uploadOntology(user, createActivity, ontology, title, description, keywordSet);
-        } catch (MobiException ex) {
-            provUtils.removeActivity(createActivity);
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        } catch (Exception ex) {
-            provUtils.removeActivity(createActivity);
-            throw ex;
-        } finally {
-            IOUtils.closeQuietly(fileInputStream);
+        Set<String> keywordSet = Collections.emptySet();
+        if (keywords != null) {
+            keywordSet = keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
         }
+        return createOntologyRecord(context, catalogId, title, description, keywordSet);
     }
 
     @Override
@@ -216,23 +206,15 @@ public class OntologyRestImpl implements OntologyRest {
             @AttributeValue(id = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
                     value = "http://mobi.com/ontologies/ontology-editor#OntologyRecord"))
     @ResourceId(id = "http://mobi.com/catalog-local")
-    public Response uploadOntologyJson(ContainerRequestContext context, String title, String description,
-                                       List<String> keywords, String ontologyJson) {
+    public Response uploadOntologyJson(ContainerRequestContext context, String catalogId, String title,
+                                       String description, List<String> keywords, String ontologyJson) {
         checkStringParam(title, "The title is missing.");
         checkStringParam(ontologyJson, "The ontologyJson is missing.");
-        User user = getActiveUser(context, engineManager);
-        CreateActivity createActivity = null;
-        try {
-            createActivity = provUtils.startCreateActivity(user);
-            Ontology ontology = ontologyManager.createOntology(ontologyJson, false);
-            return uploadOntology(user, createActivity, ontology, title, description, new HashSet<>(keywords));
-        } catch (MobiException ex) {
-            provUtils.removeActivity(createActivity);
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        } catch (Exception ex) {
-            provUtils.removeActivity(createActivity);
-            throw ex;
+        Set<String> keywordSet = Collections.emptySet();
+        if (keywords != null) {
+            keywordSet = keywords.stream().collect(Collectors.toSet());
         }
+        return createOntologyRecord(context, catalogId, title, description, keywordSet);
     }
 
     @Override
@@ -1558,62 +1540,35 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     /**
-     * Uploads the provided Ontology to a data store.
+     * Creates the OntologyRecord using OntologyManager.
      *
-     * @param user           the user making the request.
-     * @param createActivity the activity for the creation of the OntologyRecord
-     * @param ontology       the Ontology to upload.
-     * @param title          the title for the OntologyRecord.
-     * @param description    the description for the OntologyRecord.
-     * @param keywords       the comma separated list of keywords associated with the OntologyRecord.
-     * @return a Response indicating the success of the upload.
+     * @param context          the context of the request.
+     * @param catalogId        the catalogId for the OntologyRecord.
+     * @param title            the title for the OntologyRecord.
+     * @param description      the description for the OntologyRecord.
+     * @param keywordSet       the comma separated list of keywords associated with the OntologyRecord.
+     * @return a Response indicating the success of the creation.
      */
-    private Response uploadOntology(User user, CreateActivity createActivity, Ontology ontology, String title,
-                                    String description, Set<String> keywords) throws MobiException {
-        OntologyRecordConfig.OntologyRecordBuilder builder = new OntologyRecordConfig.OntologyRecordBuilder(title,
-                Collections.singleton(user));
-        ontology.getOntologyId().getOntologyIRI().ifPresent(builder::ontologyIRI);
-        if (description != null) {
-            builder.description(description);
-        }
-        if (keywords != null) {
-            builder.keywords(keywords);
-        }
-        Resource catalogId = catalogManager.getLocalCatalogIRI();
-        OntologyRecord record = ontologyManager.createOntologyRecord(builder.build());
-        Resource masterBranchId;
-        Resource commitId;
+    private Response createOntologyRecord(ContainerRequestContext context, String catalogId, String title,
+                                           String description, Set<String> keywordSet) {
+        RecordOperationConfig config = new OperationConfig();
+        User user = getActiveUser(context, engineManager);
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(OntologyRecordCreateSettings.CATALOG_ID, catalogId);
+        config.set(OntologyRecordCreateSettings.RECORD_TITLE, title);
+        config.set(OntologyRecordCreateSettings.RECORD_DESCRIPTION, description);
+        config.set(OntologyRecordCreateSettings.RECORD_KEYWORDS, keywordSet);
+        config.set(OntologyRecordCreateSettings.RECORD_PUBLISHERS, users);
         try {
-            semaphore.acquire();
-            record.getOntologyIRI().ifPresent(this::testOntologyIRIUniqueness);
-            catalogManager.addRecord(catalogId, record);
-            masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
-                    new IllegalStateException("OntologyRecord must have a master Branch"));
-            Model model = ontology.asModel(modelFactory);
-            commitId = versioningManager.commit(catalogId, record.getResource(), masterBranchId, user,
-                    "The initial commit.", model, null);
-        } catch (InterruptedException e) {
-            throw ErrorUtils.sendError(e, "Issue checking adding new OntologyRecord",
-                    Response.Status.INTERNAL_SERVER_ERROR);
-        } catch (Exception ex) {
-            ontologyManager.deleteOntology(record.getResource());
-            throw ex;
-        } finally {
-            semaphore.release();
-        }
-
-        JSONObject response = new JSONObject()
-                .element("ontologyId", ontology.getOntologyId().getOntologyIdentifier().stringValue())
-                .element("recordId", record.getResource().stringValue())
-                .element("branchId", masterBranchId.stringValue())
-                .element("commitId", commitId.stringValue());
-        provUtils.endCreateActivity(createActivity, record.getResource());
-        return Response.status(Response.Status.CREATED).entity(response).build();
-    }
-
-    private void testOntologyIRIUniqueness(Resource ontologyIRI) {
-        if (ontologyManager.ontologyIriExists(ontologyIRI)) {
-            throw ErrorUtils.sendError("Ontology already exists with IRI " + ontologyIRI, Response.Status.BAD_REQUEST);
+            OntologyRecord record = ontologyManager.createOntologyRecord(user, config);
+            JSONObject response = new JSONObject()
+                    .element("ontologyId", record.getOntologyIRI().toString())
+                    .element("recordId", record.getResource().stringValue())
+                    .element("branchId", record.getMasterBranch_resource().toString());
+            return Response.status(Response.Status.CREATED).entity(response).build();
+        } catch (MobiException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 

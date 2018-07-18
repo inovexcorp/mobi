@@ -42,6 +42,7 @@ import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -232,7 +233,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testCreateOntologyRecord() throws Exception {
-        IRI ontologyIRI = VALUE_FACTORY.createIRI("http://test.com/ontology");
         RecordOperationConfig config = new OperationConfig();
         Set<String> names = new LinkedHashSet<>();
         names.add("Rick");
@@ -245,31 +245,9 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         config.set(OntologyRecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(OntologyRecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        OntologyRecord result = manager.createOntologyRecord(user, config);
+        manager.createOntologyRecord(user, config);
 
-        verify(catalogManager).createRecord(eq(user), any(RecordOperationConfig.class), ontologyRecordFactory);
-        assertTrue(result.getOntologyIRI().isPresent());
-        assertEquals(ontologyIRI, result.getOntologyIRI().get());
-    }
-    //TODO: Remove old createRecord
-    @Test
-    public void testCreateOntologyRecordWithOntologyIRI() throws Exception {
-        IRI ontologyIRI = VALUE_FACTORY.createIRI("http://test.com/ontology");
-        OntologyRecordConfig config = new OntologyRecordConfig.OntologyRecordBuilder("title", Collections.emptySet())
-                .ontologyIRI(ontologyIRI).build();
-
-        OntologyRecord result = manager.createOntologyRecord(config);
-        assertTrue(result.getOntologyIRI().isPresent());
-        assertEquals(ontologyIRI, result.getOntologyIRI().get());
-    }
-
-    @Test
-    public void testCreateOntologyRecordWithoutOntologyIRI() throws Exception {
-        OntologyRecordConfig config = new OntologyRecordConfig.OntologyRecordBuilder("title", Collections.emptySet())
-                .build();
-
-        OntologyRecord record = manager.createOntologyRecord(config);
-        assertFalse(record.getOntologyIRI().isPresent());
+        verify(catalogManager).createRecord(eq(user), any(RecordOperationConfig.class), any(RecordFactory.class));
     }
 
     // Testing retrieveOntologyByIRI
