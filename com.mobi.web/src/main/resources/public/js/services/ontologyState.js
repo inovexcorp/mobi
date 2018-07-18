@@ -280,8 +280,12 @@
             self.getOntology = function(recordId, rdfFormat = 'jsonld') {
                 var state = sm.getOntologyStateByRecordId(recordId);
                 if (!_.isEmpty(state)) {
+                    var stateModel = {
+                        record: _.find(state.model, {'@type': 'http://mobi.com/states/ontology-editor/state-record'})
+                    };
+                    stateModel.branches = _.intersection([stateModel.record], state.model);
                     var inProgressCommit = emptyInProgressCommit;
-                    var branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "currentBranch'][0]['@id']");
+                    var branchId = _.get(stateModel.record, "['" + prefixes.ontologyState + "currentBranch'][0]['@id']");
                     var branchIndex = _.findIndex(state.model, {[prefixes.ontologyState + "branch"]: [{'@id': branchId}]});
                     var commitId = _.get(state, "model[" + branchIndex + "]['" + prefixes.ontologyState + "commit'][0]['@id']");
                     var upToDate = false;
