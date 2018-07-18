@@ -211,11 +211,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public OntologyRecord createOntologyRecord(User user, RecordOperationConfig config) {
-        try {
             return catalogManager.createRecord(user, config, ontologyRecordFactory);
-        } catch (IllegalArgumentException e) {
-            throw e;
-        }
     }
 
     @Override

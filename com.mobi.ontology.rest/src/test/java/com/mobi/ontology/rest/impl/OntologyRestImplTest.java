@@ -61,7 +61,6 @@ import com.mobi.ontology.core.api.NamedIndividual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
 import com.mobi.ontology.core.api.classexpression.OClass;
 import com.mobi.ontology.core.api.datarange.Datatype;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
@@ -76,7 +75,6 @@ import com.mobi.ontology.core.impl.owlapi.datarange.SimpleDatatype;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleAnnotationProperty;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
-import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
@@ -659,7 +657,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     @Test
     public void testUploadFile() {
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("catalogId", catalogId.stringValue());
+        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         fd.field("title", "title");
         fd.field("description", "description");
         fd.field("keywords", "keyword1");
@@ -676,7 +674,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     @Test
     public void testUploadFileWithoutTitle() {
         FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("catalogId", catalogId.stringValue());
+        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         fd.field("description", "description");
         fd.field("keywords", "keyword1");
         fd.field("keywords", "keyword2");
@@ -693,7 +691,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     public void testUploadOntologyJson() {
         JSONObject ontologyJson = new JSONObject().element("@id", "http://mobi.com/ontology");
 
-        Response response = target().path("ontologies").queryParam("catalogId", catalogId.stringValue()).queryParam("title", "title")
+        Response response = target().path("ontologies").queryParam("title", "title")
                 .queryParam("description", "description").queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
                 .request().post(Entity.json(ontologyJson));
 
@@ -703,20 +701,10 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     }
 
     @Test
-    public void testUploadOntologyJsonWithoutCatalogId() {
-        JSONObject entity = new JSONObject().element("@id", "http://mobi.com/entity");
-
-        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description", "description")
-                .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
-                .request().post(Entity.json(entity));
-        assertEquals(response.getStatus(), 400);
-    }
-
-    @Test
     public void testUploadOntologyJsonWithoutTitle() {
         JSONObject entity = new JSONObject().element("@id", "http://mobi.com/entity");
 
-        Response response = target().path("ontologies").queryParam("catalogId", catalogId.stringValue()).queryParam("description", "description")
+        Response response = target().path("ontologies").queryParam("description", "description")
                 .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
                 .request().post(Entity.json(entity));
         assertEquals(response.getStatus(), 400);
@@ -724,7 +712,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testUploadOntologyJsonWithoutJson() {
-        Response response = target().path("ontologies").queryParam("catalogId", catalogId.stringValue()).queryParam("title", "title")
+        Response response = target().path("ontologies").queryParam("title", "title")
                 .queryParam("description", "description").queryParam("keywords", "keyword1")
                 .queryParam("keywords", "keyword2")
                 .request().post(Entity.json(""));
