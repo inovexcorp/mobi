@@ -65,7 +65,6 @@ import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.ontologies.provo.InstantaneousEvent;
-import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -111,7 +110,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private OrmFactory<UnversionedRecord> unversionedRecordFactory = getRequiredOrmFactory(UnversionedRecord.class);
     private OrmFactory<VersionedRecord> versionedRecordFactory = getRequiredOrmFactory(VersionedRecord.class);
     private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
-    private OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
     private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
@@ -170,9 +168,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private RecordService<UnversionedRecord> unversionedRecordService;
 
     @Mock
-    private RecordService<OntologyRecord> ontologyRecordService;
-
-    @Mock
     private MergeRequestManager mergeRequestManager;
 
     @Before
@@ -191,7 +186,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         when(versionedRDFRecordService.getTypeIRI()).thenReturn(VersionedRDFRecord.TYPE);
         when(versionedRecordService.getTypeIRI()).thenReturn(VersionedRecord.TYPE);
         when(unversionedRecordService.getTypeIRI()).thenReturn(UnversionedRecord.TYPE);
-        when(ontologyRecordService.getTypeIRI()).thenReturn(OntologyRecord.TYPE);
 
         manager = new SimpleCatalogManager();
         injectOrmFactoryReferencesIntoService(manager);
@@ -203,7 +197,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         manager.addRecordService(recordService);
         manager.addRecordService(versionedRecordService);
         manager.addRecordService(unversionedRecordService);
-        manager.addRecordService(ontologyRecordService);
         manager.setMergeRequestManager(mergeRequestManager);
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
@@ -231,13 +224,11 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         testRecord.setCatalog(catalogFactory.createNew(localCatalogId));
 
-        OntologyRecord testOntologyRecord = ontologyRecordFactory.createNew(RECORD_IRI);
         testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         testRecord.setCatalog(catalogFactory.createNew(localCatalogId));
 
         when(recordService.create(any(User.class), any(RecordOperationConfig.class), any(RepositoryConnection.class))).thenReturn(testRecord);
         when(versionedRDFRecordService.create(any(User.class), any(RecordOperationConfig.class), any(RepositoryConnection.class))).thenReturn(testVersionedRDFRecord);
-        when(ontologyRecordService.create(any(User.class), any(RecordOperationConfig.class), any(RepositoryConnection.class))).thenReturn(testOntologyRecord);
         when(utilsService.getExpectedObject(any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
                 i.getArgumentAt(1, OrmFactory.class).createNew(i.getArgumentAt(0, Resource.class)));
         when(utilsService.getRecord(any(Resource.class), any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
