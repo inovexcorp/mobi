@@ -394,16 +394,14 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 String fileId = RestUtils.decode(fileName);
                 Resource fileIRI = vf.createIRI(fileId);
                 if (!conn.contains(fileIRI, null, null)) {
-                    byte fileBytes[] = IOUtils.toByteArray(url);
-                    VirtualFile file = vfs.resolveVirtualFile(fileBytes, fileLocation);
-                    addPolicyFile(file, file.getIdentifier(), getPolicyFromFile(file));
+                    VirtualFile file = vfs.resolveVirtualFile(url.openStream(), fileLocation);
+                    addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
                 } else {
                     PolicyFile policy = validatePolicy(fileIRI);
                     VirtualFile file = vfs.resolveVirtualFile(policy.getRetrievalURL().toString());
                     if (!file.exists()) {
-                        byte fileBytes[] = IOUtils.toByteArray(url);
-                        file = vfs.resolveVirtualFile(fileBytes, fileLocation);
-                        addPolicyFile(file, file.getIdentifier(), getPolicyFromFile(file));
+                        file = vfs.resolveVirtualFile(url.openStream(), fileLocation);
+                        addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
                     }
                 }
             }
@@ -427,7 +425,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         for (VirtualFile file : baseFolder.getChildren()) {
             if (file.isFolder()) {
                 addMissingFilesToRepo(filePaths, file);
-            } else if (!filePaths.contains(file.getIdentifier())) {
+            } else if (file.exists()) {
                 BalanaPolicy balanaPolicy = getPolicyFromFile(file);
                 addPolicyFile(file, file.getIdentifier() + ".xml", balanaPolicy);
             }
