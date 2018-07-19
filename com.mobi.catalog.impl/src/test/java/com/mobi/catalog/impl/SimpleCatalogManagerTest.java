@@ -778,6 +778,13 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI, VersionedRDFRecord.class);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testDeleteClassServiceMismatch() {
+        User user = userFactory.createNew(USER_IRI);
+
+        manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI, VersionedRecord.class);
+    }
+
     /* getRecord */
 
     @Test
