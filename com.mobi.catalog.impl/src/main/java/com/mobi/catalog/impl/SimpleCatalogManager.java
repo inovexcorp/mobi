@@ -499,7 +499,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public <T extends Record> T deleteRecord(User user, Resource recordId, Class<T> recordClass) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            OrmFactory<? extends Record> serviceType = getFactory(recordId, conn);
+            OrmFactory<? extends Record> serviceType = getFactory(recordId, conn, true);
             if (!serviceType.getType().equals(recordClass)) {
                 throw new IllegalArgumentException("Service for factory " + recordClass
                         + " is unavailable or doesn't exist.");
@@ -1325,7 +1325,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public void export(Resource recordIRI, RecordOperationConfig config) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            OrmFactory<? extends Record> factory = getFactory(recordIRI, conn);
+            OrmFactory<? extends Record> factory = getFactory(recordIRI, conn, false);
             RecordService<? extends Record> service = recordServices.get(factory.getType().toString());
             service.export(recordIRI, config, conn);
         }
@@ -1338,12 +1338,14 @@ public class SimpleCatalogManager implements CatalogManager {
 
     /**
      * Takes a recordId and returns the factory for that record. If a factory for that particular record is not
-     * registered, it returns the most specific factory available.
+     * registered, it returns the most specific factory available if the flag is set to false.
      *
      * @param recordId The record IRI
+     * @param exactOnly A flag to indicate whether to do an exact match with the record type. If false, will allow
+     *                  closest match to be returned
      * @return the record factory of a given recordId
      */
-    private OrmFactory<? extends Record> getFactory(Resource recordId, RepositoryConnection conn) {
+    private OrmFactory<? extends Record> getFactory(Resource recordId, RepositoryConnection conn, boolean exactOnly) {
         List<Resource> types = RepositoryResults.asList(
                 conn.getStatements(recordId, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
                 .stream()
@@ -1356,9 +1358,15 @@ public class SimpleCatalogManager implements CatalogManager {
                 .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
                 .collect(Collectors.toList());
 
-        for (OrmFactory<? extends Record> factory : classType) {
-            if (recordServices.keySet().contains(factory.getType().toString())) {
-                return factory;
+        if (exactOnly && classType.size() > 0) {
+            if (recordServices.keySet().contains(classType.get(0).getType().toString())) {
+                return classType.get(0);
+            }
+        } else {
+            for (OrmFactory<? extends Record> factory : classType) {
+                if (recordServices.keySet().contains(factory.getType().toString())) {
+                    return factory;
+                }
             }
         }
         throw new IllegalArgumentException("No known record services for this record type.");
