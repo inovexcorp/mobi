@@ -211,7 +211,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public OntologyRecord createOntologyRecord(User user, RecordOperationConfig config) {
-            return catalogManager.createRecord(user, config, ontologyRecordFactory);
+            return catalogManager.createRecord(user, config, OntologyRecord.class);
     }
 
     @Override

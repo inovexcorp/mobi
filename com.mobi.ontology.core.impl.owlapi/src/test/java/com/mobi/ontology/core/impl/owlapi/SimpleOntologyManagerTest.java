@@ -166,9 +166,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(catalogManager.getRepositoryId()).thenReturn("system");
         when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogIRI);
         when(catalogManager.getLocalCatalog()).thenReturn(catalog);
-        //TODO: Remove old createRecord
-        when(catalogManager.createRecord(any(RecordConfig.class), eq(ontologyRecordFactory))).thenReturn(record);
-        when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(ontologyRecordFactory))).thenReturn(record);
+        when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class))).thenReturn(record);
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.removeRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(record);
         doThrow(new IllegalArgumentException()).when(catalogManager).getMasterBranch(catalogIRI, missingIRI);
@@ -247,7 +245,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
         manager.createOntologyRecord(user, config);
 
-        verify(catalogManager).createRecord(eq(user), any(RecordOperationConfig.class), any(RecordFactory.class));
+        verify(catalogManager).createRecord(eq(user), any(RecordOperationConfig.class), eq(OntologyRecord.class));
     }
 
     // Testing retrieveOntologyByIRI

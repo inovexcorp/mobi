@@ -1562,11 +1562,12 @@ public class OntologyRestImpl implements OntologyRest {
         config.set(OntologyRecordCreateSettings.RECORD_PUBLISHERS, users);
         try {
             OntologyRecord record = ontologyManager.createOntologyRecord(user, config);
-            //query repo,head commit, ID null
             RepositoryConnection conn = repositoryManager.getRepository(catalogManager.getRepositoryId())
                     .orElseThrow(() -> new IllegalStateException("Catalog repository unavailable")).getConnection();
             Resource branchId = record.getMasterBranch_resource().get();
-            Resource commitId = conn.getStatements(branchId, valueFactory.createIRI(Branch.head_IRI), null);
+            RepositoryResult<Statement> commitStmt = conn.getStatements(branchId,
+                    valueFactory.createIRI(Branch.head_IRI), null);
+            Resource commitId = commitStmt.next().getSubject();
 
             JSONObject response = new JSONObject()
                     .element("ontologyId", record.getOntologyIRI().toString())

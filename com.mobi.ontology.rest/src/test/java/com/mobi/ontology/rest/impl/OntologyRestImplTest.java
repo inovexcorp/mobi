@@ -88,9 +88,11 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.core.SimpleRepositoryManager;
+import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import com.mobi.repository.impl.sesame.query.TestQueryResult;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
@@ -100,11 +102,13 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -172,6 +176,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private Cache<String, Ontology> mockCache;
 
     @Mock
+    private RepositoryManager mockRepoManager;
+
+    @Mock
     private CatalogProvUtils provUtils;
 
     private ModelFactory mf;
@@ -221,6 +228,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private JSONArray importedOntologyResults;
     private OutputStream ontologyJsonLd;
     private OutputStream importedOntologyJsonLd;
+    private Repository repo;
     private static String INVALID_JSON = "{id: 'invalid";
     private IRI missingIRI;
 
@@ -232,6 +240,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         mf = getModelFactory();
         vf = getValueFactory();
+
+        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo.initialize();
 
         ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
         OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
@@ -387,6 +398,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(catalogManager.createCommit(eq(inProgressCommit), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
         when(catalogManager.applyInProgressCommit(eq(inProgressCommitId), any(Model.class))).thenReturn(mf.createModel());
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
+        when(catalogManager.getRepositoryId()).thenReturn("system");
+
+        when(mockRepoManager.getRepository(anyString())).thenReturn(Optional.of(repo));
 
         when(ontologyManager.createOntologyRecord(any(User.class), any(RecordOperationConfig.class))).thenReturn(record);
         when(ontologyManager.createOntology(any(FileInputStream.class), anyBoolean())).thenReturn(ontology);
@@ -456,7 +470,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     @AfterMethod
     public void resetMocks() {
         reset(engineManager, versioningManager, ontologyId, ontology, importedOntologyId, importedOntology,
-                catalogManager, ontologyManager, sesameTransformer, results, mockCache, ontologyCache, provUtils);
+                catalogManager, ontologyManager, sesameTransformer, results, mockCache, mockRepoManager, ontologyCache, provUtils);
     }
 
     private JSONObject getResource(String path) throws Exception {
