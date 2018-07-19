@@ -170,7 +170,7 @@ public interface CatalogManager {
      * Deletes a Record using the appropriate {@link com.mobi.catalog.api.record.RecordService}.
      *
      * @param user The user performing the deletion activity
-     * @param recordIRI The record Resource to delete
+     * @param recordId The record Resource to delete
      * @param recordClass The Class of Record you want to delete.
      * @param <T>       An Object which extends Record.
      * @return The deleted Object
