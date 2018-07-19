@@ -276,7 +276,6 @@ describe('Ontology State Service', function() {
                 ontologyState[0][prefixes.ontologyState + 'record'] = [{'@id': this.recordId}];
                 ontologyState[0][prefixes.ontologyState + 'currentBranch'] = [{'@id': this.branchId}];
                 ontologyState[0][prefixes.ontologyState + 'branches'] = [{'@id': 'id-branch'}];
-                ontologyState[0][prefixes.ontologyState + 'commit'] = [{'@id': this.commitId}];
                 ontologyState[1][prefixes.ontologyState + 'branch'] = [{'@id': this.branchId}];
                 ontologyState[1][prefixes.ontologyState + 'commit'] = [{'@id': this.commitId}]
                 stateManagerSvc.getOntologyStateByRecordId.and.returnValue({model: ontologyState});
