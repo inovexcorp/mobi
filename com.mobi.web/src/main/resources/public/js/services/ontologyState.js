@@ -280,14 +280,14 @@
             self.getOntology = function(recordId, rdfFormat = 'jsonld') {
                 var state = sm.getOntologyStateByRecordId(recordId);
                 if (!_.isEmpty(state)) {
-                    var stateModel = {
-                        record: _.find(state.model, {'@type': 'http://mobi.com/states/ontology-editor/state-record'})
-                    };
-                    stateModel.branches = _.intersection([stateModel.record], state.model);
+                    var record = _.find(state.model, {'@type': 'http://mobi.com/states/ontology-editor/state-record'});
+                    var branches = _.filter(state.model, record);
                     var inProgressCommit = emptyInProgressCommit;
-                    var branchId = _.get(stateModel.record, "['" + prefixes.ontologyState + "currentBranch'][0]['@id']");
-                    var branchIndex = _.findIndex(state.model, {[prefixes.ontologyState + "branch"]: [{'@id': branchId}]});
-                    var commitId = _.get(state, "model[" + branchIndex + "]['" + prefixes.ontologyState + "commit'][0]['@id']");
+                    console.log(record);
+                    var branchId = util.getPropertyId(record, prefixes.ontologyState + "currentBranch");
+                    console.log(branchId);
+                    var branch = _.find(state.model, {[prefixes.ontologyState + "branch"]: [{'@id': branchId}]});
+                    var commitId = util.getPropertyId(branch, prefixes.ontologyState + "commit");
                     var upToDate = false;
                     return cm.getRecordBranch(branchId, recordId, catalogId)
                         .then(branch => {

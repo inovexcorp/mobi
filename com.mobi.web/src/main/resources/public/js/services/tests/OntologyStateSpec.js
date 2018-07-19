@@ -277,8 +277,11 @@ describe('Ontology State Service', function() {
                 ontologyState[0][prefixes.ontologyState + 'currentBranch'] = [{'@id': this.branchId}];
                 ontologyState[0][prefixes.ontologyState + 'branches'] = [{'@id': 'id-branch'}];
                 ontologyState[1][prefixes.ontologyState + 'branch'] = [{'@id': this.branchId}];
-                ontologyState[1][prefixes.ontologyState + 'commit'] = [{'@id': this.commitId}]
+                ontologyState[1][prefixes.ontologyState + 'commit'] = [{'@id': this.commitId}];
                 stateManagerSvc.getOntologyStateByRecordId.and.returnValue({model: ontologyState});
+                util.getPropertyId.and.callFake(function(entity, propertyIRI) {
+                    return _.get(entity, "[" + propertyIRI + "][0]['@id']", '');
+                })
             });
             describe('and getRecordBranch is resolved', function() {
                 beforeEach(function() {
