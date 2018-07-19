@@ -120,7 +120,7 @@
                             searchText: dvm.filterText
                         };
                         httpService.cancel(dvm.id);
-                        cm.getRecords(catalogId, paginatedConfig, dvm.id).then(response => { 
+                        cm.getRecords(catalogId, paginatedConfig, dvm.id).then(response => {
                             var ontologyRecords = response.data;
                             dvm.filteredList = getFilteredRecords(ontologyRecords);
                             if (response.headers() !== undefined) {
@@ -136,7 +136,9 @@
                         }
                     }
                     
-                    dvm.getPageOntologyRecords();
+                    $scope.$watch(() => dvm.os.list.length, () => {
+                        dvm.getPageOntologyRecords();
+                    });
 
                     function getFilteredRecords(records) {
                         return _.reject(records, record => _.find(dvm.os.list, {ontologyRecord: {recordId: record['@id']}}));
