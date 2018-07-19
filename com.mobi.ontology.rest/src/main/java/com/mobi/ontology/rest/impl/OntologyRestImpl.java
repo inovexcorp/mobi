@@ -58,7 +58,6 @@ import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
-import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.rdf.api.BNode;
@@ -257,20 +256,15 @@ public class OntologyRestImpl implements OntologyRest {
     public Response deleteOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr) {
         IRI recordId = valueFactory.createIRI(recordIdStr);
         User activeUser = getActiveUser(context, engineManager);
-        DeleteActivity deleteActivity = null;
         try {
             if (StringUtils.isBlank(branchIdStr)) {
-                deleteActivity = provUtils.startDeleteActivity(activeUser, recordId);
-                OntologyRecord record = ontologyManager.deleteOntology(recordId);
-                provUtils.endDeleteActivity(deleteActivity, record);
+                catalogManager.deleteRecord(activeUser, recordId, OntologyRecord.class);
             } else {
                 ontologyManager.deleteOntologyBranch(recordId, valueFactory.createIRI(branchIdStr));
             }
         } catch (MobiException e) {
-            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
-            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
         return Response.ok().build();
@@ -1596,7 +1590,6 @@ public class OntologyRestImpl implements OntologyRest {
             throw ErrorUtils.sendError(e, "Issue checking adding new OntologyRecord",
                     Response.Status.INTERNAL_SERVER_ERROR);
         } catch (Exception ex) {
-            ontologyManager.deleteOntology(record.getResource());
             throw ex;
         } finally {
             semaphore.release();
