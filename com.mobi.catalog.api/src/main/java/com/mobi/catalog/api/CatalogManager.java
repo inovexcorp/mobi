@@ -116,10 +116,10 @@ public interface CatalogManager {
      * @param <T> An Object which extends Record.
      * @param user The User that is creating the Record.
      * @param config The RecordOperationConfig containing the Record's metadata.
-     * @param factory The OrmFactory for creating the entity.
+     * @param factory The OrmFactory for creating the entity. //TODO
      * @return The Record Object that was added to the repository of type T.
      */
-    <T extends Record> T createRecord(User user, RecordOperationConfig config, OrmFactory<T> factory);
+    <T extends Record> T createRecord(User user, RecordOperationConfig config, Class<? extends T> recordClass);
 
     /**
      * Creates an Object that extends Record using provided RecordConfig and Factory.
@@ -171,11 +171,11 @@ public interface CatalogManager {
      *
      * @param user The user performing the deletion activity
      * @param recordIRI The record IRI to delete
-     * @param factory   The OrmFactory of the Type of Record you want to delete.
+     * @param factory   The OrmFactory of the Type of Record you want to delete. //TODO
      * @param <T>       An Object which extends Record.
      * @return The deleted Object
      */
-    <T extends Record> T deleteRecord(User user, IRI recordIRI, OrmFactory<T> factory);
+    <T extends Record> T deleteRecord(User user, IRI recordIRI, Class<? extends T> recordClass);
 
     /**
      * Gets the Record from the provided Catalog. The Record will be of type T which is determined by the provided
@@ -887,7 +887,7 @@ public interface CatalogManager {
      * @param recordIRI The record IRI
      * @param config The configuration of the record
      */
-    void export(IRI recordIRI, RecordOperationConfig config);
+    void export(Resource recordIRI, RecordOperationConfig config);
 
     /**
      * Exports a list of record data based on the record type and associated configurations. Export implementation is
@@ -896,5 +896,5 @@ public interface CatalogManager {
      * @param recordIRIs The list of record IRIs
      * @param config The configuration of the record
      */
-    void export(List<IRI> recordIRIs, RecordOperationConfig config);
+    void export(List<Resource> recordIRIs, RecordOperationConfig config);
 }

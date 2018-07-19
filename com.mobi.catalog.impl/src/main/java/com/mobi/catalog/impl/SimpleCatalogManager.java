@@ -240,11 +240,11 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Reference(type = '*', dynamic = true)
     void addRecordService(RecordService<? extends Record> recordService) {
-        recordServices.put(recordService.getTypeIRI(), recordService);
+        recordServices.put(recordService.getType().toString(), recordService);
     }
 
     void removeRecordService(RecordService<? extends Record> recordService) {
-        recordServices.remove(recordService.getTypeIRI());
+        recordServices.remove(recordService.getType().toString());
     }
 
     private static final String PROV_AT_TIME = "http://www.w3.org/ns/prov#atTime";
@@ -420,16 +420,12 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Record> T createRecord(User user, RecordOperationConfig config, OrmFactory<T> factory) {
+    public <T extends Record> T createRecord(User user, RecordOperationConfig config, Class<? extends T> recordClass) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            if (factory != null) {
-                RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(factory.getTypeIRI()
-                        .stringValue())).orElseThrow(() -> new IllegalArgumentException(
-                        "Service for factory " + factory.getType() + " is unavailable or doesn't exist."));
-                return (T) service.create(user, config, conn);
-            } else {
-                throw new NullPointerException("Factory can't be null");
-            }
+            RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(recordClass.toString()))
+                    .orElseThrow(() -> new IllegalArgumentException("Service for factory " + recordClass.toString()
+                            + " is unavailable or doesn't exist."));
+            return (T) service.create(user, config, conn);
         }
     }
 
@@ -501,12 +497,12 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Record> T deleteRecord(User user, IRI recordIRI, OrmFactory<T> factory) {
+    public <T extends Record> T deleteRecord(User user, IRI recordIRI, Class<? extends T> recordClass) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(factory.getTypeIRI()
-                    .stringValue())).orElseThrow(() -> new IllegalArgumentException(
-                    "Service for factory " + factory.getType() + " is unavailable or doesn't exist."));
-            return (T) service.delete((IRI) recordIRI, user, conn);
+            RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(recordClass.toString()))
+                    .orElseThrow(() -> new IllegalArgumentException("Service for factory " + recordClass.toString()
+                            + " is unavailable or doesn't exist."));
+            return (T) service.delete(recordIRI, user, conn);
         }
     }
 
@@ -1324,16 +1320,16 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void export(IRI recordIRI, RecordOperationConfig config) {
+    public void export(Resource recordIRI, RecordOperationConfig config) {
         try (RepositoryConnection conn = repository.getConnection()) {
             OrmFactory<? extends Record> factory = getFactory(recordIRI, conn);
-            RecordService<? extends Record> service = recordServices.get(factory.getTypeIRI().stringValue());
+            RecordService<? extends Record> service = recordServices.get(factory.getType().toString());
             service.export(recordIRI, config, conn);
         }
     }
 
     @Override
-    public void export(List<IRI> recordIRIs, RecordOperationConfig config) {
+    public void export(List<Resource> recordIRIs, RecordOperationConfig config) {
         recordIRIs.forEach(iri -> export(iri, config));
     }
 
@@ -1358,7 +1354,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 .collect(Collectors.toList());
 
         for (OrmFactory<? extends Record> factory : classType) {
-            if (recordServices.keySet().contains(factory.getTypeIRI().stringValue())) {
+            if (recordServices.keySet().contains(factory.getType().toString())) {
                 return factory;
             }
         }

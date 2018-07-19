@@ -186,6 +186,10 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         when(versionedRDFRecordService.getTypeIRI()).thenReturn(VersionedRDFRecord.TYPE);
         when(versionedRecordService.getTypeIRI()).thenReturn(VersionedRecord.TYPE);
         when(unversionedRecordService.getTypeIRI()).thenReturn(UnversionedRecord.TYPE);
+        when(recordService.getType()).thenReturn(Record.class);
+        when(versionedRDFRecordService.getType()).thenReturn(VersionedRDFRecord.class);
+        when(versionedRecordService.getType()).thenReturn(VersionedRecord.class);
+        when(unversionedRecordService.getType()).thenReturn(UnversionedRecord.class);
 
         manager = new SimpleCatalogManager();
         injectOrmFactoryReferencesIntoService(manager);
@@ -482,7 +486,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        manager.createRecord(user, config, recordFactory);
+        manager.createRecord(user, config, Record.class);
 
         verify(recordService).create(any(User.class), any(RecordOperationConfig.class),
                 any(RepositoryConnection.class));
@@ -503,7 +507,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        manager.createRecord(user, config, versionedRDFRecordFactory);
+        manager.createRecord(user, config, VersionedRDFRecord.class);
 
         verify(versionedRDFRecordService).create(any(User.class), any(RecordOperationConfig.class),
                 any(RepositoryConnection.class));
@@ -525,7 +529,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         manager.removeRecordService(versionedRecordService);
 
-        manager.createRecord(user, config, versionedRecordFactory);
+        manager.createRecord(user, config, VersionedRecord.class);
     }
 
     @Test (expected = NullPointerException.class)
@@ -737,7 +741,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     @Test
     public void testDeleteRecord() {
         User user = userFactory.createNew(USER_IRI);
-        manager.deleteRecord(user, RECORD_IRI, recordFactory);
+        manager.deleteRecord(user, RECORD_IRI, Record.class);
 
         verify(recordService).delete(eq(RECORD_IRI), eq(user), any(RepositoryConnection.class));
     }
@@ -745,7 +749,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     @Test
     public void testDeleteVersionedRecord() {
         User user = userFactory.createNew(USER_IRI);
-        manager.deleteRecord(user, VERSIONED_RECORD_IRI, versionedRecordFactory);
+        manager.deleteRecord(user, VERSIONED_RECORD_IRI, VersionedRecord.class);
 
         verify(versionedRecordService).delete(eq(VERSIONED_RECORD_IRI), eq(user), any(RepositoryConnection.class));
     }
@@ -753,7 +757,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     @Test
     public void testDeleteUnversionedRecord() {
         User user = userFactory.createNew(USER_IRI);
-        manager.deleteRecord(user, UNVERSIONED_RECORD_IRI, unversionedRecordFactory);
+        manager.deleteRecord(user, UNVERSIONED_RECORD_IRI, UnversionedRecord.class);
 
         verify(unversionedRecordService).delete(eq(UNVERSIONED_RECORD_IRI), eq(user), any(RepositoryConnection.class));
     }
@@ -761,7 +765,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     @Test
     public void testDeleteVersionedRDFRecord() {
         User user = userFactory.createNew(USER_IRI);
-        manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI,versionedRDFRecordFactory);
+        manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI, VersionedRDFRecord.class);
 
         verify(versionedRDFRecordService).delete(eq(VERSIONED_RDF_RECORD_IRI), eq(user), any(RepositoryConnection.class));
     }
@@ -771,7 +775,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         manager.removeRecordService(versionedRDFRecordService);
         User user = userFactory.createNew(USER_IRI);
 
-        manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI, versionedRDFRecordFactory);
+        manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI, VersionedRDFRecord.class);
     }
 
     /* getRecord */
@@ -2568,7 +2572,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     @Test
     public void testExportWithList() throws Exception {
         RecordOperationConfig config = new OperationConfig();
-        List<IRI> exportList = new ArrayList<>();
+        List<Resource> exportList = new ArrayList<>();
         exportList.add(RECORD_IRI);
         exportList.add(VERSIONED_RECORD_IRI);
         manager.export(exportList, config);
