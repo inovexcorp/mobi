@@ -140,8 +140,6 @@
                         dvm.getPageOntologyRecords();
                     });
 
-                    dvm.getPageOntologyRecords();
-
                     function getFilteredRecords(records) {
                         return _.reject(records, record => _.find(dvm.os.list, {ontologyRecord: {recordId: record['@id']}}));
                     }
