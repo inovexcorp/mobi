@@ -51,7 +51,6 @@ import com.mobi.ontology.core.api.Entity;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
@@ -61,20 +60,22 @@ import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
+import com.mobi.query.api.Operation;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
+import com.mobi.repository.base.RepositoryResult;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
@@ -92,6 +93,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -1560,12 +1562,17 @@ public class OntologyRestImpl implements OntologyRest {
         config.set(OntologyRecordCreateSettings.RECORD_PUBLISHERS, users);
         try {
             OntologyRecord record = ontologyManager.createOntologyRecord(user, config);
-            Resource commitId = record.getMasterBranch().map(Branch::getHead).map(Commit::getResource).ofElse(thro);
+            //query repo,head commit, ID null
+            RepositoryConnection conn = repositoryManager.getRepository(catalogManager.getRepositoryId())
+                    .orElseThrow(() -> new IllegalStateException("Catalog repository unavailable")).getConnection();
+            Resource branchId = record.getMasterBranch_resource().get();
+            Resource commitId = conn.getStatements(branchId, valueFactory.createIRI(Branch.head_IRI), null);
+
             JSONObject response = new JSONObject()
                     .element("ontologyId", record.getOntologyIRI().toString())
                     .element("recordId", record.getResource().stringValue())
-                    .element("branchId", record.getMasterBranch_resource().toString())
-                    .element("commitId", commitId.stringValue());
+                    .element("branchId", branchId.toString())
+                    .element("commitId", commitId.toString());
             return Response.status(Response.Status.CREATED).entity(response).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
