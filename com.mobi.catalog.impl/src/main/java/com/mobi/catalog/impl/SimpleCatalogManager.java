@@ -420,7 +420,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Record> T createRecord(User user, RecordOperationConfig config, Class<? extends T> recordClass) {
+    public <T extends Record> T createRecord(User user, RecordOperationConfig config, Class<T> recordClass) {
         try (RepositoryConnection conn = repository.getConnection()) {
             RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(recordClass.toString()))
                     .orElseThrow(() -> new IllegalArgumentException("Service for factory " + recordClass.toString()
@@ -497,12 +497,15 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Record> T deleteRecord(User user, IRI recordIRI, Class<? extends T> recordClass) {
+    public <T extends Record> T deleteRecord(User user, Resource recordId, Class<T> recordClass) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(recordClass.toString()))
-                    .orElseThrow(() -> new IllegalArgumentException("Service for factory " + recordClass.toString()
-                            + " is unavailable or doesn't exist."));
-            return (T) service.delete(recordIRI, user, conn);
+            OrmFactory<? extends Record> serviceType = getFactory(recordId, conn);
+            if (!serviceType.getType().equals(recordClass)) {
+                throw new IllegalArgumentException("Service for factory " + recordClass
+                        + " is unavailable or doesn't exist.");
+            }
+            RecordService<? extends Record> service = recordServices.get(serviceType.getType().toString());
+            return (T) service.delete((IRI) recordId, user, conn);
         }
     }
 

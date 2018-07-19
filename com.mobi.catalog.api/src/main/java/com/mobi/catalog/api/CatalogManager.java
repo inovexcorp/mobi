@@ -116,10 +116,10 @@ public interface CatalogManager {
      * @param <T> An Object which extends Record.
      * @param user The User that is creating the Record.
      * @param config The RecordOperationConfig containing the Record's metadata.
-     * @param factory The OrmFactory for creating the entity. //TODO
+     * @param recordClass The Class of the Record to be created.
      * @return The Record Object that was added to the repository of type T.
      */
-    <T extends Record> T createRecord(User user, RecordOperationConfig config, Class<? extends T> recordClass);
+    <T extends Record> T createRecord(User user, RecordOperationConfig config, Class<T> recordClass);
 
     /**
      * Creates an Object that extends Record using provided RecordConfig and Factory.
@@ -170,12 +170,12 @@ public interface CatalogManager {
      * Deletes a Record using the appropriate {@link com.mobi.catalog.api.record.RecordService}.
      *
      * @param user The user performing the deletion activity
-     * @param recordIRI The record IRI to delete
-     * @param factory   The OrmFactory of the Type of Record you want to delete. //TODO
+     * @param recordIRI The record Resource to delete
+     * @param recordClass The Class of Record you want to delete.
      * @param <T>       An Object which extends Record.
      * @return The deleted Object
      */
-    <T extends Record> T deleteRecord(User user, IRI recordIRI, Class<? extends T> recordClass);
+    <T extends Record> T deleteRecord(User user, Resource recordId, Class<T> recordClass);
 
     /**
      * Gets the Record from the provided Catalog. The Record will be of type T which is determined by the provided
