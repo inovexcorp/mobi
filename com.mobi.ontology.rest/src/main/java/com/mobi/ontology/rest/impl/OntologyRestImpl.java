@@ -51,6 +51,7 @@ import com.mobi.ontology.core.api.Entity;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
@@ -194,11 +195,15 @@ public class OntologyRestImpl implements OntologyRest {
     public Response uploadFile(ContainerRequestContext context, InputStream fileInputStream,
                                String title, String description, List<FormDataBodyPart> keywords) {
         checkStringParam(title, "The title is missing.");
+        if (fileInputStream == null) {
+            throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
+        }
+        Ontology ontology = ontologyManager.createOntology(fileInputStream, false);
         Set<String> keywordSet = Collections.emptySet();
         if (keywords != null) {
             keywordSet = keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
         }
-        return createOntologyRecord(context, title, description, keywordSet);
+        return createOntologyRecord(context, ontology, title, description, keywordSet);
     }
 
     @Override
@@ -210,11 +215,12 @@ public class OntologyRestImpl implements OntologyRest {
                                        String description, List<String> keywords, String ontologyJson) {
         checkStringParam(title, "The title is missing.");
         checkStringParam(ontologyJson, "The ontologyJson is missing.");
+        Ontology ontology = ontologyManager.createOntology(ontologyJson, false);
         Set<String> keywordSet = Collections.emptySet();
         if (keywords != null) {
             keywordSet = new HashSet<>(keywords);
         }
-        return createOntologyRecord(context, title, description, keywordSet);
+        return createOntologyRecord(context, ontology, title, description, keywordSet);
     }
 
     @Override
@@ -1543,19 +1549,24 @@ public class OntologyRestImpl implements OntologyRest {
      * Creates the OntologyRecord using OntologyManager.
      *
      * @param context          the context of the request.
+     * @param ontology         the Ontology to upload.
      * @param title            the title for the OntologyRecord.
      * @param description      the description for the OntologyRecord.
      * @param keywordSet       the comma separated list of keywords associated with the OntologyRecord.
      * @return a Response indicating the success of the creation.
      */
-    private Response createOntologyRecord(ContainerRequestContext context,  String title,
+    private Response createOntologyRecord(ContainerRequestContext context,  Ontology ontology, String title,
                                            String description, Set<String> keywordSet) {
-        RecordOperationConfig config = new OperationConfig();
         User user = getActiveUser(context, engineManager);
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
+        RecordOperationConfig config = new OperationConfig();
+        OntologyRecordConfig.OntologyRecordBuilder builder = new OntologyRecordConfig.OntologyRecordBuilder(title,
+                Collections.singleton(user));
+        ontology.getOntologyId().getOntologyIRI().ifPresent(builder::ontologyIRI);
         Resource catalogId = catalogManager.getLocalCatalogIRI();
         config.set(OntologyRecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(OntologyRecordCreateSettings.ONTOLOGY, ontology);
         config.set(OntologyRecordCreateSettings.RECORD_TITLE, title);
         config.set(OntologyRecordCreateSettings.RECORD_DESCRIPTION, description);
         config.set(OntologyRecordCreateSettings.RECORD_KEYWORDS, keywordSet);

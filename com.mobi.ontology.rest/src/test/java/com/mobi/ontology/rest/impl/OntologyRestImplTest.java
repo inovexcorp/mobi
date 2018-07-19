@@ -138,6 +138,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 public class OntologyRestImplTest extends MobiRestTestNg {
+    private OntologyRestImpl rest;
+    private RepositoryManager repoManager;
 
     @Mock
     private OntologyManager ontologyManager;
@@ -236,7 +238,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        RepositoryManager repoManager = new SimpleRepositoryManager();
+        repoManager = new SimpleRepositoryManager();
 
         mf = getModelFactory();
         vf = getValueFactory();
@@ -252,7 +254,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         OrmFactory<CreateActivity> createActivityFactory = getRequiredOrmFactory(CreateActivity.class);
         OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
 
-        OntologyRestImpl rest = new OntologyRestImpl();
+        rest = new OntologyRestImpl();
         rest.setModelFactory(mf);
         rest.setValueFactory(vf);
         rest.setOntologyManager(ontologyManager);
@@ -262,7 +264,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         rest.setOntologyCache(ontologyCache);
         rest.setVersioningManager(versioningManager);
         rest.setProvUtils(provUtils);
-        rest.setRepositoryManager(repoManager);
 
         catalogId = vf.createIRI("http://mobi.com/catalog");
         recordId = vf.createIRI("http://mobi.com/record");
@@ -346,6 +347,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
+        rest.setRepositoryManager(repoManager);
         final IRI skosSemanticRelation = vf.createIRI(SKOS.SEMANTIC_RELATION.stringValue());
 
         when(results.getPage()).thenReturn(Collections.emptyList());
@@ -676,6 +678,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         fd.field("description", "description");
         fd.field("keywords", "keyword1");
         fd.field("keywords", "keyword2");
+        rest.setRepositoryManager(mockRepoManager);
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
@@ -692,6 +695,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         fd.field("description", "description");
         fd.field("keywords", "keyword1");
         fd.field("keywords", "keyword2");
+        rest.setRepositoryManager(mockRepoManager);
+
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
@@ -704,6 +709,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     @Test
     public void testUploadOntologyJson() {
         JSONObject ontologyJson = new JSONObject().element("@id", "http://mobi.com/ontology");
+        rest.setRepositoryManager(mockRepoManager);
 
         Response response = target().path("ontologies").queryParam("title", "title")
                 .queryParam("description", "description").queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
@@ -717,6 +723,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     @Test
     public void testUploadOntologyJsonWithoutTitle() {
         JSONObject entity = new JSONObject().element("@id", "http://mobi.com/entity");
+        rest.setRepositoryManager(mockRepoManager);
 
         Response response = target().path("ontologies").queryParam("description", "description")
                 .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
@@ -726,6 +733,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testUploadOntologyJsonWithoutJson() {
+        rest.setRepositoryManager(mockRepoManager);
+
         Response response = target().path("ontologies").queryParam("title", "title")
                 .queryParam("description", "description").queryParam("keywords", "keyword1")
                 .queryParam("keywords", "keyword2")

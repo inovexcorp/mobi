@@ -34,6 +34,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
@@ -74,8 +75,13 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
      * @return created ontology
      */
     private Ontology setOntologyToRecord(T record, RecordOperationConfig config) {
-        Ontology ontology = ontologyManager.createOntology(config.get(VersionedRDFRecordCreateSettings
-                .INITIAL_COMMIT_DATA));
+        Ontology ontology;
+        if (config.get(OntologyRecordCreateSettings.ONTOLOGY) != null) {
+            ontology = config.get(OntologyRecordCreateSettings.ONTOLOGY);
+        } else {
+            ontology = ontologyManager.createOntology(config.get(VersionedRDFRecordCreateSettings
+                    .INITIAL_COMMIT_DATA));
+        }
         record.getOntologyIRI().ifPresent(this::validateOntology);
         record.setOntologyIRI(ontology.getOntologyId().getOntologyIdentifier());
         return ontology;
