@@ -63,6 +63,9 @@
                         dvm.cm.getBranchHeadCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(headCommit => {
                                 var headCommitId = _.get(headCommit, "commit['@id']", '');
+                                if (commitId === undefined) {
+                                    commitId = headCommitId
+                                }
                                 return $q.all([
                                     sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId),
                                     dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId, commitId === headCommitId)
