@@ -27,14 +27,18 @@ import com.mobi.catalog.api.record.config.OperationSetting;
 import com.mobi.catalog.api.record.config.OperationSettingImpl;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Ontology;
+import com.mobi.query.api.Operation;
+import com.mobi.rdf.api.Model;
 
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Set;
 
 public class OntologyRecordCreateSettings {
 
     public static OperationSetting<String> CATALOG_ID;
-    public static OperationSetting<Ontology> ONTOLOGY;
+    public static OperationSetting<String> JSON;
+    public static OperationSetting<InputStream> INPUT_STREAM;
     public static OperationSetting<String> RECORD_TITLE;
     public static OperationSetting<String> RECORD_DESCRIPTION;
     public static OperationSetting<Set<String>> RECORD_KEYWORDS;
@@ -46,8 +50,10 @@ public class OntologyRecordCreateSettings {
     static {
         CATALOG_ID = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.catalogId"),
                 "The catalogId of a Record object", null);
-        ONTOLOGY = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.ontology"),
-                "The ontology format to set as model for record", null);
+        JSON = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.json"),
+                "The json model for the ontology", null);
+        INPUT_STREAM = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.inputstream"),
+                "The input stream file for the ontology", null);
         RECORD_TITLE = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.recordtitle"),
                 "The title of a Record object", null);
         RECORD_DESCRIPTION = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.recorddescription"),

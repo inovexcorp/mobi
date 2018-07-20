@@ -87,6 +87,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.ws.rs.core.MediaType;
 
 public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
@@ -236,7 +237,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
-        config.set(OntologyRecordCreateSettings.ONTOLOGY, ontology);
+        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology.ttl"));
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
@@ -255,7 +256,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void createWithoutOntologyTest() throws Exception {
+    public void createWithoutInputFileTest() throws Exception {
         RecordOperationConfig config = new OperationConfig();
         Set<String> names = new LinkedHashSet<>();
         names.add("Rick");

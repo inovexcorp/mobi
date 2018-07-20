@@ -76,8 +76,8 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
      */
     private Ontology setOntologyToRecord(T record, RecordOperationConfig config) {
         Ontology ontology;
-        if (config.get(OntologyRecordCreateSettings.ONTOLOGY) != null) {
-            ontology = config.get(OntologyRecordCreateSettings.ONTOLOGY);
+        if (config.get(OntologyRecordCreateSettings.INPUT_STREAM) != null) {
+            ontology = ontologyManager.createOntology(config.get(OntologyRecordCreateSettings.INPUT_STREAM), false);
         } else {
             ontology = ontologyManager.createOntology(config.get(VersionedRDFRecordCreateSettings
                     .INITIAL_COMMIT_DATA));
