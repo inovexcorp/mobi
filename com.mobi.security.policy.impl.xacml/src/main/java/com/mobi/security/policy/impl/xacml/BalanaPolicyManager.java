@@ -379,6 +379,14 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         Optional<Cache<String, Policy>> cache = policyCache.getPolicyCache();
         cache.ifPresent(Cache::clear);
         try (RepositoryConnection conn = repository.getConnection()) {
+            Set<String> fileNames = new HashSet<>();
+            conn.getStatements(null, typeIRI, policyFileTypeIRI).forEach(statement -> {
+                Resource policyIRI = statement.getSubject();
+                PolicyFile policyFile = validatePolicy(policyIRI);
+                BalanaPolicy policy = getPolicyFromFile(policyFile);
+                cache.ifPresent(c -> c.put(policyIRI.stringValue(), policy));
+                fileNames.add(getFileName(policyFile));
+            });
 
             VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
             Set<String> existingNames = directory.getChildren().stream()
@@ -406,16 +414,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 }
             }
 
-            addMissingFilesToRepo(existingNames, directory);
-
-            Set<String> fileNames = new HashSet<>();
-            conn.getStatements(null, typeIRI, policyFileTypeIRI).forEach(statement -> {
-                Resource policyIRI = statement.getSubject();
-                PolicyFile policyFile = validatePolicy(policyIRI);
-                BalanaPolicy policy = getPolicyFromFile(policyFile);
-                cache.ifPresent(c -> c.put(policyIRI.stringValue(), policy));
-                fileNames.add(getFileName(policyFile));
-            });
+            addMissingFilesToRepo(fileNames, directory);
         } catch (IOException e) {
             throw new MobiException("Error initializing policy files due to: ", e);
         }
@@ -425,7 +424,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         for (VirtualFile file : baseFolder.getChildren()) {
             if (file.isFolder()) {
                 addMissingFilesToRepo(filePaths, file);
-            } else if (file.exists()) {
+            } else if (!filePaths.contains(file.getIdentifier())) {
                 BalanaPolicy balanaPolicy = getPolicyFromFile(file);
                 addPolicyFile(file, file.getIdentifier() + ".xml", balanaPolicy);
             }
