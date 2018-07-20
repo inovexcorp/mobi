@@ -1590,6 +1590,7 @@ public class OntologyRestImpl implements OntologyRest {
             throw ErrorUtils.sendError(e, "Issue checking adding new OntologyRecord",
                     Response.Status.INTERNAL_SERVER_ERROR);
         } catch (Exception ex) {
+            catalogManager.deleteRecord(user, record.getResource(), OntologyRecord.class);
             throw ex;
         } finally {
             semaphore.release();

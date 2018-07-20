@@ -776,6 +776,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
         verify(provUtils).startCreateActivity(user);
         verify(provUtils).removeActivity(createActivity);
+        verify(catalogManager).deleteRecord(eq(user), eq(recordId), eq(OntologyRecord.class));
     }
 
     // Test upload ontology json
