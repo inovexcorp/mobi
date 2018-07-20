@@ -392,9 +392,10 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
 
             // Initialize policies from within the bundle if they don't already exist
             Bundle bundle = context.getBundle();
-            Enumeration<URL> urls = bundle.findEntries("/policies", "*.xml", false);
+            Enumeration<URL> urls = bundle.findEntries("/policies", "*.xml", true);
             while (urls.hasMoreElements()) {
                 URL url = urls.nextElement();
+                System.out.println("pizza" + url.getPath());
                 String fileName =  FilenameUtils.getName(url.getPath());
                 String fileId = RestUtils.decode(fileName);
                 Resource fileIRI = vf.createIRI(fileId);
@@ -417,7 +418,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         }
     }
 
-    private void addMissingFilesToRepo(Set<String> filePaths, VirtualFile baseFolder) throws VirtualFilesystemException{
+    private void addMissingFilesToRepo(Set<String> filePaths, VirtualFile baseFolder) throws VirtualFilesystemException {
         for (VirtualFile file : baseFolder.getChildren()) {
             if (file.isFolder()) {
                 addMissingFilesToRepo(filePaths, file);

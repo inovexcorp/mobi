@@ -69,10 +69,12 @@ import org.osgi.framework.BundleContext;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -231,6 +233,33 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         setUpMissingFileTest();
 
         manager.start(context, props);
+    }
+
+    @Test
+    public void startWithBundleTest() {
+        // Setup:
+        System.out.println("pizza");
+        when(bundle.findEntries("/policies", "*.xml", true)).thenReturn(new Enumeration<URL>() {
+            boolean grabbed = false;
+            @Override
+            public boolean hasMoreElements() {
+                return !grabbed;
+            }
+
+            @Override
+            public URL nextElement() {
+                grabbed = true;
+                try {
+                    URL url = BalanaPolicyManagerTest.class.getResource("http%3A%2F%2Fmobi.com%2Fpolicies%2Fontology-creation.xml");
+                    System.out.println(url);
+                    return url;
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        });
+        manager.start(context, props);
+
     }
 
     @Test
