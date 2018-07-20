@@ -239,6 +239,8 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void startWithBundleTest() {
         // Setup:
         System.out.println("pizza");
+        URL url = BalanaPolicyManagerTest.class.getResource("/http%3A%2F%2Fmobi.com%2Fpolicies%2Fontology-creation.xml");
+        System.out.println(url);
         when(bundle.findEntries("/policies", "*.xml", true)).thenReturn(new Enumeration<URL>() {
             boolean grabbed = false;
             @Override
@@ -250,8 +252,6 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
             public URL nextElement() {
                 grabbed = true;
                 try {
-                    URL url = BalanaPolicyManagerTest.class.getResource("http%3A%2F%2Fmobi.com%2Fpolicies%2Fontology-creation.xml");
-                    System.out.println(url);
                     return url;
                 } catch (Exception e) {
                     return null;

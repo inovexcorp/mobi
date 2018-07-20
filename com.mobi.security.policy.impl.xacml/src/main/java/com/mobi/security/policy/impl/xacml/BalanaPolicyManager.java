@@ -396,8 +396,9 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             while (urls.hasMoreElements()) {
                 URL url = urls.nextElement();
                 System.out.println("pizza" + url.getPath());
-                String fileName =  FilenameUtils.getName(url.getPath());
+                String fileName = RestUtils.decode(FilenameUtils.getName(url.getPath()));
                 String fileId = RestUtils.decode(fileName);
+                System.out.println(fileId);
                 Resource fileIRI = vf.createIRI(fileId);
                 if (!conn.contains(fileIRI, null, null)) {
                     VirtualFile file = vfs.resolveVirtualFile(url.openStream(), fileLocation);
