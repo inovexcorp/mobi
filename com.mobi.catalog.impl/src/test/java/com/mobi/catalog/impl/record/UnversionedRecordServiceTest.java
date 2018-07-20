@@ -26,6 +26,7 @@ package com.mobi.catalog.impl.record;
 import static junit.framework.TestCase.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,15 +38,17 @@ import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
-import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.exception.RepositoryException;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -69,6 +72,9 @@ public class UnversionedRecordServiceTest extends OrmEnabledTestCase {
     private OrmFactory<UnversionedRecord> recordFactory = getRequiredOrmFactory(UnversionedRecord.class);
     private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     @Mock
     private CatalogUtilsService utilsService;
 
@@ -80,7 +86,6 @@ public class UnversionedRecordServiceTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
-
         recordService = new SimpleUnversionedRecordService();
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
 
@@ -129,6 +134,15 @@ public class UnversionedRecordServiceTest extends OrmEnabledTestCase {
         recordService.delete(testIRI, user, connection);
 
         verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
+    }
+
+    @Test
+    public void deleteRecordRemoveFails() throws Exception {
+        doThrow(RepositoryException.class).when(utilsService).removeObject(any(UnversionedRecord.class), any(RepositoryConnection.class));
+        thrown.expect(RepositoryException.class);
+
+        recordService.delete(testIRI, user, connection);
+        verify(provUtils).removeActivity(any(DeleteActivity.class));
     }
 
     @Test
