@@ -102,6 +102,7 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
+import org.eclipse.rdf4j.repository.dataset.DatasetRepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -146,6 +147,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Mock
     private CatalogManager catalogManager;
+
+    @Mock
+    private RepositoryConnection repositoryConnection;
 
     @Mock
     private EngineManager engineManager;
@@ -231,6 +235,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private OutputStream ontologyJsonLd;
     private OutputStream importedOntologyJsonLd;
     private Repository repo;
+    private RepositoryConnection connection;
     private static String INVALID_JSON = "{id: 'invalid";
     private IRI missingIRI;
 
@@ -245,6 +250,10 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
+
+        InputStream testData = getClass().getResourceAsStream("/testOntologyData.trig");
+        connection = repo.getConnection();
+        connection.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
 
         ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
         OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
@@ -404,6 +413,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         when(mockRepoManager.getRepository(anyString())).thenReturn(Optional.of(repo));
 
+        when(repositoryConnection.getStatements(any(Resource.class), any(IRI.class), any(Value.class))).thenAnswer(i -> connection.getStatements(i.getArgumentAt(0, Resource.class), i.getArgumentAt(1, IRI.class), i.getArgumentAt(2, Value.class)));
+
         when(ontologyManager.createOntologyRecord(any(User.class), any(RecordOperationConfig.class))).thenReturn(record);
         when(ontologyManager.createOntology(any(FileInputStream.class), anyBoolean())).thenReturn(ontology);
         when(ontologyManager.createOntology(anyString(), anyBoolean())).thenReturn(ontology);
@@ -472,7 +483,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     @AfterMethod
     public void resetMocks() {
         reset(engineManager, versioningManager, ontologyId, ontology, importedOntologyId, importedOntology,
-                catalogManager, ontologyManager, sesameTransformer, results, mockCache, mockRepoManager, ontologyCache, provUtils);
+                catalogManager, ontologyManager, sesameTransformer, results, mockCache, mockRepoManager, ontologyCache, provUtils, repositoryConnection);
     }
 
     private JSONObject getResource(String path) throws Exception {
@@ -679,6 +690,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         fd.field("keywords", "keyword1");
         fd.field("keywords", "keyword2");
         rest.setRepositoryManager(mockRepoManager);
+        Optional<Repository> conn = mockRepoManager.getRepository(catalogManager.getRepositoryId());
+
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
@@ -696,7 +709,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         fd.field("keywords", "keyword1");
         fd.field("keywords", "keyword2");
         rest.setRepositoryManager(mockRepoManager);
-
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));

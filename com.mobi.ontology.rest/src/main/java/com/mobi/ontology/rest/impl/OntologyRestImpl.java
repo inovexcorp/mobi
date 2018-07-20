@@ -64,7 +64,6 @@ import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
-import com.mobi.query.api.Operation;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -94,7 +93,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -1578,14 +1576,18 @@ public class OntologyRestImpl implements OntologyRest {
             Resource branchId = record.getMasterBranch_resource().get();
             RepositoryResult<Statement> commitStmt = conn.getStatements(branchId,
                     valueFactory.createIRI(Branch.head_IRI), null);
-            Resource commitId = commitStmt.next().getSubject();
-
+            Resource commitId = null;
+            if (commitStmt.hasNext()) {
+                commitId = (Resource) commitStmt.next().getObject();
+            }
             JSONObject response = new JSONObject()
                     .element("ontologyId", record.getOntologyIRI().toString())
                     .element("recordId", record.getResource().stringValue())
                     .element("branchId", branchId.toString())
                     .element("commitId", commitId.toString());
+
             return Response.status(Response.Status.CREATED).entity(response).build();
+
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
