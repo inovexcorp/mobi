@@ -33,6 +33,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import checkers.oigj.quals.I;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
@@ -199,6 +200,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         when(ontology.getOntologyId()).thenReturn(ontologyId);
         when(ontologyId.getOntologyIdentifier()).thenReturn(importedOntologyIRI);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
+        when(ontologyManager.createOntology(any(InputStream.class), any(Boolean.class))).thenReturn(ontology);
         when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(true);
         when(versioningManager.commit(eq(catalogId), eq(testIRI), eq(branchIRI), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitIRI);
         when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
@@ -248,6 +250,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         verify(ontology).asModel(eq(modelFactory));
         verify(ontology).getOntologyId();
         verify(ontologyId).getOntologyIdentifier();
+        verify(ontologyManager).createOntology(any(InputStream.class), any(Boolean.class));
         verify(utilsService, times(2)).addObject(any(Record.class),
                 any(RepositoryConnection.class));
         verify(utilsService).getObject(any(Resource.class),eq(catalogFactory),any(RepositoryConnection.class));
