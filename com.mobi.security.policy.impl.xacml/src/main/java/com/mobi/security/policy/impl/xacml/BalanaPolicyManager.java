@@ -389,9 +389,6 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             });
 
             VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
-            Set<String> existingNames = directory.getChildren().stream()
-                    .map(file -> FilenameUtils.getName(file.getIdentifier()))
-                    .collect(Collectors.toSet());
 
             // Initialize policies from within the bundle if they don't already exist
             Bundle bundle = context.getBundle();
