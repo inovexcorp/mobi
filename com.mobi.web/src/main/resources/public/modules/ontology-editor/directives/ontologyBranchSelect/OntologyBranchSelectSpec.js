@@ -67,6 +67,7 @@ describe('Ontology Branch Select directive', function() {
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
         stateManagerSvc = null;
+        utilSvc = null;
         this.element.remove();
     });
 
@@ -168,6 +169,9 @@ describe('Ontology Branch Select directive', function() {
                     };
                     catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({ commit: { '@id': this.commitId } }));
                     stateManagerSvc.getOntologyStateByRecordId.and.returnValue(ontoState);
+                    utilSvc.getPropertyId.and.callFake(function(entity, propertyIRI) {
+                        return _.get(entity, "['" + propertyIRI + "'][0]['@id']", '');
+                    });
                 });
                 it('when updateOntologyState and updateOntology are resolved', function() {
                     stateManagerSvc.updateOntologyState.and.returnValue($q.when());

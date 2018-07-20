@@ -97,13 +97,13 @@
                 var ontologyState = self.getOntologyStateByRecordId(recordId);
                 var stateId = _.get(ontologyState, 'id', '');
                 var model = _.get(ontologyState, 'model', '');
-                var branchIndex = _.findIndex(model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
-                var recordIndex = _.findIndex(model, {'@type': 'http://mobi.com/states/ontology-editor/state-record'})
+                var branch = _.find(model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
+                var record = _.find(model, {'@type': 'http://mobi.com/states/ontology-editor/state-record'})
                 var branchIri = 'http://mobi.com/states/ontology-editor/branch-id/' + uuid.v4();
 
-                model[recordIndex][prefixes.ontologyState + 'currentBranch'] = [{'@id': branchId}];
-                if (branchIndex != -1) {
-                    model[branchIndex][prefixes.ontologyState + 'commit'] = [{'@id': commitId}];
+                record[prefixes.ontologyState + 'currentBranch'] = [{'@id': branchId}];
+                if (!branch) {
+                    branch[prefixes.ontologyState + 'commit'] = [{'@id': commitId}];
                 } else {
                     model[recordIndex][prefixes.ontologyState + 'branches'].push({'@id': branchIri});
                     model.push({

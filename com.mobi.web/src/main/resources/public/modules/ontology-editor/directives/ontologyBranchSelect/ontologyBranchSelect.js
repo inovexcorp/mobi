@@ -58,12 +58,12 @@
                     dvm.changeBranch = function(item) {
                         var branchId = item['@id'];
                         var state = sm.getOntologyStateByRecordId(dvm.os.listItem.ontologyRecord.recordId);
-                        var branchIndex = _.findIndex(state.model, {[prefixes.ontologyState + "branch"]: [{'@id': branchId}]});
-                        var commitId = _.get(state, "model[" + branchIndex + "]['" + prefixes.ontologyState + "commit'][0]['@id']");
+                        var commitId = dvm.util.getPropertyId(_.find(state.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]}), prefixes.ontologyState + 'commit');
+                        console.log(commitId);
                         dvm.cm.getBranchHeadCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(headCommit => {
                                 var headCommitId = _.get(headCommit, "commit['@id']", '');
-                                if (commitId === undefined) {
+                                if (!commitId) {
                                     commitId = headCommitId
                                 }
                                 return $q.all([
@@ -71,7 +71,7 @@
                                     dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId, commitId === headCommitId)
                                 ]);
                             }, $q.reject)
-                            .then(() => dvm.os.resetStateTabs(), dvm.util.createErrorToast)
+                            .then(() => dvm.os.resetStateTabs(), dvm.util.createErrorToast);
                     }
 
                     dvm.openDeleteConfirmation = function($event, branch) {
