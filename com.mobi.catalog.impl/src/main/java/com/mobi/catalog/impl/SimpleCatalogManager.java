@@ -425,7 +425,9 @@ public class SimpleCatalogManager implements CatalogManager {
             RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(recordClass.toString()))
                     .orElseThrow(() -> new IllegalArgumentException("Service for factory " + recordClass.toString()
                             + " is unavailable or doesn't exist."));
-            return (T) service.create(user, config, conn);
+            //This is safe because we created a record of the same type as the one passed in
+            @SuppressWarnings("unchecked") T record = (T) service.create(user, config, conn);
+            return record;
         }
     }
 
