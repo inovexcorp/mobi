@@ -31,9 +31,13 @@ import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.record.AbstractRecordService;
+import com.mobi.catalog.api.record.RecordService;
 import com.mobi.rdf.api.ValueFactory;
 
-@Component
+@Component(
+        immediate = true,
+        provide = { RecordService.class, SimpleRecordService.class }
+)
 public class SimpleRecordService extends AbstractRecordService<Record> {
     @Reference
     void setCatalogFactory(CatalogFactory catalogFactory) {

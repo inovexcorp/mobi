@@ -38,9 +38,7 @@ import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
@@ -53,7 +51,6 @@ import com.mobi.ontology.core.api.Entity;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
@@ -63,7 +60,6 @@ import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.rdf.api.BNode;
@@ -192,8 +188,8 @@ public class OntologyRestImpl implements OntologyRest {
             @AttributeValue(id = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
                     value = "http://mobi.com/ontologies/ontology-editor#OntologyRecord"))
     @ResourceId(id = "http://mobi.com/catalog-local")
-    public Response uploadFile(ContainerRequestContext context, InputStream fileInputStream,
-                               String title, String description, List<FormDataBodyPart> keywords) {
+    public Response uploadFile(ContainerRequestContext context, InputStream fileInputStream, String title,
+                               String description, List<FormDataBodyPart> keywords) {
         checkStringParam(title, "The title is missing.");
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
@@ -210,8 +206,8 @@ public class OntologyRestImpl implements OntologyRest {
             @AttributeValue(id = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
                     value = "http://mobi.com/ontologies/ontology-editor#OntologyRecord"))
     @ResourceId(id = "http://mobi.com/catalog-local")
-    public Response uploadOntologyJson(ContainerRequestContext context, String title,
-                                       String description, List<String> keywords, String ontologyJson) {
+    public Response uploadOntologyJson(ContainerRequestContext context, String title, String description,
+                                       List<String> keywords, String ontologyJson) {
         checkStringParam(title, "The title is missing.");
         checkStringParam(ontologyJson, "The ontologyJson is missing.");
         Set<String> keywordSet = Collections.emptySet();
@@ -243,20 +239,15 @@ public class OntologyRestImpl implements OntologyRest {
     public Response deleteOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr) {
         IRI recordId = valueFactory.createIRI(recordIdStr);
         User activeUser = getActiveUser(context, engineManager);
-        DeleteActivity deleteActivity = null;
         try {
             if (StringUtils.isBlank(branchIdStr)) {
-                deleteActivity = provUtils.startDeleteActivity(activeUser, recordId);
-                OntologyRecord record = ontologyManager.deleteOntology(recordId);
-                provUtils.endDeleteActivity(deleteActivity, record);
+                catalogManager.deleteRecord(activeUser, recordId, OntologyRecord.class);
             } else {
                 ontologyManager.deleteOntologyBranch(recordId, valueFactory.createIRI(branchIdStr));
             }
         } catch (MobiException e) {
-            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
-            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
         return Response.ok().build();

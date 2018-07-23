@@ -320,19 +320,6 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public OntologyRecord deleteOntology(@Nonnull Resource recordId) {
-        long start = getStartTime();
-
-        OntologyRecord record = catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory);
-
-        ontologyCache.clearCache(recordId, null);
-        record.getOntologyIRI().ifPresent(ontologyCache::clearCacheImports);
-
-        logTrace("deleteOntology(recordId)", start);
-        return record;
-    }
-
-    @Override
     public void deleteOntologyBranch(@Nonnull Resource recordId, @Nonnull Resource branchId) {
         long start = getStartTime();
         catalogManager.removeBranch(catalogManager.getLocalCatalogIRI(), recordId, branchId);

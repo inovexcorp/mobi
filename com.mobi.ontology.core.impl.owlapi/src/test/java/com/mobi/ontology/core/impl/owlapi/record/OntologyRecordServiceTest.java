@@ -29,11 +29,11 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import checkers.oigj.quals.I;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
@@ -54,10 +54,8 @@ import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.utils.cache.OntologyCache;
-import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
@@ -68,13 +66,16 @@ import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.exception.RepositoryException;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -88,7 +89,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.ws.rs.core.MediaType;
 
 public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
@@ -101,7 +101,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     private final IRI masterBranchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#master");
 
     private SimpleOntologyRecordService recordService;
-    private SimpleSesameTransformer transformer;
     private OntologyRecord testRecord;
     private Branch branch;
     private Commit headCommit;
@@ -122,6 +121,9 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
     private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
     private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Mock
     private CatalogUtilsService utilsService;
@@ -155,7 +157,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         modelFactory = getModelFactory();
 
         recordService = new SimpleOntologyRecordService();
-        transformer = new SimpleSesameTransformer();
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
         WriterConfig config = new WriterConfig();
         config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
@@ -356,5 +357,14 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
         recordService.delete(testIRI, user, connection);
         verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
+    }
+
+    @Test
+    public void deleteRecordRemoveFails() throws Exception {
+        doThrow(RepositoryException.class).when(utilsService).removeObject(any(OntologyRecord.class), any(RepositoryConnection.class));
+        thrown.expect(RepositoryException.class);
+
+        recordService.delete(testIRI, user, connection);
+        verify(provUtils).removeActivity(any(DeleteActivity.class));
     }
 }

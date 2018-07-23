@@ -26,6 +26,7 @@ package com.mobi.catalog.impl.record;
 import static junit.framework.TestCase.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,8 +44,11 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.exception.RepositoryException;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -68,6 +72,9 @@ public class VersionedRecordServiceTest extends OrmEnabledTestCase {
     private OrmFactory<VersionedRecord> recordFactory = getRequiredOrmFactory(VersionedRecord.class);
     private OrmFactory<Version> versionFactory = getRequiredOrmFactory(Version.class);
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     @Mock
     private CatalogUtilsService utilsService;
 
@@ -79,7 +86,6 @@ public class VersionedRecordServiceTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
-
         recordService = new SimpleVersionedRecordService();
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
 
@@ -128,6 +134,15 @@ public class VersionedRecordServiceTest extends OrmEnabledTestCase {
         recordService.delete(testIRI, user, connection);
 
         verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
+    }
+
+    @Test
+    public void deleteRecordRemoveFails() throws Exception {
+        doThrow(RepositoryException.class).when(utilsService).removeObject(any(VersionedRecord.class), any(RepositoryConnection.class));
+        thrown.expect(RepositoryException.class);
+
+        recordService.delete(testIRI, user, connection);
+        verify(provUtils).removeActivity(any(DeleteActivity.class));
     }
 
     @Test

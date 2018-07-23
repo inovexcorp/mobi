@@ -518,28 +518,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         verify(mockCache, times(0)).put(eq(key), eq(optionalOntology.get()));
     }
 
-    // Testing deleteOntology(Resource recordId)
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testDeleteOntologyRecordWithMissingIdentifier() {
-        doThrow(new IllegalArgumentException()).when(catalogManager).removeRecord(catalogIRI, missingIRI, ontologyRecordFactory);
-
-        manager.deleteOntology(missingIRI);
-    }
-
-    @Test
-    public void testDeleteOntology() throws Exception {
-        // Setup:
-        IRI ontologyIRI = VALUE_FACTORY.createIRI("http://test.com/test-ontology");
-        record.setOntologyIRI(ontologyIRI);
-
-        OntologyRecord result = manager.deleteOntology(recordIRI);
-        assertEquals(result, record);
-        verify(catalogManager).removeRecord(catalogIRI, recordIRI, ontologyRecordFactory);
-        verify(ontologyCache).clearCache(recordIRI, null);
-        verify(ontologyCache).clearCacheImports(ontologyIRI);
-    }
-
     /* Testing deleteOntologyBranch(Resource recordId, Resource branchId) */
 
     @Test(expected = IllegalArgumentException.class)

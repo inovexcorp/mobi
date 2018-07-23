@@ -61,6 +61,7 @@ import com.mobi.ontology.core.api.NamedIndividual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
 import com.mobi.ontology.core.api.classexpression.OClass;
 import com.mobi.ontology.core.api.datarange.Datatype;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
@@ -75,6 +76,7 @@ import com.mobi.ontology.core.impl.owlapi.datarange.SimpleDatatype;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleAnnotationProperty;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
+import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
@@ -413,7 +415,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(ontologyManager.createOntology(any(FileInputStream.class), anyBoolean())).thenReturn(ontology);
         when(ontologyManager.createOntology(anyString(), anyBoolean())).thenReturn(ontology);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
-        when(ontologyManager.deleteOntology(eq(recordId))).thenReturn(record);
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class))).thenReturn(Optional.of(ontology));
         when(ontologyManager.retrieveOntology(recordId)).thenReturn(Optional.of(ontology));
@@ -704,7 +705,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
-
         assertEquals(response.getStatus(), 400);
     }
 
@@ -4070,14 +4070,13 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
 
         assertEquals(response.getStatus(), 200);
-        verify(ontologyManager).deleteOntology(recordId);
-        verify(provUtils).startDeleteActivity(user, recordId);
-        verify(provUtils).endDeleteActivity(deleteActivity, record);
+        verify(catalogManager).deleteRecord(eq(user), eq(recordId), eq(OntologyRecord.class));
     }
 
     @Test
     public void testDeleteOntologyError() {
-        Mockito.doThrow(new MobiException("I'm an exception!")).when(ontologyManager).deleteOntology(eq(recordId));
+        Mockito.doThrow(new MobiException("I'm an exception!")).when(catalogManager)
+                .deleteRecord(eq(user), eq(recordId), eq(OntologyRecord.class));
         Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
 
         assertEquals(response.getStatus(), 500);
@@ -4100,7 +4099,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .queryParam("branchId", branchId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 500);
-        verify(ontologyManager, times(0)).deleteOntology(any());
+        verify(catalogManager, times(0)).deleteRecord(any(), any(), any());
     }
 
     // Test upload changes
