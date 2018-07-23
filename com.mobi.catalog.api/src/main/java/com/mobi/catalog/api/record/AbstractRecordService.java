@@ -38,6 +38,7 @@ import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
@@ -64,27 +65,37 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     @Override
     public T create(User user, RecordOperationConfig config, RepositoryConnection conn) {
         validateCreationConfig(config);
-        CreateActivity startActivity = provUtils.startCreateActivity(user);
-        OffsetDateTime now = OffsetDateTime.now();
-        T record = createRecord(user, config, now, now, conn);
-        provUtils.endCreateActivity(startActivity, record.getResource());
-        return record;
+        CreateActivity createActivity = provUtils.startCreateActivity(user);
+        try {
+            OffsetDateTime now = OffsetDateTime.now();
+            T record = createRecord(user, config, now, now, conn);
+            provUtils.endCreateActivity(createActivity, record.getResource());
+            return record;
+        } catch (Exception e) {
+            provUtils.removeActivity(createActivity);
+            throw e;
+        }
     }
 
     @Override
-    public T delete(IRI recordId, User user, RepositoryConnection conn) {
+    public T delete(Resource recordId, User user, RepositoryConnection conn) {
         T record = getRecord(recordId, conn);
         DeleteActivity deleteActivity = provUtils.startDeleteActivity(user, recordId);
-        conn.begin();
-        deleteRecord(record, conn);
-        conn.commit();
-        provUtils.endDeleteActivity(deleteActivity, record);
+        try {
+            conn.begin();
+            deleteRecord(record, conn);
+            conn.commit();
+            provUtils.endDeleteActivity(deleteActivity, record);
 
-        return record;
+            return record;
+        } catch (Exception e) {
+            provUtils.removeActivity(deleteActivity);
+            throw e;
+        }
     }
 
     @Override
-    public void export(IRI iriRecord, RecordOperationConfig config, RepositoryConnection conn) {
+    public void export(Resource recordId, RecordOperationConfig config, RepositoryConnection conn) {
         validateSettings(config);
 
         BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
@@ -92,7 +103,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
         if (!exporterIsActive) {
             exporter.startRDF();
         }
-        T record = getRecord(iriRecord, conn);
+        T record = getRecord(recordId, conn);
         exportRecord(record, config, conn);
         if (!exporterIsActive) {
             exporter.endRDF();
@@ -158,7 +169,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
      * Method that specifies {@link Record} specific write behavior. Can be overridden by subclasses to apply specific
      * export behavior.
      *
-     * @param record An {@link IRI} of the record to be exported
+     * @param record The {@link Record} to be exported
      * @param config A {@link RecordOperationConfig} that contains the export configuration.
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      */
@@ -183,11 +194,11 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     /**
      * Gets a {@link Record} object from the associated factory.
      *
-     * @param recordId {@link IRI} of the Record
+     * @param recordId {@link Resource} of the Record
      * @param conn A {@link RepositoryConnection} to use for lookup
-     * @return A {@link Record} of the provided IRI
+     * @return A {@link Record} of the provided Resource
      */
-    protected T getRecord(IRI recordId, RepositoryConnection conn) {
+    protected T getRecord(Resource recordId, RepositoryConnection conn) {
         return utilsService.optObject(recordId, recordFactory, conn).orElseThrow(()
                 -> new IllegalArgumentException("Record " + recordId + " does not exist"));
     }

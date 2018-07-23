@@ -393,7 +393,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(ontologyManager.createOntology(any(FileInputStream.class), anyBoolean())).thenReturn(ontology);
         when(ontologyManager.createOntology(anyString(), anyBoolean())).thenReturn(ontology);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
-        when(ontologyManager.deleteOntology(eq(recordId))).thenReturn(record);
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class))).thenReturn(Optional.of(ontology));
         when(ontologyManager.retrieveOntology(recordId)).thenReturn(Optional.of(ontology));
@@ -777,7 +776,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
         verify(provUtils).startCreateActivity(user);
         verify(provUtils).removeActivity(createActivity);
-        verify(ontologyManager).deleteOntology(recordId);
+        verify(catalogManager).deleteRecord(eq(user), eq(recordId), eq(OntologyRecord.class));
     }
 
     // Test upload ontology json
@@ -4179,14 +4178,13 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
 
         assertEquals(response.getStatus(), 200);
-        verify(ontologyManager).deleteOntology(recordId);
-        verify(provUtils).startDeleteActivity(user, recordId);
-        verify(provUtils).endDeleteActivity(deleteActivity, record);
+        verify(catalogManager).deleteRecord(eq(user), eq(recordId), eq(OntologyRecord.class));
     }
 
     @Test
     public void testDeleteOntologyError() {
-        Mockito.doThrow(new MobiException("I'm an exception!")).when(ontologyManager).deleteOntology(eq(recordId));
+        Mockito.doThrow(new MobiException("I'm an exception!")).when(catalogManager)
+                .deleteRecord(eq(user), eq(recordId), eq(OntologyRecord.class));
         Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
 
         assertEquals(response.getStatus(), 500);
@@ -4209,7 +4207,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .queryParam("branchId", branchId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 500);
-        verify(ontologyManager, times(0)).deleteOntology(any());
+        verify(catalogManager, times(0)).deleteRecord(any(), any(), any());
     }
 
     // Test upload changes

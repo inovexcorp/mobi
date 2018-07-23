@@ -31,6 +31,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -47,7 +48,6 @@ import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
@@ -67,12 +67,15 @@ import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.exception.RepositoryException;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -115,6 +118,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
     private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     @Mock
     private VersioningManager versioningManager;
 
@@ -132,7 +138,6 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
-
         recordService = new SimpleVersionedRDFRecordService();
         transformer = new SimpleSesameTransformer();
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
@@ -214,8 +219,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
     }
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test
     public void createRecordWithoutCatalogID() throws Exception {
+        thrown.expect(IllegalArgumentException.class);
         RecordOperationConfig config = new OperationConfig();
         Set<String> names = new LinkedHashSet<>();
         names.add("Rick");
@@ -228,10 +234,12 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         recordService.create(user, config, connection);
+        verify(provUtils).removeActivity(any(CreateActivity.class));
     }
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test
     public void createRecordWithoutPublisher() throws Exception {
+        thrown.expect(IllegalArgumentException.class);
         RecordOperationConfig config = new OperationConfig();
         Set<String> names = new LinkedHashSet<>();
         names.add("Rick");
@@ -244,10 +252,12 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
 
         recordService.create(user, config, connection);
+        verify(provUtils).removeActivity(any(CreateActivity.class));
     }
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test
     public void createRecordWithoutTitle() throws Exception {
+        thrown.expect(IllegalArgumentException.class);
         RecordOperationConfig config = new OperationConfig();
         Set<String> names = new LinkedHashSet<>();
         names.add("Rick");
@@ -260,6 +270,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         recordService.create(user, config, connection);
+        verify(provUtils).removeActivity(any(CreateActivity.class));
     }
 
     /* delete() */
@@ -283,6 +294,15 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
         recordService.delete(testIRI, user, connection);
         verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
+    }
+
+    @Test
+    public void deleteRecordRemoveFails() throws Exception {
+        doThrow(RepositoryException.class).when(utilsService).removeObject(any(VersionedRDFRecord.class), any(RepositoryConnection.class));
+        thrown.expect(RepositoryException.class);
+
+        recordService.delete(testIRI, user, connection);
+        verify(provUtils).removeActivity(any(DeleteActivity.class));
     }
 
     /* export() */

@@ -106,6 +106,8 @@
                                 if (!_.isEmpty(state)) {
                                     sm.deleteState(_.get(state, 'id', ''));
                                 }
+                                dvm.pageIndex = 0;
+                                dvm.getPageOntologyRecords();
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
@@ -139,8 +141,6 @@
                     $scope.$watch(() => dvm.os.list.length, () => {
                         dvm.getPageOntologyRecords();
                     });
-
-                    dvm.getPageOntologyRecords();
 
                     function getFilteredRecords(records) {
                         return _.reject(records, record => _.find(dvm.os.list, {ontologyRecord: {recordId: record['@id']}}));
