@@ -105,7 +105,7 @@
                 if (branch) {
                     branch[prefixes.ontologyState + 'commit'] = [{'@id': commitId}];
                 } else {
-                    model[recordIndex][prefixes.ontologyState + 'branches'].push({'@id': branchIri});
+                    branch[prefixes.ontologyState + 'branches'].push({'@id': branchIri});
                     model.push({
                         '@id': branchIri,
                         [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
