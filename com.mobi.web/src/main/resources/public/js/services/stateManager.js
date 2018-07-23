@@ -102,7 +102,7 @@
                 var branchIri = 'http://mobi.com/states/ontology-editor/branch-id/' + uuid.v4();
 
                 record[prefixes.ontologyState + 'currentBranch'] = [{'@id': branchId}];
-                if (!branch) {
+                if (branch) {
                     branch[prefixes.ontologyState + 'commit'] = [{'@id': commitId}];
                 } else {
                     model[recordIndex][prefixes.ontologyState + 'branches'].push({'@id': branchIri});

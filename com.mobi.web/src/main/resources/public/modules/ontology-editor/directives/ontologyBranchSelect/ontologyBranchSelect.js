@@ -59,7 +59,6 @@
                         var branchId = item['@id'];
                         var state = sm.getOntologyStateByRecordId(dvm.os.listItem.ontologyRecord.recordId);
                         var commitId = dvm.util.getPropertyId(_.find(state.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]}), prefixes.ontologyState + 'commit');
-                        console.log(commitId);
                         dvm.cm.getBranchHeadCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(headCommit => {
                                 var headCommitId = _.get(headCommit, "commit['@id']", '');

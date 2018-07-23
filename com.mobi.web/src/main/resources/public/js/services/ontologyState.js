@@ -283,7 +283,7 @@
                     var record = _.find(state.model, {'@type': 'http://mobi.com/states/ontology-editor/state-record'});
                     var inProgressCommit = emptyInProgressCommit;
                     var branchId = util.getPropertyId(record, prefixes.ontologyState + 'currentBranch');
-                    var branch = _.find(state.model, {[prefixes.ontologyState + "branch"]: [{'@id': branchId}]});
+                    var branch = _.find(state.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
                     var commitId = util.getPropertyId(branch, prefixes.ontologyState + 'commit');
                     var upToDate = false;
                     return cm.getRecordBranch(branchId, recordId, catalogId)
