@@ -65,23 +65,33 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     @Override
     public T create(User user, RecordOperationConfig config, RepositoryConnection conn) {
         validateCreationConfig(config);
-        CreateActivity startActivity = provUtils.startCreateActivity(user);
-        OffsetDateTime now = OffsetDateTime.now();
-        T record = createRecord(user, config, now, now, conn);
-        provUtils.endCreateActivity(startActivity, record.getResource());
-        return record;
+        CreateActivity createActivity = provUtils.startCreateActivity(user);
+        try {
+            OffsetDateTime now = OffsetDateTime.now();
+            T record = createRecord(user, config, now, now, conn);
+            provUtils.endCreateActivity(createActivity, record.getResource());
+            return record;
+        } catch (Exception e) {
+            provUtils.removeActivity(createActivity);
+            throw e;
+        }
     }
 
     @Override
     public T delete(Resource recordId, User user, RepositoryConnection conn) {
         T record = getRecord(recordId, conn);
         DeleteActivity deleteActivity = provUtils.startDeleteActivity(user, recordId);
-        conn.begin();
-        deleteRecord(record, conn);
-        conn.commit();
-        provUtils.endDeleteActivity(deleteActivity, record);
+        try {
+            conn.begin();
+            deleteRecord(record, conn);
+            conn.commit();
+            provUtils.endDeleteActivity(deleteActivity, record);
 
-        return record;
+            return record;
+        } catch (Exception e) {
+            provUtils.removeActivity(deleteActivity);
+            throw e;
+        }
     }
 
     @Override

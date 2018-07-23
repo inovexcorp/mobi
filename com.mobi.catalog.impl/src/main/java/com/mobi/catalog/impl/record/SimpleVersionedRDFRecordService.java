@@ -34,10 +34,14 @@ import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
+import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.rdf.api.ValueFactory;
 
-@Component
+@Component(
+        immediate = true,
+        provide = { RecordService.class, SimpleVersionedRDFRecordService.class }
+)
 public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordService<VersionedRDFRecord> {
 
     @Reference
