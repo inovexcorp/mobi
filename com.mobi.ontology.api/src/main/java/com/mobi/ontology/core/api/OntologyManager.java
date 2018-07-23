@@ -166,16 +166,6 @@ public interface OntologyManager {
                                         @Nonnull Resource commitId);
 
     /**
-     * Deletes the OntologyRecord and all associated Catalog elements with the given recordId, and returns true if
-     * successfully removed.
-     *
-     * @param recordId the record id for the OntologyRecord you want to delete.
-     * @return The OntologyRecord that was deleted.
-     * @throws IllegalArgumentException - the OntologyRecord can't be retrieved.
-     */
-    OntologyRecord deleteOntology(@Nonnull Resource recordId);
-
-    /**
      * Deletes a branch associated with an OntologyRecord.
      *
      * @param recordId The record id for the OntologyRecord which contains the Branch you want to delete.

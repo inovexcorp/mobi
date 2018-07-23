@@ -31,9 +31,13 @@ import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecordFactory;
 import com.mobi.catalog.api.record.AbstractUnversionedRecordService;
+import com.mobi.catalog.api.record.RecordService;
 import com.mobi.rdf.api.ValueFactory;
 
-@Component
+@Component(
+        immediate = true,
+        provide = { RecordService.class, SimpleUnversionedRecordService.class }
+)
 public class SimpleUnversionedRecordService extends AbstractUnversionedRecordService<UnversionedRecord> {
 
     @Reference
