@@ -27,22 +27,18 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
-import com.mobi.catalog.api.mergerequest.MergeRequestManager;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
-import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
-import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
+import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
+import com.mobi.catalog.api.ontologies.mcat.UnversionedRecordFactory;
+import com.mobi.catalog.api.record.AbstractUnversionedRecordService;
 import com.mobi.catalog.api.record.RecordService;
-import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.rdf.api.ValueFactory;
 
 @Component(
         immediate = true,
-        provide = { RecordService.class, SimpleVersionedRDFRecordService.class }
+        provide = { RecordService.class, SimpleUnversionedRecordService.class }
 )
-public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordService<VersionedRDFRecord> {
+public class SimpleUnversionedRecordService extends AbstractUnversionedRecordService<UnversionedRecord> {
 
     @Reference
     void setCatalogFactory(CatalogFactory catalogFactory) {
@@ -65,37 +61,17 @@ public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordS
     }
 
     @Reference
-    void setRecordFactory(VersionedRDFRecordFactory recordFactory) {
+    void setRecordFactory(UnversionedRecordFactory recordFactory) {
         this.recordFactory = recordFactory;
     }
 
-    @Reference
-    void setCommitFactory(CommitFactory commitFactory) {
-        this.commitFactory = commitFactory;
-    }
-
-    @Reference
-    void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
-    }
-
-    @Reference
-    void setMergeRequestManager(MergeRequestManager mergeRequestManager) {
-        this.mergeRequestManager = mergeRequestManager;
-    }
-
-    @Reference
-    void setVersioningManager(VersioningManager versioningManager) {
-        this.versioningManager = versioningManager;
-    }
-
     @Override
-    public Class<VersionedRDFRecord> getType() {
-        return VersionedRDFRecord.class;
+    public Class<UnversionedRecord> getType() {
+        return UnversionedRecord.class;
     }
 
     @Override
     public String getTypeIRI() {
-        return VersionedRDFRecord.TYPE;
+        return UnversionedRecord.TYPE;
     }
 }

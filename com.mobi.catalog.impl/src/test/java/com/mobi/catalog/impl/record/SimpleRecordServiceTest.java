@@ -28,6 +28,7 @@ import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,12 +53,15 @@ import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.exception.RepositoryException;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -82,6 +86,9 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
     private OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
     private OrmFactory<Record> recordFactory = getRequiredOrmFactory(Record.class);
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     @Mock
     private CatalogUtilsService utilsService;
 
@@ -93,7 +100,6 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
-
         recordService = new SimpleRecordService();
         transformer = new SimpleSesameTransformer();
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
@@ -139,8 +145,9 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
     }
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test
     public void createRecordWithoutCatalogID() throws Exception {
+        thrown.expect(IllegalArgumentException.class);
         RecordOperationConfig config = new OperationConfig();
         Set<String> names = new LinkedHashSet<>();
         names.add("Rick");
@@ -153,10 +160,12 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         recordService.create(user, config, connection);
+        verify(provUtils).removeActivity(any(CreateActivity.class));
     }
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test
     public void createRecordWithoutPublisher() throws Exception {
+        thrown.expect(IllegalArgumentException.class);
         RecordOperationConfig config = new OperationConfig();
         Set<String> names = new LinkedHashSet<>();
         names.add("Rick");
@@ -169,10 +178,12 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
 
         recordService.create(user, config, connection);
+        verify(provUtils).removeActivity(any(CreateActivity.class));
     }
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test
     public void createRecordWithoutTitle() throws Exception {
+        thrown.expect(IllegalArgumentException.class);
         RecordOperationConfig config = new OperationConfig();
         Set<String> names = new LinkedHashSet<>();
         names.add("Rick");
@@ -185,6 +196,7 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         recordService.create(user, config, connection);
+        verify(provUtils).removeActivity(any(CreateActivity.class));
     }
 
     /* delete() */
@@ -207,8 +219,15 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         when(utilsService.optObject(eq(testIRI), eq(recordFactory), eq(connection))).thenReturn(Optional.empty());
 
         recordService.delete(testIRI, user, connection);
+    }
 
-        verify(utilsService).optObject(eq(testIRI), eq(recordFactory), eq(connection));
+    @Test
+    public void deleteRecordRemoveFails() throws Exception {
+        doThrow(RepositoryException.class).when(utilsService).removeObject(any(Record.class), any(RepositoryConnection.class));
+        thrown.expect(RepositoryException.class);
+
+        recordService.delete(testIRI, user, connection);
+        verify(provUtils).removeActivity(any(DeleteActivity.class));
     }
 
     /* export() */

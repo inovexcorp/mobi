@@ -87,7 +87,6 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.rdf.orm.Thing;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -241,11 +240,11 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Reference(type = '*', dynamic = true)
     void addRecordService(RecordService<? extends Record> recordService) {
-        recordServices.put(recordService.getTypeIRI(), recordService);
+        recordServices.put(recordService.getType().toString(), recordService);
     }
 
-    void removeRecordService(RecordService<Record> recordService) {
-        recordServices.remove(recordService.getTypeIRI());
+    void removeRecordService(RecordService<? extends Record> recordService) {
+        recordServices.remove(recordService.getType().toString());
     }
 
     private static final String PROV_AT_TIME = "http://www.w3.org/ns/prov#atTime";
@@ -421,16 +420,12 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Record> T createRecord(User user, RecordOperationConfig config, OrmFactory<T> factory) {
+    public <T extends Record> T createRecord(User user, RecordOperationConfig config, Class<T> recordClass) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            if (factory != null) {
-                RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(factory.getTypeIRI()
-                        .stringValue())).orElseThrow(() -> new IllegalArgumentException(
-                        "Service for factory " + factory.getType() + " is unavailable or doesn't exist."));
-                return (T) service.create(user, config, conn);
-            } else {
-                throw new NullPointerException("Factory can't be null");
-            }
+            RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(recordClass.toString()))
+                    .orElseThrow(() -> new IllegalArgumentException("Service for factory " + recordClass.toString()
+                            + " is unavailable or doesn't exist."));
+            return (T) service.create(user, config, conn);
         }
     }
 
@@ -499,6 +494,19 @@ public class SimpleCatalogManager implements CatalogManager {
             }
         }
         return record;
+    }
+
+    @Override
+    public <T extends Record> T deleteRecord(User user, Resource recordId, Class<T> recordClass) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            OrmFactory<? extends Record> serviceType = getFactory(recordId, conn, true);
+            if (!serviceType.getType().equals(recordClass)) {
+                throw new IllegalArgumentException("Service for factory " + recordClass
+                        + " is unavailable or doesn't exist.");
+            }
+            RecordService<? extends Record> service = recordServices.get(serviceType.getType().toString());
+            return (T) service.delete((IRI) recordId, user, conn);
+        }
     }
 
     @Override
@@ -1315,27 +1323,29 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void export(IRI recordIRI, RecordOperationConfig config) {
+    public void export(Resource recordIRI, RecordOperationConfig config) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            OrmFactory<? extends Record> serviceType = getRecordService(recordIRI, conn);
-            RecordService<? extends Record> service = recordServices.get(serviceType.getTypeIRI().stringValue());
+            OrmFactory<? extends Record> factory = getFactory(recordIRI, conn, false);
+            RecordService<? extends Record> service = recordServices.get(factory.getType().toString());
             service.export(recordIRI, config, conn);
         }
     }
 
     @Override
-    public void export(List<IRI> recordIRIs, RecordOperationConfig config) {
+    public void export(List<Resource> recordIRIs, RecordOperationConfig config) {
         recordIRIs.forEach(iri -> export(iri, config));
     }
 
     /**
-     * Takes a recordId and returns the factory IRI type for that record. If failure, it returns the most specific
-     * recordService
+     * Takes a recordId and returns the factory for that record. If a factory for that particular record is not
+     * registered, it returns the most specific factory available if the flag is set to false.
      *
      * @param recordId The record IRI
-     * @return factory record service
+     * @param exactOnly A flag to indicate whether to do an exact match with the record type. If false, will allow
+     *                  closest match to be returned
+     * @return the record factory of a given recordId
      */
-    private OrmFactory<? extends Record> getRecordService(Resource recordId, RepositoryConnection conn) {
+    private OrmFactory<? extends Record> getFactory(Resource recordId, RepositoryConnection conn, boolean exactOnly) {
         List<Resource> types = RepositoryResults.asList(
                 conn.getStatements(recordId, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
                 .stream()
@@ -1344,14 +1354,19 @@ public class SimpleCatalogManager implements CatalogManager {
                 .map(Optional::get)
                 .collect(Collectors.toList());
 
-
         List<OrmFactory<? extends Record>> classType = factoryRegistry.getSortedFactoriesOfType(Record.class).stream()
                 .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
                 .collect(Collectors.toList());
 
-        for (OrmFactory<? extends Record> factory : classType) {
-            if (recordServices.keySet().contains(factory.getTypeIRI().stringValue())) {
-                return factory;
+        if (exactOnly && classType.size() > 0) {
+            if (recordServices.keySet().contains(classType.get(0).getType().toString())) {
+                return classType.get(0);
+            }
+        } else {
+            for (OrmFactory<? extends Record> factory : classType) {
+                if (recordServices.keySet().contains(factory.getType().toString())) {
+                    return factory;
+                }
             }
         }
         throw new IllegalArgumentException("No known record services for this record type.");

@@ -31,6 +31,7 @@ import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
+import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.record.AbstractOntologyRecordService;
@@ -43,7 +44,10 @@ import com.mobi.repository.api.RepositoryConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Component
+@Component(
+        immediate = true,
+        provide = { RecordService.class, SimpleOntologyRecordService.class }
+)
 public class SimpleOntologyRecordService extends AbstractOntologyRecordService<OntologyRecord> {
 
     private OntologyCache ontologyCache;
