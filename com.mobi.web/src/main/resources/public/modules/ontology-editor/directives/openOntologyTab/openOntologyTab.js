@@ -106,6 +106,8 @@
                                 if (!_.isEmpty(state)) {
                                     sm.deleteState(_.get(state, 'id', ''));
                                 }
+                                dvm.pageIndex = 0;
+                                dvm.getPageOntologyRecords();
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
