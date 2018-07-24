@@ -143,7 +143,11 @@ public class SimpleCatalogManager implements CatalogManager {
     /**
      * A map of the available RecordServices. The string is get typeIRI for the individual RecordService.
      */
-    private Map<String, RecordService<? extends Record>> recordServices = new HashMap<>();
+    private Map<Class, RecordService> recordServices = new HashMap<>();
+
+    private <T extends Record> RecordService<T> getRecordService(Class<T> clazz) {
+        return recordServices.get(clazz);
+    }
 
     public SimpleCatalogManager() {
     }
@@ -240,11 +244,11 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Reference(type = '*', dynamic = true)
     void addRecordService(RecordService<? extends Record> recordService) {
-        recordServices.put(recordService.getType().toString(), recordService);
+        recordServices.put(recordService.getType(), recordService);
     }
 
     void removeRecordService(RecordService<? extends Record> recordService) {
-        recordServices.remove(recordService.getType().toString());
+        recordServices.remove(recordService.getType());
     }
 
     private static final String PROV_AT_TIME = "http://www.w3.org/ns/prov#atTime";
@@ -422,12 +426,12 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public <T extends Record> T createRecord(User user, RecordOperationConfig config, Class<T> recordClass) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(recordClass.toString()))
+            Optional.ofNullable(recordServices.get(recordClass))
                     .orElseThrow(() -> new IllegalArgumentException("Service for factory " + recordClass.toString()
                             + " is unavailable or doesn't exist."));
+            RecordService<T> recordService = getRecordService(recordClass);
             //This is safe because we created a record of the same type as the one passed in
-            @SuppressWarnings("unchecked") T record = (T) service.create(user, config, conn);
-            return record;
+            return recordService.create(user, config, conn);
         }
     }
 
@@ -506,8 +510,8 @@ public class SimpleCatalogManager implements CatalogManager {
                 throw new IllegalArgumentException("Service for factory " + recordClass
                         + " is unavailable or doesn't exist.");
             }
-            RecordService<? extends Record> service = recordServices.get(serviceType.getType().toString());
-            return (T) service.delete((IRI) recordId, user, conn);
+            RecordService<T> service = getRecordService(recordClass);
+            return service.delete(recordId, user, conn);
         }
     }
 
@@ -1328,7 +1332,7 @@ public class SimpleCatalogManager implements CatalogManager {
     public void export(Resource recordIRI, RecordOperationConfig config) {
         try (RepositoryConnection conn = repository.getConnection()) {
             OrmFactory<? extends Record> factory = getFactory(recordIRI, conn, false);
-            RecordService<? extends Record> service = recordServices.get(factory.getType().toString());
+            RecordService<? extends Record> service = getRecordService(factory.getType());
             service.export(recordIRI, config, conn);
         }
     }
@@ -1361,12 +1365,12 @@ public class SimpleCatalogManager implements CatalogManager {
                 .collect(Collectors.toList());
 
         if (exactOnly && classType.size() > 0) {
-            if (recordServices.keySet().contains(classType.get(0).getType().toString())) {
+            if (recordServices.keySet().contains(classType.get(0).getType())) {
                 return classType.get(0);
             }
         } else {
             for (OrmFactory<? extends Record> factory : classType) {
-                if (recordServices.keySet().contains(factory.getType().toString())) {
+                if (recordServices.keySet().contains(factory.getType())) {
                     return factory;
                 }
             }
