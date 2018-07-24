@@ -853,6 +853,7 @@
                 _.remove(self.list, { ontologyRecord: { recordId }});
             }
             self.removeBranch = function(recordId, branchId) {
+                sm.deleteOntologyBranch(recordId, branchId);
                 _.remove(self.getListItemByRecordId(recordId).branches, {'@id': branchId});
             }
             self.afterSave = function() {

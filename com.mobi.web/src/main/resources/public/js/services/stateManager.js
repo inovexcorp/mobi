@@ -114,6 +114,18 @@
                 }
                 return self.updateState(stateId, model);
             }
+            
+            self.deleteOntologyBranch = function(recordId, branchId) {
+                var ontologyState = self.getOntologyStateByRecordId(recordId);
+                var stateId = _.get(ontologyState, 'id', '');
+                var model = _.get(ontologyState, 'model', '');
+                var record = _.find(model, {'@type': 'http://mobi.com/states/ontology-editor/state-record'})
+                var branch = _.find(model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
+                var branchStateId = _.get(branch, '@id');
+                _.remove(model, _.matches({[prefixes.ontologyState + 'branch']: [{'@id': branchId}]}));
+                _.remove(record[prefixes.ontologyState + 'branches'], _.matches({'@id': branchStateId}));
+                return self.updateState(stateId, model);
+            }
 
             self.deleteOntologyState = function(recordId) {
                 var stateId = _.get(self.getOntologyStateByRecordId(recordId), 'id', '');

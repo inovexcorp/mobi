@@ -61,7 +61,7 @@ describe('State Manager service', function() {
             '@type': 'http://mobi.com/states/ontology-editor/state-record',
             [prefixes.ontologyState + 'record']: [{'@id': this.recordId}],
             [prefixes.ontologyState + 'branches']: [],
-            [prefixes.ontologyState + 'branch']: [{'@id': this.branchId}]
+            [prefixes.ontologyState + 'currentBranch']: [{'@id': this.branchId}]
         }];
     });
 
@@ -226,5 +226,17 @@ describe('State Manager service', function() {
         });
         stateManagerSvc.deleteOntologyState(this.recordId);
         expect(stateManagerSvc.deleteState).toHaveBeenCalledWith(this.stateId);
+    });
+    it('deleteOntologyBranch calls the correct method', function() {
+        var tempState = Object.assign({}, this.ontologyState);
+        this.ontologyState[0][prefixes.ontologyState + 'branches'].push({'@id': 'branchIri'});
+        this.ontologyState.push({'@id': 'branchIri', [prefixes.ontologyState + 'branch']: [{'@id': 'branchId'}]});
+        spyOn(stateManagerSvc, 'updateState');
+        spyOn(stateManagerSvc, 'getOntologyStateByRecordId').and.returnValue({
+            id: this.stateId,
+            model: this.ontologyState
+        });
+        stateManagerSvc.deleteOntologyBranch(this.recordId, 'branchId');
+        expect(stateManagerSvc.updateState).toHaveBeenCalledWith(this.stateId, [tempState[0]]);
     });
 });

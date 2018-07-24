@@ -822,6 +822,7 @@ describe('Ontology State Service', function() {
         spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
         ontologyStateSvc.removeBranch(this.recordId, this.branchId);
         expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
+        expect(stateManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
         expect(listItem.branches).toEqual([]);
     });
     describe('saveChanges should call the correct methods', function() {
