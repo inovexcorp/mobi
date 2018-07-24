@@ -228,7 +228,7 @@ describe('State Manager service', function() {
         expect(stateManagerSvc.deleteState).toHaveBeenCalledWith(this.stateId);
     });
     it('deleteOntologyBranch calls the correct method', function() {
-        var tempState = Object.assign({}, this.ontologyState);
+        var tempState = angular.copy(this.ontologyState);
         this.ontologyState[0][prefixes.ontologyState + 'branches'].push({'@id': 'branchIri'});
         this.ontologyState.push({'@id': 'branchIri', [prefixes.ontologyState + 'branch']: [{'@id': 'branchId'}]});
         spyOn(stateManagerSvc, 'updateState');
