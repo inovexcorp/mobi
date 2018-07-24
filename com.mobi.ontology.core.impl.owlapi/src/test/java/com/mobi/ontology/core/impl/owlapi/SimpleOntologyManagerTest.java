@@ -38,18 +38,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.record.config.OperationConfig;
+import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Ontology;
-import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.api.BNodeService;
@@ -237,11 +234,11 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         names.add("Morty");
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
-        config.set(OntologyRecordCreateSettings.CATALOG_ID, catalogId.stringValue());
-        config.set(OntologyRecordCreateSettings.RECORD_TITLE, "TestTitle");
-        config.set(OntologyRecordCreateSettings.RECORD_DESCRIPTION, "TestDescription");
-        config.set(OntologyRecordCreateSettings.RECORD_KEYWORDS, names);
-        config.set(OntologyRecordCreateSettings.RECORD_PUBLISHERS, users);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestDescription");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         manager.createOntologyRecord(user, config);
 

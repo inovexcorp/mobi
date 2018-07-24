@@ -40,6 +40,7 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.record.config.OperationConfig;
+import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.api.versioning.VersioningManager;
@@ -1557,11 +1558,11 @@ public class OntologyRestImpl implements OntologyRest {
             Model jsonModel = getModelFromJson(json);
             config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, jsonModel);
         }
-        config.set(OntologyRecordCreateSettings.CATALOG_ID, catalogId.stringValue());
-        config.set(OntologyRecordCreateSettings.RECORD_TITLE, title);
-        config.set(OntologyRecordCreateSettings.RECORD_DESCRIPTION, description);
-        config.set(OntologyRecordCreateSettings.RECORD_KEYWORDS, keywordSet);
-        config.set(OntologyRecordCreateSettings.RECORD_PUBLISHERS, users);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(RecordCreateSettings.RECORD_TITLE, title);
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, description);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywordSet);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         try {
             OntologyRecord record = ontologyManager.createOntologyRecord(user, config);
             RepositoryConnection conn = repositoryManager.getRepository(catalogManager.getRepositoryId())
