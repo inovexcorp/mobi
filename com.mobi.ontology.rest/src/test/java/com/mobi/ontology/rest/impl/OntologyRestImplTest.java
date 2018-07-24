@@ -408,10 +408,10 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(catalogManager.applyInProgressCommit(eq(inProgressCommitId), any(Model.class))).thenReturn(mf.createModel());
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
         when(catalogManager.getRepositoryId()).thenReturn("system");
+        when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class))).thenReturn(record);
 
         when(mockRepoManager.getRepository(anyString())).thenReturn(Optional.of(repo));
 
-        when(ontologyManager.createOntologyRecord(any(User.class), any(RecordOperationConfig.class))).thenReturn(record);
         when(ontologyManager.createOntology(any(FileInputStream.class), anyBoolean())).thenReturn(ontology);
         when(ontologyManager.createOntology(anyString(), anyBoolean())).thenReturn(ontology);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
@@ -691,7 +691,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         assertEquals(response.getStatus(), 201);
         assertGetUserFromContext();
-        verify(ontologyManager).createOntologyRecord(any(User.class), any(RecordOperationConfig.class));
+        verify(catalogManager).createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class));
     }
 
     @Test
@@ -719,7 +719,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .queryParam("description", "description").queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
                 .request().post(Entity.json(ontologyJson));
 
-        verify(ontologyManager).createOntologyRecord(any(User.class), any(RecordOperationConfig.class));
+        verify(catalogManager).createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class));
         assertEquals(response.getStatus(), 201);
         assertGetUserFromContext();
     }

@@ -1542,6 +1542,8 @@ public class OntologyRestImpl implements OntologyRest {
      * @param title            the title for the OntologyRecord.
      * @param description      the description for the OntologyRecord.
      * @param keywordSet       the comma separated list of keywords associated with the OntologyRecord.
+     * @param inputStreamFile  the input stream for the creation of an ontology for the OntologyRecord.
+     * @param json             the json string for the creation of an ontology for the OntologyRecord.
      * @return a Response indicating the success of the creation.
      */
     private Response createOntologyRecord(ContainerRequestContext context, String title, String description,
@@ -1564,7 +1566,7 @@ public class OntologyRestImpl implements OntologyRest {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywordSet);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         try {
-            OntologyRecord record = ontologyManager.createOntologyRecord(user, config);
+            OntologyRecord record = catalogManager.createRecord(user, config, OntologyRecord.class);
             RepositoryConnection conn = repositoryManager.getRepository(catalogManager.getRepositoryId())
                     .orElseThrow(() -> new IllegalStateException("Catalog repository unavailable")).getConnection();
             Resource branchId = record.getMasterBranch_resource().get();

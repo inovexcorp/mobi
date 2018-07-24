@@ -426,11 +426,10 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public <T extends Record> T createRecord(User user, RecordOperationConfig config, Class<T> recordClass) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            Optional.ofNullable(recordServices.get(recordClass))
+            Optional.ofNullable(getRecordService(recordClass))
                     .orElseThrow(() -> new IllegalArgumentException("Service for factory " + recordClass.toString()
                             + " is unavailable or doesn't exist."));
             RecordService<T> recordService = getRecordService(recordClass);
-            //This is safe because we created a record of the same type as the one passed in
             return recordService.create(user, config, conn);
         }
     }

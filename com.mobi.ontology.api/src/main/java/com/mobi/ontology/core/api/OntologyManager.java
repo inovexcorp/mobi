@@ -43,15 +43,6 @@ import javax.annotation.Nonnull;
 public interface OntologyManager {
 
     /**
-     * Creates a new OntologyRecord using the provided OntologyRecordCreateSettings.
-     *
-     * @param user the {@link User} that is creating the Record.
-     * @param config the configuration to use when creating the OntologyRecord.
-     * @return a OntologyRecord.
-     */
-    OntologyRecord createOntologyRecord(User user, RecordOperationConfig config);
-
-    /**
      * Creates a new Ontology Object using the provided OntologyId.
      *
      * @param ontologyId the ontology id for the Ontology you want to create.
@@ -260,7 +251,6 @@ public interface OntologyManager {
      * {@link RepositoryConnection}. It will provide <em>all</em> properties that can be traced back to the provided
      * property IRI, even if nested.
      *
-     * @param ontology The {@link Ontology} you wish to query.
      * @param iri      The {@link IRI} of the property for which you want the list of subproperties.
      * @param conn     the {@link RepositoryConnection} to run the query on.
      * @return a {@link TupleQueryResult} with the query results.

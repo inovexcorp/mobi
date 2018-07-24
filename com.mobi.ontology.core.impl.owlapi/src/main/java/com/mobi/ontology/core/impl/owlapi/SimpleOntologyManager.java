@@ -209,11 +209,6 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public OntologyRecord createOntologyRecord(User user, RecordOperationConfig config) {
-            return catalogManager.createRecord(user, config, OntologyRecord.class);
-    }
-
-    @Override
     public Ontology createOntology(OntologyId ontologyId) {
         return new SimpleOntology(ontologyId, this, sesameTransformer, bNodeService);
     }

@@ -240,8 +240,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        manager.createOntologyRecord(user, config);
-
         verify(catalogManager).createRecord(eq(user), any(RecordOperationConfig.class), eq(OntologyRecord.class));
     }
 
