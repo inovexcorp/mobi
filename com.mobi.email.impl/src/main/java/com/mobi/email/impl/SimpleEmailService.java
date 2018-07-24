@@ -32,6 +32,7 @@ import com.mobi.email.api.EmailService;
 import com.mobi.email.api.EmailServiceConfig;
 import com.mobi.exception.MobiException;
 import com.mobi.platform.config.api.server.Mobi;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.ImageHtmlEmail;
@@ -44,6 +45,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Arrays;
@@ -77,8 +80,11 @@ public class SimpleEmailService implements EmailService {
     void activate(Map<String, Object> configuration) {
         config = Configurable.createConfigurable(EmailServiceConfig.class, configuration);
         try {
-            InputStream input = new FileInputStream(URLDecoder.decode(System.getProperty("karaf.etc"), "UTF-8") + File.separator + config.emailTemplate());
-            emailTemplate = IOUtils.toString(input, "UTF-8");
+            File file = new File(config.emailTemplate());
+            if (!file.isAbsolute()) {
+                file = new File(URLDecoder.decode(System.getProperty("karaf.etc"), "UTF-8") + File.separator + config.emailTemplate());
+            }
+            emailTemplate = FileUtils.readFileToString(file, "UTF-8");
         } catch (IOException e) {
             throw new MobiException(e);
         }
@@ -106,9 +112,9 @@ public class SimpleEmailService implements EmailService {
                     String htmlMsg = emailTemplate.replace(emailTemplate.substring(emailTemplate.indexOf(BODY_BINDING),
                             emailTemplate.lastIndexOf(BODY_BINDING) + BODY_BINDING.length()), htmlMessage);
                     if (mobiServer.getHostName().endsWith("/")) {
-                        htmlMsg = htmlMsg.replace(HOSTNAME_BINDING, mobiServer.getHostName() + "mobi/index.html");
+                        htmlMsg = htmlMsg.replace(HOSTNAME_BINDING, mobiServer.getHostName());
                     } else {
-                        htmlMsg = htmlMsg.replace(HOSTNAME_BINDING, mobiServer.getHostName() + "/mobi/index.html");
+                        htmlMsg = htmlMsg.replace(HOSTNAME_BINDING, mobiServer.getHostName() + "/");
                     }
                     try {
                         email.setHtmlMsg(htmlMsg);
