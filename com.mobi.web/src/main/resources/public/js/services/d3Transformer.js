@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -64,17 +64,17 @@
 
             var jsonld = JSON.parse(inputData);
 
-            _.forEach(jsonld, function(jsonldNode, index) {
+            _.forEach(jsonld, (jsonldNode, index) => {
                 var jsonldNodeKeys = _.keys(jsonldNode);
                 var getValueId = _.get(jsonldNode, '@id');
 
                 buildNode(getValueId, 1, "obj");
 
-                var filterAnnotations = _.filter(jsonldNodeKeys, function(o) {
+                var filterAnnotations = _.filter(jsonldNodeKeys, o => {
                     return !_.startsWith(o, '@');
                 });
 
-                _.forEach(filterAnnotations, function(element, key) {
+                _.forEach(filterAnnotations, (element, key) => {
                     var getValue = _.get(jsonldNode, element);
                     buildWithLinks(getValueId, element, getValue);
                 });
@@ -93,16 +93,13 @@
          * @param {Object} A JSON-LD array (typically contains an ontology or dataset records)
          * @return {Object} A formatted JSON object
          */
-        self.buildHierarchyD3Format = function(jsonld) {
+        /* self.buildHierarchyD3Format = function(jsonld) {
             return '';
-        }
+        } */
 
         function buildWithLinks(parentId, predicate, jsonld) {
             _.forEach(jsonld, function(jsonldNode, index) {
                 var jsonldNodeKeys = _.keys(jsonldNode);
-                var filterAnnotations = _.filter(jsonldNodeKeys, function(o) {
-                    return !_.startsWith(o, '@');
-                });
 
                 var link = {};
                 var getValueId = _.get(jsonldNode, '@id');
@@ -110,15 +107,14 @@
                 if (getValueId) {
                     buildNode(getValueId, 1, "obj");
 
-                    var predicateLbl = predicate;
                     link.source = parentId;
-                    link.predicate = predicateLbl;
+                    link.predicate = predicate;
                     link.target = getValueId;
                     link.edgetype = "obj";
                     allNodes.links.push(link);
                 }
 
-                _.forEach(filterAnnotations, function(element, key) {
+                _.forEach(jsonldNodeKeys, (element, key) => {
                     var singleNode = {};
                     var getValue = _.get(jsonldNode, element);
                     var innerparentId = _.get(getValue, '@id');

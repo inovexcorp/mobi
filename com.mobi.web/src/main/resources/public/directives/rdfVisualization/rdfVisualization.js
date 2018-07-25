@@ -41,14 +41,15 @@
          *
          * @description
          * `rdfVisualization` is a directive that generates an SVG visualisation from a provided
-         * ontology in a JSON-LD object, this JSON-LD object will be transformed to provide a list
+         * JSON-LD array of objects, this JSON-LD object array will be transformed to provide a list
          * of data objects and uses them as nodes. Think of those nodes as the data bubbles,
          * it also provides a list of links, they connect nodes to display (complex) relations.
          * Every link needs to have at least a source and a target. Both are ids referencing a node.
          * The visualization will have default functionalities like zoom, pan, remove node,
-         * highlight node nearest neighbors and draggin events.
+         * highlight node nearest neighbors and dragging events. The directive is replaced by the contents of its
+         * template.
          *
-         * @param {Object} entity A JSON-LD object
+         * @param {Object} entity A JSON-LD array
          *
          */
         .directive('rdfVisualization', rdfVisualization);
@@ -256,13 +257,9 @@
                 function removeNode(selectedNode) {
                     formattedData.nodes.splice(selectedNode.index, 1);
                     // Remove the links connected with that node
-                    for (var i = formattedData.links.length - 1; i >= 0; i--) {
-                        var item = formattedData.links[i];
-
-                        if (item.target.id === selectedNode.id || item.source.id === selectedNode.id) {
-                            formattedData.links.splice(i, 1);
-                        }
-                    }
+                    _.filter(formattedData.links, link => {
+                        return link.target.id === selectedNode.id || link.source.id === selectedNode.id;
+                    })
                     document.getElementById("nodeMetada").textContent = '';
                     draw();
                 }
@@ -351,7 +348,7 @@
                         .enter()
                         .append('path')
                         .attr("class", edgepathsConfig.class)
-                        .attr("id", function(d, i) {
+                        .attr("id", (d, i) => {
                             return 'edgepath' + i
                         })
                         .style("pointer-events", "none");
@@ -366,19 +363,19 @@
                         .data(formattedData.links)
                         .enter()
                         .append('text')
-                        .attr('id', function(d, i) {
+                        .attr('id', (d, i) => {
                             return 'edgelabel' + i
                         })
                         .attr('font-size', edgelabelsConfig.fontSize)
                         .attr('fill', edgelabelsConfig.fontColor);
 
                     edgelabels.append('textPath')
-                        .attr('xlink:href', function(d, i) {
+                        .attr('xlink:href', (d, i) => {
                             return '#edgepath' + i
                         })
                         .style('text-anchor', edgelabelsConfig.textAnchor)
                         .attr('startOffset', edgelabelsConfig.startOffSet)
-                        .text(function(d) {
+                        .text((d) => {
                             return setLinkText(d.predicate);
                         });
                     return edgelabels;
