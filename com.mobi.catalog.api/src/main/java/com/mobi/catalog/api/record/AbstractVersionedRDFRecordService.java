@@ -93,6 +93,13 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         conn.commit();
         return record;
     }
+    protected addPolicy() {
+        Resource newPolicyId = policyManager.addPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
+    }
+
+    protected deletePolicy(Resource policyId) {
+        policyManager.deletePolicy(policyId);
+    }
 
     /**
      * Adds the record and masterBranch to the repository.
