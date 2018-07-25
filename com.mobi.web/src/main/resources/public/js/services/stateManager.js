@@ -98,7 +98,10 @@
                 var stateId = _.get(ontologyState, 'id', '');
                 var model = _.get(ontologyState, 'model', '');
                 var branch = _.find(model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
-                var record = _.find(model, {'@type': 'http://mobi.com/states/ontology-editor/state-record'})
+                var record = _.find(model, {'@type': 'http://mobi.com/states/ontology-editor/state-record'});
+                if (record === undefined) {
+                    record = _.find(model, {'@type': ['http://mobi.com/states/ontology-editor/state-record']});
+                }
                 var branchIri = 'http://mobi.com/states/ontology-editor/branch-id/' + uuid.v4();
 
                 record[prefixes.ontologyState + 'currentBranch'] = [{'@id': branchId}];

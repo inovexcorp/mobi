@@ -281,6 +281,9 @@
                 var state = sm.getOntologyStateByRecordId(recordId);
                 if (!_.isEmpty(state)) {
                     var record = _.find(state.model, {'@type': 'http://mobi.com/states/ontology-editor/state-record'});
+                    if(record === undefined) {
+                        record = _.find(state.model, {'@type': ['http://mobi.com/states/ontology-editor/state-record']});
+                    }
                     var inProgressCommit = emptyInProgressCommit;
                     var branchId = util.getPropertyId(record, prefixes.ontologyState + 'currentBranch');
                     var branch = _.find(state.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
