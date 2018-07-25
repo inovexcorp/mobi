@@ -272,7 +272,7 @@ describe('Ontology State Service', function() {
         });
         describe('if state exists', function() {
             beforeEach(function() {
-                var ontologyState = [{'@id': 'id', '@type': 'http://mobi.com/states/ontology-editor/state-record'}, {'@id': 'id-branch'}];
+                var ontologyState = [{'@id': 'id', '@type': ['http://mobi.com/states/ontology-editor/state-record']}, {'@id': 'id-branch'}];
                 ontologyState[0][prefixes.ontologyState + 'record'] = [{'@id': this.recordId}];
                 ontologyState[0][prefixes.ontologyState + 'currentBranch'] = [{'@id': this.branchId}];
                 ontologyState[0][prefixes.ontologyState + 'branches'] = [{'@id': 'id-branch'}];

@@ -58,7 +58,7 @@ describe('State Manager service', function() {
         this.branchId = 'branchId';
         this.commitId = 'commitId';
         this.ontologyState = [{
-            '@type': 'http://mobi.com/states/ontology-editor/state-record',
+            '@type': ['http://mobi.com/states/ontology-editor/state-record'],
             [prefixes.ontologyState + 'record']: [{'@id': this.recordId}],
             [prefixes.ontologyState + 'branches']: [],
             [prefixes.ontologyState + 'currentBranch']: [{'@id': this.branchId}]

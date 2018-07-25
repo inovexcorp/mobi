@@ -98,10 +98,7 @@
                 var stateId = _.get(ontologyState, 'id', '');
                 var model = _.get(ontologyState, 'model', '');
                 var branch = _.find(model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
-                var record = _.find(model, {'@type': 'http://mobi.com/states/ontology-editor/state-record'});
-                if (record === undefined) {
-                    record = _.find(model, {'@type': ['http://mobi.com/states/ontology-editor/state-record']});
-                }
+                var record = _.find(model, {'@type': ['http://mobi.com/states/ontology-editor/state-record']});
                 var branchIri = 'http://mobi.com/states/ontology-editor/branch-id/' + uuid.v4();
 
                 record[prefixes.ontologyState + 'currentBranch'] = [{'@id': branchId}];
@@ -120,7 +117,7 @@
             
             self.deleteOntologyBranch = function(recordId, branchId) {
                 var ontologyState = self.getOntologyStateByRecordId(recordId);
-                var record = _.find(ontologyState.model, {'@type': 'http://mobi.com/states/ontology-editor/state-record'});
+                var record = _.find(ontologyState.model, {'@type': ['http://mobi.com/states/ontology-editor/state-record']});
                 var branch = _.head(_.remove(ontologyState.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]}));
                 _.remove(record[prefixes.ontologyState + 'branches'], {'@id': _.get(branch, '@id')});
                 return self.updateState(ontologyState.id, ontologyState.model);
@@ -137,7 +134,7 @@
                 return [
                     {
                         '@id': 'http://mobi.com/states/ontology-editor/' + uuid.v4(),
-                        '@type': 'http://mobi.com/states/ontology-editor/state-record',
+                        '@type': ['http://mobi.com/states/ontology-editor/state-record'],
                         [prefixes.ontologyState + 'record']: [{'@id': recordId}],
                         [prefixes.ontologyState + 'branches']: [{'@id': branchIri}],
                         [prefixes.ontologyState + 'currentBranch']: [{'@id': branchId}]
