@@ -203,7 +203,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
         when(ontologyManager.createOntology(any(InputStream.class), any(Boolean.class))).thenReturn(ontology);
         when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(true);
-        when(versioningManager.commit(eq(catalogId), eq(testIRI), eq(branchIRI), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitIRI);
+        when(versioningManager.commit(any(IRI.class), any(IRI.class), any(IRI.class), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitIRI);
         when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
         when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection))).thenReturn(branch);
         when(utilsService.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
