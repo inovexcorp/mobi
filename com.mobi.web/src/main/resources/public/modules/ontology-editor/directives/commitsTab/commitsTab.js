@@ -27,9 +27,9 @@
         .module('commitsTab', [])
         .directive('commitsTab', commitsTab);
 
-        commitsTab.$inject = ['ontologyStateService'];
+        commitsTab.$inject = ['ontologyStateService', 'utilService'];
 
-        function commitsTab(ontologyStateService) {
+        function commitsTab(ontologyStateService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,9 +39,10 @@
                 controller: function() {
                     var dvm = this;
                     dvm.os = ontologyStateService;
+                    dvm.util = utilService;
 
-                    dvm.getBranch = function() {
-                        return _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
+                    dvm.getBranchTitle = function() {
+                        return dvm.util.getDctermsValue(_.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId}), 'title');
                     }
                 }
             }

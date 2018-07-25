@@ -113,24 +113,21 @@ var jsFiles = function(prefix) {
         dest + '**/main.min.js'
     ];
 
-// Method to chunk array
-var createGroupedArray = function(arr, chunkSize) {
-    var groups = [], i;
-    for (i = 0; i < arr.length; i += chunkSize) {
-        groups.push(arr.slice(i, i + chunkSize));
-    }
-    return groups;
-}
-
-var tests = createGroupedArray(glob.sync(spec), 50);
-
 //Method to run jasmine tests
 var runKarma = function(vendorFiles, testFiles, isBuild, done) {
     var configFile = isBuild ? __dirname + '/karma.conf.build.js' : __dirname + '/karma.conf.tdd.js';
     new Karma({
         configFile: configFile,
         files: vendorFiles.concat(['./target/templates.js', './src/test/js/Shared.js']).concat(testFiles)
-    }, done).start();
+    }, function(processExitCode) {
+        if (processExitCode === 0 || processExitCode === null || typeof processExitCode === 'undefined') {
+            done();
+        } else {
+            var err = new Error('ERROR: Karma Server exited with code "' + processExitCode + '"');
+            done(err);
+        }
+        process.exit(processExitCode);
+    }).start();
 }
 
 // Inject method for minified and unminified
@@ -156,57 +153,9 @@ gulp.task('test-minified', ['cacheTemplates'], function(done) {
     return runKarma(minifiedFiles, spec, true, done);
 });
 
-gulp.task('test-minified-1', ['cacheTemplates'], function(done) {
-    return runKarma(minifiedFiles, tests[0], true, done);
-});
-
-gulp.task('test-minified-2', ['test-minified-1'], function(done) {
-    return runKarma(minifiedFiles, tests[1], true, done);
-});
-
-gulp.task('test-minified-3', ['test-minified-2'], function(done) {
-    return runKarma(minifiedFiles, tests[2], true, done);
-});
-
-gulp.task('test-minified-4', ['test-minified-3'], function(done) {
-    return runKarma(minifiedFiles, tests[3], true, done);
-});
-
-gulp.task('test-minified-5', ['test-minified-4'], function(done) {
-    return runKarma(minifiedFiles, tests[4], true, done);
-});
-
-gulp.task('test-minified-6', ['test-minified-5'], function(done) {
-    return runKarma(minifiedFiles, tests[5], true, done);
-});
-
 // Run jasmine tests in PhantomJS with unminified source files
 gulp.task('test-unminified', ['cacheTemplates'], function(done) {
     return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), spec, true, done);
-});
-
-gulp.task('test-unminified-1', ['cacheTemplates'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), tests[0], true, done);
-});
-
-gulp.task('test-unminified-2', ['test-unminified-1'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), tests[1], true, done);
-});
-
-gulp.task('test-unminified-3', ['test-unminified-2'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), tests[2], true, done);
-});
-
-gulp.task('test-unminified-4', ['test-unminified-3'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), tests[3], true, done);
-});
-
-gulp.task('test-unminified-5', ['test-unminified-4'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), tests[4], true, done);
-});
-
-gulp.task('test-unminified-6', ['test-unminified-5'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), tests[5], true, done);
 });
 
 // Launch TDD environment for jasmine tests in Chrome

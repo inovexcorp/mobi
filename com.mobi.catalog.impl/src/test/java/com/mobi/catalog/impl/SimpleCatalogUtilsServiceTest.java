@@ -30,6 +30,7 @@ import static org.junit.Assert.assertTrue;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
+import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
@@ -2111,6 +2112,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
 
         // Expected list should have the first commit removed
         List<Resource> expected = commitChain.subList(1, commitChain.size());
+        Collections.reverse(expected);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             List<Resource> actual = service.getDifferenceChain(sourceId, targetId, conn);
@@ -2122,13 +2124,20 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     @Test
     public void testGetDifferenceChainCommonParent() {
         // Setup:
+        List<Resource> commitChain = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4b")).collect(Collectors.toList());
         Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4b");
         Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testLoner");
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage(String.format("No common parent between Commit %s and %s", sourceId.stringValue(), targetId.stringValue()));
+
+        // Expected should contain all commits from the source chain
+        Collections.reverse(commitChain);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             List<Resource> actual = service.getDifferenceChain(sourceId, targetId, conn);
+
+            assertEquals(actual, commitChain);
         }
     }
 

@@ -1,4 +1,4 @@
-package com.mobi.catalog.impl;
+package com.mobi.catalog.api;
 
 /*-
  * #%L

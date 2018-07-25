@@ -37,4 +37,10 @@ public interface MobiConfig {
     @Meta.AD(required = false)
     String serverId();
 
+    /**
+     * @return The configured host name for the system
+     */
+    @Meta.AD(required = false)
+    String hostName();
+
 }

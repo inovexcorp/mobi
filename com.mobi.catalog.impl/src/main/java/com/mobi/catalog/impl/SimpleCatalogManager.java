@@ -42,6 +42,7 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
+import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
@@ -62,6 +63,8 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
+import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.config.CatalogConfig;
 import com.mobi.catalog.util.SearchResults;
 import com.mobi.exception.MobiException;
@@ -70,6 +73,8 @@ import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.persistence.utils.Bindings;
+import com.mobi.persistence.utils.RepositoryResults;
+import com.mobi.persistence.utils.Statements;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.TupleQuery;
@@ -81,6 +86,7 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -123,6 +129,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private BranchFactory branchFactory;
     private InProgressCommitFactory inProgressCommitFactory;
     private CommitFactory commitFactory;
+    private OrmFactoryRegistry factoryRegistry;
     private RevisionFactory revisionFactory;
     private VersionedRDFRecordFactory versionedRDFRecordFactory;
     private VersionedRecordFactory versionedRecordFactory;
@@ -132,6 +139,11 @@ public class SimpleCatalogManager implements CatalogManager {
     private com.mobi.rdf.api.Resource distributedCatalogIRI;
     private com.mobi.rdf.api.Resource localCatalogIRI;
     private Map<com.mobi.rdf.api.Resource, String> sortingOptions = new HashMap<>();
+
+    /**
+     * A map of the available RecordServices. The string is get typeIRI for the individual RecordService.
+     */
+    private Map<String, RecordService<? extends Record>> recordServices = new HashMap<>();
 
     public SimpleCatalogManager() {
     }
@@ -219,6 +231,20 @@ public class SimpleCatalogManager implements CatalogManager {
     @Reference
     void setTagFactory(TagFactory tagFactory) {
         this.tagFactory = tagFactory;
+    }
+
+    @Reference
+    void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
+        this.factoryRegistry = factoryRegistry;
+    }
+
+    @Reference(type = '*', dynamic = true)
+    void addRecordService(RecordService<? extends Record> recordService) {
+        recordServices.put(recordService.getType().toString(), recordService);
+    }
+
+    void removeRecordService(RecordService<? extends Record> recordService) {
+        recordServices.remove(recordService.getType().toString());
     }
 
     private static final String PROV_AT_TIME = "http://www.w3.org/ns/prov#atTime";
@@ -394,6 +420,16 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public <T extends Record> T createRecord(User user, RecordOperationConfig config, Class<T> recordClass) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            RecordService<? extends Record> service = Optional.ofNullable(recordServices.get(recordClass.toString()))
+                    .orElseThrow(() -> new IllegalArgumentException("Service for factory " + recordClass.toString()
+                            + " is unavailable or doesn't exist."));
+            return (T) service.create(user, config, conn);
+        }
+    }
+
+    @Override
     public <T extends Record> T createRecord(RecordConfig config, OrmFactory<T> factory) {
         OffsetDateTime now = OffsetDateTime.now();
         return addPropertiesToRecord(factory.createNew(vf.createIRI(Catalogs.RECORD_NAMESPACE + UUID.randomUUID())),
@@ -458,6 +494,19 @@ public class SimpleCatalogManager implements CatalogManager {
             }
         }
         return record;
+    }
+
+    @Override
+    public <T extends Record> T deleteRecord(User user, Resource recordId, Class<T> recordClass) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            OrmFactory<? extends Record> serviceType = getFactory(recordId, conn, true);
+            if (!serviceType.getType().equals(recordClass)) {
+                throw new IllegalArgumentException("Service for factory " + recordClass
+                        + " is unavailable or doesn't exist.");
+            }
+            RecordService<? extends Record> service = recordServices.get(serviceType.getType().toString());
+            return (T) service.delete((IRI) recordId, user, conn);
+        }
     }
 
     @Override
@@ -998,7 +1047,7 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateBranch(catalogId, versionedRDFRecordId, branchId, conn);
             if (utils.commitInBranch(branchId, commitId, conn)) {
-                rtn =  Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
+                rtn = Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
             }
         } finally {
             log.trace("getCommit took {}ms", System.currentTimeMillis() - start);
@@ -1109,6 +1158,17 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public List<Commit> getCommitChain(Resource commitId, Resource targetId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            utils.validateResource(targetId, commitFactory.getTypeIRI(), conn);
+            return utils.getDifferenceChain(commitId, targetId, conn).stream()
+                    .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Override
     public List<Commit> getCommitChain(Resource catalogId, Resource versionedRDFRecordId, Resource branchId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
@@ -1154,7 +1214,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Difference getDifference(Resource sourceCommitId, Resource targetCommitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            return utils.getCommitDifference(utils.getDifferenceChain(sourceCommitId, targetCommitId, conn), conn);
+            return utils.getCommitDifference(utils.getDifferenceChain(sourceCommitId, targetCommitId, conn, true), conn);
         }
     }
 
@@ -1169,9 +1229,6 @@ public class SimpleCatalogManager implements CatalogManager {
             ArrayList<Resource> rightCommits = new ArrayList<>(utils.getCommitChain(rightId, true, conn));
             ArrayList<Resource> commonCommits = new ArrayList<>(leftCommits);
             commonCommits.retainAll(rightCommits);
-            if (commonCommits.size() == 0) {
-                throw new IllegalArgumentException("No common parent between Commit " + leftId + " and " + rightId);
-            }
 
             leftCommits.removeAll(commonCommits);
             rightCommits.removeAll(commonCommits);
@@ -1208,33 +1265,37 @@ public class SimpleCatalogManager implements CatalogManager {
                     }
                 });
 
-                // Check for deletion in left and addition in right
-                Model rightSubjectAdd = right.filter(subject, null, null);
-                boolean leftEntityDeleted = !left.subjects().contains(subject)
-                        && leftDeleteSubjectStatements.equals(original.filter(subject, null, null));
-                boolean rightEntityDeleted = rightDeletions.containsAll(leftDeleteSubjectStatements);
+                // Check for deletion in left and addition in right if there are common parents
+                if (commonCommits.size() != 0) {
+                    Model rightSubjectAdd = right.filter(subject, null, null);
+                    boolean leftEntityDeleted = !left.subjects().contains(subject)
+                            && leftDeleteSubjectStatements.equals(original.filter(subject, null, null));
+                    boolean rightEntityDeleted = rightDeletions.containsAll(leftDeleteSubjectStatements);
 
-                if (leftEntityDeleted && !rightEntityDeleted && rightSubjectAdd.size() > 0) {
-                    result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
-                    statementsToRemove.addAll(rightSubjectAdd);
+                    if (leftEntityDeleted && !rightEntityDeleted && rightSubjectAdd.size() > 0) {
+                        result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
+                        statementsToRemove.addAll(rightSubjectAdd);
+                    }
                 }
             });
 
             statementsToRemove.forEach(statement -> Stream.of(left, leftDeletions, right, rightDeletions)
                     .forEach(model -> model.remove(statement.getSubject(), statement.getPredicate(), null)));
 
-            rightDeletions.subjects().forEach(subject -> {
-                // Check for deletion in right and addition in left
-                Model rightDeleteSubjectStatements = rightDeletions.filter(subject, null, null);
-                Model leftSubjectAdd = left.filter(subject, null, null);
-                boolean rightEntityDeleted = !right.subjects().contains(subject)
-                        && rightDeleteSubjectStatements.equals(original.filter(subject, null, null));
-                boolean leftEntityDeleted = leftDeletions.containsAll(rightDeleteSubjectStatements);
+            if (commonCommits.size() != 0) {
+                rightDeletions.subjects().forEach(subject -> {
+                    // Check for deletion in right and addition in left
+                    Model rightDeleteSubjectStatements = rightDeletions.filter(subject, null, null);
+                    Model leftSubjectAdd = left.filter(subject, null, null);
+                    boolean rightEntityDeleted = !right.subjects().contains(subject)
+                            && rightDeleteSubjectStatements.equals(original.filter(subject, null, null));
+                    boolean leftEntityDeleted = leftDeletions.containsAll(rightDeleteSubjectStatements);
 
-                if (rightEntityDeleted && !leftEntityDeleted && leftSubjectAdd.size() > 0) {
-                    result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
-                }
-            });
+                    if (rightEntityDeleted && !leftEntityDeleted && leftSubjectAdd.size() > 0) {
+                        result.add(createConflict(subject, null, left, leftDeletions, right, rightDeletions));
+                    }
+                });
+            }
 
 
             return result;
@@ -1260,7 +1321,57 @@ public class SimpleCatalogManager implements CatalogManager {
                 .deletions(originalCopy)
                 .build();
     }
-       
+
+    @Override
+    public void export(Resource recordIRI, RecordOperationConfig config) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            OrmFactory<? extends Record> factory = getFactory(recordIRI, conn, false);
+            RecordService<? extends Record> service = recordServices.get(factory.getType().toString());
+            service.export(recordIRI, config, conn);
+        }
+    }
+
+    @Override
+    public void export(List<Resource> recordIRIs, RecordOperationConfig config) {
+        recordIRIs.forEach(iri -> export(iri, config));
+    }
+
+    /**
+     * Takes a recordId and returns the factory for that record. If a factory for that particular record is not
+     * registered, it returns the most specific factory available if the flag is set to false.
+     *
+     * @param recordId The record IRI
+     * @param exactOnly A flag to indicate whether to do an exact match with the record type. If false, will allow
+     *                  closest match to be returned
+     * @return the record factory of a given recordId
+     */
+    private OrmFactory<? extends Record> getFactory(Resource recordId, RepositoryConnection conn, boolean exactOnly) {
+        List<Resource> types = RepositoryResults.asList(
+                conn.getStatements(recordId, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
+                .stream()
+                .map(Statements::objectResource)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+
+        List<OrmFactory<? extends Record>> classType = factoryRegistry.getSortedFactoriesOfType(Record.class).stream()
+                .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
+                .collect(Collectors.toList());
+
+        if (exactOnly && classType.size() > 0) {
+            if (recordServices.keySet().contains(classType.get(0).getType().toString())) {
+                return classType.get(0);
+            }
+        } else {
+            for (OrmFactory<? extends Record> factory : classType) {
+                if (recordServices.keySet().contains(factory.getType().toString())) {
+                    return factory;
+                }
+            }
+        }
+        throw new IllegalArgumentException("No known record services for this record type.");
+    }
+
     /**
      * Creates a conflict using the provided parameters as the data to construct it.
      *
