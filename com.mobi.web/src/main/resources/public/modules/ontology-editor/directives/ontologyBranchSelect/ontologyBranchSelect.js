@@ -63,7 +63,7 @@
                             .then(headCommit => {
                                 var headCommitId = _.get(headCommit, "commit['@id']", '');
                                 if (!commitId) {
-                                    commitId = headCommitId
+                                    commitId = headCommitId;
                                 }
                                 return $q.all([
                                     sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId),

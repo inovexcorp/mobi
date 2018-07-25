@@ -27,10 +27,10 @@
         .module('createBranchOverlay', [])
         .directive('createBranchOverlay', createBranchOverlay);
 
-        createBranchOverlay.$inject = ['catalogManagerService', 'ontologyStateService', 'stateManagerService',
+        createBranchOverlay.$inject = ['$q', 'catalogManagerService', 'ontologyStateService', 'stateManagerService',
             'prefixes'];
 
-        function createBranchOverlay(catalogManagerService, ontologyStateService, stateManagerService, prefixes) {
+        function createBranchOverlay($q, catalogManagerService, ontologyStateService, stateManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -61,8 +61,13 @@
                                         dvm.os.listItem.branches.push(branch);
                                         dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
                                         var commitId = branch[prefixes.catalog + 'head'][0]['@id'];
-                                        sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)
-                                            .then(() => dvm.os.showCreateBranchOverlay = false, onError);
+                                        $q.all([
+                                            sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId),
+                                            dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)])
+                                            .then(() => {
+                                                dvm.os.showCreateBranchOverlay = false;
+                                                dvm.os.resetStateTabs();
+                                            } , onError);
                                     }, onError), onError);
                     }
 
