@@ -41,8 +41,6 @@ import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.record.config.OperationConfig;
-import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Ontology;
@@ -81,7 +79,6 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -224,23 +221,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     public void tearDown() throws Exception {
         repo.shutDown();
         vocabRepo.shutDown();
-    }
-
-    @Test
-    public void testCreateOntologyRecord() throws Exception {
-        RecordOperationConfig config = new OperationConfig();
-        Set<String> names = new LinkedHashSet<>();
-        names.add("Rick");
-        names.add("Morty");
-        Set<User> users = new LinkedHashSet<>();
-        users.add(user);
-        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
-        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
-        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestDescription");
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
-        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
-
-        verify(catalogManager).createRecord(eq(user), any(RecordOperationConfig.class), eq(OntologyRecord.class));
     }
 
     // Testing retrieveOntologyByIRI

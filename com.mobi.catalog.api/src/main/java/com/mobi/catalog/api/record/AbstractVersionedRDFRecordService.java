@@ -88,12 +88,12 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
         Resource masterBranchId = masterBranch.getResource();
         Model model = config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA);
-        conn.commit();
         try {
+            conn.commit();
             versioningManager.commit(catalogIdIRI, record.getResource(),
                     masterBranchId, user, "The initial commit.", model, null);
         } catch (Exception e) {
-            deleteRecord(record, conn);
+            conn.rollback();
             throw e;
         }
         return record;
