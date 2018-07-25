@@ -54,21 +54,22 @@
                         if (dvm.branchConfig.description === '') {
                             _.unset(dvm.branchConfig, 'description');
                         }
-                        cm.createRecordBranch(dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.branchConfig,
-                            dvm.os.listItem.ontologyRecord.commitId).then(branchId =>
-                                cm.getRecordBranch(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
-                                    .then(branch => {
-                                        dvm.os.listItem.branches.push(branch);
-                                        dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
-                                        var commitId = branch[prefixes.catalog + 'head'][0]['@id'];
-                                        $q.all([
-                                            sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId),
-                                            dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)])
-                                            .then(() => {
-                                                dvm.os.showCreateBranchOverlay = false;
-                                                dvm.os.resetStateTabs();
-                                            } , onError);
-                                    }, onError), onError);
+                        cm.createRecordBranch(dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.branchConfig, dvm.os.listItem.ontologyRecord.commitId)
+                        .then(branchId => cm.getRecordBranch(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId), $q.reject)
+                        .then(branch => {
+                            dvm.os.listItem.branches.push(branch);
+                            dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
+                            var commitId = branch[prefixes.catalog + 'head'][0]['@id'];
+                            return $q.all([
+                                sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, commitId),
+                                dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, commitId)
+                            ]);
+                        }, $q.reject)
+                        .then(() => {
+                            dvm.os.showCreateBranchOverlay = false;
+                            dvm.os.resetStateTabs();
+                        }, onError);
+
                     }
 
                     function onError(errorMessage) {
