@@ -257,6 +257,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             setRelatedProperties(policyFile, balanaPolicy);
             policyFile.setChecksum(getChecksum(balanaPolicy));
             policyFile.setRetrievalURL(vf.createIRI(virtualFileNew.getIdentifier()));
+            policyFile.setFileName(virtualFileNew.getIdentifier() + ".xml");
             virtualFileOld.delete();
             try (RepositoryConnection conn = repository.getConnection()) {
                 conn.clear(newPolicy.getId());
