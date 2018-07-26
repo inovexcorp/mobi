@@ -1577,6 +1577,9 @@ public class OntologyRestImpl implements OntologyRest {
                         .BAD_REQUEST);
             }
             Resource commitId = (Resource) commitStmt.next().getObject();
+            if (record.getOntologyIRI().equals(Optional.empty())) {
+                throw new IllegalStateException("ontologyIRI can't be empty");
+            }
             JSONObject response = new JSONObject()
                     .element("ontologyId", record.getOntologyIRI().toString())
                     .element("recordId", record.getResource().stringValue())

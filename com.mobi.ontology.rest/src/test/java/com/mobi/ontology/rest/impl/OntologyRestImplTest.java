@@ -330,6 +330,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         individualsOfResult = getResource("/individuals-of-results.json");
         basicHierarchyResults = getResource("/basic-hierarchy.json");
 
+        record.setOntologyIRI(ontologyIRI);
         missingIRI = vf.createIRI("http://mobi.com/missing");
         Resource class1b = vf.createIRI("http://mobi.com/ontology#Class1b");
         IRI subClassOf = vf.createIRI("http://www.w3.org/2000/01/rdf-schema#subClassOf");

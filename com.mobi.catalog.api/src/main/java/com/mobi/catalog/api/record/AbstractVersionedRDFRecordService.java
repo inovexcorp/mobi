@@ -89,19 +89,8 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         Resource masterBranchId = masterBranch.getResource();
         Model model = config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA);
         conn.commit();
-        Resource commit;
-        try {
-            commit = versioningManager.commit(catalogIdIRI, record.getResource(),
-                    masterBranchId, user, "The initial commit.", model, null);
-        } catch (Exception e) {
-            delete(record.getResource(), user, conn);
-            throw e;
-        }
-        if (commit == null) {
-            delete(record.getResource(), user, conn);
-            throw new IllegalStateException("VersioningManager commit can't be null");
-        }
-
+        versioningManager.commit(catalogIdIRI, record.getResource(),
+                masterBranchId, user, "The initial commit.", model, null);
         return record;
     }
 

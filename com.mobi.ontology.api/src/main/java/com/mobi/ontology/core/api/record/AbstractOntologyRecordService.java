@@ -62,20 +62,8 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         Resource masterBranchId = masterBranch.getResource();
         Model model = ontology.asModel(modelFactory);
         conn.commit();
-        Resource commit;
-        try {
-            commit = versioningManager.commit(catalogIdIRI, record.getResource(),
-                    masterBranchId, user, "The initial commit.", model, null);
-        } catch (Exception e) {
-            delete(record.getResource(), user, conn);
-            deleteRecord(record, conn);
-            throw e;
-        }
-        if (commit == null) {
-            delete(record.getResource(), user, conn);
-            throw new IllegalStateException("VersioningManager commit can't be null");
-        }
-
+        versioningManager.commit(catalogIdIRI, record.getResource(),
+                masterBranchId, user, "The initial commit.", model, null);
         return record;
     }
 
