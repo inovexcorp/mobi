@@ -426,10 +426,9 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public <T extends Record> T createRecord(User user, RecordOperationConfig config, Class<T> recordClass) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            Optional.ofNullable(getRecordService(recordClass))
+            RecordService<T> recordService = Optional.ofNullable(getRecordService(recordClass))
                     .orElseThrow(() -> new IllegalArgumentException("Service for factory " + recordClass.toString()
                             + " is unavailable or doesn't exist."));
-            RecordService<T> recordService = getRecordService(recordClass);
             return recordService.create(user, config, conn);
         }
     }
