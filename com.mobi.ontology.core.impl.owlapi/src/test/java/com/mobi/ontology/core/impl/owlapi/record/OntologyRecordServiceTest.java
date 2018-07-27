@@ -207,8 +207,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
         when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection))).thenReturn(branch);
         when(utilsService.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
-        when(utilsService.getObject(any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
-                i.getArgumentAt(1, OrmFactory.class).createNew(i.getArgumentAt(0, Resource.class)));
         doReturn(Stream.of(commitIRI).collect(Collectors.toList()))
                 .when(utilsService).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
         when(utilsService.getExpectedObject(eq(commitIRI), any(OrmFactory.class), eq(connection))).thenReturn(headCommit);
@@ -254,7 +252,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         verify(ontologyManager).createOntology(any(InputStream.class), any(Boolean.class));
         verify(utilsService, times(2)).addObject(any(Record.class),
                 any(RepositoryConnection.class));
-        verify(utilsService).getObject(any(Resource.class),eq(catalogFactory),any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
     }
@@ -283,7 +280,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
                 any(RepositoryConnection.class));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),
                 anyString(), any(Model.class), eq(null));
-        verify(utilsService).getObject(any(Resource.class),eq(catalogFactory),any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
     }

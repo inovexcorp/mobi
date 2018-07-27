@@ -53,15 +53,16 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     @Override
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
                           RepositoryConnection conn) {
-        T record = createRecordObject(config, issued, modified, conn);
+        T record = createRecordObject(config, issued, modified);
         Branch masterBranch = createMasterBranch(record);
         Ontology ontology = setOntologyToRecord(record, config);
         conn.begin();
         addRecord(record, masterBranch, conn);
-        IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
-        Resource masterBranchId = masterBranch.getResource();
-        Model model = ontology.asModel(modelFactory);
         conn.commit();
+        IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
+        Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
+                new IllegalStateException("OntologyRecord must have a master Branch"));
+        Model model = ontology.asModel(modelFactory);
         versioningManager.commit(catalogIdIRI, record.getResource(),
                 masterBranchId, user, "The initial commit.", model, null);
         return record;
