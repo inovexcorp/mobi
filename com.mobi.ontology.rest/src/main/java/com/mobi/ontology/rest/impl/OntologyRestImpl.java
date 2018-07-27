@@ -199,7 +199,9 @@ public class OntologyRestImpl implements OntologyRest {
         if (keywords != null) {
             keywordSet = keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
         }
-        return createOntologyRecord(context, title, description, keywordSet, fileInputStream, null);
+        RecordOperationConfig config = new OperationConfig();
+        config.set(OntologyRecordCreateSettings.INPUT_STREAM, fileInputStream);
+        return createOntologyRecord(context, title, description, keywordSet, config);
     }
 
     @Override
@@ -215,7 +217,10 @@ public class OntologyRestImpl implements OntologyRest {
         if (keywords != null) {
             keywordSet = new HashSet<>(keywords);
         }
-        return createOntologyRecord(context, title, description, keywordSet, null, ontologyJson);
+        RecordOperationConfig config = new OperationConfig();
+        Model jsonModel = getModelFromJson(ontologyJson);
+        config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, jsonModel);
+        return createOntologyRecord(context, title, description, keywordSet, config);
     }
 
     @Override
@@ -1542,24 +1547,15 @@ public class OntologyRestImpl implements OntologyRest {
      * @param title            the title for the OntologyRecord.
      * @param description      the description for the OntologyRecord.
      * @param keywordSet       the comma separated list of keywords associated with the OntologyRecord.
-     * @param inputStreamFile  the input stream for the creation of an ontology for the OntologyRecord.
-     * @param json             the json string for the creation of an ontology for the OntologyRecord.
+     * @param config           the RecordOperationConfig containing the appropriate model or input file.
      * @return a Response indicating the success of the creation.
      */
     private Response createOntologyRecord(ContainerRequestContext context, String title, String description,
-                                          Set<String> keywordSet, InputStream inputStreamFile, String json) {
+                                          Set<String> keywordSet, RecordOperationConfig config) {
         User user = getActiveUser(context, engineManager);
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
-        RecordOperationConfig config = new OperationConfig();
         Resource catalogId = catalogManager.getLocalCatalogIRI();
-        if (inputStreamFile != null) {
-            config.set(OntologyRecordCreateSettings.INPUT_STREAM, inputStreamFile);
-        }
-        if (json != null) {
-            Model jsonModel = getModelFromJson(json);
-            config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, jsonModel);
-        }
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, title);
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, description);
