@@ -272,11 +272,16 @@ describe('Ontology State Service', function() {
         });
         describe('if state exists', function() {
             beforeEach(function() {
-                var ontologyState = {'@id': 'id'};
-                ontologyState[prefixes.ontologyState + 'record'] = [{'@id': this.recordId}];
-                ontologyState[prefixes.ontologyState + 'branch'] = [{'@id': this.branchId}];
-                ontologyState[prefixes.ontologyState + 'commit'] = [{'@id': this.commitId}];
-                stateManagerSvc.getOntologyStateByRecordId.and.returnValue({model: [ontologyState]});
+                var ontologyState = [{'@id': 'id', '@type': ['http://mobi.com/states/ontology-editor/state-record']}, {'@id': 'id-branch'}];
+                ontologyState[0][prefixes.ontologyState + 'record'] = [{'@id': this.recordId}];
+                ontologyState[0][prefixes.ontologyState + 'currentBranch'] = [{'@id': this.branchId}];
+                ontologyState[0][prefixes.ontologyState + 'branches'] = [{'@id': 'id-branch'}];
+                ontologyState[1][prefixes.ontologyState + 'branch'] = [{'@id': this.branchId}];
+                ontologyState[1][prefixes.ontologyState + 'commit'] = [{'@id': this.commitId}];
+                stateManagerSvc.getOntologyStateByRecordId.and.returnValue({model: ontologyState});
+                util.getPropertyId.and.callFake(function(entity, propertyIRI) {
+                    return _.get(entity, "[" + propertyIRI + "][0]['@id']", '');
+                })
             });
             describe('and getRecordBranch is resolved', function() {
                 beforeEach(function() {
@@ -817,6 +822,7 @@ describe('Ontology State Service', function() {
         spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
         ontologyStateSvc.removeBranch(this.recordId, this.branchId);
         expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
+        expect(stateManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
         expect(listItem.branches).toEqual([]);
     });
     describe('saveChanges should call the correct methods', function() {
