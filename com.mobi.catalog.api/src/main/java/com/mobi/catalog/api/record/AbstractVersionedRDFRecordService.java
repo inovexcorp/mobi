@@ -155,18 +155,14 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param conn A RepositoryConnection to use for lookup
      */
     protected void deleteVersionedRDFData(T record, RepositoryConnection conn) {
-        recordFactory.getExisting(record.getResource(), record.getModel())
-                .ifPresent(versionedRDFRecord -> {
-                    mergeRequestManager.deleteMergeRequestsWithRecordId(record.getResource(), conn);
-                    record.getVersion_resource().forEach(resource -> utilsService.removeVersion(record.getResource(),
-                            resource, conn));
-                    conn.remove(record.getResource(), valueFactory.createIRI(VersionedRDFRecord.masterBranch_IRI),
-                            null, record.getResource());
-                    List<Resource> deletedCommits = new ArrayList<>();
-                    record.getBranch_resource().forEach(resource -> utilsService.removeBranch(record.getResource(),
-                            resource, deletedCommits, conn));
-
-                });
+        mergeRequestManager.deleteMergeRequestsWithRecordId(record.getResource(), conn);
+        record.getVersion_resource().forEach(resource -> utilsService.removeVersion(record.getResource(),
+                resource, conn));
+        conn.remove(record.getResource(), valueFactory.createIRI(VersionedRDFRecord.masterBranch_IRI),
+                null, record.getResource());
+        List<Resource> deletedCommits = new ArrayList<>();
+        record.getBranch_resource().forEach(resource -> utilsService.removeBranch(record.getResource(),
+                resource, deletedCommits, conn));
     }
 
     /**

@@ -23,11 +23,7 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import com.mobi.catalog.api.record.config.RecordOperationConfig;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
 import com.mobi.ontology.core.utils.MobiOntologyCreationException;
-import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
