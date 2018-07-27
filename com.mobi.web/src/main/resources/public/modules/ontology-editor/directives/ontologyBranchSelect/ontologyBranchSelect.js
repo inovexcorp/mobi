@@ -27,10 +27,10 @@
         .module('ontologyBranchSelect', [])
         .directive('ontologyBranchSelect', ontologyBranchSelect);
 
-        ontologyBranchSelect.$inject = ['$filter', '$q', '$timeout', 'catalogManagerService', 'ontologyStateService',
+        ontologyBranchSelect.$inject = ['$filter', '$q', '$timeout', 'catalogManagerService', 'ontologyStateService', 'prefixes',
             'ontologyManagerService', 'utilService', 'stateManagerService'];
 
-        function ontologyBranchSelect($filter, $q, $timeout, catalogManagerService, ontologyStateService, ontologyManagerService, utilService,
+        function ontologyBranchSelect($filter, $q, $timeout, catalogManagerService, ontologyStateService, prefixes, ontologyManagerService, utilService,
             stateManagerService) {
             return {
                 restrict: 'E',
@@ -57,12 +57,17 @@
 
                     dvm.changeBranch = function(item) {
                         var branchId = item['@id'];
+                        var state = sm.getOntologyStateByRecordId(dvm.os.listItem.ontologyRecord.recordId);
+                        var commitId = dvm.util.getPropertyId(_.find(state.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]}), prefixes.ontologyState + 'commit');
                         dvm.cm.getBranchHeadCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(headCommit => {
-                                var commitId = _.get(headCommit, "commit['@id']", '');
+                                var headCommitId = _.get(headCommit, "commit['@id']", '');
+                                if (!commitId) {
+                                    commitId = headCommitId;
+                                }
                                 return $q.all([
                                     sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId),
-                                    dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)
+                                    dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId, commitId === headCommitId)
                                 ]);
                             }, $q.reject)
                             .then(() => dvm.os.resetStateTabs(), dvm.util.createErrorToast);
