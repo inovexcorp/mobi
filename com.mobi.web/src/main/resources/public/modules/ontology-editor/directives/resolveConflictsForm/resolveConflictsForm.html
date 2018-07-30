@@ -39,7 +39,7 @@
             <div class="property-values conflict left" ng-click="dvm.selected.resolved = 'left'" ng-class="{'active': dvm.selected.resolved === 'left', 'not-selected': dvm.selected.resolved === 'right'}">
                 <h5 class="clearfix">
                     <span class="text">Branch: {{branchTitle}}</span>
-                    <input type="radio" name="resolution" class="pull-right" ng-model="dvm.selected.resolved" ng-value="'left'" />
+                    <input type="radio" name="resolution" class="float-right" ng-model="dvm.selected.resolved" ng-value="'left'" />
                 </h5>
                 <div class="value-container">
                     <statement-container ng-if="dvm.changes.left.additions.length" additions>
@@ -57,7 +57,7 @@
             <div class="property-values conflict right" ng-click="dvm.selected.resolved = 'right'" ng-class="{'active': dvm.selected.resolved === 'right', 'not-selected': dvm.selected.resolved === 'left'}">
                 <h5 class="clearfix">
                     <span class="text">Branch: {{targetTitle}}</span>
-                    <input type="radio" name="resolution" class="pull-right" ng-model="dvm.selected.resolved" ng-value="'right'" />
+                    <input type="radio" name="resolution" class="float-right" ng-model="dvm.selected.resolved" ng-value="'right'" />
                 </h5>
                 <div class="value-container">
                     <statement-container ng-if="dvm.changes.right.additions.length" additions>

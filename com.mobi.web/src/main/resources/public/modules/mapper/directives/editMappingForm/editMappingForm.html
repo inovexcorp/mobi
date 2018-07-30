@@ -24,17 +24,17 @@
     <div class="mapping-config form-group">
         <p>
             <span class="field-name">Ontology:</span> {{dvm.util.getDctermsValue(dvm.state.mapping.ontology, 'title') || "(None Specified)"}}
-            <button class="btn btn-link no-padding" ng-click="dvm.state.displayMappingConfigOverlay = true"><i class="fa fa-pencil"></i></button>
+            <button class="btn btn-link no-padding remove-min-width" ng-click="dvm.state.displayMappingConfigOverlay = true"><i class="fa fa-pencil"></i></button>
         </p>
     </div>
     <div class="class-mappings form-group">
         <div class="classes-field-name">
             <span class="field-name">Class</span>
-            <button class="btn btn-link no-padding pull-right add-class-mapping-button" ng-click="dvm.state.displayClassMappingOverlay = true" ng-disabled="dvm.state.availableClasses.length === 0"><i class="fa fa-plus"></i> Add Class</button>
+            <button class="btn btn-link no-padding float-right add-class-mapping-button" ng-click="dvm.state.displayClassMappingOverlay = true" ng-disabled="dvm.state.availableClasses.length === 0"><i class="fa fa-plus"></i> Add Class</button>
         </div>
         <div class="class-mapping-select-container">
             <class-mapping-select ng-model="dvm.state.selectedClassMappingId"></class-mapping-select>
-            <button class="btn btn-link" ng-click="dvm.state.displayDeleteClassConfirm = true" ng-disabled="!dvm.state.selectedClassMappingId"><i class="fa fa-trash"></i></button>
+            <button class="btn btn-link remove-min-width" ng-click="dvm.state.displayDeleteClassConfirm = true" ng-disabled="!dvm.state.selectedClassMappingId"><i class="fa fa-trash"></i></button>
         </div>
     </div>
     <class-mapping-details></class-mapping-details>

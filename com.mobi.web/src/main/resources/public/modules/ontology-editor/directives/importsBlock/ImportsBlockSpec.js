@@ -69,7 +69,7 @@ describe('Imports Block directive', function() {
             expect(this.element.find('block-header').length).toBe(1);
         });
         it('with a block-header a', function() {
-            expect(this.element.querySelectorAll('block-header a.pull-right').length).toBe(2);
+            expect(this.element.querySelectorAll('block-header a.float-right').length).toBe(2);
         });
         it('with a block-content', function() {
             expect(this.element.find('block-content').length).toBe(1);

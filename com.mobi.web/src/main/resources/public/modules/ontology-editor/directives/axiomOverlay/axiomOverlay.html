@@ -55,9 +55,9 @@
             </tab>
         </tabset>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-click="dvm.addAxiom()"
+            <button class="btn btn-primary float-right" ng-click="dvm.addAxiom()"
                     ng-disabled="dvm.form.$invalid || dvm.axiom === undefined || (dvm.tabs.list && !dvm.values.length) || (dvm.tabs.editor && !dvm.expression)">Add</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.os.showAxiomOverlay = false">Cancel</button>
+            <button class="btn btn-default float-right" ng-click="dvm.os.showAxiomOverlay = false">Cancel</button>
         </div>
     </form>
 </div>

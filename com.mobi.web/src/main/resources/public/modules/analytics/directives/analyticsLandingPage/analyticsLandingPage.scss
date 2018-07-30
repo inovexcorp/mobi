@@ -4,7 +4,7 @@
 .analytics-landing-page {
     display: flex;
     flex-direction: column;
-    
+
     .white-bar .form-inline {
         padding: 9px 0;
     }
@@ -13,7 +13,7 @@
         flex: 1;
         min-height: 0;
         padding: 15px 0;
-        
+
         .block-header {
             font-size: 18px;
             line-height: 34px;
@@ -29,7 +29,7 @@
                 &:hover {
                     background-color: $gray-custom;
                 }
-                    
+
                 .title {
                     flex: 1;
                     font-size: 16px;
@@ -47,6 +47,10 @@
 
                 .dropdown-toggle {
                     margin-left: 15px;
+
+                    &::after {
+                        display: none;
+                    }
                 }
 
                 .dropdown-menu {

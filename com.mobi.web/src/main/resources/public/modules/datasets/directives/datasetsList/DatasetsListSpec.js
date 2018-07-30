@@ -235,7 +235,7 @@ describe('Datasets List directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('datasets-list')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-8').length).toBe(1);
         });
         it('with block', function() {
             expect(this.element.find('block').length).toBe(1);

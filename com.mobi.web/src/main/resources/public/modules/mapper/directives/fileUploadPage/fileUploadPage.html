@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="file-upload-page row">
-    <div class="col-xs-5 form-block full-height">
+    <div class="col-5 form-block full-height">
         <mapping-title></mapping-title>
         <block>
             <block-header>
@@ -41,12 +41,12 @@
                 </div>
             </block-content>
             <block-footer>
-                <button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
-                <button class="btn btn-primary pull-right" ng-click="dvm.state.editMapping ? dvm.edit() : dvm.state.displayRunMappingOverlay = true" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)">{{dvm.state.editMapping ? 'Continue' : 'Run'}}</button>
+                <button class="btn btn-default float-left" ng-click="dvm.cancel()">Cancel</button>
+                <button class="btn btn-primary float-right" ng-click="dvm.state.editMapping ? dvm.edit() : dvm.state.displayRunMappingOverlay = true" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)">{{dvm.state.editMapping ? 'Continue' : 'Run'}}</button>
             </block-footer>
         </block>
     </div>
-    <div class="col-xs-7 full-height">
+    <div class="col-7 full-height">
         <block>
             <block-content>
                 <preview-data-grid></preview-data-grid>

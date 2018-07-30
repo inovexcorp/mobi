@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="record-block col-xs-12">
+<div class="record-block col-12">
     <block>
         <block-header>
             <catalog-breadcrumb></catalog-breadcrumb>
@@ -47,7 +47,7 @@
             </div>
         </block-content>
         <block-footer ng-if="dvm.cm.isVersionedRDFRecord(dvm.record)">
-            <catalog-pagination></catalog-pagination>
+            <catalog-pagination list-key="'branches'" get-page="dvm.getBranches()"></catalog-pagination>
         </block-footer>
     </block>
 </div>

@@ -100,8 +100,8 @@ describe('File Upload Page directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('file-upload-page')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-5').length).toBe(1);
-            expect(this.element.querySelectorAll('.col-xs-7').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-5').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-7').length).toBe(1);
         });
         it('with a mapping title', function() {
             expect(this.element.find('mapping-title').length).toBe(1);
@@ -113,12 +113,12 @@ describe('File Upload Page directive', function() {
             expect(this.element.find('file-upload-form').length).toBe(1);
         });
         it('with a button for canceling', function() {
-            var button = angular.element(this.element.querySelectorAll('.col-xs-5 block-footer button.btn-default')[0]);
+            var button = angular.element(this.element.querySelectorAll('.col-5 block-footer button.btn-default')[0]);
             expect(button.text().trim()).toBe('Cancel');
         });
         it('depending on whether a file has been selected and there are invalid properties', function() {
             scope.$digest();
-            var continueButton = angular.element(this.element.querySelectorAll('.col-xs-5 block-footer button.btn-primary')[0]);
+            var continueButton = angular.element(this.element.querySelectorAll('.col-5 block-footer button.btn-primary')[0]);
             expect(continueButton.attr('disabled')).toBeTruthy();
 
             delimitedManagerSvc.dataRows = [];
@@ -130,7 +130,7 @@ describe('File Upload Page directive', function() {
             expect(continueButton.attr('disabled')).toBeTruthy();
         });
         it('depending on whether a mapping is being edited', function() {
-            var continueButton = angular.element(this.element.querySelectorAll('.col-xs-5 block-footer button.btn-primary')[0]);
+            var continueButton = angular.element(this.element.querySelectorAll('.col-5 block-footer button.btn-primary')[0]);
             expect(continueButton.text().trim()).toBe('Run');
 
             mapperStateSvc.editMapping = true;

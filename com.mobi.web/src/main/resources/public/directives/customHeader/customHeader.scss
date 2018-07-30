@@ -40,45 +40,17 @@ body.collapsed-nav .main-header {
         i {
             font-size: 1.5em;
             vertical-align: middle;
-
-            &.fa-caret-down {
-                font-size: 1em;
-            }
         }
-        a {
+        a.dropdown-toggle{
             margin-left: 5px;
-            text-decoration: none;
         }
         div {
             display: inline-block;
             &.open a.dropdown-toggle {
                 color: #23527c;
             }
-
-            .dropdown-menu {
-                left: auto;
-                right: 0;
-
-                li {
-                    display: block;
-
-                    .divider {
-                        width: 100%;
-                    }
-                    &:first-child a {
-                        padding-bottom: 0;
-                    }
-                    &:last-child a {
-                        padding-top: 0;
-                    }
-                }
-                a {
-                    margin-left: 0;
-
-                    &.active {
-                        border-color: $brand-info;
-                    }
-                }
+            a.dropdown-toggle::after {
+                display: none;
             }
         }
     }

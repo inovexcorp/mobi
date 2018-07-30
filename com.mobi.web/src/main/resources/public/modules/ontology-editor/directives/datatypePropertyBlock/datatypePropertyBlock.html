@@ -23,7 +23,7 @@
 <div class="datatype-property-block annotation-block">
     <block>
         <block-header>
-            <span>Datatype Properties</span><a ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.mobi.imported" ng-click="dvm.openAddDataPropOverlay()" class="pull-right"><i class="fa fa-fw fa-plus"></i>Add Datatype Property</a>
+            <span>Datatype Properties</span><a ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.mobi.imported" ng-click="dvm.openAddDataPropOverlay()" class="float-right"><i class="fa fa-fw fa-plus"></i>Add Datatype Property</a>
         </block-header>
         <block-content>
             <property-values ng-repeat="property in dvm.os.listItem.selected | showProperties:dvm.dataProperties | orderBy:dvm.ontoUtils.getLabelForIRI" property="property" entity="dvm.os.listItem.selected" edit="dvm.editDataProp(property, index)" remove="dvm.showRemovePropertyOverlay(iri, index)"></property-values>

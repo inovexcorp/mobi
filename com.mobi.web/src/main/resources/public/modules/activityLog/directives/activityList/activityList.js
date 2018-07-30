@@ -65,6 +65,7 @@
                     dvm.id = 'activity-log';
                     dvm.activities = [];
                     dvm.entities = [];
+                    dvm.currentPage = 1;
                     dvm.paginatedConfig = {
                         pageIndex: 0,
                         limit: 50
@@ -75,20 +76,9 @@
                         next: ''
                     };
 
-                    dvm.getPage = function(direction) {
-                        if (direction === 'prev') {
-                            util.getResultsPage(dvm.links.prev, util.rejectError, dvm.id)
-                                .then(response => {
-                                    setActivities(response);
-                                    dvm.paginatedConfig.pageIndex -= 1;
-                                }, createToast);
-                        } else {
-                            util.getResultsPage(dvm.links.next, util.rejectError, dvm.id)
-                                .then(response => {
-                                    setActivities(response);
-                                    dvm.paginatedConfig.pageIndex += 1;
-                                }, createToast);
-                        }
+                    dvm.getPage = function() {
+                        setConfig();
+                        pm.getActivities(dvm.paginatedConfig, dvm.id).then(setActivities, createToast);
                     }
                     dvm.getTimeStamp = function(activity) {
                         var dateStr = util.getPropertyValue(activity, prefixes.prov + 'endedAtTime');
@@ -108,6 +98,9 @@
                         if (errorMessage) {
                             util.createErrorToast(errorMessage);
                         }
+                    }
+                    function setConfig() {
+                        dvm.paginatedConfig.pageIndex = dvm.currentPage - 1;
                     }
 
                     pm.getActivities(dvm.paginatedConfig, dvm.id).then(setActivities, createToast);

@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="results-block col-xs-12">
+<div class="results-block col">
     <block>
         <block-header>
             <catalog-breadcrumb></catalog-breadcrumb>
@@ -39,7 +39,7 @@
             </div>
         </block-content>
         <block-footer>
-            <catalog-pagination></catalog-pagination>
+            <catalog-pagination list-key="'records'" get-page="dvm.getRecords()"></catalog-pagination>
         </block-footer>
     </block>
 </div>

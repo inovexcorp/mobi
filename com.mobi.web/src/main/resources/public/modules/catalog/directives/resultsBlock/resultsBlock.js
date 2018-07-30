@@ -68,10 +68,8 @@
                 dvm.cm = catalogManagerService;
                 dvm.util = utilService;
 
-                getRecords();
-
                 dvm.changeSort = function() {
-                    getRecords();
+                    getInitialRecords();
                 }
                 dvm.openRecord = function(record) {
                     var currentCatalog = dvm.state.getCurrentCatalog();
@@ -81,12 +79,10 @@
                             currentCatalog.openedPath.push(response);
                         }, dvm.util.createErrorToast);
                 }
-
-                function getRecords() {
-                    dvm.state.currentPage = 0;
+                dvm.getRecords = function() {
                     var currentCatalog = dvm.state.getCurrentCatalog();
                     var paginatedConfig = {
-                        pageIndex: dvm.state.currentPage,
+                        pageIndex: dvm.state.currentPage - 1,
                         limit: currentCatalog.records.limit,
                         sortOption: currentCatalog.records.sortOption,
                         recordType: currentCatalog.records.recordType,
@@ -95,6 +91,13 @@
                     dvm.cm.getRecords(currentCatalog.catalog['@id'], paginatedConfig)
                         .then(dvm.state.setPagination, dvm.util.createErrorToast);
                 }
+
+                function getInitialRecords() {
+                    dvm.state.currentPage = 1;
+                    dvm.getRecords();
+                }
+
+                getInitialRecords();
             },
             templateUrl: 'modules/catalog/directives/resultsBlock/resultsBlock.html'
         };

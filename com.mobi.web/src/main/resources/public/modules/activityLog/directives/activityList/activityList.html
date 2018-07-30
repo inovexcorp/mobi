@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="activity-list full-height padding row">
-    <div class="col-xs-8 col-xs-offset-2 full-height">
+    <div class="col-8 offset-2 full-height">
         <block targeted-spinner="dvm.id">
             <block-content>
                 <div class="activity padding" ng-repeat="activity in dvm.activities track by activity['@id']">
@@ -34,7 +34,7 @@
             <block-footer>
                 <div class="paging-container clearfix">
                     <paging-details total-size="dvm.totalSize" page-index="dvm.paginatedConfig.pageIndex" limit="dvm.paginatedConfig.limit"></paging-details>
-                    <pagination links="dvm.links" current-page="dvm.paginatedConfig.pageIndex" get-page="dvm.getPage(direction)"></pagination>
+                    <pagination total="dvm.totalSize" limit="dvm.paginatedConfig.limit" current-page="dvm.currentPage" get-page="dvm.getPage()"></pagination>
                 </div>
             </block-footer>
         </block>

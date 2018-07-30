@@ -43,11 +43,11 @@
             </div>
         </div>
         <div class="btn-container clearfix">
-            <button type="button" ng-disabled="!dvm.eu.getNewProperties(dvm.properties, dvm.reification).length" ng-click="dvm.showOverlay = true" class="btn btn-link pull-left"><i class="fa fa-plus fa-fw"></i>Add New Reification Property</button>
+            <button type="button" ng-disabled="!dvm.eu.getNewProperties(dvm.properties, dvm.reification).length" ng-click="dvm.showOverlay = true" class="btn btn-link float-left"><i class="fa fa-plus fa-fw"></i>Add New Reification Property</button>
         </div>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-click="dvm.submit()">Submit</button>
-            <button type="button" class="btn btn-default pull-right" ng-click="dvm.closeOverlay()">Cancel</button>
+            <button class="btn btn-primary float-right" ng-click="dvm.submit()">Submit</button>
+            <button type="button" class="btn btn-default float-right" ng-click="dvm.closeOverlay()">Cancel</button>
         </div>
     </form>
     <new-instance-property-overlay ng-if="dvm.showOverlay" on-cancel="dvm.showOverlay = false" on-submit="dvm.addNewProperty(propertyIRI)" get-properties="dvm.eu.getNewProperties(dvm.properties, dvm.reification, text)"></new-instance-property-overlay>

@@ -130,8 +130,8 @@ describe('Edit Mapping Page directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('edit-mapping-page')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-5').length).toBe(1);
-            expect(this.element.querySelectorAll('.col-xs-7').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-5').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-7').length).toBe(1);
             expect(this.element.querySelectorAll('.edit-tabs').length).toBe(1);
         });
         it('with a mapping title', function() {

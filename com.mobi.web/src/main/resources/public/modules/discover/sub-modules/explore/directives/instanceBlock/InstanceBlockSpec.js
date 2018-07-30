@@ -91,17 +91,17 @@ describe('Instance Block directive', function() {
         it('with a block-footer', function() {
             expect(this.element.find('block-footer').length).toBe(1);
         });
-        it('with a paging-details.pull-left', function() {
-            expect(this.element.querySelectorAll('paging-details.pull-left').length).toBe(1);
+        it('with a paging-details.float-left', function() {
+            expect(this.element.querySelectorAll('paging-details.float-left').length).toBe(1);
         });
-        it('with a pagination.pull-right', function() {
-            expect(this.element.querySelectorAll('pagination.pull-right').length).toBe(1);
+        it('with a pagination.float-right', function() {
+            expect(this.element.querySelectorAll('pagination.float-right').length).toBe(1);
         });
-        it('with a paging-details.pull-left', function() {
-            expect(this.element.querySelectorAll('paging-details.pull-left').length).toBe(1);
+        it('with a paging-details.float-left', function() {
+            expect(this.element.querySelectorAll('paging-details.float-left').length).toBe(1);
         });
-        it('with a pagination.pull-right', function() {
-            expect(this.element.querySelectorAll('pagination.pull-right').length).toBe(1);
+        it('with a pagination.float-right', function() {
+            expect(this.element.querySelectorAll('pagination.float-right').length).toBe(1);
         });
     });
 

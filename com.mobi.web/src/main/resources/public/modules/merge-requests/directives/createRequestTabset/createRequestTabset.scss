@@ -2,6 +2,9 @@
 @import "./src/main/resources/public/css/variables";
 
 .create-request-tabset {
+    .block-content {
+        padding-bottom: 0;
+    }
     .block-footer {
         position: relative;
 

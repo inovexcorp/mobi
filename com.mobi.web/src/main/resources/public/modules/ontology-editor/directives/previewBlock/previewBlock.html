@@ -27,7 +27,7 @@
             <div class="form-inline">
                 <serialization-select ng-model="dvm.activePage.serialization"></serialization-select>
                 <button type="button" class="btn btn-primary" ng-click="dvm.getPreview()" ng-disabled="!dvm.activePage.serialization">Refresh</button>
-                <button type="button" class="btn btn-primary pull-right" ng-click="dvm.os.showDownloadOverlay = true"><i class="fa fa-fw fa-download"></i></button>
+                <button type="button" class="btn btn-primary float-right remove-min-width" ng-click="dvm.os.showDownloadOverlay = true"><i class="fa fa-fw fa-download"></i></button>
             </div>
             <div class="textarea-wrapper">
                 <ui-codemirror ng-if="dvm.activePage.preview" ng-model="dvm.activePage.preview" ui-codemirror-opts="dvm.options"></ui-codemirror>

@@ -25,7 +25,7 @@
         <span class="header active">Create New Ontology</span>
     </div>
     <div class="row form-container">
-        <div class="col-xs-6 col-xs-offset-3">
+        <div class="col-6 offset-3">
             <block>
                 <block-content>
                     <form name="dvm.form" class="clearfix" novalidate autocomplete="off">
@@ -42,8 +42,8 @@
                         <advanced-language-select ng-model="dvm.os.newLanguage"></advanced-language-select>
                         <keyword-select ng-model="dvm.os.newKeywords"></keyword-select>
                         <div class="btn-container clearfix">
-                            <button type="button" class="btn btn-primary pull-right" ng-click="dvm.create()" ng-disabled="dvm.form.$invalid">Create</button>
-                            <button type="button" class="btn btn-default pull-right" ng-click="dvm.os.showNewTab = false">Cancel</button>
+                            <button type="button" class="btn btn-primary float-right" ng-click="dvm.create()" ng-disabled="dvm.form.$invalid">Create</button>
+                            <button type="button" class="btn btn-default float-right" ng-click="dvm.os.showNewTab = false">Cancel</button>
                         </div>
                     </form>
                 </block-content>

@@ -100,8 +100,8 @@ describe('Analytics Landing Page directive', function() {
         it('with a .row', function() {
             expect(this.element.querySelectorAll('.row').length).toBe(1);
         });
-        it('with a .col-xs-8', function() {
-            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
+        it('with a .col-8', function() {
+            expect(this.element.querySelectorAll('.col-8').length).toBe(1);
         });
         it('with a block-content', function() {
             expect(this.element.find('block-content').length).toBe(1);

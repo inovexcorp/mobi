@@ -26,13 +26,13 @@
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
         <error-display ng-if="dvm.recordsErrorMessage">{{dvm.recordsErrorMessage}}</error-display>
         <div class="row">
-            <div class="col-xs-6 ontology-select-container">
+            <div class="col-6 ontology-select-container">
                 <div class="form-group">
                     <custom-label>Ontology</custom-label>
                     <div class="input-group record-search-bar">
                         <input type="text" class="form-control" name="record-search" ng-model="dvm.recordsConfig.searchText" placeholder="Search for...">
                         <span class="input-group-btn">
-                            <button class="btn btn-primary" type="submit" ng-click="dvm.getRecords()">Search</button>
+                            <button class="btn btn-primary" type="submit" ng-click="dvm.setInitialRecords()">Search</button>
                         </span>
                     </div>
                     <div class="ontology-records-list list-group">
@@ -41,7 +41,7 @@
                         </button>
                     </div>
                     <paging-details total-size="dvm.totalSize" page-index="dvm.recordsConfig.pageIndex" limit="dvm.recordsConfig.limit"></paging-details>
-                    <pagination links="dvm.links" current-page="dvm.recordsConfig.pageIndex" get-page="dvm.getRecordPage(direction)"></pagination>
+                    <pagination total="dvm.totalSize" limit="dvm.recordsConfig.limit" current-page="dvm.currentPage" get-page="dvm.setRecords()"></pagination>
                 </div>
                 <div class="form-group">
                     <custom-label>Version</custom-label>
@@ -51,7 +51,7 @@
                     </select>
                 </div>
             </div>
-            <div class="col-xs-6 preview-display">
+            <div class="col-6 preview-display">
                 <div class="ontology-record-info" ng-if="dvm.selectedRecord">
                     <h3>{{dvm.util.getDctermsValue(dvm.selectedRecord, 'title')}}</h3>
                     <entity-dates entity="dvm.selectedRecord"></entity-dates>
@@ -70,8 +70,8 @@
             </div>
         </div>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-click="dvm.set()" ng-disabled="!dvm.selectedOntologyState">Set</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.cancel()">Cancel</button>
+            <button class="btn btn-primary float-right" ng-click="dvm.set()" ng-disabled="!dvm.selectedOntologyState">Set</button>
+            <button class="btn btn-default float-right" ng-click="dvm.cancel()">Cancel</button>
         </div>
     </form>
 </div>

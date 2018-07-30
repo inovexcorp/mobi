@@ -277,7 +277,7 @@ ul {
         &.active .unsaved-icon,
         &.unsaved:hover .unsaved-icon {
             background-color: $brand-primary;
-            color: #fff;
+            color: #fff !important;
         }
 
         > span {
@@ -592,7 +592,52 @@ body {
     }
 }
 
+.paging-container {
+    .paging-details {
+        padding-top: 15px;
+    }
+}
+
+// Fixes for Material Bootstrap
+.ui-select-bootstrap > .ui-select-choices,
+.ui-select-bootstrap > .ui-select-no-choice {
+    display: initial;
+    background-color: #fff;
+    box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14),
+                0 3px 14px 3px rgba(0, 0, 0, 0.12),
+                0 4px 15px 0 rgba(0, 0, 0, 0.2);
+}
+
+.ui-select-bootstrap > .ui-select-choices::before,
+.ui-select-bootstrap > .ui-select-no-choice::before {
+    display: none;
+}
+
+.btn, .nav-tabs .nav-link {
+    text-transform: none;
+}
+
+.ui-select-toggle.form-control {
+    display: inline-block;
+}
+
+.ui-select-toggle.btn:hover {
+    background-image: none;
+}
+
+a:not([href]):not([tabindex]) {
+    color: var(--primary);
+}
+
+select.form-control, .custom-select {
+    appearance: none;
+    -webkit-appearance: none;
+}
+
 /* Helper Classes */
 .padding {
-    padding: 15px;
+    padding: 10px;
+}
+.remove-min-width {
+    min-width: 0;
 }

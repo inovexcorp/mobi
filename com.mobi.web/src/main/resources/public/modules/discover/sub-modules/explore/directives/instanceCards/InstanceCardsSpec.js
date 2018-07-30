@@ -80,8 +80,8 @@ describe('Instance Cards directive', function() {
         it('with a .row', function() {
             expect(this.element.querySelectorAll('.row').length).toBe(2);
         });
-        it('with a .col-xs-4.card-container', function() {
-            expect(this.element.querySelectorAll('.col-xs-4.card-container').length).toBe(4);
+        it('with a .col-4.card-container', function() {
+            expect(this.element.querySelectorAll('.col-4.card-container').length).toBe(4);
         });
         it('with a md-card', function() {
             expect(this.element.find('md-card').length).toBe(4);

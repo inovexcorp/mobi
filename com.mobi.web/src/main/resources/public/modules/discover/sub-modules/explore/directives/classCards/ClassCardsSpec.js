@@ -80,8 +80,8 @@ describe('Class Cards directive', function() {
         it('with .rows', function() {
             expect(this.element.querySelectorAll('.row').length).toBe(2);
         });
-        it('with .col-xs-4.card-containers', function() {
-            expect(this.element.querySelectorAll('.col-xs-4.card-container').length).toBe(4);
+        it('with .col-4.card-containers', function() {
+            expect(this.element.querySelectorAll('.col-4.card-container').length).toBe(4);
         });
         it('with md-cards', function() {
             expect(this.element.find('md-card').length).toBe(4);

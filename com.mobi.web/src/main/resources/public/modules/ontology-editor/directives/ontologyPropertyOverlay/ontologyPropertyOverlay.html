@@ -51,9 +51,9 @@
             </div>
         </div>
         <div class="btn-container clearfix">
-            <button ng-if="!dvm.os.editingOntologyProperty" class="btn btn-primary pull-right" ng-click="dvm.addProperty()" ng-disabled="dvm.propertyForm.$invalid">Add</button>
-            <button ng-if="dvm.os.editingOntologyProperty" class="btn btn-primary pull-right" ng-click="dvm.editProperty()" ng-disabled="dvm.cannotEdit()">Edit</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.os.showOntologyPropertyOverlay = false">Cancel</button>
+            <button ng-if="!dvm.os.editingOntologyProperty" class="btn btn-primary float-right" ng-click="dvm.addProperty()" ng-disabled="dvm.propertyForm.$invalid">Add</button>
+            <button ng-if="dvm.os.editingOntologyProperty" class="btn btn-primary float-right" ng-click="dvm.editProperty()" ng-disabled="dvm.cannotEdit()">Edit</button>
+            <button class="btn btn-default float-right" ng-click="dvm.os.showOntologyPropertyOverlay = false">Cancel</button>
         </div>
     </form>
 </div>

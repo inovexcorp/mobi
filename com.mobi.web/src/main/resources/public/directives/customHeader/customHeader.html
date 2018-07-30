@@ -30,10 +30,10 @@
             <a uib-dropdown-toggle title="Help">
                 <i class="fa fa-fw fa-question-circle"></i>
             </a>
-            <ul uib-dropdown-menu>
-                <li><a href="https://mobi.inovexcorp.com/docs/" target="_blank">Documentation</a></li>
-                <li role="separator" class="divider"></li>
-                <li><a href="https://inovexirad.atlassian.net/servicedesk" target="_blank">Support</a></li>
+            <ul uib-dropdown-menu class="dropdown-menu-right">
+                <a class="dropdown-item" href="https://mobi.inovexcorp.com/docs/" target="_blank">Documentation</a>
+                <li role="separator" class="dropdown-divider"></li>
+                <a class="dropdown-item" href="https://inovexirad.atlassian.net/servicedesk" target="_blank">Support</a>
             </ul>
         </div>
 
@@ -42,10 +42,10 @@
             <a uib-dropdown-toggle ng-class="{'active': $state.is('root.settings') || $state.is('root.user-management')}" title="Settings">
                 <i class="fa fa-cog fa-2x fa-fw"></i>
             </a>
-            <ul uib-dropdown-menu>
-                <li><a ng-class="{'active': $state.is('root.settings')}" ui-sref-active="active" ui-sref="root.settings">My Account</a></li>
-                <li role="separator" class="divider" ng-if="dvm.um.isAdmin(dvm.lm.currentUser)"></li>
-                <li ng-if="dvm.um.isAdmin(dvm.lm.currentUser)"><a ng-class="{'active': $state.is('root.user-management')}" ui-sref-active="active" ui-sref="root.user-management">User Management</a></li>
+            <ul uib-dropdown-menu class="dropdown-menu-right">
+                <a class="dropdown-item" ng-class="{'active': $state.is('root.settings')}" ui-sref-active="active" ui-sref="root.settings">My Account</a>
+                <li role="separator" class="dropdown-divider" ng-if="dvm.um.isAdmin(dvm.lm.currentUser)"></li>
+                <a class="dropdown-item" ng-if="dvm.um.isAdmin(dvm.lm.currentUser)" ng-class="{'active': $state.is('root.user-management')}" ui-sref-active="active" ui-sref="root.user-management">User Management</a>
             </ul>
         </div>
         <a ng-click="dvm.lm.logout()" title="Logout"><i class="fa fa-sign-out fa-fw"></i></a>

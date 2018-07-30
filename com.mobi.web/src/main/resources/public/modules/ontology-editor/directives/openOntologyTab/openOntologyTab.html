@@ -22,7 +22,7 @@
   -->
 <div class="open-ontology-tab">
     <div class="actions">
-        <form class="form-inline">
+        <form class="form-inline justify-content-center">
             <div class="form-group">
                 <input type="text" class="form-control" placeholder="Filter by text" ng-model="dvm.filterText" ng-keydown="dvm.search($event)" />
             </div>
@@ -31,7 +31,7 @@
         </form>
     </div>
     <div class="list row">
-        <div class="col-xs-8 col-xs-offset-2">
+        <div class="col-8 offset-2">
             <block targeted-spinner="dvm.id">
                 <block-content class="open-ontology-content">
                     <div class="ontologies">
@@ -51,8 +51,8 @@
                 </block-content>
                 <block-footer>
                     <div class="paging-container clearfix">
-                        <paging-details total-size="dvm.totalSize" page-index="dvm.pageIndex" limit="dvm.limit"></paging-details>
-                        <pagination links="{'prev': dvm.pageIndex !== 0, 'next': ((dvm.pageIndex + 1) * dvm.limit) < dvm.totalSize}" current-page="dvm.pageIndex" get-page="dvm.getPage(direction)"></pagination>
+                        <paging-details total-size="dvm.totalSize" page-index="dvm.currentPage - 1" limit="dvm.limit"></paging-details>
+                        <pagination total="dvm.totalSize" limit="dvm.limit" current-page="dvm.currentPage" get-page="dvm.getPageOntologyRecords()"></pagination>
                     </div>
                 </block-footer>
             </block>

@@ -107,10 +107,10 @@ describe('Search Row directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('search-row')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-8').length).toBe(1);
             expect(this.element.querySelectorAll('form.form-horizontal').length).toBe(1);
-            expect(this.element.querySelectorAll('form .col-xs-2').length).toBe(1);
-            expect(this.element.querySelectorAll('form .col-xs-10').length).toBe(1);
+            expect(this.element.querySelectorAll('form .col-2').length).toBe(1);
+            expect(this.element.querySelectorAll('form .col-10').length).toBe(1);
         });
         it('with a select', function() {
             expect(this.element.find('select').length).toBe(1);
