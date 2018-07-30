@@ -93,11 +93,15 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         conn.commit();
         return record;
     }
-    protected addPolicy() {
-        Resource newPolicyId = policyManager.addPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
+    protected XACMLPolicy createPolicy() {
+        return XACMLPolicyManager.createPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
     }
 
-    protected deletePolicy(Resource policyId) {
+    protected void addPolicy() {
+
+    }
+
+    protected void deletePolicy(Resource policyId) {
         policyManager.deletePolicy(policyId);
     }
 
