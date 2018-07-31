@@ -65,8 +65,8 @@ describe('Column Select directive', function() {
         it('with a column select', function() {
             expect(this.element.find('ui-select').length).toBe(1);
         });
-        it('with a .help-block', function() {
-            expect(this.element.querySelectorAll('.help-block').length).toBe(1);
+        it('with a .form-text', function() {
+            expect(this.element.querySelectorAll('.form-text').length).toBe(1);
         });
     });
     describe('controller methods', function() {

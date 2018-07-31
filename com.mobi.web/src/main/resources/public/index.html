@@ -33,15 +33,14 @@
         <!-- inject:css -->
         <!-- endinject -->
     </head>
-    <body ng-class="{'collapsed-nav': $root.collapsedNav}">
-        <div ng-if="!!$state.current.name && $state.current.name !== 'login'" class="full-height">
-            <nav ui-view="nav"></nav>
-            <div class="main-page">
-                <custom-header page-title="$state.current.data.title"></custom-header>
-                <section ui-view="container" class="view-container full-height"></section>
+    <body ng-class="{'collapsed-nav': $root.collapsedNav}" class="h-100">
+        <div ng-if="!!$state.current.name && $state.current.name !== 'login'" class="container-fluid h-100">
+            <div class="row h-100">
+                <sidebar></sidebar>
+                <section ui-view="container" class="col app-container h-100"></section>
             </div>
         </div>
-        <section ng-if="$state.current.name === 'login'" ui-view="container" class="view-container full-height"></section>
+        <section ng-if="$state.current.name === 'login'" ui-view="container" class="view-container h-100"></section>
         <footer ui-view="footer"></footer>
         <spinner ng-show="pendingRequests > 0"></spinner>
         <!-- inject:js -->

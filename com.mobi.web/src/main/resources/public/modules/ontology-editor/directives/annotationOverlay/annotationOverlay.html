@@ -46,7 +46,7 @@
                     ng-disabled="dvm.annotationForm.$invalid || dvm.os.annotationSelect === undefined || dvm.os.annotationValue === ''">Add</button>
             <button class="btn btn-primary float-right" ng-if="dvm.os.editingAnnotation" ng-click="dvm.editAnnotation()"
                     ng-disabled="dvm.annotationForm.$invalid || dvm.os.annotationValue === ''">Edit</button>
-            <button class="btn btn-default float-right" ng-click="dvm.os.showAnnotationOverlay = false;">Cancel</button>
+            <button class="btn float-right" ng-click="dvm.os.showAnnotationOverlay = false;">Cancel</button>
         </div>
     </form>
 </div>

@@ -29,8 +29,8 @@
         <email-input ng-model="dvm.newUser.email" input-name="'email'" ng-class="{'has-success': dvm.form.email.$dirty && dvm.form.email.$valid, 'has-error': dvm.form.email.$dirty && dvm.form.email.$invalid}" muted-text="'(Optional)'"></email-input>
 
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-click="dvm.set()" ng-disabled="dvm.form.$invalid">Set</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.state.displayEditUserProfileOverlay = false">Cancel</button>
+            <button class="btn btn-primary float-right" ng-click="dvm.set()" ng-disabled="dvm.form.$invalid">Set</button>
+            <button class="btn float-right" ng-click="dvm.state.displayEditUserProfileOverlay = false">Cancel</button>
         </div>
     </form>
 </div>

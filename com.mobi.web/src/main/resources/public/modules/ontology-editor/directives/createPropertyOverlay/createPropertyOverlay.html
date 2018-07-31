@@ -49,7 +49,7 @@
                 </div>
                 <div class="btn-container clearfix">
                     <button class="btn btn-primary float-right" ng-disabled="dvm.createPropertyForm.$invalid || !dvm.property['@type'].length || dvm.ontoUtils.checkIri(dvm.property['@id'])" ng-click="dvm.create()">Create</button>
-                    <button class="btn btn-default float-right" ng-click="dvm.os.showCreatePropertyOverlay = false">Cancel</button>
+                    <button class="btn float-right" ng-click="dvm.os.showCreatePropertyOverlay = false">Cancel</button>
                 </div>
             </form>
         </div>

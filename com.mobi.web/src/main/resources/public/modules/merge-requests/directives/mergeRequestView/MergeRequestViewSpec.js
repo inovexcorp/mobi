@@ -152,7 +152,7 @@ describe('Merge Request View directive', function() {
     });
     it('should call back when the button is clicked', function() {
         spyOn(this.controller, 'back');
-        var button = angular.element(this.element.querySelectorAll('block-footer button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('block-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(this.controller.back).toHaveBeenCalled();
     });

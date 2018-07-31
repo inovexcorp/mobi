@@ -211,10 +211,10 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${basedir}/target/classes/build/modules/nav</outputDirectory>
+                            <outputDirectory>${basedir}/target/classes/build/directives/sidebar</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>src/main/resources/public/modules/nav</directory>
+                                    <directory>${basedir}/target/filtered-resources</directory>
                                     <filtering>true</filtering>
                                     <includes>
                                         <include>*.html</include>

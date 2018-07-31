@@ -10,6 +10,7 @@ body {
     right: 0;
     top: 0;
     overflow-x: hidden;
+    overflow-y: hidden;
 
     /* Overall design styles */
     .blue-bar {
@@ -22,6 +23,9 @@ body {
         box-shadow: 5px 5px 5px 0px $gray-light;
         height: 52px;
         text-align: center;
+    }
+    .app-container {
+        padding: 0;
     }
 
     /* All <a> tags have the pointer cursor */
@@ -342,11 +346,6 @@ ul {
     }
 }
 
-/* makes the height of the containers 100% so scrolling works as expected */
-.full-height {
-    height: 100%;
-}
-
 /* table with inputs */
 .input-table {
     margin: 0;
@@ -487,73 +486,6 @@ ul {
     }
 }
 
-.nav li {
-    color: #fff;
-    display: inline-block;
-
-    button {
-        background: transparent;
-        border: 0;
-        outline: 0;
-    }
-
-    /* Styles the icon itself */
-    a,
-    button {
-        color: inherit;
-        cursor: pointer;
-        display: inline-block;
-        padding: 6px;
-        text-decoration: none;
-
-        &.disabled,
-        &[disabled] {
-            color: $gray-light;
-        }
-
-        /* Changes the color of the icons as you hover over them. */
-        &:not(.disabled):not([disabled]):hover {
-            color: $brand-info;
-        }
-
-        .fa,
-        .create-icon .identifier {
-            font-size: 1.5em;
-        }
-
-        /* The words that appear next to the icon */
-        .name {
-            display: none;
-            line-height: 2em;
-            padding-left: 10px;
-            vertical-align: top;
-        }
-
-        .create-icon {
-            display: inline-block;
-            position: relative;
-
-            .identifier {
-                display: inline-block;
-                font-weight: bold;
-                text-align: left;
-                padding-left: 3px;
-
-                &.narrow {
-                    padding-left: 7px;
-                }
-            }
-
-            .fa {
-                font-size: .75em;
-                position: absolute;
-                right: 2px;
-                top: 0;
-            }
-        }
-    }
-}
-
 /* Pagination styles */
 .pagination-wrapper {
     .paging-details {
@@ -578,11 +510,6 @@ ul {
     text-align: center;
 }
 
-body.collapsed-nav {
-    .main-page {
-        margin-left: 50px;
-    }
-}
 body {
     .main-page {
         height: 100%;

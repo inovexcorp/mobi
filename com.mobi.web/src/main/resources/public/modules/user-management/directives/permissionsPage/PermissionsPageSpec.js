@@ -359,7 +359,7 @@ describe('Permissions Page directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('permissions-page')).toEqual(true);
             expect(this.element.hasClass('row')).toEqual(true);
-            expect(this.element.querySelectorAll('.col-xs-12').length).toEqual(1);
+            expect(this.element.querySelectorAll('.col-12').length).toEqual(1);
         });
         it('with a block', function() {
             expect(this.element.find('block').length).toEqual(1);

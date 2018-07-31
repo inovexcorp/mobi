@@ -20,11 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="create-request-tabset full-height">
+<div class="create-request-tabset h-100">
     <tabset class="centered">
         <tab heading="'New Request'" active="true">
-            <div class="padding full-height row">
-                <div class="wrapping-column col-8 offset-2 full-height">
+            <div class="padding h-100 row">
+                <div class="wrapping-column col-8 offset-2 h-100">
                     <block>
                         <block-content class="padding">
                             <request-record-select ng-if="dvm.state.createRequestStep === 0"></request-record-select>
@@ -36,8 +36,8 @@
                                 <step-progress-bar step-number="3" current-step="dvm.state.createRequestStep"></step-progress-bar>
                             </div>
                             <div class="btn-container">
-                                <button class="btn btn-default" ng-click="dvm.back()">{{dvm.state.createRequestStep === 0 ? 'Cancel' : 'Back'}}</button>
-                                <button class="btn btn-primary" ng-click="dvm.next()" ng-disabled="dvm.isDisabled()">{{dvm.state.createRequestStep === 2 ? 'Submit' : 'Next'}}</button>
+                                <button class="btn float-right" ng-click="dvm.back()">{{dvm.state.createRequestStep === 0 ? 'Cancel' : 'Back'}}</button>
+                                <button class="btn btn-primary float-left" ng-click="dvm.next()" ng-disabled="dvm.isDisabled()">{{dvm.state.createRequestStep === 2 ? 'Submit' : 'Next'}}</button>
                             </div>
                         </block-footer>
                     </block>

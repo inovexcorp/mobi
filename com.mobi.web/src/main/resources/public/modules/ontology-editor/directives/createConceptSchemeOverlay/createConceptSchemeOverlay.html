@@ -45,7 +45,7 @@
             <advanced-language-select ng-model="dvm.language"></advanced-language-select>
             <div class="btn-container clearfix">
                 <button class="btn btn-primary float-right" ng-disabled="dvm.form.$invalid || dvm.ontoUtils.checkIri(dvm.scheme['@id'])" ng-click="dvm.create()">Create</button>
-                <button class="btn btn-default float-right" ng-click="dvm.os.showCreateConceptSchemeOverlay = false">Cancel</button>
+                <button class="btn float-right" ng-click="dvm.os.showCreateConceptSchemeOverlay = false">Cancel</button>
             </div>
         </form>
     </div>

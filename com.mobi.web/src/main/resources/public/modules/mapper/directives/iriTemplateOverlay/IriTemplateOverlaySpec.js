@@ -114,8 +114,8 @@ describe('IRI Template Overlay directive', function() {
             expect(this.element.querySelectorAll('.template-then').length).toBe(1);
             expect(this.element.querySelectorAll('.template-ends-with').length).toBe(1);
         });
-        it('with a .help-block', function() {
-            expect(this.element.querySelectorAll('.help-block').length).toBe(1);
+        it('with a .form-text', function() {
+            expect(this.element.querySelectorAll('.form-text').length).toBe(1);
         });
         it('with the correct classes for errors', function() {
             var failTests = ['/', '#', '?', 'test/', '/test', 'test#', '#test', 'test?', '?test', 't: test', 'test#test', 'test?test', 'test/test'];

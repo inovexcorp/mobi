@@ -46,7 +46,7 @@ describe('Analytics Editor Page directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('analytics-editor-page')).toBe(true);
-            expect(this.element.hasClass('full-height')).toBe(true);
+            expect(this.element.hasClass('h-100')).toBe(true);
             expect(this.element.hasClass('clearfix')).toBe(true);
         });
         it('with a .blue-bar', function() {

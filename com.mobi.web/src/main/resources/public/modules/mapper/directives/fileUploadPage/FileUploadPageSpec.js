@@ -113,7 +113,7 @@ describe('File Upload Page directive', function() {
             expect(this.element.find('file-upload-form').length).toBe(1);
         });
         it('with a button for canceling', function() {
-            var button = angular.element(this.element.querySelectorAll('.col-5 block-footer button.btn-default')[0]);
+            var button = angular.element(this.element.querySelectorAll('.col-5 block-footer button:not(.btn-primary)')[0]);
             expect(button.text().trim()).toBe('Cancel');
         });
         it('depending on whether a file has been selected and there are invalid properties', function() {
@@ -152,7 +152,7 @@ describe('File Upload Page directive', function() {
     });
     it('should call cancel when the cancel button is clicked', function() {
         spyOn(this.controller, 'cancel');
-        var cancelButton = angular.element(this.element.querySelectorAll('block-footer button.btn-default')[0]);
+        var cancelButton = angular.element(this.element.querySelectorAll('block-footer button:not(.btn-primary)')[0]);
         cancelButton.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });

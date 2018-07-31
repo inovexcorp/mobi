@@ -26,7 +26,7 @@
             <span>Property Hierarchies</span><a ng-click="dvm.os.unSelectItem(); dvm.os.showCreatePropertyOverlay = true" class="float-right"><i class="fa fa-plus"></i><span>Create Property</span></a>
         </block-header>
         <block-content class="tree hierarchy-tree">
-            <div class="full-height repeater-container" vs-repeat="26" vs-offset-before="10" vs-offset-after="10">
+            <div class="h-100 repeater-container" vs-repeat="26" vs-offset-before="10" vs-offset-after="10">
                 <div ng-repeat="node in dvm.flatPropertyTree | filter:dvm.isShown" class="tree-item-wrapper">
                     <div ng-if="!node.entityIRI" class="tree-item">
                         <a ng-click="node.set(dvm.os.listItem.ontologyRecord.recordId, !node.get(dvm.os.listItem.ontologyRecord.recordId)); $event.stopPropagation()">

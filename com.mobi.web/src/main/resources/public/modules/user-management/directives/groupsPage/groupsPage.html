@@ -21,11 +21,11 @@
   #L%
   -->
 <div class="groups-page row">
-    <div class="col-xs-4">
+    <div class="col-4">
         <block>
             <block-header>
                 <span>Groups</span>
-                <button class="btn btn-link pull-right" ng-click="dvm.createGroup()" ng-disabled="!dvm.um.isAdmin(dvm.lm.currentUser)">
+                <button class="btn btn-link float-right" ng-click="dvm.createGroup()" ng-disabled="!dvm.um.isAdmin(dvm.lm.currentUser)">
                     <i class="fa fa-plus"></i>Create Group
                 </button>
             </block-header>
@@ -40,18 +40,18 @@
             </block-footer>
         </block>
     </div>
-    <div class="col-xs-8">
+    <div class="col-8">
         <div class="group-title">
             <h3>{{dvm.state.selectedGroup.title}}</h3>
         </div>
         <div class="row">
-            <div class="col-xs-12">
+            <div class="col-12">
                 <div class="row vertical-half">
-                    <div class="col-xs-6">
+                    <div class="col-6">
                         <block>
                             <block-header>
                                 <span>Description</span>
-                                <button class="btn btn-link pull-right" ng-click="dvm.editDescription()" ng-disabled="!dvm.state.selectedGroup || !dvm.um.isAdmin(dvm.lm.currentUser)">
+                                <button class="btn btn-link float-right" ng-click="dvm.editDescription()" ng-disabled="!dvm.state.selectedGroup || !dvm.um.isAdmin(dvm.lm.currentUser)">
                                     <i class="fa fa-pencil"></i>Edit
                                 </button>
                             </block-header>
@@ -60,7 +60,7 @@
                             </block-content>
                         </block>
                     </div>
-                    <div class="col-xs-6">
+                    <div class="col-6">
                         <block>
                             <block-header>
                                 <span>Permissions</span>
@@ -72,7 +72,7 @@
                     </div>
                 </div>
                 <div class="row vertical-half member-block-row">
-                    <div class="col-xs-12">
+                    <div class="col-12">
                         <block>
                             <block-header>
                                 <span>Members</span>

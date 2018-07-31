@@ -41,12 +41,12 @@
         </div>
         <div class="template-ends-with form-group">
             <label class="control-label" for="endsWith">Ends With</label>
-            <select id="endsWith" class="form-control" ng-model="dvm.endsWith" ng-options="localName as localName.text for localName in dvm.localNameOptions" aria-describedby="ends-with-help-block"></select>
-            <small id="ends-with-help-block" class="help-block">Duplicate values will create a single individual with combined data.<br>Blank values will not be skipped. They will instead generate instances with no local names.<br>Any whitespace will be removed to create valid IRIs.</small>
+            <select id="endsWith" class="form-control" ng-model="dvm.endsWith" ng-options="localName as localName.text for localName in dvm.localNameOptions" aria-describedby="ends-with-form-text"></select>
+            <small id="ends-with-form-text" class="form-text">Duplicate values will create a single individual with combined data.<br>Blank values will not be skipped. They will instead generate instances with no local names.<br>Any whitespace will be removed to create valid IRIs.</small>
         </div>
         <div class="btn-container clearfix">
             <button class="btn btn-primary float-right" ng-click="dvm.state.editIriTemplate = false; dvm.set()" ng-disabled="iriTemplateForm.$invalid">Set</button>
-            <button class="btn btn-default float-right" ng-click="dvm.state.editIriTemplate = false">Cancel</button>
+            <button class="btn float-right" ng-click="dvm.state.editIriTemplate = false">Cancel</button>
         </div>
     </form>
 </div>

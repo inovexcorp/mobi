@@ -24,17 +24,17 @@
     <block>
         <block-content class="padding">
             <div class="row property-row">
-                <div ng-class="{empty: !dvm.state.selectedProperties.length}" class="col-11 offset-1 property-area full-height" drop-on-me drop-id="'property'" on-drop="dvm.state.selectProperty(data)">
+                <div ng-class="{empty: !dvm.state.selectedProperties.length}" class="col-11 offset-1 property-area h-100" drop-on-me drop-id="'property'" on-drop="dvm.state.selectProperty(data)">
                     <md-chips ng-if="dvm.state.selectedProperties.length" ng-model="dvm.state.selectedProperties" readonly="true" md-removable="true" md-on-remove="dvm.state.removeProperty($chip)">
                         <md-chip-template>{{$chip.title}}</md-chip-template>
                     </md-chips>
                 </div>
             </div>
             <div class="row class-row">
-                <div ng-class="{empty: !dvm.state.selectedClass}" class="col-1 class-area full-height md-chips" drop-on-me drop-id="'class'" on-drop="dvm.state.selectClass(data)">
+                <div ng-class="{empty: !dvm.state.selectedClass}" class="col-1 class-area h-100 md-chips" drop-on-me drop-id="'class'" on-drop="dvm.state.selectClass(data)">
                     <md-chip ng-if="dvm.state.selectedClass" class="selected-class md-chip">{{dvm.state.selectedClass.title}}</md-chip>
                 </div>
-                <div class="col-11 table-area full-height">
+                <div class="col-11 table-area h-100">
                     <error-display ng-if="dvm.state.queryError" class="padding">{{dvm.state.queryError}}</error-display>
                     <div class="table-wrapper">
                         <sortable-table bindings="dvm.state.results.bindings" data="dvm.state.results.data" headers="dvm.state.variables" targeted-spinner="dvm.state.spinnerId" on-sort="dvm.state.sortResults(binding, descending)"></sortable-table>

@@ -27,7 +27,7 @@
         <text-area required="true" text-area-name="'comment'" ng-model="dvm.comment" display-text="'Comment'"></text-area>
         <div class="btn-container clearfix">
             <button class="btn btn-primary float-right" ng-click="dvm.commit()" ng-disabled="dvm.form.$invalid">Submit</button>
-            <button class="btn btn-default float-right" ng-click="dvm.os.showCommitOverlay = false;">Cancel</button>
+            <button class="btn float-right" ng-click="dvm.os.showCommitOverlay = false;">Cancel</button>
         </div>
     </form>
 </div>

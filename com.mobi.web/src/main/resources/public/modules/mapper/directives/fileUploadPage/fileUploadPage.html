@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="file-upload-page row">
-    <div class="col-5 form-block full-height">
+    <div class="col-5 form-block h-100">
         <mapping-title></mapping-title>
         <block>
             <block-header>
@@ -37,16 +37,16 @@
                             Column {{columnObj.index}} - {{dvm.getDataMappingName(columnObj['@id'])}}
                         </li>
                     </ul>
-                    <p class="help-block">Click continue to fix the mapping.</p>
+                    <p class="form-text">Click continue to fix the mapping.</p>
                 </div>
             </block-content>
             <block-footer>
-                <button class="btn btn-default float-left" ng-click="dvm.cancel()">Cancel</button>
+                <button class="btn float-left" ng-click="dvm.cancel()">Cancel</button>
                 <button class="btn btn-primary float-right" ng-click="dvm.state.editMapping ? dvm.edit() : dvm.state.displayRunMappingOverlay = true" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)">{{dvm.state.editMapping ? 'Continue' : 'Run'}}</button>
             </block-footer>
         </block>
     </div>
-    <div class="col-7 full-height">
+    <div class="col-7 h-100">
         <block>
             <block-content>
                 <preview-data-grid></preview-data-grid>

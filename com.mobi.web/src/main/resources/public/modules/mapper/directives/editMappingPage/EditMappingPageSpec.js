@@ -179,7 +179,7 @@ describe('Edit Mapping Page directive', function() {
     });
     it('should call cancel when a cancel button is clicked', function() {
         spyOn(this.controller, 'cancel');
-        var cancelButtons = this.element.querySelectorAll('tab block-footer button.btn-default');
+        var cancelButtons = this.element.querySelectorAll('tab block-footer button:not(.btn-primary)');
         _.toArray(cancelButtons).forEach(function(button) {
             this.controller.cancel.calls.reset();
             angular.element(button).triggerHandler('click');

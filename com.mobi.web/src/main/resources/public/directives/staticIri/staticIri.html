@@ -59,7 +59,7 @@
         <!-- buttons -->
         <div class="btn-container clearfix">
             <button type="button" class="btn btn-primary pull-right" ng-click="onEdit({iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}); dvm.os.showIriOverlay = false" ng-disabled="dvm.iriForm.$invalid || dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">Submit</button>
-            <button type="button" class="btn btn-default pull-right" ng-click="dvm.resetVariables(); dvm.os.showIriOverlay = false">Cancel</button>
+            <button type="button" class="btn pull-right" ng-click="dvm.resetVariables(); dvm.os.showIriOverlay = false">Cancel</button>
             <button type="button" class="btn btn-primary pull-left" ng-click="dvm.resetVariables()"><i class="fa fa-refresh"></i></button>
         </div>
     </form>

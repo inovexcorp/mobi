@@ -190,7 +190,7 @@ describe('Create User Overlays directive', function() {
         });
     });
     it('should set the correct state when the cancel button is clicked', function() {
-        var cancelButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var cancelButton = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         cancelButton.triggerHandler('click');
         expect(userStateSvc.displayCreateUserOverlay).toBe(false);
     });
@@ -203,7 +203,7 @@ describe('Create User Overlays directive', function() {
         this.controller.step = 1;
         scope.$digest();
 
-        var backButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var backButton = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         backButton.triggerHandler('click');
         expect(this.controller.step).toBe(0);
     });

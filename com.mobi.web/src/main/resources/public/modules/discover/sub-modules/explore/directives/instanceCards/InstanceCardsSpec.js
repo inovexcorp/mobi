@@ -72,10 +72,10 @@ describe('Instance Cards directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('instance-cards')).toBe(true);
             expect(this.element.hasClass('class-cards')).toBe(true);
-            expect(this.element.hasClass('full-height')).toBe(true);
+            expect(this.element.hasClass('h-100')).toBe(true);
         });
-        it('with a .rows-container.full-height', function() {
-            expect(this.element.querySelectorAll('.rows-container.full-height').length).toBe(1);
+        it('with a .rows-container.h-100', function() {
+            expect(this.element.querySelectorAll('.rows-container.h-100').length).toBe(1);
         });
         it('with a .row', function() {
             expect(this.element.querySelectorAll('.row').length).toBe(2);

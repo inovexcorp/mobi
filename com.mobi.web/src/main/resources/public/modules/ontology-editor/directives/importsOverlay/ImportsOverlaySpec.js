@@ -343,7 +343,7 @@ describe('Imports Overlay directive', function() {
         expect(this.controller.addImport).toHaveBeenCalled();
     });
     it('should call onClose when the button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(scope.onClose).toHaveBeenCalled();
     });

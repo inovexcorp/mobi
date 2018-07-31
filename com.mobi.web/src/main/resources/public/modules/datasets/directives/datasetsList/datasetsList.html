@@ -21,12 +21,12 @@
   #L%
   -->
 <div class="datasets-list row">
-    <div class="col-8 offset-2 full-height">
+    <div class="col-8 offset-2 h-100">
         <block>
             <block-content class="padding">
                 <div class="dataset padding" ng-repeat="dataset in dvm.state.results" ng-class="{'open': dataset.record['@id'] === dvm.state.openedDatasetId}">
                     <div uib-dropdown class='action-container'>
-                        <button uib-dropdown-toggle title="Dataset Actions" class="btn btn-default remove-min-width">
+                        <button uib-dropdown-toggle title="Dataset Actions" class="btn btn-flat remove-min-width">
                             <i class="fa fa-ellipsis-h fa-fw"></i>
                         </button>
                         <ul uib-dropdown-menu class="dropdown-menu-right">

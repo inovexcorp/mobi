@@ -184,8 +184,8 @@ describe('Create Request Tabset directive', function() {
             expect(buttons.length).toEqual(2);
         });
         it('depending on the create request step', function() {
-            var defaultButton = angular.element(this.element.querySelectorAll('block-footer button.btn-default')[0]);
-            var primaryButton = angular.element(this.element.querySelectorAll('block-footer button.btn-primary')[0]);
+            var defaultButton = angular.element(this.element.querySelectorAll('block-footer button:not(.btn-primary)')[0]);
+            var primaryButton = angular.element(this.element.querySelectorAll('block-footer button')[0]);
             expect(this.element.find('request-record-select').length).toEqual(1);
             expect(this.element.find('request-branch-select').length).toEqual(0);
             expect(this.element.find('request-details-form').length).toEqual(0);
@@ -221,7 +221,7 @@ describe('Create Request Tabset directive', function() {
     });
     it('should call back when the default button is clicked', function() {
         spyOn(this.controller, 'back');
-        var button = angular.element(this.element.querySelectorAll('block-footer button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('block-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(this.controller.back).toHaveBeenCalled();
     });

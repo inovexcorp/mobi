@@ -202,7 +202,8 @@ gulp.task('minify-css', function() {
 });
 
 // Injects minified CSS and JS files
-gulp.task('inject-minified', ['minify-scripts', 'minify-vendor-scripts', 'minify-css', 'html'], function() {
+gulp.task('inject-minified', ['minify-scripts', 'minify-vendor-scripts', 'minify-css', 'html', 'filtered-html'], function() {
+// gulp.task('inject-minified', ['minify-scripts', 'minify-vendor-scripts', 'minify-css', 'html'], function() {
     return injectFiles(minifiedFiles.concat([dest + '**/*.css']));
 });;
 
@@ -221,10 +222,17 @@ gulp.task('images', function() {
 
 // Moves all of the html files to build folder
 gulp.task('html', function() {
-    return gulp.src(src + '**/*.html')
+    return gulp.src(src + '**/!(sidebar).html')
+    // return gulp.src(src + '**/*.html')
         .pipe(strip.html({ignore: /<!-- inject:css -->|<!-- inject:js -->|<!-- endinject -->/g}))
         .pipe(gulp.dest(dest));
 });
+
+gulp.task('filtered-html', function() {
+    return gulp.src(src + 'directives/sidebar/sidebar.html')
+        .pipe(strip.html({ignore: /<!-- inject:css -->|<!-- inject:js -->|<!-- endinject -->/g}))
+        .pipe(gulp.dest('./target/filtered-resources'));
+})
 
 // Creates Antlr4 bundle file
 gulp.task('antlr4', function() {
@@ -285,7 +293,8 @@ gulp.task('change-to-css', function() {
 });
 
 // Injects un-minified CSS and JS files
-gulp.task('inject-unminified', ['antlr4', 'sparqljs', 'move-custom-js', 'html', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
+gulp.task('inject-unminified', ['antlr4', 'sparqljs', 'move-custom-js', 'html', 'filtered-html', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
+// gulp.task('inject-unminified', ['antlr4', 'sparqljs', 'move-custom-js', 'html', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
     var allJsFiles = nodeJsFiles(dest + 'js/').concat(bundledFiles).concat(jsFiles(dest)),
         allStyleFiles = nodeStyleFiles(dest + 'css/').concat(styleFiles(dest, 'css')),
         allFiles = allJsFiles.concat(allStyleFiles);

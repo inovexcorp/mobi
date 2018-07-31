@@ -20,20 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="datasets-tabset full-height">
-    <div class="blue-bar"></div>
-    <div class="datasets-page-content">
-        <div class="actions white-bar">
-            <form class="form-inline justify-content-center">
-                <div class="form-group">
-                    <input type="text" class="form-control" placeholder="Search" ng-model="dvm.state.paginationConfig.searchText" ng-keyup="dvm.onKeyUp($event)" />
-                </div>
-                <button type="button" class="btn btn-primary" ng-click="dvm.state.showNewOverlay = true">New Dataset</button>
-            </form>
-        </div>
-        <datasets-list></datasets-list>
-        <new-dataset-overlay ng-if="dvm.state.showNewOverlay" on-close="dvm.state.showNewOverlay = false"></new-dataset-overlay>
-        <edit-dataset-overlay ng-if="dvm.state.showEditOverlay" on-close="dvm.state.showEditOverlay = false"></edit-dataset-overlay>
-        <upload-data-overlay ng-if="dvm.state.showUploadOverlay" on-close="dvm.state.showUploadOverlay = false"></upload-data-overlay>
+<div class="datasets-tabset h-100">
+    <div class="actions white-bar">
+        <form class="form-inline justify-content-center">
+            <div class="form-group">
+                <input type="text" class="form-control" placeholder="Search" ng-model="dvm.state.paginationConfig.searchText" ng-keyup="dvm.onKeyUp($event)" />
+            </div>
+            <button type="button" class="btn btn-primary" ng-click="dvm.state.showNewOverlay = true">New Dataset</button>
+        </form>
     </div>
+    <datasets-list></datasets-list>
+    <new-dataset-overlay ng-if="dvm.state.showNewOverlay" on-close="dvm.state.showNewOverlay = false"></new-dataset-overlay>
+    <edit-dataset-overlay ng-if="dvm.state.showEditOverlay" on-close="dvm.state.showEditOverlay = false"></edit-dataset-overlay>
+    <upload-data-overlay ng-if="dvm.state.showUploadOverlay" on-close="dvm.state.showUploadOverlay = false"></upload-data-overlay>
 </div>
