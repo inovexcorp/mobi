@@ -83,7 +83,7 @@ describe('Search Row directive', function() {
                 this.controller.search();
                 scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
-                expect(catalogStateSvc.currentPage).toBe(0);
+                expect(catalogStateSvc.currentPage).toBe(1);
                 expect(catalogStateSvc.catalogs.local.records.recordType).not.toBe(this.controller.recordType);
                 expect(catalogStateSvc.catalogs.local.records.searchText).not.toBe(this.controller.searchText);
                 expect(catalogStateSvc.setPagination).not.toHaveBeenCalled();
@@ -94,7 +94,7 @@ describe('Search Row directive', function() {
                 this.controller.search();
                 scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
-                expect(catalogStateSvc.currentPage).toBe(0);
+                expect(catalogStateSvc.currentPage).toBe(1);
                 expect(catalogStateSvc.catalogs.local.records.recordType).toBe(this.controller.recordType);
                 expect(catalogStateSvc.catalogs.local.records.searchText).toBe(this.controller.searchText);
                 expect(catalogStateSvc.setPagination).toHaveBeenCalled();
@@ -108,9 +108,7 @@ describe('Search Row directive', function() {
             expect(this.element.hasClass('search-row')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
             expect(this.element.querySelectorAll('.col-8').length).toBe(1);
-            expect(this.element.querySelectorAll('form.form-horizontal').length).toBe(1);
-            expect(this.element.querySelectorAll('form .col-2').length).toBe(1);
-            expect(this.element.querySelectorAll('form .col-10').length).toBe(1);
+            expect(this.element.querySelectorAll('form.form-inline').length).toBe(1);
         });
         it('with a select', function() {
             expect(this.element.find('select').length).toBe(1);

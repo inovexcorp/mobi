@@ -185,7 +185,7 @@ describe('Create Request Tabset directive', function() {
         });
         it('depending on the create request step', function() {
             var defaultButton = angular.element(this.element.querySelectorAll('block-footer button:not(.btn-primary)')[0]);
-            var primaryButton = angular.element(this.element.querySelectorAll('block-footer button')[0]);
+            var primaryButton = angular.element(this.element.querySelectorAll('block-footer button.btn-primary')[0]);
             expect(this.element.find('request-record-select').length).toEqual(1);
             expect(this.element.find('request-branch-select').length).toEqual(0);
             expect(this.element.find('request-details-form').length).toEqual(0);

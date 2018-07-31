@@ -84,10 +84,6 @@
                         searchText: ''
                     };
                     dvm.totalSize = 0;
-                    dvm.links = {
-                        next: '',
-                        prev: ''
-                    };
                     dvm.records = [];
                     dvm.selectedRecord = angular.copy(_.get(dvm.state.mapping, 'ontology'));
                     dvm.selectedVersion = 'latest';
@@ -257,9 +253,6 @@
                         dvm.selectedRecord = _.get(dvm.records, index, dvm.selectedRecord);
                         var headers = response.headers();
                         dvm.totalSize = _.get(headers, 'x-total-count', 0);
-                        var links = dvm.util.parseLinks(_.get(headers, 'link', ''));
-                        dvm.links.prev = _.get(links, 'prev', '');
-                        dvm.links.next = _.get(links, 'next', '');
                         dvm.recordsErrorMessage = '';
                     }
                     function onError() {

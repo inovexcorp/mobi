@@ -33,8 +33,8 @@
             </block-content>
             <block-footer>
                 <div class="paging-container clearfix">
-                    <paging-details total-size="dvm.totalSize" page-index="dvm.paginatedConfig.pageIndex" limit="dvm.paginatedConfig.limit"></paging-details>
-                    <pagination total="dvm.totalSize" limit="dvm.paginatedConfig.limit" current-page="dvm.currentPage" get-page="dvm.getPage()"></pagination>
+                    <paging-details total-size="dvm.totalSize" page-index="dvm.currentPage - 1" limit="dvm.limit"></paging-details>
+                    <pagination total="dvm.totalSize" limit="dvm.limit" current-page="dvm.currentPage" get-page="dvm.getPage()"></pagination>
                 </div>
             </block-footer>
         </block>

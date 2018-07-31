@@ -80,7 +80,7 @@ describe('Branch Block directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('branch-block')).toBe(true);
-            expect(this.element.hasClass('col-12')).toBe(true);
+            expect(this.element.hasClass('col')).toBe(true);
         });
         it('with a block', function() {
             expect(this.element.find('block').length).toBe(1);

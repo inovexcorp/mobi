@@ -69,10 +69,6 @@
                 dvm.util = utilService;
                 dvm.records = [];
                 dvm.totalSize = 0;
-                dvm.links = {
-                    prev: '',
-                    next: ''
-                };
                 dvm.currentPage = 1;
                 dvm.config = {
                     recordType: prefixes.ontologyEditor + 'OntologyRecord',
@@ -92,10 +88,6 @@
                         .then(response => setPagination(response), error => {
                             dvm.records = [];
                             dvm.totalSize = 0;
-                            dvm.links = {
-                                prev: '',
-                                next: ''
-                            };
                             dvm.util.createErrorToast(error);
                         });
                 }
@@ -110,9 +102,6 @@
                     dvm.records = _.chunk(response.data, 2);
                     var headers = response.headers();
                     dvm.totalSize = _.get(headers, 'x-total-count', 0);
-                    var links = dvm.util.parseLinks(_.get(headers, 'link', ''));
-                    dvm.links.prev = _.get(links, 'prev', '');
-                    dvm.links.next = _.get(links, 'next', '');
                 }
             }
         }

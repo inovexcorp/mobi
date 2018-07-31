@@ -51,47 +51,47 @@ describe('Explore Tab directive', function() {
             expect(this.element.hasClass('explore-tab')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
         });
-        it('with a class-block.col-12', function() {
-            expect(this.element.querySelectorAll('class-block.col-12').length).toBe(1);
+        it('with a class-block.col', function() {
+            expect(this.element.querySelectorAll('class-block.col').length).toBe(1);
 
             discoverStateSvc.explore.breadcrumbs = ['', ''];
             scope.$apply();
 
-            expect(this.element.querySelectorAll('class-block.col-12').length).toBe(0);
+            expect(this.element.querySelectorAll('class-block.col').length).toBe(0);
         });
-        it('with a instance-block.col-12', function() {
-            expect(this.element.querySelectorAll('instance-block.col-12').length).toBe(0);
+        it('with a instance-block.col', function() {
+            expect(this.element.querySelectorAll('instance-block.col').length).toBe(0);
 
             discoverStateSvc.explore.breadcrumbs = ['', ''];
             scope.$apply();
 
-            expect(this.element.querySelectorAll('instance-block.col-12').length).toBe(1);
+            expect(this.element.querySelectorAll('instance-block.col').length).toBe(1);
         });
-        it('with a instance-view.col-12', function() {
-            expect(this.element.querySelectorAll('instance-view.col-12').length).toBe(0);
+        it('with a instance-view.col', function() {
+            expect(this.element.querySelectorAll('instance-view.col').length).toBe(0);
 
             discoverStateSvc.explore.breadcrumbs = ['', '', ''];
             scope.$apply();
 
-            expect(this.element.querySelectorAll('instance-view.col-12').length).toBe(1);
+            expect(this.element.querySelectorAll('instance-view.col').length).toBe(1);
         });
-        it('with a instance-editor.col-12', function() {
-            expect(this.element.querySelectorAll('instance-editor.col-12').length).toBe(0);
+        it('with a instance-editor.col', function() {
+            expect(this.element.querySelectorAll('instance-editor.col').length).toBe(0);
 
             discoverStateSvc.explore.breadcrumbs = ['', '', ''];
             discoverStateSvc.explore.editing = true;
             scope.$apply();
 
-            expect(this.element.querySelectorAll('instance-editor.col-12').length).toBe(1);
+            expect(this.element.querySelectorAll('instance-editor.col').length).toBe(1);
         });
-        it('with a instance-creator.col-12', function() {
-            expect(this.element.querySelectorAll('instance-creator.col-12').length).toBe(0);
+        it('with a instance-creator.col', function() {
+            expect(this.element.querySelectorAll('instance-creator.col').length).toBe(0);
 
             discoverStateSvc.explore.breadcrumbs = ['', '', ''];
             discoverStateSvc.explore.creating = true;
             scope.$apply();
 
-            expect(this.element.querySelectorAll('instance-creator.col-12').length).toBe(1);
+            expect(this.element.querySelectorAll('instance-creator.col').length).toBe(1);
         });
     });
 });

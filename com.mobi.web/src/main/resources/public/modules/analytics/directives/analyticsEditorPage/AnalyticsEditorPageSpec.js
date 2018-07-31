@@ -49,9 +49,6 @@ describe('Analytics Editor Page directive', function() {
             expect(this.element.hasClass('h-100')).toBe(true);
             expect(this.element.hasClass('clearfix')).toBe(true);
         });
-        it('with a .blue-bar', function() {
-            expect(this.element.querySelectorAll('.blue-bar').length).toBe(1);
-        });
         it('with a .row', function() {
             expect(this.element.querySelectorAll('.row').length).toBe(1);
         });

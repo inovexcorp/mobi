@@ -200,7 +200,6 @@
                 self.errorMessage = '';
                 self.infoMessage = 'Please submit a query to see results here.';
                 self.currentPage = 1;
-                // self.currentPage = 0;
                 self.links = {
                     next: '',
                     prev: ''

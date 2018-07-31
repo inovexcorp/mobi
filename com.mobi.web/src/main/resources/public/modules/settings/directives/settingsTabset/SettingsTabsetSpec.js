@@ -46,8 +46,7 @@ describe('Settings Tabset directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('settings-tabset')).toBe(true);
         });
-        it('with tabsets', function() {
-            expect(this.element.find('tabset').length).toBe(2);
+        it('with a tabset', function() {
             expect(this.element.querySelectorAll('tabset.centered').length).toBe(1);
         });
         it('with tabs', function() {

@@ -126,7 +126,7 @@ describe('Mapping Select Page directive', function() {
             expect(this.element.find('block-content').length).toBe(1);
         });
         it('with buttons for downloading, editing, running, and duplicating a mapping', function() {
-            var buttons = this.element.querySelectorAll('.col-8 block-header div ul li a');
+            var buttons = this.element.querySelectorAll('.col-8 block-header div ul a');
             expect(buttons.length).toBe(4);
             _.forEach(_.toArray(buttons), function(button) {
                 expect(['Edit', 'Run', 'Download', 'Duplicate']).toContain(angular.element(button).text().trim());

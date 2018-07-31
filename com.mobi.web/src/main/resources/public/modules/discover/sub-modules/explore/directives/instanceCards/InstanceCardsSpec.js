@@ -215,7 +215,7 @@ describe('Instance Cards directive', function() {
                 describe('there are more instances and getClassInstanceDetails is', function() {
                     beforeEach(function() {
                         discoverStateSvc.explore.instanceDetails.total = 5;
-                        discoverStateSvc.explore.instanceDetails.currentPage = 1;
+                        discoverStateSvc.explore.instanceDetails.currentPage = 2;
                     });
                     describe('resolved and the instance', function() {
                         beforeEach(function() {
@@ -235,7 +235,7 @@ describe('Instance Cards directive', function() {
                             expect(discoverStateSvc.explore.instanceDetails.data).toEqual(this.resultsObject.data);
                             expect(discoverStateSvc.explore.instanceDetails.links).toEqual(this.resultsObject.links);
                             expect(discoverStateSvc.explore.instanceDetails.total).toBe(4);
-                            expect(discoverStateSvc.explore.instanceDetails.currentPage).toBe(0);
+                            expect(discoverStateSvc.explore.instanceDetails.currentPage).toBe(1);
                             expect(this.controller.showDeleteOverlay).toBe(false);
                         });
                         it('was not the only one on the page', function() {
@@ -250,7 +250,7 @@ describe('Instance Cards directive', function() {
                             expect(discoverStateSvc.explore.instanceDetails.data).toEqual(this.resultsObject.data);
                             expect(discoverStateSvc.explore.instanceDetails.links).toEqual(this.resultsObject.links);
                             expect(discoverStateSvc.explore.instanceDetails.total).toBe(4);
-                            expect(discoverStateSvc.explore.instanceDetails.currentPage).toBe(1);
+                            expect(discoverStateSvc.explore.instanceDetails.currentPage).toBe(2);
                             expect(this.controller.showDeleteOverlay).toBe(false);
                         });
                     });

@@ -77,10 +77,6 @@
                         searchText: ''
                     };
                     dvm.totalSize = 0;
-                    dvm.links = {
-                        next: '',
-                        prev: ''
-                    };
 
                     dvm.setInitialOntologies = function() {
                         dvm.currentPage = 1;
@@ -91,10 +87,6 @@
                         return cm.getRecords(cm.localCatalog['@id'], dvm.ontologySearchConfig)
                             .then(parseOntologyResults, errorMessage => {
                                 dvm.ontologies = [];
-                                dvm.links = {
-                                    next: '',
-                                    prev: ''
-                                };
                                 dvm.totalSize = 0;
                                 onError(errorMessage);
                             });
@@ -118,9 +110,6 @@
                         dvm.ontologies = response.data;
                         var headers = response.headers();
                         dvm.totalSize = _.get(headers, 'x-total-count', 0);
-                        var links = dvm.util.parseLinks(_.get(headers, 'link', ''));
-                        dvm.links.prev = _.get(links, 'prev', '');
-                        dvm.links.next = _.get(links, 'next', '');
                         dvm.error = '';
                     }
 
