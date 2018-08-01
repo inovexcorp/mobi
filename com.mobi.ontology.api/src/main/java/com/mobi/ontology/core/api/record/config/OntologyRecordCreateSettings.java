@@ -25,14 +25,8 @@ package com.mobi.ontology.core.api.record.config;
 
 import com.mobi.catalog.api.record.config.OperationSetting;
 import com.mobi.catalog.api.record.config.OperationSettingImpl;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontology.core.api.Ontology;
-import com.mobi.query.api.Operation;
-import com.mobi.rdf.api.Model;
 
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.Set;
 
 public class OntologyRecordCreateSettings {
 
