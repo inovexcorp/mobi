@@ -59,17 +59,19 @@
              * @methodOf policyEnforcement.service:policyEnforcementService
              *
              * @description
-             * Calls the POST /mobirest/policy-enforcement endpoint with the passed TODO
+             * Calls the POST /mobirest/policy-enforcement endpoint with the passed XACML parameters to be evaluated.
              *
-             * @param {string} [relatedResource=''] An optional IRI string for a related Resource
-             * @param {string} [relatedSubject=''] An optional IRI string for a related Subject
-             * @param {string} [relatedAction=''] An optional IRI string for a related Action
-             * @return {Promise} A Promise that resolves to a JSON array of Policy JSON objects or is rejected with
+             * @param {Object} [subjectAttrs=''] An optional Object of attributes for a subject
+             * @param {string} [resourceId=''] An optional IRI string for a resourceId
+             * @param {Object} [resourceAttrs=''] An optional Object of attributes for a resource
+             * @param {string} [actionId=''] An optional IRI string for an actionId
+             * @param {Object} [actionAttrs=''] An optional Object of attributes for an action
+             * @return {Promise} A Promise that resolves to a string of the decision of the request or is rejected with
              * an error message
              */
-            self.evaluateRequest = function(subjectAttr = undefined, resourceId = undefined, resourceAttrs = undefined, actionId = undefined, actionAttrs = undefined) {
+            self.evaluateRequest = function(subjectAttrs = undefined, resourceId = undefined, resourceAttrs = undefined, actionId = undefined, actionAttrs = undefined) {
                 var request = {
-                    "subjectAttr": subjectAttr,
+                    "subjectAttr": subjectAttrs,
                     "resourceId": resourceId,
                     "resourceAttrs": resourceAttrs,
                     "actionId": actionId,
