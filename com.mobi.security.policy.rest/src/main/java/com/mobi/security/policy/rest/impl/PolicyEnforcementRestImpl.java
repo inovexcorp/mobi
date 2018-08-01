@@ -117,7 +117,6 @@ public class PolicyEnforcementRestImpl implements PolicyEnforcementRest {
         return Response.ok(decision.toString()).build();
     }
 
-    // TODO: Consolidate
     private String getMessageOrDefault(com.mobi.security.policy.api.Response response, String defaultMessage) {
         return StringUtils.isEmpty(response.getStatusMessage()) ? defaultMessage : response.getStatusMessage();
     }
