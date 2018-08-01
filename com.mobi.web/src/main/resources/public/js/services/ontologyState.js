@@ -280,9 +280,11 @@
             self.getOntology = function(recordId, rdfFormat = 'jsonld') {
                 var state = sm.getOntologyStateByRecordId(recordId);
                 if (!_.isEmpty(state)) {
+                    var record = _.find(state.model, {'@type': ['http://mobi.com/states/ontology-editor/state-record']});
                     var inProgressCommit = emptyInProgressCommit;
-                    var branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "branch'][0]['@id']");
-                    var commitId = _.get(state, "model[0]['" + prefixes.ontologyState + "commit'][0]['@id']");
+                    var branchId = util.getPropertyId(record, prefixes.ontologyState + 'currentBranch');
+                    var branch = _.find(state.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
+                    var commitId = util.getPropertyId(branch, prefixes.ontologyState + 'commit');
                     var upToDate = false;
                     return cm.getRecordBranch(branchId, recordId, catalogId)
                         .then(branch => {
@@ -851,6 +853,7 @@
                 _.remove(self.list, { ontologyRecord: { recordId }});
             }
             self.removeBranch = function(recordId, branchId) {
+                sm.deleteOntologyBranch(recordId, branchId);
                 _.remove(self.getListItemByRecordId(recordId).branches, {'@id': branchId});
             }
             self.afterSave = function() {
