@@ -68,6 +68,9 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.exception.RepositoryException;
+import com.mobi.security.policy.api.xacml.XACMLPolicy;
+import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -108,6 +111,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private User user;
     private DeleteActivity deleteActivity;
     private Tag tag;
+    private XACMLPolicy xacmlPolicy;
 
     private OrmFactory<VersionedRDFRecord> recordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
     private OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
@@ -135,6 +139,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private MergeRequestManager mergeRequestManager;
+
+    @Mock
+    private XACMLPolicyManager xacmlPolicyManager;
 
     @Before
     public void setUp() throws Exception {
@@ -183,6 +190,8 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         when(utilsService.getRevisionChanges(eq(commitIRI), eq(connection))).thenReturn(difference);
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
         doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
+        when(xacmlPolicyManager.createPolicy(any(PolicyType.class))).thenCallRealMethod();
+        when(xacmlPolicyManager.addPolicy(any(XACMLPolicy.class))).thenCallRealMethod();
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.setVersioningManager(versioningManager);
@@ -190,6 +199,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         recordService.setVf(VALUE_FACTORY);
         recordService.setProvUtils(provUtils);
         recordService.setMergeRequestManager(mergeRequestManager);
+        recordService.setPolicyManager(xacmlPolicyManager);
     }
 
     /* create() */

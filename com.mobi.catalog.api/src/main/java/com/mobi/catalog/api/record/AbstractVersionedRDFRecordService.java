@@ -44,6 +44,9 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.security.policy.api.xacml.XACMLPolicy;
+import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -67,6 +70,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     protected BranchFactory branchFactory;
     protected MergeRequestManager mergeRequestManager;
     protected VersioningManager versioningManager;
+    protected XACMLPolicyManager xacmlPolicyManager;
 
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
@@ -93,16 +97,18 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         conn.commit();
         return record;
     }
-    protected XACMLPolicy createPolicy() {
-        return XACMLPolicyManager.createPolicy(new BalanaPolicy(policyType, VALUE_FACTORY));
+
+    protected void writePolicyType() {
+
     }
 
-    protected void addPolicy() {
-
+    protected Resource policyCreation(PolicyType policyType) {
+        XACMLPolicy xacmlPolicy = xacmlPolicyManager.createPolicy(policyType);
+        return xacmlPolicyManager.addPolicy(xacmlPolicy);
     }
 
     protected void deletePolicy(Resource policyId) {
-        policyManager.deletePolicy(policyId);
+        xacmlPolicyManager.deletePolicy(policyId);
     }
 
     /**
