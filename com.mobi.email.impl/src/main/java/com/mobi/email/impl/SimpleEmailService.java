@@ -163,7 +163,7 @@ public class SimpleEmailService implements EmailService {
 
         URL imageBasePath = null;
         try {
-            imageBasePath = new URL(config.imageBasePath());
+            imageBasePath = new URL(mobiServer.getHostName());
         } catch (MalformedURLException e) {
             throw new MobiException(e);
         }

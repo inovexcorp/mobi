@@ -69,14 +69,6 @@ public interface EmailServiceConfig {
     String security();
 
     /**
-     * The default base path to resolve images by when a relative path is used in the email template.
-     *
-     * @return The default base path to use to resolve images
-     */
-    @Meta.AD(deflt = "file://")
-    String imageBasePath();
-
-    /**
      * The default email template located in the ${karaf.etc} directory to use to send emails.
      *
      * @return The default email template filename
