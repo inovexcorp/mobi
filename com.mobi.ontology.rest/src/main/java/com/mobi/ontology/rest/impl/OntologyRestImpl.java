@@ -1541,7 +1541,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     /**
-     * Creates the OntologyRecord using OntologyManager.
+     * Creates the OntologyRecord using CatalogManager.
      *
      * @param context          the context of the request.
      * @param title            the title for the OntologyRecord.
@@ -1561,30 +1561,39 @@ public class OntologyRestImpl implements OntologyRest {
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, description);
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywordSet);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        OntologyRecord record;
+        Resource branchId;
+        Resource commitId;
         try {
-            OntologyRecord record = catalogManager.createRecord(user, config, OntologyRecord.class);
-            RepositoryConnection conn = repositoryManager.getRepository(catalogManager.getRepositoryId())
-                    .orElseThrow(() -> new IllegalStateException("Catalog repository unavailable")).getConnection();
-            Resource branchId = record.getMasterBranch_resource().get();
-            RepositoryResult<Statement> commitStmt = conn.getStatements(branchId,
-                    valueFactory.createIRI(Branch.head_IRI), null);
-            if (!commitStmt.hasNext()) {
-                throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status
-                        .BAD_REQUEST);
+            semaphore.acquire();
+            record = catalogManager.createRecord(user, config, OntologyRecord.class);
+            branchId = record.getMasterBranch_resource().get();
+            Repository repo = repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
+                    new IllegalStateException("Catalog repository unavailable"));
+            try (RepositoryConnection conn = repo.getConnection()) {
+                RepositoryResult<Statement> commitStmt = conn.getStatements(branchId,
+                        valueFactory.createIRI(Branch.head_IRI), null);
+                if (!commitStmt.hasNext()) {
+                    throw ErrorUtils.sendError("The requested instance could not be found.",
+                            Response.Status.BAD_REQUEST);
+                }
+                commitId = (Resource) commitStmt.next().getObject();
             }
-            Resource commitId = (Resource) commitStmt.next().getObject();
-            conn.close();
-            JSONObject response = new JSONObject()
-                    .element("ontologyId", record.getOntologyIRI().toString())
-                    .element("recordId", record.getResource().stringValue())
-                    .element("branchId", branchId.toString())
-                    .element("commitId", commitId.toString());
-
-            return Response.status(Response.Status.CREATED).entity(response).build();
-
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (InterruptedException e) {
+            throw ErrorUtils.sendError(e, "Issue checking adding new OntologyRecord",
+                        Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            semaphore.release();
         }
+        JSONObject response = new JSONObject();
+        response.element("ontologyId", record.getOntologyIRI().toString());
+        response.element("recordId", record.getResource().stringValue());
+        response.element("branchId", branchId.toString());
+        response.element("commitId", commitId.toString());
+
+        return Response.status(Response.Status.CREATED).entity(response).build();
     }
 
     /**
