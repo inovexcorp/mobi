@@ -70,9 +70,7 @@
 
                 buildNode(getValueId, 1, "obj");
 
-                var filterAnnotations = _.filter(jsonldNodeKeys, o => {
-                    return !_.startsWith(o, '@');
-                });
+                var filterAnnotations = _.filter(jsonldNodeKeys, o => !_.startsWith(o, '@'));
 
                 _.forEach(filterAnnotations, (element, key) => {
                     var getValue = _.get(jsonldNode, element);

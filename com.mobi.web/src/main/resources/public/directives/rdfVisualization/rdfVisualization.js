@@ -221,12 +221,8 @@
                  * Callback function to update the element positions after each tick
                  */
                 function tick() {
-                    nodes.attr("cx", element => {
-                            return element.x = Math.max(radius, Math.min(width - radius, element.x));
-                        })
-                        .attr("cy", element => {
-                            return element.y = Math.max(radius, Math.min(height - radius, element.y));
-                        });
+                    nodes.attr("cx", element => element.x = Math.max(radius, Math.min(width - radius, element.x)))
+                        .attr("cy", element => element.y = Math.max(radius, Math.min(height - radius, element.y)));
 
                     links.attr("x1",  element => element.source.x)
                          .attr("y1",  element => element.source.y)
@@ -257,9 +253,7 @@
                 function removeNode(selectedNode) {
                     formattedData.nodes.splice(selectedNode.index, 1);
                     // Remove the links connected with that node
-                    _.filter(formattedData.links, link => {
-                        return link.target.id === selectedNode.id || link.source.id === selectedNode.id;
-                    })
+                    _.filter(formattedData.links, link => link.target.id === selectedNode.id || link.source.id === selectedNode.id)
                     document.getElementById("nodeMetada").textContent = '';
                     draw();
                 }
@@ -348,9 +342,7 @@
                         .enter()
                         .append('path')
                         .attr("class", edgepathsConfig.class)
-                        .attr("id", (d, i) => {
-                            return 'edgepath' + i
-                        })
+                        .attr("id", (d, i) => 'edgepath' + i)
                         .style("pointer-events", "none");
                     return edgepaths;
                 }
@@ -363,21 +355,15 @@
                         .data(formattedData.links)
                         .enter()
                         .append('text')
-                        .attr('id', (d, i) => {
-                            return 'edgelabel' + i
-                        })
+                        .attr('id', (d, i) => 'edgelabel' + i)
                         .attr('font-size', edgelabelsConfig.fontSize)
                         .attr('fill', edgelabelsConfig.fontColor);
 
                     edgelabels.append('textPath')
-                        .attr('xlink:href', (d, i) => {
-                            return '#edgepath' + i
-                        })
+                        .attr('xlink:href', (d, i) => '#edgepath' + i)
                         .style('text-anchor', edgelabelsConfig.textAnchor)
                         .attr('startOffset', edgelabelsConfig.startOffSet)
-                        .text((d) => {
-                            return setLinkText(d.predicate);
-                        });
+                        .text((d) => setLinkText(d.predicate));
                     return edgelabels;
                 }
 
