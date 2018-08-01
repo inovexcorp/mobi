@@ -53,7 +53,7 @@
                     config.params = {application};
                 }
                 return $http.post(prefix, angular.toJson(stateJson), config)
-                    .then(response => self.states.push({id: response.data, model: [stateJson]}), util.rejectError);
+                    .then(response => self.states.push({id: response.data, model: stateJson}), util.rejectError);
             }
 
             self.getState = function(stateId) {
@@ -65,7 +65,7 @@
                 return $http.put(prefix + '/' + encodeURIComponent(stateId), angular.toJson(stateJson))
                     .then(() => _.forEach(self.states, state => {
                         if (_.get(state, 'id', '') === stateId) {
-                            _.set(state, 'model', [stateJson]);
+                            _.set(state, 'model', stateJson);
                             return false;
                         }
                     }), util.rejectError);
@@ -94,8 +94,34 @@
             }
 
             self.updateOntologyState = function(recordId, branchId, commitId) {
-                var stateId = _.get(self.getOntologyStateByRecordId(recordId), 'id', '');
-                return self.updateState(stateId, makeOntologyState(recordId, branchId, commitId));
+                var ontologyState = self.getOntologyStateByRecordId(recordId);
+                var stateId = _.get(ontologyState, 'id', '');
+                var model = _.get(ontologyState, 'model', '');
+                var branch = _.find(model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
+                var record = _.find(model, {'@type': ['http://mobi.com/states/ontology-editor/state-record']});
+                var branchIri = 'http://mobi.com/states/ontology-editor/branch-id/' + uuid.v4();
+
+                record[prefixes.ontologyState + 'currentBranch'] = [{'@id': branchId}];
+                if (branch) {
+                    branch[prefixes.ontologyState + 'commit'] = [{'@id': commitId}];
+                } else {
+                    record[prefixes.ontologyState + 'branches'].push({'@id': branchIri});
+                    model.push({
+                        '@id': branchIri,
+                        [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
+                        [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
+                    });
+                }
+                return self.updateState(stateId, model);
+            }
+            
+            self.deleteOntologyBranch = function(recordId, branchId) {
+                var ontologyState = self.getOntologyStateByRecordId(recordId);
+                var record = _.find(ontologyState.model, {'@type': ['http://mobi.com/states/ontology-editor/state-record']});
+                var branch = _.head(_.remove(ontologyState.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]}));
+                _.remove(record[prefixes.ontologyState + 'branches'], {'@id': _.get(branch, '@id')});
+                return self.updateState(ontologyState.id, ontologyState.model);
+
             }
 
             self.deleteOntologyState = function(recordId) {
@@ -104,12 +130,21 @@
             }
 
             function makeOntologyState(recordId, branchId, commitId) {
-                return {
-                    '@id': 'http://mobi.com/states/ontology-editor/' + uuid.v4(),
-                    [prefixes.ontologyState + 'record']: [{'@id': recordId}],
-                    [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
-                    [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
-                }
+                var branchIri = 'http://mobi.com/states/ontology-editor/branch-id/' + uuid.v4();
+                return [
+                    {
+                        '@id': 'http://mobi.com/states/ontology-editor/' + uuid.v4(),
+                        '@type': ['http://mobi.com/states/ontology-editor/state-record'],
+                        [prefixes.ontologyState + 'record']: [{'@id': recordId}],
+                        [prefixes.ontologyState + 'branches']: [{'@id': branchIri}],
+                        [prefixes.ontologyState + 'currentBranch']: [{'@id': branchId}]
+                    },
+                    {
+                        '@id': branchIri,
+                        [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
+                        [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
+                    }
+                ]
             }
         }
 })();
