@@ -42,6 +42,7 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
 
 import java.time.OffsetDateTime;
+import java.util.concurrent.Semaphore;
 
 public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
@@ -50,21 +51,35 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     protected OntologyManager ontologyManager;
     protected VersioningManager versioningManager;
 
+    /**
+     * Semaphore for protecting ontology IRI uniqueness checks.
+     */
+    private Semaphore semaphore = new Semaphore(1, true);
+
+
     @Override
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
                           RepositoryConnection conn) {
-        T record = createRecordObject(config, issued, modified);
-        Branch masterBranch = createMasterBranch(record);
-        Ontology ontology = setOntologyToRecord(record, config);
-        conn.begin();
-        addRecord(record, masterBranch, conn);
-        conn.commit();
-        IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
-        Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
-                new IllegalStateException("OntologyRecord must have a master Branch"));
-        Model model = ontology.asModel(modelFactory);
-        versioningManager.commit(catalogIdIRI, record.getResource(),
-                masterBranchId, user, "The initial commit.", model, null);
+        T record = null;
+        try {
+            semaphore.acquire();
+            record = createRecordObject(config, issued, modified);
+            Branch masterBranch = createMasterBranch(record);
+            Ontology ontology = setOntologyToRecord(record, config);
+            conn.begin();
+            addRecord(record, masterBranch, conn);
+            conn.commit();
+            IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
+            Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
+                    new IllegalStateException("OntologyRecord must have a master Branch"));
+            Model model = ontology.asModel(modelFactory);
+            versioningManager.commit(catalogIdIRI, record.getResource(),
+                    masterBranchId, user, "The initial commit.", model, null);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            semaphore.release();
+        }
         return record;
     }
 

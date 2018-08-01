@@ -105,7 +105,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Semaphore;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
@@ -128,11 +127,6 @@ public class OntologyRestImpl implements OntologyRest {
     private RepositoryManager repositoryManager;
 
     private static final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
-
-    /**
-     * Semaphore for protecting ontology IRI uniqueness checks.
-     */
-    private Semaphore semaphore = new Semaphore(1, true);
 
     @Reference
     void setModelFactory(ModelFactory modelFactory) {
@@ -1565,7 +1559,6 @@ public class OntologyRestImpl implements OntologyRest {
         Resource branchId;
         Resource commitId;
         try {
-            semaphore.acquire();
             record = catalogManager.createRecord(user, config, OntologyRecord.class);
             branchId = record.getMasterBranch_resource().get();
             Repository repo = repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
@@ -1581,11 +1574,6 @@ public class OntologyRestImpl implements OntologyRest {
             }
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        } catch (InterruptedException e) {
-            throw ErrorUtils.sendError(e, "Issue checking adding new OntologyRecord",
-                        Response.Status.INTERNAL_SERVER_ERROR);
-        } finally {
-            semaphore.release();
         }
         JSONObject response = new JSONObject();
         response.element("ontologyId", record.getOntologyIRI().toString());
