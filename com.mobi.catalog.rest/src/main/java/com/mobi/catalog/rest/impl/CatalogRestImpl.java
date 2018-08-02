@@ -55,6 +55,7 @@ import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.DistributionFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommitFactory;
+import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.Version;
@@ -76,6 +77,7 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rest.security.annotations.ActionAttributes;
+import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
@@ -216,6 +218,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getCatalog(String catalogId) {
         try {
             Resource catalogIri = vf.createIRI(catalogId);
@@ -310,6 +313,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getRecord(String catalogId, String recordId) {
         try {
             Record record = catalogManager.getRecord(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -324,6 +328,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response deleteRecord(ContainerRequestContext context, String catalogId, String recordId) {
         User activeUser = getActiveUser(context, engineManager);
         IRI recordIri = vf.createIRI(recordId);
@@ -344,6 +349,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response updateRecord(String catalogId, String recordId, String newRecordJson) {
         try {
             Record newRecord = getNewThing(newRecordJson, vf.createIRI(recordId),
@@ -358,6 +364,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getUnversionedDistributions(UriInfo uriInfo, String catalogId, String recordId, String sort,
                                                 int offset, int limit, boolean asc) {
         try {
@@ -375,6 +382,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response createUnversionedDistribution(ContainerRequestContext context, String catalogId, String recordId,
                                                   String title, String description, String format, String accessURL,
                                                   String downloadURL) {
@@ -391,6 +399,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getUnversionedDistribution(String catalogId, String recordId, String distributionId) {
         try {
             Distribution distribution = catalogManager.getUnversionedDistribution(vf.createIRI(catalogId),
@@ -407,6 +416,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response deleteUnversionedDistribution(String catalogId, String recordId, String distributionId) {
         try {
             catalogManager.removeUnversionedDistribution(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -420,6 +430,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response updateUnversionedDistribution(String catalogId, String recordId, String distributionId,
                                                   String newDistributionJson) {
         try {
@@ -436,6 +447,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getVersions(UriInfo uriInfo, String catalogId, String recordId, String sort, int offset,
                                 int limit, boolean asc) {
         try {
@@ -451,6 +463,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response createVersion(ContainerRequestContext context, String catalogId, String recordId, String typeIRI,
                                   String title, String description) {
         try {
@@ -473,6 +486,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getLatestVersion(String catalogId, String recordId) {
         try {
             Version version = catalogManager.getLatestVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -487,6 +501,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getVersion(String catalogId, String recordId, String versionId) {
         try {
             Version version = catalogManager.getVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -501,6 +516,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response deleteVersion(String catalogId, String recordId, String versionId) {
         try {
             catalogManager.removeVersion(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(versionId));
@@ -513,6 +529,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response updateVersion(String catalogId, String recordId, String versionId, String newVersionJson) {
         try {
             Version newVersion = getNewThing(newVersionJson, vf.createIRI(versionId),
@@ -527,6 +544,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getVersionedDistributions(UriInfo uriInfo, String catalogId, String recordId, String versionId,
                                               String sort, int offset, int limit, boolean asc) {
         try {
@@ -544,6 +562,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response createVersionedDistribution(ContainerRequestContext context, String catalogId, String recordId,
                                                 String versionId, String title, String description, String format,
                                                 String accessURL, String downloadURL) {
@@ -561,6 +580,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getVersionedDistribution(String catalogId, String recordId, String versionId,
                                              String distributionId) {
         try {
@@ -578,6 +598,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response deleteVersionedDistribution(String catalogId, String recordId, String versionId,
                                                 String distributionId) {
         try {
@@ -592,6 +613,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response updateVersionedDistribution(String catalogId, String recordId, String versionId,
                                                 String distributionId, String newDistributionJson) {
         try {
@@ -608,6 +630,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getVersionCommit(String catalogId, String recordId, String versionId, String format) {
         long start = System.currentTimeMillis();
         try {
@@ -625,6 +648,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getBranches(ContainerRequestContext context, UriInfo uriInfo, String catalogId, String recordId,
                                 String sort, int offset, int limit, boolean asc, boolean applyUserFilter) {
         try {
@@ -653,6 +677,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ActionId(id = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response createBranch(ContainerRequestContext context, String catalogId, String recordId,
                                  String typeIRI, String title, String description) {
         try {
@@ -675,6 +701,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getMasterBranch(String catalogId, String recordId) {
         try {
             Branch masterBranch = catalogManager.getMasterBranch(vf.createIRI(catalogId), vf.createIRI(recordId));
@@ -688,6 +715,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getBranch(String catalogId, String recordId, String branchId) {
         try {
             Branch branch = catalogManager.getBranch(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -702,6 +730,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response deleteBranch(String catalogId, String recordId, String branchId) {
         try {
             catalogManager.removeBranch(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(branchId));
@@ -714,6 +743,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ActionId(id = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response updateBranch(String catalogId, String recordId, String branchId, String newBranchJson) {
         try {
             Branch newBranch = getNewThing(newBranchJson, vf.createIRI(branchId),
@@ -728,6 +759,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getCommitChain(UriInfo uriInfo, String catalogId, String recordId, String branchId, String targetId,
                                    int offset, int limit) {
         LinksUtils.validateParams(limit, offset);
@@ -758,6 +790,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ActionId(id = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response createBranchCommit(ContainerRequestContext context, String catalogId, String recordId,
                                        String branchId, String message) {
         try {
@@ -774,6 +808,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getHead(String catalogId, String recordId, String branchId, String format) {
         long start = System.currentTimeMillis();
         try {
@@ -791,6 +826,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getBranchCommit(String catalogId, String recordId, String branchId, String commitId,
                                     String format) {
         long start = System.currentTimeMillis();
@@ -810,6 +846,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getDifference(String catalogId, String recordId, String branchId, String targetBranchId,
                                   String rdfFormat) {
         try {
@@ -829,6 +866,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getConflicts(String catalogId, String recordId, String branchId, String targetBranchId,
                                  String rdfFormat) {
         try {
@@ -851,6 +889,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ActionId(id = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response merge(ContainerRequestContext context, String catalogId, String recordId, String sourceBranchId,
                           String targetBranchId, String additionsJson, String deletionsJson) {
         try {
@@ -868,6 +908,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getCompiledResource(ContainerRequestContext context, String catalogId, String recordId,
                                         String branchId, String commitId, String rdfFormat, boolean apply) {
         try {
@@ -893,6 +934,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response downloadCompiledResource(ContainerRequestContext context, String catalogId, String recordId,
                                              String branchId, String commitId, String rdfFormat, boolean apply,
                                              String fileName) {
@@ -930,6 +972,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ActionId(id = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response createInProgressCommit(ContainerRequestContext context, String catalogId, String recordId) {
         try {
             User activeUser = getActiveUser(context, engineManager);
@@ -944,6 +988,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response getInProgressCommit(ContainerRequestContext context, String catalogId, String recordId,
                                         String format) {
         try {
@@ -961,6 +1006,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response deleteInProgressCommit(ContainerRequestContext context, String catalogId, String recordId) {
         try {
             User activeUser = getActiveUser(context, engineManager);
@@ -974,6 +1020,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ActionId(id = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, id="catalogId")
     public Response updateInProgressCommit(ContainerRequestContext context, String catalogId, String recordId,
                                            String additionsJson, String deletionsJson) {
         try {
