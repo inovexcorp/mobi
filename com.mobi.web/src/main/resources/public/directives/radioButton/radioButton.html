@@ -20,9 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="radio" ng-class="{'disabled': isDisabledWhen, 'wrapper-inline': inline}">
-    <label ng-class="{'radio-inline': inline}">
-        <input type="radio" ng-value="value" ng-model="bindModel" ng-change="dvm.onChange()" ng-disabled="isDisabledWhen"/>
-        {{displayText}}
-    </label>
+<div class="radio-button form-check" ng-class="{'disabled': dvm.isDisabled, 'form-check-inline': dvm.inline}">
+    <input type="radio" class="form-check-input" ng-value="dvm.value" ng-model="dvm.bindModel" ng-change="dvm.onChange()" ng-disabled="dvm.isDisabled" ng-attr-id="{{::('radio-' + $id)}}"/>
+    <label class="form-check-label" ng-attr-for="{{::('radio-' + $id)}}">{{dvm.displayText}}</label>
 </div>

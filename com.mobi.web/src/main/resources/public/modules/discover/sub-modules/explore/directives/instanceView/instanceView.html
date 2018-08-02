@@ -26,10 +26,10 @@
             <breadcrumbs class="float-left" items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
             <a class="float-right edit-button" ng-click="dvm.edit()"><i class="fa fa-pencil-square-o"></i>Edit</a>
         </block-header>
-        <block-content>
+        <block-content class="padding">
             <div class="row">
                 <div class="col-8 offset-2">
-                    <h2>{{dvm.ds.explore.instance.metadata.title}} <small>&lt;{{dvm.ds.explore.instance.metadata.instanceIRI}}&gt;</small></h2>
+                    <h2>{{dvm.ds.explore.instance.metadata.title}} <small class="text-muted">&lt;{{dvm.ds.explore.instance.metadata.instanceIRI}}&gt;</small></h2>
                     <p class="lead">{{dvm.ds.explore.instance.metadata.description}}</p>
                     <div ng-repeat="(key, value) in dvm.entity track by $index">
                         <h3 class="property">{{dvm.util.getBeautifulIRI(key)}}</h3>

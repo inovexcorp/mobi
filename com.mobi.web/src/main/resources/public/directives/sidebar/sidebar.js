@@ -56,7 +56,8 @@
                     $rootScope.collapsedNav = !$rootScope.collapsedNav;
                 }
                 dvm.getUserDisplay = function() {
-                    return dvm.um.getUserDisplay(_.find(dvm.um.users, {'iri': dvm.lm.currentUserIRI}));
+                    var user = _.find(dvm.um.users, {'iri': dvm.lm.currentUserIRI});
+                    return _.get(user, 'firstName') || _.get(user, 'username');
                 }
             },
             templateUrl: 'directives/sidebar/sidebar.html'

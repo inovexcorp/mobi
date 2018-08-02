@@ -1,6 +1,54 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
+// Fixes for Material Bootstrap
+.ui-select-bootstrap > .ui-select-choices,
+.ui-select-bootstrap > .ui-select-no-choice {
+    display: initial;
+    background-color: #fff;
+    box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14),
+                0 3px 14px 3px rgba(0, 0, 0, 0.12),
+                0 4px 15px 0 rgba(0, 0, 0, 0.2);
+}
+
+.ui-select-bootstrap > .ui-select-choices::before,
+.ui-select-bootstrap > .ui-select-no-choice::before {
+    display: none;
+}
+
+.btn, .nav-tabs .nav-link {
+    text-transform: none;
+}
+
+.ui-select-toggle.form-control {
+    display: inline-block;
+}
+
+.ui-select-bootstrap .ui-select-choices-row.active > span {
+    background-color: var(--primary);
+}
+
+a:not([href]):not([tabindex]) {
+    color: var(--primary);
+}
+
+select.form-control, .custom-select {
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.dropdown-item {
+    font-size: 0.875rem;
+}
+
+.ui-select-toggle.form-control {
+    background-image: url('data:image/svg+xml;charset=utf8,%3Csvg fill="%23000000" fill-opacity="0.54" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M7 10l5 5 5-5z"/%3E%3Cpath d="M0 0h24v24H0z" fill="none"/%3E%3C/svg%3E');
+    background-position: 100% 50%;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 1.5em;
+}
+
 /* General page spacing */
 body {
     bottom: 0;
@@ -15,7 +63,7 @@ body {
     /* Overall design styles */
     .blue-bar {
         height: 48px;
-        background-color: $highlight-blue;
+        background-color: var(--primary);
     }
 
     .white-bar {
@@ -47,7 +95,7 @@ body {
 
     /* Error message font */
     .error-display {
-        color: $error-color;
+        color: var(--danger);
         font-weight: bold;
     }
 
@@ -93,13 +141,6 @@ ul {
     list-style: none;
     margin: 0;
     padding: 0;
-}
-
-/* standard box style and height */
-.boxed {
-    border: 1px solid $gray-dark;
-    height: 100%;
-    overflow-y: auto;
 }
 
 /* Overlay styles */
@@ -183,7 +224,7 @@ ul {
         width: 500px;
 
         > h6, > h1 {
-            background-color: $highlight-blue;
+            background-color: var(--primary);
             border: 1px solid #fff;
             border-bottom: 0;
             border-top-left-radius: 5px;
@@ -217,7 +258,7 @@ ul {
 
     /* header text style */
     h6, h1 {
-        background-color: $highlight-blue;
+        background-color: var(--primary);
         border-top-left-radius: 5px;
         border-top-right-radius: 5px;
         color: #fff;
@@ -270,7 +311,7 @@ ul {
 
     /* Anchor inherits the color of parent and fills container completely */
     a {
-        color: inherit;
+        color: inherit !important;
         cursor: pointer;
         display: flex;
         padding: 3px 4px;
@@ -280,7 +321,7 @@ ul {
         &.active,
         &.active .unsaved-icon,
         &.unsaved:hover .unsaved-icon {
-            background-color: $brand-primary;
+            background-color: var(--primary);
             color: #fff !important;
         }
 
@@ -322,26 +363,6 @@ ul {
         li,
         .tree-item {
             width: 100%;
-
-            &.invalid .fa-check:before {
-                content: "\f071";
-            }
-
-            /* Class identifying that it contains a <ul> element */
-            &.container {
-                margin: 0;
-                padding: 0;
-            }
-
-            &.invalid a {
-                .unsaved-icon {
-                    color: $brand-danger;
-                }
-
-                &.active .unsaved-icon {
-                    color: #fff;
-                }
-            }
         }
     }
 }
@@ -386,15 +407,6 @@ ul {
             right: 0;
         }
     }
-}
-
-/* section title */
-.section-header {
-    background: $brand-primary;
-    color: #fff;
-    font-size: 16px;
-    margin: 0;
-    padding: 6px 15px 10px;
 }
 
 /* static form display spacing */
@@ -475,7 +487,7 @@ ul {
     }
 
     .display-text {
-        background-color: $gray;
+        background-color: var(--dark-light);
         box-shadow: 0 0 2px rgba(0,0,0,.14), 0 2px 4px rgba(0,0,0,.28);
         color: #fff;
         display: none;
@@ -523,42 +535,6 @@ body {
     .paging-details {
         padding-top: 15px;
     }
-}
-
-// Fixes for Material Bootstrap
-.ui-select-bootstrap > .ui-select-choices,
-.ui-select-bootstrap > .ui-select-no-choice {
-    display: initial;
-    background-color: #fff;
-    box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14),
-                0 3px 14px 3px rgba(0, 0, 0, 0.12),
-                0 4px 15px 0 rgba(0, 0, 0, 0.2);
-}
-
-.ui-select-bootstrap > .ui-select-choices::before,
-.ui-select-bootstrap > .ui-select-no-choice::before {
-    display: none;
-}
-
-.btn, .nav-tabs .nav-link {
-    text-transform: none;
-}
-
-.ui-select-toggle.form-control {
-    display: inline-block;
-}
-
-.ui-select-toggle.btn:hover {
-    background-image: none;
-}
-
-a:not([href]):not([tabindex]) {
-    color: var(--primary);
-}
-
-select.form-control, .custom-select {
-    appearance: none;
-    -webkit-appearance: none;
 }
 
 /* Helper Classes */

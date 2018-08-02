@@ -20,13 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="sidebar pt-2 h-100 d-flex flex-column" ng-class="$root.collapsedNav ? 'collapsed' : 'open'">
-    <div class="image-container pb-2">
-        <img ng-src="{{$root.collapsedNav ? 'images/mobi-alternate-logo-icon.png' : 'images/mobi-alternate-logo.svg'}}" alt="Mobi Logo">
+<div class="sidebar py-2 h-100 d-flex flex-column" ng-class="$root.collapsedNav ? 'collapsed' : 'open'">
+    <div class="image-container text-center pb-2">
+        <a class="d-block" ui-sref="root.home"><img ng-src="{{$root.collapsedNav ? 'images/mobi-alternate-logo-icon.png' : 'images/mobi-alternate-logo.svg'}}" alt="Mobi Logo"></a>
     </div>
-    <a class="current-user-box p-2 text-nowrap" ng-class="{'active': $state.is('root.settings')}" ui-sref-active="active" ui-sref="root.settings">
-        <div class="avatar-box align-middle"><img src="images/avatar.png" alt="User avatar"/></div>
-        <div class="user-title ml-1 text-nowrap align-middle collapsed-hide" ng-if="!$root.collapsedNav">{{dvm.getUserDisplay()}}</div>
+    <a class="current-user-box p-2 my-2" ng-class="{'active': $state.is('root.settings'), 'text-truncate': !$root.collapsedNav}" ui-sref-active="active" ui-sref="root.settings">
+        <div class="avatar-box d-inline-block rounded-circle align-middle"><img src="images/avatar.png" alt="User avatar"/></div>
+        <div class="user-title d-inline-block ml-1 align-middle collapsed-hide" ng-if="!$root.collapsedNav">{{dvm.getUserDisplay()}}</div>
     </a>
     <ul class="nav flex-column flex-grow-1">
         <li class="nav-item" ng-repeat="per in dvm.perspectives" ng-class="{'active': per.isActive}" ui-sref-active="active">
@@ -38,8 +38,8 @@
             <li class="nav-item" ng-if="dvm.um.isAdmin(dvm.lm.currentUser)" ng-class="{'active': $state.is('root.user-management')}" ui-sref-active="active">
                 <a class="nav-link" ui-sref="root.user-management"><i class="fa fa-cog"></i><span class="collapsed-hide ml-1" ng-if="!$root.collapsedNav">Administration</span></a>
             </li>
-            <li class="nav-item dropright" uib-dropdown>
-                <a uib-dropdown-toggle class="nav-link" href="#"><i class="fa fa-question-circle"></i><span class="collapsed-hide ml-1" ng-if="!$root.collapsedNav">Help</span></a>
+            <li class="nav-item help dropright" uib-dropdown>
+                <a uib-dropdown-toggle class="nav-link"><i class="fa fa-question-circle"></i><span class="collapsed-hide ml-1" ng-if="!$root.collapsedNav">Help</span></a>
                 <ul uib-dropdown-menu>
                     <a class="dropdown-item" href="https://mobi.inovexcorp.com/docs/" target="_blank">Documentation</a>
                     <li role="separator" class="dropdown-divider"></li>
@@ -48,7 +48,7 @@
             </li>
             <li class="nav-item"><a class="nav-link" ng-click="dvm.lm.logout()"><i class="fa fa-sign-out fa-fw"></i><span class="collapsed-hide ml-1" ng-if="!$root.collapsedNav">Logout</span></a></li>
         </ul>
-        <div class="version collapsed-hide pl-3 text-nowrap">
+        <div class="version collapsed-hide text-center text-nowrap mt-2">
             <small class="collapsed-hide" ng-class="$root.collapsedNav ? 'hidden' : 'shown'">v${project.version}</small>
         </div>
     </div>

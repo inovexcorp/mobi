@@ -12,10 +12,10 @@
         height: 48px;
 
         .heading {
-            background-color: $gray-lighter;
+            background-color: var(--light-dark);
             border-top-left-radius: 10px;
             border-top-right-radius: 10px;
-            color: black;
+            color: var(--body);
             display: inline-block;
             flex-basis: auto;
             flex-grow: 1;
@@ -31,7 +31,7 @@
             @include noCopy();
 
             &.active {
-                background-color: white;
+                background-color: #fff;
             }
             &:last-child {
                 margin-right: 10px;
@@ -45,7 +45,7 @@
             &.marked {
                 .heading-text,
                 .fa-times {
-                    color: $brand-primary;
+                    color: var(--primary);
                 }
                 .heading-text {
                     font-weight: bold;
@@ -91,12 +91,12 @@
                 background-color: white;
                 border-bottom: 2px solid transparent;
                 border-radius: 0;
-                color: $gray-light;
+                color: var(--light-dark);
                 margin: 0;
                 padding: 15px 15px 13px;
 
                 &.active {
-                    border-color: $brand-primary;
+                    border-color: var(--primary);
                     color: black;
                 }
                 .heading-text {
@@ -118,14 +118,14 @@
                 background-color: white;
                 border-bottom: 2px solid transparent;
                 border-radius: 0;
-                color: $gray-light;
+                color: var(--light-dark);
                 margin: 0;
                 padding: 15px 15px 13px;
                 font-size: 1em;
                 line-height: 1em;
 
                 &.active {
-                    border-color: $brand-primary;
+                    border-color: --var(--primary);
                     color: black;
                 }
                 .heading-text {

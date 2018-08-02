@@ -35,7 +35,7 @@
     </head>
     <body ng-class="{'collapsed-nav': $root.collapsedNav}" class="h-100">
         <div ng-if="!!$state.current.name && $state.current.name !== 'login'" class="container-fluid h-100">
-            <div class="row h-100">
+            <div class="row flex-nowrap h-100">
                 <sidebar></sidebar>
                 <section ui-view="container" class="col app-container h-100"></section>
             </div>

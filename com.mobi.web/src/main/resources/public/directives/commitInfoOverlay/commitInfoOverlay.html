@@ -23,14 +23,14 @@
 <div class="commit-info-overlay overlay lg">
     <form class="content" name="dvm.form">
         <h6>Commit Information</h6>
-        <div class="main">
+        <div class="main d-flex flex-column">
             <h3>{{dvm.util.condenseCommitId(commit.id)}}</h3>
             <div><span class="field-name">Date: </span>{{dvm.util.getDate(commit.date, 'short')}}</div>
             <div><span class="field-name">Creator: </span>{{dvm.um.getUserDisplay(commit.creator)}}</div>
             <p>{{commit.message}}</p>
 
             <div class="changes-container">
-                <span class="field-name">Changes: </span>
+                <span class="field-name">Changes</span>
                 <p ng-if="!additions.length && !deletions.length">(None)</p>
                 <commit-changes-display ng-if="additions.length || deletions.length" additions="additions" deletions="deletions"></commit-changes-display>
             </div>

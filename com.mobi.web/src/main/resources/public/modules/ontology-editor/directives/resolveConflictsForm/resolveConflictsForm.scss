@@ -12,12 +12,9 @@
         }
     }
     .flex-container {
-        align-items: center;
-        display: flex;
-
         .conflict {
             cursor: pointer;
-            flex: 1;
+            // flex: 1;
 
             h5 {
                 padding: 8px;

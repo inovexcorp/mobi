@@ -40,8 +40,10 @@
                             <span>{{dvm.util.getDctermsValue(record, 'title')}}</span>
                         </button>
                     </div>
-                    <paging-details total-size="dvm.totalSize" page-index="dvm.recordsConfig.pageIndex" limit="dvm.recordsConfig.limit"></paging-details>
-                    <pagination total="dvm.totalSize" limit="dvm.recordsConfig.limit" current-page="dvm.currentPage" get-page="dvm.setRecords()"></pagination>
+                    <div class="paging-container">
+                        <paging-details total-size="dvm.totalSize" page-index="dvm.recordsConfig.pageIndex" limit="dvm.recordsConfig.limit"></paging-details>
+                        <pagination total="dvm.totalSize" limit="dvm.recordsConfig.limit" current-page="dvm.currentPage" get-page="dvm.setRecords()"></pagination>
+                    </div>
                 </div>
                 <div class="form-group">
                     <custom-label>Version</custom-label>

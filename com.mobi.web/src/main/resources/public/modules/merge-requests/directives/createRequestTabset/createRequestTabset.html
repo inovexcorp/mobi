@@ -36,8 +36,8 @@
                                 <step-progress-bar step-number="3" current-step="dvm.state.createRequestStep"></step-progress-bar>
                             </div>
                             <div class="btn-container">
+                                <button class="btn btn-primary float-right" ng-click="dvm.next()" ng-disabled="dvm.isDisabled()">{{dvm.state.createRequestStep === 2 ? 'Submit' : 'Next'}}</button>
                                 <button class="btn float-right" ng-click="dvm.back()">{{dvm.state.createRequestStep === 0 ? 'Cancel' : 'Back'}}</button>
-                                <button class="btn btn-primary float-left" ng-click="dvm.next()" ng-disabled="dvm.isDisabled()">{{dvm.state.createRequestStep === 2 ? 'Submit' : 'Next'}}</button>
                             </div>
                         </block-footer>
                     </block>

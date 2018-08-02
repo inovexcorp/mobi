@@ -9,11 +9,12 @@
     position: relative;
 
     /* Spacing for the property header */
-    h5 {
+    .value-header {
         border-bottom: 1px solid $gray-lighter;
         cursor: pointer;
         margin: 0;
         padding: 8px 34px 8px 8px;
+        font-size: 14px;
 
         .text {
             margin: 0;
@@ -29,7 +30,6 @@
             top: 8px;
         }
     }
-
     /* Contains the value of the property */
     .value-container {
         position: relative;
@@ -38,7 +38,6 @@
         &:hover {
             background-color: $gray-lighter;
         }
-
         /* Removes paragraph margin from the property value */
         .value-display-wrapper {
             display: inline-block;
@@ -51,7 +50,6 @@
             width:         calc(100% - 62px);
             word-wrap: break-word;
         }
-
         /* Places the button in the top right corner */
         .btn {
             border: 0;

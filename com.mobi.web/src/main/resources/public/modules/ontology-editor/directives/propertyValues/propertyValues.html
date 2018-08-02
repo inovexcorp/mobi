@@ -21,9 +21,11 @@
   #L%
   -->
 <div class="property-values">
-    <h5 ng-click="isClosed = !isClosed" class="clearfix">
-        <p class="text">{{dvm.os.getEntityNameByIndex(property, dvm.os.listItem)}} <small>&lt;{{property}}&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
-    </h5>
+    <div ng-click="isClosed = !isClosed" class="value-header d-flex align-items-center clearfix">
+        <p class="text">{{dvm.os.getEntityNameByIndex(property, dvm.os.listItem)}}</p>
+        <small class="ml-1">&lt;{{property}}&gt;</small>
+        <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+    </div>
     <div class="value-container" ng-repeat="value in entity[property]" ng-hide="isClosed">
         <span ng-if="::dvm.ontoUtils.isLinkable(value['@id'])" class="value-display-wrapper">{{dvm.ontoUtils.getLabelForIRI(value['@id'])}} <small><<a ng-click="dvm.os.goTo(value['@id'])">{{value['@id']}}</a>></small></span>
         <span ng-if="::!dvm.ontoUtils.isLinkable(value['@id'])" class="value-display-wrapper">
