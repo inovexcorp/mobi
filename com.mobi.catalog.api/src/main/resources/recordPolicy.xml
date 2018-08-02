@@ -78,18 +78,18 @@
             </AnyOf>
         </Target>
     </Rule>
-    <Rule Effect="Permit" RuleId="urn:update">
-        <!-- Only the user who created the record can manage it -->
+    <Rule Effect="Permit" RuleId="urn:MASTER">
+        <!-- Only the user who created the record can manage Master -->
         <Target>
             <AnyOf>
                 <AllOf>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/ontologies/catalog#Update</AttributeValue>
-                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:action" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
+                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/branches/MASTER</AttributeValue>
+                        <AttributeDesignator AttributeId="http://mobi.com/ontologies/catalog#branch" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:action" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                     </Match>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/users/UserX</AttributeValue>
-                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
+                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/roles/users/UserX</AttributeValue>
+                        <AttributeDesignator AttributeId="http://mobi.com/ontologies/user/management#hasUserRole" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                     </Match>
                 </AllOf>
             </AnyOf>

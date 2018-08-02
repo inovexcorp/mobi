@@ -47,7 +47,14 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -56,6 +63,15 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
+import javax.xml.bind.JAXB;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 /**
  * Defines functionality for VersionedRDFRecordService. Provides common methods for exporting and deleting a Record.
@@ -71,6 +87,17 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     protected MergeRequestManager mergeRequestManager;
     protected VersioningManager versioningManager;
     protected XACMLPolicyManager xacmlPolicyManager;
+
+    private static String fileLocation;
+    private String filePath;
+
+    static {
+        StringBuilder builder = new StringBuilder(System.getProperty("java.io.tmpdir"));
+        if (!System.getProperty("java.io.tmpdir").endsWith("/")) {
+            builder.append("/");
+        }
+        fileLocation = builder.append("com.mobi.catalog.api/").toString();
+    }
 
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
@@ -95,11 +122,63 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         versioningManager.commit(catalogIdIRI, record.getResource(),
                 masterBranchId, user, "The initial commit.", model, null);
         conn.commit();
+        writePolicyType(user, record);
         return record;
     }
 
-    protected void writePolicyType() {
+    protected void writePolicyType(User user, T record) {
+        try {
+            /* -- recordPolicy doc -- */
+            String path = copyToTemp("recordPolicy.xml");
+            filePath = "file:" + path;
+            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+            Document recordPolicy = docBuilder.parse(filePath);
+            String str = convertDocumentToString(recordPolicy);
+            str.replaceAll("(UserX)", user.toString());
+            str.replaceAll("(test)", record.getResource().stringValue());
+            PolicyType recordPolicyType = JAXB.unmarshal(str, PolicyType.class);
+            policyCreation(recordPolicyType);
 
+            /* -- policyPolicy doc -- */
+            String pathPolicy = copyToTemp("policyPolicy.xml");
+            filePath = "file:" + pathPolicy;
+            Document policyPolicy = docBuilder.parse(filePath);
+            String strPolicyPolicy = convertDocumentToString(policyPolicy);
+            strPolicyPolicy.replaceAll("(UserX)", user.toString());
+            strPolicyPolicy.replaceAll("(test)", recordPolicyType.getPolicyId());
+            PolicyType policyPolicyType = JAXB.unmarshal(str, PolicyType.class);
+            policyCreation(policyPolicyType);
+
+        } catch (ParserConfigurationException pce) {
+            pce.printStackTrace();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        } catch (SAXException sae) {
+            sae.printStackTrace();
+        }
+    }
+
+    private static String convertDocumentToString(Document doc) {
+        TransformerFactory tf = TransformerFactory.newInstance();
+        Transformer transformer;
+        String output = null;
+        try {
+            transformer = tf.newTransformer();
+            StringWriter writer = new StringWriter();
+            transformer.transform(new DOMSource(doc), new StreamResult(writer));
+            output = writer.getBuffer().toString();
+        } catch (TransformerException e) {
+            e.printStackTrace();
+        }
+        return output;
+    }
+
+    private String copyToTemp(String resourceName) throws IOException {
+        String absolutePath = fileLocation + resourceName;
+        Files.copy(getClass().getResourceAsStream("/" + resourceName), Paths.get(absolutePath),
+                StandardCopyOption.REPLACE_EXISTING);
+        return absolutePath;
     }
 
     protected Resource policyCreation(PolicyType policyType) {
@@ -107,8 +186,13 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         return xacmlPolicyManager.addPolicy(xacmlPolicy);
     }
 
-    protected void deletePolicy(Resource policyId) {
+    protected void deletePolicies(T record) {
+        IRI policyId = valueFactory.createIRI("http://mobi.com/policies/record/urn%3"
+                + record.getResource().stringValue());
+        IRI policyPolicyId = valueFactory.createIRI("http://mobi.com/policies/policy/urn%3"
+                + policyId);
         xacmlPolicyManager.deletePolicy(policyId);
+        xacmlPolicyManager.deletePolicy(policyPolicyId);
     }
 
     /**
@@ -161,6 +245,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     @Override
     protected void deleteRecord(T record, RepositoryConnection conn) {
         deleteRecordObject(record, conn);
+        deletePolicies(record);
         deleteVersionedRDFData(record, conn);
     }
 
