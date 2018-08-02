@@ -62,9 +62,10 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
                           RepositoryConnection conn) {
         T record = createRecordObject(config, issued, modified);
         Branch masterBranch = createMasterBranch(record);
+        Ontology ontology = createOntology(config);
         try {
             semaphore.acquire();
-            Ontology ontology = setOntologyToRecord(record, config);
+            setOntologyToRecord(record, ontology);
             conn.begin();
             addRecord(record, masterBranch, conn);
             conn.commit();
@@ -83,13 +84,12 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     }
 
     /**
-     * Creates an ontology and sets that new ontology to the record.
+     * Creates an ontology based on config file.
      *
-     * @param record Created record
      * @param config A {@link RepositoryConnection} to use for lookup
      * @return created ontology
      */
-    private Ontology setOntologyToRecord(T record, RecordOperationConfig config) {
+    private Ontology createOntology(RecordOperationConfig config) {
         Ontology ontology;
         if (config.get(OntologyRecordCreateSettings.INPUT_STREAM) != null) {
             ontology = ontologyManager.createOntology(config.get(OntologyRecordCreateSettings.INPUT_STREAM), false);
@@ -97,9 +97,18 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
             ontology = ontologyManager.createOntology(config.get(VersionedRDFRecordCreateSettings
                     .INITIAL_COMMIT_DATA));
         }
+        return ontology;
+    }
+
+    /**
+     * Validates and sets the ontology to the record.
+     *
+     * @param record created record
+     * @param ontology created ontology
+     */
+    private void setOntologyToRecord(T record, Ontology ontology) {
         record.getOntologyIRI().ifPresent(this::validateOntology);
         record.setOntologyIRI(ontology.getOntologyId().getOntologyIdentifier());
-        return ontology;
     }
 
     /**
