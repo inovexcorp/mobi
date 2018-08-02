@@ -60,11 +60,10 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     @Override
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
                           RepositoryConnection conn) {
-        T record = null;
+        T record = createRecordObject(config, issued, modified);
+        Branch masterBranch = createMasterBranch(record);
         try {
             semaphore.acquire();
-            record = createRecordObject(config, issued, modified);
-            Branch masterBranch = createMasterBranch(record);
             Ontology ontology = setOntologyToRecord(record, config);
             conn.begin();
             addRecord(record, masterBranch, conn);
