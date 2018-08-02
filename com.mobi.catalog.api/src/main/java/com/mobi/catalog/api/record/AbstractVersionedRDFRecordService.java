@@ -122,11 +122,11 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         versioningManager.commit(catalogIdIRI, record.getResource(),
                 masterBranchId, user, "The initial commit.", model, null);
         conn.commit();
-        writePolicyType(user, record);
+        writePolicies(user, record);
         return record;
     }
 
-    protected void writePolicyType(User user, T record) {
+    protected void writePolicies(User user, T record) {
         try {
             /* -- recordPolicy doc -- */
             String path = copyToTemp("recordPolicy.xml");
@@ -138,7 +138,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             str.replaceAll("(UserX)", user.toString());
             str.replaceAll("(test)", record.getResource().stringValue());
             PolicyType recordPolicyType = JAXB.unmarshal(str, PolicyType.class);
-            policyCreation(recordPolicyType);
+            addPolicy(recordPolicyType);
 
             /* -- policyPolicy doc -- */
             String pathPolicy = copyToTemp("policyPolicy.xml");
@@ -146,9 +146,9 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             Document policyPolicy = docBuilder.parse(filePath);
             String strPolicyPolicy = convertDocumentToString(policyPolicy);
             strPolicyPolicy.replaceAll("(UserX)", user.toString());
-            strPolicyPolicy.replaceAll("(test)", recordPolicyType.getPolicyId());
+            strPolicyPolicy.replaceAll("(test)", record.getResource().stringValue());
             PolicyType policyPolicyType = JAXB.unmarshal(str, PolicyType.class);
-            policyCreation(policyPolicyType);
+            addPolicy(policyPolicyType);
 
         } catch (ParserConfigurationException pce) {
             pce.printStackTrace();
@@ -181,16 +181,17 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         return absolutePath;
     }
 
-    protected Resource policyCreation(PolicyType policyType) {
+    protected Resource addPolicy(PolicyType policyType) {
         XACMLPolicy xacmlPolicy = xacmlPolicyManager.createPolicy(policyType);
         return xacmlPolicyManager.addPolicy(xacmlPolicy);
     }
 
     protected void deletePolicies(T record) {
-        IRI policyId = valueFactory.createIRI("http://mobi.com/policies/record/urn%3"
-                + record.getResource().stringValue());
-        IRI policyPolicyId = valueFactory.createIRI("http://mobi.com/policies/policy/urn%3"
-                + policyId);
+        String recordResourceStr = record.getResource().stringValue();
+        IRI policyId = valueFactory.createIRI("http://mobi.com/policies/record/"
+                + recordResourceStr);
+        IRI policyPolicyId = valueFactory.createIRI("http://mobi.com/policies/policy/record/"
+                + recordResourceStr);
         xacmlPolicyManager.deletePolicy(policyId);
         xacmlPolicyManager.deletePolicy(policyPolicyId);
     }
