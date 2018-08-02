@@ -5,12 +5,13 @@
 @prefix foaf: <http://xmlns.com/foaf/0.1/>.
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix policy: <http://mobi.com/ontologies/policy#>.
 @prefix : <http://mobi.com/ontologies/catalog#>.
 @base <http://mobi.com/ontologies/catalog>.
 
 <http://mobi.com/ontologies/catalog> a owl:Ontology;
     owl:versionIRI <http://mobi.com/ontologies/catalog#1.0>;
-    owl:imports <http://www.w3.org/ns/prov#>;
+    owl:imports <http://www.w3.org/ns/prov#>, <http://mobi.com/ontologies/policy>;
     rdfs:label "The Mobi Catalog Ontology"@en;
     rdfs:comment "The Mobi catalog ontology is designed to facilitate interoperability between Mobi catalogs published on the Web. By using the Mobi catalog to describe resources, publishers increase discoverability and enable easy consumption of metadata from multiple catalogs. It further enables decentralized publishing of catalogs and facilitates federated resource search across sites. Aggregated Mobi catalog metadata can serve as a manifest file to facilitate digital preservation."@en;
     dct:creator [foaf:name "Jordan Lewis"], [foaf:name "Megan Mercer"];
@@ -232,6 +233,12 @@
     rdfs:comment "Links the Resource of the revisioned named graph."@en;
     rdfs:domain :GraphRevision;
     rdfs:range <http://mobi.com/ontologies/mobi#Identifier>.
+
+# Modify Action
+:Modify a owl:Class;
+    rdfs:subClassOf policy:Action;
+    dct:title "Modify"@en;
+    dct:description "An action that results in the modification of a VersionedRDFRecord"@en .
 
 # Misc.
 

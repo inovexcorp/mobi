@@ -59,6 +59,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>security.policy.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
@@ -124,6 +129,11 @@
                                 <ontology>
                                     <ontologyFile>${project.basedir}/../com.mobi.jaas.api/src/main/resources/mobi_user_management.ttl</ontologyFile>
                                     <outputPackage>com.mobi.jaas.api.ontologies.usermanagement</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../com.mobi.security.policy.api/src/main/resources/mobi_policy.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.security.policy.api.ontologies.policy</outputPackage>
+                                    <ontologyName>Policy</ontologyName>
                                 </ontology>
                             </references>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>
