@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Policy Enforcement service', function() {
-    var policyEnforcementService, scope, $httpBackend, $httpParamSerializer, utilSvc, $q;
+    var policyEnforcementSvc, scope, $httpBackend, $httpParamSerializer, utilSvc, $q;
 
     beforeEach(function() {
         module('policyEnforcement');
@@ -43,7 +43,7 @@ describe('Policy Enforcement service', function() {
     });
 
     afterEach(function() {
-        policyEnforcementService = null;
+        policyEnforcementSvc = null;
         scope = null;
         $httpBackend = null;
         $httpParamSerializer = null

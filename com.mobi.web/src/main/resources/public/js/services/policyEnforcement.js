@@ -69,12 +69,13 @@
              *     }
              * }
              *
-             * @param {Object} [jsonRequest=''] An Object of ids and attributes to create a XACML request
+             * @param {Object} [jsonRequest] An Object of ids and attributes to create a XACML request
              * @return {Promise} A Promise that resolves to a string of the decision of the request or is rejected with
              * an error message
              */
             self.evaluateRequest = function(jsonRequest) {
-                return $http.post(prefix, jsonRequest)
+                var filteredRequest = _.pick(jsonRequest, ['resourceId', 'actionId', 'actionAtrs', 'resourceAttrs', 'subjectAttrs']);
+                return $http.post(prefix, filteredRequest)
                     .then(response => response.data, util.rejectError);
             }
         }
