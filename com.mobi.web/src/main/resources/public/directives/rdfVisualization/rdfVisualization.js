@@ -363,7 +363,7 @@
                         .attr('xlink:href', (d, i) => '#edgepath' + i)
                         .style('text-anchor', edgelabelsConfig.textAnchor)
                         .attr('startOffset', edgelabelsConfig.startOffSet)
-                        .text((d) => setLinkText(d.predicate));
+                        .text(d => setLinkText(d.predicate));
                     return edgelabels;
                 }
 

@@ -45,9 +45,6 @@
 
     function d3TransformerService() {
         var self = this;
-        var allNodes = {};
-        allNodes.nodes = [];
-        allNodes.links = [];
 
         /**
          * @ngdoc method
@@ -61,8 +58,10 @@
          * @return {Object} A formatted JSON object
          */
         self.buildForceDirectedGraphD3Format = function(inputData) {
-
             var jsonld = JSON.parse(inputData);
+            var allNodes = {};
+            allNodes.nodes = [];
+            allNodes.links = [];
 
             _.forEach(jsonld, (jsonldNode, index) => {
                 var jsonldNodeKeys = _.keys(jsonldNode);
