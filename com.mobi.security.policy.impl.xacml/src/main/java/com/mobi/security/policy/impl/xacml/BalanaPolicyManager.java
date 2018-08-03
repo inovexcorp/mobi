@@ -68,6 +68,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
@@ -387,8 +388,8 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             Enumeration<URL> urls = bundle.findEntries("/policies", "*.xml", true);
             while (urls.hasMoreElements()) {
                 URL url = urls.nextElement();
-                String fileName = RestUtils.decode(FilenameUtils.getName(url.getPath()));
-                String fileId = RestUtils.decode(fileName);
+                String fileName = URLDecoder.decode(FilenameUtils.getName(url.getPath()));
+                String fileId = URLDecoder.decode(fileName);
                 Resource fileIRI = vf.createIRI(fileId);
                 if (!conn.contains(fileIRI, null, null)) {
                     VirtualFile file = vfs.resolveVirtualFile(url.openStream(), fileLocation);
