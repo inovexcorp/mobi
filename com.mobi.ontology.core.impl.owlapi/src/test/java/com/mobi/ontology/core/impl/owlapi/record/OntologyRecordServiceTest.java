@@ -247,8 +247,8 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         recordService.create(user, config, connection);
 
         verify(ontology).asModel(eq(modelFactory));
-        verify(ontology, times(2)).getOntologyId();
-        verify(ontologyId, times(2)).getOntologyIdentifier();
+        verify(ontology).getOntologyId();
+        verify(ontologyId).getOntologyIdentifier();
         verify(ontologyManager).createOntology(any(InputStream.class), any(Boolean.class));
         verify(utilsService, times(2)).addObject(any(Record.class),
                 any(RepositoryConnection.class));
@@ -273,8 +273,8 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         recordService.create(user, config, connection);
 
         verify(ontology).asModel(eq(modelFactory));
-        verify(ontology, times(2)).getOntologyId();
-        verify(ontologyId, times(2)).getOntologyIdentifier();
+        verify(ontology).getOntologyId();
+        verify(ontologyId).getOntologyIdentifier();
         verify(ontologyManager).createOntology(any(Model.class));
         verify(utilsService, times(2)).addObject(any(Record.class),
                 any(RepositoryConnection.class));

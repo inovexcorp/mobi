@@ -109,7 +109,7 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     private void setOntologyToRecord(T record, Ontology ontology) {
         Resource ontologyIRI = ontology.getOntologyId().getOntologyIdentifier();
         validateOntology(ontologyIRI);
-        record.setOntologyIRI(ontology.getOntologyId().getOntologyIdentifier());
+        record.setOntologyIRI(ontologyIRI);
     }
 
     /**
