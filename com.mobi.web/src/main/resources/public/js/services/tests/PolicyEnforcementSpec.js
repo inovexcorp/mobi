@@ -79,7 +79,7 @@ describe('Policy Enforcement service', function() {
             }));
         });
         it('when resolved', function() {
-            $httpBackend.whenPOST('/mobirest/policy-enforcement').respond(200);
+            $httpBackend.expectPOST('/mobirest/policy-enforcement', this.jsonRequest).respond(200);
             policyEnforcementSvc.evaluateRequest(this.jsonRequest)
                 .then(_.noop, function() {
                     fail('Promise should have resolved');
@@ -87,13 +87,14 @@ describe('Policy Enforcement service', function() {
             flushAndVerify($httpBackend);
         });
         it('with additional fields when resolved', function() {
+            var copy = JSON.parse(JSON.stringify(this.jsonRequest));
+            $httpBackend.expectPOST('/mobirest/policy-enforcement', copy).respond(200);
             this.jsonRequest.additionalField = 'urn:test';
-            $httpBackend.whenPOST('/mobirest/policy-enforcement').respond(200);
-            delete this.jsonRequest.additionalField;
             policyEnforcementSvc.evaluateRequest(this.jsonRequest)
                 .then(_.noop, function() {
                     fail('Promise should have resolved');
                 });
+            expect(policyEnforcementSvc.evaluateRequest)
             flushAndVerify($httpBackend);
         });
     });

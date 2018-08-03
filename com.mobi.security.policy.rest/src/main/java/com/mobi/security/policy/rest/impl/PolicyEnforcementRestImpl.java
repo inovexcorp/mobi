@@ -41,7 +41,6 @@ import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.rest.PolicyEnforcementRest;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

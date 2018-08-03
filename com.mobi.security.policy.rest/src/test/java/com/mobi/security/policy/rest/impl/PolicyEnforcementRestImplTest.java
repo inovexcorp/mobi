@@ -23,29 +23,21 @@ package com.mobi.security.policy.rest.impl;
  * #L%
  */
 
-import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rest.util.MobiRestTestNg;
-import com.mobi.rest.util.UsernameTestFilter;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
-import com.mobi.security.policy.api.xacml.XACMLRequest;
 import com.mobi.web.security.util.AuthenticationProps;
 import net.sf.json.JSONObject;
-import org.apache.commons.io.IOUtils;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -54,8 +46,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
