@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Policy Enforcement service', function() {
+describe('Policy Enforcement service', function() {
     var policyEnforcementSvc, scope, $httpBackend, $httpParamSerializer, utilSvc, $q;
 
     beforeEach(function() {
@@ -86,7 +86,7 @@ fdescribe('Policy Enforcement service', function() {
                 });
             flushAndVerify($httpBackend);
         });
-        it('when resolved', function() {
+        it('with additional fields when resolved', function() {
             this.jsonRequest.additionalField = 'urn:test';
             $httpBackend.whenPOST('/mobirest/policy-enforcement').respond(200);
             delete this.jsonRequest.additionalField;
