@@ -60,24 +60,21 @@
              *
              * @description
              * Calls the POST /mobirest/policy-enforcement endpoint with the passed XACML parameters to be evaluated.
+             * Example JSON object:
+             * {
+             *     "resourceId": "http://mobi.com/catalog-local",
+             *     "actionId": "http://mobi.com/ontologies/policy#Create",
+             *     "actionAttrs": {
+             *     "http://www.w3.org/1999/02/22-rdf-syntax-ns#type":"http://mobi.com/ontologies/ontology-editor#OntologyRecord"
+             *     }
+             * }
              *
-             * @param {Object} [subjectAttrs=''] An optional Object of attributes for a subject
-             * @param {string} [resourceId=''] An optional IRI string for a resourceId
-             * @param {Object} [resourceAttrs=''] An optional Object of attributes for a resource
-             * @param {string} [actionId=''] An optional IRI string for an actionId
-             * @param {Object} [actionAttrs=''] An optional Object of attributes for an action
+             * @param {Object} [jsonRequest=''] An Object of ids and attributes to create a XACML request
              * @return {Promise} A Promise that resolves to a string of the decision of the request or is rejected with
              * an error message
              */
-            self.evaluateRequest = function(subjectAttrs = undefined, resourceId = undefined, resourceAttrs = undefined, actionId = undefined, actionAttrs = undefined) {
-                var request = {
-                    "subjectAttr": subjectAttrs,
-                    "resourceId": resourceId,
-                    "resourceAttrs": resourceAttrs,
-                    "actionId": actionId,
-                    "actionAttrs": actionAttrs
-                };
-                return $http.post(prefix, request)
+            self.evaluateRequest = function(jsonRequest) {
+                return $http.post(prefix, jsonRequest)
                     .then(response => response.data, util.rejectError);
             }
         }

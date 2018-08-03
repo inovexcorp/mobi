@@ -42,7 +42,14 @@ public interface PolicyEnforcementRest {
 
     /**
      * Converts a user provided JSON object string into a XACML request. Evaluates the request and returns the decision
-     * result.
+     * result. An example request would have a JSON object of:
+     * {
+     *     "resourceId": "http://mobi.com/catalog-local",
+     *     "actionId": "http://mobi.com/ontologies/policy#Create",
+     *     "actionAttrs": {
+     *     "http://www.w3.org/1999/02/22-rdf-syntax-ns#type":"http://mobi.com/ontologies/ontology-editor#OntologyRecord"
+     *     }
+     * }
      *
      * @param context the request context supplied by the underlying JAX-RS implementation
      * @param jsonRequest a JSON object containing XACML required fields

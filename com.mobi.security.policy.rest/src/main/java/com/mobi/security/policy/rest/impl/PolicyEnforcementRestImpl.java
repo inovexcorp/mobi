@@ -27,6 +27,7 @@ import static com.mobi.web.security.util.AuthenticationProps.ANON_USER;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.IRI;
@@ -75,46 +76,58 @@ public class PolicyEnforcementRestImpl implements PolicyEnforcementRest {
 
     @Override
     public Response evaluateRequest(ContainerRequestContext context, String jsonRequest) {
-        log.info("Authorizing...");
+        log.debug("Authorizing...");
         long start = System.currentTimeMillis();
 
-        JSONObject json = JSONObject.fromObject(jsonRequest);
-        IRI subjectId = (IRI) RestUtils.optActiveUser(context, engineManager).map(User::getResource)
-                .orElse(vf.createIRI(ANON_USER));
-        IRI actionId = vf.createIRI(json.getString("actionId"));
-        IRI resourceId = vf.createIRI(json.getString("resourceId"));
+        try {
+            JSONObject json = JSONObject.fromObject(jsonRequest);
+            IRI subjectId = (IRI) RestUtils.optActiveUser(context, engineManager).map(User::getResource)
+                    .orElse(vf.createIRI(ANON_USER));
 
-        Map<String, String> attributes = json.getJSONObject("subjectAttrs");
-        Map<String, Literal> subjectAttrs = attributes.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(),
-                e -> vf.createLiteral(e.getValue())));
-        attributes = json.getJSONObject("resourceAttrs");
-        Map<String, Literal> resourceAttrs = attributes.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(),
-                e -> vf.createLiteral(e.getValue())));
-        attributes = json.getJSONObject("actionAttrs");
-        Map<String, Literal> actionAttrs = attributes.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(),
-                e -> vf.createLiteral(e.getValue())));
-
-        Request request = pdp.createRequest(subjectId, subjectAttrs, resourceId, resourceAttrs, actionId, actionAttrs);
-
-        log.debug(request.toString());
-        com.mobi.security.policy.api.Response response = pdp.evaluate(request);
-        log.debug(response.toString());
-
-        Decision decision = response.getDecision();
-        if (decision != Decision.PERMIT) {
-            if (decision == Decision.DENY) {
-                String statusMessage = getMessageOrDefault(response,
-                        "You do not have permission to perform this action");
-                throw ErrorUtils.sendError(statusMessage, javax.ws.rs.core.Response.Status.UNAUTHORIZED);
+            String actionIdStr = json.optString("actionId");
+            String resourceIdStr = json.optString("resourceId");
+            if (StringUtils.isEmpty(actionIdStr) || StringUtils.isEmpty(resourceIdStr)) {
+                throw ErrorUtils.sendError("ID is required.", Response.Status.BAD_REQUEST);
             }
-            if (decision == Decision.INDETERMINATE) {
-                String statusMessage = getMessageOrDefault(response, "Request indeterminate");
-                throw ErrorUtils.sendError(statusMessage, javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR);
+
+            IRI actionId = vf.createIRI(actionIdStr);
+            IRI resourceId = vf.createIRI(resourceIdStr);
+
+            Map<String, String> attributes = json.getJSONObject("subjectAttrs");
+            Map<String, Literal> subjectAttrs = attributes.entrySet().stream().collect(Collectors.toMap(
+                    e -> e.getKey(), e -> vf.createLiteral(e.getValue())));
+            attributes = json.getJSONObject("resourceAttrs");
+            Map<String, Literal> resourceAttrs = attributes.entrySet().stream().collect(Collectors.toMap(
+                    e -> e.getKey(), e -> vf.createLiteral(e.getValue())));
+            attributes = json.getJSONObject("actionAttrs");
+            Map<String, Literal> actionAttrs = attributes.entrySet().stream().collect(Collectors.toMap(
+                    e -> e.getKey(), e -> vf.createLiteral(e.getValue())));
+
+            Request request = pdp.createRequest(subjectId, subjectAttrs, resourceId, resourceAttrs,
+                    actionId, actionAttrs);
+
+            log.debug(request.toString());
+            com.mobi.security.policy.api.Response response = pdp.evaluate(request);
+            log.debug(response.toString());
+
+            Decision decision = response.getDecision();
+            if (decision != Decision.PERMIT) {
+                if (decision == Decision.DENY) {
+                    String statusMessage = getMessageOrDefault(response,
+                            "You do not have permission to perform this action");
+                    throw ErrorUtils.sendError(statusMessage, Response.Status.UNAUTHORIZED);
+                }
+                if (decision == Decision.INDETERMINATE) {
+                    String statusMessage = getMessageOrDefault(response, "Request indeterminate");
+                    throw ErrorUtils.sendError(statusMessage, Response.Status.INTERNAL_SERVER_ERROR);
+                }
             }
+            log.debug(String.format("Request permitted. %dms", System.currentTimeMillis() - start));
+
+            return Response.ok(decision.toString()).build();
+        } catch (IllegalArgumentException | MobiException ex) {
+            throw ErrorUtils.sendError("Request could not be evaluated", Response.Status.INTERNAL_SERVER_ERROR);
         }
-        log.info(String.format("Request permitted. %dms", System.currentTimeMillis() - start));
-
-        return Response.ok(decision.toString()).build();
     }
 
     private String getMessageOrDefault(com.mobi.security.policy.api.Response response, String defaultMessage) {

@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Policy Enforcement service', function() {
-    var analyticManagerSvc, scope, $httpBackend, $httpParamSerializer, utilSvc, $q;
+    var policyEnforcementService, scope, $httpBackend, $httpParamSerializer, utilSvc, $q;
 
     beforeEach(function() {
         module('policyEnforcement');
@@ -39,15 +39,11 @@ describe('Policy Enforcement service', function() {
         });
 
         utilSvc.rejectError.and.returnValue($q.reject('Error Message'));
-        this.subjectAttr = {};
-        this.resourceId = {};
-        this.resourceAttrs = {};
-        this.actionId = {};
-        this.actionAttrs = {};
+        this.jsonRequest = {};
     });
 
     afterEach(function() {
-        analyticManagerSvc = null;
+        policyEnforcementService = null;
         scope = null;
         $httpBackend = null;
         $httpParamSerializer = null
@@ -58,7 +54,7 @@ describe('Policy Enforcement service', function() {
     describe('should evaluate a request', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenPOST('/mobirest/policy-enforcement').respond(400, null, null, 'Error Message');
-            policyEnforcementSvc.evaluateRequest(this.subjectAttr, this.resourceId, this.resourceAttrs, this.actionId, this.actionAttrs)
+            policyEnforcementSvc.evaluateRequest(this.jsonRequest)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
@@ -72,7 +68,7 @@ describe('Policy Enforcement service', function() {
         });
         it('when resolved', function() {
             $httpBackend.whenPOST('/mobirest/policy-enforcement').respond(200);
-            policyEnforcementSvc.evaluateRequest(this.subjectAttr, this.resourceId, this.resourceAttrs, this.actionId, this.actionAttrs)
+            policyEnforcementSvc.evaluateRequest(this.jsonRequest)
                 .then(_.noop, function() {
                     fail('Promise should have resolved');
                 });
