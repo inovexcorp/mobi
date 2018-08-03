@@ -1,14 +1,12 @@
-@Version("1.2.0.${build}")
-
-package com.mobi.ontology.core.api.record;
+package com.mobi.ontology.core.api.record.config;
 
 /*-
  * #%L
- * com.mobi.ontology.api
+ * com.mobi.ontology.core.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,20 @@ package com.mobi.ontology.core.api.record;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import com.mobi.catalog.api.record.config.OperationSetting;
+import com.mobi.catalog.api.record.config.OperationSettingImpl;
+
+import java.io.InputStream;
+
+public class OntologyRecordCreateSettings {
+
+    public static OperationSetting<InputStream> INPUT_STREAM;
+
+    public OntologyRecordCreateSettings() {
+    }
+
+    static {
+        INPUT_STREAM = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.inputstream"),
+                "The input stream file for the ontology", null);
+    }
+}
