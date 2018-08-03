@@ -3,18 +3,18 @@
 
 /* Manchester Syntax styles */
 .manchester-expr, .cm-manchester-expr {
-    color: $brand-primary;
+    color: var(--primary);
     font-weight: bold;
 }
 .manchester-rest, .cm-manchester-rest {
-    color: $brand-success;
+    color: var(--success);
     font-weight: bold;
 }
 .manchester-lit, .cm-manchester-lit {
     color: #f49c1f;
 }
 .cm-manchester-error {
-    border-bottom: 1px dotted $error-color;
+    border-bottom: 1px dotted var(--danger);
 }
 .cm-open-par {
     color: #646464 !important;

@@ -29,10 +29,10 @@
                     margin-left: 10px;
                 }
                 &.invalid {
-                    background-color: $brand-danger-light;
+                    background-color: var(--danger-light);
 
                     &.active {
-                        background-color: $brand-danger;
+                        background-color: var(--danger);
                     }
                 }
                 &:hover {

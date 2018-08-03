@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="analytics-landing-page h-100 clearfix">
+<div class="analytics-landing-page d-flex flex-column h-100 clearfix">
     <div class="white-bar">
         <form name="dvm.form" class="form-inline justify-content-center">
             <div class="form-group">
@@ -42,7 +42,7 @@
                     <md-list>
                         <md-list-item ng-repeat="record in dvm.records track by record['@id']" class="analytic">
                             <p class="title">{{dvm.util.getDctermsValue(record, 'title')}}</p>
-                            <p class="time">{{dvm.util.getDate(dvm.util.getDctermsValue(record, 'modified'), 'short')}}</p>
+                            <p class="time text-muted">{{dvm.util.getDate(dvm.util.getDctermsValue(record, 'modified'), 'short')}}</p>
                             <div uib-dropdown>
                                 <button uib-dropdown-toggle class="btn btn-xs remove-min-width">
                                     <i class="fa fa-ellipsis-h fa-fw"></i>

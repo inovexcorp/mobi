@@ -29,7 +29,7 @@
                     <dataset-form-group ng-model="dvm.ds.search.datasetRecordId" on-select="dvm.getTypes()"></dataset-form-group>
                     <a class="refresh-link" ng-click="dvm.refresh()" uib-tooltip="Refreshes the dataset metadata" tooltip-append-to-body="true"><i class="fa fa-refresh"></i>Refresh</a>
                 </div>
-                <div class="strike">AND</div>
+                <div class="strike text-muted">AND</div>
                 <div class="form-group">
                     <custom-label>Keywords</custom-label>
                     <div class="boolean-operator float-right">
@@ -42,7 +42,7 @@
                         <input type="text" ng-disabled="!dvm.ds.search.datasetRecordId">
                     </md-chips>
                 </div>
-                <div class="strike">AND</div>
+                <div class="strike text-muted">AND</div>
                 <div class="form-group">
                     <custom-label>Types</custom-label>
                     <div class="boolean-operator float-right">
@@ -60,7 +60,7 @@
                         </md-optgroup>
                     </md-select>
                 </div>
-                <div class="strike">AND</div>
+                <div class="strike text-muted">AND</div>
                 <div class="properties-container">
                     <div class="header-wrapper">
                         <custom-label class="property-label">Properties</custom-label>

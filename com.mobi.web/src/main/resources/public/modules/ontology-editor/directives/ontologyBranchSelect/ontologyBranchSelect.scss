@@ -42,29 +42,20 @@
         }
 
         .fa-fw {
-            color: $gray-light;
             line-height: 20px;
             margin-left: 5px;
             text-decoration: none;
 
             &:hover {
-                color: $gray-dark;
+                color: var(--grey) !important;
             }
         }
 
         .fa-fw-red {
-            color: $brand-danger;
+            color: var(--danger);
             line-height: 20px;
             margin-left: 5px;
             text-decoration: none;
-        }
-    }
-
-    .active .branch-display .float-right {
-        color: #fff;
-
-        &:hover {
-            color: $gray-light;
         }
     }
 }

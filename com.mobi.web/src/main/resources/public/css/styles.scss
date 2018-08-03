@@ -68,7 +68,7 @@ body {
 
     .white-bar {
         background-color: #fff;
-        box-shadow: 5px 5px 5px 0px $gray-light;
+        box-shadow: 5px 5px 5px 0px var(--light-dark);
         height: 52px;
         text-align: center;
     }
@@ -350,17 +350,8 @@ ul {
     }
 
     /* General styles for the ul elements */
-    ul,
     .repeater-container {
-        /* Padding to match the width of the icons */
-        ul,
-        .creator {
-            border-left: 1px solid $gray-lighter;
-            margin-left: 1.28571429em;
-        }
-
         /* The list items which contain an anchor for all of the items in the tree */
-        li,
         .tree-item {
             width: 100%;
         }

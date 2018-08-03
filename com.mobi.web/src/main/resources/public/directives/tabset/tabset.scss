@@ -82,7 +82,7 @@
     &.centered {
         > .tabset-headings {
             background: white;
-            box-shadow: 5px 5px 5px 0px $gray-light;
+            box-shadow: 5px 5px 5px 0px var(--light-dark);
             display: block;
             height: 52px;
             text-align: center;
@@ -97,7 +97,7 @@
 
                 &.active {
                     border-color: var(--primary);
-                    color: black;
+                    color: var(--body);
                 }
                 .heading-text {
                     max-width: none;
@@ -112,7 +112,7 @@
             display: block;
             height: inherit;
             text-align: center;
-            border-bottom: 1px solid $gray-light;
+            border-bottom: 1px solid var(--light-dark);
 
             .heading {
                 background-color: white;
@@ -126,7 +126,7 @@
 
                 &.active {
                     border-color: --var(--primary);
-                    color: black;
+                    color: var(--body);
                 }
                 .heading-text {
                     max-width: none;

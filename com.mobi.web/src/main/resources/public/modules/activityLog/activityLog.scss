@@ -2,7 +2,7 @@
 @import "./src/main/resources/public/css/variables";
 
 .activity-log {
-    background-color: $gray-lighter;
+    background-color: var(--light);
     display: flex;
     flex-direction: column;
 }

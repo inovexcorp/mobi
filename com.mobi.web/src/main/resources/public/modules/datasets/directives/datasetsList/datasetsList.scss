@@ -12,14 +12,14 @@
         flex-direction: column;
     }
     .dataset {
-        border-bottom: 1px solid $gray-lighter;
+        border-bottom: 1px solid var(--light);
         cursor: pointer;
 
         &:last-child {
             border-bottom: none;
         }
         &:hover {
-            background-color: $gray-lighter;
+            background-color: var(--light);
         }
         .record-keywords {
             margin-bottom: 0;

@@ -20,7 +20,7 @@
                 padding: 15px;
 
                 .ontology {
-                    border-bottom: 1px solid $gray-lighter;
+                    border-bottom: 1px solid var(--light);
                     cursor: pointer;
                     padding: 10px;
 
@@ -28,7 +28,7 @@
                         border-bottom: none;
                     }
                     &:hover {
-                        background-color: $gray-lighter;
+                        background-color: var(--light);
                     }
                     .details {
                         .header {
@@ -40,11 +40,10 @@
 
                     .action-container {
                         .action {
-                            color: $gray-light;
                             text-decoration: none;
 
                             &:hover {
-                                color: $gray;
+                                color: var(--gray) !important;
                             }
                         }
                     }

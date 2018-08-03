@@ -5,31 +5,27 @@
     .block-header .float-right {
         margin-left: 10px;
     }
-
     .import {
         margin: 0;
         padding: 10px;
         display: flex;
-        
-        &:hover {
-            background: $gray-lighter;
-        }
 
+        &:hover {
+            background: var(--light);
+        }
         .import-iri {
             @include textOverflow;
             flex: 1;
         }
-        
         .error-display {
             font-weight: normal;
         }
     }
-
     .indirect-import-container {
-        border-top: 1px solid $gray-custom;
+        border-top: 1px solid var(--light);
 
         .indirect-header {
-            border-bottom: 1px solid $gray-custom;
+            border-bottom: 1px solid var(--light);
             display: inline-block;
             padding: 10px;
             width: 100%;
