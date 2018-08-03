@@ -50,7 +50,7 @@
 
         function policyEnforcementService($http, $q, REST_PREFIX, utilService, prefixes) {
             var self = this;
-            var prefix = REST_PREFIX + 'policy-enforcement';
+            var prefix = REST_PREFIX + 'pep';
             var util = utilService;
 
             /**
@@ -59,7 +59,7 @@
              * @methodOf policyEnforcement.service:policyEnforcementService
              *
              * @description
-             * Calls the POST /mobirest/policy-enforcement endpoint with the passed XACML parameters to be evaluated.
+             * Calls the POST /mobirest/pep endpoint with the passed XACML parameters to be evaluated.
              * Example JSON object:
              * {
              *     "resourceId": "http://mobi.com/catalog-local",

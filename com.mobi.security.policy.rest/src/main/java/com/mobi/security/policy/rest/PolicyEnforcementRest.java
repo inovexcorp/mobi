@@ -36,8 +36,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Path("/policy-enforcement")
-@Api(value = "/policy-enforcement")
+@Path("/pep")
+@Api(value = "/pep")
 public interface PolicyEnforcementRest {
 
     /**

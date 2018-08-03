@@ -41,10 +41,10 @@ import net.sf.json.JSONObject;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Before;
-import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
@@ -74,7 +74,7 @@ public class PolicyEnforcementRestImplTest extends MobiRestTestNg {
     private com.mobi.security.policy.api.Response response;
 
     @Override
-    protected Application configureApp() throws Exception {
+    protected Application configureApp() {
         MockitoAnnotations.initMocks(this);
         vf = getValueFactory();
 
@@ -91,8 +91,8 @@ public class PolicyEnforcementRestImplTest extends MobiRestTestNg {
         config.register(MultiPartFeature.class);
     }
 
-    @Before
-    public void setUpMocks() throws Exception {
+    @BeforeMethod
+    public void setUpMocks() {
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(user.getResource()).thenReturn(vf.createIRI(USER_IRI));
         when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(request);
@@ -112,78 +112,78 @@ public class PolicyEnforcementRestImplTest extends MobiRestTestNg {
     }
 
     @Test
-    public void evaluateRequestTest() throws Exception {
-        Response response = target().path("policy-enforcement").request().post(Entity.json(json));
+    public void evaluateRequestTest() {
+        Response response = target().path("pep").request().post(Entity.json(json));
         assertEquals(response.getStatus(), 200);
     }
 
     @Test
-    public void evaluateEmptyRequestTest() throws Exception {
-        Response response = target().path("policy-enforcement").request().post(Entity.json(new JSONObject()));
+    public void evaluateEmptyRequestTest() {
+        Response response = target().path("pep").request().post(Entity.json(new JSONObject()));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void evaluateEmptyActionIdTest() throws Exception {
+    public void evaluateEmptyActionIdTest() {
         json.remove("actionId");
-        Response response = target().path("policy-enforcement").request().post(Entity.json(json));
+        Response response = target().path("pep").request().post(Entity.json(json));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void evaluateEmptyResourceIdTest() throws Exception {
+    public void evaluateEmptyResourceIdTest() {
         json.remove("resourceId");
-        Response response = target().path("policy-enforcement").request().post(Entity.json(json));
+        Response response = target().path("pep").request().post(Entity.json(json));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void evaluateEmptySubjectAttrsTest() throws Exception {
+    public void evaluateEmptySubjectAttrsTest() {
         json.remove("subjectAttrs");
-        Response response = target().path("policy-enforcement").request().post(Entity.json(json));
+        Response response = target().path("pep").request().post(Entity.json(json));
         assertEquals(response.getStatus(), 200);
     }
 
     @Test
-    public void evaluateEmptyActionAttrsTest() throws Exception {
+    public void evaluateEmptyActionAttrsTest() {
         json.remove("actionAttrs");
-        Response response = target().path("policy-enforcement").request().post(Entity.json(json));
+        Response response = target().path("pep").request().post(Entity.json(json));
         assertEquals(response.getStatus(), 200);
     }
 
     @Test
-    public void evaluateEmptyResourceAttrsTest() throws Exception {
+    public void evaluateEmptyResourceAttrsTest() {
         json.remove("resourceAttrs");
-        Response response = target().path("policy-enforcement").request().post(Entity.json(json));
+        Response response = target().path("pep").request().post(Entity.json(json));
         assertEquals(response.getStatus(), 200);
     }
 
     @Test
-    public void evaluateRequestNoUserTest() throws Exception { //TODO: FIX
+    public void evaluateRequestNoUserTest() {
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
         when(user.getResource()).thenReturn(vf.createIRI(AuthenticationProps.ANON_USER));
-        Response response = target().path("policy-enforcement").request().post(Entity.json(json));
+        Response response = target().path("pep").request().post(Entity.json(json));
         assertEquals(response.getStatus(), 200);
     }
 
     @Test
-    public void evaluateRequestDenyDecisionTest() throws Exception {
+    public void evaluateRequestDenyDecisionTest() {
         when(response.getDecision()).thenReturn(Decision.DENY);
-        Response response = target().path("policy-enforcement").request().post(Entity.json(json));
+        Response response = target().path("pep").request().post(Entity.json(json));
         assertEquals(response.getStatus(), 401);
     }
 
     @Test
-    public void evaluateRequestIndeterminateDecisionTest() throws Exception {
+    public void evaluateRequestIndeterminateDecisionTest() {
         when(response.getDecision()).thenReturn(Decision.INDETERMINATE);
-        Response response = target().path("policy-enforcement").request().post(Entity.json(json));
+        Response response = target().path("pep").request().post(Entity.json(json));
         assertEquals(response.getStatus(), 500);
     }
 
     @Test
-    public void evaluateRequestNADecisionTest() throws Exception {
+    public void evaluateRequestNADecisionTest() {
         when(response.getDecision()).thenReturn(Decision.NOT_APPLICABLE);
-        Response response = target().path("policy-enforcement").request().post(Entity.json(json));
+        Response response = target().path("pep").request().post(Entity.json(json));
         assertEquals(response.getStatus(), 200);
     }
 }

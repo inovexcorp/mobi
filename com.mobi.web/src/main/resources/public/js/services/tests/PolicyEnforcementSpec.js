@@ -65,7 +65,7 @@ describe('Policy Enforcement service', function() {
 
     describe('should evaluate a request', function() {
         it('unless an error occurs', function() {
-            $httpBackend.whenPOST('/mobirest/policy-enforcement').respond(400, null, null, 'Error Message');
+            $httpBackend.whenPOST('/mobirest/pep').respond(400, null, null, 'Error Message');
             policyEnforcementSvc.evaluateRequest(this.jsonRequest)
                 .then(function() {
                     fail('Promise should have rejected');
@@ -79,7 +79,7 @@ describe('Policy Enforcement service', function() {
             }));
         });
         it('when resolved', function() {
-            $httpBackend.expectPOST('/mobirest/policy-enforcement', this.jsonRequest).respond(200);
+            $httpBackend.expectPOST('/mobirest/pep', this.jsonRequest).respond(200);
             policyEnforcementSvc.evaluateRequest(this.jsonRequest)
                 .then(_.noop, function() {
                     fail('Promise should have resolved');
@@ -88,7 +88,7 @@ describe('Policy Enforcement service', function() {
         });
         it('with additional fields when resolved', function() {
             var copy = JSON.parse(JSON.stringify(this.jsonRequest));
-            $httpBackend.expectPOST('/mobirest/policy-enforcement', copy).respond(200);
+            $httpBackend.expectPOST('/mobirest/pep', copy).respond(200);
             this.jsonRequest.additionalField = 'urn:test';
             policyEnforcementSvc.evaluateRequest(this.jsonRequest)
                 .then(_.noop, function() {
