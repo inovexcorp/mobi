@@ -1,10 +1,10 @@
-<Policy xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="http://mobi.com/policies/record/test" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" Version="1.0">
-    <Description>Who can access Record urn:test</Description>
+<Policy xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="http://mobi.com/policies/record/%RECORDIRIENCODED%" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" Version="1.0">
+    <Description>Who can access Record %RECORDIRI%</Description>
     <Target>
         <AnyOf>
             <AllOf>
                 <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">urn:test</AttributeValue>
+                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">%RECORDIRI%</AttributeValue>
                     <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                 </Match>
             </AllOf>
@@ -28,7 +28,7 @@
         </Target>
     </Rule>
     <Rule Effect="Permit" RuleId="urn:delete">
-        <!-- Only the user who created the record can delete it -->
+        <!-- Only %USERIRI% who created the record can delete it -->
         <Target>
             <AnyOf>
                 <AllOf>
@@ -37,7 +37,7 @@
                         <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:action" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                     </Match>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/users/UserX</AttributeValue>
+                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">%USERIRI%</AttributeValue>
                         <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                     </Match>
                 </AllOf>
@@ -45,7 +45,7 @@
         </Target>
     </Rule>
     <Rule Effect="Permit" RuleId="urn:update">
-        <!-- Only the user who created the record can manage it -->
+        <!-- Only %USERIRI% who created the record can manage it -->
         <Target>
             <AnyOf>
                 <AllOf>
@@ -54,7 +54,7 @@
                         <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:action" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                     </Match>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/users/UserX</AttributeValue>
+                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/users/%USERIRI%</AttributeValue>
                         <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                     </Match>
                 </AllOf>
@@ -79,7 +79,7 @@
         </Target>
     </Rule>
     <Rule Effect="Permit" RuleId="urn:MASTER">
-        <!-- Only the user who created the record can manage Master -->
+        <!-- Only %USERIRI% who created the record can manage Master -->
         <Target>
             <AnyOf>
                 <AllOf>
@@ -88,7 +88,7 @@
                         <AttributeDesignator AttributeId="http://mobi.com/ontologies/catalog#branch" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:action" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                     </Match>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/roles/users/UserX</AttributeValue>
+                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/roles/users/%USERIRI%</AttributeValue>
                         <AttributeDesignator AttributeId="http://mobi.com/ontologies/user/management#hasUserRole" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                     </Match>
                 </AllOf>

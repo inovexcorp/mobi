@@ -135,8 +135,9 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
             Document recordPolicy = docBuilder.parse(filePath);
             String str = convertDocumentToString(recordPolicy);
-            str.replaceAll("(UserX)", user.toString());
-            str.replaceAll("(test)", record.getResource().stringValue());
+            str.replaceAll("(%USERIRI%)", user.getResource().stringValue());
+            str.replaceAll("(%RECORDIRI%)", record.getResource().stringValue());
+            str.replaceAll("(%RECORDIRIENCODED%)", record.getResource().stringValue());
             PolicyType recordPolicyType = JAXB.unmarshal(str, PolicyType.class);
             addPolicy(recordPolicyType);
 
@@ -145,8 +146,9 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             filePath = "file:" + pathPolicy;
             Document policyPolicy = docBuilder.parse(filePath);
             String strPolicyPolicy = convertDocumentToString(policyPolicy);
-            strPolicyPolicy.replaceAll("(UserX)", user.toString());
-            strPolicyPolicy.replaceAll("(test)", record.getResource().stringValue());
+            strPolicyPolicy.replaceAll("(%USERIRI%)", user.toString());
+            strPolicyPolicy.replaceAll("(%POLICYIRI%)", recordPolicyType.getPolicyId());
+            strPolicyPolicy.replaceAll("(%POLICYIRIENCODED%)", record.getResource().stringValue());
             PolicyType policyPolicyType = JAXB.unmarshal(str, PolicyType.class);
             addPolicy(policyPolicyType);
 
@@ -188,10 +190,9 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
 
     protected void deletePolicies(T record) {
         String recordResourceStr = record.getResource().stringValue();
-        IRI policyId = valueFactory.createIRI("http://mobi.com/policies/record/"
-                + recordResourceStr);
-        IRI policyPolicyId = valueFactory.createIRI("http://mobi.com/policies/policy/record/"
-                + recordResourceStr);
+        //use a sparkle query like CatalogManager to get recordp and pp
+        IRI policyId = ;
+        IRI policyPolicyId = ;
         xacmlPolicyManager.deletePolicy(policyId);
         xacmlPolicyManager.deletePolicy(policyPolicyId);
     }
