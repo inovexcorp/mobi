@@ -39,6 +39,7 @@ import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -297,7 +298,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = "http://mobi.com/ontologies/catalog#Modify")
+    @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response saveChangesToOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                           String commitIdStr, String entityIdStr, String entityJson) {
@@ -318,7 +319,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = "http://mobi.com/ontologies/catalog#Modify")
+    @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response uploadChangesToOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                             String commitIdStr, InputStream fileInputStream) {
@@ -479,7 +480,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = "http://mobi.com/ontologies/catalog#Modify")
+    @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response addAnnotationToOntology(ContainerRequestContext context, String recordIdStr,
                                             String annotationJson) {
@@ -492,6 +493,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
+    @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response deleteAnnotationFromOntology(ContainerRequestContext context, String recordIdStr,
                                                  String annotationIdStr, String branchIdStr, String commitIdStr) {
@@ -517,7 +519,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = "http://mobi.com/ontologies/catalog#Modify")
+    @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response addClassToOntology(ContainerRequestContext context, String recordIdStr, String classJson) {
         verifyJsonldType(classJson, OWL.CLASS.stringValue());
@@ -529,6 +531,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
+    @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response deleteClassFromOntology(ContainerRequestContext context, String recordIdStr, String classIdStr,
                                             String branchIdStr, String commitIdStr) {
@@ -555,7 +558,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = "http://mobi.com/ontologies/catalog#Modify")
+    @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response addDatatypeToOntology(ContainerRequestContext context, String recordIdStr, String datatypeJson) {
         verifyJsonldType(datatypeJson, OWL.DATATYPEPROPERTY.stringValue());
@@ -567,6 +570,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
+    @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response deleteDatatypeFromOntology(ContainerRequestContext context, String recordIdStr,
                                                String datatypeIdStr, String branchIdStr, String commitIdStr) {
@@ -593,7 +597,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = "http://mobi.com/ontologies/catalog#Modify")
+    @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response addObjectPropertyToOntology(ContainerRequestContext context, String recordIdStr,
                                                 String objectPropertyJson) {
@@ -606,6 +610,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
+    @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response deleteObjectPropertyFromOntology(ContainerRequestContext context, String recordIdStr,
                                                      String objectPropertyIdStr, String branchIdStr,
@@ -633,7 +638,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = "http://mobi.com/ontologies/catalog#Modify")
+    @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response addDataPropertyToOntology(ContainerRequestContext context, String recordIdStr,
                                               String dataPropertyJson) {
@@ -646,6 +651,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
+    @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response deleteDataPropertyFromOntology(ContainerRequestContext context, String recordIdStr,
                                                    String dataPropertyIdStr, String branchIdStr, String commitIdStr) {
@@ -672,7 +678,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = "http://mobi.com/ontologies/catalog#Modify")
+    @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response addIndividualToOntology(ContainerRequestContext context, String recordIdStr,
                                             String individualJson) {
@@ -685,6 +691,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
+    @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response deleteIndividualFromOntology(ContainerRequestContext context, String recordIdStr,
                                                  String individualIdStr, String branchIdStr, String commitIdStr) {
