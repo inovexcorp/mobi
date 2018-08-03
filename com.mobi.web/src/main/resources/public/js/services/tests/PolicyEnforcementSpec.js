@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Policy Enforcement service', function() {
+fdescribe('Policy Enforcement service', function() {
     var policyEnforcementSvc, scope, $httpBackend, $httpParamSerializer, utilSvc, $q;
 
     beforeEach(function() {
@@ -39,7 +39,19 @@ describe('Policy Enforcement service', function() {
         });
 
         utilSvc.rejectError.and.returnValue($q.reject('Error Message'));
-        this.jsonRequest = {};
+        this.jsonRequest = {
+            'resourceId':'urn:test',
+            'actionId':'urn:test',
+            'actionAtrs': {
+                'urn:test':'urn:test'
+            },
+            'resourceAttrs': {
+               'urn:test':'urn:test'
+            },
+            'subjectAttrs': {
+              'urn:test':'urn:test'
+            }
+        };
     });
 
     afterEach(function() {
@@ -68,6 +80,16 @@ describe('Policy Enforcement service', function() {
         });
         it('when resolved', function() {
             $httpBackend.whenPOST('/mobirest/policy-enforcement').respond(200);
+            policyEnforcementSvc.evaluateRequest(this.jsonRequest)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('when resolved', function() {
+            this.jsonRequest.additionalField = 'urn:test';
+            $httpBackend.whenPOST('/mobirest/policy-enforcement').respond(200);
+            delete this.jsonRequest.additionalField;
             policyEnforcementSvc.evaluateRequest(this.jsonRequest)
                 .then(_.noop, function() {
                     fail('Promise should have resolved');
