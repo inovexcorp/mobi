@@ -107,7 +107,8 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
      * @param ontology created ontology
      */
     private void setOntologyToRecord(T record, Ontology ontology) {
-        record.getOntologyIRI().ifPresent(this::validateOntology);
+        Resource ontologyIRI = ontology.getOntologyId().getOntologyIdentifier();
+        validateOntology(ontologyIRI);
         record.setOntologyIRI(ontology.getOntologyId().getOntologyIdentifier());
     }
 

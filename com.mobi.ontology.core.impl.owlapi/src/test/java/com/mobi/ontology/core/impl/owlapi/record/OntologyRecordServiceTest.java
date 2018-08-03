@@ -202,7 +202,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         when(ontologyId.getOntologyIdentifier()).thenReturn(importedOntologyIRI);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
         when(ontologyManager.createOntology(any(InputStream.class), any(Boolean.class))).thenReturn(ontology);
-        when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(true);
+        when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(false);
         when(versioningManager.commit(any(IRI.class), any(IRI.class), any(IRI.class), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitIRI);
         when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
         when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection))).thenReturn(branch);
@@ -247,8 +247,8 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         recordService.create(user, config, connection);
 
         verify(ontology).asModel(eq(modelFactory));
-        verify(ontology).getOntologyId();
-        verify(ontologyId).getOntologyIdentifier();
+        verify(ontology, times(2)).getOntologyId();
+        verify(ontologyId, times(2)).getOntologyIdentifier();
         verify(ontologyManager).createOntology(any(InputStream.class), any(Boolean.class));
         verify(utilsService, times(2)).addObject(any(Record.class),
                 any(RepositoryConnection.class));
@@ -273,8 +273,8 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         recordService.create(user, config, connection);
 
         verify(ontology).asModel(eq(modelFactory));
-        verify(ontology).getOntologyId();
-        verify(ontologyId).getOntologyIdentifier();
+        verify(ontology, times(2)).getOntologyId();
+        verify(ontologyId, times(2)).getOntologyIdentifier();
         verify(ontologyManager).createOntology(any(Model.class));
         verify(utilsService, times(2)).addObject(any(Record.class),
                 any(RepositoryConnection.class));
