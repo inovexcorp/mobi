@@ -23,7 +23,7 @@
 <div class="download-query-overlay overlay sm">
     <form class="content" name="dvm.form">
         <h6>Download Results</h6>
-        <text-input ng-model="dvm.fileName" display-text="'File Name'" required="true" input-name="'fileName'" ng-class="{'has-error': dvm.form.fileName.$invalid}"></text-input>
+        <text-input ng-model="dvm.fileName" display-text="'File Name'" required="true" input-name="'fileName'" is-invalid="dvm.form.fileName.$invalid"></text-input>
         <div class="form-group">
             <custom-label>File Type</custom-label>
             <select class="form-control" ng-model="dvm.fileType" required>

@@ -6,7 +6,6 @@
 
     .fa-search,
     .fa-times-circle {
-        color: lightgray;
         position: absolute;
         font-size: 1.25em;
         top: 12px;
@@ -21,7 +20,7 @@
         text-decoration: none;
 
         &:hover {
-            color: black;
+            color: var(--body) !important;
         }
     }
 

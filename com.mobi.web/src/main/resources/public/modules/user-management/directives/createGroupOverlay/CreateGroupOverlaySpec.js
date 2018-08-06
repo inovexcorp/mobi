@@ -125,13 +125,13 @@ describe('Create Group Overlay directive', function() {
         });
         it('depending on the title field validity', function() {
             scope.$digest();
-            var inputGroup = angular.element(this.element.querySelectorAll('.title')[0]);
-            expect(inputGroup.hasClass('has-error')).toBe(false);
+            var titleInput = angular.element(this.element.querySelectorAll('.title input')[0]);
+            expect(titleInput.hasClass('is-invalid')).toBe(false);
 
             this.controller.form.title.$setDirty();
             this.controller.form.title.$touched = true;
             scope.$digest();
-            expect(inputGroup.hasClass('has-error')).toBe(true);
+            expect(titleInput.hasClass('is-invalid')).toBe(true);
         });
         it('depending on the form validity', function() {
             this.controller.form.$invalid = false;

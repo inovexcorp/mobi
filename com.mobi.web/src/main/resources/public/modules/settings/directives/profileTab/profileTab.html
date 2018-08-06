@@ -30,9 +30,9 @@
                     <i class="fa fa-check fa-fw"></i><span>Profile successfully saved</span>
                 </p>
                 <form name="dvm.form">
-                    <text-input ng-model="dvm.currentUser.firstName" input-name="'firstName'" display-text="'First Name'" muted-text="'(Optional)'" ng-class="{'has-success': dvm.form.firstName.$dirty && dvm.form.firstName.$valid, 'has-error': dvm.form.firstName.$dirty && dvm.form.firstName.$invalid}"></text-input>
-                    <text-input ng-model="dvm.currentUser.lastName" input-name="'lastName'" display-text="'Last Name'" muted-text="'(Optional)'" ng-class="{'has-success': dvm.form.lastName.$dirty && dvm.form.lastName.$valid, 'has-error': dvm.form.lastName.$dirty && dvm.form.lastName.$invalid}"></text-input>
-                    <email-input ng-model="dvm.currentUser.email" input-name="'email'" ng-class="{'has-success': dvm.form.email.$dirty && dvm.form.email.$valid, 'has-error': dvm.form.email.$dirty && dvm.form.email.$invalid}" muted-text="'(Optional)'"></email-input>
+                    <text-input ng-model="dvm.currentUser.firstName" input-name="'firstName'" display-text="'First Name'" muted-text="'(Optional)'" is-valid="dvm.form.firstName.$dirty && dvm.form.firstName.$valid" is-invalid="dvm.form.firstName.$dirty && dvm.form.firstName.$invalid"></text-input>
+                    <text-input ng-model="dvm.currentUser.lastName" input-name="'lastName'" display-text="'Last Name'" muted-text="'(Optional)'" is-valid="dvm.form.lastName.$dirty && dvm.form.lastName.$valid" is-invalid="dvm.form.lastName.$dirty && dvm.form.lastName.$invalid"></text-input>
+                    <email-input ng-model="dvm.currentUser.email" input-name="'email'" is-valid="dvm.form.email.$dirty && dvm.form.email.$valid" is-invalid="dvm.form.email.$dirty && dvm.form.email.$invalid" muted-text="'(Optional)'"></email-input>
                 </form>
             </block-content>
             <block-footer>

@@ -122,18 +122,18 @@ describe('IRI Template Overlay directive', function() {
             var successTests = ['t:test', 'test:/test', 'TEST:test', 't:test.test'];
             this.controller.beginsWith = '';
             scope.$digest();
-            var beginsWith = angular.element(this.element.querySelectorAll('.template-begins-with')[0]);
-            expect(beginsWith.hasClass('has-error')).toBe(true);
+            var beginsWith = angular.element(this.element.querySelectorAll('.template-begins-with input')[0]);
+            expect(beginsWith.hasClass('is-invalid')).toBe(true);
 
             failTests.forEach(function(test) {
                 this.controller.beginsWith = test;
                 scope.$digest();
-                expect(beginsWith.hasClass('has-error')).toBe(true);
+                expect(beginsWith.hasClass('is-invalid')).toBe(true);
             }, this);
             successTests.forEach(function(test) {
                 this.controller.beginsWith = test;
                 scope.$digest();
-                expect(beginsWith.hasClass('has-error')).toBe(false);
+                expect(beginsWith.hasClass('is-invalid')).toBe(false);
             }, this);
         });
         it('with the correct number of options for ends with', function() {

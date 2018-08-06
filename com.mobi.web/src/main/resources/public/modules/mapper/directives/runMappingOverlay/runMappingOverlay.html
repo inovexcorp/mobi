@@ -27,10 +27,10 @@
         <div class="row">
             <div class="col-6">
                 <radio-button ng-model="dvm.runMethod" value="'download'" display-text="'Download'" inline="true"></radio-button>
-                <text-input ng-class="{'has-error': dvm.form.fileName.$invalid}" ng-model="dvm.fileName" input-name="'fileName'" display-text="'Data File Name'" required="dvm.runMethod === 'download'" ng-click="dvm.runMethod = 'download'"></text-input>
-                <div class="form-group" ng-class="{'has-error': dvm.form.downloadFormat.$invalid}">
+                <text-input is-invalid="dvm.form.fileName.$invalid" ng-model="dvm.fileName" input-name="'fileName'" display-text="'Data File Name'" required="dvm.runMethod === 'download'" ng-click="dvm.runMethod = 'download'"></text-input>
+                <div class="form-group">
                     <custom-label>Serialization</custom-label>
-                    <mapper-serialization-select format="dvm.format" name="downloadFormat" ng-required="dvm.runMethod === 'download'" ng-click="dvm.runMethod = 'download'"></mapper-serialization-select>
+                    <mapper-serialization-select format="dvm.format" name="downloadFormat" ng-required="dvm.runMethod === 'download'" ng-click="dvm.runMethod = 'download'" ng-class="{'is-invalid': dvm.form.downloadFormat.$invalid}"></mapper-serialization-select>
                 </div>
             </div>
             <div class="col-6">

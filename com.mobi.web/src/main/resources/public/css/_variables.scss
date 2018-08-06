@@ -57,3 +57,36 @@ $screen-md-max:              ($screen-lg-min - 1) !default;
 $sidebar-width: 39px;
 $circle-button-width: 57px;
 $circle-button-tooltip: 62px;
+$sidebar-open-width: 180px;
+$sidebar-closed-width: 50px;
+
+// Palettes
+$mobi-primary-050: #E6E8F3;
+$mobi-primary-100: #C1C5E2;
+$mobi-primary-200: #989FCF;
+$mobi-primary-300: #6E79BC;
+$mobi-primary-400: #4F5CAD;
+$mobi-primary-500: #303F9F;
+$mobi-primary-600: #2B3997;
+$mobi-primary-700: #24318D;
+$mobi-primary-800: #1E2983;
+$mobi-primary-900: #131B72;
+$mobi-primary-A100: #A8AEFF;
+$mobi-primary-A200: #757EFF;
+$mobi-primary-A400: #424FFF;
+$mobi-primary-A700: #2937FF;
+
+$mobi-secondary-50: #E8EAF6;
+$mobi-secondary-100: #C5CBE9;
+$mobi-secondary-200: #9FA8DA;
+$mobi-secondary-300: #7985CB;
+$mobi-secondary-400: #5C6BC0;
+$mobi-secondary-500: #3F51B5;
+$mobi-secondary-600: #394AAE;
+$mobi-secondary-700: #3140A5;
+$mobi-secondary-800: #29379D;
+$mobi-secondary-900: #1B278D;
+$mobi-secondary-A100: #C6CBFF;
+$mobi-secondary-A200: #939DFF;
+$mobi-secondary-A400: #606EFF;
+$mobi-secondary-A700: #4757FF;

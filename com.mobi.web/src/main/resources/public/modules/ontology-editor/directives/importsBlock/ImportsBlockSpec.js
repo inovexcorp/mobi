@@ -80,11 +80,11 @@ describe('Imports Block directive', function() {
             scope.$apply();
             expect(this.element.querySelectorAll('p a.import-iri').length).toBe(0);
         });
-        it('with a .error-display', function() {
-            expect(this.element.querySelectorAll('.error-display').length).toBe(0);
+        it('with a .text-danger', function() {
+            expect(this.element.querySelectorAll('.text-danger').length).toBe(0);
             spyOn(this.controller, 'failed').and.returnValue(true);
             scope.$apply();
-            expect(this.element.querySelectorAll('.error-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.text-danger').length).toBe(1);
         });
         it('with a p a.btn-link', function() {
             expect(this.element.querySelectorAll('p a.btn-link').length).toBe(1);

@@ -17,9 +17,6 @@
             @include textOverflow;
             flex: 1;
         }
-        .error-display {
-            font-weight: normal;
-        }
     }
     .indirect-import-container {
         border-top: 1px solid var(--light);

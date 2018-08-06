@@ -23,8 +23,8 @@
         }
     }
     &.open {
-        min-width: 180px;
-        max-width: 180px;
+        min-width: $sidebar-open-width;
+        max-width: $sidebar-open-width;
     }
     .image-container {
         overflow: hidden;
@@ -46,7 +46,7 @@
     .nav-item.active,
     .current-user-box:hover,
     .current-user-box.active {
-        background-color: var(--primary-light);
+        background-color: $mobi-primary-400;
     }
     .current-user-box {
         .user-title {
@@ -108,8 +108,8 @@
         }
     }
     &.collapsed {
-        min-width: 50px;
-        max-width: 50px;
+        min-width: $sidebar-closed-width;
+        max-width: $sidebar-closed-width;
 
         .image-container {
             text-align: left;

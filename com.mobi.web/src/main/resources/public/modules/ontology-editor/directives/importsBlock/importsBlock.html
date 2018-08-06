@@ -28,14 +28,14 @@
         <block-content>
             <p ng-if="dvm.os.listItem.selected[dvm.prefixes.owl + 'imports'].length" ng-repeat="import in dvm.os.listItem.selected[dvm.prefixes.owl + 'imports'] | orderBy:dvm.get track by import['@id']" class="import">
                 <a ng-if="!dvm.failed(import['@id'])" href="{{import['@id']}}" target="_blank" class="import-iri">{{import['@id']}}</a>
-                <span ng-if="dvm.failed(import['@id'])" class="error-display">{{import['@id']}} <strong>(failed)</strong></span>
+                <span ng-if="dvm.failed(import['@id'])" class="text-danger">{{import['@id']}} <strong>(failed)</strong></span>
                 <a class="btn-link" ng-click="dvm.setupRemove(import['@id'])" title="Delete"><i class="fa fa-times fa-fw"></i></a>
             </p>
             <div ng-if="dvm.indirectImports.length" class="indirect-import-container">
                 <span class="indirect-header">Indirect Imports</span>
                 <p ng-repeat="iri in dvm.indirectImports track by $index" class="indirect import">
                     <a ng-if="!dvm.failed(iri)" href="{{iri}}" target="_blank" class="import-iri">{{iri}}</a>
-                    <span ng-if="dvm.failed(iri)" class="error-display">{{iri}} <strong>(failed)</strong></span>
+                    <span ng-if="dvm.failed(iri)" class="text-danger">{{iri}} <strong>(failed)</strong></span>
                 </p>
             </div>
             <info-message ng-if="!dvm.os.listItem.selected[dvm.prefixes.owl + 'imports'].length" class="padding">This ontology does not have any imports.</info-message>

@@ -32,10 +32,10 @@
         <div ng-transclude></div>
         <error-display ng-if="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">This IRI already exists</error-display>
         <!-- Begins with -->
-        <div ng-class="{'has-error': dvm.iriForm.iriBegin.$error.pattern}" class="form-group begin-container">
+        <div class="form-group begin-container">
             <custom-label>Begins with</custom-label>
-            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="dvm.iriBegin" ng-pattern="dvm.namespacePattern" ng-trim="false" required focus-me />
-            <p ng-messages="dvm.iriForm.iriBegin.$error" class="error-display">
+            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="dvm.iriBegin" ng-pattern="dvm.namespacePattern" ng-trim="false" ng-class="{'is-invalid': dvm.iriForm.iriBegin.$error.pattern}" required focus-me />
+            <p ng-messages="dvm.iriForm.iriBegin.$error" class="invalid-feedback">
                 <ng-message when="pattern">Value is not a valid namespace.</ng-message>
             </p>
         </div>
@@ -49,10 +49,10 @@
             </select>
         </div>
         <!-- Ends with -->
-        <div ng-class="{'has-error': dvm.iriForm.iriEnd.$error.pattern}" class="form-group ends-container">
+        <div class="form-group ends-container">
             <custom-label>Ends with</custom-label>
-            <input class="form-control" id="iriEnd" name="iriEnd" ng-model="dvm.iriEnd" ng-pattern="/^\S+$/" ng-trim="false" required />
-            <p ng-messages="dvm.iriForm.iriEnd.$error" class="error-display">
+            <input class="form-control" id="iriEnd" name="iriEnd" ng-model="dvm.iriEnd" ng-pattern="/^\S+$/" ng-trim="false" ng-class="{'is-invalid': dvm.iriForm.iriEnd.$error.pattern}" required />
+            <p ng-messages="dvm.iriForm.iriEnd.$error" class="invalid-feedback">
                 <ng-message when="pattern">Spaces are not allowed.</ng-message>
             </p>
         </div>
