@@ -37,6 +37,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.ImageHtmlEmail;
 import org.apache.commons.mail.resolver.DataSourceUrlResolver;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +56,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import javax.activation.CommandMap;
+import javax.activation.MailcapCommandMap;
 
 @Component(
         designateFactory = EmailServiceConfig.class,
@@ -67,9 +73,11 @@ public class SimpleEmailService implements EmailService {
     private static final String BODY_BINDING = "!|$BODY!|$";
     private static final String MESSAGE_BINDING = "!|$MESSAGE!|$";
     private static final String HOSTNAME_BINDING = "!|$HOSTNAME!|$";
+    private static final String LOGO_BINDING = "!|$LOGO!|$";
     private EmailServiceConfig config;
     private Mobi mobiServer;
     private String emailTemplate;
+    private URL logo;
 
     @Reference
     void setMobiServer(Mobi mobiServer) {
@@ -77,22 +85,24 @@ public class SimpleEmailService implements EmailService {
     }
 
     @Activate
-    void activate(Map<String, Object> configuration) {
+    void activate(BundleContext bundleContext, Map<String, Object> configuration) {
         config = Configurable.createConfigurable(EmailServiceConfig.class, configuration);
         try {
-            File file = new File(config.emailTemplate());
-            if (!file.isAbsolute()) {
-                file = new File(URLDecoder.decode(System.getProperty("karaf.etc"), "UTF-8") + File.separator + config.emailTemplate());
+            File templateFile = new File(config.emailTemplate());
+            if (!templateFile.isAbsolute()) {
+                templateFile = new File(URLDecoder.decode(System.getProperty("karaf.etc"), "UTF-8") + File.separator + config.emailTemplate());
             }
-            emailTemplate = FileUtils.readFileToString(file, "UTF-8");
+            emailTemplate = FileUtils.readFileToString(templateFile, "UTF-8");
+            Bundle bundle = bundleContext.getBundle();
+            logo = bundle.getResource("mobi-primary-logo.svg");
         } catch (IOException e) {
             throw new MobiException(e);
         }
     }
 
     @Modified
-    void modified(Map<String, Object> configuration) {
-        activate(configuration);
+    void modified(BundleContext bundleContext, Map<String, Object> configuration) {
+        activate(bundleContext, configuration);
     }
 
     @Override
@@ -111,6 +121,7 @@ public class SimpleEmailService implements EmailService {
                     email.setSubject(subject);
                     String htmlMsg = emailTemplate.replace(emailTemplate.substring(emailTemplate.indexOf(BODY_BINDING),
                             emailTemplate.lastIndexOf(BODY_BINDING) + BODY_BINDING.length()), htmlMessage);
+                    htmlMsg = htmlMsg.replace(LOGO_BINDING, logo.toString());
                     if (mobiServer.getHostName().endsWith("/")) {
                         htmlMsg = htmlMsg.replace(HOSTNAME_BINDING, mobiServer.getHostName());
                     } else {
