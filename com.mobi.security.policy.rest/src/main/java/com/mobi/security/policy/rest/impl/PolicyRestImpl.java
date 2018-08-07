@@ -32,6 +32,8 @@ import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 import com.mobi.exception.MobiException;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rest.security.annotations.ResourceId;
+import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.exception.PolicySyntaxException;
 import com.mobi.security.policy.api.xacml.PolicyQueryParams;
@@ -96,6 +98,7 @@ public class PolicyRestImpl implements PolicyRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id = "policyId")
     public Response retrievePolicy(String policyId) {
         try {
             Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(policyId));
@@ -109,6 +112,7 @@ public class PolicyRestImpl implements PolicyRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, id = "policyId")
     public Response updatePolicy(String policyId, String policyJson) {
         try {
             XACMLPolicy policy = jsonToPolicy(policyJson);
