@@ -54,6 +54,7 @@ import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
@@ -200,13 +201,12 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         when(ontology.getOntologyId()).thenReturn(ontologyId);
         when(ontologyId.getOntologyIdentifier()).thenReturn(importedOntologyIRI);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
-        when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(true);
-        when(versioningManager.commit(eq(catalogId), eq(testIRI), eq(branchIRI), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitIRI);
+        when(ontologyManager.createOntology(any(InputStream.class), any(Boolean.class))).thenReturn(ontology);
+        when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(false);
+        when(versioningManager.commit(any(IRI.class), any(IRI.class), any(IRI.class), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitIRI);
         when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
         when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection))).thenReturn(branch);
         when(utilsService.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
-        when(utilsService.getObject(any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
-                i.getArgumentAt(1, OrmFactory.class).createNew(i.getArgumentAt(0, Resource.class)));
         doReturn(Stream.of(commitIRI).collect(Collectors.toList()))
                 .when(utilsService).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
         when(utilsService.getExpectedObject(eq(commitIRI), any(OrmFactory.class), eq(connection))).thenReturn(headCommit);
@@ -238,6 +238,33 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology.ttl"));
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+
+        recordService.create(user, config, connection);
+
+        verify(ontology).asModel(eq(modelFactory));
+        verify(ontology).getOntologyId();
+        verify(ontologyId).getOntologyIdentifier();
+        verify(ontologyManager).createOntology(any(InputStream.class), any(Boolean.class));
+        verify(utilsService, times(2)).addObject(any(Record.class),
+                any(RepositoryConnection.class));
+        verify(provUtils).startCreateActivity(eq(user));
+        verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
+    }
+
+    @Test
+    public void createWithoutInputFileTest() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
@@ -252,8 +279,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         verify(utilsService, times(2)).addObject(any(Record.class),
                 any(RepositoryConnection.class));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),
-                        anyString(), any(Model.class), eq(null));
-        verify(utilsService).getObject(any(Resource.class),eq(catalogFactory),any(RepositoryConnection.class));
+                anyString(), any(Model.class), eq(null));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
     }
