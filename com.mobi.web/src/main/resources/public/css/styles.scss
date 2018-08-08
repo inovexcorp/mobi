@@ -59,6 +59,17 @@ select.form-control, .custom-select {
     background-repeat: no-repeat;
     background-size: 1.5em 1.5em;
     padding-right: 1.5em;
+
+    &[disabled="disabled"] {
+        border-style: dotted;
+        color: rgba(0,0,0,.38);
+        opacity: 1;
+
+        &:hover, &:focus {
+            border-color: rgba(0,0,0,.42);
+            box-shadow: none;
+        }
+    }
 }
 
 /* General page spacing */

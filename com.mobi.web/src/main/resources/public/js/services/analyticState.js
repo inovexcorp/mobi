@@ -356,7 +356,6 @@
                 self.variables = {};
                 self.queryError = '';
                 self.currentPage = 1;
-                // self.currentPage = 0;
                 self.totalSize = 0;
                 self.limit = 100;
                 self.links = {};
