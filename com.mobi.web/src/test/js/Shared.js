@@ -1320,6 +1320,14 @@ function mockPolicyManager() {
     });
 }
 
+function mockPolicyEnforcement() {
+    module(function($provide) {
+        $provide.service('policyEnforcementService', function($q) {
+            this.evaluateRequest = jasmine.createSpy('evaulateRequest').and.returnValue($q.when());
+        });
+    });
+}
+
 function flushAndVerify($httpBackend) {
     $httpBackend.flush();
     $httpBackend.verifyNoOutstandingExpectation();
