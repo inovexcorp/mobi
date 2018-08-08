@@ -33,7 +33,6 @@ import com.mobi.email.api.EmailServiceConfig;
 import com.mobi.exception.MobiException;
 import com.mobi.platform.config.api.server.Mobi;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.ImageHtmlEmail;
 import org.apache.commons.mail.resolver.DataSourceUrlResolver;
@@ -43,12 +42,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Arrays;
@@ -56,10 +51,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
-import javax.activation.CommandMap;
-import javax.activation.MailcapCommandMap;
 
 @Component(
         designateFactory = EmailServiceConfig.class,
@@ -94,7 +85,7 @@ public class SimpleEmailService implements EmailService {
             }
             emailTemplate = FileUtils.readFileToString(templateFile, "UTF-8");
             Bundle bundle = bundleContext.getBundle();
-            logo = bundle.getResource("mobi-primary-logo.svg");
+            logo = bundle.getResource("mobi-primary-logo-cropped.png");
         } catch (IOException e) {
             throw new MobiException(e);
         }
@@ -151,6 +142,7 @@ public class SimpleEmailService implements EmailService {
                     int repeatTries = 2;
                     while (repeatTries > 0) {
                         try {
+                            Thread.currentThread().setContextClassLoader(javax.mail.Session.class.getClassLoader());
                             email.sendMimeMessage();
                             break;
                         } catch (EmailException e) {
@@ -174,7 +166,7 @@ public class SimpleEmailService implements EmailService {
 
         URL imageBasePath = null;
         try {
-            imageBasePath = new URL(mobiServer.getHostName());
+            imageBasePath = new URL("file://");
         } catch (MalformedURLException e) {
             throw new MobiException(e);
         }

@@ -76,8 +76,8 @@ public class SimpleEmailServiceTest {
         templatePath = SimpleEmailService.class.getResource("/emailTemplate.html");
         when(bundle.getEntry(any(String.class))).thenReturn(templatePath);
         when(bundleContext.getBundle()).thenReturn(bundle);
-        URL te = SimpleEmailServiceTest.class.getResource("/mobi-primary-logo.svg");
-        when(bundle.getResource(any())).thenReturn(te);
+        URL logoResource = SimpleEmailServiceTest.class.getResource("/mobi-primary-logo-cropped.png");
+        when(bundle.getResource(any())).thenReturn(logoResource);
 
         es = new SimpleEmailService();
         es.setMobiServer(mobi);
@@ -200,22 +200,5 @@ public class SimpleEmailServiceTest {
 
         CompletableFuture<Set<String>> cf = es.sendEmail(SUBJECT_LINE, HTML_MESSAGE, TO_EMAIL_ADDRESS);
         cf.get();
-    }
-
-    @Test
-    public void sendSimpleEmailViaGmailTest() throws Exception {
-        config.replace("port", 587);
-        config.replace("smtpServer", "smtp.gmail.com");
-        config.put("security", "STARTTLS");
-
-        // Uncomment to send from Outlook
-        // config.replace("smtpServer", "smtp-mail.outlook.com");
-        // config.replace("emailAddress", "mobitestuser@outlook.com");
-        Method m = es.getClass().getDeclaredMethod("modified", BundleContext.class, Map.class);
-        m.setAccessible(true);
-        m.invoke(es, bundleContext, config);
-
-        CompletableFuture<Set<String>> cf = es.sendSimpleEmail(SUBJECT_LINE, TEXT_MESSAGE, "tom.dalton@inovexcorp.com");
-        assertEquals(0, cf.get().size());
     }
 }
