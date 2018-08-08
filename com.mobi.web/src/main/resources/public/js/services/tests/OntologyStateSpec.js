@@ -2983,6 +2983,11 @@ describe('Ontology State Service', function() {
         // expect(item[0].scrollTop).toBe(25);
     });
     describe('getDefaultPrefix returns the proper value for the prefix associated with ontology', function() {
+        beforeEach(function() {
+            ontologyManagerSvc.isBlankNodeId.and.callFake(function(id) {
+                return _.isString(id) && (_.includes(id, '/.well-known/genid/') || _.includes(id, '_:genid') || _.includes(id, '_:b'));
+            });
+        });
         it('when there is no iriBegin or iriThen', function() {
             ontologyStateSvc.listItem.ontologyId = 'ontologyId#';
             expect(ontologyStateSvc.getDefaultPrefix()).toEqual('ontologyId/#');
@@ -2993,6 +2998,10 @@ describe('Ontology State Service', function() {
                 iriThen: 'then'
             }
             expect(ontologyStateSvc.getDefaultPrefix()).toEqual('begin/then');
+        });
+        it('when the iri is a blank node', function() {
+            ontologyStateSvc.listItem.ontologyId = 'https://mobi.com/.well-known/genid/genid1#';
+            expect(ontologyStateSvc.getDefaultPrefix()).toEqual('https://mobi.com/no-entity-namespace#');
         });
     });
     describe('updatePropertyIcon should set the icon of an entity', function() {

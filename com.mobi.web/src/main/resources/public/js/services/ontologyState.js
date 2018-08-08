@@ -1129,7 +1129,11 @@
                 }
             }
             self.getDefaultPrefix = function() {
-                return _.replace(_.get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + _.get(self.listItem, 'iriThen', '#');
+                var prefixIri = _.replace(_.get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + _.get(self.listItem, 'iriThen', '#');
+                if (om.isBlankNodeId(prefixIri)) {
+                    prefixIri = 'https://mobi.com/no-entity-namespace#';
+                }
+                return prefixIri;
             }
             self.getOntologiesArray = function() {
                 return getOntologiesArrayByListItem(self.listItem);
