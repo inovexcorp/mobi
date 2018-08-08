@@ -404,17 +404,23 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 }
             }
 
+            // Grab fileNames that are already in the repository
             Set<String> fileNames = new HashSet<>();
             conn.getStatements(null, typeIRI, policyFileTypeIRI).forEach(statement -> {
                 Resource policyIRI = statement.getSubject();
                 PolicyFile policyFile = validatePolicy(policyIRI);
-                BalanaPolicy policy = getPolicyFromFile(policyFile);
-                cache.ifPresent(c -> c.put(policyIRI.stringValue(), policy));
                 fileNames.add(getFileName(policyFile));
             });
 
 
             addMissingFilesToRepo(fileNames, directory);
+
+            conn.getStatements(null, typeIRI, policyFileTypeIRI).forEach(statement -> {
+                Resource policyIRI = statement.getSubject();
+                PolicyFile policyFile = validatePolicy(policyIRI);
+                BalanaPolicy policy = getPolicyFromFile(policyFile);
+                cache.ifPresent(c -> c.put(policyIRI.stringValue(), policy));
+            });
         } catch (IOException e) {
             throw new MobiException("Error initializing policy files due to: ", e);
         }
