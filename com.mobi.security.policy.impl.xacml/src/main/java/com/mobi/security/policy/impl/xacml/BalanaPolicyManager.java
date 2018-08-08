@@ -388,8 +388,8 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             Enumeration<URL> urls = bundle.findEntries("/policies", "*.xml", true);
             while (urls.hasMoreElements()) {
                 URL url = urls.nextElement();
-                String fileName = URLDecoder.decode(FilenameUtils.getName(url.getPath()));
-                String fileId = URLDecoder.decode(fileName);
+                String fileName = URLDecoder.decode(FilenameUtils.getName(url.getPath()), "UTF-8");
+                String fileId = URLDecoder.decode(fileName, "UTF-8");
                 Resource fileIRI = vf.createIRI(fileId);
                 if (!conn.contains(fileIRI, null, null)) {
                     VirtualFile file = vfs.resolveVirtualFile(url.openStream(), fileLocation);
