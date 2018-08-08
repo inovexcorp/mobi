@@ -79,8 +79,8 @@ public interface MergeRequestManager {
     Optional<MergeRequest> getMergeRequest(Resource requestId, RepositoryConnection conn);
 
     /**
-     * Replaces the stored {@link MergeRequest} of {@code requestId} with the provided {@link MergeRequest} {@code request}
-     * Assumes that {@code request} is properly populated.
+     * Replaces the stored {@link MergeRequest} of {@code requestId} with the provided {@link MergeRequest}
+     * {@code request}. Assumes that {@code request} is properly populated.
      *
      * @param requestId the {@link Resource} identifying a {@link MergeRequest}
      * @param request the updated {@link MergeRequest} referenced by {@code requestId}
@@ -97,6 +97,23 @@ public interface MergeRequestManager {
      * @throws IllegalArgumentException If the provided {@link Resource} does not exist in the repository
      */
     void deleteMergeRequest(Resource requestId, RepositoryConnection conn);
+
+    /**
+     * Accepts a {@link MergeRequest} by performing a merge between the source and target {@link Branch branches},
+     * changing the type to an {@link com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest}, and
+     * replacing the sourceBranch and targetBranch predicates with sourceBranchTitle, sourceCommit, targetBranchTitle,
+     * and targetCommit.
+     *
+     * @param requestId The {@link Resource} representing the {@link MergeRequest} ID to delete.
+     * @param user The {@link User} performing the acceptance
+     * @param conn A RepositoryConnection to use for lookup
+     * @throws IllegalStateException If any expected links between objects or data properties are not present on the
+     *      {@link MergeRequest}, {@link VersionedRDFRecord}, {@link Branch Branches}, or
+     *      {@link com.mobi.catalog.api.ontologies.mcat.Commit Commits}
+     * @throws IllegalArgumentException If the {@link MergeRequest} has already been accepted, does not have a target
+     *      {@link Branch}, or conflicts exist between the source {@link Branch} and target {@link Branch}
+     */
+    void acceptMergeRequest(Resource requestId, User user, RepositoryConnection conn);
 
     /**
      * Removes all MergeRequests that are linked to the VersionedRDFRecord identified by the provided Resource.

@@ -865,7 +865,7 @@ public interface CatalogManager {
      * @param leftId  The left (first) Commit.
      * @param rightId The right (second) Commit.
      * @return The Set of Conflicts between the two Commits identified by the provided Resources.
-     * @throws IllegalArgumentException Thrown if either Commit could not be found or the Commits have no common parent.
+     * @throws IllegalArgumentException Thrown if either Commit could not be found.
      * @throws IllegalStateException    Thrown if a Commit in either chain does not have the additions/deletions set.
      */
     Set<Conflict> getConflicts(Resource leftId, Resource rightId);

@@ -78,7 +78,6 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
     private Statement commentB;
 
     private final IRI USER_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test#user");
-    private final IRI TYPE_IRI = VALUE_FACTORY.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
     private final IRI PROV_AT_TIME = VALUE_FACTORY.createIRI("http://www.w3.org/ns/prov#atTime");
 
     private static final String COMMITS = "http://mobi.com/test/commits#";
@@ -349,11 +348,6 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
     @Test
     public void getCompiledResourceTiming() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup
-            IRI revisionTypeIRI = VALUE_FACTORY.createIRI(Revision.TYPE);
-            IRI additionsTypeIRI = VALUE_FACTORY.createIRI(Revision.additions_IRI);
-            IRI deletionsTypeIRI = VALUE_FACTORY.createIRI(Revision.deletions_IRI);
-
             // Need dates to have an ordered commit list
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
             long dayInMs = 86400000;

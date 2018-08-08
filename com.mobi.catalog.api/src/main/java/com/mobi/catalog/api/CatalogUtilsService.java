@@ -23,6 +23,7 @@ package com.mobi.catalog.api;
  * #L%
  */
 
+import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
@@ -43,6 +44,7 @@ import com.mobi.repository.api.RepositoryConnection;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -647,6 +649,18 @@ public interface CatalogUtilsService {
      * @return The base Model with statements added and deleted.
      */
     Model applyDifference(Model base, Difference diff);
+
+    /**
+     * Gets all of the conflicts between the Commits identified by the two provided {@link Resource Resources}.
+     *
+     * @param sourceCommitId The {@link Resource} ID of the source Commit.
+     * @param targetCommitId The {@link Resource} ID of the target Commit.
+     * @param conn A RepositoryConnection to use for lookup.
+     * @return The Set of Conflicts between the two Commits identified by the provided {@link Resource Resources}.
+     * @throws IllegalArgumentException Thrown if either Commit could not be found.
+     * @throws IllegalStateException    Thrown if a Commit in either chain does not have the additions/deletions set.
+     */
+    Set<Conflict> getConflicts(Resource sourceCommitId, Resource targetCommitId, RepositoryConnection conn);
 
     /**
      * Returns an IllegalArgumentException stating that an object of the type determined by the provided OrmFactory with
