@@ -122,7 +122,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
      */
     protected T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
                              RepositoryConnection conn) {
-        T recordObject = createRecordObject(config, issued, modified, conn);
+        T recordObject = createRecordObject(config, issued, modified);
         conn.begin();
         utilsService.addObject(recordObject, conn);
         conn.commit();
@@ -135,11 +135,9 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
      * @param config A {@link RecordOperationConfig} that contains the record configuration
      * @param issued Time the record was issued
      * @param modified Time the record was modified
-     * @param conn A {@link RepositoryConnection} to use for lookup
      * @return A {@link Record} of the provided config
      */
-    protected T createRecordObject(RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
-                                   RepositoryConnection conn) {
+    protected T createRecordObject(RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified) {
         T record = recordFactory.createNew(valueFactory.createIRI(Catalogs.RECORD_NAMESPACE + UUID.randomUUID()));
         Literal titleLiteral = valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_TITLE));
         Literal issuedLiteral = valueFactory.createLiteral(issued);
@@ -148,7 +146,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
                 .map(user -> (Value) user.getResource())
                 .collect(Collectors.toSet());
         IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
-        record.setCatalog(utilsService.getObject(catalogIdIRI, catalogFactory, conn));
+        record.setCatalog(catalogFactory.createNew(catalogIdIRI));
 
         record.setProperty(titleLiteral, valueFactory.createIRI(_Thing.title_IRI));
         record.setProperty(issuedLiteral, valueFactory.createIRI(_Thing.issued_IRI));
