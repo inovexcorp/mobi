@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology State Service', function() {
-    var ontologyStateSvc, $q, scope, util, stateManagerSvc, propertyManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, httpSvc, $document, splitIRI;
+    var ontologyStateSvc, $q, scope, util, stateManagerSvc, propertyManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, httpSvc, uuidSvc, $document, splitIRI;
     var listItem;
 
     beforeEach(function() {
@@ -42,9 +42,12 @@ describe('Ontology State Service', function() {
             $provide.service('$document', function() {
                 this.querySelectorAll = jasmine.createSpy('querySelectorAll');
             });
+            $provide.service('uuid', function() {
+                this.v4 = jasmine.createSpy('v4').and.returnValue('');
+            });
         });
 
-        inject(function(ontologyStateService, _updateRefsService_, _propertyManagerService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_, _$document_, _splitIRIFilter_) {
+        inject(function(ontologyStateService, _updateRefsService_, _propertyManagerService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_, _uuid_, _$document_, _splitIRIFilter_) {
             ontologyStateSvc = ontologyStateService;
             updateRefsSvc = _updateRefsService_;
             propertyManagerSvc = _propertyManagerService_;
@@ -56,6 +59,7 @@ describe('Ontology State Service', function() {
             stateManagerSvc = _stateManagerService_;
             prefixes = _prefixes_;
             httpSvc = _httpService_;
+            uuidSvc = _uuid_;
             $document = _$document_;
             splitIRI = _splitIRIFilter_;
         });
@@ -2987,6 +2991,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.isBlankNodeId.and.callFake(function(id) {
                 return _.isString(id) && (_.includes(id, '/.well-known/genid/') || _.includes(id, '_:genid') || _.includes(id, '_:b'));
             });
+            uuidSvc.v4.and.returnValue("test");
         });
         it('when there is no iriBegin or iriThen', function() {
             ontologyStateSvc.listItem.ontologyId = 'ontologyId#';
@@ -3001,7 +3006,7 @@ describe('Ontology State Service', function() {
         });
         it('when the iri is a blank node', function() {
             ontologyStateSvc.listItem.ontologyId = 'https://mobi.com/.well-known/genid/genid1#';
-            expect(ontologyStateSvc.getDefaultPrefix()).toEqual('https://mobi.com/no-entity-namespace#');
+            expect(ontologyStateSvc.getDefaultPrefix()).toEqual('https://mobi.com/blank-node-namespace/test#');
         });
     });
     describe('updatePropertyIcon should set the icon of an entity', function() {

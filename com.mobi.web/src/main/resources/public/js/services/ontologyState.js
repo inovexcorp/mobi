@@ -46,9 +46,9 @@
          */
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService'];
+        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService', 'uuid'];
 
-        function ontologyStateService($timeout, $q, $filter, $document, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService) {
+        function ontologyStateService($timeout, $q, $filter, $document, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService, uuid) {
             var self = this;
             var om = ontologyManagerService;
             var pm = propertyManagerService;
@@ -1131,7 +1131,7 @@
             self.getDefaultPrefix = function() {
                 var prefixIri = _.replace(_.get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + _.get(self.listItem, 'iriThen', '#');
                 if (om.isBlankNodeId(prefixIri)) {
-                    prefixIri = 'https://mobi.com/no-entity-namespace#';
+                    prefixIri = 'https://mobi.com/blank-node-namespace/' + uuid.v4() + '#';
                 }
                 return prefixIri;
             }
