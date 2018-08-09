@@ -39,7 +39,6 @@ import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
-import com.mobi.rest.util.RestUtils;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.security.policy.api.Policy;
 import com.mobi.security.policy.api.cache.PolicyCache;
@@ -65,7 +64,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -77,7 +75,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.cache.Cache;
@@ -389,7 +386,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             while (urls.hasMoreElements()) {
                 URL url = urls.nextElement();
                 String fileName = URLDecoder.decode(FilenameUtils.getName(url.getPath()), "UTF-8");
-                String fileId = URLDecoder.decode(fileName, "UTF-8");
+                String fileId = FilenameUtils.removeExtension(URLDecoder.decode(fileName, "UTF-8"));
                 Resource fileIRI = vf.createIRI(fileId);
                 if (!conn.contains(fileIRI, null, null)) {
                     VirtualFile file = vfs.resolveVirtualFile(url.openStream(), fileLocation);
@@ -409,7 +406,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
             conn.getStatements(null, typeIRI, policyFileTypeIRI).forEach(statement -> {
                 Resource policyIRI = statement.getSubject();
                 PolicyFile policyFile = validatePolicy(policyIRI);
-                fileNames.add(getFileName(policyFile));
+                fileNames.add(FilenameUtils.removeExtension(getFileName(policyFile)));
             });
 
 

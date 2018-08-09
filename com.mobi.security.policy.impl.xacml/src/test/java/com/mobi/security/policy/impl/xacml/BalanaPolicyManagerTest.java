@@ -270,7 +270,8 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         // Setup:
         setUpBundleTest();
         defaultPolicyFile = policyFileFactory.createNew(defaultPolicyId);
-        defaultPolicyFile.setRetrievalURL(VALUE_FACTORY.createIRI("http://mobi.com/policies/ontology-creation"));
+        VirtualFile file = vfs.resolveVirtualFile(getClass().getResourceAsStream("/http%3A%2F%2Fmobi.com%2Fpolicies%2Fontology-creation.xml"), fileLocation);
+        defaultPolicyFile.setRetrievalURL(VALUE_FACTORY.createIRI(file.getIdentifier()));
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(defaultPolicyFile.getModel(), defaultPolicyId);
         }
