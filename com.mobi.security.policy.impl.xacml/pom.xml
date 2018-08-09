@@ -60,11 +60,6 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>rest.util</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
             <artifactId>vfs</artifactId>
             <version>${project.version}</version>
         </dependency>
