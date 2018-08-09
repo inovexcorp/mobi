@@ -61,7 +61,6 @@ import com.mobi.ontology.core.api.NamedIndividual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
 import com.mobi.ontology.core.api.classexpression.OClass;
 import com.mobi.ontology.core.api.datarange.Datatype;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
@@ -76,7 +75,6 @@ import com.mobi.ontology.core.impl.owlapi.datarange.SimpleDatatype;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleAnnotationProperty;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
-import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
@@ -621,6 +619,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .thenReturn(Optional.empty());
     }
 
+    private void assertCreatedOntologyIRI(JSONObject responseObject) {
+        String ontologyId = responseObject.optString("ontologyId");
+        assertNotNull(ontologyId);
+        assertEquals(ontologyId, ontologyIRI.stringValue());
+    }
+
     private JSONObject getResponse(Response response) {
         return JSONObject.fromObject(response.readEntity(String.class));
     }
@@ -689,10 +693,10 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
-
         assertEquals(response.getStatus(), 201);
-        assertGetUserFromContext();
+        assertCreatedOntologyIRI(getResponse(response));
         verify(catalogManager).createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class));
+        assertGetUserFromContext();
     }
 
     @Test
@@ -719,9 +723,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies").queryParam("title", "title")
                 .queryParam("description", "description").queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
                 .request().post(Entity.json(ontologyJson));
-
-        verify(catalogManager).createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class));
         assertEquals(response.getStatus(), 201);
+        verify(catalogManager).createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class));
+        assertCreatedOntologyIRI(getResponse(response));
         assertGetUserFromContext();
     }
 
