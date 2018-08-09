@@ -28,7 +28,7 @@
         <block-content class="padding">
             <pagination-header list-key="'records'" change-sort="dvm.changeSort()"></pagination-header>
             <div class="results-list list-group">
-                <button ng-repeat="record in dvm.state.results" class="record list-group-item" ng-click="dvm.openRecord(record)">
+                <button ng-repeat="record in dvm.state.results track by record['@id']" class="record list-group-item" ng-click="dvm.openRecord(record)">
                     <record-types record="record"></record-types>
                     <h3>{{dvm.util.getDctermsValue(record, 'title')}}</h3>
                     <entity-dates entity="record"></entity-dates>
