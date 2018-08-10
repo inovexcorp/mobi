@@ -1135,8 +1135,8 @@
                 var prefixIri = _.replace(_.get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + _.get(self.listItem, 'iriThen', '#');
                 if (om.isBlankNodeId(prefixIri)) {
                     var nonBlankNodeId = _.find(_.keys(self.listItem.index), iri => !om.isBlankNodeId(iri));
-                    if (nonBlankNodeId !== undefined) {
-                        prefixIri = _.split(nonBlankNodeId, '#', 1)[0] + '#';
+                    if (nonBlankNodeId) {
+                        prefixIri = $filter('splitIRI')(nonBlankNodeId).begin + '#';
                     } else {
                         prefixIri = 'https://mobi.com/blank-node-namespace/' + uuid.v4() + '#';
                     }
