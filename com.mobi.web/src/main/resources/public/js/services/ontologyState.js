@@ -1133,20 +1133,13 @@
             }
             self.getDefaultPrefix = function() {
                 var prefixIri = _.replace(_.get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + _.get(self.listItem, 'iriThen', '#');
-                // Find existing namespace in ontology entities
-                var entities = ['dataProperties', 'objectProperties', 'individuals', 'classes'];
-                while (om.isBlankNodeId(prefixIri) && entities.length > 0) {
-                    var section = Object.keys(_.get(self.listItem, [entities.pop(), 'iris']));
-                    var tempPrefix = _.find(section, o => {
-                        return !om.isBlankNodeId(_.split(o, '#', 1)[0]);
-                    });
-                    if (tempPrefix !== undefined) {
-                        prefixIri = _.split(tempPrefix, '#', 1)[0] + '#';
-                    }
-                }
-                // If no entity was found, set it to a default namespace
                 if (om.isBlankNodeId(prefixIri)) {
-                    prefixIri = 'https://mobi.com/blank-node-namespace/' + uuid.v4() + '#';
+                    var nonBlankNodeId = _.find(_.keys(self.listItem.index), iri => !om.isBlankNodeId(iri));
+                    if (nonBlankNodeId !== undefined) {
+                        prefixIri = _.split(nonBlankNodeId, '#', 1)[0] + '#';
+                    } else {
+                        prefixIri = 'https://mobi.com/blank-node-namespace/' + uuid.v4() + '#';
+                    }
                 }
                 return prefixIri;
             }
