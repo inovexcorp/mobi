@@ -1638,7 +1638,7 @@ public class OntologyRestImpl implements OntologyRest {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
         JSONObject response = new JSONObject();
-        response.element("ontologyId", record.getOntologyIRI().toString());
+        response.element("ontologyId", record.getOntologyIRI().get().toString());
         response.element("recordId", record.getResource().stringValue());
         response.element("branchId", branchId.toString());
         response.element("commitId", commitId.toString());

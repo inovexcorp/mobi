@@ -864,6 +864,9 @@
                         self.listItem.additions = [];
                         self.listItem.deletions = [];
 
+                        return _.isEqual(inProgressCommit, emptyInProgressCommit) ? cm.deleteInProgressCommit(self.listItem.ontologyRecord.recordId, catalogId) : $q.when();
+                    }, $q.reject)
+                    .then(() => {
                         _.forOwn(self.listItem.editorTabStates, (value, key) => {
                             _.unset(value, 'usages');
                         });
