@@ -64,9 +64,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
@@ -75,7 +75,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.cache.Cache;
@@ -193,16 +192,11 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     public Resource addPolicy(XACMLPolicy policy) {
         validateUniqueId(policy);
         BalanaPolicy balanaPolicy = getBalanaPolicy(policy);
-        String fileName = UUID.randomUUID() + ".xml";
-        String filePath = fileLocation + fileName;
-        LOG.debug("Creating new policy file at " + filePath);
+        LOG.debug("Creating new policy file");
         try {
-            VirtualFile file = vfs.resolveVirtualFile(filePath);
-            file.create();
-            try (OutputStream out = file.writeContent()) {
-                out.write(balanaPolicy.toString().getBytes());
-            }
-            PolicyFile policyFile = addPolicyFile(file, fileName, balanaPolicy);
+            byte[] fileBytes = balanaPolicy.toString().getBytes();
+            VirtualFile file = vfs.resolveVirtualFile(fileBytes, fileLocation);
+            PolicyFile policyFile = addPolicyFile(file, file.getIdentifier() + ".xml", balanaPolicy);
             return policyFile.getResource();
         } catch (IOException e) {
             throw new IllegalStateException("Could not save XACML Policy to disk due to: ", e);
@@ -252,16 +246,17 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         try {
             BalanaPolicy balanaPolicy = getBalanaPolicy(newPolicy);
             IRI filePath = getRetrievalURL(policyFile);
-            VirtualFile virtualFile = vfs.resolveVirtualFile(filePath.stringValue());
-            if (!virtualFile.exists()) {
+            VirtualFile virtualFileOld = vfs.resolveVirtualFile(filePath.stringValue());
+            if (!virtualFileOld.exists()) {
                 throw new IllegalStateException("Policy file does not exist");
             }
-            LOG.debug("Updating policy file at " + filePath);
-            try (OutputStream out = virtualFile.writeContent()) {
-                out.write(balanaPolicy.toString().getBytes());
-            }
+            VirtualFile virtualFileNew = vfs.resolveVirtualFile(balanaPolicy.toString().getBytes(), fileLocation);
+            LOG.debug("Updating policy file at " + filePath + " to file at " + virtualFileNew.getIdentifier());
             setRelatedProperties(policyFile, balanaPolicy);
             policyFile.setChecksum(getChecksum(balanaPolicy));
+            policyFile.setRetrievalURL(vf.createIRI(virtualFileNew.getIdentifier()));
+            policyFile.setFileName(virtualFileNew.getIdentifier() + ".xml");
+            virtualFileOld.delete();
             try (RepositoryConnection conn = repository.getConnection()) {
                 conn.clear(newPolicy.getId());
                 conn.add(policyFile.getModel(), newPolicy.getId());
@@ -383,44 +378,59 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         Optional<Cache<String, Policy>> cache = policyCache.getPolicyCache();
         cache.ifPresent(Cache::clear);
         try (RepositoryConnection conn = repository.getConnection()) {
+            VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
+
+            // Initialize policies from within the bundle if they don't already exist
+            Bundle bundle = context.getBundle();
+            Enumeration<URL> urls = bundle.findEntries("/policies", "*.xml", true);
+            while (urls.hasMoreElements()) {
+                URL url = urls.nextElement();
+                String fileName = URLDecoder.decode(FilenameUtils.getName(url.getPath()), "UTF-8");
+                String fileId = FilenameUtils.removeExtension(URLDecoder.decode(fileName, "UTF-8"));
+                Resource fileIRI = vf.createIRI(fileId);
+                if (!conn.contains(fileIRI, null, null)) {
+                    VirtualFile file = vfs.resolveVirtualFile(url.openStream(), fileLocation);
+                    addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
+                } else {
+                    PolicyFile policy = validatePolicy(fileIRI);
+                    VirtualFile file = vfs.resolveVirtualFile(policy.getRetrievalURL().toString());
+                    if (!file.exists()) {
+                        file = vfs.resolveVirtualFile(url.openStream(), fileLocation);
+                        addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
+                    }
+                }
+            }
+
+            // Grab fileNames that are already in the repository
             Set<String> fileNames = new HashSet<>();
+            conn.getStatements(null, typeIRI, policyFileTypeIRI).forEach(statement -> {
+                Resource policyIRI = statement.getSubject();
+                PolicyFile policyFile = validatePolicy(policyIRI);
+                fileNames.add(FilenameUtils.removeExtension(getFileName(policyFile)));
+            });
+
+
+            addMissingFilesToRepo(fileNames, directory);
+
             conn.getStatements(null, typeIRI, policyFileTypeIRI).forEach(statement -> {
                 Resource policyIRI = statement.getSubject();
                 PolicyFile policyFile = validatePolicy(policyIRI);
                 BalanaPolicy policy = getPolicyFromFile(policyFile);
                 cache.ifPresent(c -> c.put(policyIRI.stringValue(), policy));
-                fileNames.add(getFileName(policyFile));
             });
-            VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
-            Set<String> existingNames = directory.getChildren().stream()
-                    .map(file -> FilenameUtils.getName(file.getIdentifier()))
-                    .collect(Collectors.toSet());
-
-            // Initialize policies from within the bundle if they don't already exist
-            Bundle bundle = context.getBundle();
-            Enumeration<URL> urls = bundle.findEntries("/policies", "*.xml", false);
-            while (urls.hasMoreElements()) {
-                URL url = urls.nextElement();
-                String fileName =  FilenameUtils.getName(url.getPath());
-                if (!existingNames.contains(fileName)) {
-                    VirtualFile file = vfs.resolveVirtualFile(fileLocation + "/" + fileName);
-                    file.create();
-                    try (OutputStream out = file.writeContent()) {
-                        IOUtils.copy(url.openConnection().getInputStream(), out);
-                    }
-                }
-            }
-
-            for (VirtualFile file : directory.getChildren()) {
-                String fileName = FilenameUtils.getName(file.getIdentifier());
-                if (!fileNames.contains(fileName) && fileName.endsWith(".xml")) {
-                    LOG.debug("Discovered policy file " + fileName + " in directory that is not in the repository");
-                    BalanaPolicy balanaPolicy = getPolicyFromFile(file);
-                    addPolicyFile(file, fileName, balanaPolicy);
-                }
-            }
         } catch (IOException e) {
             throw new MobiException("Error initializing policy files due to: ", e);
+        }
+    }
+
+    private void addMissingFilesToRepo(Set<String> filePaths, VirtualFile baseFolder) throws VirtualFilesystemException {
+        for (VirtualFile file : baseFolder.getChildren()) {
+            if (file.isFolder()) {
+                addMissingFilesToRepo(filePaths, file);
+            } else if (!filePaths.contains(file.getIdentifier())) {
+                BalanaPolicy balanaPolicy = getPolicyFromFile(file);
+                addPolicyFile(file, file.getIdentifier() + ".xml", balanaPolicy);
+            }
         }
     }
 
