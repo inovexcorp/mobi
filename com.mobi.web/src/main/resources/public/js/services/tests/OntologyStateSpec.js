@@ -3125,7 +3125,13 @@ describe('Ontology State Service', function() {
         it('when the iri is a blank node and there is something in the index', function() {
             splitIRI.and.returnValue({begin: 'http://matonto.org/ontologies/uhtc', then: '#'});
             ontologyStateSvc.listItem.ontologyId = 'https://mobi.com/.well-known/genid/genid1#';
-            ontologyStateSvc.listItem.index = ['http://matonto.org/ontologies/uhtc#Element'];
+            ontologyStateSvc.listItem.index = {
+                'http://matonto.org/ontologies/uhtc#Element': {
+                    position: 0,
+                    label: 'test',
+                    ontologyIri: 'https://mobi.com/.well-known/genid/genid1#'
+                }
+            };
             expect(ontologyStateSvc.getDefaultPrefix()).toEqual('http://matonto.org/ontologies/uhtc#');
         });
     });
