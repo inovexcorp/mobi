@@ -3118,9 +3118,15 @@ describe('Ontology State Service', function() {
             }
             expect(ontologyStateSvc.getDefaultPrefix()).toEqual('begin/then');
         });
-        it('when the iri is a blank node', function() {
+        it('when the iri is a blank node and nothing is in the index', function() {
             ontologyStateSvc.listItem.ontologyId = 'https://mobi.com/.well-known/genid/genid1#';
             expect(ontologyStateSvc.getDefaultPrefix()).toEqual('https://mobi.com/blank-node-namespace/test#');
+        });
+        it('when the iri is a blank node and there is something in the index', function() {
+            splitIRI.and.returnValue({begin: 'http://matonto.org/ontologies/uhtc', then: '#'});
+            ontologyStateSvc.listItem.ontologyId = 'https://mobi.com/.well-known/genid/genid1#';
+            ontologyStateSvc.listItem.index = ['http://matonto.org/ontologies/uhtc#Element'];
+            expect(ontologyStateSvc.getDefaultPrefix()).toEqual('http://matonto.org/ontologies/uhtc#');
         });
     });
     describe('updatePropertyIcon should set the icon of an entity', function() {
