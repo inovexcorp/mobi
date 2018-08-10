@@ -1136,7 +1136,8 @@
                 if (om.isBlankNodeId(prefixIri)) {
                     var nonBlankNodeId = _.find(_.keys(self.listItem.index), iri => !om.isBlankNodeId(iri));
                     if (nonBlankNodeId) {
-                        prefixIri = $filter('splitIRI')(nonBlankNodeId).begin + '#';
+                        var split = $filter('splitIRI')(nonBlankNodeId);
+                        prefixIri = split.begin + split.then;
                     } else {
                         prefixIri = 'https://mobi.com/blank-node-namespace/' + uuid.v4() + '#';
                     }
