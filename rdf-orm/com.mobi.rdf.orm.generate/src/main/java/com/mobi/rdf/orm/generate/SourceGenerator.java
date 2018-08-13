@@ -173,6 +173,7 @@ public class SourceGenerator {
      * @return
      */
     private static String generateMethodName(final String prefix, final String staticFieldName) {
+        System.out.println(prefix + " - " + staticFieldName);
         return prefix + StringUtils.capitalize(staticFieldName.substring(0, staticFieldName.length() - 4));
     }
 
@@ -417,6 +418,10 @@ public class SourceGenerator {
                 else if (interfaceMethod.name().startsWith("remove")) {
                     generateFieldAdderRemoverForImpl(impl, interfaceMethod, interfaceClass, false);
                 }
+                // Else it's a clearer for a property
+                else if (interfaceMethod.name().startsWith("clear")) {
+                    generateFieldClearerForImpl(impl, interfaceMethod, interfaceClass);
+                }
                 // Else it's a property IRI getter.
                 else if (interfaceMethod.name().startsWith(PROPERTY_IRI_GETTER_PREFIX)) {
                     if (impl.methods().stream().noneMatch(method -> method.name().equals(interfaceMethod.name()))) {
@@ -524,6 +529,16 @@ public class SourceGenerator {
         }
     }
 
+    private void generateFieldClearerForImpl(final JDefinedClass impl, final JMethod interfaceMethod,
+                                             final JDefinedClass interfaceClass) {
+        final JMethod method = impl.method(JMod.PUBLIC, interfaceMethod.type(), interfaceMethod.name());
+        method.annotate(Override.class);
+        method.body()._return(JExpr.invoke("clearProperty")
+                .arg(JExpr.ref("valueFactory")
+                        .invoke("createIRI")
+                        .arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod))));
+    }
+
     private void generateImplConstructors(final JDefinedClass impl, final JDefinedClass interfaceClazz) {
         final JMethod constructor = impl.constructor(JMod.PUBLIC);
         constructor.body().invoke("super")
@@ -599,6 +614,11 @@ public class SourceGenerator {
                         methodIriMap.put(
                                 generateSetterMethodForInterface(clazz, iri, name, fieldName, propertyIri, setterType),
                                 clazz.fields().get(fieldName + "_IRI"));
+
+                        // Clearer method.
+                        methodIriMap.put(generateClearerMethodForInterface(clazz, iri, name, fieldName, propertyIri),
+                                clazz.fields().get(fieldName + "_IRI"));
+
                     } else {
                         // TODO - handle the type is undefined... Work with it
                         // as a Value?
@@ -607,6 +627,15 @@ public class SourceGenerator {
             });
             classMethodIriMap.put(clazz, methodIriMap);
         });
+    }
+
+    private JMethod generateClearerMethodForInterface(final JDefinedClass clazz, final IRI interfaceIri,
+                                                      final String name, final String fieldName, final IRI propertyIri) {
+        final JMethod method = clazz.method(JMod.PUBLIC, boolean.class, generateMethodName("clear", name));
+        final JDocComment comment = method.javadoc();
+        comment.add("Clear the " + fieldName + " property from this instance of a " + interfaceIri + ".");
+        comment.addReturn().add("Whether or not data was removed for this property/instance");
+        return method;
     }
 
     private JMethod generateGetterMethodForInterface(final JDefinedClass clazz, final IRI interfaceIri,
@@ -944,13 +973,13 @@ public class SourceGenerator {
 
         owlClasses.stream()
                 .map(org.eclipse.rdf4j.model.Statement::getSubject)
-                .filter(subject->subject instanceof IRI)
+                .filter(subject -> subject instanceof IRI)
                 .map(subject -> (IRI) subject)
                 .forEach(classIris::add);
 
         rdfsClasses.stream()
                 .map(org.eclipse.rdf4j.model.Statement::getSubject)
-                .filter(subject->subject instanceof IRI)
+                .filter(subject -> subject instanceof IRI)
                 .map(subject -> (IRI) subject)
                 .forEach(classIris::add);
         return classIris;
