@@ -46,9 +46,9 @@
          */
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService'];
+        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService', 'uuid'];
 
-        function ontologyStateService($timeout, $q, $filter, $document, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService) {
+        function ontologyStateService($timeout, $q, $filter, $document, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService, uuid) {
             var self = this;
             var om = ontologyManagerService;
             var pm = propertyManagerService;
@@ -1132,7 +1132,17 @@
                 }
             }
             self.getDefaultPrefix = function() {
-                return _.replace(_.get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + _.get(self.listItem, 'iriThen', '#');
+                var prefixIri = _.replace(_.get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + _.get(self.listItem, 'iriThen', '#');
+                if (om.isBlankNodeId(prefixIri)) {
+                    var nonBlankNodeId = _.find(_.keys(self.listItem.index), iri => !om.isBlankNodeId(iri));
+                    if (nonBlankNodeId) {
+                        var split = $filter('splitIRI')(nonBlankNodeId);
+                        prefixIri = split.begin + split.then;
+                    } else {
+                        prefixIri = 'https://mobi.com/blank-node-namespace/' + uuid.v4() + '#';
+                    }
+                }
+                return prefixIri;
             }
             self.getOntologiesArray = function() {
                 return getOntologiesArrayByListItem(self.listItem);
