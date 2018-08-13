@@ -173,7 +173,6 @@ public class SourceGenerator {
      * @return
      */
     private static String generateMethodName(final String prefix, final String staticFieldName) {
-        System.out.println(prefix + " - " + staticFieldName);
         return prefix + StringUtils.capitalize(staticFieldName.substring(0, staticFieldName.length() - 4));
     }
 
