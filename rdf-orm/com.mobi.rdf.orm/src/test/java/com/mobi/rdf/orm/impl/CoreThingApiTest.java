@@ -12,12 +12,12 @@ package com.mobi.rdf.orm.impl;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -43,13 +43,14 @@ import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
 import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 import junit.framework.TestCase;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Optional;
 
-public class TestCoreThingApi {
+public class CoreThingApiTest {
 
     private static final ThingFactory thingFactory = new ThingFactory();
 
@@ -117,6 +118,16 @@ public class TestCoreThingApi {
         TestCase.assertEquals("John",
                 t.getModel().filter(t.getResource(), valueFactory.createIRI("urn://mobi.com/silly#myNameIs"), null,
                         t.getResource()).iterator().next().getObject().stringValue());
+
+        Assert.assertTrue(t.clearProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")));
+        TestCase.assertFalse(t.getProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")).isPresent());
+        Assert.assertFalse(t.clearProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")));
+        TestCase.assertEquals("John",
+                t.getModel().filter(t.getResource(), valueFactory.createIRI("urn://mobi.com/silly#myNameIs"), null,
+                        t.getResource()).iterator().next().getObject().stringValue());
+
+        t.setProperty(null, valueFactory.createIRI("urn://mobi.com/silly#myNameIs"));
+        TestCase.assertFalse(t.getProperty(valueFactory.createIRI("urn://mobi.com/silly#myNameIs")).isPresent());
     }
 
     @Test
@@ -148,7 +159,7 @@ public class TestCoreThingApi {
         IRI pred3 = valueFactory.createIRI("urn:pred3");
         IRI context = valueFactory.createIRI("http://test.com/c1");
 
-        Model model =  modelFactory.createModel();
+        Model model = modelFactory.createModel();
         model.add(sub, pred1, valueFactory.createLiteral("A"));
         model.add(sub, pred2, valueFactory.createLiteral("B"));
         model.add(sub, pred2, valueFactory.createLiteral("C"));

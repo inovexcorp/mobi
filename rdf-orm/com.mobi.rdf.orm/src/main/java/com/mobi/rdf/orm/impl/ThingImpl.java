@@ -138,8 +138,9 @@ public class ThingImpl implements Thing {
     @Override
     public boolean setProperty(Value value, IRI predicate, IRI... context) {
         // Remove other properties with same prediciate...
-        model.remove(getResource(), predicate, null, context);
-        return model.add(getResource(), predicate, value, context);
+        boolean removed = model.remove(getResource(), predicate, null, context);
+        return value != null ? model.add(getResource(), predicate, value, context)
+                : removed;
     }
 
     /**
@@ -168,6 +169,11 @@ public class ThingImpl implements Thing {
     @Override
     public boolean removeProperty(Value value, IRI predicate, IRI... context) {
         return model.remove(resource, predicate, value, context);
+    }
+
+    @Override
+    public boolean clearProperty(IRI predicate, IRI... context) {
+        return model.remove(resource, predicate, null, context);
     }
 
     /**
