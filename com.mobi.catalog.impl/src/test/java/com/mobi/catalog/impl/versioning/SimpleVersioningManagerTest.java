@@ -31,13 +31,13 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.versioning.VersioningService;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.rdf.api.IRI;
@@ -48,7 +48,6 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
@@ -61,7 +60,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
-import java.util.Optional;
 
 public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
     private Repository repo;
@@ -88,10 +86,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
     private CatalogUtilsService catalogUtils;
 
     @Mock
-    private CatalogManager catalogManager;
-
-    @Mock
-    private RepositoryManager repositoryManager;
+    private CatalogConfigProvider config;
 
     @Before
     public void setUp() throws Exception {
@@ -141,13 +136,10 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         when(ontologyService.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
         when(ontologyService.addCommit(any(Branch.class), any(User.class), anyString(), any(Model.class), any(Model.class), any(Commit.class), any(Commit.class), any(RepositoryConnection.class))).thenReturn(commit.getResource());
 
-        when(catalogManager.getRepositoryId()).thenReturn("system");
-
-        when(repositoryManager.getRepository("system")).thenReturn(Optional.of(repo));
+        when(config.getRepository()).thenReturn(repo);
 
         manager = new SimpleVersioningManager();
-        manager.setRepositoryManager(repositoryManager);
-        manager.setCatalogManager(catalogManager);
+        manager.setConfig(config);
         manager.setCatalogUtils(catalogUtils);
         manager.setVf(VALUE_FACTORY);
         manager.setFactoryRegistry(ORM_FACTORY_REGISTRY);

@@ -34,6 +34,7 @@ import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.config.rdf.export.RecordExportConfig;
 import com.mobi.etl.api.rdf.export.RecordExportService;
 import com.mobi.persistence.utils.BatchExporter;
@@ -55,12 +56,18 @@ public class RecordExportServiceImpl implements RecordExportService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RDFExportServiceImpl.class);
 
+    private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
     private ValueFactory vf;
     private RecordFactory recordFactory;
     private VersionedRDFRecordFactory versionedRDFRecordFactory;
     private BranchFactory branchFactory;
     private SesameTransformer transformer;
+
+    @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
+    }
 
     @Reference
     void setCatalogManager(CatalogManager catalogManager) {
@@ -94,11 +101,12 @@ public class RecordExportServiceImpl implements RecordExportService {
 
     @Override
     public void export(RecordExportConfig config) throws IOException {
-        BatchExporter writer = new BatchExporter(transformer, new BufferedGroupingRDFHandler(Rio.createWriter(config.getFormat(), config.getOutput())));
+        BatchExporter writer = new BatchExporter(transformer, new BufferedGroupingRDFHandler(
+                Rio.createWriter(config.getFormat(), config.getOutput())));
         writer.setLogger(LOG);
         writer.setPrintToSystem(true);
 
-        com.mobi.rdf.api.Resource localCatalog = catalogManager.getLocalCatalogIRI();
+        com.mobi.rdf.api.Resource localCatalog = configProvider.getLocalCatalogIRI();
 
         Set<com.mobi.rdf.api.Resource> records;
         if (config.getRecords() == null) {
@@ -113,7 +121,7 @@ public class RecordExportServiceImpl implements RecordExportService {
         records.forEach(resource -> {
             // Write Record
             Record record = catalogManager.getRecord(localCatalog, resource, recordFactory)
-                    .orElseThrow(() -> new IllegalStateException("Could not retrieve record " + resource.stringValue()));
+                    .orElseThrow(() -> new IllegalStateException("Could not retrieve record " + resource));
             record.getModel().forEach(writer::handleStatement);
 
             // Write Versioned Data
@@ -127,16 +135,17 @@ public class RecordExportServiceImpl implements RecordExportService {
     }
 
     private void exportVersionedRDFData(com.mobi.rdf.api.Resource resource, BatchExporter writer) {
-        com.mobi.rdf.api.Resource localCatalog = catalogManager.getLocalCatalogIRI();
+        com.mobi.rdf.api.Resource localCatalog = configProvider.getLocalCatalogIRI();
 
         VersionedRDFRecord record = catalogManager.getRecord(localCatalog, resource, versionedRDFRecordFactory)
-                .orElseThrow(() -> new IllegalStateException("Could not retrieve record " + resource.stringValue()));
+                .orElseThrow(() -> new IllegalStateException("Could not retrieve record " + resource));
 
         Set<String> processedCommits = new HashSet<>();
         // Write Branches
         record.getBranch_resource().forEach(branchResource -> {
             Branch branch = catalogManager.getBranch(localCatalog, resource, branchResource, branchFactory)
-                    .orElseThrow(() -> new IllegalStateException("Could not retrieve expected branch " + branchResource.stringValue()));
+                    .orElseThrow(() -> new IllegalStateException("Could not retrieve expected branch "
+                            + branchResource));
             branch.getModel().forEach(writer::handleStatement);
 
             // Write Commits
@@ -151,7 +160,8 @@ public class RecordExportServiceImpl implements RecordExportService {
 
                 // Write Commit/Revision Data
                 commit = catalogManager.getCommit(localCatalog, resource, branchResource, commitResource)
-                        .orElseThrow(() -> new IllegalStateException("Could not retrieve expected commit " + commitResource.stringValue()));
+                        .orElseThrow(() -> new IllegalStateException("Could not retrieve expected commit "
+                                + commitResource));
                 commit.getModel().forEach(writer::handleStatement);
 
                 // Write Additions/Deletions Graphs

@@ -33,6 +33,7 @@ import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFactory;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.Bindings;
@@ -57,6 +58,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     static final String COMPONENT_NAME = "com.mobi.catalog.api.mergerequest.MergeRequestManager";
 
     private ValueFactory vf;
+    private CatalogConfigProvider configProvider;
     private CatalogUtilsService catalogUtils;
     private MergeRequestFactory mergeRequestFactory;
     private VersionedRDFRecordFactory recordFactory;
@@ -65,6 +67,11 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     @Reference
     void setVf(ValueFactory vf) {
         this.vf = vf;
+    }
+
+    @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
     }
 
     @Reference
@@ -106,6 +113,13 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             );
         } catch (IOException e) {
             throw new MobiException(e);
+        }
+    }
+
+    @Override
+    public List<MergeRequest> getMergeRequests(MergeRequestFilterParams params) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return getMergeRequests(params, conn);
         }
     }
 
@@ -154,6 +168,13 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     }
 
     @Override
+    public MergeRequest createMergeRequest(MergeRequestConfig config, Resource localCatalog) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return createMergeRequest(config, localCatalog, conn);
+        }
+    }
+
+    @Override
     public MergeRequest createMergeRequest(MergeRequestConfig config, Resource localCatalog,
                                            RepositoryConnection conn) {
         catalogUtils.validateBranch(localCatalog, config.getRecordId(), config.getSourceBranchId(), conn);
@@ -175,6 +196,13 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     }
 
     @Override
+    public void addMergeRequest(MergeRequest request) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            addMergeRequest(request, conn);
+        }
+    }
+
+    @Override
     public void addMergeRequest(MergeRequest request, RepositoryConnection conn) {
         if (conn.containsContext(request.getResource())) {
             throw catalogUtils.throwAlreadyExists(request.getResource(), recordFactory);
@@ -183,8 +211,22 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     }
 
     @Override
+    public Optional<MergeRequest> getMergeRequest(Resource requestId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return getMergeRequest(requestId, conn);
+        }
+    }
+
+    @Override
     public Optional<MergeRequest> getMergeRequest(Resource requestId, RepositoryConnection conn) {
         return catalogUtils.optObject(requestId, mergeRequestFactory, conn);
+    }
+
+    @Override
+    public void updateMergeRequest(Resource requestId, MergeRequest request) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            updateMergeRequest(requestId, request, conn);
+        }
     }
 
     @Override
@@ -194,9 +236,23 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     }
 
     @Override
+    public void deleteMergeRequest(Resource requestId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            deleteMergeRequest(requestId, conn);
+        }
+    }
+
+    @Override
     public void deleteMergeRequest(Resource requestId, RepositoryConnection conn) {
         catalogUtils.validateResource(requestId, mergeRequestFactory.getTypeIRI(), conn);
         catalogUtils.remove(requestId, conn);
+    }
+
+    @Override
+    public void deleteMergeRequestsWithRecordId(Resource recordId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            deleteMergeRequestsWithRecordId(recordId, conn);
+        }
     }
 
     @Override
@@ -210,6 +266,13 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         builder.setAccepted(true);
         mergeRequests = getMergeRequests(builder.build(), conn);
         mergeRequests.forEach(mergeRequest -> deleteMergeRequest(mergeRequest.getResource(), conn));
+    }
+
+    @Override
+    public void cleanMergeRequests(Resource recordId, Resource branchId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            cleanMergeRequests(recordId, branchId, conn);
+        }
     }
 
     @Override

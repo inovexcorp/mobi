@@ -25,7 +25,6 @@ package com.mobi.catalog.impl.versioning;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -33,6 +32,7 @@ import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.api.versioning.VersioningService;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.Statements;
@@ -42,7 +42,6 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.api.RepositoryManager;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 
 import java.util.HashMap;
@@ -53,17 +52,11 @@ import java.util.stream.Collectors;
 
 @Component
 public class SimpleVersioningManager implements VersioningManager {
-    private RepositoryManager repositoryManager;
     private OrmFactoryRegistry factoryRegistry;
     private CatalogUtilsService catalogUtils;
-    private CatalogManager catalogManager;
+    private CatalogConfigProvider config;
     private Map<String, VersioningService<VersionedRDFRecord>> versioningServices = new HashMap<>();
     private ValueFactory vf;
-
-    @Reference
-    void setRepositoryManager(RepositoryManager repositoryManager) {
-        this.repositoryManager = repositoryManager;
-    }
 
     @Reference(type = '*', dynamic = true)
     @SuppressWarnings("unchecked")
@@ -87,8 +80,8 @@ public class SimpleVersioningManager implements VersioningManager {
     }
 
     @Reference
-    void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
+    void setConfig(CatalogConfigProvider config) {
+        this.config = config;
     }
 
     @Reference
@@ -199,7 +192,6 @@ public class SimpleVersioningManager implements VersioningManager {
     }
 
     private RepositoryConnection getCatalogRepoConnection() {
-        return repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
-                new IllegalStateException("Catalog repository unavailable")).getConnection();
+        return config.getRepository().getConnection();
     }
 }
