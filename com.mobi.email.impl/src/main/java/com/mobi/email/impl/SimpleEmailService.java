@@ -137,6 +137,7 @@ public class SimpleEmailService implements EmailService {
                         LOGGER.debug("With a subject of: " + subject);
                         LOGGER.debug("And a body of: " + htmlMsg);
                     } catch (EmailException e) {
+                        LOGGER.error("Unable to buld MIME message", e);
                         throw new MobiException("Unable to build MIME message.", e);
                     }
                     int repeatTries = 2;
@@ -147,6 +148,7 @@ public class SimpleEmailService implements EmailService {
                             break;
                         } catch (EmailException e) {
                             if (--repeatTries < 1) {
+                                LOGGER.error("Could not send email.", e);
                                 throw new MobiException("Could not send email.", e);
                             }
                             LOGGER.info("Could not send email. Attempting retry.");
@@ -168,6 +170,7 @@ public class SimpleEmailService implements EmailService {
         try {
             imageBasePath = new URL("file://");
         } catch (MalformedURLException e) {
+            LOGGER.error("Error creating URL", e);
             throw new MobiException(e);
         }
 
@@ -183,6 +186,7 @@ public class SimpleEmailService implements EmailService {
         try {
             email.setFrom(config.emailAddress());
         } catch (EmailException e) {
+            LOGGER.error("Invalid 'From' email address.", e);
             throw new MobiException("Invalid 'From' email address.", e);
         }
         return email;
