@@ -35,14 +35,55 @@
             <block targeted-spinner="dvm.id">
                 <block-content class="open-ontology-content">
                     <div class="ontologies">
-                        <div class="ontology" ng-click="dvm.open(record)" ng-repeat="record in dvm.filteredList">
-                            <div class="details">
-                                <h2 class="header" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></h2>
-                                <small class="ontology-iri text-muted">{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small>
-                                <p class="description" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
+                        <div class="ontology" ng-repeat="record in dvm.filteredList">
+                            <div class="ontology-info" ng-click="dvm.open(record)">
+                                <div class="details">
+                                    <h2 class="header" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></h2>
+                                    <small class="ontology-iri text-muted">{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small>
+                                    <p class="description" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
+                                </div>
+                                <div class="action-container">
+                                    <a ng-show="dvm.manageRecord()" ng-click="showAccessControls = !showAccessControls; $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-lock"></i></a>
+                                    <a ng-click="dvm.showDeleteConfirmationOverlay(record); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
+                                </div>
                             </div>
-                            <div class="action-container">
-                                <a ng-click="dvm.showDeleteConfirmationOverlay(record); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
+                            <div ng-show="dvm.manageRecord()" class="access-controls" uib-collapse="!showAccessControls">
+                                <!--<span class="everyone"><i>Everyone</i></span>-->
+                                <div>
+                                    <i class="record-action">View Record</i>
+                                    <md-switch ng-model="record.viewRecord" md-invert class="control" aria-label="View Record">
+                                        <a ng-if="!record.viewRecord" class="users"><i ng-click="record.showViewRecord = true; $event.stopPropagation()" class="fa fa-lg fa-fw fa-users"></i></a>
+                                    </md-switch>
+                                    <record-access-overlay ng-if="record.showViewRecord" overlay-flag="record.showViewRecord"></record-access-overlay>
+                                </div>
+                                <div>
+                                    <i class="record-action">Delete Record</i>
+                                    <md-switch ng-model="record.deleteRecord" md-invert class="control" aria-label="Delete Record">
+                                        <a ng-if="!record.deleteRecord" class="users"><i ng-click="record.showDeleteRecord = true; $event.stopPropagation()" class="fa fa-lg fa-fw fa-users"></i></a>
+                                    </md-switch>
+                                    <record-access-overlay ng-if="record.showDeleteRecord" overlay-flag="record.showDeleteRecord"></record-access-overlay>
+                                </div>
+                                <div>
+                                    <i class="record-action">Manage Record</i>
+                                    <md-switch ng-model="record.manageRecord" md-invert class="control" aria-label="Manage Record">
+                                        <a ng-if="!record.manageRecord" class="users"><i ng-click="record.showManageRecord = true; $event.stopPropagation()" class="fa fa-lg fa-fw fa-users"></i></a>
+                                    </md-switch>
+                                    <record-access-overlay ng-if="record.showManageRecord" overlay-flag="record.showManageRecord"></record-access-overlay>
+                                </div>
+                                <div>
+                                    <i class="record-action">Modify Record</i>
+                                    <md-switch ng-model="record.modifyRecord" md-invert class="control" aria-label="Modify Record">
+                                        <a ng-if="!record.modifyRecord" class="users"><i ng-click="record.showModifyRecord = true; $event.stopPropagation()" class="fa fa-lg fa-fw fa-users"></i></a>
+                                    </md-switch>
+                                    <record-access-overlay ng-if="record.showModifyRecord" overlay-flag="record.showModifyRecord"></record-access-overlay>
+                                </div>
+                                <div>
+                                    <i class="record-action">Modify Master Branch</i>
+                                    <md-switch ng-model="record.modifyMaster" md-invert class="control" aria-label="Modify Master Branch">
+                                        <a ng-if="!record.modifyMaster" class="users"><i ng-click="record.showModifyMaster = true; $event.stopPropagation()" class="fa fa-lg fa-fw fa-users"></i></a>
+                                    </md-switch>
+                                    <record-access-overlay ng-if="record.showModifyMaster" overlay-flag="record.showModifyMaster"></record-access-overlay>
+                                </div>
                             </div>
                         </div>
                         <info-message ng-if="!dvm.filteredList.length && dvm.filterText">No ontologies match your filtered text.</info-message>

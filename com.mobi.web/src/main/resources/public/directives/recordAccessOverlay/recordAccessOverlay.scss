@@ -1,0 +1,18 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.commit-info-overlay {
+    h3 {
+        margin-top: 0;
+    }
+    .main {
+        display: flex;
+        flex-direction: column;
+        height: 400px;
+        overflow-y: auto;
+
+        .changes-container {
+            flex: 1;
+        }
+    }
+}

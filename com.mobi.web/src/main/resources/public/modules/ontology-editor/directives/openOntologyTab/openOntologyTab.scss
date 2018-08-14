@@ -33,42 +33,74 @@
                     border-bottom: 1px solid $gray-lighter;
                     cursor: pointer;
                     display: flex;
-                    flex-direction: row;
+                    flex-direction: column;
                     padding: 10px;
 
                     &:last-child {
                         border-bottom: none;
                     }
 
-                    &:hover {
-                        background-color: $gray-lighter;
-                    }
-
-                    .details {
-                        flex: 1;
-
-                        .header {
-                            font-size: 1.25em;
-                            font-weight: normal;
-                            margin: 0 0 5px;
-                        }
-
-                        p {
-                            margin: 0;
-                        }
-                    }
-
-                    .action-container {
+                    .ontology-info {
                         display: flex;
-                        align-items: center;
+                        flex-direction: row;
 
-                        .action {
-                            color: $gray-light;
-                            display: inline-block;
-                            text-decoration: none;
+                        .details {
+                            flex: 1;
 
-                            &:hover {
-                                color: $gray;
+                            .header {
+                                font-size: 1.25em;
+                                font-weight: normal;
+                                margin: 0 0 5px;
+                            }
+
+                            p {
+                                margin: 0;
+                            }
+                        }
+
+                        .action-container {
+                            display: flex;
+                            align-items: center;
+
+                            .action {
+                                color: $gray-light;
+                                display: inline-block;
+                                text-decoration: none;
+
+                                &:hover {
+                                    color: $gray;
+                                }
+                            }
+                        }
+
+                        &:hover {
+                            background-color: $gray-lighter;
+                        }
+                    }
+
+                    .access-controls {
+                        //align-items: center;
+
+                        .everyone {
+                            //float: right;
+                            //margin-left: auto;
+                        }
+                        .record-action {
+                            padding-left: 30px;
+                        }
+                        md-switch {
+                            float: right;
+                            margin-top: 0;
+                            margin-bottom: 0;
+
+                            .users {
+                                color: $gray-light;
+                                display: inline-block;
+                                text-decoration: none;
+
+                                &:hover {
+                                    color: $gray;
+                                }
                             }
                         }
                     }
