@@ -126,6 +126,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         return record;
     }
 
+    //TODO: Write tests to cover this new implementation
     protected void writePolicies(User user, T record) {
         try {
             /* -- recordPolicy doc -- */
@@ -137,6 +138,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             String str = convertDocumentToString(recordPolicy);
             str.replaceAll("(%USERIRI%)", user.getResource().stringValue());
             str.replaceAll("(%RECORDIRI%)", record.getResource().stringValue());
+            //TODO: encode the recordIRI, this isn't done below
             str.replaceAll("(%RECORDIRIENCODED%)", record.getResource().stringValue());
             PolicyType recordPolicyType = JAXB.unmarshal(str, PolicyType.class);
             addPolicy(recordPolicyType);
@@ -148,6 +150,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             String strPolicyPolicy = convertDocumentToString(policyPolicy);
             strPolicyPolicy.replaceAll("(%USERIRI%)", user.toString());
             strPolicyPolicy.replaceAll("(%POLICYIRI%)", recordPolicyType.getPolicyId());
+            //TODO: encode the policyIRI, this isn't done below
             strPolicyPolicy.replaceAll("(%POLICYIRIENCODED%)", record.getResource().stringValue());
             PolicyType policyPolicyType = JAXB.unmarshal(str, PolicyType.class);
             addPolicy(policyPolicyType);
@@ -190,7 +193,9 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
 
     protected void deletePolicies(T record) {
         String recordResourceStr = record.getResource().stringValue();
+        String query = "SELECT * WHERE {?S ?O {" + recordResourceStr +" }}";
         //use a sparkle query like CatalogManager to get recordp and pp
+        //TODO: write a sparkle query like CatalogManager to get recordpolicy and pp to delete
         IRI policyId = ;
         IRI policyPolicyId = ;
         xacmlPolicyManager.deletePolicy(policyId);
