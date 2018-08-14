@@ -33,7 +33,6 @@ import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequestFactory;
@@ -275,6 +274,13 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     }
 
     @Override
+    public void acceptMergeRequest(Resource requestId, User user) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            acceptMergeRequest(requestId, user, conn);
+        }
+    }
+
+    @Override
     public void acceptMergeRequest(Resource requestId, User user,  RepositoryConnection conn) {
         // Validate MergeRequest
         MergeRequest request = catalogUtils.getExpectedObject(requestId, mergeRequestFactory, conn);
@@ -286,9 +292,6 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         // Collect information about the VersionedRDFRecord, Branches, and Commits
         Resource recordId = request.getOnRecord_resource().orElseThrow(() ->
                 new IllegalStateException("Request " + requestId + " does not have a VersionedRDFRecord"));
-        VersionedRDFRecord record = catalogUtils.getExpectedObject(recordId, recordFactory, conn);
-        Resource catalogId = record.getCatalog_resource().orElseThrow(() ->
-                new IllegalStateException("VersionedRDFRecord " + recordId + " does not have a Catalog"));
         Resource targetId = request.getTargetBranch_resource().orElseThrow(() ->
                 new IllegalArgumentException("Request " + requestId + " does not have a target Branch"));
         Branch target = catalogUtils.getExpectedObject(targetId, branchFactory, conn);
@@ -306,7 +309,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             throw new IllegalArgumentException("Branch " + sourceId + " and " + targetId
                     + " have conflicts and cannot be merged");
         }
-        versioningManager.merge(catalogId, recordId, sourceId, targetId, user, null, null);
+        versioningManager.merge(configProvider.getLocalCatalogIRI(), recordId, sourceId, targetId, user, null, null);
 
         // Turn MergeRequest into an AcceptedMergeRequest
         AcceptedMergeRequest acceptedRequest = acceptedMergeRequestFactory.createNew(request.getResource(),

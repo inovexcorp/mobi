@@ -186,27 +186,11 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         when(versionedRecordService.getType()).thenReturn(VersionedRecord.class);
         when(unversionedRecordService.getType()).thenReturn(UnversionedRecord.class);
 
-        manager = new SimpleCatalogManager();
-        injectOrmFactoryReferencesIntoService(manager);
-        manager.setConfigProvider(configProvider);
-        manager.setValueFactory(VALUE_FACTORY);
-        manager.setModelFactory(MODEL_FACTORY);
-        manager.setUtils(utilsService);
-        manager.addRecordService(versionedRDFRecordService);
-        manager.addRecordService(recordService);
-        manager.addRecordService(versionedRecordService);
-        manager.addRecordService(unversionedRecordService);
-        manager.setMergeRequestManager(mergeRequestManager);
-
-        manager.start();
-
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
         }
-
-        manager.setFactoryRegistry(ORM_FACTORY_REGISTRY);
 
         distributedCatalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-distributed");
         localCatalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-local");
@@ -246,6 +230,21 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
                 inProgressCommitFactory.createNew(i.getArgumentAt(2, Resource.class)));
         when(utilsService.throwAlreadyExists(any(Resource.class), any(OrmFactory.class))).thenReturn(new IllegalArgumentException());
         when(utilsService.throwThingNotFound(any(Resource.class), any(OrmFactory.class))).thenReturn(new IllegalStateException());
+
+        manager = new SimpleCatalogManager();
+        injectOrmFactoryReferencesIntoService(manager);
+        manager.setConfigProvider(configProvider);
+        manager.setValueFactory(VALUE_FACTORY);
+        manager.setModelFactory(MODEL_FACTORY);
+        manager.setUtils(utilsService);
+        manager.addRecordService(versionedRDFRecordService);
+        manager.addRecordService(recordService);
+        manager.addRecordService(versionedRecordService);
+        manager.addRecordService(unversionedRecordService);
+        manager.setMergeRequestManager(mergeRequestManager);
+
+        manager.start();
+        manager.setFactoryRegistry(ORM_FACTORY_REGISTRY);
     }
 
     @After

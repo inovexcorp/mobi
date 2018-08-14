@@ -41,7 +41,6 @@ import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
@@ -140,7 +139,6 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         titleIRI = VALUE_FACTORY.createIRI(_Thing.title_IRI);
 
         versionedRDFRecord1 = versionedRDFRecordFactory.createNew(RECORD_1_IRI);
-        versionedRDFRecord1.addProperty(LOCAL_CATALOG_IRI, VALUE_FACTORY.createIRI(Record.catalog_IRI));
         versionedRDFRecord2 = versionedRDFRecordFactory.createNew(RECORD_2_IRI);
         sourceBranch1 = branchFactory.createNew(SOURCE_BRANCH_1_IRI);
         sourceBranch1.setProperty(VALUE_FACTORY.createLiteral(SOURCE_BRANCH_TITLE), titleIRI);
@@ -208,6 +206,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         MockitoAnnotations.initMocks(this);
 
         when(configProvider.getRepository()).thenReturn(repo);
+        when(configProvider.getLocalCatalogIRI()).thenReturn(LOCAL_CATALOG_IRI);
 
         when(utilsService.getExpectedObject(any(Resource.class), eq(mergeRequestFactory), any(RepositoryConnection.class))).thenAnswer(i -> {
             Resource iri = i.getArgumentAt(0, Resource.class);
@@ -234,15 +233,6 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
                 return targetBranch1;
             } else if (iri.equals(TARGET_BRANCH_2_IRI)) {
                 return targetBranch2;
-            }
-            throw new IllegalArgumentException();
-        });
-        when(utilsService.getExpectedObject(any(Resource.class), eq(versionedRDFRecordFactory), any(RepositoryConnection.class))).thenAnswer(i -> {
-            Resource iri = i.getArgumentAt(0, Resource.class);
-            if (iri.equals(RECORD_1_IRI)) {
-                return versionedRDFRecord1;
-            } else if (iri.equals(RECORD_2_IRI)) {
-                return versionedRDFRecord2;
             }
             throw new IllegalArgumentException();
         });
@@ -601,17 +591,6 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.acceptMergeRequest(request3.getResource(), user1, conn);
-        }
-        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any());
-    }
-
-    @Test
-    public void acceptMergeRequestWithNoCatalogTest() {
-        // Setup
-        thrown.expect(IllegalStateException.class);
-
-        try (RepositoryConnection conn = repo.getConnection()) {
-            manager.acceptMergeRequest(request2.getResource(), user1, conn);
         }
         verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any());
     }

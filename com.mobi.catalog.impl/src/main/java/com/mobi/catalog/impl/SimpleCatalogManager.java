@@ -1262,35 +1262,6 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     /**
-     * Creates a conflict using the provided parameters as the data to construct it.
-     *
-     * @param subject        The Resource identifying the conflicted statement's subject.
-     * @param predicate      The IRI identifying the conflicted statement's predicate.
-     * @param left           The Model of the left item being compared.
-     * @param leftDeletions  The Model of the deleted statements from the left Model.
-     * @param right          The Model of the right item being compared.
-     * @param rightDeletions The Model of the deleted statements from the right Model.
-     * @return A Conflict created using all of the provided data.
-     */
-    private Conflict createConflict(Resource subject, IRI predicate, Model left, Model leftDeletions,
-                                    Model right, Model rightDeletions) {
-        Difference.Builder leftDifference = new Difference.Builder();
-        Difference.Builder rightDifference = new Difference.Builder();
-
-        leftDifference
-                .additions(mf.createModel(left).filter(subject, predicate, null))
-                .deletions(mf.createModel(leftDeletions).filter(subject, predicate, null));
-        rightDifference
-                .additions(mf.createModel(right).filter(subject, predicate, null))
-                .deletions(mf.createModel(rightDeletions).filter(subject, predicate, null));
-
-        return new Conflict.Builder(vf.createIRI(subject.stringValue()))
-                .leftDifference(leftDifference.build())
-                .rightDifference(rightDifference.build())
-                .build();
-    }
-
-    /**
      * Creates the base for the sorting options Object.
      */
     private void createSortingOptions() {

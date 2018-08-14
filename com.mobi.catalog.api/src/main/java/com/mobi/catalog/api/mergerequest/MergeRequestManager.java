@@ -164,6 +164,22 @@ public interface MergeRequestManager {
      *
      * @param requestId The {@link Resource} representing the {@link MergeRequest} ID to delete.
      * @param user The {@link User} performing the acceptance
+     * @throws IllegalStateException If any expected links between objects or data properties are not present on the
+     *      {@link MergeRequest}, {@link VersionedRDFRecord}, {@link Branch Branches}, or
+     *      {@link com.mobi.catalog.api.ontologies.mcat.Commit Commits}
+     * @throws IllegalArgumentException If the {@link MergeRequest} has already been accepted, does not have a target
+     *      {@link Branch}, or conflicts exist between the source {@link Branch} and target {@link Branch}
+     */
+    void acceptMergeRequest(Resource requestId, User user);
+
+    /**
+     * Accepts a {@link MergeRequest} by performing a merge between the source and target {@link Branch branches},
+     * changing the type to an {@link com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest}, and
+     * replacing the sourceBranch and targetBranch predicates with sourceBranchTitle, sourceCommit, targetBranchTitle,
+     * and targetCommit.
+     *
+     * @param requestId The {@link Resource} representing the {@link MergeRequest} ID to delete.
+     * @param user The {@link User} performing the acceptance
      * @param conn A RepositoryConnection to use for lookup
      * @throws IllegalStateException If any expected links between objects or data properties are not present on the
      *      {@link MergeRequest}, {@link VersionedRDFRecord}, {@link Branch Branches}, or
