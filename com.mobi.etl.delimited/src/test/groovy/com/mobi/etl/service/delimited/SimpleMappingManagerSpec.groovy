@@ -27,6 +27,7 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService
 
 import com.mobi.catalog.api.CatalogManager
+import com.mobi.catalog.config.CatalogConfigProvider
 import com.mobi.etl.api.config.delimited.MappingRecordConfig
 import com.mobi.etl.api.delimited.MappingId
 import com.mobi.etl.api.delimited.MappingWrapper
@@ -52,6 +53,7 @@ class SimpleMappingManagerSpec extends Specification {
     def mappingRecordFactory = getRequiredOrmFactory(MappingRecord.class)
     def builder = new SimpleMappingId.Builder(vf)
 
+    def configProvider = Mock(CatalogConfigProvider)
     def catalogManager = Mock(CatalogManager)
     def model = Mock(Model)
     def mappingWrapper = Mock(MappingWrapper)
@@ -65,6 +67,7 @@ class SimpleMappingManagerSpec extends Specification {
     def setup() {
         injectOrmFactoryReferencesIntoService(service)
         service.setValueFactory(vf)
+        service.setConfigProvider(configProvider)
         service.setCatalogManager(catalogManager)
         service.setSesameTransformer(transformer)
 

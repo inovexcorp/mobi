@@ -60,6 +60,7 @@ import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.catalog.rest.CatalogRest;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -119,6 +120,7 @@ public class CatalogRestImpl implements CatalogRest {
 
     private OrmFactoryRegistry factoryRegistry;
     private SesameTransformer transformer;
+    private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
     private ValueFactory vf;
     private VersioningManager versioningManager;
@@ -146,6 +148,11 @@ public class CatalogRestImpl implements CatalogRest {
     @Reference
     void setTransformer(SesameTransformer transformer) {
         this.transformer = transformer;
+    }
+
+    @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
     }
 
     @Reference
@@ -221,10 +228,10 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getCatalog(String catalogId) {
         try {
             Resource catalogIri = vf.createIRI(catalogId);
-            if (catalogIri.equals(catalogManager.getLocalCatalogIRI())) {
+            if (catalogIri.equals(configProvider.getLocalCatalogIRI())) {
                 return Response.ok(thingToSkolemizedJsonObject(catalogManager.getLocalCatalog(),
                         Catalog.TYPE, transformer, bNodeService)).build();
-            } else if (catalogIri.equals(catalogManager.getDistributedCatalogIRI())) {
+            } else if (catalogIri.equals(configProvider.getDistributedCatalogIRI())) {
                 return Response.ok(thingToSkolemizedJsonObject(catalogManager.getDistributedCatalog(),
                         Catalog.TYPE, transformer, bNodeService)).build();
             } else {

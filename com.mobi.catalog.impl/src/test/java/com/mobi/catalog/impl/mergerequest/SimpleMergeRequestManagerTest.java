@@ -46,6 +46,7 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.rdf.api.IRI;
@@ -58,6 +59,7 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -126,6 +128,9 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
     @Mock
     private Conflict conflict;
+
+    @Mock
+    private CatalogConfigProvider configProvider;
 
     @Before
     public void setUp() {
@@ -202,6 +207,8 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
         MockitoAnnotations.initMocks(this);
 
+        when(configProvider.getRepository()).thenReturn(repo);
+
         when(utilsService.getExpectedObject(any(Resource.class), eq(mergeRequestFactory), any(RepositoryConnection.class))).thenAnswer(i -> {
             Resource iri = i.getArgumentAt(0, Resource.class);
             if (iri.equals(request1.getResource())) {
@@ -250,6 +257,12 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         manager.setVf(VALUE_FACTORY);
         manager.setCatalogUtils(utilsService);
         manager.setVersioningManager(versioningManager);
+        manager.setConfigProvider(configProvider);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        repo.shutDown();
     }
 
     /* getMergeRequests */

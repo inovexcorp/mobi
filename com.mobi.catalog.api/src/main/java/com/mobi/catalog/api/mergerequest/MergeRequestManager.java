@@ -35,6 +35,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MergeRequestManager {
+
+    /**
+     * Gets the {@link List} of all {@link MergeRequest}s in Mobi that match the provided parameters.
+     *
+     * @param params The {@link MergeRequestFilterParams} to filter the MergeRequests by
+     * @return The {@link List} of all matching {@link MergeRequest}s
+     */
+    List<MergeRequest> getMergeRequests(MergeRequestFilterParams params);
+
     /**
      * Gets the {@link List} of all {@link MergeRequest}s in Mobi that match the provided parameters.
      *
@@ -43,6 +52,21 @@ public interface MergeRequestManager {
      * @return The {@link List} of all matching {@link MergeRequest}s
      */
     List<MergeRequest> getMergeRequests(MergeRequestFilterParams params, RepositoryConnection conn);
+
+    /**
+     * Creates a {@link MergeRequest} with the metadata within the provided {@link MergeRequestConfig} along with a
+     * created and modified date. The title, {@link VersionedRDFRecord} ID, source {@link Branch} ID, target
+     * {@link Branch} ID, and creator {@link User} are required. Can optionally include a description and
+     * any assigned {@link User}s.
+     *
+     * @param config A {@link MergeRequestConfig} containing metadata about a {@link MergeRequest}
+     * @param localCatalog A {@link Resource} identifying the local catalog ID
+     * @return A {@link MergeRequest} created with the provided metadata
+     * @throws IllegalArgumentException {@link VersionedRDFRecord} could not be found, the {@link VersionedRDFRecord}
+     *      does not belong to the local {@link Catalog}, or the source or target {@link Branch}es do not belong to
+     *      the {@link VersionedRDFRecord}.
+     */
+    MergeRequest createMergeRequest(MergeRequestConfig config, Resource localCatalog);
 
     /**
      * Creates a {@link MergeRequest} with the metadata within the provided {@link MergeRequestConfig} along with a
@@ -64,10 +88,26 @@ public interface MergeRequestManager {
      * Stores the provided {@link MergeRequest} in the repository as long as it does not already exist.
      *
      * @param request A {@link MergeRequest} to add to the repository
+     * @throws IllegalArgumentException If the provided {@link MergeRequest} already exists in the repository
+     */
+    void addMergeRequest(MergeRequest request);
+
+    /**
+     * Stores the provided {@link MergeRequest} in the repository as long as it does not already exist.
+     *
+     * @param request A {@link MergeRequest} to add to the repository
      * @param conn A RepositoryConnection to use for lookup
      * @throws IllegalArgumentException If the provided {@link MergeRequest} already exists in the repository
      */
     void addMergeRequest(MergeRequest request, RepositoryConnection conn);
+
+    /**
+     * Gets the {@link MergeRequest} identified by the provided {@link Resource}.
+     *
+     * @param requestId The {@link Resource} identifying a {@link MergeRequest}
+     * @return The {@link MergeRequest} if it exists.
+     */
+    Optional<MergeRequest> getMergeRequest(Resource requestId);
 
     /**
      * Gets the {@link MergeRequest} identified by the provided {@link Resource}.
@@ -84,10 +124,28 @@ public interface MergeRequestManager {
      *
      * @param requestId the {@link Resource} identifying a {@link MergeRequest}
      * @param request the updated {@link MergeRequest} referenced by {@code requestId}
+     * @throws IllegalArgumentException If the provided {@link MergeRequest} does not exist in the repository
+     */
+    void updateMergeRequest(Resource requestId, MergeRequest request);
+
+    /**
+     * Replaces the stored {@link MergeRequest} of {@code requestId} with the provided {@link MergeRequest} {@code request}
+     * Assumes that {@code request} is properly populated.
+     *
+     * @param requestId the {@link Resource} identifying a {@link MergeRequest}
+     * @param request the updated {@link MergeRequest} referenced by {@code requestId}
      * @param conn A RepositoryConnection to use for lookup
      * @throws IllegalArgumentException If the provided {@link MergeRequest} does not exist in the repository
      */
     void updateMergeRequest(Resource requestId, MergeRequest request, RepositoryConnection conn);
+
+    /**
+     * Deletes an existing {@link MergeRequest} identified by the provided the {@link Resource}.
+     *
+     * @param requestId The {@link Resource} representing the {@link MergeRequest} ID to delete.
+     * @throws IllegalArgumentException If the provided {@link Resource} does not exist in the repository
+     */
+    void deleteMergeRequest(Resource requestId);
 
     /**
      * Deletes an existing {@link MergeRequest} identified by the provided the {@link Resource}.
@@ -120,9 +178,27 @@ public interface MergeRequestManager {
      *
      * @param recordId Removes all MergeRequests that are linked to the VersionedRDFRecord identified by the provided
      *                 Resource.
+     */
+    void deleteMergeRequestsWithRecordId(Resource recordId);
+
+    /**
+     * Removes all MergeRequests that are linked to the VersionedRDFRecord identified by the provided Resource.
+     *
+     * @param recordId Removes all MergeRequests that are linked to the VersionedRDFRecord identified by the provided
+     *                 Resource.
      * @param conn A RepositoryConnection to use for lookup
      */
     void deleteMergeRequestsWithRecordId(Resource recordId, RepositoryConnection conn);
+
+    /**
+     * Updates any existing MergeRequest that references the provided branchId that is being removed. If a deleted
+     * branch is the target of an open MergeRequest, the target will be removed from the MergeRequest. If a deleted
+     * branch is the source of an open MergeRequest, the MergeRequest will be deleted.
+     *
+     * @param recordId A Resource of the recordId representing a VersionedRDFRecord
+     * @param branchId A Resource of the branchId representing a deleted Branch
+     */
+    void cleanMergeRequests(Resource recordId, Resource branchId);
 
     /**
      * Updates any existing MergeRequest that references the provided branchId that is being removed. If a deleted

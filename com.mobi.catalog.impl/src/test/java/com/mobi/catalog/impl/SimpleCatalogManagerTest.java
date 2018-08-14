@@ -34,7 +34,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
@@ -58,6 +57,7 @@ import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
@@ -72,7 +72,6 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -89,10 +88,8 @@ import org.mockito.MockitoAnnotations;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -150,6 +147,9 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     public ExpectedException thrown = ExpectedException.none();
 
     @Mock
+    private CatalogConfigProvider configProvider;
+
+    @Mock
     private CatalogUtilsService utilsService;
 
     @Mock
@@ -172,12 +172,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
-        SesameRepositoryWrapper repositoryWrapper = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        Map<String, Object> repoProps = new HashMap<>();
-        repoProps.put("id", "system");
-        RepositoryConfig config = Configurable.createConfigurable(RepositoryConfig.class, repoProps);
-        repositoryWrapper.setConfig(config);
-        repo = repositoryWrapper;
+        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
         MockitoAnnotations.initMocks(this);
@@ -193,7 +188,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
         manager = new SimpleCatalogManager();
         injectOrmFactoryReferencesIntoService(manager);
-        manager.setRepository(repo);
+        manager.setConfigProvider(configProvider);
         manager.setValueFactory(VALUE_FACTORY);
         manager.setModelFactory(MODEL_FACTORY);
         manager.setUtils(utilsService);
@@ -203,18 +198,14 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         manager.addRecordService(unversionedRecordService);
         manager.setMergeRequestManager(mergeRequestManager);
 
+        manager.start();
+
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
         }
 
-        Map<String, Object> props = new HashMap<>();
-        props.put("title", "Mobi Test Catalog");
-        props.put("description", "This is a test catalog");
-        props.put("iri", "http://mobi.com/test/catalogs#catalog");
-
-        manager.start(props);
         manager.setFactoryRegistry(ORM_FACTORY_REGISTRY);
 
         distributedCatalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-distributed");
@@ -231,8 +222,14 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         testRecord.setCatalog(catalogFactory.createNew(localCatalogId));
 
+        when(configProvider.getRepository()).thenReturn(repo);
+        when(configProvider.getLocalCatalogIRI()).thenReturn(localCatalogId);
+        when(configProvider.getDistributedCatalogIRI()).thenReturn(distributedCatalogId);
+
         when(recordService.create(any(User.class), any(RecordOperationConfig.class), any(RepositoryConnection.class))).thenReturn(testRecord);
+
         when(versionedRDFRecordService.create(any(User.class), any(RecordOperationConfig.class), any(RepositoryConnection.class))).thenReturn(testVersionedRDFRecord);
+
         when(utilsService.getExpectedObject(any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
                 i.getArgumentAt(1, OrmFactory.class).createNew(i.getArgumentAt(0, Resource.class)));
         when(utilsService.getRecord(any(Resource.class), any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
@@ -254,23 +251,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     @After
     public void tearDown() throws Exception {
         repo.shutDown();
-    }
-
-    @Test
-    public void testGetRepositoryId() throws Exception {
-        assertEquals("system", manager.getRepositoryId());
-    }
-
-    @Test
-    public void testGetDistributedCatalogIRI() throws Exception {
-        IRI iri = manager.getDistributedCatalogIRI();
-        assertEquals(distributedCatalogId, iri);
-    }
-
-    @Test
-    public void testGetLocalCatalogIRI() throws Exception {
-        IRI iri = manager.getLocalCatalogIRI();
-        assertEquals(localCatalogId, iri);
     }
 
     /* getDistributedCatalog */
@@ -394,7 +374,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // Setup:
         Repository repo2 = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo2.initialize();
-        manager.setRepository(repo2);
+        when(configProvider.getRepository()).thenReturn(repo2);
         int limit = 1;
         int offset = 0;
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();

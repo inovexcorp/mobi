@@ -37,7 +37,6 @@ import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.orm.OrmFactory;
@@ -49,27 +48,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public interface CatalogManager {
-
-    /**
-     * Returns the ID of the Repository which should store all catalog data.
-     *
-     * @return The ID of the catalog Repository
-     */
-    String getRepositoryId();
-
-    /**
-     * Returns the IRI for the distributed Catalog.
-     *
-     * @return The IRI which identifies the distributed Catalog.
-     */
-    IRI getDistributedCatalogIRI();
-
-    /**
-     * Returns the IRI for the local Catalog.
-     *
-     * @return The IRI which identifies the local Catalog.
-     */
-    IRI getLocalCatalogIRI();
 
     /**
      * Retrieves the distributed Catalog containing the published Records.

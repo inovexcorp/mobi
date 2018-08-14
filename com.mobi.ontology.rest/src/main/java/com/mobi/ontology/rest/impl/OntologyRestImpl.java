@@ -35,7 +35,6 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.google.common.collect.Iterables;
 import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
@@ -44,7 +43,7 @@ import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
-import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -82,7 +81,6 @@ import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
-import com.mobi.security.policy.api.ontologies.policy.Update;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
@@ -122,12 +120,11 @@ public class OntologyRestImpl implements OntologyRest {
     private ModelFactory modelFactory;
     private ValueFactory valueFactory;
     private OntologyManager ontologyManager;
+    private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
     private OntologyCache ontologyCache;
-    private VersioningManager versioningManager;
-    private CatalogProvUtils provUtils;
     private RepositoryManager repositoryManager;
 
     private static final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
@@ -148,6 +145,11 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
+    }
+
+    @Reference
     void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
     }
@@ -165,16 +167,6 @@ public class OntologyRestImpl implements OntologyRest {
     @Reference
     void setOntologyCache(OntologyCache ontologyCache) {
         this.ontologyCache = ontologyCache;
-    }
-
-    @Reference
-    void setVersioningManager(VersioningManager versioningManager) {
-        this.versioningManager = versioningManager;
-    }
-
-    @Reference
-    void setProvUtils(CatalogProvUtils provUtils) {
-        this.provUtils = provUtils;
     }
 
     @Reference
@@ -293,7 +285,7 @@ public class OntologyRestImpl implements OntologyRest {
             Resource recordId = valueFactory.createIRI(recordIdStr);
             User user = getActiveUser(context, engineManager);
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
-            catalogManager.updateInProgressCommit(catalogManager.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
+            catalogManager.updateInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
                     diff.getAdditions(), diff.getDeletions());
             return Response.ok().build();
         } catch (MobiException e) {
@@ -310,7 +302,7 @@ public class OntologyRestImpl implements OntologyRest {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
         try {
-            Resource catalogIRI = catalogManager.getLocalCatalogIRI();
+            Resource catalogIRI = configProvider.getLocalCatalogIRI();
             Resource recordId = valueFactory.createIRI(recordIdStr);
 
             User user = getActiveUser(context, engineManager);
@@ -1062,13 +1054,13 @@ public class OntologyRestImpl implements OntologyRest {
      * @return a Resource which identifies the InProgressCommit associated with the User for the Record
      */
     private Resource getInProgressCommitIRI(User user, Resource recordId) {
-        Optional<InProgressCommit> optional = catalogManager.getInProgressCommit(catalogManager.getLocalCatalogIRI(),
+        Optional<InProgressCommit> optional = catalogManager.getInProgressCommit(configProvider.getLocalCatalogIRI(),
                 recordId, user);
         if (optional.isPresent()) {
             return optional.get().getResource();
         } else {
             InProgressCommit inProgressCommit = catalogManager.createInProgressCommit(user);
-            catalogManager.addInProgressCommit(catalogManager.getLocalCatalogIRI(), recordId, inProgressCommit);
+            catalogManager.addInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommit);
             return inProgressCommit.getResource();
         }
     }
@@ -1113,7 +1105,7 @@ public class OntologyRestImpl implements OntologyRest {
             if (optionalOntology.isPresent() && applyInProgressCommit) {
                 User user = getActiveUser(context, engineManager);
                 Optional<InProgressCommit> optional = catalogManager.getInProgressCommit(
-                        catalogManager.getLocalCatalogIRI(), valueFactory.createIRI(recordIdStr), user);
+                        configProvider.getLocalCatalogIRI(), valueFactory.createIRI(recordIdStr), user);
 
                 if (optional.isPresent()) {
                     Model ontologyModel = catalogManager.applyInProgressCommit(optional.get().getResource(),
@@ -1144,8 +1136,10 @@ public class OntologyRestImpl implements OntologyRest {
      * @return The properly formatted JSON response with a List of a particular Ontology Component.
      */
     private <T extends JSON> T doWithOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
-                                           String commitIdStr, Function<Ontology, T> iriFunction, boolean applyInProgressCommit) {
-        Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit);
+                                           String commitIdStr, Function<Ontology, T> iriFunction,
+                                              boolean applyInProgressCommit) {
+        Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr,
+                applyInProgressCommit);
         if (optionalOntology.isPresent()) {
             return iriFunction.apply(optionalOntology.get());
         } else {
@@ -1530,7 +1524,7 @@ public class OntologyRestImpl implements OntologyRest {
         User user = getActiveUser(context, engineManager);
         Resource recordId = valueFactory.createIRI(recordIdStr);
         Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
-        catalogManager.updateInProgressCommit(catalogManager.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
+        catalogManager.updateInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
                 entityModel, null);
         return Response.status(Response.Status.CREATED).build();
     }
@@ -1560,7 +1554,7 @@ public class OntologyRestImpl implements OntologyRest {
             throw ErrorUtils.sendError(entityIdStr + " was not found within the ontology.",
                     Response.Status.BAD_REQUEST);
         }
-        catalogManager.updateInProgressCommit(catalogManager.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
+        catalogManager.updateInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
                 null, model);
         return Response.ok().build();
     }
@@ -1611,7 +1605,7 @@ public class OntologyRestImpl implements OntologyRest {
         User user = getActiveUser(context, engineManager);
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
-        Resource catalogId = catalogManager.getLocalCatalogIRI();
+        Resource catalogId = configProvider.getLocalCatalogIRI();
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, title);
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, description);
@@ -1623,9 +1617,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             record = catalogManager.createRecord(user, config, OntologyRecord.class);
             branchId = record.getMasterBranch_resource().get();
-            Repository repo = repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
-                    new IllegalStateException("Catalog repository unavailable"));
-            try (RepositoryConnection conn = repo.getConnection()) {
+            try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
                 RepositoryResult<Statement> commitStmt = conn.getStatements(branchId,
                         valueFactory.createIRI(Branch.head_IRI), null);
                 if (!commitStmt.hasNext()) {
@@ -1638,7 +1630,7 @@ public class OntologyRestImpl implements OntologyRest {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
         JSONObject response = new JSONObject();
-        response.element("ontologyId", record.getOntologyIRI().toString());
+        response.element("ontologyId", record.getOntologyIRI().get().toString());
         response.element("recordId", record.getResource().stringValue());
         response.element("branchId", branchId.toString());
         response.element("commitId", commitId.toString());

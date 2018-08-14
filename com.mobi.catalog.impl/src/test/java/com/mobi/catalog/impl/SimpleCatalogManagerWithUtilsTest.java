@@ -26,12 +26,13 @@ package com.mobi.catalog.impl;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
+import static org.mockito.Mockito.when;
 
-import aQute.bnd.annotation.metatype.Configurable;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.Catalogs;
+import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.persistence.utils.RepositoryResults;
@@ -44,7 +45,6 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -52,15 +52,14 @@ import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
@@ -82,20 +81,21 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
 
     private static final String COMMITS = "http://mobi.com/test/commits#";
 
+    @Mock
+    private CatalogConfigProvider configProvider;
+
     @Before
     public void setUp() throws Exception {
-        SesameRepositoryWrapper repositoryWrapper = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        Map<String, Object> repoProps = new HashMap<>();
-        repoProps.put("id", "system");
-        RepositoryConfig config = Configurable.createConfigurable(RepositoryConfig.class, repoProps);
-        repositoryWrapper.setConfig(config);
-        repo = repositoryWrapper;
+        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));;
         repo.initialize();
 
         MockitoAnnotations.initMocks(this);
+
+        when(configProvider.getRepository()).thenReturn(repo);
+
         manager = new SimpleCatalogManager();
         injectOrmFactoryReferencesIntoService(manager);
-        manager.setRepository(repo);
+        manager.setConfigProvider(configProvider);
         manager.setValueFactory(VALUE_FACTORY);
         manager.setModelFactory(MODEL_FACTORY);
         manager.setUtils(utilsService);
@@ -111,12 +111,7 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
             conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
         }
 
-        Map<String, Object> props = new HashMap<>();
-        props.put("title", "Mobi Test Catalog");
-        props.put("description", "This is a test catalog");
-        props.put("iri", "http://mobi.com/test/catalogs#catalog");
-
-        manager.start(props);
+        manager.start();
 
         initialComment = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ClassA"),
                 VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#comment"),
