@@ -31,8 +31,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
@@ -88,7 +88,7 @@ public class CatalogProvUtilsImplTest extends OrmEnabledTestCase {
     private ProvenanceService provenanceService;
 
     @Mock
-    private CatalogManager catalogManager;
+    private CatalogConfigProvider config;
 
     @Mock
     private RepositoryConnection connProv;
@@ -107,7 +107,7 @@ public class CatalogProvUtilsImplTest extends OrmEnabledTestCase {
         user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/user"));
 
         when(mobi.getServerIdentifier()).thenReturn(UUID.randomUUID());
-        when(catalogManager.getRepositoryId()).thenReturn("system");
+        when(config.getRepositoryId()).thenReturn("system");
 
         IRI recordIRI = VALUE_FACTORY.createIRI(recordIri);
 
@@ -124,7 +124,7 @@ public class CatalogProvUtilsImplTest extends OrmEnabledTestCase {
         utils.setVf(VALUE_FACTORY);
         utils.setMobi(mobi);
         utils.setProvenanceService(provenanceService);
-        utils.setCatalogManager(catalogManager);
+        utils.setConfig(config);
         utils.setModelFactory(MODEL_FACTORY);
     }
 

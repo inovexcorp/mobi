@@ -40,6 +40,7 @@ import com.mobi.catalog.api.ontologies.mcat.UserBranch
 import com.mobi.catalog.api.ontologies.mcat.Version
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord
+import com.mobi.catalog.config.CatalogConfigProvider
 import com.mobi.jaas.api.ontologies.usermanagement.User
 import com.mobi.rdf.api.Model
 import com.mobi.repository.api.Repository
@@ -48,6 +49,7 @@ import spock.lang.Specification
 class SimpleCatalogManagerSpec extends Specification {
 
     def service = new SimpleCatalogManager()
+    def configProvider = Mock(CatalogConfigProvider)
     def repository = Mock(Repository)
     def model = Mock(Model)
     def vf = getValueFactory()
@@ -86,10 +88,12 @@ class SimpleCatalogManagerSpec extends Specification {
     def dummyBranchIRI
 
     def setup() {
-        service.setRepository(repository)
+        service.setConfigProvider(configProvider)
         injectOrmFactoryReferencesIntoService(service)
         service.setValueFactory(vf)
         service.setModelFactory(mf)
+
+        configProvider.getRepository() >> repository
 
         catalog.getModel() >> model
 
