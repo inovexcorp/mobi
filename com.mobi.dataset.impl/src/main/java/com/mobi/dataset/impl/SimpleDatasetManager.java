@@ -28,6 +28,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.ontology.dataset.Dataset;
@@ -65,8 +66,8 @@ import java.util.Set;
 @Component(immediate = true)
 public class SimpleDatasetManager implements DatasetManager {
 
+    private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
-    private Repository systemRepository;
     private ValueFactory vf;
     private DatasetRecordFactory dsRecFactory;
     private DatasetFactory dsFactory;
@@ -94,13 +95,13 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     @Reference
-    void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
     }
 
-    @Reference(target = "(id=system)")
-    void setRepository(Repository repository) {
-        this.systemRepository = repository;
+    @Reference
+    void setCatalogManager(CatalogManager catalogManager) {
+        this.catalogManager = catalogManager;
     }
 
     @Reference
@@ -138,9 +139,9 @@ public class SimpleDatasetManager implements DatasetManager {
     @Override
     public Set<Resource> getDatasets(String repositoryId) {
         Set<Resource> datasets = new HashSet<>();
-        try (RepositoryConnection conn = systemRepository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(FIND_DATASETS_QUERY);
-            query.setBinding(CATALOG_BINDING, catalogManager.getLocalCatalogIRI());
+            query.setBinding(CATALOG_BINDING, configProvider.getLocalCatalogIRI());
             query.setBinding(REPOSITORY_BINDING, vf.createLiteral(repositoryId));
             TupleQueryResult result = query.evaluate();
             result.forEach(bindingSet -> datasets.add(Bindings.requiredResource(bindingSet, "dataset")));
@@ -150,7 +151,7 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public PaginatedSearchResults<DatasetRecord> getDatasetRecords(DatasetPaginatedSearchParams searchParams) {
-        PaginatedSearchResults<Record> results = catalogManager.findRecord(catalogManager.getLocalCatalogIRI(),
+        PaginatedSearchResults<Record> results = catalogManager.findRecord(configProvider.getLocalCatalogIRI(),
                 searchParams.build());
         return new DatasetRecordSearchResults(results, dsRecFactory);
     }
@@ -162,7 +163,7 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public Optional<DatasetRecord> getDatasetRecord(Resource record) {
-        return catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), record, dsRecFactory);
+        return catalogManager.getRecord(configProvider.getLocalCatalogIRI(), record, dsRecFactory);
     }
 
     @Override
@@ -191,7 +192,7 @@ public class SimpleDatasetManager implements DatasetManager {
             datasetRecord.getModel().addAll(identifier.getStatements());
         });
         datasetRecord.setOntology(ontologies);
-        catalogManager.addRecord(catalogManager.getLocalCatalogIRI(), datasetRecord);
+        catalogManager.addRecord(configProvider.getLocalCatalogIRI(), datasetRecord);
 
         try (RepositoryConnection conn = dsRepo.getConnection()) {
             conn.add(dataset.getModel(), datasetIRI);
@@ -209,7 +210,8 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public DatasetRecord deleteDataset(Resource record) {
-        DatasetRecord datasetRecord = catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), record, dsRecFactory);
+        DatasetRecord datasetRecord = catalogManager.removeRecord(configProvider.getLocalCatalogIRI(), record,
+                dsRecFactory);
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
         Resource dataset = datasetRecord.getDataset_resource().orElseThrow(()
@@ -231,7 +233,8 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public DatasetRecord safeDeleteDataset(Resource record) {
-        DatasetRecord datasetRecord = catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), record, dsRecFactory);
+        DatasetRecord datasetRecord = catalogManager.removeRecord(configProvider.getLocalCatalogIRI(), record,
+                dsRecFactory);
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
         Resource dataset = datasetRecord.getDataset_resource().orElseThrow(()
@@ -321,7 +324,7 @@ public class SimpleDatasetManager implements DatasetManager {
      *      with the correct dataset repository; otherwise, Optional.empty().
      */
     private Optional<Resource> getRecordResource(Resource dataset, String repositoryId) {
-        try (RepositoryConnection conn = systemRepository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             RepositoryResult<Statement> recordStmts =
                     conn.getStatements(null, vf.createIRI(DatasetRecord.dataset_IRI), dataset);
 
