@@ -1,4 +1,4 @@
-@Version("2.4.0.${build}")
+@Version("2.4.1.${build}")
 
 package com.mobi.catalog.rest;
 

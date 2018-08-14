@@ -27,14 +27,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
@@ -43,6 +41,7 @@ import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.rdf.api.IRI;
@@ -54,10 +53,10 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -109,7 +108,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     private CatalogUtilsService utilsService;
 
     @Mock
-    private CatalogManager catalogManager;
+    private CatalogConfigProvider configProvider;
 
     @Before
     public void setUp() {
@@ -178,8 +177,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         }
 
         MockitoAnnotations.initMocks(this);
-        when(catalogManager.getRepositoryId()).thenReturn("system");
-        when(catalogManager.getLocalCatalogIRI()).thenReturn(LOCAL_CATALOG_IRI);
+        when(configProvider.getRepository()).thenReturn(repo);
 
         when(utilsService.getExpectedObject(any(Resource.class), eq(mergeRequestFactory), any(RepositoryConnection.class))).thenAnswer(i -> {
             Resource iri = i.getArgumentAt(0, Resource.class);
@@ -205,6 +203,12 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         injectOrmFactoryReferencesIntoService(manager);
         manager.setVf(vf);
         manager.setCatalogUtils(utilsService);
+        manager.setConfigProvider(configProvider);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        repo.shutDown();
     }
 
     /* getMergeRequests */
