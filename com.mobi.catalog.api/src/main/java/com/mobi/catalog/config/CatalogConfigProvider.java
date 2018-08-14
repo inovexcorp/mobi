@@ -36,9 +36,9 @@ public interface CatalogConfigProvider {
     String getRepositoryId();
 
     /**
-     * Returns the ID of the Repository which should store all catalog data.
+     * Returns the Repository which should store all catalog data.
      *
-     * @return The ID of the catalog Repository
+     * @return The catalog Repository
      */
     Repository getRepository();
 

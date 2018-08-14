@@ -189,8 +189,7 @@ class SimpleDatasetManagerSpec extends Specification {
         connMock.getStatements(*_) >> resultsMock
 
         configProviderMock.getLocalCatalogIRI() >> localCatalog
-//        configProviderMock.getRepository() >> repositoryMock
-        
+
         repoManagerMock.getRepository("system") >> Optional.of(repositoryMock)
         repoManagerMock.getRepository("test") >> Optional.of(testRepo)
         
