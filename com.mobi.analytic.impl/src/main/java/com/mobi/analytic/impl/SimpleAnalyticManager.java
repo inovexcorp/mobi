@@ -25,25 +25,25 @@ package com.mobi.analytic.impl;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.analytic.api.builder.AnalyticRecordConfig;
-import com.mobi.analytic.ontologies.analytic.AnalyticRecordFactory;
-import com.mobi.analytic.ontologies.analytic.Configuration;
-import com.mobi.analytic.pagination.AnalyticRecordSearchResults;
 import com.mobi.analytic.api.AnalyticManager;
+import com.mobi.analytic.api.builder.AnalyticRecordConfig;
 import com.mobi.analytic.api.configuration.ConfigurationService;
 import com.mobi.analytic.ontologies.analytic.AnalyticRecord;
+import com.mobi.analytic.ontologies.analytic.AnalyticRecordFactory;
+import com.mobi.analytic.ontologies.analytic.Configuration;
 import com.mobi.analytic.pagination.AnalyticPaginatedSearchParams;
+import com.mobi.analytic.pagination.AnalyticRecordSearchResults;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 
 import java.util.HashMap;
@@ -53,9 +53,9 @@ import java.util.Optional;
 @Component
 public class SimpleAnalyticManager implements AnalyticManager {
 
+    private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
     private CatalogUtilsService catalogUtils;
-    private Repository repository;
     private AnalyticRecordFactory analyticRecordFactory;
     private ValueFactory vf;
     private ModelFactory mf;
@@ -71,6 +71,11 @@ public class SimpleAnalyticManager implements AnalyticManager {
     }
 
     @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
+    }
+
+    @Reference
     void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
     }
@@ -78,11 +83,6 @@ public class SimpleAnalyticManager implements AnalyticManager {
     @Reference
     void setCatalogUtils(CatalogUtilsService catalogUtils) {
         this.catalogUtils = catalogUtils;
-    }
-
-    @Reference(target = "(id=system)")
-    void setRepository(Repository repository) {
-        this.repository = repository;
     }
 
     @Reference
@@ -102,14 +102,14 @@ public class SimpleAnalyticManager implements AnalyticManager {
 
     @Override
     public PaginatedSearchResults<AnalyticRecord> getAnalyticRecords(AnalyticPaginatedSearchParams searchParams) {
-        PaginatedSearchResults<Record> results = catalogManager.findRecord(catalogManager.getLocalCatalogIRI(),
+        PaginatedSearchResults<Record> results = catalogManager.findRecord(configProvider.getLocalCatalogIRI(),
                 searchParams.build());
         return new AnalyticRecordSearchResults(results, analyticRecordFactory);
     }
 
     @Override
     public Optional<AnalyticRecord> getAnalyticRecord(Resource recordId) {
-        return catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId, analyticRecordFactory);
+        return catalogManager.getRecord(configProvider.getLocalCatalogIRI(), recordId, analyticRecordFactory);
     }
 
     @Override
@@ -117,7 +117,7 @@ public class SimpleAnalyticManager implements AnalyticManager {
         AnalyticRecord record = catalogManager.createRecord(config, analyticRecordFactory);
         record.setHasConfig(config.getConfiguration());
         record.getModel().addAll(config.getConfiguration().getModel());
-        catalogManager.addRecord(catalogManager.getLocalCatalogIRI(), record);
+        catalogManager.addRecord(configProvider.getLocalCatalogIRI(), record);
         return record;
     }
 
@@ -126,7 +126,7 @@ public class SimpleAnalyticManager implements AnalyticManager {
         AnalyticRecord record = getAnalyticRecord(recordId).orElseThrow(() ->
                 new IllegalArgumentException("Could not find the required AnalyticRecord in the Catalog."));
 
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             conn.begin();
             catalogUtils.removeObject(record, conn);
             conn.commit();
@@ -145,7 +145,7 @@ public class SimpleAnalyticManager implements AnalyticManager {
 
     @Override
     public <T extends Configuration> Optional<T> getConfiguration(Resource configId, OrmFactory<T> factory) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Model model = RepositoryResults.asModel(conn.getStatements(configId, null, null), mf);
             return factory.getExisting(configId, model);
         }
@@ -164,7 +164,7 @@ public class SimpleAnalyticManager implements AnalyticManager {
 
     @Override
     public <T extends Configuration> void updateConfiguration(Resource recordId, T newConfiguration) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource configId = newConfiguration.getResource();
             if (!conn.getStatements(recordId, vf.createIRI(AnalyticRecord.hasConfig_IRI), configId).hasNext()) {
                 throw new IllegalArgumentException(String.format("Configuration %s does not belong to AnalyticRecord "

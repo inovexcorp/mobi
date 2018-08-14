@@ -30,7 +30,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
@@ -41,6 +40,7 @@ import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.utils.cache.OntologyCache;
@@ -87,6 +87,9 @@ import javax.cache.Cache;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
 public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
+
+    @Mock
+    private CatalogConfigProvider configProvider;
 
     @Mock
     private CatalogManager catalogManager;
@@ -147,8 +150,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
         OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
         Catalog catalog = catalogFactory.createNew(catalogIRI);
-        when(catalogManager.getRepositoryId()).thenReturn("system");
-        when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogIRI);
         when(catalogManager.getLocalCatalog()).thenReturn(catalog);
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.removeRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(record);
@@ -193,13 +194,16 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
             conn.add(vocabulary.asModel(MODEL_FACTORY));
         }
         when(mockRepoManager.createMemoryRepository()).thenReturn(repoManager.createMemoryRepository());
-        when(mockRepoManager.getRepository("system")).thenReturn(Optional.of(repo));
+
+        when(configProvider.getRepository()).thenReturn(repo);
+        when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
 
         manager = Mockito.spy(new SimpleOntologyManager());
         injectOrmFactoryReferencesIntoService(manager);
         manager.setValueFactory(VALUE_FACTORY);
         manager.setModelFactory(MODEL_FACTORY);
         manager.setSesameTransformer(sesameTransformer);
+        manager.setConfigProvider(configProvider);
         manager.setCatalogManager(catalogManager);
         manager.setRepositoryManager(mockRepoManager);
         manager.setOntologyCache(ontologyCache);
@@ -213,14 +217,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     }
 
     // Testing retrieveOntologyByIRI
-
-    @Test(expected = IllegalStateException.class)
-    public void testRetrieveOntologyByIRIWithMissingRepo() {
-        // Setup:
-        doReturn(Optional.empty()).when(mockRepoManager).getRepository(anyString());
-
-        manager.retrieveOntologyByIRI(ontologyIRI);
-    }
 
     @Test
     public void testRetrieveOntologyByIRIThatDoesNotExist() {
