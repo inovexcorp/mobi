@@ -112,13 +112,15 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     @Override
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
                           RepositoryConnection conn) {
-        T record = createRecordObject(config, issued, modified, conn);
+        T record = createRecordObject(config, issued, modified);
         Branch masterBranch = createMasterBranch(record);
         conn.begin();
         addRecord(record, masterBranch, conn);
         IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
-        Resource masterBranchId = masterBranch.getResource();
+        Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
+                new IllegalStateException("VersionedRDFRecord must have a master Branch"));
         Model model = config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA);
+        conn.commit();
         versioningManager.commit(catalogIdIRI, record.getResource(),
                 masterBranchId, user, "The initial commit.", model, null);
         conn.commit();
@@ -263,20 +265,14 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param conn A RepositoryConnection to use for lookup
      */
     protected void deleteVersionedRDFData(T record, RepositoryConnection conn) {
-        recordFactory.getExisting(record.getResource(), record.getModel())
-                .ifPresent(versionedRDFRecord -> {
-                    mergeRequestManager.deleteMergeRequestsWithRecordId(versionedRDFRecord.getResource(), conn);
-                    versionedRDFRecord.getVersion_resource()
-                            .forEach(resource -> utilsService.removeVersion(versionedRDFRecord.getResource(),
-                                    resource, conn));
-                    conn.remove(versionedRDFRecord.getResource(),
-                            valueFactory.createIRI(VersionedRDFRecord.masterBranch_IRI),null,
-                            versionedRDFRecord.getResource());
-                    List<Resource> deletedCommits = new ArrayList<>();
-                    versionedRDFRecord.getBranch_resource()
-                            .forEach(resource -> utilsService.removeBranch(versionedRDFRecord.getResource(),
-                                    resource, deletedCommits, conn));
-                });
+        mergeRequestManager.deleteMergeRequestsWithRecordId(record.getResource(), conn);
+        record.getVersion_resource().forEach(resource -> utilsService.removeVersion(record.getResource(),
+                resource, conn));
+        conn.remove(record.getResource(), valueFactory.createIRI(VersionedRDFRecord.masterBranch_IRI),
+                null, record.getResource());
+        List<Resource> deletedCommits = new ArrayList<>();
+        record.getBranch_resource().forEach(resource -> utilsService.removeBranch(record.getResource(),
+                resource, deletedCommits, conn));
     }
 
     /**

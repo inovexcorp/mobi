@@ -32,8 +32,6 @@ import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
-import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
@@ -205,13 +203,6 @@ public class SimpleOntologyManager implements OntologyManager {
     @Reference
     public void setbNodeService(BNodeService bNodeService) {
         this.bNodeService = bNodeService;
-    }
-
-    @Override
-    public OntologyRecord createOntologyRecord(OntologyRecordConfig config) {
-        OntologyRecord record = catalogManager.createRecord(config, ontologyRecordFactory);
-        config.getOntologyIRI().ifPresent(record::setOntologyIRI);
-        return record;
     }
 
     @Override
