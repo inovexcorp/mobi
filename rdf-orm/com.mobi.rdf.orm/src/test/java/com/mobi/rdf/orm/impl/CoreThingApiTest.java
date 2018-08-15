@@ -12,19 +12,18 @@ package com.mobi.rdf.orm.impl;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -42,8 +41,6 @@ import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
 import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
-import junit.framework.TestCase;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -100,34 +97,34 @@ public class CoreThingApiTest {
                 valueFactory).orElseThrow(() -> new Exception("FAILED TO GET THING"));
 
         Value typeValue = t.getProperty(valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")).get();
-        TestCase.assertEquals(valueFactory.createIRI("http://xmlns.com/foaf/0.1/Agent"), typeValue);
+        assertEquals(valueFactory.createIRI("http://xmlns.com/foaf/0.1/Agent"), typeValue);
 
         int ageValue = Integer.parseInt(t.getProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")).get().stringValue());
-        TestCase.assertEquals(100, ageValue);
+        assertEquals(100, ageValue);
 
         t.addProperty(valueFactory.createLiteral("Ben"), valueFactory.createIRI("urn://mobi.com/silly#myNameIs"),
                 valueFactory.createIRI("urn://mobi.com/orm/test/testAgent"));
         String nameValue = t.getProperty(valueFactory.createIRI("urn://mobi.com/silly#myNameIs"),
                 valueFactory.createIRI("urn://mobi.com/orm/test/testAgent")).get().stringValue();
-        TestCase.assertEquals("Ben", nameValue);
+        assertEquals("Ben", nameValue);
 
         t.setProperty(valueFactory.createLiteral("John"), valueFactory.createIRI("urn://mobi.com/silly#myNameIs"),
                 valueFactory.createIRI("urn://mobi.com/orm/test/testAgent"));
-        TestCase.assertEquals(1, t.getModel().filter(t.getResource(),
+        assertEquals(1, t.getModel().filter(t.getResource(),
                 valueFactory.createIRI("urn://mobi.com/silly#myNameIs"), null, t.getResource()).size());
-        TestCase.assertEquals("John",
+        assertEquals("John",
                 t.getModel().filter(t.getResource(), valueFactory.createIRI("urn://mobi.com/silly#myNameIs"), null,
                         t.getResource()).iterator().next().getObject().stringValue());
 
-        Assert.assertTrue(t.clearProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")));
-        TestCase.assertFalse(t.getProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")).isPresent());
-        Assert.assertFalse(t.clearProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")));
-        TestCase.assertEquals("John",
+        assertTrue(t.clearProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")));
+        assertFalse(t.getProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")).isPresent());
+        assertFalse(t.clearProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")));
+        assertEquals("John",
                 t.getModel().filter(t.getResource(), valueFactory.createIRI("urn://mobi.com/silly#myNameIs"), null,
                         t.getResource()).iterator().next().getObject().stringValue());
 
         t.setProperty(null, valueFactory.createIRI("urn://mobi.com/silly#myNameIs"));
-        TestCase.assertFalse(t.getProperty(valueFactory.createIRI("urn://mobi.com/silly#myNameIs")).isPresent());
+        assertFalse(t.getProperty(valueFactory.createIRI("urn://mobi.com/silly#myNameIs")).isPresent());
     }
 
     @Test
@@ -138,8 +135,8 @@ public class CoreThingApiTest {
         t2.setProperty(valueFactory.createLiteral("Ben"), pred,
                 (IRI) t2.getResource());
         Optional<Value> opt = t2.getProperty(pred, (IRI) t2.getResource());
-        TestCase.assertTrue(opt.isPresent());
-        TestCase.assertEquals(valueFactory.createLiteral("Ben"), opt.orElse(null));
+        assertTrue(opt.isPresent());
+        assertEquals(valueFactory.createLiteral("Ben"), opt.orElse(null));
 
         final Thing t = thingFactory.getExisting(myIri, model,
                 valueFactory).orElseThrow(() -> new Exception("FAILED TO GET THING THAT WAS JUST CREATED"));
@@ -148,7 +145,7 @@ public class CoreThingApiTest {
     @Test
     public void testOptionalEmpty() {
         Optional<Thing> optional = thingFactory.getExisting(valueFactory.createIRI("urn://doesnotexist.org"), model);
-        TestCase.assertFalse(optional.isPresent());
+        assertFalse(optional.isPresent());
     }
 
     @Test
