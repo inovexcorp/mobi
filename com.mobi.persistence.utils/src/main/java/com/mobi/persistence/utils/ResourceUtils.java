@@ -55,13 +55,12 @@ public class ResourceUtils {
     }
 
     /**
-     * Encodes the passed {@link Resource} using percent encoding for use in a URL.
+     * Encodes the passed {@link Resource} using percent encoding for use in a URL and returns a string.
      *
      * @param resource The {@link Resource} to be encoded.
-     * @param vf The {@link ValueFactory} used to create a Resource.
-     * @return The URL encoded version of the passed Resource.
+     * @return A string of the URL encoded version of the passed Resource.
      */
-    public static Resource encode(Resource resource, ValueFactory vf) {
+    public static String encode(Resource resource) {
         String encoded;
         try {
             encoded = URLEncoder.encode(resource.stringValue(), "UTF-8").replaceAll("%28", "(")
@@ -73,7 +72,7 @@ public class ResourceUtils {
         } catch (UnsupportedEncodingException e) {
             throw new MobiException(e);
         }
-        return vf.createIRI(encoded);
+        return encoded;
     }
 
     /**
@@ -93,16 +92,16 @@ public class ResourceUtils {
     }
 
     /**
-     * Decodes the passed {@link Resource} that is encoded using percent encoding.
+     * Decodes the passed string that is encoded using percent encoding and returns a Resource.
      *
-     * @param resource The {@link Resource} to be decoded.
+     * @param str The string to be decoded.
      * @param vf The {@link ValueFactory} used to create a Resource.
-     * @return The decoded version of the passed URL encoded Resource.
+     * @return The a {@link Resource} decoded version of the passed URL encoded string.
      */
-    public static Resource decode(Resource resource, ValueFactory vf) {
+    public static Resource decode(String str, ValueFactory vf) {
         String decoded;
         try {
-            decoded = URLDecoder.decode(resource.stringValue(), "UTF-8");
+            decoded = URLDecoder.decode(str, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             throw new MobiException(e);
         }

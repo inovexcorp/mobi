@@ -174,14 +174,15 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         RepositoryResult<Statement> results = conn.getStatements(null,
                 valueFactory.createIRI(Policy.relatedResource_IRI), record.getResource());
         if (!results.hasNext()) {
-            LOGGER.info("Could not find policy for record: " + record.getResource().stringValue());
+            LOGGER.info("Could not find policy for record: " + record.getResource().stringValue()
+                    + ". Continuing with record deletion.");
         }
         Resource recordPolicyId = results.next().getSubject();
 
         results = conn.getStatements(null, valueFactory.createIRI(Policy.relatedResource_IRI), recordPolicyId);
         if (!results.hasNext()) {
             LOGGER.info("Could not find policy policy for record: " + record.getResource().stringValue()
-                    + " with a policyId of: " + recordPolicyId.stringValue());
+                    + " with a policyId of: " + recordPolicyId.stringValue() + ". Continuing with record deletion.");
         }
         Resource policyPolicyId = results.next().getSubject();
         xacmlPolicyManager.deletePolicy(recordPolicyId);

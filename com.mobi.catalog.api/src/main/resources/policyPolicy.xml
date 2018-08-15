@@ -49,8 +49,8 @@
             </AnyOf>
         </Target>
     </Rule>
-    <Rule Effect="Permit" RuleId="urn:modify">
-        <Description>Who can modify Policy %POLICYIRI%</Description>
+    <Rule Effect="Permit" RuleId="urn:update">
+        <Description>Who can update Policy %POLICYIRI%</Description>
         <Target>
             <AnyOf>
                 <AllOf>
