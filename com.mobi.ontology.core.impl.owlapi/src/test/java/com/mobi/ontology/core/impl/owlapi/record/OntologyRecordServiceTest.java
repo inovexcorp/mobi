@@ -48,6 +48,7 @@ import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontology.core.api.Ontology;
@@ -62,11 +63,16 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.exception.RepositoryException;
+import com.mobi.security.policy.api.ontologies.policy.Policy;
+import com.mobi.security.policy.api.xacml.XACMLPolicy;
+import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.WriterConfig;
@@ -99,6 +105,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     private final IRI tagIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#tag");
     private final IRI distributionIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/distributions#distribution");
     private final IRI masterBranchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#master");
+    private final IRI recordPolicyIRI = VALUE_FACTORY.createIRI("http://mobi.com/policies/record/encoded-record-policy");
 
     private SimpleOntologyRecordService recordService;
     private OntologyRecord testRecord;
@@ -132,6 +139,12 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     private RepositoryConnection connection;
 
     @Mock
+    private RepositoryResult<Statement> results;
+
+    @Mock
+    private Statement statement;
+
+    @Mock
     private CatalogProvUtils provUtils;
 
     @Mock
@@ -151,6 +164,9 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private VersioningManager versioningManager;
+
+    @Mock
+    private XACMLPolicyManager xacmlPolicyManager;
 
     @Before
     public void setUp() throws Exception {
@@ -215,6 +231,12 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
         doNothing().when(ontologyCache).clearCache(any(Resource.class), any(Resource.class));
         doNothing().when(ontologyCache).clearCacheImports(any(Resource.class));
+        when(xacmlPolicyManager.addPolicy(any(XACMLPolicy.class))).thenReturn(recordPolicyIRI);
+        when(connection.getStatements(eq(null), eq(VALUE_FACTORY.createIRI(Policy.relatedResource_IRI)), any(IRI.class))).thenReturn(results);
+        when(results.hasNext()).thenReturn(true);
+        when(results.next()).thenReturn(statement);
+        when(statement.getSubject()).thenReturn(recordPolicyIRI);
+
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.setOntologyManager(ontologyManager);
@@ -225,6 +247,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         recordService.setOntologyCache(ontologyCache);
         recordService.setVersioningManager(versioningManager);
         recordService.setMergeRequestManager(mergeRequestManager);
+        recordService.setPolicyManager(xacmlPolicyManager);
     }
 
     /* create() */
@@ -280,6 +303,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
                 any(RepositoryConnection.class));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),
                 anyString(), any(Model.class), eq(null));
+        verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
     }
@@ -359,6 +383,15 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     public void deleteRecordRemoveFails() throws Exception {
         doThrow(RepositoryException.class).when(utilsService).removeObject(any(OntologyRecord.class), any(RepositoryConnection.class));
         thrown.expect(RepositoryException.class);
+
+        recordService.delete(testIRI, user, connection);
+        verify(provUtils).removeActivity(any(DeleteActivity.class));
+    }
+
+    @Test
+    public void deleteRecordPolicyDoesNotExist() throws Exception {
+        when(results.hasNext()).thenReturn(false);
+        thrown.expect(MobiException.class);
 
         recordService.delete(testIRI, user, connection);
         verify(provUtils).removeActivity(any(DeleteActivity.class));

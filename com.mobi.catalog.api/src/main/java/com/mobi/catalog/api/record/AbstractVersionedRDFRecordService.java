@@ -37,24 +37,24 @@ import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordExportSettings;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.base.RepositoryResult;
+import com.mobi.rest.util.RestUtils;
+import com.mobi.security.policy.api.ontologies.policy.Policy;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
-import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
+import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -63,15 +63,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
-import javax.xml.bind.JAXB;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 /**
  * Defines functionality for VersionedRDFRecordService. Provides common methods for exporting and deleting a Record.
@@ -87,17 +78,6 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     protected MergeRequestManager mergeRequestManager;
     protected VersioningManager versioningManager;
     protected XACMLPolicyManager xacmlPolicyManager;
-
-    private static String fileLocation;
-    private String filePath;
-
-    static {
-        StringBuilder builder = new StringBuilder(System.getProperty("java.io.tmpdir"));
-        if (!System.getProperty("java.io.tmpdir").endsWith("/")) {
-            builder.append("/");
-        }
-        fileLocation = builder.append("com.mobi.catalog.api/").toString();
-    }
 
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
@@ -123,84 +103,77 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         conn.commit();
         versioningManager.commit(catalogIdIRI, record.getResource(),
                 masterBranchId, user, "The initial commit.", model, null);
-        conn.commit();
         writePolicies(user, record);
         return record;
     }
 
-    //TODO: Write tests to cover this new implementation
+    /**
+     * Creates two policy files for the Record based on default templates. One policy to control who can view and modify
+     * the Record. The other for who can modify the aforementioned policy.
+     *
+     * @param user The user who created the Record and associated Policy files
+     * @param record The record the Policy files control
+     */
     protected void writePolicies(User user, T record) {
         try {
-            /* -- recordPolicy doc -- */
-            String path = copyToTemp("recordPolicy.xml");
-            filePath = "file:" + path;
-            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-            Document recordPolicy = docBuilder.parse(filePath);
-            String str = convertDocumentToString(recordPolicy);
-            str.replaceAll("(%USERIRI%)", user.getResource().stringValue());
-            str.replaceAll("(%RECORDIRI%)", record.getResource().stringValue());
-            //TODO: encode the recordIRI, this isn't done below
-            str.replaceAll("(%RECORDIRIENCODED%)", record.getResource().stringValue());
-            PolicyType recordPolicyType = JAXB.unmarshal(str, PolicyType.class);
-            addPolicy(recordPolicyType);
+            // Record Policy
+            InputStream recordPolicyStream = AbstractVersionedRDFRecordService.class
+                    .getResourceAsStream("/recordPolicy.xml");
+            String recordPolicyTemplate = IOUtils.toString(recordPolicyStream, "UTF-8");
+            String encodedRecordIRI = RestUtils.encode(record.getResource().stringValue());
 
-            /* -- policyPolicy doc -- */
-            String pathPolicy = copyToTemp("policyPolicy.xml");
-            filePath = "file:" + pathPolicy;
-            Document policyPolicy = docBuilder.parse(filePath);
-            String strPolicyPolicy = convertDocumentToString(policyPolicy);
-            strPolicyPolicy.replaceAll("(%USERIRI%)", user.toString());
-            strPolicyPolicy.replaceAll("(%POLICYIRI%)", recordPolicyType.getPolicyId());
-            //TODO: encode the policyIRI, this isn't done below
-            strPolicyPolicy.replaceAll("(%POLICYIRIENCODED%)", record.getResource().stringValue());
-            PolicyType policyPolicyType = JAXB.unmarshal(str, PolicyType.class);
-            addPolicy(policyPolicyType);
+            recordPolicyTemplate = recordPolicyTemplate.replaceAll("%USERIRI%", user.getResource().stringValue())
+                    .replaceAll("%RECORDIRI%", record.getResource().stringValue())
+                    .replaceAll("%RECORDIRIENCODED%", encodedRecordIRI);
+            Resource recordPolicyResource = addPolicy(recordPolicyTemplate);
 
-        } catch (ParserConfigurationException pce) {
-            pce.printStackTrace();
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        } catch (SAXException sae) {
-            sae.printStackTrace();
+            // Policy for the Record Policy
+            InputStream policyPolicyStream = AbstractVersionedRDFRecordService.class
+                    .getResourceAsStream("/policyPolicy.xml");
+            String policyPolicyTemplate = IOUtils.toString(policyPolicyStream, "UTF-8");
+
+            policyPolicyTemplate = policyPolicyTemplate.replaceAll("%USERIRI%", user.getResource().stringValue())
+                    .replaceAll("%POLICYIRI%", recordPolicyResource.stringValue())
+                    .replaceAll("%POLICYIRIENCODED%", encodedRecordIRI);
+            addPolicy(policyPolicyTemplate);
+
+        } catch (IOException e) {
+            throw new MobiException("Error writing record policy.", e);
         }
     }
 
-    private static String convertDocumentToString(Document doc) {
-        TransformerFactory tf = TransformerFactory.newInstance();
-        Transformer transformer;
-        String output = null;
-        try {
-            transformer = tf.newTransformer();
-            StringWriter writer = new StringWriter();
-            transformer.transform(new DOMSource(doc), new StreamResult(writer));
-            output = writer.getBuffer().toString();
-        } catch (TransformerException e) {
-            e.printStackTrace();
+    /**
+     * Uses the {@link XACMLPolicyManager} to add the Policy file to the repository and virtual filesystem.
+     *
+     * @param policyString A string representation of a policy
+     * @return The {@link Resource} of the new Policy
+     */
+    protected Resource addPolicy(String policyString) {
+        XACMLPolicy policy = new XACMLPolicy(policyString, valueFactory);
+        return xacmlPolicyManager.addPolicy(policy);
+    }
+
+    /**
+     * Deletes the two Policy files associated with the provided Record.
+     *
+     * @param record The Record whose policies to delete
+     * @param conn A RepositoryConnection to use for lookup
+     */
+    protected void deletePolicies(T record, RepositoryConnection conn) {
+        RepositoryResult<Statement> results = conn.getStatements(null,
+                valueFactory.createIRI(Policy.relatedResource_IRI), record.getResource());
+        if (!results.hasNext()) {
+            throw new MobiException("Could not find policy for record: " + record.getResource().stringValue());
         }
-        return output;
-    }
+        Resource recordPolicyId = results.next().getSubject();
 
-    private String copyToTemp(String resourceName) throws IOException {
-        String absolutePath = fileLocation + resourceName;
-        Files.copy(getClass().getResourceAsStream("/" + resourceName), Paths.get(absolutePath),
-                StandardCopyOption.REPLACE_EXISTING);
-        return absolutePath;
-    }
-
-    protected Resource addPolicy(PolicyType policyType) {
-        XACMLPolicy xacmlPolicy = xacmlPolicyManager.createPolicy(policyType);
-        return xacmlPolicyManager.addPolicy(xacmlPolicy);
-    }
-
-    protected void deletePolicies(T record) {
-        String recordResourceStr = record.getResource().stringValue();
-        String query = "SELECT * WHERE {?S ?O {" + recordResourceStr +" }}";
-        //use a sparkle query like CatalogManager to get recordp and pp
-        //TODO: write a sparkle query like CatalogManager to get recordpolicy and pp to delete
-        IRI policyId = ;
-        IRI policyPolicyId = ;
-        xacmlPolicyManager.deletePolicy(policyId);
+        results = conn.getStatements(null, valueFactory.createIRI(Policy.relatedResource_IRI), recordPolicyId);
+        if (!results.hasNext()) {
+            throw new MobiException("Could not find policy policy for record: " + record.getResource().stringValue()
+                    + "with a policyId of: " + recordPolicyId.stringValue());
+        }
+        Resource policyPolicyId = results.next().getSubject();
+        xacmlPolicyManager.deletePolicy(recordPolicyId);
         xacmlPolicyManager.deletePolicy(policyPolicyId);
     }
 
@@ -254,7 +227,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     @Override
     protected void deleteRecord(T record, RepositoryConnection conn) {
         deleteRecordObject(record, conn);
-        deletePolicies(record);
+        deletePolicies(record, conn);
         deleteVersionedRDFData(record, conn);
     }
 

@@ -54,6 +54,7 @@ import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordExportSettings;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
@@ -63,14 +64,16 @@ import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.exception.RepositoryException;
+import com.mobi.security.policy.api.ontologies.policy.Policy;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
-import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -101,6 +104,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private final IRI tagIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#tag");
     private final IRI distributionIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/distributions#distribution");
     private final IRI masterBranchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#master");
+    private final IRI recordPolicyIRI = VALUE_FACTORY.createIRI("http://mobi.com/policies/record/encoded-record-policy");
 
     private SimpleVersionedRDFRecordService recordService;
     private SimpleSesameTransformer transformer;
@@ -133,6 +137,12 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private RepositoryConnection connection;
+
+    @Mock
+    private RepositoryResult<Statement> results;
+
+    @Mock
+    private Statement statement;
 
     @Mock
     private CatalogProvUtils provUtils;
@@ -188,8 +198,11 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         when(utilsService.getRevisionChanges(eq(commitIRI), eq(connection))).thenReturn(difference);
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
         doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
-        when(xacmlPolicyManager.createPolicy(any(PolicyType.class))).thenCallRealMethod();
-        when(xacmlPolicyManager.addPolicy(any(XACMLPolicy.class))).thenCallRealMethod();
+        when(xacmlPolicyManager.addPolicy(any(XACMLPolicy.class))).thenReturn(recordPolicyIRI);
+        when(connection.getStatements(eq(null), eq(VALUE_FACTORY.createIRI(Policy.relatedResource_IRI)), any(IRI.class))).thenReturn(results);
+        when(results.hasNext()).thenReturn(true);
+        when(results.next()).thenReturn(statement);
+        when(statement.getSubject()).thenReturn(recordPolicyIRI);
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.setVersioningManager(versioningManager);
@@ -222,6 +235,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
                 any(RepositoryConnection.class));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),
                 anyString(), any(Model.class), eq(null));
+        verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
     }
@@ -307,6 +321,15 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     public void deleteRecordRemoveFails() throws Exception {
         doThrow(RepositoryException.class).when(utilsService).removeObject(any(VersionedRDFRecord.class), any(RepositoryConnection.class));
         thrown.expect(RepositoryException.class);
+
+        recordService.delete(testIRI, user, connection);
+        verify(provUtils).removeActivity(any(DeleteActivity.class));
+    }
+
+    @Test
+    public void deleteRecordPolicyDoesNotExist() throws Exception {
+        when(results.hasNext()).thenReturn(false);
+        thrown.expect(MobiException.class);
 
         recordService.delete(testIRI, user, connection);
         verify(provUtils).removeActivity(any(DeleteActivity.class));
