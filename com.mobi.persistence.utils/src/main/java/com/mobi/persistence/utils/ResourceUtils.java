@@ -24,6 +24,8 @@ package com.mobi.persistence.utils;
  */
 
 import com.mobi.exception.MobiException;
+import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.ValueFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -53,6 +55,28 @@ public class ResourceUtils {
     }
 
     /**
+     * Encodes the passed {@link Resource} using percent encoding for use in a URL.
+     *
+     * @param resource The {@link Resource} to be encoded.
+     * @param vf The {@link ValueFactory} used to create a Resource.
+     * @return The URL encoded version of the passed Resource.
+     */
+    public static Resource encode(Resource resource, ValueFactory vf) {
+        String encoded;
+        try {
+            encoded = URLEncoder.encode(resource.stringValue(), "UTF-8").replaceAll("%28", "(")
+                    .replaceAll("%29", ")")
+                    .replaceAll("\\+", "%20")
+                    .replaceAll("%27", "'")
+                    .replaceAll("%21", "!")
+                    .replaceAll("%7E", "~");
+        } catch (UnsupportedEncodingException e) {
+            throw new MobiException(e);
+        }
+        return vf.createIRI(encoded);
+    }
+
+    /**
      * Decodes the passed string that is encoded using percent encoding.
      *
      * @param str The string to be decoded.
@@ -66,5 +90,22 @@ public class ResourceUtils {
             throw new MobiException(e);
         }
         return decoded;
+    }
+
+    /**
+     * Decodes the passed {@link Resource} that is encoded using percent encoding.
+     *
+     * @param resource The {@link Resource} to be decoded.
+     * @param vf The {@link ValueFactory} used to create a Resource.
+     * @return The decoded version of the passed URL encoded Resource.
+     */
+    public static Resource decode(Resource resource, ValueFactory vf) {
+        String decoded;
+        try {
+            decoded = URLDecoder.decode(resource.stringValue(), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new MobiException(e);
+        }
+        return vf.createIRI(decoded);
     }
 }

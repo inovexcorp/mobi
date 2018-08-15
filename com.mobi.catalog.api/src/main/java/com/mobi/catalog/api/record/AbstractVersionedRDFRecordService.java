@@ -52,6 +52,9 @@ import com.mobi.security.policy.api.ontologies.policy.Policy;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -72,6 +75,13 @@ import javax.annotation.Nonnull;
  */
 public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRecord>
         extends AbstractRecordService<T> implements RecordService<T> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractVersionedRDFRecordService.class);
+    private static final String USER_IRI_BINDING = "%USERIRI%";
+    private static final String RECORD_IRI_BINDING = "%RECORDIRI%";
+    private static final String ENCODED_RECORD_IRI_BINDING = "%RECORDIRIENCODED%";
+    private static final String POLICY_IRI_BINDING = "%POLICYIRI%";
+    private static final String ENCODED_POLICY_IRI_BINDING = "%POLICYIRIENCODED%";
 
     protected CommitFactory commitFactory;
     protected BranchFactory branchFactory;
@@ -119,23 +129,24 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             // Record Policy
             InputStream recordPolicyStream = AbstractVersionedRDFRecordService.class
                     .getResourceAsStream("/recordPolicy.xml");
-            String recordPolicyTemplate = IOUtils.toString(recordPolicyStream, "UTF-8");
             String encodedRecordIRI = ResourceUtils.encode(record.getResource().stringValue());
 
-            recordPolicyTemplate = recordPolicyTemplate.replaceAll("%USERIRI%", user.getResource().stringValue())
-                    .replaceAll("%RECORDIRI%", record.getResource().stringValue())
-                    .replaceAll("%RECORDIRIENCODED%", encodedRecordIRI);
-            Resource recordPolicyResource = addPolicy(recordPolicyTemplate);
+            String[] search = {USER_IRI_BINDING, RECORD_IRI_BINDING, ENCODED_RECORD_IRI_BINDING};
+            String[] replace = {user.getResource().stringValue(), record.getResource().stringValue(), encodedRecordIRI};
+            String recordPolicy = StringUtils.replaceEach(IOUtils.toString(recordPolicyStream, "UTF-8"),
+                    search, replace);
+
+            Resource recordPolicyResource = addPolicy(recordPolicy);
 
             // Policy for the Record Policy
+            search[1] = POLICY_IRI_BINDING;
+            search[2] = ENCODED_POLICY_IRI_BINDING;
+            replace[1] = recordPolicyResource.stringValue();
             InputStream policyPolicyStream = AbstractVersionedRDFRecordService.class
                     .getResourceAsStream("/policyPolicy.xml");
-            String policyPolicyTemplate = IOUtils.toString(policyPolicyStream, "UTF-8");
-
-            policyPolicyTemplate = policyPolicyTemplate.replaceAll("%USERIRI%", user.getResource().stringValue())
-                    .replaceAll("%POLICYIRI%", recordPolicyResource.stringValue())
-                    .replaceAll("%POLICYIRIENCODED%", encodedRecordIRI);
-            addPolicy(policyPolicyTemplate);
+            String policyPolicy = StringUtils.replaceEach(IOUtils.toString(policyPolicyStream, "UTF-8"),
+                    search, replace);
+            addPolicy(policyPolicy);
 
         } catch (IOException e) {
             throw new MobiException("Error writing record policy.", e);
@@ -163,14 +174,14 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         RepositoryResult<Statement> results = conn.getStatements(null,
                 valueFactory.createIRI(Policy.relatedResource_IRI), record.getResource());
         if (!results.hasNext()) {
-            throw new MobiException("Could not find policy for record: " + record.getResource().stringValue());
+            LOGGER.info("Could not find policy for record: " + record.getResource().stringValue());
         }
         Resource recordPolicyId = results.next().getSubject();
 
         results = conn.getStatements(null, valueFactory.createIRI(Policy.relatedResource_IRI), recordPolicyId);
         if (!results.hasNext()) {
-            throw new MobiException("Could not find policy policy for record: " + record.getResource().stringValue()
-                    + "with a policyId of: " + recordPolicyId.stringValue());
+            LOGGER.info("Could not find policy policy for record: " + record.getResource().stringValue()
+                    + " with a policyId of: " + recordPolicyId.stringValue());
         }
         Resource policyPolicyId = results.next().getSubject();
         xacmlPolicyManager.deletePolicy(recordPolicyId);

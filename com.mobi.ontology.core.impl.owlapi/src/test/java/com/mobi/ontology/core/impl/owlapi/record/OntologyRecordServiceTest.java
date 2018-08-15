@@ -387,13 +387,4 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         recordService.delete(testIRI, user, connection);
         verify(provUtils).removeActivity(any(DeleteActivity.class));
     }
-
-    @Test
-    public void deleteRecordPolicyDoesNotExist() throws Exception {
-        when(results.hasNext()).thenReturn(false);
-        thrown.expect(MobiException.class);
-
-        recordService.delete(testIRI, user, connection);
-        verify(provUtils).removeActivity(any(DeleteActivity.class));
-    }
 }

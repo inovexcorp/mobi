@@ -326,15 +326,6 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         verify(provUtils).removeActivity(any(DeleteActivity.class));
     }
 
-    @Test
-    public void deleteRecordPolicyDoesNotExist() throws Exception {
-        when(results.hasNext()).thenReturn(false);
-        thrown.expect(MobiException.class);
-
-        recordService.delete(testIRI, user, connection);
-        verify(provUtils).removeActivity(any(DeleteActivity.class));
-    }
-
     /* export() */
 
     @Test
