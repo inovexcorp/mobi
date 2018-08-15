@@ -41,13 +41,13 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
+import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
-import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.ontologies.policy.Policy;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
@@ -120,7 +120,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             InputStream recordPolicyStream = AbstractVersionedRDFRecordService.class
                     .getResourceAsStream("/recordPolicy.xml");
             String recordPolicyTemplate = IOUtils.toString(recordPolicyStream, "UTF-8");
-            String encodedRecordIRI = RestUtils.encode(record.getResource().stringValue());
+            String encodedRecordIRI = ResourceUtils.encode(record.getResource().stringValue());
 
             recordPolicyTemplate = recordPolicyTemplate.replaceAll("%USERIRI%", user.getResource().stringValue())
                     .replaceAll("%RECORDIRI%", record.getResource().stringValue())

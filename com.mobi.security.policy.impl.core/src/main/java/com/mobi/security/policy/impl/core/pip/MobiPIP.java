@@ -23,7 +23,7 @@ package com.mobi.security.policy.impl.core.pip;
  * #L%
  */
 
-import static com.mobi.rest.util.RestUtils.decode;
+import static com.mobi.persistence.utils.ResourceUtils.decode;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
