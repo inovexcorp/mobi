@@ -14,8 +14,10 @@
     .flex-container {
         .conflict {
             cursor: pointer;
-            // flex: 1;
 
+            .value-header .text {
+                max-width: none;
+            }
             h5 {
                 padding: 8px;
             }

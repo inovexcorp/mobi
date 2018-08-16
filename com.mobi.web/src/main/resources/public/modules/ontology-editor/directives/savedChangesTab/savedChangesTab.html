@@ -35,8 +35,8 @@
                 <div class="changes h-100" ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length">
                     <div class="property-values" ng-repeat="item in dvm.showList">
                         <div ng-click="isClosed = !isClosed" class="value-header d-flex align-items-center clearfix">
-                            <p class="text">{{dvm.util.getBeautifulIRI(item.id)}}</p>
-                            <small class="ml-1 text-truncate"><a ng-click="dvm.go($event, item.id)">{{item.id}}</a></small>
+                            <p class="text" tile="{{item.id}}">{{dvm.util.getBeautifulIRI(item.id)}}</p>
+                            <small class="ml-1 text-muted"><a ng-click="dvm.go($event, item.id)">{{item.id}}</a></small>
                             <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
                         </div>
                         <div class="value-container" ng-hide="isClosed">

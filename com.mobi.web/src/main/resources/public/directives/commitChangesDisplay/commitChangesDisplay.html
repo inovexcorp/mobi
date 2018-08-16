@@ -23,7 +23,7 @@
 <div class="commit-changes-display">
     <div class="property-values" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
         <div ng-click="isClosed = !isClosed" class="clearfix value-header d-flex align-items-center">
-            <p class="text">{{dvm.ontoUtils.getLabelForIRI(key)}}</p>
+            <p class="text" title="{{key}}">{{dvm.ontoUtils.getLabelForIRI(key)}}</p>
             <small class="text-muted ml-1">&lt;{{key}}&gt;</small>
             <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
         </div>

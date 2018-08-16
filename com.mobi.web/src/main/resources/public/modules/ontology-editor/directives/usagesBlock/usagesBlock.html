@@ -27,7 +27,7 @@
             <div class="property-values" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
                 <div ng-click="isClosed = !isClosed" class="value-header d-flex align-items-center clearfix">
                     <p class="text">{{dvm.ontoUtils.getLabelForIRI(key)}}</p>
-                    <small class="ml-1">&lt;{{key}}&gt;</small>
+                    <small class="ml-1 text-muted">&lt;{{key}}&gt;</small>
                     <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
                 </div>
                 <div class="value-container" ng-repeat="statement in value" ng-hide="isClosed">

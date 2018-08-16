@@ -22,8 +22,8 @@
   -->
 <div class="property-values">
     <div ng-click="isClosed = !isClosed" class="value-header d-flex align-items-center clearfix">
-        <p class="text">{{dvm.os.getEntityNameByIndex(property, dvm.os.listItem)}}</p>
-        <small class="ml-1">&lt;{{property}}&gt;</small>
+        <p class="text" title="{{property}}">{{dvm.os.getEntityNameByIndex(property, dvm.os.listItem)}}</p>
+        <small class="ml-1 text-muted ">&lt;{{property}}&gt;</small>
         <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
     </div>
     <div class="value-container" ng-repeat="value in entity[property]" ng-hide="isClosed">

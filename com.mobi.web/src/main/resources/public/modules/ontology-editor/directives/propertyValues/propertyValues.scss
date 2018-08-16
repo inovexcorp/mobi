@@ -19,10 +19,11 @@
         .text {
             margin: 0;
             @include textOverflow;
-
-            small {
-                font-size: .875em;
-            }
+            max-width: 75%;
+        }
+        small {
+            flex: 1;
+            @include textOverflow;
         }
         i.fa {
             position: absolute;
