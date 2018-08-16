@@ -46,9 +46,9 @@
          */
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService'];
+        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService', 'uuid'];
 
-        function ontologyStateService($timeout, $q, $filter, $document, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService) {
+        function ontologyStateService($timeout, $q, $filter, $document, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService, uuid) {
             var self = this;
             var om = ontologyManagerService;
             var pm = propertyManagerService;
@@ -280,9 +280,11 @@
             self.getOntology = function(recordId, rdfFormat = 'jsonld') {
                 var state = sm.getOntologyStateByRecordId(recordId);
                 if (!_.isEmpty(state)) {
+                    var record = _.find(state.model, {'@type': ['http://mobi.com/states/ontology-editor/state-record']});
                     var inProgressCommit = emptyInProgressCommit;
-                    var branchId = _.get(state, "model[0]['" + prefixes.ontologyState + "branch'][0]['@id']");
-                    var commitId = _.get(state, "model[0]['" + prefixes.ontologyState + "commit'][0]['@id']");
+                    var branchId = util.getPropertyId(record, prefixes.ontologyState + 'currentBranch');
+                    var branch = _.find(state.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
+                    var commitId = util.getPropertyId(branch, prefixes.ontologyState + 'commit');
                     var upToDate = false;
                     return cm.getRecordBranch(branchId, recordId, catalogId)
                         .then(branch => {
@@ -851,6 +853,7 @@
                 _.remove(self.list, { ontologyRecord: { recordId }});
             }
             self.removeBranch = function(recordId, branchId) {
+                sm.deleteOntologyBranch(recordId, branchId);
                 _.remove(self.getListItemByRecordId(recordId).branches, {'@id': branchId});
             }
             self.afterSave = function() {
@@ -861,6 +864,9 @@
                         self.listItem.additions = [];
                         self.listItem.deletions = [];
 
+                        return _.isEqual(inProgressCommit, emptyInProgressCommit) ? cm.deleteInProgressCommit(self.listItem.ontologyRecord.recordId, catalogId) : $q.when();
+                    }, $q.reject)
+                    .then(() => {
                         _.forOwn(self.listItem.editorTabStates, (value, key) => {
                             _.unset(value, 'usages');
                         });
@@ -1126,7 +1132,17 @@
                 }
             }
             self.getDefaultPrefix = function() {
-                return _.replace(_.get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + _.get(self.listItem, 'iriThen', '#');
+                var prefixIri = _.replace(_.get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + _.get(self.listItem, 'iriThen', '#');
+                if (om.isBlankNodeId(prefixIri)) {
+                    var nonBlankNodeId = _.find(_.keys(self.listItem.index), iri => !om.isBlankNodeId(iri));
+                    if (nonBlankNodeId) {
+                        var split = $filter('splitIRI')(nonBlankNodeId);
+                        prefixIri = split.begin + split.then;
+                    } else {
+                        prefixIri = 'https://mobi.com/blank-node-namespace/' + uuid.v4() + '#';
+                    }
+                }
+                return prefixIri;
             }
             self.getOntologiesArray = function() {
                 return getOntologiesArrayByListItem(self.listItem);

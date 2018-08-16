@@ -43,7 +43,6 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Difference;
@@ -51,7 +50,8 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -60,7 +60,6 @@ import com.mobi.ontology.core.api.NamedIndividual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
 import com.mobi.ontology.core.api.classexpression.OClass;
 import com.mobi.ontology.core.api.datarange.Datatype;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
@@ -75,11 +74,8 @@ import com.mobi.ontology.core.impl.owlapi.datarange.SimpleDatatype;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleAnnotationProperty;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
-import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
-import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
@@ -89,9 +85,11 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.core.SimpleRepositoryManager;
+import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import com.mobi.repository.impl.sesame.query.TestQueryResult;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
@@ -101,11 +99,13 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -135,9 +135,14 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 public class OntologyRestImplTest extends MobiRestTestNg {
+    private OntologyRestImpl rest;
+    private RepositoryManager repoManager;
 
     @Mock
     private OntologyManager ontologyManager;
+
+    @Mock
+    private CatalogConfigProvider configProvider;
 
     @Mock
     private CatalogManager catalogManager;
@@ -167,19 +172,11 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private OntologyCache ontologyCache;
 
     @Mock
-    private VersioningManager versioningManager;
-
-    @Mock
     private Cache<String, Ontology> mockCache;
-
-    @Mock
-    private CatalogProvUtils provUtils;
 
     private ModelFactory mf;
     private ValueFactory vf;
     private OrmFactory<OntologyRecord> ontologyRecordFactory;
-    private CreateActivity createActivity;
-    private DeleteActivity deleteActivity;
     private IRI catalogId;
     private IRI recordId;
     private OntologyRecord record;
@@ -222,37 +219,31 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private JSONArray importedOntologyResults;
     private OutputStream ontologyJsonLd;
     private OutputStream importedOntologyJsonLd;
+    private Repository repo;
     private static String INVALID_JSON = "{id: 'invalid";
     private IRI missingIRI;
 
     @Override
     protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
-
-        RepositoryManager repoManager = new SimpleRepositoryManager();
+        repoManager = new SimpleRepositoryManager();
 
         mf = getModelFactory();
         vf = getValueFactory();
+
+        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo.initialize();
+
+        InputStream testData = getClass().getResourceAsStream("/testOntologyData.trig");
+        try (RepositoryConnection connection = repo.getConnection()) {
+            connection.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+        }
 
         ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
         OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
         OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
         OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
         OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
-        OrmFactory<CreateActivity> createActivityFactory = getRequiredOrmFactory(CreateActivity.class);
-        OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
-
-        OntologyRestImpl rest = new OntologyRestImpl();
-        rest.setModelFactory(mf);
-        rest.setValueFactory(vf);
-        rest.setOntologyManager(ontologyManager);
-        rest.setCatalogManager(catalogManager);
-        rest.setEngineManager(engineManager);
-        rest.setSesameTransformer(sesameTransformer);
-        rest.setOntologyCache(ontologyCache);
-        rest.setVersioningManager(versioningManager);
-        rest.setProvUtils(provUtils);
-        rest.setRepositoryManager(repoManager);
 
         catalogId = vf.createIRI("http://mobi.com/catalog");
         recordId = vf.createIRI("http://mobi.com/record");
@@ -312,6 +303,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         individualsOfResult = getResource("/individuals-of-results.json");
         basicHierarchyResults = getResource("/basic-hierarchy.json");
 
+        record.setOntologyIRI(ontologyIRI);
         missingIRI = vf.createIRI("http://mobi.com/missing");
         Resource class1b = vf.createIRI("http://mobi.com/ontology#Class1b");
         IRI subClassOf = vf.createIRI("http://www.w3.org/2000/01/rdf-schema#subClassOf");
@@ -320,8 +312,19 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         IRI type = vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
         constructs = mf.createModel(Stream.of(vf.createStatement(class1b, subClassOf, class1a), vf.createStatement(individual1a, type, class1a)).collect(Collectors.toSet()));
         failedImports = Collections.singleton(importedOntologyIRI);
-        createActivity = createActivityFactory.createNew(vf.createIRI("http://test.org/activity/create"));
-        deleteActivity = deleteActivityFactory.createNew(vf.createIRI("http://test.org/activity/delete"));
+
+        when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
+        when(configProvider.getRepository()).thenReturn(repo);
+
+        rest = new OntologyRestImpl();
+        rest.setModelFactory(mf);
+        rest.setValueFactory(vf);
+        rest.setOntologyManager(ontologyManager);
+        rest.setConfigProvider(configProvider);
+        rest.setCatalogManager(catalogManager);
+        rest.setEngineManager(engineManager);
+        rest.setSesameTransformer(sesameTransformer);
+        rest.setOntologyCache(ontologyCache);
 
         return new ResourceConfig()
                 .register(rest)
@@ -336,14 +339,13 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
+        rest.setRepositoryManager(repoManager);
         final IRI skosSemanticRelation = vf.createIRI(SKOS.SEMANTIC_RELATION.stringValue());
 
         when(results.getPage()).thenReturn(Collections.emptyList());
         when(results.getPageNumber()).thenReturn(0);
         when(results.getPageSize()).thenReturn(0);
         when(results.getTotalSize()).thenReturn(0);
-
-        when(versioningManager.commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitId);
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 
@@ -378,7 +380,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(importedOntology.asJsonLD(anyBoolean())).thenReturn(importedOntologyJsonLd);
         when(importedOntology.getImportsClosure()).thenReturn(Collections.singleton(importedOntology));
 
-        when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogId);
         when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(results);
         when(catalogManager.getRecord(eq(catalogId), eq(recordId), any(OntologyRecordFactory.class))).thenReturn(Optional.of(record));
         when(catalogManager.removeRecord(catalogId, recordId, ontologyRecordFactory)).thenReturn(record);
@@ -388,12 +389,11 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(catalogManager.createCommit(eq(inProgressCommit), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
         when(catalogManager.applyInProgressCommit(eq(inProgressCommitId), any(Model.class))).thenReturn(mf.createModel());
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
+        when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class))).thenReturn(record);
 
-        when(ontologyManager.createOntologyRecord(any(OntologyRecordConfig.class))).thenReturn(record);
         when(ontologyManager.createOntology(any(FileInputStream.class), anyBoolean())).thenReturn(ontology);
         when(ontologyManager.createOntology(anyString(), anyBoolean())).thenReturn(ontology);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
-        when(ontologyManager.deleteOntology(eq(recordId))).thenReturn(record);
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class))).thenReturn(Optional.of(ontology));
         when(ontologyManager.retrieveOntology(recordId)).thenReturn(Optional.of(ontology));
@@ -449,15 +449,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         entityUsagesConstruct = modelToJsonld(constructs, sesameTransformer);
 
         when(ontologyCache.getOntologyCache()).thenReturn(Optional.of(mockCache));
-
-        when(provUtils.startCreateActivity(any(User.class))).thenReturn(createActivity);
-        when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
     }
 
     @AfterMethod
     public void resetMocks() {
-        reset(engineManager, versioningManager, ontologyId, ontology, importedOntologyId, importedOntology,
-                catalogManager, ontologyManager, sesameTransformer, results, mockCache, ontologyCache, provUtils);
+        reset(engineManager, ontologyId, ontology, importedOntologyId, importedOntology,
+                catalogManager, ontologyManager, sesameTransformer, results, mockCache, ontologyCache);
     }
 
     private JSONObject getResource(String path) throws Exception {
@@ -599,6 +596,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .thenReturn(Optional.empty());
     }
 
+    private void assertCreatedOntologyIRI(JSONObject responseObject) {
+        String ontologyId = responseObject.optString("ontologyId");
+        assertNotNull(ontologyId);
+        assertEquals(ontologyId, ontologyIRI.stringValue());
+    }
+
     private JSONObject getResponse(Response response) {
         return JSONObject.fromObject(response.readEntity(String.class));
     }
@@ -666,20 +669,10 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
-
         assertEquals(response.getStatus(), 201);
+        assertCreatedOntologyIRI(getResponse(response));
+        verify(catalogManager).createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class));
         assertGetUserFromContext();
-        verify(ontologyManager).createOntology(any(FileInputStream.class), eq(false));
-        verify(ontology, atLeastOnce()).getOntologyId();
-        verify(ontologyId).getOntologyIdentifier();
-        verify(ontologyId).getOntologyIRI();
-        verify(catalogManager, atLeastOnce()).getLocalCatalogIRI();
-        verify(ontologyManager).createOntologyRecord(any(OntologyRecordConfig.class));
-        verify(catalogManager).addRecord(catalogId, record);
-        verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
-        verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(createActivity, record.getResource());
     }
 
     @Test
@@ -692,92 +685,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
-
         assertEquals(response.getStatus(), 400);
-        verify(provUtils, times(0)).startCreateActivity(user);
-    }
-
-    @Test
-    public void testUploadFileWithoutFile() {
-        FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("title", "title");
-        fd.field("description", "description");
-        fd.field("keywords", "keyword1");
-        fd.field("keywords", "keyword2");
-
-        Response response = target().path("ontologies").request().post(Entity.entity(fd,
-                MediaType.MULTIPART_FORM_DATA));
-
-        assertEquals(response.getStatus(), 400);
-        verify(provUtils, times(0)).startCreateActivity(user);
-    }
-
-    @Test
-    public void testUploadInvalidOntologyFile() {
-        // Setup:
-        when(ontologyManager.createOntology(any(FileInputStream.class), anyBoolean()))
-                .thenThrow(new MobiOntologyException("Error"));
-
-        FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/search-results.json"),
-                MediaType.APPLICATION_OCTET_STREAM_TYPE);
-        fd.field("title", "title");
-        fd.field("description", "description");
-        fd.field("keywords", "keyword1");
-        fd.field("keywords", "keyword2");
-
-        Response response = target().path("ontologies").request().post(Entity.entity(fd,
-                MediaType.MULTIPART_FORM_DATA));
-
-        assertEquals(response.getStatus(), 500);
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(createActivity);
-    }
-
-    @Test
-    public void testUploadExistingOntologyFile() {
-        // Setup:
-        when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(true);
-        record.setOntologyIRI(ontologyIRI);
-        when(results.getPage()).thenReturn(Collections.singletonList(record));
-        FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
-        fd.field("title", "title");
-        fd.field("description", "description");
-        fd.field("keywords", "keyword1");
-        fd.field("keywords", "keyword2");
-
-        Response response = target().path("ontologies").request().post(Entity.entity(fd,
-                MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(createActivity);
-    }
-
-    @Test
-    public void  testUploadFileCommitFail() {
-        // Setup:
-        when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString(), any(Model.class), any(Model.class))).thenThrow(new IllegalStateException());
-        FormDataMultiPart fd = new FormDataMultiPart();
-        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
-        fd.field("title", "title");
-        fd.field("description", "description");
-        fd.field("keywords", "keyword1");
-        fd.field("keywords", "keyword2");
-
-        Response response = target().path("ontologies").request().post(Entity.entity(fd,
-                MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 500);
-        assertGetUserFromContext();
-        verify(ontologyManager).createOntology(any(FileInputStream.class), eq(false));
-        verify(catalogManager, atLeastOnce()).getLocalCatalogIRI();
-        verify(ontologyManager).createOntologyRecord(any(OntologyRecordConfig.class));
-        verify(catalogManager).addRecord(catalogId, record);
-        verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
-        verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(createActivity);
-        verify(ontologyManager).deleteOntology(recordId);
     }
 
     // Test upload ontology json
@@ -789,20 +697,10 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies").queryParam("title", "title")
                 .queryParam("description", "description").queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
                 .request().post(Entity.json(ontologyJson));
-
         assertEquals(response.getStatus(), 201);
+        verify(catalogManager).createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class));
+        assertCreatedOntologyIRI(getResponse(response));
         assertGetUserFromContext();
-        verify(ontologyManager).createOntology(ontologyJson.toString(), false);
-        verify(ontology, atLeastOnce()).getOntologyId();
-        verify(ontologyId).getOntologyIdentifier();
-        verify(ontologyId).getOntologyIRI();
-        verify(catalogManager, atLeastOnce()).getLocalCatalogIRI();
-        verify(ontologyManager).createOntologyRecord(any(OntologyRecordConfig.class));
-        verify(catalogManager).addRecord(catalogId, record);
-        verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
-        verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(createActivity, record.getResource());
     }
 
     @Test
@@ -813,7 +711,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
                 .request().post(Entity.json(entity));
         assertEquals(response.getStatus(), 400);
-        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
@@ -823,36 +720,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .queryParam("keywords", "keyword2")
                 .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
-        verify(provUtils, times(0)).startCreateActivity(user);
-    }
-
-    @Test
-    public void testUploadInvalidOntologyJson() {
-        when(ontologyManager.createOntology(anyString(), anyBoolean())).thenThrow(new MobiOntologyException("Error"));
-        JSONObject entity = new JSONObject().element("@id", "http://mobi.com/entity");
-
-        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
-                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
-        assertEquals(response.getStatus(), 500);
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(createActivity);
-    }
-
-    @Test
-    public void testUploadExistingOntologyJson() {
-        // Setup:
-        when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(true);
-        record.setOntologyIRI(ontologyIRI);
-        when(results.getPage()).thenReturn(Collections.singletonList(record));
-        JSONObject ontologyJson = new JSONObject().element("@id", "http://mobi.com/ontology");
-
-        Response response = target().path("ontologies").queryParam("title", "title")
-                .queryParam("description", "description")
-                .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
-                .request().post(Entity.json(ontologyJson));
-        assertEquals(response.getStatus(), 400);
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(createActivity);
     }
 
     // Test get ontology
@@ -4179,14 +4046,13 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
 
         assertEquals(response.getStatus(), 200);
-        verify(ontologyManager).deleteOntology(recordId);
-        verify(provUtils).startDeleteActivity(user, recordId);
-        verify(provUtils).endDeleteActivity(deleteActivity, record);
+        verify(catalogManager).deleteRecord(eq(user), eq(recordId), eq(OntologyRecord.class));
     }
 
     @Test
     public void testDeleteOntologyError() {
-        Mockito.doThrow(new MobiException("I'm an exception!")).when(ontologyManager).deleteOntology(eq(recordId));
+        Mockito.doThrow(new MobiException("I'm an exception!")).when(catalogManager)
+                .deleteRecord(eq(user), eq(recordId), eq(OntologyRecord.class));
         Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
 
         assertEquals(response.getStatus(), 500);
@@ -4209,7 +4075,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .queryParam("branchId", branchId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 500);
-        verify(ontologyManager, times(0)).deleteOntology(any());
+        verify(catalogManager, times(0)).deleteRecord(any(), any(), any());
     }
 
     // Test upload changes
@@ -4290,8 +4156,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testUploadChangesToOntologyWithExistingInProgressCommit() {
-        when(catalogManager.getInProgressCommit(eq(catalogManager.getLocalCatalogIRI()), eq(recordId), any(User.class)))
-                .thenReturn(Optional.of(inProgressCommit));
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId), any(User.class))).thenReturn(Optional.of(inProgressCommit));
 
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("file", getClass().getResourceAsStream("/search-results.json"), MediaType.APPLICATION_OCTET_STREAM_TYPE);

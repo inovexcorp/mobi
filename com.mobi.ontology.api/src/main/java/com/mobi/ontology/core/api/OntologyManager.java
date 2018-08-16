@@ -23,9 +23,7 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
 import com.mobi.ontology.core.utils.MobiOntologyCreationException;
-import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -39,14 +37,6 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 
 public interface OntologyManager {
-
-    /**
-     * Creates a new OntologyRecord using the provided OntologyRecordConfig.
-     *
-     * @param config the configuration to use when creating the OntologyRecord
-     * @return a OntologyRecord
-     */
-    OntologyRecord createOntologyRecord(OntologyRecordConfig config);
 
     /**
      * Creates a new Ontology Object using the provided OntologyId.
@@ -166,16 +156,6 @@ public interface OntologyManager {
                                         @Nonnull Resource commitId);
 
     /**
-     * Deletes the OntologyRecord and all associated Catalog elements with the given recordId, and returns true if
-     * successfully removed.
-     *
-     * @param recordId the record id for the OntologyRecord you want to delete.
-     * @return The OntologyRecord that was deleted.
-     * @throws IllegalArgumentException - the OntologyRecord can't be retrieved.
-     */
-    OntologyRecord deleteOntology(@Nonnull Resource recordId);
-
-    /**
      * Deletes a branch associated with an OntologyRecord.
      *
      * @param recordId The record id for the OntologyRecord which contains the Branch you want to delete.
@@ -267,7 +247,6 @@ public interface OntologyManager {
      * {@link RepositoryConnection}. It will provide <em>all</em> properties that can be traced back to the provided
      * property IRI, even if nested.
      *
-     * @param ontology The {@link Ontology} you wish to query.
      * @param iri      The {@link IRI} of the property for which you want the list of subproperties.
      * @param conn     the {@link RepositoryConnection} to run the query on.
      * @return a {@link TupleQueryResult} with the query results.

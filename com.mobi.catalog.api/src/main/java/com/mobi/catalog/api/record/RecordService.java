@@ -26,7 +26,7 @@ package com.mobi.catalog.api.record;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
 
 public interface RecordService<T extends Record> {
@@ -46,21 +46,31 @@ public interface RecordService<T extends Record> {
     String getTypeIRI();
 
     /**
+     * Creates and adds a Record based on a provided configuration.
+     *
+     * @param user The {@link User} that is creating the Record
+     * @param config A {@link RecordOperationConfig} that contains the create configuration
+     * @param conn A {@link RepositoryConnection} to the repo where the Record exists
+     * @return The created Record
+     */
+    T create(User user, RecordOperationConfig config, RepositoryConnection conn);
+
+    /**
      * Deletes a Record from a Catalog and creates a provenance event for the activity based on the provided user.
      *
-     * @param recordId A {@link IRI} of the Record to delete
+     * @param recordId A {@link Resource} of the Record to delete
      * @param user The {@link User} that is deleting the Record
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      * @return The deleted Record
      */
-    T delete(IRI recordId, User user, RepositoryConnection conn);
+    T delete(Resource recordId, User user, RepositoryConnection conn);
 
     /**
      * Exports a given Record based on a provided configuration.
      *
-     * @param iriRecord An {@link IRI} of the record to be exported
-     * @param config A {@link RecordOperationConfig} that contains the export configuration.
+     * @param iriRecord An {@link Resource} of the record to be exported
+     * @param config A {@link RecordOperationConfig} that contains the export configuration
      * @param conn A {@link RepositoryConnection} to the repo where the Record exists
      */
-    void export(IRI iriRecord, RecordOperationConfig config, RepositoryConnection conn);
+    void export(Resource iriRecord, RecordOperationConfig config, RepositoryConnection conn);
 }

@@ -31,6 +31,7 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
+import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
@@ -825,10 +826,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         final List<Resource> commonCommits = new ArrayList<>(sourceCommits);
         commonCommits.retainAll(targetCommits);
 
-        if (commonCommits.size() == 0) {
-            throw new IllegalArgumentException("No common parent between Commit " + sourceCommitId + " and "
-                    + targetCommitId);
-        }
         sourceCommits.removeAll(commonCommits);
 
         if (!asc) {
