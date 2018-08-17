@@ -29,14 +29,13 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import org.junit.Before;
-import org.junit.Test;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -55,6 +54,7 @@ public class OrmFactoryRegistryImplTest {
     private IRI aIRI;
     private IRI bIRI;
     private IRI cIRI;
+    private IRI dIRI;
     private IRI errorIRI;
     private interface A extends Thing {
         String TYPE = "http://example.com/A";
@@ -65,6 +65,9 @@ public class OrmFactoryRegistryImplTest {
     private interface C extends Thing, B {
         String TYPE = "http://example.com/C";
     }
+    private interface D extends Thing, A {
+        String TYPE = "http://example.com/D";
+    }
     private interface Error extends Thing {
         String TYPE = "http://example.com/error";
     }
@@ -72,6 +75,7 @@ public class OrmFactoryRegistryImplTest {
     static abstract class AImpl implements A, Thing {}
     static abstract class BImpl implements B, A, Thing {}
     static abstract class CImpl implements C, B, A, Thing {}
+    static abstract class DImpl implements D, A, Thing {}
 
     @Mock
     private OrmFactory<A> aFactory;
@@ -82,6 +86,9 @@ public class OrmFactoryRegistryImplTest {
     @Mock
     private OrmFactory<C> cFactory;
 
+    @Mock
+    private OrmFactory<D> dFactory;
+
     @Before
     public void setUp() throws Exception {
         thingFactory.setValueFactory(vf);
@@ -89,6 +96,7 @@ public class OrmFactoryRegistryImplTest {
         aIRI = vf.createIRI(A.TYPE);
         bIRI = vf.createIRI(B.TYPE);
         cIRI = vf.createIRI(C.TYPE);
+        dIRI = vf.createIRI(D.TYPE);
         errorIRI = vf.createIRI(Error.TYPE);
 
         MockitoAnnotations.initMocks(this);
@@ -98,19 +106,27 @@ public class OrmFactoryRegistryImplTest {
         registry.addFactory(aFactory);
         registry.addFactory(cFactory);
         registry.addFactory(bFactory);
+        registry.addFactory(dFactory);
 
         when(aFactory.getTypeIRI()).thenReturn(vf.createIRI(A.TYPE));
         when(aFactory.getType()).thenReturn(A.class);
         doReturn(AImpl.class).when(aFactory).getImpl();
         when(aFactory.getParentTypeIRIs()).thenReturn(Collections.emptySet());
+
         when(bFactory.getTypeIRI()).thenReturn(vf.createIRI(B.TYPE));
         doReturn(BImpl.class).when(bFactory).getImpl();
         when(bFactory.getType()).thenReturn(B.class);
         when(bFactory.getParentTypeIRIs()).thenReturn(Collections.singleton(aIRI));
+
         when(cFactory.getTypeIRI()).thenReturn(vf.createIRI(C.TYPE));
         doReturn(CImpl.class).when(cFactory).getImpl();
         when(cFactory.getType()).thenReturn(C.class);
         when(cFactory.getParentTypeIRIs()).thenReturn(Stream.of(aIRI, bIRI).collect(Collectors.toSet()));
+
+        when(dFactory.getTypeIRI()).thenReturn(vf.createIRI(D.TYPE));
+        doReturn(DImpl.class).when(dFactory).getImpl();
+        when(dFactory.getType()).thenReturn(D.class);
+        when(dFactory.getParentTypeIRIs()).thenReturn(Collections.singleton(aIRI));
     }
 
     @Test
@@ -181,7 +197,7 @@ public class OrmFactoryRegistryImplTest {
         List<OrmFactory<? extends Thing>> result = registry.getFactoriesOfType(Thing.class);
         assertEquals(1, result.size());
         List<OrmFactory<? extends A>> result2 = registry.getFactoriesOfType(A.class);
-        assertEquals(3, result2.size());
+        assertEquals(4, result2.size());
         List<OrmFactory<? extends B>> result3 = registry.getFactoriesOfType(B.class);
         assertEquals(2, result3.size());
         List<OrmFactory<? extends C>> result4 = registry.getFactoriesOfType(C.class);
@@ -199,7 +215,7 @@ public class OrmFactoryRegistryImplTest {
         List<OrmFactory<? extends Thing>> result = registry.getFactoriesOfType(Thing.TYPE);
         assertEquals(1, result.size());
         result = registry.getFactoriesOfType(A.TYPE);
-        assertEquals(3, result.size());
+        assertEquals(4, result.size());
         result = registry.getFactoriesOfType(B.TYPE);
         assertEquals(2, result.size());
         result = registry.getFactoriesOfType(C.TYPE);
@@ -217,7 +233,7 @@ public class OrmFactoryRegistryImplTest {
         List<OrmFactory<? extends Thing>> result = registry.getFactoriesOfType(thingIRI);
         assertEquals(1, result.size());
         result = registry.getFactoriesOfType(aIRI);
-        assertEquals(3, result.size());
+        assertEquals(4, result.size());
         result = registry.getFactoriesOfType(bIRI);
         assertEquals(2, result.size());
         result = registry.getFactoriesOfType(cIRI);
@@ -234,23 +250,20 @@ public class OrmFactoryRegistryImplTest {
     public void getSortedFactoriesByTypeClassTest() throws Exception {
         List<OrmFactory<? extends A>> result = registry.getSortedFactoriesOfType(A.class);
         assertEquals(cFactory, result.get(0));
-        assertEquals(bFactory, result.get(1));
-        assertEquals(aFactory, result.get(2));
+        assertEquals(aFactory, result.get(result.size() - 1));
     }
 
     @Test
     public void getSortedFactoriesByTypeStringTest() throws Exception {
         List<OrmFactory<? extends Thing>> result = registry.getSortedFactoriesOfType(A.TYPE);
         assertEquals(cFactory, result.get(0));
-        assertEquals(bFactory, result.get(1));
-        assertEquals(aFactory, result.get(2));
+        assertEquals(aFactory, result.get(result.size() - 1));
     }
 
     @Test
     public void getSortedFactoriesByTypeIRITest() throws Exception {
         List<OrmFactory<? extends Thing>> result = registry.getSortedFactoriesOfType(aIRI);
         assertEquals(cFactory, result.get(0));
-        assertEquals(bFactory, result.get(1));
-        assertEquals(aFactory, result.get(2));
+        assertEquals(aFactory, result.get(result.size() - 1));
     }
 }

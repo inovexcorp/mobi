@@ -25,8 +25,6 @@ package com.mobi.rdf.orm.impl;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -92,7 +90,8 @@ public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
     @Override
     public <T extends Thing> List<OrmFactory<? extends T>> getSortedFactoriesOfType(Class<T> type) {
         return getFactoryStreamOfType(type)
-                .sorted((factory1, factory2) -> factory1.getType().isAssignableFrom(factory2.getType()) ? 1 : -1)
+                .sorted((factory1, factory2) -> factory2.getParentTypeIRIs().size()
+                        - factory1.getParentTypeIRIs().size())
                 .collect(Collectors.toList());
     }
 
@@ -114,8 +113,8 @@ public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
     @Override
     public List<OrmFactory<? extends Thing>> getSortedFactoriesOfType(IRI typeIRI) {
         return getFactoryStreamOfType(typeIRI)
-                .sorted((factory1, factory2) ->
-                        factory1.getType().isAssignableFrom(factory2.getType()) ? 1 : -1)
+                .sorted((factory1, factory2) -> factory2.getParentTypeIRIs().size()
+                        - factory1.getParentTypeIRIs().size())
                 .collect(Collectors.toList());
     }
 
@@ -127,7 +126,8 @@ public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
     }
 
     @Override
-    public <T extends Thing> Optional<T> getExisting(Resource resource, Model model, Class<T> type) throws OrmException {
+    public <T extends Thing> Optional<T> getExisting(Resource resource, Model model, Class<T> type)
+            throws OrmException {
         OrmFactory<T> factory = getFactoryOfType(type)
                 .orElseThrow(() -> new OrmException("No OrmFactory present of type: " + type.getName()));
         return factory.getExisting(resource, model);
