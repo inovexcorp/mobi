@@ -63,6 +63,7 @@ import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -163,6 +164,9 @@ public class CatalogRestImplTest extends MobiRestTestNg {
     private CatalogManager catalogManager;
 
     @Mock
+    private CatalogConfigProvider configProvider;
+
+    @Mock
     private VersioningManager versioningManager;
 
     @Mock
@@ -249,12 +253,15 @@ public class CatalogRestImplTest extends MobiRestTestNg {
 
         MockitoAnnotations.initMocks(this);
         when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
+        when(configProvider.getLocalCatalogIRI()).thenReturn(vf.createIRI(LOCAL_IRI));
+        when(configProvider.getDistributedCatalogIRI()).thenReturn(vf.createIRI(DISTRIBUTED_IRI));
 
         rest = new CatalogRestImpl();
         injectOrmFactoryReferencesIntoService(rest);
         rest.setVf(vf);
         rest.setEngineManager(engineManager);
         rest.setTransformer(transformer);
+        rest.setConfigProvider(configProvider);
         rest.setCatalogManager(catalogManager);
         rest.setFactoryRegistry(getOrmFactoryRegistry());
         rest.setVersioningManager(versioningManager);
@@ -291,8 +298,6 @@ public class CatalogRestImplTest extends MobiRestTestNg {
 
         when(catalogManager.getLocalCatalog()).thenReturn(localCatalog);
         when(catalogManager.getDistributedCatalog()).thenReturn(distributedCatalog);
-        when(catalogManager.getLocalCatalogIRI()).thenReturn(vf.createIRI(LOCAL_IRI));
-        when(catalogManager.getDistributedCatalogIRI()).thenReturn(vf.createIRI(DISTRIBUTED_IRI));
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(testRecord.getResource()));
         when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(results);
         when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(recordFactory)))
