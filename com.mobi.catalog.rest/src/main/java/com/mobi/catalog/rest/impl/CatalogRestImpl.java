@@ -59,6 +59,7 @@ import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.Version;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.catalog.rest.CatalogRest;
@@ -781,6 +782,9 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     @ActionId(id = Modify.TYPE)
+    @ActionAttributes(
+            @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
+    )
     @ResourceId(type = ValueType.PATH, id="recordId")
     public Response createBranchCommit(ContainerRequestContext context, String catalogId, String recordId,
                                        String branchId, String message) {

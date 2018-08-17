@@ -82,6 +82,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     private static final String ENCODED_RECORD_IRI_BINDING = "%RECORDIRIENCODED%";
     private static final String POLICY_IRI_BINDING = "%POLICYIRI%";
     private static final String ENCODED_POLICY_IRI_BINDING = "%POLICYIRIENCODED%";
+    private static final String MASTER_BRANCH_IRI_BINDING = "%MASTER%";
 
     protected CommitFactory commitFactory;
     protected BranchFactory branchFactory;
@@ -129,10 +130,13 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             // Record Policy
             InputStream recordPolicyStream = AbstractVersionedRDFRecordService.class
                     .getResourceAsStream("/recordPolicy.xml");
-            String encodedRecordIRI = ResourceUtils.encode(record.getResource().stringValue());
+            String encodedRecordIRI = ResourceUtils.encode(record.getResource());
+            String encodedMasterIRI = ResourceUtils.encode(record.getMasterBranch_resource().get());
 
-            String[] search = {USER_IRI_BINDING, RECORD_IRI_BINDING, ENCODED_RECORD_IRI_BINDING};
-            String[] replace = {user.getResource().stringValue(), record.getResource().stringValue(), encodedRecordIRI};
+            String[] search = {USER_IRI_BINDING, RECORD_IRI_BINDING, ENCODED_RECORD_IRI_BINDING,
+                    MASTER_BRANCH_IRI_BINDING};
+            String[] replace = {user.getResource().stringValue(), record.getResource().stringValue(), encodedRecordIRI,
+                    encodedMasterIRI};
             String recordPolicy = StringUtils.replaceEach(IOUtils.toString(recordPolicyStream, "UTF-8"),
                     search, replace);
 
@@ -174,15 +178,15 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         RepositoryResult<Statement> results = conn.getStatements(null,
                 valueFactory.createIRI(Policy.relatedResource_IRI), record.getResource());
         if (!results.hasNext()) {
-            LOGGER.info("Could not find policy for record: " + record.getResource().stringValue()
+            LOGGER.info("Could not find policy for record: " + record.getResource()
                     + ". Continuing with record deletion.");
         }
         Resource recordPolicyId = results.next().getSubject();
 
         results = conn.getStatements(null, valueFactory.createIRI(Policy.relatedResource_IRI), recordPolicyId);
         if (!results.hasNext()) {
-            LOGGER.info("Could not find policy policy for record: " + record.getResource().stringValue()
-                    + " with a policyId of: " + recordPolicyId.stringValue() + ". Continuing with record deletion.");
+            LOGGER.info("Could not find policy policy for record: " + record.getResource()
+                    + " with a policyId of: " + recordPolicyId + ". Continuing with record deletion.");
         }
         Resource policyPolicyId = results.next().getSubject();
         xacmlPolicyManager.deletePolicy(recordPolicyId);
