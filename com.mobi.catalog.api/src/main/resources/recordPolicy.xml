@@ -108,7 +108,7 @@
                 <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:not">
                     <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:any-of">
                         <Function FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-equal" />
-                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/branches/%MASTER%</AttributeValue>
+                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">%MASTER%</AttributeValue>
                         <AttributeDesignator AttributeId="http://mobi.com/ontologies/catalog#branch" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:action" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
                     </Apply>
                 </Apply>

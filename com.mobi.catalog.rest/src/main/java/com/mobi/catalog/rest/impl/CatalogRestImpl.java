@@ -782,10 +782,10 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     @ActionId(id = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, id="recordId")
     @ActionAttributes(
             @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
     )
-    @ResourceId(type = ValueType.PATH, id="recordId")
     public Response createBranchCommit(ContainerRequestContext context, String catalogId, String recordId,
                                        String branchId, String message) {
         try {
