@@ -76,6 +76,7 @@
                     dvm.showDeleteConfirm = false;
                     dvm.showClearConfirm = false;
                     dvm.cachedOntologyIds = [];
+                    dvm.currentPage = dvm.state.paginationConfig.pageIndex + 1;
 
                     dvm.getIdentifiedOntologyIds = function(dataset) {
                         return _.map(dataset.identifiers, identifier => identifier[prefixes.dataset + 'linksToRecord'][0]['@id']);
@@ -99,8 +100,8 @@
                         }
                     }
                     dvm.getPage = function(direction) {
-                        dvm.state.paginationConfig.pageIndex = dvm.state.paginationConfig.pageIndex + (direction === 'prev' ? -1 : 1);
-                        dvm.state.setResults(dvm.state.links[direction]);
+                        dvm.state.paginationConfig.pageIndex = dvm.currentPage - 1;
+                        dvm.state.setResults();
                     }
                     dvm.delete = function() {
                         dm.deleteDatasetRecord(dvm.state.selectedDataset.record['@id'])

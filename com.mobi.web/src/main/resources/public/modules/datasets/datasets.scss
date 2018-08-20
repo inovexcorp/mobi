@@ -2,5 +2,5 @@
 @import "./src/main/resources/public/css/variables";
 
 .datasets-page {
-    background-color: $gray-lighter;
+    background-color: var(--light);
 }

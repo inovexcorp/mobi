@@ -83,15 +83,15 @@ describe('Class Block directive', function() {
             expect(this.element.querySelectorAll('.text-warning').length).toBe(1);
             expect(this.element.querySelectorAll('.fa-exclamation-circle').length).toBe(1);
         });
-        it('with a .full-height and class-cards', function() {
-            expect(this.element.querySelectorAll('.full-height').length).toBe(0);
+        it('with a .h-100 and class-cards', function() {
+            expect(this.element.querySelectorAll('.h-100').length).toBe(0);
             expect(this.element.find('class-cards').length).toBe(0);
 
             discoverStateSvc.explore.recordId = 'recordId';
             discoverStateSvc.explore.classDetails = [{}];
             scope.$digest();
 
-            expect(this.element.querySelectorAll('.full-height').length).toBe(1);
+            expect(this.element.querySelectorAll('.h-100').length).toBe(1);
             expect(this.element.find('class-cards').length).toBe(1);
         });
     });

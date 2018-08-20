@@ -10,10 +10,10 @@
             margin: 0;
         }
         .property-row {
-            border-bottom: 1px solid $gray-light;
+            border-bottom: 1px solid var(--light-dark);
 
             .property-area {
-                border-left: 1px solid $gray-light;
+                border-left: 1px solid var(--light-dark);
                 min-height: 75px;
 
                 &.empty:after {
@@ -45,7 +45,7 @@
                 }
             }
             .table-area {
-                border: 1px solid $gray-light;
+                border: 1px solid var(--light-dark);
                 border-top: 0;
                 display: flex;
                 flex-direction: column;
@@ -60,7 +60,7 @@
         .class-area,
         .property-area {
             &.empty:after {
-                color: $gray-light;
+                color: var(--light-dark);
                 display: block;
                 left: 0;
                 padding: 0 15px;
@@ -81,7 +81,7 @@
             font-size: 16px;
         }
         .paging-wrapper {
-            border-top: 1px solid $gray-light;
+            border-top: 1px solid var(--light-dark);
             padding: 10px 15px;
             position: relative;
 
@@ -95,7 +95,6 @@
                     margin: 0;
                 }
             }
-
             .pagination {
                 margin: 0;
                 vertical-align: bottom;

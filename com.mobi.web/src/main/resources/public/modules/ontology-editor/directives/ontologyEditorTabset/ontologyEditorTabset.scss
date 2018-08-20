@@ -2,8 +2,6 @@
 @import "./src/main/resources/public/css/variables";
 
 .ontology-editor-tabset {
-    height: 100%;
-
     .tabset.centered > .tabset-headings {
         height: 48px;
 
@@ -11,29 +9,25 @@
             font-size: 14px;
             line-height: 18px;
         }
-
         .fa {
             line-height: 18px;
             padding-right: 5px;
         }
     }
-
     .up-to-date .heading .fa.fa-exclamation-triangle {
         display: none;
     }
-
     .heading {
         &.active .fa.fa-exclamation-triangle {
-            color: $brand-danger;
+            color: var(--danger);
         }
 
         .fa.fa-exclamation-triangle {
-            color: $brand-danger-light;
+            color: var(--danger-light);
         }
     }
-
     > .tabset > .tabset-headings {
-        background-color: $highlight-blue;
+        background-color: var(--primary);
 
         .heading {
             &.is-last .heading-text {
@@ -45,7 +39,6 @@
                     content: '\f067';
                 }
             }
-
             .heading-text {
                 width: 100px;
             }

@@ -29,10 +29,10 @@
                     <dataset-form-group ng-model="dvm.ds.search.datasetRecordId" on-select="dvm.getTypes()"></dataset-form-group>
                     <a class="refresh-link" ng-click="dvm.refresh()" uib-tooltip="Refreshes the dataset metadata" tooltip-append-to-body="true"><i class="fa fa-refresh"></i>Refresh</a>
                 </div>
-                <div class="strike">AND</div>
+                <div class="strike text-muted">AND</div>
                 <div class="form-group">
                     <custom-label>Keywords</custom-label>
-                    <div class="boolean-operator pull-right">
+                    <div class="boolean-operator float-right">
                         <md-radio-group ng-model="dvm.ds.search.queryConfig.isOrKeywords" ng-disabled="!dvm.ds.search.datasetRecordId">
                             <md-radio-button ng-value="false" name="is-or-keyword">AND</md-radio-button>
                             <md-radio-button ng-value="true" name="is-or-keyword">OR</md-radio-button>
@@ -42,10 +42,10 @@
                         <input type="text" ng-disabled="!dvm.ds.search.datasetRecordId">
                     </md-chips>
                 </div>
-                <div class="strike">AND</div>
+                <div class="strike text-muted">AND</div>
                 <div class="form-group">
                     <custom-label>Types</custom-label>
-                    <div class="boolean-operator pull-right">
+                    <div class="boolean-operator float-right">
                         <md-radio-group ng-model="dvm.ds.search.queryConfig.isOrTypes" ng-disabled="!dvm.ds.search.datasetRecordId">
                             <md-radio-button ng-value="false" name="is-or-type">AND</md-radio-button>
                             <md-radio-button ng-value="true" name="is-or-type">OR</md-radio-button>
@@ -60,11 +60,11 @@
                         </md-optgroup>
                     </md-select>
                 </div>
-                <div class="strike">AND</div>
+                <div class="strike text-muted">AND</div>
                 <div class="properties-container">
                     <div class="header-wrapper">
                         <custom-label class="property-label">Properties</custom-label>
-                        <button type="button" ng-disabled="!dvm.ds.search.datasetRecordId" class="pull-right btn btn-link property-link" ng-click="dvm.showPropertyFilterOverlay = true"><i class="fa fa-fw fa-plus"></i>Property</button>
+                        <button type="button" ng-disabled="!dvm.ds.search.datasetRecordId" class="float-right btn btn-link property-link" ng-click="dvm.showPropertyFilterOverlay = true"><i class="fa fa-fw fa-plus"></i>Property</button>
                     </div>
                     <md-list ng-class="{disabled: !dvm.ds.search.datasetRecordId}">
                         <md-list-item ng-repeat="meta in dvm.ds.search.queryConfig.filters" class="md-3-line">
@@ -80,8 +80,8 @@
             </form>
         </block-content>
         <block-footer class="btn-container clearfix">
-            <button type="submit" class="btn btn-primary pull-right" ng-disabled="!dvm.isSubmittable()" ng-click="dvm.submit()">Submit</button>
-            <a class="btn btn-link pull-right" ng-click="dvm.ds.resetSearchQueryConfig()">Clear</a>
+            <button type="submit" class="btn btn-primary float-right" ng-disabled="!dvm.isSubmittable()" ng-click="dvm.submit()">Submit</button>
+            <a class="btn btn-link float-right" ng-click="dvm.ds.resetSearchQueryConfig()">Clear</a>
         </block-footer>
     </block>
     <property-filter-overlay ng-if="dvm.showPropertyFilterOverlay" close-overlay="dvm.showPropertyFilterOverlay = false"></property-filter-overlay>

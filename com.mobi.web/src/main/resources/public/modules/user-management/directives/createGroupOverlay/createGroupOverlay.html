@@ -25,19 +25,19 @@
         <h6>Create Group</h6>
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
 
-        <div class="form-group title" ng-class="{'has-error': dvm.form.title.$dirty && dvm.form.title.$invalid}">
+        <div class="form-group title">
             <custom-label>Group Title</custom-label>
-            <input class="form-control" type="text" name="title" ng-model="dvm.newGroup.title" unique-value="dvm.getTitles()" required focus-me/>
+            <input class="form-control" type="text" name="title" ng-model="dvm.newGroup.title" unique-value="dvm.getTitles()" ng-class="{'is-invalid': dvm.form.title.$dirty && dvm.form.title.$invalid}" required focus-me/>
+            <p ng-messages="dvm.form.title.$error" class="invalid-feedback">
+                <ng-message when="uniqueTitle">This group title has already been taken.</ng-message>
+            </p>
         </div>
-        <p ng-messages="dvm.form.name.$error" class="error-display">
-            <ng-message when="uniqueTitle">This group title has already been taken.</ng-message>
-        </p>
         <text-area ng-model="dvm.newGroup.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <member-table members="dvm.newGroup.members" remove-member="dvm.removeMember()" add-member="dvm.addMember()"></member-table>
 
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-click="dvm.add()" ng-disabled="dvm.form.$invalid">Add</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.state.displayCreateGroupOverlay = false">Cancel</button>
+            <button class="btn btn-primary float-right" ng-click="dvm.add()" ng-disabled="dvm.form.$invalid">Add</button>
+            <button class="btn float-right" ng-click="dvm.state.displayCreateGroupOverlay = false">Cancel</button>
         </div>
     </form>
 </div>

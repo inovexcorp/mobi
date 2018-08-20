@@ -37,7 +37,9 @@ describe('Email Input directive', function() {
         scope.changeEvent = jasmine.createSpy('changeEvent');
         scope.required = true;
         scope.inputName = '';
-        this.element = $compile(angular.element('<email-input ng-model="bindModel" change-event="changeEvent()" muted-text="mutedText" required="required" input-name="inputName"></email-input>'))(scope);
+        scope.isInvalid = false;
+        scope.isValid = false;
+        this.element = $compile(angular.element('<email-input ng-model="bindModel" change-event="changeEvent()" muted-text="mutedText" required="required" input-name="inputName" is-invalid="isInvalid" is-valid="isValid"></email-input>'))(scope);
         scope.$digest();
         this.isolatedScope = this.element.isolateScope();
     });
@@ -73,6 +75,16 @@ describe('Email Input directive', function() {
             scope.$digest();
             expect(scope.inputName).toBe('');
         });
+        it('isInvalid should be one way bound', function() {
+            this.isolatedScope.isInvalid = true;
+            scope.$digest();
+            expect(scope.isInvalid).toBe(false);
+        });
+        it('isValid should be one way bound', function() {
+            this.isolatedScope.isValid = true;
+            scope.$digest();
+            expect(scope.isValid).toBe(false);
+        });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
@@ -107,6 +119,22 @@ describe('Email Input directive', function() {
                 scope.$digest();
                 expect(input.hasClass('ng-invalid-pattern')).toBe(false);
             });
+        });
+        it('depending on whether it is invalid', function() {
+            var input = angular.element(this.element.querySelectorAll('input[type="text"]')[0]);
+            expect(input.hasClass('is-invalid')).toEqual(false);
+
+            scope.isInvalid = true;
+            scope.$digest();
+            expect(input.hasClass('is-invalid')).toEqual(true);
+        });
+        it('depending on whether it is valid', function() {
+            var input = angular.element(this.element.querySelectorAll('input[type="text"]')[0]);
+            expect(input.hasClass('is-valid')).toEqual(false);
+
+            scope.isValid = true;
+            scope.$digest();
+            expect(input.hasClass('is-valid')).toEqual(true);
         });
     });
     it('should call changeEvent when the text in the input changes', function() {

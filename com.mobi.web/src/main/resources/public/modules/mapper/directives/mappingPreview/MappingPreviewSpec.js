@@ -110,11 +110,13 @@ describe('Mapping Preview directive', function() {
             mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
             scope.$digest();
             var propItem = angular.element(this.element.querySelectorAll('.props > li')[0]);
-            expect(propItem.hasClass('error-display')).toBe(false);
+            expect(propItem.hasClass('text-danger')).toBe(false);
+            expect(propItem.hasClass('font-weight-bold')).toBe(false);
 
             this.controller.isInvalid.and.returnValue(true);
             scope.$digest();
-            expect(propItem.hasClass('error-display')).toBe(true);
+            expect(propItem.hasClass('text-danger')).toBe(true);
+            expect(propItem.hasClass('font-weight-bold')).toBe(true);
         });
     });
 });

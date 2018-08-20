@@ -106,15 +106,15 @@ describe('Merge Request View directive', function() {
         });
         it('depending on whether the merge request is accepted', function() {
             var indicator = angular.element(this.element.querySelectorAll('.open-indicator')[0]);
-            expect(indicator.hasClass('label-primary')).toEqual(true);
-            expect(indicator.hasClass('label-success')).toEqual(false);
+            expect(indicator.hasClass('badge-primary')).toEqual(true);
+            expect(indicator.hasClass('badge-success')).toEqual(false);
             expect(indicator.text().trim()).toEqual('Open');
             expect(this.element.find('commit-difference-tabset').length).toEqual(1);
 
             mergeRequestManagerSvc.isAccepted.and.returnValue(true);
             scope.$digest();
-            expect(indicator.hasClass('label-primary')).toEqual(false);
-            expect(indicator.hasClass('label-success')).toEqual(true);
+            expect(indicator.hasClass('badge-primary')).toEqual(false);
+            expect(indicator.hasClass('badge-success')).toEqual(true);
             expect(indicator.text().trim()).toEqual('Accepted');
             expect(this.element.find('commit-difference-tabset').length).toEqual(0);
         });
@@ -152,7 +152,7 @@ describe('Merge Request View directive', function() {
     });
     it('should call back when the button is clicked', function() {
         spyOn(this.controller, 'back');
-        var button = angular.element(this.element.querySelectorAll('block-footer button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('block-footer button:not(.btn-danger)')[0]);
         button.triggerHandler('click');
         expect(this.controller.back).toHaveBeenCalled();
     });

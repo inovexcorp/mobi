@@ -21,15 +21,15 @@
   #L%
   -->
 <div class="permissions-page row">
-    <div class="col-xs-12">
+    <div class="col">
         <block>
             <block-content>
                 <div class="policy row" ng-repeat="item in dvm.policies track by item.id">
-                    <div class="col-xs-6 col-xs-offset-3">
+                    <div class="col-6 offset-3">
                         <h3>Create {{(item.type | splitIRI).end | beautify}}</h3>
                         <md-switch ng-model="item.everyone" ng-change="dvm.toggleEveryone(item)" aria-label="Everyone">Everyone</md-switch>
                         <div class="row">
-                            <div class="col-xs-6">
+                            <div class="col-6">
                                 <div class="selected-items">
                                     <div class="selected-item" ng-repeat="user in item.selectedUsers track by user.iri">
                                         <span>{{user.username}}</span>
@@ -45,7 +45,7 @@
                                     </md-autocomplete>
                                 </div>
                             </div>
-                            <div class="col-xs-6">
+                            <div class="col-6">
                                 <div class="selected-items">
                                     <div class="selected-item" ng-repeat="group in item.selectedGroups track by group.iri">
                                         <span>{{group.title}}</span>

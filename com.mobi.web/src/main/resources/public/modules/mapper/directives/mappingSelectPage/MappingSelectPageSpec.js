@@ -111,7 +111,7 @@ describe('Mapping Select Page directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('mapping-select-page')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-8').length).toBe(1);
         });
         it('with a mappingListBlock', function() {
             expect(this.element.find('mapping-list-block').length).toBe(1);
@@ -126,14 +126,14 @@ describe('Mapping Select Page directive', function() {
             expect(this.element.find('block-content').length).toBe(1);
         });
         it('with buttons for downloading, editing, running, and duplicating a mapping', function() {
-            var buttons = this.element.querySelectorAll('.col-xs-8 block-header div ul li a');
+            var buttons = this.element.querySelectorAll('.col-8 block-header div ul a');
             expect(buttons.length).toBe(4);
             _.forEach(_.toArray(buttons), function(button) {
                 expect(['Edit', 'Run', 'Download', 'Duplicate']).toContain(angular.element(button).text().trim());
             });
         });
         it('depending on whether a mapping has been selected', function() {
-            var mappingHeader = angular.element(this.element.querySelectorAll('.col-xs-8 block-header .mapping-preview-header')[0]);
+            var mappingHeader = angular.element(this.element.querySelectorAll('.col-8 block-header .mapping-preview-header')[0]);
             expect(mappingHeader.hasClass('invisible')).toBe(false);
             expect(this.element.querySelectorAll('.preview').length).toBe(1);
 
@@ -155,25 +155,25 @@ describe('Mapping Select Page directive', function() {
     });
     it('should call downloadMapping when the button is clicked', function() {
         spyOn(this.controller, 'download');
-        var downloadButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header .download-btn')[0]);
+        var downloadButton = angular.element(this.element.querySelectorAll('.col-8 block-header .download-btn')[0]);
         angular.element(downloadButton).triggerHandler('click');
         expect(this.controller.download).toHaveBeenCalled();
     });
     it('should call edit when the button is clicked', function() {
         spyOn(this.controller, 'edit');
-        var editButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header .edit-btn')[0]);
+        var editButton = angular.element(this.element.querySelectorAll('.col-8 block-header .edit-btn')[0]);
         angular.element(editButton).triggerHandler('click');
         expect(this.controller.edit).toHaveBeenCalled();
     });
     it('should call run when the button is clicked', function() {
         spyOn(this.controller, 'run');
-        var runButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header .run-btn')[0]);
+        var runButton = angular.element(this.element.querySelectorAll('.col-8 block-header .run-btn')[0]);
         angular.element(runButton).triggerHandler('click');
         expect(this.controller.run).toHaveBeenCalled();
     });
     it('should call duplicate when the button is clicked', function() {
         spyOn(this.controller, 'duplicate');
-        var duplicateButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header .duplicate-btn')[0]);
+        var duplicateButton = angular.element(this.element.querySelectorAll('.col-8 block-header .duplicate-btn')[0]);
         angular.element(duplicateButton).triggerHandler('click');
         expect(this.controller.duplicate).toHaveBeenCalled();
     });
