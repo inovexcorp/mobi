@@ -65,30 +65,12 @@
                     dvm.id = 'activity-log';
                     dvm.activities = [];
                     dvm.entities = [];
-                    dvm.paginatedConfig = {
-                        pageIndex: 0,
-                        limit: 50
-                    };
+                    dvm.currentPage = 1;
+                    dvm.limit = 50;
                     dvm.totalSize = 0;
-                    dvm.links = {
-                        prev: '',
-                        next: ''
-                    };
 
-                    dvm.getPage = function(direction) {
-                        if (direction === 'prev') {
-                            util.getResultsPage(dvm.links.prev, util.rejectError, dvm.id)
-                                .then(response => {
-                                    setActivities(response);
-                                    dvm.paginatedConfig.pageIndex -= 1;
-                                }, createToast);
-                        } else {
-                            util.getResultsPage(dvm.links.next, util.rejectError, dvm.id)
-                                .then(response => {
-                                    setActivities(response);
-                                    dvm.paginatedConfig.pageIndex += 1;
-                                }, createToast);
-                        }
+                    dvm.getPage = function() {
+                        pm.getActivities(getConfig(), dvm.id).then(setActivities, createToast);
                     }
                     dvm.getTimeStamp = function(activity) {
                         var dateStr = util.getPropertyValue(activity, prefixes.prov + 'endedAtTime');
@@ -100,17 +82,17 @@
                         dvm.entities = response.data.entities;
                         var headers = response.headers();
                         dvm.totalSize = _.get(headers, 'x-total-count', 0);
-                        var links = util.parseLinks(_.get(headers, 'link', ''));
-                        dvm.links.prev = _.get(links, 'prev', '');
-                        dvm.links.next = _.get(links, 'next', '');
                     }
                     function createToast(errorMessage) {
                         if (errorMessage) {
                             util.createErrorToast(errorMessage);
                         }
                     }
+                    function getConfig() {
+                        return {pageIndex: dvm.currentPage - 1, limit: dvm.limit};
+                    }
 
-                    pm.getActivities(dvm.paginatedConfig, dvm.id).then(setActivities, createToast);
+                    pm.getActivities(getConfig(), dvm.id).then(setActivities, createToast);
 
                     $scope.$on('$destroy', () => httpService.cancel(dvm.id));
                 }]

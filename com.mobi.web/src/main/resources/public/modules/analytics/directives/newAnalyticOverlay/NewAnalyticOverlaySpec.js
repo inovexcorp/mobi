@@ -136,8 +136,8 @@ describe('Class And Property Block directive', function() {
         it('with a .btn-primary', function() {
             expect(this.element.querySelectorAll('.btn-primary').length).toBe(1);
         });
-        it('with a .btn-default', function() {
-            expect(this.element.querySelectorAll('.btn-default').length).toBe(1);
+        it('with a regular .btn', function() {
+            expect(this.element.querySelectorAll('.btn:not(.btn-primary)').length).toBe(1);
         });
     });
     describe('controller methods', function() {

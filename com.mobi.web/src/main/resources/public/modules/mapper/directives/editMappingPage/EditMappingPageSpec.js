@@ -130,8 +130,8 @@ describe('Edit Mapping Page directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('edit-mapping-page')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-5').length).toBe(1);
-            expect(this.element.querySelectorAll('.col-xs-7').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-5').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-7').length).toBe(1);
             expect(this.element.querySelectorAll('.edit-tabs').length).toBe(1);
         });
         it('with a mapping title', function() {
@@ -179,7 +179,7 @@ describe('Edit Mapping Page directive', function() {
     });
     it('should call cancel when a cancel button is clicked', function() {
         spyOn(this.controller, 'cancel');
-        var cancelButtons = this.element.querySelectorAll('tab block-footer button.btn-default');
+        var cancelButtons = this.element.querySelectorAll('tab block-footer button:not(.btn-primary)');
         _.toArray(cancelButtons).forEach(function(button) {
             this.controller.cancel.calls.reset();
             angular.element(button).triggerHandler('click');

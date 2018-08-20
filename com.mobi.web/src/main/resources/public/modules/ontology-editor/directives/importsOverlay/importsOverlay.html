@@ -26,10 +26,10 @@
         <tabset class="in-overlay">
             <tab heading="'Web URL'" active="dvm.tabs.url" on-click="dvm.clickTab('url')" class="web-url">
                 <error-display ng-if="dvm.urlError">{{dvm.urlError}}</error-display>
-                <div ng-class="{'has-error': dvm.form.url.$error.pattern}" class="form-group">
+                <div class="form-group">
                     <custom-label>URL</custom-label>
-                    <input class="form-control" name="url" ng-model="dvm.url" ng-pattern="dvm.iriPattern" ng-required="dvm.tabs.url" focus-me />
-                    <p ng-messages="dvm.form.url.$error" class="error-display">
+                    <input class="form-control" name="url" ng-model="dvm.url" ng-pattern="dvm.iriPattern" ng-required="dvm.tabs.url" ng-class="{'is-invalid': dvm.form.url.$error.pattern}" focus-me />
+                    <p ng-messages="dvm.form.url.$error" class="invalid-feedback">
                         <ng-message when="pattern">The value provided is not a valid URL.</ng-message>
                     </p>
                 </div>
@@ -51,8 +51,8 @@
             </tab>
         </tabset>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid || (dvm.tabs.server && !dvm.ontologyIsSelected())" ng-click="dvm.addImport()">Submit</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.onClose()">Cancel</button>
+            <button class="btn btn-primary float-right" ng-disabled="dvm.form.$invalid || (dvm.tabs.server && !dvm.ontologyIsSelected())" ng-click="dvm.addImport()">Submit</button>
+            <button class="btn float-right" ng-click="dvm.onClose()">Cancel</button>
         </div>
     </form>
 </div>

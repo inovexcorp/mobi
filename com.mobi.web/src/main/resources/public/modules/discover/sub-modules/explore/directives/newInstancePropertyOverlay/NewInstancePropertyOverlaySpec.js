@@ -74,29 +74,29 @@ describe('New Instance Property Overlay directive', function() {
             expect(this.element.hasClass('new-instance-property-overlay')).toBe(true);
             expect(this.element.hasClass('overlay')).toBe(true);
         });
-        it('for a form', function() {
+        it('with a form', function() {
             expect(this.element.find('form').length).toBe(1);
         });
-        it('for a h6', function() {
+        it('with a h6', function() {
             expect(this.element.find('h6').length).toBe(1);
         });
-        it('for a .main', function() {
+        it('with a .main', function() {
             expect(this.element.querySelectorAll('.main').length).toBe(1);
         });
-        it('for a p', function() {
+        it('with a p', function() {
             expect(this.element.find('p').length).toBe(1);
         });
-        it('for md-autocomplete', function() {
+        it('with a md-autocomplete', function() {
             expect(this.element.find('md-autocomplete').length).toBe(1);
         });
-        it('for a .btn-container.clearfix', function() {
+        it('with a .btn-container.clearfix', function() {
             expect(this.element.querySelectorAll('.btn-container.clearfix').length).toBe(1);
         });
-        it('for a .btn.btn-primary', function() {
+        it('with a .btn.btn-primary', function() {
             expect(this.element.querySelectorAll('.btn.btn-primary').length).toBe(1);
         });
-        it('for a .btn.btn-default', function() {
-            expect(this.element.querySelectorAll('.btn.btn-default').length).toBe(1);
+        it('with a regular .btn', function() {
+            expect(this.element.querySelectorAll('.btn:not(.btn-primary)').length).toBe(1);
         });
     });
 });

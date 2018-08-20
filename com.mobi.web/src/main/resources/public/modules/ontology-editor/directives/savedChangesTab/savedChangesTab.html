@@ -21,9 +21,9 @@
   #L%
   -->
 <div class="saved-changes-tab row">
-    <div class="col-xs-8 col-xs-offset-2">
+    <div class="col-8 offset-2">
         <block>
-            <block-header ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length">
+            <block-header class="border-0" ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length">
                 <error-display ng-if="!dvm.os.listItem.upToDate">There have been other commits made on this Branch.
                     <span ng-if="!dvm.os.listItem.userBranch"> Please either commit your changes or remove them to resync your working branch with the HEAD.</span>
                 </error-display>
@@ -32,12 +32,13 @@
                 </div>
             </block-header>
             <block-content>
-                <div class="changes" ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length">
+                <div class="changes h-100" ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length">
                     <div class="property-values" ng-repeat="item in dvm.showList">
-                        <h5 ng-click="isClosed = !isClosed" class="clearfix">
-                            <p class="text">{{dvm.util.getBeautifulIRI(item.id)}} <small><a ng-click="dvm.go($event, item.id)">{{item.id}}</a></small></p>
+                        <div ng-click="isClosed = !isClosed" class="value-header d-flex align-items-center clearfix">
+                            <p class="text" tile="{{item.id}}">{{dvm.util.getBeautifulIRI(item.id)}}</p>
+                            <small class="ml-1 text-muted"><a ng-click="dvm.go($event, item.id)">{{item.id}}</a></small>
                             <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
-                        </h5>
+                        </div>
                         <div class="value-container" ng-hide="isClosed">
                             <statement-container ng-if="item.additions.length" additions>
                                 <statement-display ng-repeat="addition in item.additions | orderBy:dvm.util.getPredicateLocalName" predicate="addition.p" object="addition.o" addition/>

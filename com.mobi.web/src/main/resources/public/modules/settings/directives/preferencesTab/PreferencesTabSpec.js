@@ -57,8 +57,8 @@ describe('Preferences Tab directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('preferences-tab')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-6').length).toBe(1);
-            expect(this.element.querySelectorAll('.col-xs-offset-3').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-6').length).toBe(1);
+            expect(this.element.querySelectorAll('.offset-3').length).toBe(1);
         });
         it('with a block', function() {
             expect(this.element.find('block').length).toBe(1);

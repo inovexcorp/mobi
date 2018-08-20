@@ -20,21 +20,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="user-management-tabset full-height">
-    <div class="user-management-container full-height">
-        <div class="blue-bar"></div>
-        <div class="user-management-page-content">
-        	<tabset class="centered">
-                <tab heading="'Users'" active="dvm.state.showUsers">
-                    <users-page></users-page>
-                </tab>
-                <tab heading="'Groups'" active="dvm.state.showGroups">
-                    <groups-page></groups-page>
-                </tab>
-                <tab heading="'Permissions'" active="dvm.state.showPermissions">
-                    <permissions-page></permissions-page>
-                </tab>
-            </tabset>
-        </div>
-    </div>
+<div class="user-management-tabset h-100">
+	<tabset class="centered">
+        <tab heading="'Users'" active="dvm.state.showUsers">
+            <users-page></users-page>
+        </tab>
+        <tab heading="'Groups'" active="dvm.state.showGroups">
+            <groups-page></groups-page>
+        </tab>
+        <tab heading="'Permissions'" active="dvm.state.showPermissions">
+            <permissions-page></permissions-page>
+        </tab>
+    </tabset>
 </div>

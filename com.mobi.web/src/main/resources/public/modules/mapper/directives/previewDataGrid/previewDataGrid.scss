@@ -9,10 +9,10 @@
 		color: inherit;
 	}
 	.header {
-		background-color: $gray-lighter;
+		background-color: var(--light);
 		font-weight: bold;
 	}
 	.highlight-col {
-		background-color: #A1DAED;
+		background-color: var(--primary-light);
 	}
 }

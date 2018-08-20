@@ -1,0 +1,26 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+$primary: (
+    color: $mobi-primary-500,
+    dark: $mobi-primary-700,
+    light: $mobi-primary-100
+);
+
+$secondary: (
+    color: $mobi-secondary-500,
+    dark: $mobi-secondary-700,
+    light: $mobi-secondary-100
+);
+
+$colors: (
+    body: rgba(0,0,0,0.87)
+);
+
+$info: (
+  color: #424FFF,
+  dark:  darken(#424FFF, 10%),
+  light: lighten(#424FFF, 10%)
+);
+
+@import "node_modules/daemonite-material/assets/scss/material";

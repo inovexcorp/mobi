@@ -21,44 +21,52 @@
  * #L%
  */
 describe('Pagination directive', function() {
-    var $compile, scope;
+    var $compile, scope, $timeout;
 
     beforeEach(function() {
         module('templates');
         module('pagination');
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _$timeout_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $timeout = _$timeout_;
         });
 
-        scope.links = {};
-        scope.currentPage = 0;
+        scope.currentPage = 1;
+        scope.total = 10;
+        scope.limit = 1;
         scope.getPage = jasmine.createSpy('getPage');
-        this.element = $compile(angular.element('<pagination links="links" current-page="currentPage" get-page="getPage(direction)"></pagination>'))(scope);
+        this.element = $compile(angular.element('<pagination total="total" limit="limit" current-page="currentPage" get-page="getPage()"></pagination>'))(scope);
         scope.$digest();
-        this.isolatedScope = this.element.isolateScope();
+        this.controller = this.element.controller('pagination');
     });
 
     afterEach(function() {
         $compile = null;
         scope = null;
+        $timeout = null;
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
-        it('links should be one way bound', function() {
-            this.isolatedScope.links = {prev: 'prev'};
+    describe('controller bound variable', function() {
+        it('total should be one way bound', function() {
+            this.controller.total = 0;
             scope.$digest();
-            expect(scope.links).toEqual({});
+            expect(scope.total).toEqual(10);
         });
-        it('currentPage should be one way bound', function() {
-            this.isolatedScope.currentPage = 1;
+        it('limit should be one way bound', function() {
+            this.controller.limit = 0;
             scope.$digest();
-            expect(scope.currentPage).toBe(0);
+            expect(scope.limit).toEqual(1);
+        });
+        it('currentPage should be two way bound', function() {
+            this.controller.currentPage = 2;
+            scope.$digest();
+            expect(scope.currentPage).toBe(2);
         });
         it('getPage should be called in parent scope when invoked', function() {
-            this.isolatedScope.getPage();
+            this.controller.getPage();
             expect(scope.getPage).toHaveBeenCalled();
         });
     });
@@ -66,33 +74,15 @@ describe('Pagination directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('page-nav')).toBe(true);
         });
-        it('depending on whether links were passed', function() {
-            expect(this.element.querySelectorAll('ul.pagination').length).toBe(1);
-
-            scope.links = undefined;
-            scope.$digest();
-            expect(this.element.querySelectorAll('ul.pagination').length).toBe(0);
-        });
-        it('depending on which links were passed', function() {
-            expect(this.element.querySelectorAll('li a[aria-label="Previous"]').length).toBe(0);
-            expect(this.element.querySelectorAll('li a[aria-label="Next"]').length).toBe(0);
-
-            scope.links = {next: 'next', prev: 'prev'};
-            scope.$digest();
-            expect(this.element.querySelectorAll('li a[aria-label="Previous"]').length).toBe(1);
-            expect(this.element.querySelectorAll('li a[aria-label="Next"]').length).toBe(1);
+        it('with a ul[uib-pagination]', function() {
+            expect(this.element.querySelectorAll('ul[uib-pagination]').length).toBe(1);
         });
     });
-    it('should call getPage when either the Next or Previous link is clicked', function() {
-        scope.links = {next: 'next', prev: 'prev'};
-        scope.$digest();
-
-        var prevLink = this.element.querySelectorAll('li a[aria-label="Previous"]')[0];
-        angular.element(prevLink).triggerHandler('click');
-        expect(scope.getPage).toHaveBeenCalledWith('prev');
-
-        var nextLink = this.element.querySelectorAll('li a[aria-label="Next"]')[0];
-        angular.element(nextLink).triggerHandler('click');
-        expect(scope.getPage).toHaveBeenCalledWith('next');
+    describe('controller methods', function() {
+        it('should change the page', function() {
+            this.controller.changePage();
+            $timeout.flush();
+            expect(scope.getPage).toHaveBeenCalled();
+        });
     });
 });

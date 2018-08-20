@@ -95,10 +95,10 @@
                     dvm.deletions = [];
                     dvm.commits = [];
                     dvm.circleRadius = 5;
-                    dvm.circleSpacing = 50;
+                    dvm.circleSpacing = 48;
                     dvm.columnSpacing = 25;
                     dvm.deltaX = 5 + dvm.circleRadius;
-                    dvm.deltaY = 37;
+                    dvm.deltaY = 56;
 
                     $scope.$watchGroup(['dvm.branchTitle', 'dvm.commitId', 'dvm.targetId'], () => dvm.getCommits());
 

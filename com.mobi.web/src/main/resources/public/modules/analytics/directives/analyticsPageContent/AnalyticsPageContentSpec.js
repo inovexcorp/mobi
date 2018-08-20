@@ -49,7 +49,7 @@ describe('Analytics Page directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('analytics-page-content')).toBe(true);
-            expect(this.element.hasClass('full-height')).toBe(true);
+            expect(this.element.hasClass('h-100')).toBe(true);
         });
         it('with a analytics-landing-page', function() {
             expect(this.element.find('analytics-landing-page').length).toBe(1);

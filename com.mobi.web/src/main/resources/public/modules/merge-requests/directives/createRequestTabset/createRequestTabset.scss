@@ -2,6 +2,9 @@
 @import "./src/main/resources/public/css/variables";
 
 .create-request-tabset {
+    .block-content {
+        padding-bottom: 0;
+    }
     .block-footer {
         position: relative;
 
@@ -19,13 +22,6 @@
                 right: auto !important;
                 top: auto !important;
                 transform: none !important;
-
-                .btn-primary {
-                    float: right;
-                }
-                .btn-default {
-                    float: left;
-                }
             }
         }
         .btn-container {

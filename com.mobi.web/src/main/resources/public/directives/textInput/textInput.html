@@ -22,5 +22,5 @@
   -->
 <div class="form-group">
     <custom-label muted-text="mutedText">{{displayText}}</custom-label>
-    <input type="text" name="{{inputName}}" class="form-control" ng-model="bindModel" ng-trim="false" ng-change="changeEvent()" ng-required="required">
+    <input type="text" name="{{inputName}}" class="form-control" ng-class="{'is-invalid': isInvalid, 'is-valid': isValid}" ng-model="bindModel" ng-trim="false" ng-change="changeEvent()" ng-required="required">
 </div>

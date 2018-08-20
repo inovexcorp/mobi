@@ -19,6 +19,7 @@
             overflow-y: auto;
             border: 1px solid #ddd;
             border-radius: 4px;
+            display: block;
 
             .list-group-item {
                 outline: 0;
@@ -28,27 +29,10 @@
                     margin-left: 10px;
                 }
                 &.invalid {
-                    background-color: $brand-danger-light;
+                    background-color: var(--danger-light);
 
                     &.active {
-                        background-color: $brand-danger;
-                    }
-                }
-                &.active {
-                    .list-group-item-text {
-                        color: white;
-
-                        .text-muted {
-                            color: #ddd;
-                        }
-                    }
-                    .prop-actions a {
-                        color: white;
-
-                        &:hover,
-                        &:focus {
-                            color: lightgrey;
-                        }
+                        background-color: var(--danger);
                     }
                 }
                 &:hover {

@@ -467,7 +467,7 @@ describe('Create Property Overlay directive', function() {
         expect(this.controller.create).toHaveBeenCalled();
     });
     it('should set the correct state when the cancel button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(false);
     });

@@ -67,9 +67,6 @@ describe('Datasets Tabset directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('datasets-tabset')).toBe(true);
         });
-        it('with a .blue-bar', function() {
-            expect(this.element.querySelectorAll('.blue-bar').length).toBe(1);
-        });
         it('with a .white-bar', function() {
             expect(this.element.querySelectorAll('.white-bar').length).toBe(1);
         });

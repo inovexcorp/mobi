@@ -120,7 +120,7 @@ describe('Instance Creator directive', function() {
                         expect(discoverStateSvc.explore.instance.entity).toEqual(this.cleanEntity);
                         expect(exploreSvc.createInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.instance.entity);
                         expect(discoverStateSvc.explore.instanceDetails.total).toBe(4);
-                        expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: 1, limit: 1});
+                        expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: 0, limit: 1});
                         expect(discoverStateSvc.explore.instanceDetails.data).toEqual(this.resultsObject.data);
                         expect(discoverStateSvc.explore.instanceDetails.links).toEqual(this.resultsObject.links);
                         expect(discoverStateSvc.explore.instance.metadata).toEqual({instanceIRI: this.instance['@id'], title: 'title', description: 'comment'});
@@ -138,7 +138,7 @@ describe('Instance Creator directive', function() {
                         expect(discoverStateSvc.explore.instance.entity).toEqual(this.cleanEntity);
                         expect(exploreSvc.createInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.instance.entity);
                         expect(discoverStateSvc.explore.instanceDetails.total).toBe(4);
-                        expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: 1, limit: 1});
+                        expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: 0, limit: 1});
                         expect(discoverStateSvc.explore.instanceDetails.data).toEqual(this.resultsObject.data);
                         expect(discoverStateSvc.explore.instanceDetails.links).toEqual(this.resultsObject.links);
                         expect(discoverStateSvc.explore.instance.metadata).toEqual({instanceIRI: this.instance['@id'], title: 'title', description: 'comment'});
@@ -158,7 +158,7 @@ describe('Instance Creator directive', function() {
                     expect(discoverStateSvc.explore.instance.entity).toEqual(this.cleanEntity);
                     expect(exploreSvc.createInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.instance.entity);
                     expect(discoverStateSvc.explore.instanceDetails.total).toBe(4);
-                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: 1, limit: 1});
+                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: 0, limit: 1});
                     expect(exploreSvc.getClassDetails).not.toHaveBeenCalled();
                     expect(util.createErrorToast).toHaveBeenCalledWith('error');
                 });

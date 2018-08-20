@@ -2,7 +2,7 @@
 @import "./src/main/resources/public/css/variables";
 
 .block .block-footer {
-    border-top: 1px solid $gray-custom;
+    border-top: 1px solid var(--light-dark);
 
     &.centered {
         text-align: center;

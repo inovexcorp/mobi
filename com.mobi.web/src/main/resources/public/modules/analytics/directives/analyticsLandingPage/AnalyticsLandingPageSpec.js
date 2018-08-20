@@ -47,7 +47,6 @@ describe('Analytics Landing Page directive', function() {
             data: [],
             headers: jasmine.createSpy('headers').and.returnValue({
                 'x-total-count': 10,
-                link: 'link'
             })
         }));
         this.element = $compile(angular.element('<analytics-landing-page></analytics-landing-page>'))(scope);
@@ -70,11 +69,8 @@ describe('Analytics Landing Page directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('analytics-landing-page')).toBe(true);
-            expect(this.element.hasClass('full-height')).toBe(true);
+            expect(this.element.hasClass('h-100')).toBe(true);
             expect(this.element.hasClass('clearfix')).toBe(true);
-        });
-        it('with a .blue-bar', function() {
-            expect(this.element.querySelectorAll('.blue-bar').length).toBe(1);
         });
         it('with a .white-bar', function() {
             expect(this.element.querySelectorAll('.white-bar').length).toBe(1);
@@ -100,8 +96,8 @@ describe('Analytics Landing Page directive', function() {
         it('with a .row', function() {
             expect(this.element.querySelectorAll('.row').length).toBe(1);
         });
-        it('with a .col-xs-8', function() {
-            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
+        it('with a .col-8', function() {
+            expect(this.element.querySelectorAll('.col-8').length).toBe(1);
         });
         it('with a block-content', function() {
             expect(this.element.find('block-content').length).toBe(1);
@@ -153,81 +149,38 @@ describe('Analytics Landing Page directive', function() {
         });
     });
     describe('controller methods', function() {
-        describe('getAnalyticRecords should set the correct variables when getRecords', function() {
+        describe('setRecords should set the correct variables when getRecords', function() {
             it('resolves', function() {
                 catalogManagerSvc.getRecords.and.returnValue($q.when({
                     data: [{'@id': 'recordId'}],
                     headers: jasmine.createSpy('headers').and.returnValue({
                         'x-total-count': 10,
-                        link: 'link'
                     })
                 }));
-                utilSvc.parseLinks.and.returnValue({next: 'next', prev: 'prev'});
-                this.controller.config.pageIndex = 1;
-                this.controller.getAnalyticRecords();
+                this.controller.currentPage = 1;
+                this.controller.setRecords();
                 scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith('catalogId', this.controller.config);
                 expect(this.controller.config.pageIndex).toEqual(0);
                 expect(this.controller.records).toEqual([{'@id': 'recordId'}]);
-                expect(this.controller.paging.total).toBe(10);
-                expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
-                expect(this.controller.paging.links).toEqual({next: 'next', prev: 'prev'});
+                expect(this.controller.total).toBe(10);
             });
             it('rejects', function() {
                 catalogManagerSvc.getRecords.and.returnValue($q.reject('error'));
-                this.controller.getAnalyticRecords();
+                this.controller.currentPage = 1;
+                this.controller.setRecords();
                 scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith('catalogId', this.controller.config);
+                expect(this.controller.config.pageIndex).toEqual(0);
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
             });
         });
-        describe('getPage should set the correct variables when getResultsPage', function() {
-            beforeEach(function() {
-                this.controller.config.pageIndex = 1;
-                this.controller.paging.links = {
-                    next: 'next',
-                    prev: 'prev'
-                };
-            });
-            describe('resolves and direction is', function() {
-                beforeEach(function() {
-                    utilSvc.getResultsPage.and.returnValue($q.when({
-                        data: [{'@id': 'recordId'}],
-                        headers: jasmine.createSpy('headers').and.returnValue({
-                            'x-total-count': 10,
-                            link: 'link'
-                        })
-                    }));
-                    utilSvc.parseLinks.and.returnValue({next: 'next', prev: 'prev'});
-                });
-                it('next', function() {
-                    this.controller.getPage('next');
-                    scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith('next');
-                    expect(this.controller.config.pageIndex).toEqual(2);
-                    expect(this.controller.records).toEqual([{'@id': 'recordId'}]);
-                    expect(this.controller.paging.total).toBe(10);
-                    expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
-                    expect(this.controller.paging.links).toEqual({next: 'next', prev: 'prev'});
-                });
-                it('prev', function() {
-                    this.controller.getPage('prev');
-                    scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith('prev');
-                    expect(this.controller.config.pageIndex).toEqual(0);
-                    expect(this.controller.records).toEqual([{'@id': 'recordId'}]);
-                    expect(this.controller.paging.total).toBe(10);
-                    expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
-                    expect(this.controller.paging.links).toEqual({next: 'next', prev: 'prev'});
-                });
-            });
-            it('rejects', function() {
-                utilSvc.getResultsPage.and.returnValue($q.reject('error'));
-                this.controller.getPage('next');
-                scope.$apply();
-                expect(utilSvc.getResultsPage).toHaveBeenCalledWith('next');
-                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
-            });
+        it('setInitialRecords should call the correct methods', function() {
+            spyOn(this.controller, 'setRecords');
+            this.controller.currentPage = 10;
+            this.controller.setInitialRecords();
+            expect(this.controller.currentPage).toEqual(1);
+            expect(this.controller.setRecords).toHaveBeenCalled();
         });
         describe('open should call the correct functions when getAnalytic', function() {
             describe('resolves and populateEditor', function() {

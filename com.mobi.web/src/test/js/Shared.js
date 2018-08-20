@@ -963,7 +963,7 @@ function mockCatalogState() {
                     }
                 }
             };
-            this.currentPage = 0;
+            this.currentPage = 1;
             this.links = {
                 prev: '',
                 next: ''
@@ -1108,7 +1108,7 @@ function mockDiscoverState() {
                     original: []
                 },
                 instanceDetails: {
-                    currentPage: 0,
+                    currentPage: 1,
                     data: [],
                     limit: 99,
                     links: {

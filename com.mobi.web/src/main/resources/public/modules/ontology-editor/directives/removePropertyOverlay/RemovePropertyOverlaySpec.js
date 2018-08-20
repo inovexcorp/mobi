@@ -97,11 +97,14 @@ describe('Remove Property Overlay directive', function() {
         it('with a h6', function() {
             expect(this.element.find('h6').length).toBe(1);
         });
-        ['main', 'btn-container', 'btn-primary', 'btn-default'].forEach(function(item) {
+        ['main', 'btn-container', 'btn-primary'].forEach(function(item) {
             it('with a .' + item, function() {
                 expect(this.element.querySelectorAll('.' + item).length).toBe(1);
             });
         }, this);
+        it('with a regular .btn', function() {
+            expect(this.element.querySelectorAll('.btn:not(.btn-primary)').length).toBe(1);
+        });
     });
     describe('controller methods', function() {
         describe('getValueDisplay should return', function() {
@@ -231,7 +234,7 @@ describe('Remove Property Overlay directive', function() {
         expect(this.controller.removeProperty).toHaveBeenCalled();
     });
     it('sets the correct state when the cancel button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(this.controller.overlayFlag).toBe(false);
     });

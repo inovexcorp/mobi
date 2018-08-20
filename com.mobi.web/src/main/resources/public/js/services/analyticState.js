@@ -233,9 +233,9 @@
              * @type {number}
              *
              * @description
-             * 'currentPage' is a number indicating which page is currently shown.
+             * 'currentPage' is the 1 based index indicating which page is currently shown.
              */
-            self.currentPage = 0;
+            self.currentPage = 1;
 
             /**
              * @ngdoc property
@@ -355,7 +355,7 @@
                 self.results = undefined;
                 self.variables = {};
                 self.queryError = '';
-                self.currentPage = 0;
+                self.currentPage = 1;
                 self.totalSize = 0;
                 self.limit = 100;
                 self.links = {};
@@ -414,7 +414,7 @@
              */
             self.selectProperty = function(data) {
                 self.selectedProperties.push(_.remove(self.properties, data)[0]);
-                getPagedResults(self.createQueryString());
+                getInitialResults(self.createQueryString());
             }
 
             /**
@@ -431,7 +431,7 @@
             self.removeProperty = function(data) {
                 self.properties.push(angular.copy(data));
                 if (self.selectedProperties.length) {
-                    getPagedResults(self.createQueryString());
+                    getInitialResults(self.createQueryString());
                 } else {
                     self.results = undefined;
                 }
@@ -497,19 +497,10 @@
              * @methodOf analyticState.service:analyticStateService
              *
              * @description
-             * Gets the next or previous page of results and updates the paginated variables to reflect
-             * that change.
-             *
-             * @param {string} direction The direction, either next or prev, of the page that you want to get.
+             * Gets a page of results and updates the paginated variables to reflect that change.
              */
-            self.getPage = function(direction) {
-                var isNext = direction === 'next';
-                var url = isNext ? self.links.next : self.links.prev;
-                httpService.get(url, undefined, self.spinnerId)
-                    .then(response => {
-                        self.currentPage = isNext ? self.currentPage + 1 : self.currentPage - 1;
-                        onPagedSuccess(response);
-                    }, onPagedError);
+            self.getPage = function() {
+                getPagedResults(self.createQueryString());
             }
 
             /**
@@ -527,7 +518,7 @@
             self.sortResults = function(expression, descending = false) {
                 self.query.order = [{expression, descending}];
                 var generator = new sparqljs.Generator();
-                getPagedResults(generator.stringify(self.query));
+                getInitialResults(generator.stringify(self.query));
             }
 
             /**
@@ -624,7 +615,7 @@
                                 }
                             });
                             if (self.selectedProperties.length) {
-                                getPagedResults(self.createQueryString());
+                                getInitialResults(self.createQueryString());
                             } else {
                                 message = 'The Properties could not be found in the Dataset ontologies';
                             }
@@ -736,13 +727,17 @@
                 };
             }
 
+            function getInitialResults(query) {
+                self.currentPage = 1;
+                getPagedResults(query);
+            }
+
             function getPagedResults(query) {
                 httpService.cancel(self.spinnerId);
-                self.currentPage = 0;
                 var paramObj = {
                     datasetRecordIRI: self.datasets[0].id,
                     id: self.spinnerId,
-                    page: self.currentPage,
+                    page: self.currentPage - 1,
                     limit: self.limit
                 };
                 sm.pagedQuery(query, paramObj)

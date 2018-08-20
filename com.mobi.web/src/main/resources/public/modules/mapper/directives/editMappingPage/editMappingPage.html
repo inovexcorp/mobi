@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="edit-mapping-page row">
-    <div class="col-xs-5">
+    <div class="col-5">
         <mapping-title></mapping-title>
         <tabset class="edit-tabs">
             <tab heading="'Edit'" active="dvm.tabs.edit">
@@ -31,9 +31,9 @@
                         <edit-mapping-form></edit-mapping-form>
                     </block-content>
                     <block-footer>
-                        <button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
-                        <button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="!dvm.isSaveable()">Save</button>
-                        <button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="!dvm.isSaveable()">Save &amp; Run</button>
+                        <button class="btn float-left" ng-click="dvm.cancel()">Cancel</button>
+                        <button class="btn btn-primary float-right save-btn" ng-click="dvm.save()" ng-disabled="!dvm.isSaveable()">Save</button>
+                        <button class="btn btn-primary float-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="!dvm.isSaveable()">Save &amp; Run</button>
                     </block-footer>
                 </block>
             </tab>
@@ -44,15 +44,15 @@
                         <rdf-preview-form></rdf-preview-form>
                     </block-content>
                     <block-footer>
-                        <button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
-                        <button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="!dvm.isSaveable()">Save</button>
-                        <button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="!dvm.isSaveable()">Save &amp; Run</button>
+                        <button class="btn float-left" ng-click="dvm.cancel()">Cancel</button>
+                        <button class="btn btn-primary float-right save-btn" ng-click="dvm.save()" ng-disabled="!dvm.isSaveable()">Save</button>
+                        <button class="btn btn-primary float-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="!dvm.isSaveable()">Save &amp; Run</button>
                     </block-footer>
                 </block>
             </tab>
         </tabset>
     </div>
-    <div class="col-xs-7">
+    <div class="col-7">
         <block>
             <block-content>
                 <preview-data-grid></preview-data-grid>
