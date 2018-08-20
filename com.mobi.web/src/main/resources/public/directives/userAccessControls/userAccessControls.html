@@ -1,0 +1,59 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="user-access-controls">
+    <md-switch ng-model="item.everyone" ng-change="dvm.toggleEveryone(item)" aria-label="Everyone">Everyone</md-switch>
+    <div class="row">
+        <div class="col-xs-6">
+            <div class="selected-items">
+                <div class="selected-item" ng-repeat="user in item.selectedUsers track by user.iri">
+                    <span>{{user.username}}</span>
+                    <a ng-click="dvm.removeUser(user, item)"><i class="fa fa-times"></i></a>
+                </div>
+            </div>
+            <div class="selector-container">
+                <md-autocomplete hide-label md-no-cache="true" md-min-length="0" md-selected-item="item.selectedUser" md-search-text="item.userSearchText" md-selected-item-change="dvm.addUser(user, item)" md-items="user in dvm.filterUsers(item.users, item.userSearchText)" md-item-text="user.username" placeholder="Select a user..." md-floating-label="Test" ng-disabled="item.everyone">
+                    <md-item-template>
+                        <span md-highlight-text="item.userSearchText" md-highlight-flags="i">{{user.username}}</span>
+                    </md-item-template>
+                    <md-not-found><span class="text-muted">No users to show</span></md-not-found>
+                </md-autocomplete>
+            </div>
+        </div>
+        <div class="col-xs-6">
+            <div class="selected-items">
+                <div class="selected-item" ng-repeat="group in item.selectedGroups track by group.iri">
+                    <span>{{group.title}}</span>
+                    <a ng-click="dvm.removeGroup(group, item)"><i class="fa fa-times"></i></a>
+                </div>
+            </div>
+            <div class="selector-container">
+                <md-autocomplete hide-label md-no-cache="true" md-min-length="0" md-selected-item="item.selectedGroup" md-search-text="item.groupSearchText" md-selected-item-change="dvm.addGroup(group, item)" md-items="group in dvm.filterGroups(item.groups, item.groupSearchText)" md-item-text="group.title" placeholder="Select a group..." md-floating-label="Test" ng-disabled="item.everyone">
+                    <md-item-template>
+                        <span md-highlight-text="item.groupSearchText" md-highlight-flags="i">{{group.title}}</span>
+                    </md-item-template>
+                    <md-not-found><span class="text-muted">No groups to show</span></md-not-found>
+                </md-autocomplete>
+            </div>
+        </div>
+    </div>
+</div>

@@ -28,10 +28,10 @@
         .directive('openOntologyTab', openOntologyTab);
 
         openOntologyTab.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
-            'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService'];
+            'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService', 'policyEnforcementService'];
 
         function openOntologyTab(httpService, ontologyManagerService, ontologyStateService, prefixes,
-            stateManagerService, utilService, mapperStateService, catalogManagerService) {
+            stateManagerService, utilService, mapperStateService, catalogManagerService, policyEnforcementService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -44,6 +44,7 @@
                     var dvm = this;
                     var sm = stateManagerService;
                     var cm = catalogManagerService;
+                    var pe = policyEnforcementService;
                     var ontologyRecords = [];
 
                     dvm.prefixes = prefixes;
@@ -136,6 +137,9 @@
                         if (event.keyCode === 13) {
                             dvm.getPageOntologyRecords();
                         }
+                    }
+                    dvm.manageRecord = function() {
+                        return true;
                     }
                     
                     $scope.$watch(() => dvm.os.list.length, () => {

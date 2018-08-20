@@ -89,6 +89,7 @@
             'pagination',
             'pagingDetails',
             'passwordConfirmInput',
+            'recordAccessOverlay',
             'radioButton',
             'rdfVisualization',
             'recordKeywords',
@@ -103,6 +104,7 @@
             'textArea',
             'textInput',
             'uniqueValue',
+            'userAccessControls',
             'valueDisplay',
 
             /* Custom Modules */
@@ -140,6 +142,7 @@
             'mergeRequestsState',
             'ontologyManager',
             'ontologyState',
+            'policyEnforcement',
             'policyManager',
             'prefixes',
             'propertyManager',

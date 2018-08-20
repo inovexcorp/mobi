@@ -20,20 +20,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="permissions-page row">
-    <div class="col-xs-12">
-        <block>
-            <block-content>
-                <div class="policy row" ng-repeat="item in dvm.policies track by item.id">
-                    <div class="col-xs-6 col-xs-offset-3">
-                        <h3>Create {{(item.type | splitIRI).end | beautify}}</h3>
-                        <user-access-controls item="item"></user-access-controls>
-                    </div>
-                </div>
-            </block-content>
-        </block>
-    </div>
-    <div class="save-container">
-        <circle-button class="save-button btn-primary" btn-icon="'fa-floppy-o'" display-text="'Save Changes'" ng-click="dvm.saveChanges()" ng-disabled="!dvm.hasChanges()"></circle-button>
-    </div>
+<div class="record-access-overlay overlay lg">
+    <form class="content" name="dvm.form">
+        <h6>Record Access Controls</h6>
+        <user-access-controls></user-access-controls>
+        <div class="btn-container clearfix">
+            <button class="btn btn-default pull-right" ng-click="dvm.close()">Close</button>
+        </div>
+    </form>
 </div>
