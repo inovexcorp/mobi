@@ -20,9 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="checkbox" ng-class="{'disabled': isDisabledWhen}">
-    <label class="control-label">
-        <input type="checkbox" ng-model="bindModel" ng-change="dvm.onChange()" ng-disabled="isDisabledWhen"/>
-        {{displayText}}
-    </label>
+<div class="checkbox form-check" ng-class="{'disabled': dvm.isDisabled, 'form-check-inline': dvm.inline}">
+    <input type="checkbox" class="form-check-input" ng-model="dvm.bindModel" ng-change="dvm.onChange()" ng-disabled="dvm.isDisabled" ng-attr-id="{{::('checkbox-' + $id)}}"/>
+    <label class="form-check-label" ng-attr-for="{{::('checkbox-' + $id)}}">{{dvm.displayText}}</label>
 </div>

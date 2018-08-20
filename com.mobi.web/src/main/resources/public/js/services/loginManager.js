@@ -83,7 +83,7 @@
              * @type {string}
              *
              * @description
-             * `currentUser` holds the username of the user that is currenlty logged into Mobi.
+             * `currentUser` holds the username of the user that is currently logged into Mobi.
              */
             self.currentUser = '';
 

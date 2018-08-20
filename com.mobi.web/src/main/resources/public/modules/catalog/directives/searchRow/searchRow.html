@@ -21,25 +21,19 @@
   #L%
   -->
 <div class="row search-row">
-    <div class="col-xs-8 col-xs-offset-2">
-        <form name="dvm.form" class="form-horizontal">
-            <div class="col-xs-2">
-                <div class="form-group">
-                    <select class="form-control" ng-model="dvm.recordType">
-                        <option value="">Filter</option>
-                        <option ng-repeat="type in dvm.cm.recordTypes" value="{{type}}">{{(type | splitIRI).end}}</option>
-                    </select>
-                </div>
+    <div class="col-8 offset-2">
+        <form name="dvm.form" class="form-inline justify-content-center">
+            <div class="form-group">
+                <select class="form-control" ng-model="dvm.recordType">
+                    <option value="">Filter</option>
+                    <option ng-repeat="type in dvm.cm.recordTypes" value="{{type}}">{{(type | splitIRI).end}}</option>
+                </select>
             </div>
-            <div class="col-xs-10">
-                <div class="form-group">
-                    <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Search for..." ng-model="dvm.searchText" />
-                        <span class="input-group-btn">
-                            <button class="btn btn-primary" type="submit" ng-click="dvm.search()">Search</button>
-                        </span>
-                    </div>
-                </div>
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search for..." ng-model="dvm.searchText" />
+                <span class="input-group-btn">
+                    <button class="btn btn-primary" type="submit" ng-click="dvm.search()">Search</button>
+                </span>
             </div>
         </form>
     </div>

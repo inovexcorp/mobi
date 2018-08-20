@@ -18,7 +18,7 @@
     }
 
     .request {
-        border-bottom: 1px solid $gray-lighter;
+        border-bottom: 1px solid var(--light);
         display: flex;
         flex-direction: row;
 
@@ -35,12 +35,10 @@
             align-items: center;
 
             .action {
-                color: $gray-light;
-                display: inline-block;
                 text-decoration: none;
 
                 &:hover {
-                    color: $gray;
+                    color: var(--grey) !important;
                 }
             }
         }

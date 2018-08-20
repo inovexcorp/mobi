@@ -142,8 +142,8 @@ describe('Instance Form directive', function() {
             expect(this.element.hasClass('instance-form')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
         });
-        it('with a .col-xs-8.col-xs-offset-2', function() {
-            expect(this.element.querySelectorAll('.col-xs-8.col-xs-offset-2').length).toBe(1);
+        it('with a .col-8.offset-2', function() {
+            expect(this.element.querySelectorAll('.col-8.offset-2').length).toBe(1);
         });
         it('with a h2', function() {
             expect(this.element.find('h2').length).toBe(1);

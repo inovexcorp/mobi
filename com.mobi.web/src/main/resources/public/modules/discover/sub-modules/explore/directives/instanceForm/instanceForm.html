@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="instance-form row">
-    <div class="col-xs-8 col-xs-offset-2">
+    <div class="col-8 offset-2">
         <h2>{{header}}</h2>
         <div ng-repeat="missing in dvm.missingProperties track by $index">
             <error-display>{{missing}}</error-display>
@@ -48,7 +48,7 @@
             </div>
         </form>
         <div class="btn-container clearfix">
-            <button type="button" ng-disabled="!dvm.eu.getNewProperties(dvm.properties, dvm.instance).length" ng-click="dvm.showOverlay = true" class="btn btn-link pull-left"><i class="fa fa-plus fa-fw"></i>Add New Property</button>
+            <button type="button" ng-disabled="!dvm.eu.getNewProperties(dvm.properties, dvm.instance).length" ng-click="dvm.showOverlay = true" class="btn btn-link float-left"><i class="fa fa-plus fa-fw"></i>Add New Property</button>
         </div>
     </div>
     <new-instance-property-overlay ng-if="dvm.showOverlay" on-cancel="dvm.showOverlay = false" on-submit="dvm.addNewProperty(propertyIRI)" get-properties="dvm.eu.getNewProperties(dvm.properties, dvm.instance, text)"></new-instance-property-overlay>

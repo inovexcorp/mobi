@@ -21,5 +21,5 @@
   #L%
   -->
 <div class="catalog-pagination">
-    <pagination links="dvm.state.links" current-page="dvm.state.currentPage" get-page="dvm.getPage(direction)"></pagination>
+    <pagination total="dvm.state.totalSize" limit="dvm.state.getCurrentCatalog()[listKey].limit" current-page="dvm.state.currentPage" get-page="getPage()"></pagination>
 </div>

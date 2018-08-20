@@ -40,7 +40,6 @@
          * @scope
          * @restrict E
          * @requires catalogState.service:catalogStateService
-         * @requires util.service:utilService
          *
          * @description
          * `catalogPagination` is a directive which creates a div with a
@@ -50,34 +49,20 @@
          */
         .directive('catalogPagination', catalogPagination);
 
-    catalogPagination.$inject = ['catalogStateService', 'utilService', '$q'];
+    catalogPagination.$inject = ['catalogStateService'];
 
-    function catalogPagination(catalogStateService, utilService, $q) {
+    function catalogPagination(catalogStateService) {
         return {
             restrict: 'E',
             replace: true,
             controllerAs: 'dvm',
-            scope: {},
+            scope: {
+                listKey: '<',
+                getPage: '&'
+            },
             controller: function() {
                 var dvm = this;
                 dvm.state = catalogStateService;
-                dvm.util = utilService;
-
-                dvm.getPage = function(direction) {
-                    if (direction === 'next') {
-                        dvm.util.getResultsPage(dvm.state.links.next)
-                            .then(response => {
-                                dvm.state.currentPage += 1;
-                                dvm.state.setPagination(response);
-                            }, dvm.util.createErrorToast);
-                    } else {
-                        dvm.util.getResultsPage(dvm.state.links.prev)
-                            .then(response => {
-                                dvm.state.currentPage -= 1;
-                                dvm.state.setPagination(response);
-                            }, dvm.util.createErrorToast);
-                    }
-                }
             },
             templateUrl: 'modules/catalog/directives/catalogPagination/catalogPagination.html'
         };

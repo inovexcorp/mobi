@@ -72,10 +72,10 @@
                 dvm.recordType = _.get(dvm.state.getCurrentCatalog(), 'records.recordType', '');
 
                 dvm.search = function() {
-                    dvm.state.currentPage = 0;
+                    dvm.state.currentPage = 1;
                     var currentCatalog = dvm.state.getCurrentCatalog();
                     var paginatedConfig = {
-                        pageIndex: dvm.state.currentPage,
+                        pageIndex: dvm.state.currentPage - 1,
                         limit: currentCatalog.records.limit,
                         sortOption: currentCatalog.records.sortOption,
                         recordType: dvm.recordType,

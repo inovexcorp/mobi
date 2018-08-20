@@ -24,23 +24,23 @@
     <form class="content" name="dvm.infoForm">
         <h1>Create User</h1>
         <h2>User Info</h2>
-        <div class="form-group username" ng-class="{'has-error': dvm.infoForm.username.$dirty && dvm.infoForm.username.$invalid}">
+        <div class="form-group username">
             <custom-label>Username</custom-label>
-            <input class="form-control" type="text" name="username" ng-model="dvm.newUser.username" unique-value="dvm.getUsernames()" ng-pattern="dvm.usernamePattern" ng-trim="false" required focus-me/>
+            <input class="form-control" type="text" name="username" ng-model="dvm.newUser.username" unique-value="dvm.getUsernames()" ng-pattern="dvm.usernamePattern" ng-trim="false" ng-class="{'is-invalid': dvm.infoForm.username.$dirty && dvm.infoForm.username.$invalid}" required focus-me/>
+            <p ng-messages="dvm.infoForm.username.$error" class="invalid-feedback">
+                <ng-message when="uniqueUsername">This username has already been taken</ng-message>
+                <ng-message when="pattern">Invalid username</ng-message>
+            </p>
         </div>
-        <p ng-messages="dvm.infoForm.username.$error" class="error-display">
-            <ng-message when="uniqueUsername">This username has already been taken</ng-message>
-            <ng-message when="pattern">Invalid username</ng-message>
-        </p>
         <password-confirm-input password="dvm.password" label="'Password'" required></password-confirm-input>
         <text-input ng-model="dvm.newUser.firstName" input-name="'firstName'" display-text="'First Name'" muted-text="'(Optional)'"></text-input>
         <text-input ng-model="dvm.newUser.lastName" input-name="'lastName'" display-text="'Last Name'" muted-text="'(Optional)'"></text-input>
-        <email-input ng-model="dvm.newUser.email" input-name="'email'" ng-class="{'has-error': dvm.infoForm.email.$dirty && dvm.infoForm.email.$invalid}" muted-text="'(Optional)'"></email-input>
+        <email-input ng-model="dvm.newUser.email" input-name="'email'" is-invalid="dvm.infoForm.email.$dirty && dvm.infoForm.email.$invalid" muted-text="'(Optional)'"></email-input>
 
         <step-progress-bar step-number="2" current-step="dvm.step"></step-progress-bar>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-click="dvm.step = 1" ng-disabled="dvm.infoForm.$invalid">Next</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.state.displayCreateUserOverlay = false">Cancel</button>
+            <button class="btn btn-primary float-right" ng-click="dvm.step = 1" ng-disabled="dvm.infoForm.$invalid">Next</button>
+            <button class="btn float-right" ng-click="dvm.state.displayCreateUserOverlay = false">Cancel</button>
         </div>
     </form>
 </div>
@@ -54,8 +54,8 @@
 
         <step-progress-bar step-number="2" current-step="dvm.step"></step-progress-bar>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-click="dvm.add()" ng-disabled="dvm.permissionForm.$invalid">Add</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.step = 0">Back</button>
+            <button class="btn btn-primary float-right" ng-click="dvm.add()" ng-disabled="dvm.permissionForm.$invalid">Add</button>
+            <button class="btn float-right" ng-click="dvm.step = 0">Back</button>
         </div>
     </form>
 </div>

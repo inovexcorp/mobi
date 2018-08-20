@@ -22,7 +22,7 @@
  */
 (function() {
     'use strict';
-    
+
     angular
         /**
          * @ngdoc overview
@@ -50,7 +50,7 @@
          * new analytics.
          */
         .directive('analyticsLandingPage', analyticsLandingPage);
-        
+
         analyticsLandingPage.$inject = ['$q', 'analyticManagerService', 'analyticStateService', 'catalogManagerService', 'prefixes', 'utilService'];
 
         function analyticsLandingPage($q, analyticManagerService, analyticStateService, catalogManagerService, prefixes, utilService) {
@@ -71,13 +71,8 @@
                     dvm.util = utilService;
                     var catalogId = cm.localCatalog['@id'];
                     dvm.records = [];
-                    dvm.paging = {
-                        links: {
-                            next: '',
-                            prev: ''
-                        },
-                        total: 0
-                    };
+                    dvm.total = 0;
+                    dvm.currentPage = 1;
                     dvm.config = {
                         limit: 50,
                         pageIndex: 0,
@@ -89,22 +84,15 @@
                         }
                     };
 
-                    dvm.getAnalyticRecords = function() {
-                        dvm.config.pageIndex = 0;
+                    dvm.setRecords = function() {
+                        dvm.config.pageIndex = dvm.currentPage - 1;
                         cm.getRecords(catalogId, dvm.config)
-                            .then(response => {
-                                setPagination(response);
-                            }, dvm.util.createErrorToast);
+                            .then(setPagination, dvm.util.createErrorToast);
                     }
-
-                    dvm.getPage = function(direction) {
-                        dvm.util.getResultsPage(dvm.paging.links[direction])
-                            .then(response => {
-                                dvm.config.pageIndex = direction === 'next' ? dvm.config.pageIndex + 1 : dvm.config.pageIndex - 1;
-                                setPagination(response);
-                            }, dvm.util.createErrorToast);
+                    dvm.setInitialRecords = function() {
+                        dvm.currentPage = 1;
+                        dvm.setRecords();
                     }
-                    
                     dvm.open = function(analyticRecordId) {
                         am.getAnalytic(analyticRecordId)
                             .then(state.populateEditor, $q.reject)
@@ -130,19 +118,14 @@
                                 dvm.showDeleteOverlay = false;
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
-                    
+
                     function setPagination(response) {
                         dvm.records = response.data;
                         var headers = response.headers();
-                        dvm.paging.total = _.get(headers, 'x-total-count', 0);
-                        var links = dvm.util.parseLinks(_.get(headers, 'link', ''));
-                        dvm.paging.links = {
-                            next: _.get(links, 'next', ''),
-                            prev: _.get(links, 'prev', '')
-                        };
+                        dvm.total = _.get(headers, 'x-total-count', 0);
                     }
 
-                    dvm.getAnalyticRecords();
+                    dvm.setInitialRecords();
                 }
             }
         }

@@ -1,0 +1,11 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.mapping-select-page {
+    .mapping-preview-header button {
+        min-width: 0;
+    }
+    .dropdown-toggle::after {
+        display: none;
+    }
+}

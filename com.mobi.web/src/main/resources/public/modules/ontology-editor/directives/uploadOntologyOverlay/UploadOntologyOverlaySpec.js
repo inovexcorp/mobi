@@ -75,10 +75,11 @@ describe('Upload Ontology Overlay directive', function() {
                 expect(this.element.find(tag).length).toBe(1);
             });
         });
-        _.forEach(['btn-container', 'btn-default'], function(item) {
-            it('with a .' + item, function() {
-                expect(this.element.querySelectorAll('.' + item).length).toBe(1);
-            });
+        it('with a regular .btn', function() {
+            expect(this.element.querySelectorAll('.btn:not(.btn-primary)').length).toBe(1);
+        });
+        it('with a .btn-container', function() {
+            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
         });
         it('with .btn-primarys', function() {
             expect(this.element.querySelectorAll('.btn-primary').length).toBe(2);
