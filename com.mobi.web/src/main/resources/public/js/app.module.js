@@ -104,6 +104,7 @@
             'textArea',
             'textInput',
             'uniqueValue',
+            'userAccessControls',
             'valueDisplay',
 
             /* Custom Modules */

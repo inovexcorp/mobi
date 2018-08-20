@@ -54,17 +54,7 @@
          * displayed are those for restrictions on record creation. The directive is replaced by the
          * contents of its template.
          */
-        .directive('permissionsPage', permissionsPage)
-        /**
-         * @ngdoc directive
-         * @name permissionsPage.directive:hideLabel
-         * @restrict A
-         *
-         * @description
-         * `hideLabel` is a utility directive for working with Angular Material inputs so that
-         * the placeholder for a md-autocomplete is set appropriately on the underlying <input>.
-         */
-        .directive('hideLabel', hideLabel);
+        .directive('permissionsPage', permissionsPage);
 
     permissionsPage.$inject = ['$q', 'policyManagerService', 'catalogManagerService', 'utilService', 'prefixes', 'userManagerService'];
 
@@ -74,7 +64,7 @@
             replace: true,
             controllerAs: 'dvm',
             scope: {},
-            controller: ['$scope', function($scope) {
+            controller: ['$scope', function ($scope) {
                 var dvm = this;
                 var pm = policyManagerService;
                 var um = userManagerService;
@@ -86,68 +76,68 @@
 
                 dvm.policies = [];
 
-                dvm.filterUsers = function(users, searchText) {
-                    return _.filter(users, user => _.includes(user.username.toLowerCase(), searchText.toLowerCase()));
-                }
-                dvm.filterGroups = function(groups, searchText) {
-                    return _.filter(groups, group => _.includes(group.title.toLowerCase(), searchText.toLowerCase()));
-                }
-                dvm.addUser = function(user, item) {
-                    if (user) {
-                        item.selectedUsers.push(user);
-                        item.selectedUsers = sortUsers(item.selectedUsers);
-                        _.remove(item.users, user);
-                        item.selectedUser = undefined;
-                        item.userSearchText = '';
-                        $scope.$$childTail.userSearchText = '';
-                        $scope.$$childTail.selectedUser = undefined;
-                        document.activeElement.blur();
-                        addUserMatch(user.iri, item.policy);
-                        item.changed = true;
-                    }
-                }
-                dvm.removeUser = function(user, item) {
-                    item.users.push(user);
-                    item.users = sortUsers(item.users);
-                    _.remove(item.selectedUsers, user);
-                    removeMatch(user.iri, item.policy);
-                    item.changed = true;
-                }
-                dvm.addGroup = function(group, item) {
-                    if (group) {
-                        item.selectedGroups.push(group);
-                        item.selectedGroups = sortGroups(item.selectedGroups);
-                        _.remove(item.groups, group);
-                        item.selectedGroup = undefined;
-                        item.groupSearchText = '';
-                        $scope.$$childTail.groupSearchText = '';
-                        $scope.$$childTail.selectedGroup = undefined;
-                        document.activeElement.blur();
-                        addGroupMatch(group.iri, item.policy);
-                        item.changed = true;
-                    }
-                }
-                dvm.removeGroup = function(group, item) {
-                    item.groups.push(group);
-                    item.groups = sortGroups(item.groups);
-                    _.remove(item.selectedGroups, group);
-                    removeMatch(group.iri, item.policy);
-                    item.changed = true;
-                }
-                dvm.toggleEveryone = function(item) {
-                    if (item.everyone) {
-                        _.set(item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);
-                        addMatch(userRole, prefixes.user + 'hasUserRole', item.policy);
-                        item.users = sortUsers(_.concat(item.users, item.selectedUsers));
-                        item.selectedUsers = [];
-                        item.groups = sortGroups(_.concat(item.groups, item.selectedGroups));
-                        item.selectedGroups = [];
-                    } else {
-                        removeMatch(userRole, item.policy);
-                    }
-                    item.changed = true;
-                }
-                dvm.saveChanges = function() {
+                // dvm.filterUsers = function(users, searchText) {
+                //     return _.filter(users, user => _.includes(user.username.toLowerCase(), searchText.toLowerCase()));
+                // }
+                // dvm.filterGroups = function(groups, searchText) {
+                //     return _.filter(groups, group => _.includes(group.title.toLowerCase(), searchText.toLowerCase()));
+                // }
+                // dvm.addUser = function(user, item) {
+                //     if (user) {
+                //         item.selectedUsers.push(user);
+                //         item.selectedUsers = sortUsers(item.selectedUsers);
+                //         _.remove(item.users, user);
+                //         item.selectedUser = undefined;
+                //         item.userSearchText = '';
+                //         $scope.$$childTail.userSearchText = '';
+                //         $scope.$$childTail.selectedUser = undefined;
+                //         document.activeElement.blur();
+                //         addUserMatch(user.iri, item.policy);
+                //         item.changed = true;
+                //     }
+                // }
+                // dvm.removeUser = function(user, item) {
+                //     item.users.push(user);
+                //     item.users = sortUsers(item.users);
+                //     _.remove(item.selectedUsers, user);
+                //     removeMatch(user.iri, item.policy);
+                //     item.changed = true;
+                // }
+                // dvm.addGroup = function(group, item) {
+                //     if (group) {
+                //         item.selectedGroups.push(group);
+                //         item.selectedGroups = sortGroups(item.selectedGroups);
+                //         _.remove(item.groups, group);
+                //         item.selectedGroup = undefined;
+                //         item.groupSearchText = '';
+                //         $scope.$$childTail.groupSearchText = '';
+                //         $scope.$$childTail.selectedGroup = undefined;
+                //         document.activeElement.blur();
+                //         addGroupMatch(group.iri, item.policy);
+                //         item.changed = true;
+                //     }
+                // }
+                // dvm.removeGroup = function(group, item) {
+                //     item.groups.push(group);
+                //     item.groups = sortGroups(item.groups);
+                //     _.remove(item.selectedGroups, group);
+                //     removeMatch(group.iri, item.policy);
+                //     item.changed = true;
+                // }
+                // dvm.toggleEveryone = function(item) {
+                //     if (item.everyone) {
+                //         _.set(item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);
+                //         addMatch(userRole, prefixes.user + 'hasUserRole', item.policy);
+                //         item.users = sortUsers(_.concat(item.users, item.selectedUsers));
+                //         item.selectedUsers = [];
+                //         item.groups = sortGroups(_.concat(item.groups, item.selectedGroups));
+                //         item.selectedGroups = [];
+                //     } else {
+                //         removeMatch(userRole, item.policy);
+                //     }
+                //     item.changed = true;
+                // }
+                dvm.saveChanges = function () {
                     var changedPolicies = _.filter(dvm.policies, 'changed');
                     $q.all(_.map(changedPolicies, item => pm.updatePolicy(item.policy)))
                         .then(() => {
@@ -155,40 +145,40 @@
                             util.createSuccessToast('Permissions updated');
                         }, util.createErrorToast);
                 }
-                dvm.hasChanges = function() {
+                dvm.hasChanges = function () {
                     return _.some(dvm.policies, 'changed');
                 }
 
                 setPolicies();
 
-                function removeMatch(value, policy) {
-                    _.remove(_.get(policy, 'Rule[0].Target.AnyOf[0].AllOf', []), ['Match[0].AttributeValue.content[0]', value]);
-                }
-                function addUserMatch(value, policy) {
-                    addMatch(value, pm.subjectId, policy);
-                }
-                function addGroupMatch(value, policy) {
-                    addMatch(value, groupAttributeId, policy);
-                }
-                function addMatch(value, id, policy) {
-                    var newMatch = {
-                        Match: [{
-                            AttributeValue: {
-                                content: [value],
-                                otherAttributes: {},
-                                DataType: prefixes.xsd + 'string'
-                            },
-                            AttributeDesignator: {
-                                Category: pm.subjectCategory,
-                                AttributeId: id,
-                                DataType: prefixes.xsd + 'string',
-                                MustBePresent: true
-                            },
-                            MatchId: pm.stringEqual
-                        }]
-                    };
-                    _.get(policy, 'Rule[0].Target.AnyOf[0].AllOf', []).push(newMatch);
-                }
+                // function removeMatch(value, policy) {
+                //     _.remove(_.get(policy, 'Rule[0].Target.AnyOf[0].AllOf', []), ['Match[0].AttributeValue.content[0]', value]);
+                // }
+                // function addUserMatch(value, policy) {
+                //     addMatch(value, pm.subjectId, policy);
+                // }
+                // function addGroupMatch(value, policy) {
+                //     addMatch(value, groupAttributeId, policy);
+                // }
+                // function addMatch(value, id, policy) {
+                //     var newMatch = {
+                //         Match: [{
+                //             AttributeValue: {
+                //                 content: [value],
+                //                 otherAttributes: {},
+                //                 DataType: prefixes.xsd + 'string'
+                //             },
+                //             AttributeDesignator: {
+                //                 Category: pm.subjectCategory,
+                //                 AttributeId: id,
+                //                 DataType: prefixes.xsd + 'string',
+                //                 MustBePresent: true
+                //             },
+                //             MatchId: pm.stringEqual
+                //         }]
+                //     };
+                //     _.get(policy, 'Rule[0].Target.AnyOf[0].AllOf', []).push(newMatch);
+                // }
                 function setPolicies() {
                     dvm.policies = [];
                     pm.getPolicies(resource, undefined, action)
@@ -214,6 +204,7 @@
                                 .value();
                         }, util.createErrorToast);
                 }
+
                 function getRecordType(policy) {
                     return _.chain(policy)
                         .get('Target.AnyOf', [])
@@ -224,6 +215,7 @@
                         .head()
                         .value();
                 }
+
                 function setInfo(item) {
                     var matches = _.chain(item.policy)
                         .get('Rule[0].Target.AnyOf[0].AllOf', [])
@@ -250,27 +242,16 @@
                     item.users = sortUsers(_.difference(um.users, item.selectedUsers));
                     item.groups = sortGroups(_.difference(um.groups, item.selectedGroups));
                 }
+
                 function sortUsers(users) {
                     return _.sortBy(users, 'username');
                 }
+
                 function sortGroups(groups) {
                     return _.sortBy(groups, 'title');
                 }
             }],
             templateUrl: 'modules/user-management/directives/permissionsPage/permissionsPage.html'
         };
-    }
-
-    hideLabel.$inject = ['$timeout'];
-
-    function hideLabel($timeout) {
-        return {
-            restrict: 'A',
-            link: function(scope, elem, attrs) {
-                if ('placeholder' in attrs) {
-                    $timeout(() => elem.find('input').attr('placeholder', attrs.placeholder));
-                }
-            }
-        }
     }
 })();

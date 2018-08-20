@@ -27,41 +27,7 @@
                 <div class="policy row" ng-repeat="item in dvm.policies track by item.id">
                     <div class="col-xs-6 col-xs-offset-3">
                         <h3>Create {{(item.type | splitIRI).end | beautify}}</h3>
-                        <md-switch ng-model="item.everyone" ng-change="dvm.toggleEveryone(item)" aria-label="Everyone">Everyone</md-switch>
-                        <div class="row">
-                            <div class="col-xs-6">
-                                <div class="selected-items">
-                                    <div class="selected-item" ng-repeat="user in item.selectedUsers track by user.iri">
-                                        <span>{{user.username}}</span>
-                                        <a ng-click="dvm.removeUser(user, item)"><i class="fa fa-times"></i></a>
-                                    </div>
-                                </div>
-                                <div class="selector-container">
-                                    <md-autocomplete hide-label md-no-cache="true" md-min-length="0" md-selected-item="item.selectedUser" md-search-text="item.userSearchText" md-selected-item-change="dvm.addUser(user, item)" md-items="user in dvm.filterUsers(item.users, item.userSearchText)" md-item-text="user.username" placeholder="Select a user..." md-floating-label="Test" ng-disabled="item.everyone">
-                                        <md-item-template>
-                                            <span md-highlight-text="item.userSearchText" md-highlight-flags="i">{{user.username}}</span>
-                                        </md-item-template>
-                                        <md-not-found><span class="text-muted">No users to show</span></md-not-found>
-                                    </md-autocomplete>
-                                </div>
-                            </div>
-                            <div class="col-xs-6">
-                                <div class="selected-items">
-                                    <div class="selected-item" ng-repeat="group in item.selectedGroups track by group.iri">
-                                        <span>{{group.title}}</span>
-                                        <a ng-click="dvm.removeGroup(group, item)"><i class="fa fa-times"></i></a>
-                                    </div>
-                                </div>
-                                <div class="selector-container">
-                                    <md-autocomplete hide-label md-no-cache="true" md-min-length="0" md-selected-item="item.selectedGroup" md-search-text="item.groupSearchText" md-selected-item-change="dvm.addGroup(group, item)" md-items="group in dvm.filterGroups(item.groups, item.groupSearchText)" md-item-text="group.title" placeholder="Select a group..." md-floating-label="Test" ng-disabled="item.everyone">
-                                        <md-item-template>
-                                            <span md-highlight-text="item.groupSearchText" md-highlight-flags="i">{{group.title}}</span>
-                                        </md-item-template>
-                                        <md-not-found><span class="text-muted">No groups to show</span></md-not-found>
-                                    </md-autocomplete>
-                                </div>
-                            </div>
-                        </div>
+                        <user-access-controls item="item"></user-access-controls>
                     </div>
                 </div>
             </block-content>
