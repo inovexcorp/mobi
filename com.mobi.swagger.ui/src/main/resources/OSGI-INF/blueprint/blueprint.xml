@@ -27,7 +27,7 @@
                              update-strategy="reload" >
     </cm:property-placeholder>
 
-    <service id="resources" interface="org.ops4j.pax.web.extender.whiteboard.ResourceMapping">
+    <service id="resources" interface="org.ops4j.pax.web.service.whiteboard.ResourceMapping">
         <bean class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
             <property name="alias" value="/mobirest/swagger-ui" />
             <property name="path" value="swagger" />
