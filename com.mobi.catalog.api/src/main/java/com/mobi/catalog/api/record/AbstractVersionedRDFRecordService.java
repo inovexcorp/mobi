@@ -131,12 +131,11 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             InputStream recordPolicyStream = AbstractVersionedRDFRecordService.class
                     .getResourceAsStream("/recordPolicy.xml");
             String encodedRecordIRI = ResourceUtils.encode(record.getResource());
-            String encodedMasterIRI = ResourceUtils.encode(record.getMasterBranch_resource().get());
 
             String[] search = {USER_IRI_BINDING, RECORD_IRI_BINDING, ENCODED_RECORD_IRI_BINDING,
                     MASTER_BRANCH_IRI_BINDING};
             String[] replace = {user.getResource().stringValue(), record.getResource().stringValue(), encodedRecordIRI,
-                    encodedMasterIRI};
+                    record.getMasterBranch_resource().get().stringValue()};
             String recordPolicy = StringUtils.replaceEach(IOUtils.toString(recordPolicyStream, "UTF-8"),
                     search, replace);
 

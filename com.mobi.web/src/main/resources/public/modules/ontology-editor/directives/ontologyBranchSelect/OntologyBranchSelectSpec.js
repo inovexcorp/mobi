@@ -137,11 +137,11 @@ describe('Ontology Branch Select directive', function() {
         it('depending on whether an error occurred while deleting a branch', function() {
             this.controller.showDeleteConfirmation = true;
             scope.$digest();
-            expect(this.element.find('error-message').length).toBe(0);
+            expect(this.element.find('error-display').length).toBe(0);
 
             this.controller.deleteError = 'Error';
             scope.$digest();
-            expect(this.element.find('error-message').length).toBe(1);
+            expect(this.element.find('error-display').length).toBe(1);
         });
         it('depending on whether a branch is being editing', function() {
             expect(this.element.find('edit-branch-overlay').length).toBe(0);
