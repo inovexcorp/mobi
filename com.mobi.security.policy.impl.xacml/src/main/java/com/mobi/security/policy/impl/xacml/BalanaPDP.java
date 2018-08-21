@@ -63,6 +63,7 @@ import org.wso2.balana.finder.PolicyFinder;
 import org.wso2.balana.finder.PolicyFinderModule;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -153,13 +154,13 @@ public class BalanaPDP implements PDP {
     private org.wso2.balana.PDP getPDP(IRI policyAlgorithm) {
         PDPConfig config = balana.getPdpConfig();
 
-        PolicyFinder policyFinder = config.getPolicyFinder();
+        PolicyFinder policyFinder = new PolicyFinder();
         Set<PolicyFinderModule> policyFinderModules = new HashSet<>();
         policyFinderModules.add(balanaPRP);
         policyFinder.setModules(policyFinderModules);
 
-        AttributeFinder attributeFinder = config.getAttributeFinder();
-        List<AttributeFinderModule> attributeFinderModules = attributeFinder.getModules();
+        AttributeFinder attributeFinder = new AttributeFinder();
+        List<AttributeFinderModule> attributeFinderModules = new ArrayList<>(config.getAttributeFinder().getModules());
         pips.forEach(pip -> {
             MobiAttributeFinder mobiAttributeFinder = new MobiAttributeFinder(vf, pip, jaxbContext);
             attributeFinderModules.add(mobiAttributeFinder);

@@ -722,6 +722,9 @@ public class CatalogRestImpl implements CatalogRest {
     @Override
     @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id="recordId")
+    @ActionAttributes(
+            @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
+    )
     public Response deleteBranch(String catalogId, String recordId, String branchId) {
         try {
             catalogManager.removeBranch(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(branchId));

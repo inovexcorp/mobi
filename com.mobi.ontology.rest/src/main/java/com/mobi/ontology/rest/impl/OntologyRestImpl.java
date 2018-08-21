@@ -39,6 +39,7 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -234,6 +235,9 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionAttributes(
+            @AttributeValue(type = ValueType.QUERY, id = VersionedRDFRecord.branch_IRI, value = "branchId")
+    )
     public Response deleteOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr) {
         IRI recordId = valueFactory.createIRI(recordIdStr);
         User activeUser = getActiveUser(context, engineManager);
