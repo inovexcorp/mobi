@@ -176,14 +176,14 @@ describe('New Dataset Overlay directive', function() {
         expect(this.controller.step).toBe(1);
     });
     it('should call onClose when the button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(scope.onClose).toHaveBeenCalled();
     });
     it('should go the previous step when the back button is clicked', function() {
         this.controller.step = 1;
         scope.$digest();
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(this.controller.step).toBe(0);
     });

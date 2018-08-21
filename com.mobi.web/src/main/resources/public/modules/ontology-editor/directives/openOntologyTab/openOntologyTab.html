@@ -20,29 +20,29 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="open-ontology-tab">
+<div class="open-ontology-tab d-flex flex-column h-100">
     <div class="actions">
-        <form class="form-inline">
+        <form class="form-inline justify-content-center">
             <div class="form-group">
                 <input type="text" class="form-control" placeholder="Filter by text" ng-model="dvm.filterText" ng-keydown="dvm.search($event)" />
             </div>
-            <button type="button" class="btn btn-primary" ng-click="dvm.newOntology()">New Ontology</button>
-            <button type="button" class="btn btn-primary" ng-click="dvm.os.showUploadTab = true">Upload Ontology</button>
+            <button type="button" class="btn btn-primary ml-1" ng-click="dvm.newOntology()">New Ontology</button>
+            <button type="button" class="btn btn-primary ml-1" ng-click="dvm.os.showUploadTab = true">Upload Ontology</button>
         </form>
     </div>
-    <div class="list row">
-        <div class="col-xs-8 col-xs-offset-2">
+    <div class="list flex-grow-1 flex-shrink-1 row m-0">
+        <div class="col-8 offset-2">
             <block targeted-spinner="dvm.id">
-                <block-content class="open-ontology-content">
-                    <div class="ontologies">
-                        <div class="ontology" ng-click="dvm.open(record)" ng-repeat="record in dvm.filteredList">
-                            <div class="details">
+                <block-content class="open-ontology-content d-flex flex-column">
+                    <div class="ontologies flex-grow-1">
+                        <div class="ontology d-flex" ng-click="dvm.open(record)" ng-repeat="record in dvm.filteredList">
+                            <div class="details flex-grow-1">
                                 <h2 class="header" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></h2>
                                 <small class="ontology-iri text-muted">{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small>
-                                <p class="description" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
+                                <p class="description m-0" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
                             </div>
-                            <div class="action-container">
-                                <a ng-click="dvm.showDeleteConfirmationOverlay(record); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
+                            <div class="action-container d-flex align-items-center">
+                                <a ng-click="dvm.showDeleteConfirmationOverlay(record); $event.stopPropagation()" class="action d-inline-block text-muted"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
                             </div>
                         </div>
                         <info-message ng-if="!dvm.filteredList.length && dvm.filterText">No ontologies match your filtered text.</info-message>
@@ -51,8 +51,8 @@
                 </block-content>
                 <block-footer>
                     <div class="paging-container clearfix">
-                        <paging-details total-size="dvm.totalSize" page-index="dvm.pageIndex" limit="dvm.limit"></paging-details>
-                        <pagination links="{'prev': dvm.pageIndex !== 0, 'next': ((dvm.pageIndex + 1) * dvm.limit) < dvm.totalSize}" current-page="dvm.pageIndex" get-page="dvm.getPage(direction)"></pagination>
+                        <paging-details class="float-left" total-size="dvm.totalSize" page-index="dvm.currentPage - 1" limit="dvm.limit"></paging-details>
+                        <pagination class="float-right" total="dvm.totalSize" limit="dvm.limit" current-page="dvm.currentPage" get-page="dvm.getPageOntologyRecords()"></pagination>
                     </div>
                 </block-footer>
             </block>

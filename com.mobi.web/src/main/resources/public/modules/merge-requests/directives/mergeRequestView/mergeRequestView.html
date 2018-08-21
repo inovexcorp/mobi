@@ -24,7 +24,7 @@
     <block>
         <block-content class="padding">
             <div class="main-details">
-                <span class="open-indicator label pull-right" ng-class="dvm.mm.isAccepted(dvm.selected.request) ? 'label-success' : 'label-primary'">{{dvm.mm.isAccepted(dvm.selected.request) ? 'Accepted' : 'Open'}}</span>
+                <span class="open-indicator badge badge-pill float-right" ng-class="dvm.mm.isAccepted(dvm.selected.request) ? 'badge-success' : 'badge-primary'">{{dvm.mm.isAccepted(dvm.selected.request) ? 'Accepted' : 'Open'}}</span>
                 <div class="title">
                     <h2>{{dvm.selected.title}}</h2>
                     <small>Created on {{dvm.selected.date}} by {{dvm.selected.creator}}</small>
@@ -42,8 +42,8 @@
             <commit-difference-tabset ng-if="!dvm.mm.isAccepted(dvm.selected.request)" difference="dvm.selected.difference" branch-title="dvm.selected.sourceBranchTitle" commit-id="dvm.selected.sourceCommit" target-id="dvm.selected.targetCommit"></commit-difference-tabset>
         </block-content>
         <block-footer>
-            <button class="btn btn-danger pull-right" ng-click="dvm.showDelete()">Delete</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.back()">Back</button>
+            <button class="btn btn-danger float-right" ng-click="dvm.showDelete()">Delete</button>
+            <button class="btn float-right" ng-click="dvm.back()">Back</button>
         </block-footer>
     </block>
 </div>

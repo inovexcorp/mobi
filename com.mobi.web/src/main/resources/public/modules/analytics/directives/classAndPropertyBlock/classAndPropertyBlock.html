@@ -31,7 +31,7 @@
             </div>
             <div class="list-container padding">
                 <h1>Properties</h1>
-                <md-list-item ng-repeat="property in dvm.state.properties | orderBy:'title' track by property.id" drag-me drag-id="'property'" info="property" ng-disabled="dvm.isDisabled(property.classes)">
+                <md-list-item ng-repeat="property in dvm.state.properties | orderBy:'title' track by property.id" drag-me drag-id="'property'" info="property" ng-disabled="dvm.isDisabled(property.classes)" ng-class="{'text-muted': dvm.isDisabled(property.classes)}">
                     <p class="item-name">{{property.title}}</p>
                 </md-list-item>
             </div>

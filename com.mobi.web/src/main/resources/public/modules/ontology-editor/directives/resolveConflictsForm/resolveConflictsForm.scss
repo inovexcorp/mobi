@@ -12,13 +12,12 @@
         }
     }
     .flex-container {
-        align-items: center;
-        display: flex;
-
         .conflict {
             cursor: pointer;
-            flex: 1;
 
+            .value-header .text {
+                max-width: none;
+            }
             h5 {
                 padding: 8px;
             }
@@ -30,7 +29,7 @@
             }
             &:hover,
             &.active {
-                box-shadow: 0 0 20px 10px $gray-lighter;
+                box-shadow: 0 0 20px 10px var(--light-dark);
                 opacity: 1;
             }
             &.not-selected {

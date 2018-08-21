@@ -31,6 +31,7 @@ import static com.mobi.rest.util.RestUtils.modelToSkolemizedJsonld;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
@@ -99,6 +100,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private final Logger log = LoggerFactory.getLogger(ExplorableDatasetRestImpl.class);
 
     private DatasetManager datasetManager;
+    private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
     private ValueFactory factory;
     private ModelFactory modelFactory;
@@ -177,6 +179,11 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     @Reference
     public void setFactory(ValueFactory factory) {
         this.factory = factory;
+    }
+
+    @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
     }
 
     @Reference
@@ -631,8 +638,8 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             if (ontologyRecordIRIOpt.isPresent() && compiledResourceOpt.isPresent()) {
                 Model compiledResource = compiledResourceOpt.get();
                 IRI ontologyRecordIRI = ontologyRecordIRIOpt.get();
-                Optional<OntologyRecord> ontologyRecordOpt = catalogManager.getRecord(catalogManager
-                                .getLocalCatalogIRI(), ontologyRecordIRI, ontologyRecordFactory);
+                Optional<OntologyRecord> ontologyRecordOpt = catalogManager.getRecord(
+                        configProvider.getLocalCatalogIRI(), ontologyRecordIRI, ontologyRecordFactory);
                 if (!ontologyRecordOpt.isPresent()) {
                     log.warn("OntologyRecord " + ontologyRecordIRI + " could not be found");
                 }

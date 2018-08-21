@@ -5,15 +5,15 @@
     font-size: 14px;
 
     &:hover {
-        background: $gray-lighter;
+        background: var(--light);
     }
 
     &.addition {
-        color: $brand-success;
+        color: var(--success);
     }
 
     &.deletion {
-        color: $brand-danger;
+        color: var(--danger);
     }
 
     td {

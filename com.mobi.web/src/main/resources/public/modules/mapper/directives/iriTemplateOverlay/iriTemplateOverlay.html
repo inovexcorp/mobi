@@ -23,10 +23,10 @@
 <div class="iri-template-overlay overlay lg">
     <form class="content" name="iriTemplateForm">
         <h6>Edit IRI Template</h6>
-        <div class="template-begins-with form-group" ng-class="{'has-error': iriTemplateForm.beginsWith.$invalid}">
+        <div class="template-begins-with form-group">
             <label class="control-label" for="beginsWith">Begins With</label>
-            <input type="text" id="beginsWith" name="beginsWith" class="form-control" aria-describedby="beginning" ng-model="dvm.beginsWith" ng-pattern="/^[a-zA-Z0-9._\-]+[:]+[a-zA-Z0-9._\-\/]+[a-zA-Z0-9._\-]$/" required focus-me>
-            <div ng-messages="iriTemplateForm.beginsWith.$error" class="error-display">
+            <input type="text" id="beginsWith" name="beginsWith" class="form-control" aria-describedby="beginning" ng-model="dvm.beginsWith" ng-pattern="/^[a-zA-Z0-9._\-]+[:]+[a-zA-Z0-9._\-\/]+[a-zA-Z0-9._\-]$/" ng-class="{'is-invalid': iriTemplateForm.beginsWith.$invalid}" required focus-me>
+            <div ng-messages="iriTemplateForm.beginsWith.$error" class="invalid-feedback">
                 <ng-message when="required">This field is required</ng-message>
                 <ng-message when="pattern">This value is invalid</ng-message>
             </div>
@@ -41,12 +41,12 @@
         </div>
         <div class="template-ends-with form-group">
             <label class="control-label" for="endsWith">Ends With</label>
-            <select id="endsWith" class="form-control" ng-model="dvm.endsWith" ng-options="localName as localName.text for localName in dvm.localNameOptions" aria-describedby="ends-with-help-block"></select>
-            <small id="ends-with-help-block" class="help-block">Duplicate values will create a single individual with combined data.<br>Blank values will not be skipped. They will instead generate instances with no local names.<br>Any whitespace will be removed to create valid IRIs.</small>
+            <select id="endsWith" class="form-control" ng-model="dvm.endsWith" ng-options="localName as localName.text for localName in dvm.localNameOptions" aria-describedby="ends-with-form-text"></select>
+            <small id="ends-with-form-text" class="form-text">Duplicate values will create a single individual with combined data.<br>Blank values will not be skipped. They will instead generate instances with no local names.<br>Any whitespace will be removed to create valid IRIs.</small>
         </div>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-click="dvm.state.editIriTemplate = false; dvm.set()" ng-disabled="iriTemplateForm.$invalid">Set</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.state.editIriTemplate = false">Cancel</button>
+            <button class="btn btn-primary float-right" ng-click="dvm.state.editIriTemplate = false; dvm.set()" ng-disabled="iriTemplateForm.$invalid">Set</button>
+            <button class="btn float-right" ng-click="dvm.state.editIriTemplate = false">Cancel</button>
         </div>
     </form>
 </div>

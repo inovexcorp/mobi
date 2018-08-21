@@ -26,7 +26,7 @@
             margin: 10px 0 5px 0;
 
             &.changed {
-                color: $brand-primary;
+                color: var(--primary);
             }
         }
         .values {
@@ -44,7 +44,7 @@
                     padding: 5px 8px;
                 }
                 &:not(.link-container) .value-container:hover {
-                    background: $gray-lighter;
+                    background: var(--light);
                 }
             }
             .link {

@@ -58,8 +58,8 @@ describe('Commits Tab directive', function() {
                 expect(this.element.find(item).length).toBe(1);
             });
         });
-        it('for .col-xs-8', function() {
-            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
+        it('for .col-8', function() {
+            expect(this.element.querySelectorAll('.col-8').length).toBe(1);
         });
     });
     describe('controller methods', function() {

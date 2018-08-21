@@ -40,33 +40,40 @@
          * @scope
          * @restrict E
          *
-         * @description 
-         * `pagination` is a directive that creates a div element a custom Bootstrap 
-         * 'pagination' ul for paginated results returned from HTTP calls. The getPage 
-         * function expects a parameter named 'direction' to which it passes back either
-         * 'next' or 'prev'. The directive is replaced by the content of the template.
+         * @description
+         * `pagination` is a directive that creates a div element a custom Bootstrap
+         * 'pagination' ul for paginated results returned from HTTP calls. The directive will automatically
+         * update the `currentPage` value when directional buttons are clicked. The `getPage` function is
+         * called after the `currentPage` value changes. It also uses the provided `total` and `limit` values
+         * to show the correct numebr of pages. The directive is replaced by the content of the template.
          *
-         * @param {Object} links a links object from a paginated result
-         * @param {string} links.prev the path for a previous page of results
-         * @param {string} links.next the path for a following page of results
-         * @param {number} currentPage the index of the current page
-         * @param {function} getPage the function to be called when a pagination link 
-         * is clicked
-         *
-         * @usage
-         * <!-- With only an icon -->
-         * <pagination links="{prev: '', next: ''}" current-page="0", get-page="console.log('Getting page')"></pagination>
+         * @param {number} currentPage the index of the current page (1 based)
+         * @param {function} getPage the function to be called when a pagination link is clicked
+         * @param {number} total the total number of results
+         * @param {limit} limit the limit on the number of items per page
          */
         .directive('pagination', pagination);
 
-        function pagination() {
+        pagination.$inject = ['$timeout']
+
+        function pagination($timeout) {
             return {
                 restrict: 'E',
                 replace: true,
-                scope: {
-                    links: '<',
-                    currentPage: '<',
-                    getPage: '&'
+                scope: {},
+                bindToController: {
+                    currentPage: '=',
+                    getPage: '&',
+                    total: '<',
+                    limit: '<'
+                },
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+
+                    dvm.changePage = function() {
+                        $timeout(() => dvm.getPage());
+                    }
                 },
                 templateUrl: 'directives/pagination/pagination.html'
             }

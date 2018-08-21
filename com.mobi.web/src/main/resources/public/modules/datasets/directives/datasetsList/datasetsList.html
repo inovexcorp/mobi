@@ -21,19 +21,19 @@
   #L%
   -->
 <div class="datasets-list row">
-    <div class="col-xs-8 col-xs-offset-2 full-height">
+    <div class="col-8 offset-2 h-100">
         <block>
             <block-content class="padding">
                 <div class="dataset padding" ng-repeat="dataset in dvm.state.results" ng-class="{'open': dataset.record['@id'] === dvm.state.openedDatasetId}">
                     <div uib-dropdown class='action-container'>
-                        <button uib-dropdown-toggle title="Dataset Actions" class="btn btn-xs btn-default">
+                        <button uib-dropdown-toggle title="Dataset Actions" class="btn btn-flat remove-min-width">
                             <i class="fa fa-ellipsis-h fa-fw"></i>
                         </button>
-                        <ul uib-dropdown-menu>
-                            <li><a ng-click="dvm.showUploadData(dataset)" class="action upload-data"><i class="fa fa-fw fa-upload"></i> Upload Data</a></li>
-                            <li><a ng-click="dvm.showEdit(dataset)" class="action update-dataset"><i class="fa fa-fw fa-pencil"></i> Edit</a></li>
-                            <li><a ng-click="dvm.showClear(dataset)" class="action clear-dataset" ><i class="fa fa-fw fa-eraser"></i> Clear</a></li>
-                            <li><a ng-click="dvm.showDelete(dataset)" class="action delete-dataset"><i class="fa fa-fw fa-trash-o"></i> Delete</a></li>
+                        <ul uib-dropdown-menu class="dropdown-menu-right">
+                            <a ng-click="dvm.showUploadData(dataset)" class="dropdown-item action upload-data"><i class="fa fa-fw fa-upload"></i> Upload Data</a>
+                            <a ng-click="dvm.showEdit(dataset)" class="dropdown-item action update-dataset"><i class="fa fa-fw fa-pencil"></i> Edit</a>
+                            <a ng-click="dvm.showClear(dataset)" class="dropdown-item action clear-dataset" ><i class="fa fa-fw fa-eraser"></i> Clear</a>
+                            <a ng-click="dvm.showDelete(dataset)" class="dropdown-item action delete-dataset"><i class="fa fa-fw fa-trash-o"></i> Delete</a>
                         </ul>
                     </div>
                     <div class="details" ng-click="dvm.clickDataset(dataset)">
@@ -62,7 +62,7 @@
             <block-footer>
                 <div class="paging-container clearfix">
                     <paging-details total-size="dvm.state.totalSize" page-index="dvm.state.paginationConfig.pageIndex" limit="dvm.state.paginationConfig.limit"></paging-details>
-                    <pagination links="dvm.state.links" current-page="dvm.state.paginationConfig.pageIndex" get-page="dvm.getPage(direction)"></pagination>
+                    <pagination total="dvm.state.totalSize" limit="dvm.state.paginationConfig.limit" current-page="dvm.currentPage" get-page="dvm.getPage(direction)"></pagination>
                 </div>
             </block-footer>
         </block>

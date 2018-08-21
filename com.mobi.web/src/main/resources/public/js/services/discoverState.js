@@ -79,7 +79,7 @@
          *             prev: ''
          *         },
          *         total: 10,
-         *         currentPage: 0
+         *         currentPage: 1
          *     },
          * }
          * ```
@@ -134,7 +134,7 @@
          */
         self.resetPagedInstanceDetails = function() {
             self.explore.instanceDetails = {
-                currentPage: 0,
+                currentPage: 1,
                 data: [],
                 limit: 99,
                 links: {
@@ -249,7 +249,7 @@
                     original: []
                 },
                 instanceDetails: {
-                    currentPage: 0,
+                    currentPage: 1,
                     data: [],
                     limit: 99,
                     links: {

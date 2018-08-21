@@ -2,10 +2,10 @@
 @import "./src/main/resources/public/css/variables";
 
 .discover {
-    background-color: $gray-lighter;
+    background-color: var(--light);
     display: flex;
     flex-direction: column;
-    
+
     .discover-page-content {
         flex: 1;
         min-height: 0;

@@ -20,8 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="tree hierarchy-tree full-height">
-    <div class="full-height repeater-container" vs-repeat="26" vs-offset-before="10" vs-offset-after="10">
+<div class="tree hierarchy-tree h-100">
+    <div class="h-100 repeater-container" vs-repeat="26" vs-offset-before="10" vs-offset-after="10">
         <div ng-repeat="node in hierarchy | filter:dvm.isShown" class="tree-item-wrapper">
             <tree-item ng-style="{'padding-left': (dvm.indent * node.indent) + 'em'}"
                        is-active="dvm.os.getActiveEntityIRI() === node.entityIRI"

@@ -36,13 +36,13 @@ describe('Radio Button directive', function() {
         scope.ngModel = false;
         scope.value = 0;
         scope.displayText = '';
-        scope.isDisabledWhen = false;
+        scope.isDisabled = false;
         scope.changeEvent = jasmine.createSpy('changeEvent');
         scope.inline = false;
 
-        this.element = $compile(angular.element('<radio-button ng-model="ngModel" value="value" display-text="displayText" is-disabled-when="isDisabledWhen" change-event="changeEvent()" inline="inline"></radio-button>'))(scope);
+        this.element = $compile(angular.element('<radio-button ng-model="ngModel" value="value" display-text="displayText" is-disabled="isDisabled" change-event="changeEvent()" inline="inline"></radio-button>'))(scope);
         scope.$digest();
-        this.isolatedScope = this.element.isolateScope();
+        this.controller = this.element.controller('radioButton');
     });
 
     afterEach(function() {
@@ -52,63 +52,70 @@ describe('Radio Button directive', function() {
         this.element.remove();
     });
 
-    it('calls changeEvent if value of radio button is changed', function() {
-        this.element.find('input')[0].click();
-        scope.$digest();
-        $timeout.flush();
-        expect(scope.changeEvent).toHaveBeenCalled();
-    });
-    describe('in isolated scope', function() {
+    describe('controller bound variable', function() {
         it('bindModel should be two way bound', function() {
-            this.isolatedScope.bindModel = true;
+            this.controller.bindModel = true;
             scope.$digest();
             expect(scope.ngModel).toEqual(true);
         });
         it('value should be one way bound', function() {
-            this.isolatedScope.value = 1;
+            this.controller.value = 1;
             scope.$digest();
             expect(scope.value).toEqual(0);
         });
         it('displayText should be one way bound', function() {
-            this.isolatedScope.displayText = 'abc';
+            this.controller.displayText = 'abc';
             scope.$digest();
             expect(scope.displayText).toEqual('');
         });
-        it('isDisabledWhen should be one way bound', function() {
-            this.isolatedScope.isDisabledWhen = true;
+        it('isDisabled should be one way bound', function() {
+            this.controller.isDisabled = true;
             scope.$digest();
-            expect(scope.isDisabledWhen).toBe(false);
+            expect(scope.isDisabled).toBe(false);
         });
         it('inline should be one way bound', function() {
-            this.isolatedScope.inline = true;
+            this.controller.inline = true;
             scope.$digest();
             expect(scope.inline).toBe(false);
         });
         it('changeEvent should be called in parent scope when invoked', function() {
-            this.isolatedScope.changeEvent();
+            this.controller.changeEvent();
             expect(scope.changeEvent).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
-        it('for a label and radio button', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('form-group'));
-            var labelList = this.element.querySelectorAll('label');
-            var inputList = this.element.querySelectorAll('input');
-            expect(labelList.length).toBe(1);
-            expect(inputList.length).toBe(1);
-            var input = inputList[0];
-            expect(input.type).toBe('radio');
+        it('for wrapping containers', function() {
+            expect(this.element.hasClass('radio-button')).toBe(true);
+            expect(this.element.hasClass('form-check')).toBe(true);
         });
-        it('when inline is false', function() {
-            expect(this.element.querySelectorAll('label.radio-inline').length).toEqual(0);
-            expect(this.element.hasClass('wrapper-inline')).toBe(false);
+        it('with a radio input', function() {
+            expect(this.element.querySelectorAll('input[type="radio"]').length).toBe(1);
         });
-        it('when inline is true', function() {
+        it('with a .form-check-label', function() {
+            expect(this.element.querySelectorAll('.form-check-label').length).toBe(1);
+        });
+        it('depending on whether it should be inline', function() {
+            expect(this.element.hasClass('form-check-inline')).toEqual(false);
             scope.inline = true;
             scope.$digest();
-            expect(this.element.querySelectorAll('label.radio-inline').length).toEqual(1);
-            expect(this.element.hasClass('wrapper-inline')).toBe(true);
+            expect(this.element.hasClass('form-check-inline')).toEqual(true);
         });
+        it('depending on whether it is disabled', function() {
+            var radio = this.element.find('input');
+            expect(this.element.hasClass('disabled')).toBe(false);
+            expect(radio.attr('disabled')).toBeFalsy();
+
+            scope.isDisabled = true;
+            scope.$digest();
+            expect(this.element.hasClass('disabled')).toBe(true);
+            expect(radio.attr('disabled')).toBeTruthy();
+        });
+    });
+    it('calls changeEvent if value of radio button is changed', function() {
+        spyOn(this.controller, 'onChange');
+        this.element.find('input')[0].click();
+        // scope.$digest();
+        $timeout.flush();
+        expect(this.controller.onChange).toHaveBeenCalled();
     });
 });

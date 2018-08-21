@@ -3,7 +3,7 @@
 
 .activity-list {
     .activity {
-        border-bottom: 1px solid $gray-lighter;
+        border-bottom: 1px solid var(--light);
 
         .title {
             font-weight: bold;
@@ -27,12 +27,6 @@
                 line-height: 34px;
                 margin: 0;
             }
-        }
-        .page-count {
-            float: left;
-            font-size: 1.125em;
-            line-height: 34px;
-            margin: 0;
         }
         .page-nav {
             float: right;
