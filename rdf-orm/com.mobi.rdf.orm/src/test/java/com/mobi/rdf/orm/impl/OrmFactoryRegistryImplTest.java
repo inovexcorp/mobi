@@ -54,7 +54,6 @@ public class OrmFactoryRegistryImplTest {
     private IRI aIRI;
     private IRI bIRI;
     private IRI cIRI;
-    private IRI dIRI;
     private IRI errorIRI;
     private interface A extends Thing {
         String TYPE = "http://example.com/A";
@@ -96,7 +95,6 @@ public class OrmFactoryRegistryImplTest {
         aIRI = vf.createIRI(A.TYPE);
         bIRI = vf.createIRI(B.TYPE);
         cIRI = vf.createIRI(C.TYPE);
-        dIRI = vf.createIRI(D.TYPE);
         errorIRI = vf.createIRI(Error.TYPE);
 
         MockitoAnnotations.initMocks(this);
