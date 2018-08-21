@@ -5,13 +5,7 @@
     display: flex;
     flex-direction: column;
 
-    .datasets-page-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-
-        .actions form.form-inline {
-            padding: 9px;
-        }
+    .actions form.form-inline {
+        padding: 9px;
     }
 }

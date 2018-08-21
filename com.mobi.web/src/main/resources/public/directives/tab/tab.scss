@@ -6,21 +6,21 @@
 
     .actions {
         background: white;
-        box-shadow: 5px 5px 5px 0px $gray-light;
+        box-shadow: 5px 5px 5px 0px var(--light-dark);
         height: 52px;
         text-align: center;
 
         a,
         .header {
             border-bottom: 2px solid transparent;
-            color: $gray-lighter;
+            color: var(--light-dark);
             display: inline-block;
             font-size: 1.125em;
             padding: 15px 15px 13px;
 
             &.active {
-                border-color: $brand-primary;
-                color: black;
+                border-color: var(--primary);
+                color: var(--body);
             }
         }
     }

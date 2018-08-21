@@ -82,10 +82,13 @@ describe('Edit Branch Overlay directive', function() {
                 expect(this.element.find(item).length).toBe(1);
             });
         });
-        _.forEach(['btn-container', 'btn-primary', 'btn-default'], function(item) {
+        _.forEach(['btn-container', 'btn-primary'], function(item) {
             it('with a .' + item, function() {
                 expect(this.element.querySelectorAll('.' + item).length).toBe(1);
             });
+        });
+        it('with a regular .btn', function() {
+            expect(this.element.querySelectorAll('.btn:not(.btn-primary)').length).toBe(1);
         });
         it('depending on whether there is an error', function() {
             expect(this.element.find('error-display').length).toBe(0);
@@ -154,7 +157,7 @@ describe('Edit Branch Overlay directive', function() {
         expect(this.controller.edit).toHaveBeenCalled();
     });
     it('should set overlayFlag when the cancel button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(scope.overlayFlag).toBe(false);
     });

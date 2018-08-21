@@ -133,6 +133,22 @@ public interface MergeRequestRest {
     Response updateMergeRequest(@PathParam("requestId") String requestId, String newMergeRequest);
 
     /**
+     * Accepts a {@link MergeRequest} with the provided ID by completing the merge it represents and changing the
+     * type to an {@link com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest}.
+     *
+     * @param context The context of the request.
+     * @param requestId The String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @return A Response indicating the status of the acceptance.
+     */
+    @POST
+    @Path("{requestId}")
+    @RolesAllowed("user")
+    @ApiOperation("Accepts a MergeRequest by performing the merge and changing the type")
+    Response acceptMergeRequest(@Context ContainerRequestContext context,
+                                @PathParam("requestId") String requestId);
+
+    /**
      * Deletes an existing {@link MergeRequest} that has the {@code requestId}.
      *
      * @param requestId The String representing the {@link MergeRequest} ID to delete. NOTE: Assumes ID represents an

@@ -50,7 +50,7 @@ public class SimpleCacheManager implements CacheManager {
     }
 
     private <K, V> void removeCache(CacheConfiguration<K, V> configuration) {
-        if (cacheManager != null) {
+        if (cacheManager != null && !cacheManager.isClosed()) {
             cacheManager.destroyCache(configuration.getCacheId());
         }
     }

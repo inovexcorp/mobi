@@ -88,7 +88,7 @@ describe('Ontology Button Stack directive', function() {
         });
     });
     it('should set the correct state when the upload changes button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('circle-button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('circle-button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(ontologyStateSvc.showUploadChangesOverlay).toEqual(true);
     });

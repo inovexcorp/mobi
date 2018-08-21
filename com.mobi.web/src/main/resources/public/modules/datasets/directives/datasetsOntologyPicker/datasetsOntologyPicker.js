@@ -68,6 +68,7 @@
                     dvm.ontologies = [];
                     dvm.util = utilService;
 
+                    dvm.currentPage = 1;
                     dvm.ontologySearchConfig = {
                         pageIndex: 0,
                         sortOption: _.find(cm.sortOptions, {field: prefixes.dcterms + 'title', asc: true}),
@@ -76,28 +77,19 @@
                         searchText: ''
                     };
                     dvm.totalSize = 0;
-                    dvm.links = {
-                        next: '',
-                        prev: ''
-                    };
 
-                    dvm.getOntologies = function() {
-                        return cm.getRecords(cm.localCatalog['@id'], dvm.ontologySearchConfig).then(parseOntologyResults, errorMessage => {
-                            dvm.ontologies = [];
-                            dvm.links = {
-                                next: '',
-                                prev: ''
-                            };
-                            dvm.totalSize = 0;
-                            onError(errorMessage);
-                        });
+                    dvm.setInitialOntologies = function() {
+                        dvm.currentPage = 1;
+                        return dvm.setOntologies();
                     }
-                    dvm.getRecordPage = function(direction) {
-                        dvm.util.getResultsPage(dvm.links[direction])
-                            .then(response => {
-                                dvm.ontologySearchConfig.pageIndex = dvm.ontologySearchConfig.pageIndex + (direction === 'prev' ? -1 : 1);
-                                parseOntologyResults(response);
-                            }, onError);
+                    dvm.setOntologies = function() {
+                        dvm.ontologySearchConfig.pageIndex = dvm.currentPage - 1;
+                        return cm.getRecords(cm.localCatalog['@id'], dvm.ontologySearchConfig)
+                            .then(parseOntologyResults, errorMessage => {
+                                dvm.ontologies = [];
+                                dvm.totalSize = 0;
+                                onError(errorMessage);
+                            });
                     }
                     dvm.isSelected = function(ontologyId) {
                         return _.some(dvm.selectedOntologies, {'@id': ontologyId});
@@ -118,14 +110,11 @@
                         dvm.ontologies = response.data;
                         var headers = response.headers();
                         dvm.totalSize = _.get(headers, 'x-total-count', 0);
-                        var links = dvm.util.parseLinks(_.get(headers, 'link', ''));
-                        dvm.links.prev = _.get(links, 'prev', '');
-                        dvm.links.next = _.get(links, 'next', '');
                         dvm.error = '';
                     }
 
                     // Begin Initialization...
-                    dvm.getOntologies()
+                    dvm.setInitialOntologies()
                         .then(() => {
                             if (state.showEditOverlay) {
                                 dvm.selectedOntologies = [];

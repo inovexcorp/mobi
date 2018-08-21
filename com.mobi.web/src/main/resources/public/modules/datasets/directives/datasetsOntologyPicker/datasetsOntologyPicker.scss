@@ -27,10 +27,10 @@
         }
     }
     .remove-ontology {
-        color: $brand-danger;
+        color: var(-danger);
 
         &:hover {
-            color: #C9302C;
+            color: var(--danger-dark);
         }
     }
 }

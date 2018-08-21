@@ -25,7 +25,7 @@
         <li ng-repeat="group in dvm.um.groups | filterGroups | filter:{title: dvm.state.groupSearchString} track by group.title">
             <a ng-click="dvm.onClick(group)" ng-class="{'active': group.title === dvm.state.selectedGroup.title}">
                 {{group.title}}
-                <span class="member-count pull-right"><i class="fa fa-users"></i> {{group.members.length}}</span>
+                <span class="member-count float-right"><i class="fa fa-users"></i> {{group.members.length}}</span>
             </a>
         </li>
     </ul>

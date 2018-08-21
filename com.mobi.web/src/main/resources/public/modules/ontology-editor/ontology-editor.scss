@@ -2,6 +2,5 @@
 @import "./src/main/resources/public/css/variables";
 
 .ontology-editor {
-    background-color: $gray-lighter;
-    height: 100%;
+    background-color: var(--light);
 }

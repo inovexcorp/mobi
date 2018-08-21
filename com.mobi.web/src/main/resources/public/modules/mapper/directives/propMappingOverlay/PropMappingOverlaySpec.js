@@ -394,7 +394,7 @@ describe('Prop Mapping Overlay directive', function() {
     });
     it('should call cancel when the button is clicked', function() {
         spyOn(this.controller, 'cancel');
-        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         continueButton.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });

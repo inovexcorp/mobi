@@ -99,7 +99,7 @@
     </service>
 
     <!-- Resources -->
-    <service id="rootResources" interface="org.ops4j.pax.web.extender.whiteboard.ResourceMapping">
+    <service id="rootResources" interface="org.ops4j.pax.web.service.whiteboard.ResourceMapping">
         <bean class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
             <property name="alias" value="/mobi"/>
             <property name="path" value="build"/>

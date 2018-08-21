@@ -23,9 +23,9 @@
 <div class="instance-creator instance-editor">
     <block>
         <block-header>
-            <breadcrumbs class="pull-left" items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
-            <a class="pull-right link" ng-click="dvm.cancel()">Cancel</a>
-            <a a-disabled="!dvm.isValid" class="pull-right link" ng-click="dvm.save()"><i class="fa fa-floppy-o"></i>Save</a>
+            <breadcrumbs class="float-left" items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
+            <a class="float-right link" ng-click="dvm.cancel()">Cancel</a>
+            <a a-disabled="!dvm.isValid" class="float-right link" ng-click="dvm.save()"><i class="fa fa-floppy-o"></i>Save</a>
         </block-header>
         <block-content>
             <instance-form header="'Instance Creator'" is-valid="dvm.isValid"></instance-form>

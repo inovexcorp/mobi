@@ -97,7 +97,7 @@
                                 if (ds.explore.instanceDetails.data.length === 1) {
                                     ds.explore.instanceDetails.currentPage--;
                                 }
-                                var offset = ds.explore.instanceDetails.currentPage * ds.explore.instanceDetails.limit;
+                                var offset = (ds.explore.instanceDetails.currentPage - 1) * ds.explore.instanceDetails.limit;
                                 return es.getClassInstanceDetails(ds.explore.recordId, ds.explore.classId, {offset, limit: ds.explore.instanceDetails.limit});
                             }, $q.reject)
                             .then(response => {

@@ -30,6 +30,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -71,6 +72,7 @@ import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
 import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
@@ -196,6 +198,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         when(requestManager.createMergeRequest(any(MergeRequestConfig.class), any(Resource.class))).thenReturn(request1);
         when(requestManager.getMergeRequest(any(Resource.class))).thenReturn(Optional.empty());
         when(requestManager.getMergeRequest(eq(request1.getResource()))).thenReturn(Optional.of(request1));
+        doNothing().when(requestManager).acceptMergeRequest(any(Resource.class), any(User.class), any(RepositoryConnection.class));
 
         doThrow(new IllegalArgumentException()).when(requestManager).deleteMergeRequest(vf.createIRI(doesNotExist));
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
@@ -530,6 +533,36 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         Response response = target().path("merge-requests/" + encode(invalidIRIString)).request()
                 .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
+    }
+
+    /* POST merge-requests/{requestId} */
+
+    @Test
+    public void acceptMergeRequestTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
+                .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
+        verify(requestManager).acceptMergeRequest(request1.getResource(), user);
+        assertEquals(response.getStatus(), 200);
+    }
+
+    @Test
+    public void acceptMergeRequestWithBadArgumentsTest() {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(requestManager).acceptMergeRequest(any(Resource.class), any(User.class));
+
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
+                .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void acceptMergeRequestWithErrorTest() {
+        // Setup:
+        doThrow(new IllegalStateException()).when(requestManager).acceptMergeRequest(any(Resource.class), any(User.class));
+
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
+                .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
+        assertEquals(response.getStatus(), 500);
     }
 
     /* DELETE merge-requests/{requestId} */

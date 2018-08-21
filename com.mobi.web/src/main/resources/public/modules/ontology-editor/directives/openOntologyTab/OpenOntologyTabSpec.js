@@ -51,8 +51,8 @@ describe('Open Ontology Tab directive', function() {
             httpSvc = _httpService_;
         });
 
-        this.records = { 
-            data: [],    
+        this.records = {
+            data: [],
             headers: () => [{'x-total-count': 11}]
         };
         this.recordsData = [{'@id': 'recordA', [prefixes.dcterms + 'identifier']: [{'@value': 'A'}]},
@@ -69,7 +69,6 @@ describe('Open Ontology Tab directive', function() {
 
         catalogManagerSvc.getRecords.and.callFake((catalogId, paginatedConfig, id) => {
             this.records.data = _.chunk(this.recordsData, paginatedConfig.limit)[paginatedConfig.pageIndex];
-            
             return $q.when(this.records);
         });
         utilSvc.getDctermsValue.and.returnValue('A');
@@ -128,17 +127,13 @@ describe('Open Ontology Tab directive', function() {
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
         });
-        it('depending on how many unopened ontologies there are, the limit, and the offset', function() {
-            this.controller.limit = 10;
-            this.controller.pageIndex = 0;
-            scope.$apply();
+        it('depending on how many unopened ontologies there are', function() {
             expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(10);
             expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(0);
-
-            this.controller.getPage('next');
-            scope.$apply();
-            expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(1);
-            expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(0);
+            this.controller.filteredList = [];
+            scope.$digest();
+            expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(0);
+            expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(1);
         });
         it('depending on if the ontology being deleted is currently being used in the mapping tool', function() {
             this.controller.showDeleteConfirmation = true;
@@ -180,15 +175,6 @@ describe('Open Ontology Tab directive', function() {
             expect(ontologyStateSvc.newOntology[prefixes.dcterms + 'description']).toEqual([{'@value': ''}]);
             expect(ontologyStateSvc.newLanguage).toEqual(undefined);
             expect(ontologyStateSvc.newKeywords).toEqual([]);
-        });
-        it('should get a page of results', function() {
-            var begin = this.controller.pageIndex;
-            this.controller.getPage('next');
-            expect(this.controller.pageIndex).toBe(begin + 1);
-
-            begin = this.controller.pageIndex;
-            this.controller.getPage('prev');
-            expect(this.controller.pageIndex).toBe(begin - 1);
         });
         describe('should show the delete confirmation overlay', function() {
             beforeEach(function() {
@@ -245,7 +231,8 @@ describe('Open Ontology Tab directive', function() {
         });
         it('should get the list of unopened ontology records', function() {
             var catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
-            var sortOption = 'sort';
+            var sortOption = {field: 'http://purl.org/dc/terms/title', asc: true};
+            catalogManagerSvc.sortOptions = [sortOption];
             var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
             var paginatedConfig = {
                 pageIndex: 0,
@@ -255,10 +242,21 @@ describe('Open Ontology Tab directive', function() {
                 searchText: undefined
             };
             ontologyStateSvc.list = [{ontologyRecord: {'recordId': 'recordA'}}];
-            this.controller.getPageOntologyRecords('sort');
+            this.controller.getPageOntologyRecords();
             scope.$apply();
             expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, paginatedConfig, this.controller.id);
             expect(this.controller.filteredList).not.toContain(jasmine.objectContaining({'@id': 'recordA'}));
+        });
+        it('should perform a search if the key pressed was ENTER', function() {
+            spyOn(this.controller, 'getPageOntologyRecords');
+            this.controller.currentPage = 10;
+            this.controller.search({});
+            expect(this.controller.currentPage).toEqual(10);
+            expect(this.controller.getPageOntologyRecords).not.toHaveBeenCalled();
+
+            this.controller.search({keyCode: 13});
+            expect(this.controller.currentPage).toEqual(1);
+            expect(this.controller.getPageOntologyRecords).toHaveBeenCalled();
         });
     });
     it('should filter the ontology list when the filter text changes', function() {

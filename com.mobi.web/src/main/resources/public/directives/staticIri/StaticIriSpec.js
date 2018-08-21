@@ -99,8 +99,8 @@ describe('Static IRI directive', function() {
             expect(this.element.querySelectorAll('.overlay').length).toBe(0);
         });
         it('depending on whether the begin field is invalid', function() {
-            var beginContainer = angular.element(this.element.querySelectorAll('.overlay .begin-container')[0]);
-            expect(beginContainer.hasClass('has-error')).toBe(false);
+            var beginInput = angular.element(this.element.querySelectorAll('.overlay .begin-container input')[0]);
+            expect(beginInput.hasClass('is-invalid')).toBe(false);
 
             this.controller.iriForm = {
                 iriBegin: {
@@ -110,11 +110,11 @@ describe('Static IRI directive', function() {
                 }
             };
             scope.$digest();
-            expect(beginContainer.hasClass('has-error')).toBe(true);
+            expect(beginInput.hasClass('is-invalid')).toBe(true);
         });
         it('depending on whether the ends field is invalid', function() {
-            var endsContainer = angular.element(this.element.querySelectorAll('.overlay .ends-container')[0]);
-            expect(endsContainer.hasClass('has-error')).toBe(false);
+            var endsInput = angular.element(this.element.querySelectorAll('.overlay .ends-container input')[0]);
+            expect(endsInput.hasClass('is-invalid')).toBe(false);
 
             this.controller.iriForm = {
                 iriEnd: {
@@ -124,7 +124,7 @@ describe('Static IRI directive', function() {
                 }
             };
             scope.$digest();
-            expect(endsContainer.hasClass('has-error')).toBe(true);
+            expect(endsInput.hasClass('is-invalid')).toBe(true);
         });
         it('depending on the form validity', function() {
             var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary.pull-right')[0]);

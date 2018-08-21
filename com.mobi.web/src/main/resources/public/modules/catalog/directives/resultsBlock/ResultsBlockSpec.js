@@ -82,7 +82,7 @@ describe('Results Block directive', function() {
                 this.controller.changeSort();
                 scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
-                expect(catalogStateSvc.currentPage).toBe(0);
+                expect(catalogStateSvc.currentPage).toBe(1);
                 expect(catalogStateSvc.setPagination).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
             });
@@ -90,7 +90,7 @@ describe('Results Block directive', function() {
                 this.controller.changeSort();
                 scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
-                expect(catalogStateSvc.currentPage).toBe(0);
+                expect(catalogStateSvc.currentPage).toBe(1);
                 expect(catalogStateSvc.setPagination).toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
@@ -122,7 +122,6 @@ describe('Results Block directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('results-block')).toBe(true);
-            expect(this.element.hasClass('col-xs-12')).toBe(true);
         });
         it('with a block', function() {
             expect(this.element.find('block').length).toBe(1);

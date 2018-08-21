@@ -3,24 +3,14 @@
 
 .search-tab {
     .ui-select-highlight {
-        background-color: yellow;
+        background-color: var(--yellow);
     }
-
     .padding {
         padding-top: 10px;
     }
-
     .result-header {
-        border-bottom: 1px solid $gray-light;
+        border-bottom: 1px solid var(--light-dark);
         cursor: pointer;
-        display: flex;
         padding: 5px 0;
-
-        strong {
-            display: inline-block;
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
     }
 }

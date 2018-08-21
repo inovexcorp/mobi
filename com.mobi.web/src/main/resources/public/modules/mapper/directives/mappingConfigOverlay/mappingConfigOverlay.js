@@ -75,6 +75,7 @@
 
                     dvm.errorMessage = '';
                     dvm.ontologyStates = [];
+                    dvm.currentPage = 1;
                     dvm.recordsConfig = {
                         pageIndex: 0,
                         sortOption: _.find(cm.sortOptions, {field: prefixes.dcterms + 'title', asc: true}),
@@ -83,10 +84,6 @@
                         searchText: ''
                     };
                     dvm.totalSize = 0;
-                    dvm.links = {
-                        next: '',
-                        prev: ''
-                    };
                     dvm.records = [];
                     dvm.selectedRecord = angular.copy(_.get(dvm.state.mapping, 'ontology'));
                     dvm.selectedVersion = 'latest';
@@ -115,23 +112,13 @@
                             dvm.selectedOntologyState = stateObj;
                         }, onError);
                     }
-
-                    dvm.getRecords = function() {
-                        dvm.recordsConfig.pageIndex = 0;
-                        cm.getRecords(cm.localCatalog['@id'], dvm.recordsConfig).then(parseRecordResults, onRecordsError);
+                    dvm.setInitialRecords = function() {
+                        dvm.currentPage = 1;
+                        dvm.setRecords();
                     }
-                    dvm.getRecordPage = function(direction) {
-                        if (direction === 'prev') {
-                            dvm.util.getResultsPage(dvm.links.prev).then(response => {
-                                dvm.recordsConfig.pageIndex -= 1;
-                                parseRecordResults(response);
-                            }, onRecordsError);
-                        } else {
-                            dvm.util.getResultsPage(dvm.links.next).then(response => {
-                                dvm.recordsConfig.pageIndex += 1;
-                                parseRecordResults(response);
-                            }, onRecordsError);
-                        }
+                    dvm.setRecords = function() {
+                        dvm.recordsConfig.pageIndex = dvm.currentPage - 1;
+                        cm.getRecords(cm.localCatalog['@id'], dvm.recordsConfig).then(parseRecordResults, onRecordsError);
                     }
                     dvm.selectOntology = function(record) {
                         dvm.selectedRecord = record;
@@ -266,9 +253,6 @@
                         dvm.selectedRecord = _.get(dvm.records, index, dvm.selectedRecord);
                         var headers = response.headers();
                         dvm.totalSize = _.get(headers, 'x-total-count', 0);
-                        var links = dvm.util.parseLinks(_.get(headers, 'link', ''));
-                        dvm.links.prev = _.get(links, 'prev', '');
-                        dvm.links.next = _.get(links, 'next', '');
                         dvm.recordsErrorMessage = '';
                     }
                     function onError() {
@@ -281,7 +265,7 @@
                         dvm.recordsErrorMessage = 'Error retrieving ontologies';
                     }
 
-                    dvm.getRecords();
+                    dvm.setInitialRecords();
                 },
                 templateUrl: 'modules/mapper/directives/mappingConfigOverlay/mappingConfigOverlay.html'
             }
