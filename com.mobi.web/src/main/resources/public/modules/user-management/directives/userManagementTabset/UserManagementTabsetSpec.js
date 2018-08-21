@@ -47,9 +47,6 @@ describe('User Management Tabset directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('user-management-tabset')).toBe(true);
         });
-        it('with a .blue-bar', function() {
-            expect(this.element.querySelectorAll('.blue-bar').length).toBe(1);
-        });
         it('with a tabset', function() {
             var tabset = this.element.find('tabset');
             expect(tabset.length).toBe(1);

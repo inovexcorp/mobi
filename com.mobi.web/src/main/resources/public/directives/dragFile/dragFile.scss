@@ -2,12 +2,12 @@
 @import "./src/main/resources/public/css/variables";
 
 .drag-file {
-    background-color: $gray-lighter;
-    border: dashed 1px $gray;
+    background-color: var(--light);
+    border: dashed 1px var(--grey);
     text-align: center;
 
     &.hover {
-        box-shadow: 0 0 10px 2px $gray-light;
+        box-shadow: 0 0 10px 2px var(--light-dark);
     }
 
     .inner-container {

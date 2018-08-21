@@ -53,9 +53,9 @@
          */
         .directive('instanceBlock', instanceBlock);
 
-        instanceBlock.$inject = ['$http', '$filter', 'discoverStateService', 'exploreService', 'utilService', 'uuid'];
+        instanceBlock.$inject = ['$filter', 'discoverStateService', 'exploreService', 'utilService', 'uuid'];
 
-        function instanceBlock($http, $filter, discoverStateService, exploreService, utilService, uuid) {
+        function instanceBlock($filter, discoverStateService, exploreService, utilService, uuid) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceBlock/instanceBlock.html',
@@ -68,20 +68,16 @@
                     var util = utilService;
                     dvm.ds = discoverStateService;
 
-                    dvm.getPage = function(direction) {
-                        var url = (direction === 'next') ? dvm.ds.explore.instanceDetails.links.next : dvm.ds.explore.instanceDetails.links.prev;
-                        $http.get(url)
+                    dvm.setPage = function() {
+                        var pagingObj = {
+                            limit: dvm.ds.explore.instanceDetails.limit,
+                            offset: (dvm.ds.explore.instanceDetails.currentPage - 1) * dvm.ds.explore.instanceDetails.limit
+                        };
+                        es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, pagingObj)
                             .then(response => {
                                 dvm.ds.explore.instanceDetails.data = [];
                                 _.merge(dvm.ds.explore.instanceDetails, es.createPagedResultsObject(response));
-                                if (direction === 'next') {
-                                    dvm.ds.explore.instanceDetails.currentPage += 1;
-                                } else {
-                                    dvm.ds.explore.instanceDetails.currentPage -= 1;
-                                }
-                            }, response => {
-                                util.createErrorToast(response.statusText);
-                            });
+                            }, util.createErrorToast);
                     }
 
                     dvm.create = function() {

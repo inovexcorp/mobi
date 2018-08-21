@@ -20,14 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="step-progress-bar row">
-    <div class="col-xs-12">
-        <div class="progress">
-            <div ng-repeat="step in dvm.getRange(stepNumber) track by step" class="step" ng-class="{'completed': step <= currentStep}" ng-style="{'left': dvm.calculateLeft(step), 'right': dvm.calculateRight(step), 'transform': dvm.calculateTransform(step)}">
-                <span ng-if="currentStep === step">{{currentStep + 1}}</span>
-                <span ng-if="step < currentStep"><i class="fa fa-check"></i></span>
-            </div>
-            <div class="progress-bar" ng-style="{'width': dvm.getPercentage(stepNumber, currentStep) + '%'}"></div>
+<div class="step-progress-bar stepper-horiz">
+    <div class="stepper" ng-repeat="step in dvm.getRange(stepNumber) track by step" ng-class="{'done': step < currentStep, 'active': step === currentStep}">
+        <div class="stepper-icon">
+            <i ng-if="step < currentStep" class="material-icons">check</i>
+            <span ng-if="step >= currentStep">{{step + 1}}</span>
         </div>
     </div>
 </div>

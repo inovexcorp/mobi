@@ -7,19 +7,19 @@
     margin: 0;
     padding: 15px 0;
 
-    .col-xs-8 {
+    .col-8 {
         display: flex;
         flex-direction: column;
     }
     .dataset {
-        border-bottom: 1px solid $gray-lighter;
+        border-bottom: 1px solid var(--light);
         cursor: pointer;
 
         &:last-child {
             border-bottom: none;
         }
         &:hover {
-            background-color: $gray-lighter;
+            background-color: var(--light);
         }
         .record-keywords {
             margin-bottom: 0;
@@ -56,18 +56,13 @@
             padding-right: 10px;
             padding-top: 10px;
 
+            .dropdown-toggle::after {
+                display: none;
+            }
             button {
                 i {
                     vertical-align: middle;
                 }
-            }
-            .dropdown-menu {
-                right: 10px;
-                left: inherit;
-            }
-            .action {
-                display: inline-block;
-                width: 100%;
             }
         }
         .description {
@@ -91,12 +86,6 @@
                 line-height: 34px;
                 margin: 0;
             }
-        }
-        .page-count {
-            float: left;
-            font-size: 1.125em;
-            line-height: 34px;
-            margin: 0;
         }
         .page-nav {
             float: right;

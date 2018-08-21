@@ -47,7 +47,6 @@ describe('Request Record Select directive', function() {
         catalogManagerSvc.getRecords.and.returnValue($q.when(this.getResponse));
         utilSvc.getResultsPage.and.returnValue($q.when(this.getResponse));
         catalogManagerSvc.sortOptions = [{field: prefixes.dcterms + 'title', asc: true}];
-        utilSvc.parseLinks.and.returnValue({prev: 'prev', next: 'next'});
         this.element = $compile(angular.element('<request-record-select></request-record-select>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('requestRecordSelect');
@@ -77,7 +76,6 @@ describe('Request Record Select directive', function() {
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith('catalogId', this.controller.config);
                 expect(angular.copy(this.controller.records)).toEqual([[{'@id': '1'}, {'@id': '2'}], [{'@id': '3'}]]);
                 expect(this.controller.totalSize).toEqual(3);
-                expect(this.controller.links).toEqual({prev: 'prev', next: 'next'});
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
             it('unless an error occurs', function() {
@@ -87,52 +85,15 @@ describe('Request Record Select directive', function() {
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith('catalogId', this.controller.config);
                 expect(this.controller.records).toEqual([]);
                 expect(this.controller.totalSize).toEqual(0);
-                expect(this.controller.links).toEqual({prev: '', next: ''});
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
             });
         });
-        describe('should get a page of records', function() {
-            beforeEach(function() {
-                this.originalIndex = this.controller.config.pageIndex;
-                this.links = {
-                    prev: 'prev',
-                    next: 'next'
-                };
-                this.controller.links = angular.copy(this.links);
-            });
-            describe('successfully with', function() {
-                it('next', function() {
-                    this.controller.getPage('next');
-                    scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.controller.links['next']);
-                    expect(this.controller.config.pageIndex).toEqual(this.originalIndex + 1);
-                    expect(angular.copy(this.controller.records)).toEqual([[{'@id': '1'}, {'@id': '2'}], [{'@id': '3'}]]);
-                    expect(this.controller.totalSize).toEqual(3);
-                    expect(this.controller.links).toEqual({prev: 'prev', next: 'next'});
-                    expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
-                });
-                it('prev', function() {
-                    this.controller.getPage('prev');
-                    scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.controller.links['prev']);
-                    expect(this.controller.config.pageIndex).toEqual(this.originalIndex - 1);
-                    expect(angular.copy(this.controller.records)).toEqual([[{'@id': '1'}, {'@id': '2'}], [{'@id': '3'}]]);
-                    expect(this.controller.totalSize).toEqual(3);
-                    expect(this.controller.links).toEqual({prev: 'prev', next: 'next'});
-                    expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
-                });
-            });
-            it('unless an error occurs', function() {
-                utilSvc.getResultsPage.and.returnValue($q.reject('Error Message'));
-                this.controller.getPage('prev');
-                scope.$apply();
-                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(jasmine.any(String));
-                expect(this.controller.config.pageIndex).toEqual(this.originalIndex);
-                expect(this.controller.records).toEqual([]);
-                expect(this.controller.totalSize).toEqual(0);
-                expect(this.controller.links).toEqual({prev: '', next: ''});
-                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
-            });
+        it('should set the initial page of records', function() {
+            spyOn(this.controller, 'setRecords');
+            this.controller.currentPage = 10;
+            this.controller.setInitialRecords();
+            expect(this.controller.currentPage).toEqual(1);
+            expect(this.controller.setRecords).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {

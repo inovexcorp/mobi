@@ -123,13 +123,13 @@ describe('Create User Overlays directive', function() {
         });
         it('with the correct classes based on the username field validity', function() {
             scope.$digest();
-            var inputGroup = angular.element(this.element.querySelectorAll('.username')[0]);
-            expect(inputGroup.hasClass('has-error')).toBe(false);
+            var usernameInput = angular.element(this.element.querySelectorAll('.username input')[0]);
+            expect(usernameInput.hasClass('is-invalid')).toBe(false);
 
             this.controller.newUser.username = '$';
             this.controller.infoForm.username.$setDirty();
             scope.$digest();
-            expect(inputGroup.hasClass('has-error')).toBe(true);
+            expect(usernameInput.hasClass('is-invalid')).toBe(true);
         });
         it('with the correct classes based on the info form validity', function() {
             this.controller.infoForm.$invalid = false;
@@ -190,7 +190,7 @@ describe('Create User Overlays directive', function() {
         });
     });
     it('should set the correct state when the cancel button is clicked', function() {
-        var cancelButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var cancelButton = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         cancelButton.triggerHandler('click');
         expect(userStateSvc.displayCreateUserOverlay).toBe(false);
     });
@@ -203,7 +203,7 @@ describe('Create User Overlays directive', function() {
         this.controller.step = 1;
         scope.$digest();
 
-        var backButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var backButton = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         backButton.triggerHandler('click');
         expect(this.controller.step).toBe(0);
     });

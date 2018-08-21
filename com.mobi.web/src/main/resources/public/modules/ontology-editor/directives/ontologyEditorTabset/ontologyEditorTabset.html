@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="ontology-editor-tabset">
+<div class="ontology-editor-tabset h-100">
     <tabset>
         <tab ng-repeat="item in dvm.os.list track by item.ontologyId" ng-class="{'up-to-date': item.upToDate && !item.userBranch}"
              heading="item.ontologyRecord.title"

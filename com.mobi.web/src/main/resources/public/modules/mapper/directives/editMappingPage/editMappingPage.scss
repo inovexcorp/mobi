@@ -4,8 +4,8 @@
 .edit-mapping-page {
 	.edit-tabs {
 		> .tabset-headings a {
-			background-color: $gray-light;
-			
+			background-color: var(--grey);
+
 			&.active {
 				background-color: #fff;
 			}

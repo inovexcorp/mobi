@@ -26,7 +26,7 @@
 
         /* Spacing for the annotation header */
         h5 {
-            border-bottom: 1px solid $gray-lighter;
+            border-bottom: 1px solid var(--light);
             cursor: pointer;
             margin: 0;
             padding: 8px;
@@ -42,7 +42,7 @@
 
             /* Highlights the value you are hovering over */
             &:hover {
-                background-color: $gray-lighter;
+                background-color: var(--light);
             }
 
             /* Removes paragraph margin from the annotation value */

@@ -16,7 +16,7 @@
         }
 
         .textarea-wrapper {
-            border-top: 1px solid $gray-lighter;
+            border-top: 1px solid var(--light);
             flex: 1;
             min-height: 0;
             overflow: hidden;

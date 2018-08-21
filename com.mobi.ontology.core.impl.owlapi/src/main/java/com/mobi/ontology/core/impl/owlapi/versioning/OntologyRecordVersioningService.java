@@ -150,7 +150,8 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
             if (baseCommit != null) {
                 // If this is not the initial commit
                 Model model;
-                Difference diff = new Difference.Builder().additions(additions).deletions(deletions).build();
+                Difference diff = new Difference.Builder().additions(additions == null ? mf.createModel() : additions)
+                        .deletions(deletions == null ? mf.createModel() : deletions).build();
                 if (auxCommit != null) {
                     // If this is a merge, collect all the additions from the aux branch and provided models
                     List<com.mobi.rdf.api.Resource> sourceChain = catalogUtils.getCommitChain(auxCommit.getResource(), false, conn);

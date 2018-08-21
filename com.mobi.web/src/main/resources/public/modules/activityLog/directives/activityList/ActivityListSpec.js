@@ -40,11 +40,8 @@ describe('Activity List directive', function() {
             prefixes = _prefixes_;
         });
 
-        this.nextLink = 'http://example.com/next';
-        this.prevLink = 'http://example.com/prev';
         this.headers = {
             'x-total-count': 2,
-            link: ''
         };
         this.response = {
             data: {
@@ -55,7 +52,6 @@ describe('Activity List directive', function() {
         };
 
         provManagerSvc.getActivities.and.returnValue($q.when(this.response));
-        utilSvc.parseLinks.and.returnValue({next: this.nextLink, prev: this.prevLink});
     });
 
     beforeEach(function compile() {
@@ -80,24 +76,22 @@ describe('Activity List directive', function() {
         it('unless an error occurs', function() {
             provManagerSvc.getActivities.and.returnValue($q.reject('Error message'));
             this.compile();
-            expect(provManagerSvc.getActivities).toHaveBeenCalledWith(this.controller.paginatedConfig, this.controller.id);
-            expect(utilSvc.parseLinks).not.toHaveBeenCalled();
+            expect(provManagerSvc.getActivities).toHaveBeenCalledWith({pageIndex: this.controller.currentPage - 1, limit: this.controller.limit}, this.controller.id);
             expect(this.controller.activities).toEqual([]);
             expect(this.controller.entities).toEqual([]);
             expect(this.controller.totalSize).toEqual(0);
-            expect(this.controller.paginatedConfig).toEqual({limit: 50, pageIndex: 0});
-            expect(this.controller.links).toEqual({prev: '', next: ''});
+            expect(this.controller.currentPage).toEqual(1);
+            expect(this.controller.limit).toEqual(50);
             expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
         });
         it('successfully', function() {
             this.compile();
-            expect(provManagerSvc.getActivities).toHaveBeenCalledWith(this.controller.paginatedConfig, this.controller.id);
-            expect(utilSvc.parseLinks).toHaveBeenCalledWith(this.headers.link);
+            expect(provManagerSvc.getActivities).toHaveBeenCalledWith({pageIndex: this.controller.currentPage - 1, limit: this.controller.limit}, this.controller.id);
             expect(this.controller.activities).toEqual(this.response.data.activities);
             expect(this.controller.entities).toEqual(this.response.data.entities);
             expect(this.controller.totalSize).toEqual(this.headers['x-total-count']);
-            expect(this.controller.paginatedConfig).toEqual({limit: 50, pageIndex: 0});
-            expect(this.controller.links).toEqual({prev: this.prevLink, next: this.nextLink});
+            expect(this.controller.currentPage).toEqual(1);
+            expect(this.controller.limit).toEqual(50);
             expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
         });
     });
@@ -106,54 +100,20 @@ describe('Activity List directive', function() {
             this.compile();
         });
         describe('should get a page of Activities', function() {
-            beforeEach(function() {
-                this.index = this.controller.paginatedConfig.pageIndex;
-                utilSvc.parseLinks.and.returnValue({});
-                utilSvc.parseLinks.calls.reset();
+            it('successfully', function() {
+                provManagerSvc.getActivities.and.returnValue($q.when(this.response));
+                this.controller.getPage();
+                scope.$apply();
+                expect(provManagerSvc.getActivities).toHaveBeenCalledWith({pageIndex: this.controller.currentPage - 1, limit: this.controller.limit}, this.controller.id);
+                expect(this.controller.activities).toEqual(this.response.data.activities);
+                expect(this.controller.entities).toEqual(this.response.data.entities);
+                expect(this.controller.totalSize).toEqual(this.headers['x-total-count']);
             });
-            describe('successfully', function() {
-                beforeEach(function() {
-                    utilSvc.getResultsPage.and.returnValue($q.when(this.response));
-                });
-                it('if the direction is previous', function() {
-                    this.controller.getPage('prev');
-                    scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.prevLink, utilSvc.rejectError, this.controller.id);
-                    expect(utilSvc.parseLinks).toHaveBeenCalledWith(this.headers.link);
-                    expect(this.controller.paginatedConfig.pageIndex).toBe(this.index - 1);
-                    expect(this.controller.activities).toEqual(this.response.data.activities);
-                    expect(this.controller.entities).toEqual(this.response.data.entities);
-                    expect(this.controller.totalSize).toEqual(this.headers['x-total-count']);
-                    expect(this.controller.links).toEqual({prev: '', next: ''});
-                });
-                it('if the direction is next', function() {
-                    this.controller.getPage('next');
-                    scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.nextLink, utilSvc.rejectError, this.controller.id);
-                    expect(utilSvc.parseLinks).toHaveBeenCalledWith(this.headers.link);
-                    expect(this.controller.paginatedConfig.pageIndex).toBe(this.index + 1);
-                    expect(this.controller.activities).toEqual(this.response.data.activities);
-                    expect(this.controller.entities).toEqual(this.response.data.entities);
-                    expect(this.controller.totalSize).toEqual(this.headers['x-total-count']);
-                    expect(this.controller.links).toEqual({prev: '', next: ''});
-                });
-            });
-            describe('unless an error occurs', function() {
-                beforeEach(function() {
-                    utilSvc.getResultsPage.and.returnValue($q.reject('Error message'));
-                });
-                it('and the direction was previous', function() {
-                    this.controller.getPage('prev');
-                    scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.prevLink, utilSvc.rejectError, this.controller.id);
-                    expect(utilSvc.parseLinks).not.toHaveBeenCalled();
-                });
-                it('and the direction was next', function() {
-                    this.controller.getPage('next');
-                    scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.nextLink, utilSvc.rejectError, this.controller.id);
-                    expect(utilSvc.parseLinks).not.toHaveBeenCalled();
-                });
+            it('unless an error occurs', function() {
+                provManagerSvc.getActivities.and.returnValue($q.reject('Error message'));
+                this.controller.getPage();
+                scope.$apply();
+                expect(provManagerSvc.getActivities).toHaveBeenCalledWith({pageIndex: this.controller.currentPage - 1, limit: this.controller.limit}, this.controller.id);
             });
         });
         it('should get the time stamp of an Activity', function() {
@@ -171,7 +131,7 @@ describe('Activity List directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('activity-list')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-8').length).toBe(1);
         });
         it('with block', function() {
             expect(this.element.find('block').length).toBe(1);

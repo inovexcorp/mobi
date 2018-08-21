@@ -66,7 +66,7 @@ describe('Upload Ontology Tab directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('upload-ontology-tab')).toBe(true);
         });
-        _.forEach(['actions', 'header', 'row-container', 'md-list-item-text', 'col-xs-6'], function(item) {
+        _.forEach(['actions', 'header', 'row-container', 'md-list-item-text', 'col-6'], function(item) {
             it('with a .' + item, function() {
                 expect(this.element.querySelectorAll('.' + item).length).toBe(1);
             });

@@ -30,7 +30,7 @@
             <input class="form-control" type="text" name="title" ng-model="dvm.recordConfig.title" required focus-me>
         </div>
         <text-input ng-model="dvm.recordConfig.datasetIRI" display-text="'Dataset IRI'" muted-text="'(Optional)'"></text-input>
-        <small class="help-block">System will create a default IRI if not provided.</small>
+        <small class="form-text">System will create a default IRI if not provided.</small>
         <text-area ng-model="dvm.recordConfig.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <keyword-select ng-model="dvm.keywords"></keyword-select>
         <div class="form-group">
@@ -39,8 +39,8 @@
         </div>
         <step-progress-bar step-number="2" current-step="dvm.step"></step-progress-bar>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-disabled="dvm.infoForm.$invalid" ng-click="dvm.step = 1">Next</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.onClose()">Cancel</button>
+            <button class="btn btn-primary float-right" ng-disabled="dvm.infoForm.$invalid" ng-click="dvm.step = 1">Next</button>
+            <button class="btn float-right" ng-click="dvm.onClose()">Cancel</button>
         </div>
     </form>
 </div>
@@ -52,8 +52,8 @@
         <datasets-ontology-picker selected-ontologies="dvm.selectedOntologies" error="dvm.error"></datasets-ontology-picker>
         <step-progress-bar step-number="2" current-step="dvm.step"></step-progress-bar>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-click="dvm.create()">Submit</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.step = 0">Back</button>
+            <button class="btn btn-primary float-right" ng-click="dvm.create()">Submit</button>
+            <button class="btn float-right" ng-click="dvm.step = 0">Back</button>
         </div>
     </form>
 </div>

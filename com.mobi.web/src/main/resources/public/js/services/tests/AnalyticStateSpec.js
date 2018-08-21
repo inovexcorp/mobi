@@ -53,7 +53,7 @@ describe('Analytic State Service', function() {
             prev: 'prev-url'
         };
         analyticStateSvc.limit = 10;
-        analyticStateSvc.currentPage = 0;
+        analyticStateSvc.currentPage = 1;
         analyticStateSvc.spinnerId = 'spinnerId';
         utilSvc.parseLinks.and.returnValue({prev: 'prev-link', next: 'next-link'});
 
@@ -82,20 +82,6 @@ describe('Analytic State Service', function() {
             expect(analyticStateSvc.classes).toEqual([]);
             expect(analyticStateSvc.properties).toEqual([]);
         }
-        this.getPageResolves = function(direction) {
-            httpSvc.get.and.returnValue($q.when(this.response));
-            analyticStateSvc.getPage(direction);
-            scope.$apply();
-            expect(httpSvc.get).toHaveBeenCalledWith(direction + '-url', undefined, 'spinnerId');
-            this.onPagedSuccess();
-        }
-        this.getPageRejects = function(direction) {
-            httpSvc.get.and.returnValue($q.reject('error'));
-            analyticStateSvc.getPage(direction);
-            scope.$apply();
-            expect(httpSvc.get).toHaveBeenCalledWith(direction + '-url', undefined, 'spinnerId');
-            this.onPagedError();
-        }
         this.onPagedSuccess = function() {
             expect(analyticStateSvc.queryError).toBe('');
             expect(analyticStateSvc.results).toEqual({data: [], bindings: []});
@@ -115,7 +101,7 @@ describe('Analytic State Service', function() {
         }
         this.getPagedResults = function() {
             expect(httpSvc.cancel).toHaveBeenCalledWith('spinnerId');
-            expect(analyticStateSvc.currentPage).toBe(0);
+            expect(analyticStateSvc.currentPage).toBe(1);
             expect(sparqlManagerSvc.pagedQuery).toHaveBeenCalledWith(jasmine.any(String), {
                 datasetRecordIRI: 'datasetId',
                 id: 'spinnerId',
@@ -171,7 +157,7 @@ describe('Analytic State Service', function() {
         expect(analyticStateSvc.results).toBeUndefined();
         expect(analyticStateSvc.variables).toEqual({});
         expect(analyticStateSvc.queryError).toEqual('');
-        expect(analyticStateSvc.currentPage).toEqual(0);
+        expect(analyticStateSvc.currentPage).toEqual(1);
         expect(analyticStateSvc.totalSize).toEqual(0);
         expect(analyticStateSvc.limit).toEqual(100);
         expect(analyticStateSvc.links).toEqual({});
@@ -197,7 +183,7 @@ describe('Analytic State Service', function() {
         expect(analyticStateSvc.results).toBeUndefined();
         expect(analyticStateSvc.variables).toEqual({});
         expect(analyticStateSvc.queryError).toEqual('');
-        expect(analyticStateSvc.currentPage).toEqual(0);
+        expect(analyticStateSvc.currentPage).toEqual(1);
         expect(analyticStateSvc.totalSize).toEqual(0);
         expect(analyticStateSvc.limit).toEqual(100);
         expect(analyticStateSvc.links).toEqual({});
@@ -321,22 +307,22 @@ describe('Analytic State Service', function() {
         });
         expect(analyticStateSvc.variables).toEqual({var0s: 'title'});
     });
-    describe('getPage should call the correct methods with the correct url when direction is', function() {
-        describe('next and get', function() {
-            it('resolves', function() {
-                this.getPageResolves('next');
-            });
-            it('rejects', function() {
-                this.getPageRejects('next');
-            });
+    describe('getPage should call the correct methods with the correct url when get', function() {
+        beforeEach(function() {
+            spyOn(analyticStateSvc, 'createQueryString').and.returnValue('query');
         });
-        describe('prev and get', function() {
-            it('resolves', function() {
-                this.getPageResolves('prev');
-            });
-            it('rejects', function() {
-                this.getPageRejects('prev');
-            });
+        it('resolves', function() {
+            sparqlManagerSvc.pagedQuery.and.returnValue($q.when(this.response));
+            analyticStateSvc.getPage();
+            scope.$apply();
+            this.getPagedResults();
+            this.onPagedSuccess();
+        });
+        it('rejects', function() {
+            sparqlManagerSvc.pagedQuery.and.returnValue($q.reject('error'));
+            analyticStateSvc.getPage();
+            scope.$apply();
+            this.onPagedError();
         });
     });
     describe('sortResults should adjust the query as needed and get the correct results when pagedQuery', function() {

@@ -58,6 +58,8 @@ var jsFiles = function(prefix) {
             prefix + 'codemirror-minified/**/javascript.js',
             prefix + 'codemirror-minified/**/matchbrackets.js',
             prefix + 'angular/**/angular.min.js',
+            prefix + 'popper.js/dist/umd/popper.min.js',
+            prefix + 'jquery/**/jquery.min.js',
             prefix + 'angular-mocks/**/angular-mocks.js',
             prefix + 'angular-animate/**/angular-animate.js',
             prefix + 'angular-ui-router/**/angular-ui-router.min.js',
@@ -65,8 +67,7 @@ var jsFiles = function(prefix) {
             prefix + 'angular-cookies/**/angular-cookies.min.js',
             prefix + 'angular-ui-codemirror/**/ui-codemirror.js',
             prefix + 'angular-messages/**/angular-messages.min.js',
-            prefix + 'angular-ui-bootstrap/**/ui-bootstrap.js',
-            prefix + 'angular-ui-bootstrap/**/ui-bootstrap-tpls.js',
+            prefix + 'ui-bootstrap4/**/ui-bootstrap-tpls.js',
             prefix + 'ui-select/**/select.min.js',
             prefix + 'handsontable/**/handsontable.full.js',
             prefix + 'ng-handsontable/**/ngHandsontable.min.js',
@@ -77,6 +78,7 @@ var jsFiles = function(prefix) {
             prefix + 'clipboard/**/clipboard.min.js',
             prefix + 'ngclipboard/**/ngclipboard.min.js',
             prefix + 'angular-aria/angular-aria.min.js',
+            prefix + 'daemonite-material/**/material.js',
             prefix + 'angular-material/angular-material.min.js'
         ]
     },
@@ -90,7 +92,6 @@ var jsFiles = function(prefix) {
     nodeStyleFiles = function(prefix) {
         return [
             prefix + 'angular-material/angular-material.min.css',
-            prefix + 'bootstrap/**/bootstrap.min.css',
             prefix + 'font-awesome/**/font-awesome.min.css',
             prefix + 'ui-select/**/select.min.css',
             prefix + 'codemirror-minified/**/codemirror.css',
@@ -198,7 +199,7 @@ gulp.task('minify-css', function() {
 });
 
 // Injects minified CSS and JS files
-gulp.task('inject-minified', ['minify-scripts', 'minify-vendor-scripts', 'minify-css', 'html'], function() {
+gulp.task('inject-minified', ['minify-scripts', 'minify-vendor-scripts', 'minify-css', 'html', 'filtered-html'], function() {
     return injectFiles(minifiedFiles.concat([dest + '**/*.css']));
 });;
 
@@ -217,10 +218,16 @@ gulp.task('images', function() {
 
 // Moves all of the html files to build folder
 gulp.task('html', function() {
-    return gulp.src(src + '**/*.html')
+    return gulp.src(src + '**/!(sidebar).html')
         .pipe(strip.html({ignore: /<!-- inject:css -->|<!-- inject:js -->|<!-- endinject -->/g}))
         .pipe(gulp.dest(dest));
 });
+
+gulp.task('filtered-html', function() {
+    return gulp.src(src + 'directives/sidebar/sidebar.html')
+        .pipe(strip.html({ignore: /<!-- inject:css -->|<!-- inject:js -->|<!-- endinject -->/g}))
+        .pipe(gulp.dest('./target/filtered-resources'));
+})
 
 // Creates Antlr4 bundle file
 gulp.task('antlr4', function() {
@@ -281,7 +288,7 @@ gulp.task('change-to-css', function() {
 });
 
 // Injects un-minified CSS and JS files
-gulp.task('inject-unminified', ['antlr4', 'sparqljs', 'move-custom-js', 'html', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
+gulp.task('inject-unminified', ['antlr4', 'sparqljs', 'move-custom-js', 'html', 'filtered-html', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
     var allJsFiles = nodeJsFiles(dest + 'js/').concat(bundledFiles).concat(jsFiles(dest)),
         allStyleFiles = nodeStyleFiles(dest + 'css/').concat(styleFiles(dest, 'css')),
         allFiles = allJsFiles.concat(allStyleFiles);

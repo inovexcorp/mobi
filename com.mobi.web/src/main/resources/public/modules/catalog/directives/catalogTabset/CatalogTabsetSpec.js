@@ -21,17 +21,16 @@
  * #L%
  */
 describe('Catalog Tabset directive', function() {
-    var $compile, scope, catalogStateSvc;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
         module('catalogTabset');
         mockCatalogState();
 
-        inject(function(_$compile_, _$rootScope_, _catalogStateService_) {
+        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            catalogStateSvc = _catalogStateService_;
         });
 
         this.element = $compile(angular.element('<catalog-tabset></catalog-tabset>'))(scope);
@@ -41,7 +40,6 @@ describe('Catalog Tabset directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        catalogStateSvc = null;
         this.element.remove();
     });
 
@@ -49,8 +47,7 @@ describe('Catalog Tabset directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('catalog-tabset')).toBe(true);
         });
-        it('with tabsets', function() {
-            expect(this.element.find('tabset').length).toBe(2);
+        it('with a tabset', function() {
             expect(this.element.querySelectorAll('tabset.centered').length).toBe(1);
         });
         it('with tabs', function() {

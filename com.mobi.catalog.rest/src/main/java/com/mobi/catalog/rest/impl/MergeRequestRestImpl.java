@@ -48,7 +48,6 @@ import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.RepositoryManager;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import net.sf.json.JSONArray;
@@ -79,10 +78,6 @@ public class MergeRequestRestImpl implements MergeRequestRest {
     @Reference
     void setConfigProvider(CatalogConfigProvider configProvider) {
         this.configProvider = configProvider;
-    }
-
-    @Reference
-    void setRepositoryManager(RepositoryManager repositoryManager) {
     }
 
     @Reference
@@ -179,6 +174,20 @@ public class MergeRequestRestImpl implements MergeRequestRest {
         try {
             manager.updateMergeRequest(requestIdResource, jsonToMergeRequest(requestIdResource, newMergeRequest));
             return Response.ok().build();
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public Response acceptMergeRequest(ContainerRequestContext context, String requestId) {
+        Resource requestIdResource = createIRI(requestId, vf);
+        User activeUser = getActiveUser(context, engineManager);
+        try {
+            manager.acceptMergeRequest(requestIdResource, activeUser);
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
