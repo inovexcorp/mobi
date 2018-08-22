@@ -48,6 +48,7 @@ import com.mobi.security.policy.api.ontologies.policy.Create;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.security.policy.api.ontologies.policy.Update;
+import com.mobi.vocabularies.xsd.XSD;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.message.internal.MediaTypes;
@@ -143,16 +144,16 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
             String resourceIdStr = resourceIdAnnotation.id();
             switch (resourceIdAnnotation.type()) {
                 case PATH:
-                    validatePathParam(resourceIdStr, pathParameters);
+                    validatePathParam(resourceIdStr, pathParameters, true);
                     resourceId = vf.createIRI(pathParameters.getFirst(resourceIdStr));
                     break;
                 case QUERY:
-                    validateQueryParam(resourceIdStr, queryParameters);
+                    validateQueryParam(resourceIdStr, queryParameters, true);
                     resourceId = vf.createIRI(queryParameters.getFirst(resourceIdStr));
                     break;
                 case BODY:
                     FormDataMultiPart form = getFormData(context);
-                    validateFormParam(resourceIdStr, form);
+                    validateFormParam(resourceIdStr, form, true);
                     resourceId = vf.createIRI(form.getField(resourceIdStr).getValue());
                     break;
                 case PRIMITIVE:
@@ -228,25 +229,28 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         return StringUtils.isEmpty(response.getStatusMessage()) ? defaultMessage : response.getStatusMessage();
     }
 
-    private void validatePathParam(String key, MultivaluedMap<String, String> params) {
-        if (!params.containsKey(key)) {
+    private boolean validatePathParam(String key, MultivaluedMap<String, String> params, boolean isRequired) {
+        if (!params.containsKey(key) && isRequired) {
             throw ErrorUtils.sendError("Path does not contain parameter " + key,
                     javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR);
         }
+        return params.containsKey(key);
     }
 
-    private void validateQueryParam(String key, MultivaluedMap<String, String> params) {
-        if (!params.containsKey(key)) {
+    private boolean validateQueryParam(String key, MultivaluedMap<String, String> params, boolean isRequired) {
+        if (!params.containsKey(key) && isRequired) {
             throw ErrorUtils.sendError("Query parameters do not contain " + key,
                     javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR);
         }
+        return params.containsKey(key);
     }
 
-    private void validateFormParam(String key, FormDataMultiPart params) {
-        if (params.getField(key) == null) {
+    private boolean validateFormParam(String key, FormDataMultiPart params, boolean isRequired) {
+        if (params.getField(key) == null && isRequired) {
             throw ErrorUtils.sendError("Form parameters do not contain " + key,
                     javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR);
         }
+        return params.getField(key) == null;
     }
 
     private FormDataMultiPart getFormData(ContainerRequestContext context) {
@@ -269,20 +273,24 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                 .forEach(attributeValue -> {
                     String valueStr = attributeValue.value();
                     String datatype = attributeValue.datatype();
+                    boolean isRequired = attributeValue.required();
                     Literal value;
                     switch (attributeValue.type()) {
                         case PATH:
-                            validatePathParam(valueStr, pathParameters);
-                            value = getLiteral(pathParameters.getFirst(valueStr), datatype);
+                            value = validatePathParam(valueStr, pathParameters, isRequired)
+                                    ? getLiteral(pathParameters.getFirst(valueStr), datatype)
+                                    : getLiteral("", XSD.STRING);
                             break;
                         case QUERY:
-                            validateQueryParam(valueStr, queryParameters);
-                            value = getLiteral(queryParameters.getFirst(valueStr), datatype);
+                            value = validateQueryParam(valueStr, queryParameters, isRequired)
+                                    ? getLiteral(queryParameters.getFirst(valueStr), datatype)
+                                    : getLiteral("", XSD.STRING);
                             break;
                         case BODY:
                             FormDataMultiPart form = getFormData(context);
-                            validateFormParam(valueStr, form);
-                            value = getLiteral(form.getField(valueStr).getValue(), datatype);
+                            value = validateFormParam(valueStr, form, isRequired)
+                                    ? getLiteral(form.getField(valueStr).getValue(), datatype)
+                                    : getLiteral("", XSD.STRING);
                             break;
                         case PRIMITIVE:
                         default:

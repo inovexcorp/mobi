@@ -236,7 +236,8 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     @ResourceId(type = ValueType.PATH, id = "recordId")
     @ActionAttributes(
-            @AttributeValue(type = ValueType.QUERY, id = VersionedRDFRecord.branch_IRI, value = "branchId")
+            @AttributeValue(type = ValueType.QUERY, id = VersionedRDFRecord.branch_IRI, value = "branchId",
+                    required = false)
     )
     public Response deleteOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr) {
         IRI recordId = valueFactory.createIRI(recordIdStr);
