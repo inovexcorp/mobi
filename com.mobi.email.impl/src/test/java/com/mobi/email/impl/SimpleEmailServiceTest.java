@@ -120,10 +120,12 @@ public class SimpleEmailServiceTest {
         assertTrue(email.getBody().contains(TEXT_MESSAGE));
     }
 
-    @Test (expected = ExecutionException.class)
+    @Test
     public void sendSimpleEmailInvalidAddressTest() throws Exception {
         CompletableFuture<Set<String>> cf = es.sendSimpleEmail(SUBJECT_LINE, TEXT_MESSAGE, "badAddress");
-        cf.get();
+        Set<String> failedEmails = cf.get();
+        assertEquals(1, failedEmails.size());
+        assertEquals("badAddress", failedEmails.iterator().next());
     }
 
     @Test
@@ -177,10 +179,12 @@ public class SimpleEmailServiceTest {
         assertTrue(email.getBody().contains(TEXT_MESSAGE));
     }
 
-    @Test(expected = ExecutionException.class)
+    @Test
     public void sendEmailSingleInvalidAddressTest() throws Exception {
         CompletableFuture<Set<String>> cf = es.sendEmail(SUBJECT_LINE, HTML_MESSAGE, "badAddress");
-        cf.get();
+        Set<String> failedEmails = cf.get();
+        assertEquals(1, failedEmails.size());
+        assertEquals("badAddress", failedEmails.iterator().next());
     }
 
     @Test

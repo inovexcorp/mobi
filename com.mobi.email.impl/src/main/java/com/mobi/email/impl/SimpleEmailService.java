@@ -123,12 +123,22 @@ public class SimpleEmailService implements EmailService {
                     } catch (EmailException e) {
                         throw new MobiException("Unable to set HTML Message content", e);
                     }
-                    for (String userEmail : userEmails) {
+                    if (userEmails.length == 1) {
                         try {
-                            email.addBcc(userEmail);
+                            email.addTo(userEmails[0]);
                         } catch (EmailException e) {
-                            invalidEmails.add(userEmail);
+                            invalidEmails.add(userEmails[0]);
                             LOGGER.info("Invalid email address.", e);
+                            return invalidEmails;
+                        }
+                    } else {
+                        for (String userEmail : userEmails) {
+                            try {
+                                email.addBcc(userEmail);
+                            } catch (EmailException e) {
+                                invalidEmails.add(userEmail);
+                                LOGGER.info("Invalid email address.", e);
+                            }
                         }
                     }
                     try {
