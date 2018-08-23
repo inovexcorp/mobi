@@ -4,9 +4,9 @@ This bundle provides the API for the Mobi Email Service. This service provides a
 ## Configuration
 The `com.mobi.email.api` package exported by this bundle will provide a configuration interface with properties for the SMTP server to connect to.
 
-If using a Gmail account, port `465` with a security of `SSL` or `TLS` will enable you to connect. An additional step of allowing less secure apps to access the gmail account is necessary to send emails from Gmail (see, https://myaccount.google.com/lesssecureapps).
+If using a Gmail account, port `587` with a security setting of `STARTTLS` will enable you to connect. An additional step of allowing less secure apps to access the gmail account is necessary to send emails from Gmail (see, https://myaccount.google.com/lesssecureapps).
 
-If using an Outlook account, port '587' with a security setting of `STARTTLS` will enable you to connect.
+If using an Outlook account, port '587' with a security setting of `STARTTLS` will enable you to connect. See https://mobi.inovexcorp.com/docs/ for more configurations.
 
 ## Email Template
 A default email template is provided in the ${karaf.etc} directory. The email service provides a method for doing a simple string replace on the `!|$MESSAGE!|$` binding. For more complex HTML inserts, the service provides a method to replace all HTML between the two `!|$BODY!|$` bindings.
