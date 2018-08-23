@@ -82,6 +82,7 @@ import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.security.policy.api.ontologies.policy.Delete;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
@@ -234,20 +235,13 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
+    @ActionId(id = Delete.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
-    @ActionAttributes(
-            @AttributeValue(type = ValueType.QUERY, id = VersionedRDFRecord.branch_IRI, value = "branchId",
-                    required = false)
-    )
-    public Response deleteOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr) {
+    public Response deleteOntology(ContainerRequestContext context, String recordIdStr) {
         IRI recordId = valueFactory.createIRI(recordIdStr);
         User activeUser = getActiveUser(context, engineManager);
         try {
-            if (StringUtils.isBlank(branchIdStr)) {
-                catalogManager.deleteRecord(activeUser, recordId, OntologyRecord.class);
-            } else {
-                ontologyManager.deleteOntologyBranch(recordId, valueFactory.createIRI(branchIdStr));
-            }
+            catalogManager.deleteRecord(activeUser, recordId, OntologyRecord.class);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
@@ -350,6 +344,24 @@ public class OntologyRestImpl implements OntologyRest {
         } finally {
             IOUtils.closeQuietly(fileInputStream);
         }
+    }
+
+    @Override
+    @ActionId(id = Modify.TYPE)
+    @ActionAttributes(
+            @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
+    )
+    @ResourceId(type = ValueType.PATH, id = "recordId")
+    public Response deleteOntologyBranch(ContainerRequestContext context, String recordIdStr, String branchIdStr) {
+        IRI recordId = valueFactory.createIRI(recordIdStr);
+        try {
+            ontologyManager.deleteOntologyBranch(recordId, valueFactory.createIRI(branchIdStr));
+        } catch (MobiException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+        return Response.ok().build();
     }
 
     @Override

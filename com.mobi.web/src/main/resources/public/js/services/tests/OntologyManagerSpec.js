@@ -411,18 +411,7 @@ describe('Ontology Manager service', function() {
         });
     });
     describe('deleteOntology hits the proper endpoint', function() {
-        beforeEach(function() {
-            this.params = paramSerializer({ branchId: this.branchId });
-        });
-        it('with a branchId', function() {
-            $httpBackend.expectDELETE('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?' + this.params).respond(200);
-            ontologyManagerSvc.deleteOntology(this.recordId, this.branchId)
-                .then(_.noop, function() {
-                    fail('Promise should have resolved');
-                });
-            flushAndVerify($httpBackend);
-        });
-        it('without a branchId', function() {
+        it('successfully', function() {
             $httpBackend.expectDELETE('/mobirest/ontologies/' + encodeURIComponent(this.recordId)).respond(200);
             ontologyManagerSvc.deleteOntology(this.recordId)
                 .then(_.noop, function() {
@@ -431,8 +420,8 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectDELETE('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?' + this.params).respond(400, null, null, this.error);
-            ontologyManagerSvc.deleteOntology(this.recordId, this.branchId)
+            $httpBackend.expectDELETE('/mobirest/ontologies/' + encodeURIComponent(this.recordId)).respond(400, null, null, this.error);
+            ontologyManagerSvc.deleteOntology(this.recordId)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
@@ -512,6 +501,30 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                 });
             flushAndVerify($httpBackend);
+        });
+    });
+    describe('deleteOntologyBranch hits the proper endpoint', function() {
+        it('successfully', function() {
+            $httpBackend.expectDELETE('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId)).respond(200);
+            ontologyManagerSvc.deleteOntologyBranch(this.recordId, this.branchId)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectDELETE('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId)).respond(400, null, null, this.error);
+            ontologyManagerSvc.deleteOntologyBranch(this.recordId, this.branchId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual(this.error);
+                }.bind(this));
+            flushAndVerify($httpBackend);
+            expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: this.error
+            }));
         });
     });
     describe('getVocabularyStuff retrieves information about skos:Concepts and skos:ConceptSchemes in an ontology', function() {

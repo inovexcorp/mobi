@@ -86,7 +86,7 @@
                     }
 
                     dvm.delete = function() {
-                        om.deleteOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id'])
+                        om.deleteOntologyBranch(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id'])
                             .then(() => {
                                 dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id']);
                                 dvm.showDeleteConfirmation = false;

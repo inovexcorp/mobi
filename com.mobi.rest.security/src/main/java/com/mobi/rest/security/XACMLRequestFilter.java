@@ -279,18 +279,18 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                         case PATH:
                             value = validatePathParam(valueStr, pathParameters, isRequired)
                                     ? getLiteral(pathParameters.getFirst(valueStr), datatype)
-                                    : getLiteral("", XSD.STRING);
+                                    : null;
                             break;
                         case QUERY:
                             value = validateQueryParam(valueStr, queryParameters, isRequired)
                                     ? getLiteral(queryParameters.getFirst(valueStr), datatype)
-                                    : getLiteral("", XSD.STRING);
+                                    : null;
                             break;
                         case BODY:
                             FormDataMultiPart form = getFormData(context);
                             value = validateFormParam(valueStr, form, isRequired)
                                     ? getLiteral(form.getField(valueStr).getValue(), datatype)
-                                    : getLiteral("", XSD.STRING);
+                                    : null;
                             break;
                         case PRIMITIVE:
                         default:
@@ -298,7 +298,9 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                             break;
                     }
 
-                    attrs.put(attributeValue.id(), value);
+                    if (value != null) {
+                        attrs.put(attributeValue.id(), value);
+                    }
                 });
     }
 }

@@ -234,7 +234,7 @@ describe('Ontology Branch Select directive', function() {
                 ontologyStateSvc.listItem.branches = [this.branch];
             });
             it('when resolved', function() {
-                ontologyManagerSvc.deleteOntology.and.returnValue($q.when());
+                ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.when());
                 this.controller.delete();
                 scope.$apply();
                 expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
@@ -242,7 +242,7 @@ describe('Ontology Branch Select directive', function() {
                 expect(this.controller.showDeleteConfirmation).toBe(false);
             });
             it('when rejected', function() {
-                ontologyManagerSvc.deleteOntology.and.returnValue($q.reject(this.errorMessage));
+                ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.reject(this.errorMessage));
                 this.controller.delete();
                 scope.$apply();
                 expect(this.controller.deleteError).toBe(this.errorMessage);
