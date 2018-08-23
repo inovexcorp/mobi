@@ -30,7 +30,7 @@
          *
          * @description
          * The `mergeRequestList` module only provides the `mergeRequestList` directive which creates a div
-         * with a {@link block.directive:block} with the list of open MergeRequests.
+         * with a {@link block.directive:block} with a list of MergeRequests.
          */
         .module('mergeRequestList', [])
         /**
@@ -42,7 +42,7 @@
          *
          * @description
          * `mergeRequestList` is a directive which creates a div containing a {@link block.directive:block}
-         * with the list of open MergeRequests retrieved by the
+         * with the list of MergeRequests retrieved by the
          * {@link mergeRequestsState.service:mergeRequestsStateService}. The directive is replaced
          * by the contents of its template.
          */
@@ -59,9 +59,13 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    dvm.filterOptions = [
+                        {value: false, label: 'Open'},
+                        {value: true, label: 'Accepted'},
+                    ];
                     dvm.state = mergeRequestsStateService;
 
-                    dvm.state.setRequests();
+                    dvm.state.setRequests(dvm.state.acceptedFilter);
 
                     dvm.showDeleteOverlay = function(request) {
                         dvm.state.requestToDelete = request;
