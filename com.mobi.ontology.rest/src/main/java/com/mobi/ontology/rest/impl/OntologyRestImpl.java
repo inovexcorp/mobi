@@ -238,10 +238,9 @@ public class OntologyRestImpl implements OntologyRest {
     @ActionId(id = Delete.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response deleteOntology(ContainerRequestContext context, String recordIdStr) {
-        IRI recordId = valueFactory.createIRI(recordIdStr);
-        User activeUser = getActiveUser(context, engineManager);
         try {
-            catalogManager.deleteRecord(activeUser, recordId, OntologyRecord.class);
+            catalogManager.deleteRecord(getActiveUser(context, engineManager), valueFactory.createIRI(recordIdStr),
+                    OntologyRecord.class);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
@@ -353,9 +352,9 @@ public class OntologyRestImpl implements OntologyRest {
     )
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response deleteOntologyBranch(ContainerRequestContext context, String recordIdStr, String branchIdStr) {
-        IRI recordId = valueFactory.createIRI(recordIdStr);
         try {
-            ontologyManager.deleteOntologyBranch(recordId, valueFactory.createIRI(branchIdStr));
+            ontologyManager.deleteOntologyBranch(valueFactory.createIRI(recordIdStr),
+                    valueFactory.createIRI(branchIdStr));
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
