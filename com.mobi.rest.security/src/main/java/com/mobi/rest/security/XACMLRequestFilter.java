@@ -48,7 +48,6 @@ import com.mobi.security.policy.api.ontologies.policy.Create;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.security.policy.api.ontologies.policy.Update;
-import com.mobi.vocabularies.xsd.XSD;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.message.internal.MediaTypes;
