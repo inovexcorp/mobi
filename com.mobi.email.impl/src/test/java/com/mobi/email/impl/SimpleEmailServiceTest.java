@@ -19,6 +19,7 @@ import org.osgi.framework.BundleContext;
 
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -149,7 +150,7 @@ public class SimpleEmailServiceTest {
 
     @Test
     public void sendSimpleEmailAbsoluteTemplateTest() throws Exception {
-        config.replace("emailTemplate", templatePath.getPath());
+        config.replace("emailTemplate", URLDecoder.decode(templatePath.getPath(), "UTF-8"));
         Method m = es.getClass().getDeclaredMethod("modified", BundleContext.class, Map.class);
         m.setAccessible(true);
         m.invoke(es, bundleContext, config);
