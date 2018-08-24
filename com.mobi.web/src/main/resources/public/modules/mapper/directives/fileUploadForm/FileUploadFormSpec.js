@@ -106,6 +106,9 @@ describe('File Upload Form directive', function() {
         it('with a file input', function() {
             expect(this.element.find('file-input').length).toBe(1);
         });
+        it('with a checkbox', function() {
+            expect(this.element.find('checkbox').length).toBe(1);
+        });
         it('depending on the type of file', function() {
             this.controller.fileObj = {name: 'test.csv'};
             scope.$digest();

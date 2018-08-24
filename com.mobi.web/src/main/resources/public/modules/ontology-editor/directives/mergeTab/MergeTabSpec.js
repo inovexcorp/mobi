@@ -118,7 +118,7 @@ describe('Merge Tab directive', function() {
             });
         });
         it('with a button to cancel', function() {
-            var buttons = this.element.querySelectorAll('block-footer .btn-default');
+            var buttons = this.element.querySelectorAll('block-footer .btn:not(.btn-primary)');
             expect(buttons.length).toEqual(1);
             expect(angular.element(buttons[0]).text().trim()).toEqual('Cancel');
         });
@@ -311,7 +311,7 @@ describe('Merge Tab directive', function() {
     it('should call cancel when the button is clicked', function() {
         this.compile();
         spyOn(this.controller, 'cancel');
-        var button = angular.element(this.element.querySelectorAll('block-footer .btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('block-footer .btn:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });

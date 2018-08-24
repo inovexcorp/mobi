@@ -72,16 +72,16 @@ describe('Instance Cards directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('instance-cards')).toBe(true);
             expect(this.element.hasClass('class-cards')).toBe(true);
-            expect(this.element.hasClass('full-height')).toBe(true);
+            expect(this.element.hasClass('h-100')).toBe(true);
         });
-        it('with a .rows-container.full-height', function() {
-            expect(this.element.querySelectorAll('.rows-container.full-height').length).toBe(1);
+        it('with a .rows-container.h-100', function() {
+            expect(this.element.querySelectorAll('.rows-container.h-100').length).toBe(1);
         });
         it('with a .row', function() {
             expect(this.element.querySelectorAll('.row').length).toBe(2);
         });
-        it('with a .col-xs-4.card-container', function() {
-            expect(this.element.querySelectorAll('.col-xs-4.card-container').length).toBe(4);
+        it('with a .col-4.card-container', function() {
+            expect(this.element.querySelectorAll('.col-4.card-container').length).toBe(4);
         });
         it('with a md-card', function() {
             expect(this.element.find('md-card').length).toBe(4);
@@ -215,7 +215,7 @@ describe('Instance Cards directive', function() {
                 describe('there are more instances and getClassInstanceDetails is', function() {
                     beforeEach(function() {
                         discoverStateSvc.explore.instanceDetails.total = 5;
-                        discoverStateSvc.explore.instanceDetails.currentPage = 1;
+                        discoverStateSvc.explore.instanceDetails.currentPage = 2;
                     });
                     describe('resolved and the instance', function() {
                         beforeEach(function() {
@@ -235,7 +235,7 @@ describe('Instance Cards directive', function() {
                             expect(discoverStateSvc.explore.instanceDetails.data).toEqual(this.resultsObject.data);
                             expect(discoverStateSvc.explore.instanceDetails.links).toEqual(this.resultsObject.links);
                             expect(discoverStateSvc.explore.instanceDetails.total).toBe(4);
-                            expect(discoverStateSvc.explore.instanceDetails.currentPage).toBe(0);
+                            expect(discoverStateSvc.explore.instanceDetails.currentPage).toBe(1);
                             expect(this.controller.showDeleteOverlay).toBe(false);
                         });
                         it('was not the only one on the page', function() {
@@ -250,7 +250,7 @@ describe('Instance Cards directive', function() {
                             expect(discoverStateSvc.explore.instanceDetails.data).toEqual(this.resultsObject.data);
                             expect(discoverStateSvc.explore.instanceDetails.links).toEqual(this.resultsObject.links);
                             expect(discoverStateSvc.explore.instanceDetails.total).toBe(4);
-                            expect(discoverStateSvc.explore.instanceDetails.currentPage).toBe(1);
+                            expect(discoverStateSvc.explore.instanceDetails.currentPage).toBe(2);
                             expect(this.controller.showDeleteOverlay).toBe(false);
                         });
                     });

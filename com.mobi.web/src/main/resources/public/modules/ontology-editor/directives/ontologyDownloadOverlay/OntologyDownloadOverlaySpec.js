@@ -67,12 +67,12 @@ describe('Ontology Download Overlay directive', function() {
         it('with a .btn-container', function() {
             expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
         });
-        it('with a .error-display', function() {
-            expect(this.element.querySelectorAll('.error-display').length).toBe(1);
+        it('with a .invalid-feedback', function() {
+            expect(this.element.querySelectorAll('.invalid-feedback').length).toBe(1);
         });
         it('depending on whether the fileName is valid', function() {
-            var formGroup = angular.element(this.element.querySelectorAll('.form-group')[0]);
-            expect(formGroup.hasClass('has-error')).toBe(false);
+            var nameInput = angular.element(this.element.querySelectorAll('.form-group input')[0]);
+            expect(nameInput.hasClass('is-invalid')).toBe(false);
 
             this.controller.form = {
                 fileName: {
@@ -82,7 +82,7 @@ describe('Ontology Download Overlay directive', function() {
                 }
             }
             scope.$digest();
-            expect(formGroup.hasClass('has-error')).toBe(true);
+            expect(nameInput.hasClass('is-invalid')).toBe(true);
         });
     });
     describe('controller methods', function() {

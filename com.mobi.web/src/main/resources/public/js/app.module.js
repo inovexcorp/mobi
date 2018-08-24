@@ -73,7 +73,6 @@
             'commitHistoryTable',
             'commitInfoOverlay',
             'confirmationOverlay',
-            'customHeader',
             'customLabel',
             'dragFile',
             'dragMe',
@@ -93,6 +92,7 @@
             'radioButton',
             'rdfVisualization',
             'recordKeywords',
+            'sidebar',
             'spinner',
             'statementContainer',
             'statementDisplay',
@@ -117,7 +117,6 @@
             'login',
             'mapper',
             'merge-requests',
-            'nav',
             'ontology-editor',
             'settings',
             'user-management',
@@ -248,12 +247,46 @@
         }
 
         function theming($mdThemingProvider) {
-            var bootstrapBlue = $mdThemingProvider.extendPalette('blue', {
-                500: '#337ab7'
+            var primary = $mdThemingProvider.definePalette('mobiPrimary', {
+                '50': 'E6E8F3',
+                '100': 'C1C5E2',
+                '200': '989FCF',
+                '300': '6E79BC',
+                '400': '4F5CAD',
+                '500': '303F9F',
+                '600': '2B3997',
+                '700': '24318D',
+                '800': '1E2983',
+                '900': '131B72',
+                'A100': 'A8AEFF',
+                'A200': '757EFF',
+                'A400': '424FFF',
+                'A700': '2937FF',
+                'contrastDefaultColor': 'light',
+                'contrastDarkColors': ['50', '100', '200', '300', '400', 'A100'],
+                'contrastLightColors': undefined
             });
-            $mdThemingProvider.definePalette('bootstrapBlue', bootstrapBlue);
+            var secondary = $mdThemingProvider.definePalette('mobiSecondary', {
+                '50': 'E8EAF6',
+                '100': 'C5CBE9',
+                '200': '9FA8DA',
+                '300': '7985CB',
+                '400': '5C6BC0',
+                '500': '3F51B5',
+                '600': '394AAE',
+                '700': '3140A5',
+                '800': '29379D',
+                '900': '1B278D',
+                'A100': 'C6CBFF',
+                'A200': '939DFF',
+                'A400': '606EFF',
+                'A700': '4757FF',
+                'contrastDefaultColor': 'light',
+                'contrastDarkColors': ['50', '100', '200', '300', '400', 'A100'],
+                'contrastLightColors': undefined
+            });
             $mdThemingProvider.theme('default')
-                .primaryPalette('bootstrapBlue')
-                .accentPalette('light-blue');
+                .primaryPalette('mobiPrimary')
+                .accentPalette('mobiSecondary');
         }
 })();

@@ -20,16 +20,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="class-cards full-height">
-    <div vs-repeat="183" class="rows-container full-height">
+<div class="class-cards h-100">
+    <div vs-repeat="183" class="rows-container h-100">
         <div ng-repeat="chunk in dvm.chunks" class="row">
-            <div ng-repeat="item in chunk" class="card-container col-xs-4">
+            <div ng-repeat="item in chunk" class="card-container col-4">
                 <md-card class="card">
                     <md-card-title>
                         <md-card-title-text>
                             <span class="card-header">
                                 <span class="md-headline text">{{item.classTitle}}</span>
-                                <span class="badge">{{item.instancesCount | number}}</span>
+                                <span class="badge badge-primary badge-pill rounded-circle">{{item.instancesCount | number}}</span>
                             </span>
                         </md-card-title-text>
                     </md-card-title>

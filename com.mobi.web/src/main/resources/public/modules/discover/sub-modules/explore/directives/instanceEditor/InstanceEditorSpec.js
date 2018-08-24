@@ -109,7 +109,7 @@ describe('Instance Editor directive', function() {
                     expect(exploreUtilsSvc.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([this.instance]);
                     expect(discoverStateSvc.explore.instance.entity).toEqual([{prop: 'new'}]);
                     expect(exploreSvc.updateInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, this.instanceIRI, discoverStateSvc.explore.instance.entity);
-                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: discoverStateSvc.explore.instanceDetails.currentPage * discoverStateSvc.explore.instanceDetails.limit, limit: discoverStateSvc.explore.instanceDetails.limit});
+                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: (discoverStateSvc.explore.instanceDetails.currentPage - 1) * discoverStateSvc.explore.instanceDetails.limit, limit: discoverStateSvc.explore.instanceDetails.limit});
                     expect(discoverStateSvc.explore.instanceDetails.data).toEqual(data);
                     expect(discoverStateSvc.explore.instance.metadata).toEqual({instanceIRI: 'id', title: 'title'});
                     expect(_.last(discoverStateSvc.explore.breadcrumbs)).toBe('title');
@@ -123,7 +123,7 @@ describe('Instance Editor directive', function() {
                     expect(exploreUtilsSvc.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([this.instance]);
                     expect(discoverStateSvc.explore.instance.entity).toEqual([{prop: 'new'}]);
                     expect(exploreSvc.updateInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, this.instanceIRI, discoverStateSvc.explore.instance.entity);
-                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: discoverStateSvc.explore.instanceDetails.currentPage * discoverStateSvc.explore.instanceDetails.limit, limit: discoverStateSvc.explore.instanceDetails.limit});
+                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: (discoverStateSvc.explore.instanceDetails.currentPage - 1) * discoverStateSvc.explore.instanceDetails.limit, limit: discoverStateSvc.explore.instanceDetails.limit});
                     expect(util.createErrorToast).toHaveBeenCalledWith('error');
                 });
             });

@@ -2,10 +2,6 @@
 @import "./src/main/resources/public/css/variables";
 
 .open-ontology-tab {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-
     .actions {
         height: 48px;
 
@@ -13,27 +9,18 @@
             padding: 7px;
         }
     }
-
     .list {
         flex: 1;
         min-height: 0;
-        margin: 0;
         padding: 15px 0;
 
         .open-ontology-content {
-            display: flex;
-            flex-direction: column;
-
             .ontologies {
-                flex: 1;
                 min-height: 0;
                 padding: 15px;
 
                 .ontology {
-                    border-bottom: 1px solid $gray-lighter;
-                    cursor: pointer;
-                    display: flex;
-                    flex-direction: column;
+                    border-bottom: 1px solid var(--light);
                     padding: 10px;
 
                     &:last-child {
@@ -41,65 +28,43 @@
                     }
 
                     .ontology-info {
-                        display: flex;
-                        flex-direction: row;
-
+                        cursor: pointer;
                         .details {
-                            flex: 1;
-
                             .header {
                                 font-size: 1.25em;
                                 font-weight: normal;
                                 margin: 0 0 5px;
                             }
-
-                            p {
-                                margin: 0;
-                            }
-                        }
-
-                        .action-container {
-                            display: flex;
-                            align-items: center;
-
-                            .action {
-                                color: $gray-light;
-                                display: inline-block;
-                                text-decoration: none;
-
-                                &:hover {
-                                    color: $gray;
-                                }
-                            }
                         }
 
                         &:hover {
-                            background-color: $gray-lighter;
+                            background-color: var(--light);
+                        }
+                    }
+
+                    .action-container {
+                        .action {
+                            text-decoration: none;
+
+                            &:hover {
+                                color: var(--gray) !important;
+                            }
                         }
                     }
 
                     .access-controls {
-                        //align-items: center;
-
-                        .everyone {
-                            float: right;
-                            //margin-left: auto;
-                        }
                         .record-action {
-                            padding-left: 30px;
+                            padding: 0 0 0 20px;
                         }
                         md-switch {
-                            float: right;
                             margin-top: 0;
                             margin-bottom: 0;
 
                             .users {
-                                color: $gray-light;
-                                display: inline-block;
                                 text-decoration: none;
 
                                 &:hover {
-                                    color: $gray;
+                                    color: var(--gray);
                                 }
                             }
                         }
@@ -107,70 +72,20 @@
                 }
             }
         }
-
         .paging-container {
             padding: 0 15px;
 
             .paging-details {
-                float: left;
-
                 p {
                     line-height: 34px;
                     margin: 0;
                 }
             }
-
-            .page-count {
-                float: left;
-                font-size: 1.125em;
-                line-height: 34px;
-                margin: 0;
-            }
-
             .page-nav {
-                float: right;
-
                 .pagination {
                     margin: 0;
                     vertical-align: bottom;
                 }
-            }
-        }
-    }
-
-    .type-container {
-        display: flex;
-        flex-direction: row;
-
-        .type {
-            background: $gray-lighter;
-            border: 2px solid $gray-light;
-            border-radius: 10px;
-            flex: 1;
-            margin-right: 15px;
-            outline: 0;
-            padding: 15px;
-
-            &:last-child {
-                margin-right: 0;
-            }
-
-            .text-wrapper {
-                display: flex;
-                flex-direction: row;
-
-                .text {
-                    font-size: 1.25em;
-                    flex: 1;
-                    min-width: 0;
-                    width: 0;
-                }
-            }
-
-            &.active {
-                background: $brand-primary;
-                border-color: darken($brand-primary, 10%);
-                color: white;
             }
         }
     }

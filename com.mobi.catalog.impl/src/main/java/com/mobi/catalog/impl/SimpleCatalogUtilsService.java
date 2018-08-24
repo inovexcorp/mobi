@@ -26,12 +26,13 @@ package com.mobi.catalog.impl;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.Catalogs;
+import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
-import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
@@ -64,6 +65,7 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
+import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
@@ -932,6 +934,87 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public Set<Conflict> getConflicts(Resource sourceCommitId, Resource targetCommitId, RepositoryConnection conn) {
+        // Does not take into account named graphs
+        validateResource(sourceCommitId, commitFactory.getTypeIRI(), conn);
+        validateResource(targetCommitId, commitFactory.getTypeIRI(), conn);
+
+        ArrayList<Resource> sourceCommits = new ArrayList<>(getCommitChain(sourceCommitId, true, conn));
+        ArrayList<Resource> targetCommits = new ArrayList<>(getCommitChain(targetCommitId, true, conn));
+        ArrayList<Resource> commonCommits = new ArrayList<>(sourceCommits);
+        commonCommits.retainAll(targetCommits);
+
+        sourceCommits.removeAll(commonCommits);
+        targetCommits.removeAll(commonCommits);
+
+        sourceCommits.trimToSize();
+        targetCommits.trimToSize();
+
+        Difference sourceDiff = getCommitDifference(sourceCommits, conn);
+        Difference targetDiff = getCommitDifference(targetCommits, conn);
+
+        Model sourceAdds = sourceDiff.getAdditions();
+        Model targetAdds = targetDiff.getAdditions();
+        Model sourceDels = sourceDiff.getDeletions();
+        Model targetDels = targetDiff.getDeletions();
+
+        Set<Conflict> result = new HashSet<>();
+        Model original = getCompiledResource(commonCommits, conn);
+
+        Set<Statement> statementsToRemove = new HashSet<>();
+
+        sourceDels.subjects().forEach(subject -> {
+            Model sourceDelSubjectStatements = sourceDels.filter(subject, null, null);
+
+            // Check for modification in left and right
+            sourceDelSubjectStatements.forEach(statement -> {
+                IRI pred = statement.getPredicate();
+                Value obj = statement.getObject();
+
+                if (targetDels.contains(subject, pred, obj)
+                        && sourceAdds.contains(subject, pred, null)
+                        && targetAdds.contains(subject, pred, null)) {
+                    result.add(createConflict(subject, pred, sourceAdds, sourceDels, targetAdds, targetDels));
+                    statementsToRemove.add(statement);
+                }
+            });
+
+            // Check for deletion in left and addition in right if there are common parents
+            if (commonCommits.size() != 0) {
+                Model targetSubjectAdd = targetAdds.filter(subject, null, null);
+                boolean sourceEntityDeleted = !sourceAdds.subjects().contains(subject)
+                        && sourceDelSubjectStatements.equals(original.filter(subject, null, null));
+                boolean targetEntityDeleted = targetDels.containsAll(sourceDelSubjectStatements);
+
+                if (sourceEntityDeleted && !targetEntityDeleted && targetSubjectAdd.size() > 0) {
+                    result.add(createConflict(subject, null, sourceAdds, sourceDels, targetAdds, targetDels));
+                    statementsToRemove.addAll(targetSubjectAdd);
+                }
+            }
+        });
+
+        statementsToRemove.forEach(statement -> Stream.of(sourceAdds, sourceDels, targetAdds, targetDels)
+                .forEach(model -> model.remove(statement.getSubject(), statement.getPredicate(), null)));
+
+        if (commonCommits.size() != 0) {
+            targetDels.subjects().forEach(subject -> {
+                // Check for deletion in right and addition in left
+                Model targetDelSubjectStatements = targetDels.filter(subject, null, null);
+                Model sourceSubjectAdd = sourceAdds.filter(subject, null, null);
+                boolean targetEntityDeleted = !targetAdds.subjects().contains(subject)
+                        && targetDelSubjectStatements.equals(original.filter(subject, null, null));
+                boolean sourceEntityDeleted = sourceDels.containsAll(targetDelSubjectStatements);
+
+                if (targetEntityDeleted && !sourceEntityDeleted && sourceSubjectAdd.size() > 0) {
+                    result.add(createConflict(subject, null, sourceAdds, sourceDels, targetAdds, targetDels));
+                }
+            });
+        }
+
+        return result;
+    }
+
+    @Override
     public <T extends Thing> IllegalArgumentException throwAlreadyExists(Resource id, OrmFactory<T> factory) {
         return new IllegalArgumentException(String.format("%s %s already exists", factory.getTypeIRI().getLocalName(),
                 id));
@@ -1039,5 +1122,34 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         public Iterator<Statement> iterator() {
             return this;
         }
+    }
+
+    /**
+     * Creates a conflict using the provided parameters as the data to construct it.
+     *
+     * @param subject        The Resource identifying the conflicted statement's subject.
+     * @param predicate      The IRI identifying the conflicted statement's predicate.
+     * @param left           The Model of the left item being compared.
+     * @param leftDeletions  The Model of the deleted statements from the left Model.
+     * @param right          The Model of the right item being compared.
+     * @param rightDeletions The Model of the deleted statements from the right Model.
+     * @return A Conflict created using all of the provided data.
+     */
+    private Conflict createConflict(Resource subject, IRI predicate, Model left, Model leftDeletions,
+                                    Model right, Model rightDeletions) {
+        Difference.Builder leftDifference = new Difference.Builder();
+        Difference.Builder rightDifference = new Difference.Builder();
+
+        leftDifference
+                .additions(mf.createModel(left).filter(subject, predicate, null))
+                .deletions(mf.createModel(leftDeletions).filter(subject, predicate, null));
+        rightDifference
+                .additions(mf.createModel(right).filter(subject, predicate, null))
+                .deletions(mf.createModel(rightDeletions).filter(subject, predicate, null));
+
+        return new Conflict.Builder(vf.createIRI(subject.stringValue()))
+                .leftDifference(leftDifference.build())
+                .rightDifference(rightDifference.build())
+                .build();
     }
 }

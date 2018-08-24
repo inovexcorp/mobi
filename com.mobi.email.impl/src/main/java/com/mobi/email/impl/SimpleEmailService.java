@@ -32,17 +32,17 @@ import com.mobi.email.api.EmailService;
 import com.mobi.email.api.EmailServiceConfig;
 import com.mobi.exception.MobiException;
 import com.mobi.platform.config.api.server.Mobi;
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.ImageHtmlEmail;
 import org.apache.commons.mail.resolver.DataSourceUrlResolver;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -64,9 +64,11 @@ public class SimpleEmailService implements EmailService {
     private static final String BODY_BINDING = "!|$BODY!|$";
     private static final String MESSAGE_BINDING = "!|$MESSAGE!|$";
     private static final String HOSTNAME_BINDING = "!|$HOSTNAME!|$";
+    private static final String LOGO_BINDING = "!|$LOGO!|$";
     private EmailServiceConfig config;
     private Mobi mobiServer;
     private String emailTemplate;
+    private URL logo;
 
     @Reference
     void setMobiServer(Mobi mobiServer) {
@@ -74,19 +76,24 @@ public class SimpleEmailService implements EmailService {
     }
 
     @Activate
-    void activate(Map<String, Object> configuration) {
+    void activate(BundleContext bundleContext, Map<String, Object> configuration) {
         config = Configurable.createConfigurable(EmailServiceConfig.class, configuration);
         try {
-            InputStream input = new FileInputStream(URLDecoder.decode(System.getProperty("karaf.etc"), "UTF-8") + File.separator + config.emailTemplate());
-            emailTemplate = IOUtils.toString(input, "UTF-8");
+            File templateFile = new File(config.emailTemplate());
+            if (!templateFile.isAbsolute()) {
+                templateFile = new File(URLDecoder.decode(System.getProperty("karaf.etc"), "UTF-8") + File.separator + config.emailTemplate());
+            }
+            emailTemplate = FileUtils.readFileToString(templateFile, "UTF-8");
+            Bundle bundle = bundleContext.getBundle();
+            logo = bundle.getResource("mobi-primary-logo-cropped.png");
         } catch (IOException e) {
             throw new MobiException(e);
         }
     }
 
     @Modified
-    void modified(Map<String, Object> configuration) {
-        activate(configuration);
+    void modified(BundleContext bundleContext, Map<String, Object> configuration) {
+        activate(bundleContext, configuration);
     }
 
     @Override
@@ -105,22 +112,33 @@ public class SimpleEmailService implements EmailService {
                     email.setSubject(subject);
                     String htmlMsg = emailTemplate.replace(emailTemplate.substring(emailTemplate.indexOf(BODY_BINDING),
                             emailTemplate.lastIndexOf(BODY_BINDING) + BODY_BINDING.length()), htmlMessage);
+                    htmlMsg = htmlMsg.replace(LOGO_BINDING, logo.toString());
                     if (mobiServer.getHostName().endsWith("/")) {
-                        htmlMsg = htmlMsg.replace(HOSTNAME_BINDING, mobiServer.getHostName() + "mobi/index.html");
+                        htmlMsg = htmlMsg.replace(HOSTNAME_BINDING, mobiServer.getHostName());
                     } else {
-                        htmlMsg = htmlMsg.replace(HOSTNAME_BINDING, mobiServer.getHostName() + "/mobi/index.html");
+                        htmlMsg = htmlMsg.replace(HOSTNAME_BINDING, mobiServer.getHostName() + "/");
                     }
                     try {
                         email.setHtmlMsg(htmlMsg);
                     } catch (EmailException e) {
                         throw new MobiException("Unable to set HTML Message content", e);
                     }
-                    for (String userEmail : userEmails) {
+                    if (userEmails.length == 1) {
                         try {
-                            email.addBcc(userEmail);
+                            email.addTo(userEmails[0]);
                         } catch (EmailException e) {
-                            invalidEmails.add(userEmail);
+                            invalidEmails.add(userEmails[0]);
                             LOGGER.info("Invalid email address.", e);
+                            return invalidEmails;
+                        }
+                    } else {
+                        for (String userEmail : userEmails) {
+                            try {
+                                email.addBcc(userEmail);
+                            } catch (EmailException e) {
+                                invalidEmails.add(userEmail);
+                                LOGGER.info("Invalid email address.", e);
+                            }
                         }
                     }
                     try {
@@ -129,15 +147,18 @@ public class SimpleEmailService implements EmailService {
                         LOGGER.debug("With a subject of: " + subject);
                         LOGGER.debug("And a body of: " + htmlMsg);
                     } catch (EmailException e) {
+                        LOGGER.error("Unable to buld MIME message", e);
                         throw new MobiException("Unable to build MIME message.", e);
                     }
                     int repeatTries = 2;
                     while (repeatTries > 0) {
                         try {
+                            Thread.currentThread().setContextClassLoader(javax.mail.Session.class.getClassLoader());
                             email.sendMimeMessage();
                             break;
                         } catch (EmailException e) {
                             if (--repeatTries < 1) {
+                                LOGGER.error("Could not send email.", e);
                                 throw new MobiException("Could not send email.", e);
                             }
                             LOGGER.info("Could not send email. Attempting retry.");
@@ -157,8 +178,9 @@ public class SimpleEmailService implements EmailService {
 
         URL imageBasePath = null;
         try {
-            imageBasePath = new URL(config.imageBasePath());
+            imageBasePath = new URL("file://");
         } catch (MalformedURLException e) {
+            LOGGER.error("Error creating URL", e);
             throw new MobiException(e);
         }
 
@@ -174,6 +196,7 @@ public class SimpleEmailService implements EmailService {
         try {
             email.setFrom(config.emailAddress());
         } catch (EmailException e) {
+            LOGGER.error("Invalid 'From' email address.", e);
             throw new MobiException("Invalid 'From' email address.", e);
         }
         return email;

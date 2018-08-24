@@ -29,6 +29,6 @@
             <div ng-bind-html="dvm.dm.getHeader(column) | highlight:$select.search | trusted"></div>
         </ui-select-choices>
     </ui-select>
-    <small class="help-block">Columns are saved by zero-based index</small>
+    <small class="form-text">Columns are saved by zero-based index</small>
     <div ng-if="dvm.isNumber(dvm.selectedColumn)"><span class="field-name">Value: </span><span ng-class="{'text-muted': dvm.getValuePreview() === '(None)'}">{{dvm.getValuePreview()}}</span></div>
 </div>

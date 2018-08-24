@@ -52,7 +52,7 @@
                     dvm.os = ontologyStateService;
                     dvm.ms = mapperStateService;
                     dvm.util = utilService;
-                    dvm.pageIndex = 0;
+                    dvm.currentPage = 1;
                     dvm.limit = 10;
                     dvm.totalSize = 0;
                     dvm.filteredList = [];
@@ -78,14 +78,6 @@
                         dvm.os.newLanguage = undefined;
                         dvm.os.showNewTab = true;
                     }
-                    dvm.getPage = function(direction) {
-                        if (direction === 'next') {
-                            dvm.pageIndex++;
-                        } else {
-                            dvm.pageIndex--;
-                        }
-                        dvm.getPageOntologyRecords();
-                    }
                     dvm.showDeleteConfirmationOverlay = function(record) {
                         dvm.recordId = _.get(record, '@id', '');
                         dvm.recordTitle = dvm.util.getDctermsValue(record, 'title');
@@ -107,19 +99,19 @@
                                 if (!_.isEmpty(state)) {
                                     sm.deleteState(_.get(state, 'id', ''));
                                 }
-                                dvm.pageIndex = 0;
+                                dvm.currentPage = 1;
                                 dvm.getPageOntologyRecords();
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
-                    dvm.getPageOntologyRecords = function(sortOption = _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true})) {
+                    dvm.getPageOntologyRecords = function() {
                         var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
                         var catalogId = _.get(cm.localCatalog, '@id', '');
                         var paginatedConfig = {
-                            pageIndex: dvm.pageIndex,
+                            pageIndex: dvm.currentPage - 1,
                             limit: dvm.limit,
                             recordType: ontologyRecordType,
-                            sortOption,
+                            sortOption: _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
                             searchText: dvm.filterText
                         };
                         httpService.cancel(dvm.id);
@@ -132,16 +124,16 @@
                         });
                     }
                     dvm.search = function(event) {
-                        dvm.pageIndex = 0;
                         // keyCode 13 is the enter key
                         if (event.keyCode === 13) {
+                            dvm.currentPage = 1;
                             dvm.getPageOntologyRecords();
                         }
                     }
                     dvm.manageRecord = function() {
                         return true;
                     }
-                    
+
                     $scope.$watch(() => dvm.os.list.length, () => {
                         dvm.getPageOntologyRecords();
                     });

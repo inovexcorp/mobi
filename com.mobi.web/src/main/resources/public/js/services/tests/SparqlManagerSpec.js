@@ -59,7 +59,7 @@ describe('SPARQL Manager service', function() {
         expect(sparqlManagerSvc.data).toEqual(undefined);
         expect(sparqlManagerSvc.errorMessage).toEqual('');
         expect(sparqlManagerSvc.infoMessage).toEqual('Please submit a query to see results here.');
-        expect(sparqlManagerSvc.currentPage).toEqual(0);
+        expect(sparqlManagerSvc.currentPage).toEqual(1);
         expect(sparqlManagerSvc.links).toEqual({next: '', prev: ''});
         expect(sparqlManagerSvc.totalSize).toEqual(0);
         expect(sparqlManagerSvc.bindings).toEqual([]);
@@ -250,7 +250,7 @@ describe('SPARQL Manager service', function() {
     describe('should retrieve a page of a query against the repository', function() {
         beforeEach(function() {
             this.params.limit = sparqlManagerSvc.limit;
-            this.params.offset = sparqlManagerSvc.currentPage * sparqlManagerSvc.limit;
+            this.params.offset = (sparqlManagerSvc.currentPage - 1) * sparqlManagerSvc.limit;
             this.url = '/mobirest/sparql/page?';
         });
         it('with a dataset', function() {
@@ -269,10 +269,9 @@ describe('SPARQL Manager service', function() {
             $httpBackend.expectGET(this.url).respond(400, {details: details}, undefined, statusMessage);
             sparqlManagerSvc.queryRdf();
             flushAndVerify($httpBackend);
-
             expect(sparqlManagerSvc.errorMessage).toEqual(statusMessage);
             expect(sparqlManagerSvc.errorDetails).toEqual(details);
-            expect(sparqlManagerSvc.currentPage).toBe(0);
+            expect(sparqlManagerSvc.currentPage).toBe(1);
             expect(sparqlManagerSvc.data).toBeUndefined();
         });
         it('when returning no bindings', function() {
@@ -282,7 +281,7 @@ describe('SPARQL Manager service', function() {
             flushAndVerify($httpBackend);
 
             expect(sparqlManagerSvc.infoMessage).toEqual('There were no results for the submitted query.');
-            expect(sparqlManagerSvc.currentPage).toBe(0);
+            expect(sparqlManagerSvc.currentPage).toBe(1);
             expect(sparqlManagerSvc.data).toBeUndefined();
         });
         it('when returning bindings', function() {

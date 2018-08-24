@@ -101,10 +101,10 @@
              * @type {number}
              *
              * @description
-             * `currentPage` holds an integer indicating which page of results for the current paginated
+             * `currentPage` holds an 1 based index indicating which page of results for the current paginated
              * results list should be shown.
              */
-            self.currentPage = 0;
+            self.currentPage = 1;
             /**
              * @ngdoc property
              * @name catalogState.service:catalogStateService#links

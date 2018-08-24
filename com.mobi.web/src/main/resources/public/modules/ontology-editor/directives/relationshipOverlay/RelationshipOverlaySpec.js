@@ -196,7 +196,7 @@ describe('Relationship Overlay directive', function() {
         expect(this.controller.addRelationship).toHaveBeenCalled();
     });
     it('should set the correct state when the Cancel button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(ontologyStateSvc.showRelationshipOverlay).toBe(false);
     });

@@ -25,7 +25,7 @@
         <span class="header active">Upload Ontology</span>
     </div>
     <div class="row row-container">
-        <div class="col-xs-6 col-xs-offset-3">
+        <div class="col-6 offset-3">
             <block>
                 <block-content class="padding">
                     <drag-file files="dvm.files" on-drop="dvm.showOverlay = true"></drag-file>
@@ -40,7 +40,7 @@
                     </md-list>
                 </block-content>
                 <block-footer class="btn-container clearfix">
-                    <button class="btn btn-primary pull-right" ng-click="dvm.cancel()" ng-disabled="dvm.hasPending()">Close</button>
+                    <button class="btn btn-primary float-right" ng-click="dvm.cancel()" ng-disabled="dvm.hasPending()">Close</button>
                 </block-footer>
             </block>
         </div>
