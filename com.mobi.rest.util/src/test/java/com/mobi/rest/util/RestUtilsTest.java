@@ -135,18 +135,6 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void encodeTest() throws Exception {
-        String test = ":/#?=& +;\"{[}]@$%^\t";
-        assertEquals("%3A%2F%23%3F%3D%26%20%2B%3B%22%7B%5B%7D%5D%40%24%25%5E%09", RestUtils.encode(test));
-    }
-
-    @Test
-    public void decodeTest() throws Exception {
-        String test = "%3A%2F%23%3F%3D%26%20%2B%3B%22%7B%5B%7D%5D%40%24%25%5E%09";
-        assertEquals(":/#?=& +;\"{[}]@$%^\t", RestUtils.decode(test));
-    }
-
-    @Test
     public void getRDFFormatTest() throws Exception {
         assertEquals(RestUtils.getRDFFormat("jsonld"), RDFFormat.JSONLD);
         assertEquals(RestUtils.getRDFFormat("JSONLD"), RDFFormat.JSONLD);

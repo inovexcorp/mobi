@@ -1,14 +1,12 @@
-@Version("3.0.0.${build}")
-
-package com.mobi.rest.util;
+package com.mobi.persistence.utils;
 
 /*-
  * #%L
- * com.mobi.rest.util
+ * com.mobi.persistence.utils
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,21 @@ package com.mobi.rest.util;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Test;
+
+public class ResourceUtilsTest {
+
+    @Test
+    public void encodeTest() throws Exception {
+        String test = ":/#?=& +;\"{[}]@$%^\t";
+        assertEquals("%3A%2F%23%3F%3D%26%20%2B%3B%22%7B%5B%7D%5D%40%24%25%5E%09", ResourceUtils.encode(test));
+    }
+
+    @Test
+    public void decodeTest() throws Exception {
+        String test = "%3A%2F%23%3F%3D%26%20%2B%3B%22%7B%5B%7D%5D%40%24%25%5E%09";
+        assertEquals(":/#?=& +;\"{[}]@$%^\t", ResourceUtils.decode(test));
+    }
+}

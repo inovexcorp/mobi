@@ -93,15 +93,10 @@ public class MobiAttributeFinder extends AttributeFinderModule {
                 vf.createIRI(category.toString()), vf.createIRI(attributeType.toString()));
         List<Literal> values = pip.findAttribute(designator, new BalanaRequest(context.getRequestCtx(), vf, jaxbContext));
         List<AttributeValue> attributeValues = new ArrayList<>();
-        if (values.size() == 0) {
-            return new EvaluationResult(new Status(Collections.singletonList(Status.STATUS_MISSING_ATTRIBUTE)));
-        } else if (values.size() == 1) {
-            attributeValues.add(getAttributeValue(values.get(0)));
-        } else {
-            values.stream()
-                    .map(this::getAttributeValue)
-                    .forEach(attributeValues::add);
-        }
+        values.stream()
+                .map(this::getAttributeValue)
+                .forEach(attributeValues::add);
+
         return new EvaluationResult(new BagAttribute(attributeType, attributeValues));
     }
 

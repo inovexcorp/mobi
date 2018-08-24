@@ -93,7 +93,7 @@
                                 return sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, createdBranchId, commitId);
                             }, $q.reject)
                             .then(() => {
-                                return om.deleteOntology(dvm.os.listItem.ontologyRecord.recordId, userBranchId);
+                                return om.deleteOntologyBranch(dvm.os.listItem.ontologyRecord.recordId, userBranchId);
                             }, $q.reject)
                             .then(() => {
                                 dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, userBranchId);

@@ -230,23 +230,23 @@ describe('Merge Tab directive', function() {
                         beforeEach(function() {
                             ontologyStateSvc.listItem.merge.checkbox = true;
                         });
-                        it('and deleteOntology is resolved', function() {
-                            ontologyManagerSvc.deleteOntology.and.returnValue($q.when());
+                        it('and deleteOntologyBranch is resolved', function() {
+                            ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.when());
                             this.controller.merge();
                             scope.$apply();
                             expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, jasmine.any(Object));
                             expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.targetId, this.commitId);
-                            expect(ontologyManagerSvc.deleteOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.branchId);
+                            expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.branchId);
                             expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.branchId);
                             expect(util.createSuccessToast).toHaveBeenCalled();
                         });
-                        it('and deleteOntology is rejected', function() {
-                            ontologyManagerSvc.deleteOntology.and.returnValue($q.reject(this.error));
+                        it('and deleteOntologyBranch is rejected', function() {
+                            ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.reject(this.error));
                             this.controller.merge();
                             scope.$apply();
                             expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, jasmine.any(Object));
                             expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.targetId, this.commitId);
-                            expect(ontologyManagerSvc.deleteOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.branchId);
+                            expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.branchId);
                             expect(this.controller.error).toEqual(this.error);
                         });
                     });
