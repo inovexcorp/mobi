@@ -25,19 +25,21 @@
         <block-header>
             <span>Property Hierarchies</span><a ng-click="dvm.os.unSelectItem(); dvm.os.showCreatePropertyOverlay = true" class="float-right"><i class="fa fa-plus"></i><span>Create Property</span></a>
         </block-header>
-        <block-content class="tree hierarchy-tree">
-            <div class="h-100 repeater-container" vs-repeat="26" vs-offset-before="10" vs-offset-after="10">
-                <div ng-repeat="node in dvm.flatPropertyTree | filter:dvm.isShown" class="tree-item-wrapper">
-                    <div ng-if="!node.entityIRI" class="tree-item">
-                        <a ng-click="node.set(dvm.os.listItem.ontologyRecord.recordId, !node.get(dvm.os.listItem.ontologyRecord.recordId)); $event.stopPropagation()">
-                            <i class="fa fa-fw" ng-class="{'fa-folder-open-o': node.get(dvm.os.listItem.ontologyRecord.recordId), 'fa-folder-o': !node.get(dvm.os.listItem.ontologyRecord.recordId)}"></i><span>{{node.title}}</span>
-                        </a>
+        <block-content>
+            <div class="tree hierarchy-tree h-100">
+                <div class="repeater-container" vs-repeat="26" vs-offset-before="10" vs-offset-after="10">
+                    <div ng-repeat="node in dvm.flatPropertyTree | filter:dvm.isShown" class="tree-item-wrapper">
+                        <div ng-if="!node.entityIRI" class="tree-item">
+                            <a ng-click="node.set(dvm.os.listItem.ontologyRecord.recordId, !node.get(dvm.os.listItem.ontologyRecord.recordId)); $event.stopPropagation()">
+                                <i class="fa fa-fw" ng-class="{'fa-folder-open-o': node.get(dvm.os.listItem.ontologyRecord.recordId), 'fa-folder-o': !node.get(dvm.os.listItem.ontologyRecord.recordId)}"></i><span>{{node.title}}</span>
+                            </a>
+                        </div>
+                        <tree-item ng-if="node.entityIRI" ng-style="{'padding-left': (dvm.indent * (node.indent + 1)) + 'em'}"
+                                   is-active="dvm.os.getActiveEntityIRI() === node.entityIRI"
+                                   current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI)"
+                                   on-click="dvm.os.selectItem(node.entityIRI)" has-children="node.hasChildren"
+                                   path="node.path" data-path-to="{{dvm.os.joinPath(node.path)}}" is-opened="dvm.os.getOpened(dvm.os.joinPath(node.path))"></tree-item>
                     </div>
-                    <tree-item ng-if="node.entityIRI" ng-style="{'padding-left': (dvm.indent * (node.indent + 1)) + 'em'}"
-                               is-active="dvm.os.getActiveEntityIRI() === node.entityIRI"
-                               current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI)"
-                               on-click="dvm.os.selectItem(node.entityIRI)" has-children="node.hasChildren"
-                               path="node.path" data-path-to="{{dvm.os.joinPath(node.path)}}" is-opened="dvm.os.getOpened(dvm.os.joinPath(node.path))"></tree-item>
                 </div>
             </div>
         </block-content>
