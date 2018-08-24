@@ -887,6 +887,9 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     @ActionId(id = Modify.TYPE)
+    @ActionAttributes(
+            @AttributeValue(type = ValueType.QUERY, id = VersionedRDFRecord.branch_IRI, value = "targetId")
+    )
     @ResourceId(type = ValueType.PATH, id="recordId")
     public Response merge(ContainerRequestContext context, String catalogId, String recordId, String sourceBranchId,
                           String targetBranchId, String additionsJson, String deletionsJson) {
