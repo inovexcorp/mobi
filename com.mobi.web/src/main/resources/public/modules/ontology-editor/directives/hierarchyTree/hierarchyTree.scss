@@ -3,6 +3,8 @@
 
 .hierarchy-tree.tree {
     padding: 0 0 0 10px;
+    display: inline-block;
+    min-width: 100%;
 
     .repeater-container {
         overflow: auto;
