@@ -54,6 +54,7 @@ import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordExportSettings;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
@@ -63,11 +64,16 @@ import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.exception.RepositoryException;
+import com.mobi.security.policy.api.ontologies.policy.Policy;
+import com.mobi.security.policy.api.xacml.XACMLPolicy;
+import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
@@ -98,6 +104,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private final IRI tagIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#tag");
     private final IRI distributionIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/distributions#distribution");
     private final IRI masterBranchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#master");
+    private final IRI recordPolicyIRI = VALUE_FACTORY.createIRI("http://mobi.com/policies/record/encoded-record-policy");
 
     private SimpleVersionedRDFRecordService recordService;
     private SimpleSesameTransformer transformer;
@@ -108,6 +115,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private User user;
     private DeleteActivity deleteActivity;
     private Tag tag;
+    private XACMLPolicy xacmlPolicy;
 
     private OrmFactory<VersionedRDFRecord> recordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
     private OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
@@ -131,10 +139,19 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private RepositoryConnection connection;
 
     @Mock
+    private RepositoryResult<Statement> results;
+
+    @Mock
+    private Statement statement;
+
+    @Mock
     private CatalogProvUtils provUtils;
 
     @Mock
     private MergeRequestManager mergeRequestManager;
+
+    @Mock
+    private XACMLPolicyManager xacmlPolicyManager;
 
     @Before
     public void setUp() throws Exception {
@@ -181,6 +198,11 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         when(utilsService.getRevisionChanges(eq(commitIRI), eq(connection))).thenReturn(difference);
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
         doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
+        when(xacmlPolicyManager.addPolicy(any(XACMLPolicy.class))).thenReturn(recordPolicyIRI);
+        when(connection.getStatements(eq(null), eq(VALUE_FACTORY.createIRI(Policy.relatedResource_IRI)), any(IRI.class))).thenReturn(results);
+        when(results.hasNext()).thenReturn(true);
+        when(results.next()).thenReturn(statement);
+        when(statement.getSubject()).thenReturn(recordPolicyIRI);
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.setVersioningManager(versioningManager);
@@ -188,6 +210,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         recordService.setVf(VALUE_FACTORY);
         recordService.setProvUtils(provUtils);
         recordService.setMergeRequestManager(mergeRequestManager);
+        recordService.setPolicyManager(xacmlPolicyManager);
     }
 
     /* create() */
@@ -212,6 +235,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
                 any(RepositoryConnection.class));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),
                 anyString(), any(Model.class), eq(null));
+        verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
     }

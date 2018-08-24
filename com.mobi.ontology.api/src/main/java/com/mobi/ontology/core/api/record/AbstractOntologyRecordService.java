@@ -75,6 +75,7 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
             Model model = ontology.asModel(modelFactory);
             versioningManager.commit(catalogIdIRI, record.getResource(),
                     masterBranchId, user, "The initial commit.", model, null);
+            writePolicies(user, record);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {

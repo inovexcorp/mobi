@@ -294,6 +294,7 @@ function mockOntologyManager() {
             this.getConceptSchemeIRIs = jasmine.createSpy('getConceptSchemeIRIs').and.returnValue([]);
             this.downloadOntology = jasmine.createSpy('downloadOntology');
             this.deleteOntology = jasmine.createSpy('deleteOntology').and.returnValue($q.when());
+            this.deleteOntologyBranch = jasmine.createSpy('deleteOntologyBranch').and.returnValue($q.when());
             this.getAnnotationPropertyHierarchies = jasmine.createSpy('getAnnotationPropertyHierarchies');
             this.uploadChangesFile = jasmine.createSpy('uploadChangesFile').and.returnValue($q.when({}));
             this.getFailedImports = jasmine.createSpy('getFailedImports').and.returnValue($q.when([]));

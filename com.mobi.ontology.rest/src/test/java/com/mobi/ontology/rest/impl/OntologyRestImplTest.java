@@ -26,7 +26,7 @@ package com.mobi.ontology.rest.impl;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
-import static com.mobi.rest.util.RestUtils.encode;
+import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -4061,8 +4061,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testDeleteOntologyBranch() {
-        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
-                .queryParam("branchId", branchId.stringValue()).request().delete();
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/branches/"
+                + encode(branchId.stringValue())).request().delete();
 
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).deleteOntologyBranch(recordId, branchId);
@@ -4071,8 +4071,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     @Test
     public void testDeleteOntologyBranchError() {
         Mockito.doThrow(new MobiException("I'm an exception!")).when(ontologyManager).deleteOntologyBranch(eq(recordId), eq(branchId));
-        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
-                .queryParam("branchId", branchId.stringValue()).request().delete();
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/branches/"
+                + encode(branchId.stringValue())).request().delete();
 
         assertEquals(response.getStatus(), 500);
         verify(catalogManager, times(0)).deleteRecord(any(), any(), any());

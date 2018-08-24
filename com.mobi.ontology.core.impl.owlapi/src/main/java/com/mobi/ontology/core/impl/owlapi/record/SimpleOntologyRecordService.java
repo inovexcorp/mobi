@@ -41,6 +41,7 @@ import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,6 +106,11 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
     }
 
     @Reference
+    void setPolicyManager(XACMLPolicyManager xacmlPolicyManager) {
+        this.xacmlPolicyManager = xacmlPolicyManager;
+    }
+
+    @Reference
     void setVersioningManager(VersioningManager versioningManager) {
         this.versioningManager = versioningManager;
     }
@@ -128,6 +134,7 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
     protected void deleteRecord(OntologyRecord record, RepositoryConnection conn) {
         long start = getStartTime();
         deleteRecordObject(record, conn);
+        deletePolicies(record, conn);
         deleteVersionedRDFData(record, conn);
         clearOntologyCache(record);
         logTrace("deleteOntology(recordId)", start);
