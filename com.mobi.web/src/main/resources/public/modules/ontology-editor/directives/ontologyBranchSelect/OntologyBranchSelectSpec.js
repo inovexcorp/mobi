@@ -137,11 +137,11 @@ describe('Ontology Branch Select directive', function() {
         it('depending on whether an error occurred while deleting a branch', function() {
             this.controller.showDeleteConfirmation = true;
             scope.$digest();
-            expect(this.element.find('error-message').length).toBe(0);
+            expect(this.element.find('error-display').length).toBe(0);
 
             this.controller.deleteError = 'Error';
             scope.$digest();
-            expect(this.element.find('error-message').length).toBe(1);
+            expect(this.element.find('error-display').length).toBe(1);
         });
         it('depending on whether a branch is being editing', function() {
             expect(this.element.find('edit-branch-overlay').length).toBe(0);
@@ -234,7 +234,7 @@ describe('Ontology Branch Select directive', function() {
                 ontologyStateSvc.listItem.branches = [this.branch];
             });
             it('when resolved', function() {
-                ontologyManagerSvc.deleteOntology.and.returnValue($q.when());
+                ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.when());
                 this.controller.delete();
                 scope.$apply();
                 expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
@@ -242,7 +242,7 @@ describe('Ontology Branch Select directive', function() {
                 expect(this.controller.showDeleteConfirmation).toBe(false);
             });
             it('when rejected', function() {
-                ontologyManagerSvc.deleteOntology.and.returnValue($q.reject(this.errorMessage));
+                ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.reject(this.errorMessage));
                 this.controller.delete();
                 scope.$apply();
                 expect(this.controller.deleteError).toBe(this.errorMessage);

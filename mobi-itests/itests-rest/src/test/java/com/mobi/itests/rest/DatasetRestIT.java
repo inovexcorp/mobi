@@ -32,6 +32,7 @@ import static org.junit.Assert.assertTrue;
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.itests.support.KarafTestSupport;
+import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.Statements;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
@@ -40,7 +41,6 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
-import com.mobi.rest.util.RestUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -165,7 +165,7 @@ public class DatasetRestIT extends KarafTestSupport {
     private CloseableHttpResponse uploadFile(CloseableHttpClient client, Resource datasetId, HttpEntity entity)
             throws IOException, GeneralSecurityException {
         authenticateUser(context);
-        HttpPost post = new HttpPost(baseUrl + "/datasets/" + RestUtils.encode(datasetId.stringValue()) + "/data");
+        HttpPost post = new HttpPost(baseUrl + "/datasets/" + ResourceUtils.encode(datasetId.stringValue()) + "/data");
         post.setEntity(entity);
         return client.execute(post, context);
     }

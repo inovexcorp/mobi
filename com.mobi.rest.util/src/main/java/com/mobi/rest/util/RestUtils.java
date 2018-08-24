@@ -65,43 +65,6 @@ public class RestUtils {
     private static final Logger LOG = LoggerFactory.getLogger(RestUtils.class);
 
     /**
-     * Encodes the passed string using percent encoding for use in a URL.
-     *
-     * @param str The string to be encoded.
-     * @return The URL encoded version of the passed string.
-     */
-    public static String encode(String str) {
-        String encoded;
-        try {
-            encoded = URLEncoder.encode(str, "UTF-8").replaceAll("%28", "(")
-                    .replaceAll("%29", ")")
-                    .replaceAll("\\+", "%20")
-                    .replaceAll("%27", "'")
-                    .replaceAll("%21", "!")
-                    .replaceAll("%7E", "~");
-        } catch (UnsupportedEncodingException e) {
-            throw new MobiException(e);
-        }
-        return encoded;
-    }
-
-    /**
-     * Decodes the passed string that is encoded using percent encoding.
-     *
-     * @param str The string to be decoded.
-     * @return The decoded version of the passed URL encoded string.
-     */
-    public static String decode(String str) {
-        String decoded;
-        try {
-            decoded = URLDecoder.decode(str, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new MobiException(e);
-        }
-        return decoded;
-    }
-
-    /**
      * Returns the specified RDFFormat. Currently supports Turtle, RDF/XML, and JSON-LD.
      *
      * @param format The abbreviated name of a RDFFormat.

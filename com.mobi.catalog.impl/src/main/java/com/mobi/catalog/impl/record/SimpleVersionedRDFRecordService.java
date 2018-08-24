@@ -37,6 +37,7 @@ import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 
 @Component(
         immediate = true,
@@ -82,6 +83,11 @@ public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordS
     @Reference
     void setMergeRequestManager(MergeRequestManager mergeRequestManager) {
         this.mergeRequestManager = mergeRequestManager;
+    }
+
+    @Reference
+    void setPolicyManager(XACMLPolicyManager xacmlPolicyManager) {
+        this.xacmlPolicyManager = xacmlPolicyManager;
     }
 
     @Reference
