@@ -59,6 +59,7 @@ import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.Version;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.catalog.rest.CatalogRest;
@@ -721,6 +722,9 @@ public class CatalogRestImpl implements CatalogRest {
     @Override
     @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id="recordId")
+    @ActionAttributes(
+            @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
+    )
     public Response deleteBranch(String catalogId, String recordId, String branchId) {
         try {
             catalogManager.removeBranch(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(branchId));
@@ -782,6 +786,9 @@ public class CatalogRestImpl implements CatalogRest {
     @Override
     @ActionId(id = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, id="recordId")
+    @ActionAttributes(
+            @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
+    )
     public Response createBranchCommit(ContainerRequestContext context, String catalogId, String recordId,
                                        String branchId, String message) {
         try {
@@ -880,6 +887,9 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Override
     @ActionId(id = Modify.TYPE)
+    @ActionAttributes(
+            @AttributeValue(type = ValueType.QUERY, id = VersionedRDFRecord.branch_IRI, value = "targetId")
+    )
     @ResourceId(type = ValueType.PATH, id="recordId")
     public Response merge(ContainerRequestContext context, String catalogId, String recordId, String sourceBranchId,
                           String targetBranchId, String additionsJson, String deletionsJson) {

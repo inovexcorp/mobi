@@ -307,8 +307,8 @@ describe('Saved Changes Tab directive', function() {
                                 }
                             }.bind(this));
                         });
-                        it('and when deleteOntology is resolved', function() {
-                            ontologyManagerSvc.deleteOntology.and.returnValue($q.when());
+                        it('and when deleteOntologyBranch is resolved', function() {
+                            ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.when());
                             ontologyStateSvc.listItem.ontologyRecord.branchId = this.newBranchId;
                             _.remove(ontologyStateSvc.listItem.branches, function(branch) {
                                 return branch['@id'] === this.userBranchId;
@@ -327,7 +327,7 @@ describe('Saved Changes Tab directive', function() {
                                 this.catalogId, this.otherUserBranch);
                         });
                         it('when rejected', function() {
-                            ontologyManagerSvc.deleteOntology.and.returnValue($q.reject('error'));
+                            ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.reject('error'));
                             this.controller.restoreBranchWithUserBranch();
                             scope.$apply();
                             expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');

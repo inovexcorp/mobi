@@ -23,7 +23,6 @@ package com.mobi.sparql.rest.impl;
  * #L%
  */
 
-import static com.mobi.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
@@ -37,6 +36,7 @@ import static org.testng.Assert.assertTrue;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
+import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -116,7 +116,7 @@ public class SparqlRestImplTest extends MobiRestTestNg {
         rest.setValueFactory(vf);
 
         DATASET_ID = "http://example.com/datasets/0";
-        ALL_QUERY = RestUtils.encode(IOUtils.toString(getClass().getClassLoader().getResourceAsStream("all_query.rq")));
+        ALL_QUERY = ResourceUtils.encode(IOUtils.toString(getClass().getClassLoader().getResourceAsStream("all_query.rq")));
 
         return new ResourceConfig()
                 .register(rest)
@@ -188,11 +188,11 @@ public class SparqlRestImplTest extends MobiRestTestNg {
 
     @Test
     public void queryWithInvalidQueryTest() {
-        Response response = target().path("sparql").queryParam("query", RestUtils.encode("+"))
+        Response response = target().path("sparql").queryParam("query", ResourceUtils.encode("+"))
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(response.getStatus(), 400);
 
-        response = target().path("sparql").queryParam("query", RestUtils.encode("+")).queryParam("dataset", DATASET_ID)
+        response = target().path("sparql").queryParam("query", ResourceUtils.encode("+")).queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(response.getStatus(), 400);
     }
@@ -275,13 +275,13 @@ public class SparqlRestImplTest extends MobiRestTestNg {
 
     @Test
     public void downloadQueryWithInvalidQueryTest() {
-        Response response = target().path("sparql").queryParam("query", RestUtils.encode("+"))
+        Response response = target().path("sparql").queryParam("query", ResourceUtils.encode("+"))
                 .queryParam("fileType", "csv").request().get();
         assertEquals(response.getStatus(), 400);
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
         assertTrue(result.containsKey("details"));
 
-        response = target().path("sparql").queryParam("query", RestUtils.encode("+")).queryParam("dataset", DATASET_ID)
+        response = target().path("sparql").queryParam("query", ResourceUtils.encode("+")).queryParam("dataset", DATASET_ID)
                 .queryParam("fileType", "csv").request().get();
         assertEquals(response.getStatus(), 400);
         result = JSONObject.fromObject(response.readEntity(String.class));
@@ -387,12 +387,12 @@ public class SparqlRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getPagedResultsWithInvalidQueryTest() {
-        Response response = target().path("sparql/page").queryParam("query", encode("+")).request().get();
+        Response response = target().path("sparql/page").queryParam("query", ResourceUtils.encode("+")).request().get();
         assertEquals(response.getStatus(), 400);
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
         assertTrue(result.containsKey("details"));
 
-        response = target().path("sparql/page").queryParam("query", encode("+")).queryParam("dataset", DATASET_ID)
+        response = target().path("sparql/page").queryParam("query", ResourceUtils.encode("+")).queryParam("dataset", DATASET_ID)
                 .request().get();
         assertEquals(response.getStatus(), 400);
         result = JSONObject.fromObject(response.readEntity(String.class));

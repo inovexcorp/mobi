@@ -54,4 +54,9 @@ public @interface AttributeValue {
      * A string representing the value of the Attribute.
      */
     String value();
+
+    /**
+     * A boolean indicating if the value is required.
+     */
+    boolean required() default true;
 }
