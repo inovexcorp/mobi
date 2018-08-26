@@ -41,6 +41,7 @@
          * @requires mergeRequestsState.service:mergeRequestsStateService
          * @requires mergeRequestManager.service:mergeRequestManagerService
          * @requires util.service:utilService
+         * @requires ontologyState.service:ontologyStateService
          *
          * @description
          * `mergeRequestsPage` is a directive which creates a div containing the main parts of the Merge Requests
@@ -52,9 +53,9 @@
          */
         .directive('mergeRequestsPage', mergeRequestsPage);
 
-    mergeRequestsPage.$inject = ['$q', 'mergeRequestsStateService', 'mergeRequestManagerService', 'utilService'];
+    mergeRequestsPage.$inject = ['$q', 'mergeRequestsStateService', 'mergeRequestManagerService', 'utilService', 'ontologyStateService'];
 
-    function mergeRequestsPage($q, mergeRequestsStateService, mergeRequestManagerService, utilService) {
+    function mergeRequestsPage($q, mergeRequestsStateService, mergeRequestManagerService, utilService, ontologyStateService) {
         return {
             restrict: 'E',
             templateUrl: 'modules/merge-requests/directives/mergeRequestsPage/mergeRequestsPage.html',
@@ -65,6 +66,7 @@
                 var dvm = this;
                 var mm = mergeRequestManagerService;
                 var util = utilService;
+                var os = ontologyStateService;
                 dvm.state = mergeRequestsStateService;
                 dvm.errorMessage = '';
 
@@ -91,6 +93,7 @@
                     dvm.errorMessage = '';
                 }
                 dvm.acceptRequest = function() {
+                    var branchId = dvm.state.requestToAccept.targetBranch['@id'];
                     mm.acceptRequest(dvm.state.requestToAccept.request['@id'])
                         .then(() => {
                             util.createSuccessToast('Request successfully accepted');
@@ -103,6 +106,9 @@
                         .then(() => {
                             dvm.state.selected = dvm.state.requestToAccept;
                             dvm.closeAccept();
+                            if (os.listItem && os.listItem.ontologyRecord.branchId === branchId) {
+                                os.listItem.upToDate = false;
+                            }
                         }, error => dvm.errorMessage = error);
                 }
             }

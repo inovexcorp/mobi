@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Merge Requests Page directive', function() {
-    var $compile, scope, $q, mergeRequestsStateSvc, mergeRequestManagerSvc, utilSvc;
+    var $compile, scope, $q, mergeRequestsStateSvc, mergeRequestManagerSvc, utilSvc, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -29,14 +29,16 @@ describe('Merge Requests Page directive', function() {
         mockMergeRequestsState();
         mockMergeRequestManager();
         mockUtil();
+        mockOntologyState();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _mergeRequestsStateService_, _mergeRequestManagerService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _mergeRequestsStateService_, _mergeRequestManagerService_, _utilService_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             mergeRequestsStateSvc = _mergeRequestsStateService_;
             mergeRequestManagerSvc = _mergeRequestManagerService_;
             utilSvc = _utilService_;
+            ontologyStateSvc = _ontologyStateService_;
         });
 
         this.element = $compile(angular.element('<merge-requests-page></merge-requests-page>'))(scope);
@@ -51,6 +53,7 @@ describe('Merge Requests Page directive', function() {
         mergeRequestsStateSvc = null;
         mergeRequestManagerSvc = null;
         utilSvc = null;
+        ontologyStateSvc = null;
         this.element.remove();
     });
 
@@ -119,8 +122,9 @@ describe('Merge Requests Page directive', function() {
         });
         describe('should accept a merge request', function() {
             beforeEach(function() {
-                mergeRequestsStateSvc.requestToAccept = {request: {'@id': 'request'}};
-                mergeRequestsStateSvc.selected = angular.copy(mergeRequestsStateSvc.requestToAccept);
+                this.requestObj = {request: {'@id': 'request'}, targetBranch: {'@id': 'branchId'}};
+                mergeRequestsStateSvc.requestToAccept = angular.copy(this.requestObj);
+                mergeRequestsStateSvc.selected = angular.copy(this.requestObj);
                 spyOn(this.controller, 'closeAccept');
             });
             describe('if acceptRequest resolves', function() {
@@ -129,7 +133,8 @@ describe('Merge Requests Page directive', function() {
                 });
                 describe('if getRequest resolves', function() {
                     beforeEach(function() {
-                        mergeRequestManagerSvc.getRequest.and.returnValue($q.when({'@id': 'request', new: true}));
+                        this.newRequest = {'@id': 'request', new: true};
+                        mergeRequestManagerSvc.getRequest.and.returnValue($q.when(this.newRequest));
                     });
                     it('if setRequestDetails resolves', function() {
                         mergeRequestsStateSvc.setRequestDetails.and.returnValue($q.when());
@@ -138,9 +143,23 @@ describe('Merge Requests Page directive', function() {
                         expect(mergeRequestManagerSvc.acceptRequest).toHaveBeenCalledWith('request');
                         expect(mergeRequestManagerSvc.getRequest).toHaveBeenCalledWith('request');
                         expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.requestToAccept);
-                        expect(mergeRequestsStateSvc.selected).toEqual({request: {'@id': 'request', new: true}});
+                        expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'request', this.newRequest));
                         expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                         expect(this.controller.closeAccept).toHaveBeenCalled();
+                        expect(this.controller.errorMessage).toEqual('');
+                    });
+                    it('if setRequestDetails resolves and the ontology editor is on the target branch', function() {
+                        mergeRequestsStateSvc.setRequestDetails.and.returnValue($q.when());
+                        ontologyStateSvc.listItem.ontologyRecord.branchId = this.requestObj.targetBranch['@id'];
+                        this.controller.acceptRequest();
+                        scope.$apply();
+                        expect(mergeRequestManagerSvc.acceptRequest).toHaveBeenCalledWith('request');
+                        expect(mergeRequestManagerSvc.getRequest).toHaveBeenCalledWith('request');
+                        expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.requestToAccept);
+                        expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'request', this.newRequest));
+                        expect(utilSvc.createSuccessToast).toHaveBeenCalled();
+                        expect(this.controller.closeAccept).toHaveBeenCalled();
+                        expect(ontologyStateSvc.listItem.upToDate).toEqual(false);
                         expect(this.controller.errorMessage).toEqual('');
                     });
                     it('unless setRequestDetails rejects', function() {
@@ -150,7 +169,7 @@ describe('Merge Requests Page directive', function() {
                         expect(mergeRequestManagerSvc.acceptRequest).toHaveBeenCalledWith('request');
                         expect(mergeRequestManagerSvc.getRequest).toHaveBeenCalledWith('request');
                         expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.requestToAccept);
-                        expect(mergeRequestsStateSvc.selected).toEqual({request: {'@id': 'request'}});
+                        expect(mergeRequestsStateSvc.selected).toEqual(this.requestObj);
                         expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                         expect(this.controller.closeAccept).not.toHaveBeenCalled();
                         expect(this.controller.errorMessage).toEqual('Error Message');
@@ -163,7 +182,7 @@ describe('Merge Requests Page directive', function() {
                     expect(mergeRequestManagerSvc.acceptRequest).toHaveBeenCalledWith('request');
                     expect(mergeRequestManagerSvc.getRequest).toHaveBeenCalledWith('request');
                     expect(mergeRequestsStateSvc.setRequestDetails).not.toHaveBeenCalled();
-                    expect(mergeRequestsStateSvc.selected).toEqual({request: {'@id': 'request'}});
+                    expect(mergeRequestsStateSvc.selected).toEqual(this.requestObj);
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(this.controller.closeAccept).not.toHaveBeenCalled();
                     expect(this.controller.errorMessage).toEqual('Error Message');
@@ -176,7 +195,7 @@ describe('Merge Requests Page directive', function() {
                 expect(mergeRequestManagerSvc.acceptRequest).toHaveBeenCalledWith('request');
                 expect(mergeRequestManagerSvc.getRequest).not.toHaveBeenCalled();
                 expect(mergeRequestsStateSvc.setRequestDetails).not.toHaveBeenCalled();
-                expect(mergeRequestsStateSvc.selected).toEqual({request: {'@id': 'request'}});
+                expect(mergeRequestsStateSvc.selected).toEqual(this.requestObj);
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
                 expect(this.controller.closeAccept).not.toHaveBeenCalled();
                 expect(this.controller.errorMessage).toEqual('Error Message');
