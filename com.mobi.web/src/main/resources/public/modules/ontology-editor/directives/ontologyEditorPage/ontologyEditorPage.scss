@@ -1,0 +1,17 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.ontology-editor-page {
+    .up-to-date .nav-link .fa.fa-exclamation-triangle {
+        display: none;
+    }
+    .nav-link {
+        &.active .fa.fa-exclamation-triangle {
+            color: var(--danger);
+        }
+
+        .fa.fa-exclamation-triangle {
+            color: var(--danger-light);
+        }
+    }
+}

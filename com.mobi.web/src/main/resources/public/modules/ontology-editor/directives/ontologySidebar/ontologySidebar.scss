@@ -1,0 +1,27 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.ontology-sidebar {
+    min-width: 180px;
+    max-width: 180px;
+    padding: 0;
+    background-color: var(--light-dark);
+
+    .nav-item {
+        .nav-link {
+            color: initial;
+            flex: 1;
+        }
+        span.close-icon {
+            padding: 10px 1rem 10px 0;
+            cursor: pointer;
+        }
+        &.active,
+        &:hover {
+            .nav-link {
+                color: var(--primary);
+                font-weight: bold;
+            }
+        }
+    }
+}

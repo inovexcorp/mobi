@@ -85,6 +85,8 @@
             'focusMe',
             'infoMessage',
             'keywordSelect',
+            'materialTab',
+            'materialTabset',
             'pagination',
             'pagingDetails',
             'passwordConfirmInput',
