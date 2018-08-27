@@ -79,14 +79,14 @@
             controller: ['$scope', function($scope) {
                 var dvm = this;
                 var pm = policyManagerService;
-                var um = userManagerService;
-                var util = utilService;
-                var resource = _.get(catalogManagerService.localCatalog, '@id', '');
-                var action = pm.actionCreate;
+                // var um = userManagerService;
+                // var util = utilService;
+                // var resource = _.get(catalogManagerService.localCatalog, '@id', '');
+                // var action = pm.actionCreate;
                 var groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + prefixes.foaf + 'member' + '>') + ')';
                 var userRole = 'http://mobi.com/roles/user';
 
-                dvm.policies = [];
+                // dvm.policies = [];
 
                 dvm.filterUsers = function(users, searchText) {
                     return _.filter(users, user => _.includes(user.username.toLowerCase(), searchText.toLowerCase()));
@@ -149,17 +149,17 @@
                     }
                     item.changed = true;
                 }
-                dvm.saveChanges = function() {
-                    var changedPolicies = _.filter(dvm.policies, 'changed');
-                    $q.all(_.map(changedPolicies, item => pm.updatePolicy(item.policy)))
-                        .then(() => {
-                            _.forEach(changedPolicies, item => item.changed = false);
-                            util.createSuccessToast('Permissions updated');
-                        }, util.createErrorToast);
-                }
-                dvm.hasChanges = function() {
-                    return _.some(dvm.policies, 'changed');
-                }
+                // dvm.saveChanges = function() {
+                //     var changedPolicies = _.filter(dvm.policies, 'changed');
+                //     $q.all(_.map(changedPolicies, item => pm.updatePolicy(item.policy)))
+                //         .then(() => {
+                //             _.forEach(changedPolicies, item => item.changed = false);
+                //             util.createSuccessToast('Permissions updated');
+                //         }, util.createErrorToast);
+                // }
+                // dvm.hasChanges = function() {
+                //     return _.some(dvm.policies, 'changed');
+                // }
 
                 function removeMatch(value, policy) {
                     _.remove(_.get(policy, 'Rule[0].Target.AnyOf[0].AllOf', []), ['Match[0].AttributeValue.content[0]', value]);

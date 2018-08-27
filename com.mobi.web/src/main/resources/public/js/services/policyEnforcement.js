@@ -46,9 +46,9 @@
          */
         .service('policyEnforcementService', policyEnforcementService);
 
-        policyEnforcementService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'prefixes'];
+        policyEnforcementService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService'];
 
-        function policyEnforcementService($http, $q, REST_PREFIX, utilService, prefixes) {
+        function policyEnforcementService($http, $q, REST_PREFIX, utilService) {
             var self = this;
             var prefix = REST_PREFIX + 'pep';
             var util = utilService;
