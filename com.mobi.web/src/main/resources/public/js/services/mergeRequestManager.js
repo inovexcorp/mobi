@@ -88,7 +88,7 @@
              * @param {string} requestConfig.recordId The required IRI of the VersionedRDFRecord of the new MergeRequest
              * @param {string} requestConfig.sourceBranchId The required IRI of the source Branch for the new MergeRequest
              * @param {string} requestConfig.targetBranchId The required IRI of the target Branch for the new MergeRequest
-             * @param {string[]} requestConfig.assignees The optional assignees of the new MergeRequest.
+             * @param {string[]} requestConfig.assignees The optional usernames of the assignees of the new MergeRequest.
              * @return {Promise} A promise that resolves to the IRI of the new MergeRequest or is rejected with
              * an error message
              */

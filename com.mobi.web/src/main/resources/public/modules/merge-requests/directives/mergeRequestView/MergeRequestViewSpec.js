@@ -111,6 +111,11 @@ describe('Merge Request View directive', function() {
             expect(button.length).toEqual(1);
             expect(button.text().trim()).toContain('Back');
         });
+        it('depending on how many assignees the request has', function() {
+            mergeRequestsStateSvc.selected.assignees = ['user1', 'user2'];
+            scope.$digest();
+            expect(this.element.querySelectorAll('.assignees li').length).toEqual(2);
+        });
         it('depending on whether the merge request is accepted', function() {
             var indicator = angular.element(this.element.querySelectorAll('.open-indicator')[0]);
             expect(indicator.hasClass('badge-primary')).toEqual(true);

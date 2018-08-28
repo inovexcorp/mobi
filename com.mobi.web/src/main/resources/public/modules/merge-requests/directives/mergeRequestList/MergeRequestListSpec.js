@@ -81,6 +81,11 @@ describe('Merge Request List directive', function() {
             expect(this.element.find('info-message').length).toEqual(0);
             expect(this.element.querySelectorAll('.request').length).toEqual(mergeRequestsStateSvc.requests.length);
         });
+        it('depending on how many assignees are on a request', function() {
+            mergeRequestsStateSvc.requests = [{assignees: ['user1', 'user2']}];
+            scope.$digest();
+            expect(this.element.querySelectorAll('.request .assignees li').length).toEqual(2);
+        });
     });
     it('should set the correct state when a request is clicked', function() {
         mergeRequestsStateSvc.requests = [{}];
