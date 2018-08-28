@@ -61,7 +61,7 @@
                     var dvm = this;
                     dvm.filterOptions = [
                         {value: false, label: 'Open'},
-                        {value: true, label: 'Accepted'},
+                        {value: true, label: 'Accepted'}
                     ];
                     dvm.state = mergeRequestsStateService;
 

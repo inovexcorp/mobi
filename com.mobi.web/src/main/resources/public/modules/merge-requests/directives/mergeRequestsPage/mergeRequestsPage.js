@@ -110,11 +110,11 @@
                                 if (os.listItem.ontologyRecord.branchId === targetBranchId) {
                                     os.listItem.upToDate = false;
                                     if (os.listItem.merge.active) {
-                                        util.createWarningToast('You have a merge in process in the Ontology Editor that is out of date. Please reopen the merge form.');
+                                        util.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form.', {timeOut: 5000});
                                     }
                                 }
                                 if (os.listItem.merge.active && _.get(os.listItem.merge.target, '@id') === targetBranchId) {
-                                    util.createWarningToast('You have a merge in process in the Ontology Editor that is out of date. Please reopen the merge form to avoid conflicts.');
+                                    util.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
                                 }
                             }
                         }, error => dvm.errorMessage = error);
