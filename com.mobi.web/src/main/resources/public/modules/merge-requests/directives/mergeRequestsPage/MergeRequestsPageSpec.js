@@ -136,31 +136,72 @@ describe('Merge Requests Page directive', function() {
                         this.newRequest = {'@id': 'request', new: true};
                         mergeRequestManagerSvc.getRequest.and.returnValue($q.when(this.newRequest));
                     });
-                    it('if setRequestDetails resolves', function() {
-                        mergeRequestsStateSvc.setRequestDetails.and.returnValue($q.when());
-                        this.controller.acceptRequest();
-                        scope.$apply();
-                        expect(mergeRequestManagerSvc.acceptRequest).toHaveBeenCalledWith('request');
-                        expect(mergeRequestManagerSvc.getRequest).toHaveBeenCalledWith('request');
-                        expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.requestToAccept);
-                        expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'request', this.newRequest));
-                        expect(utilSvc.createSuccessToast).toHaveBeenCalled();
-                        expect(this.controller.closeAccept).toHaveBeenCalled();
-                        expect(this.controller.errorMessage).toEqual('');
-                    });
-                    it('if setRequestDetails resolves and the ontology editor is on the target branch', function() {
-                        mergeRequestsStateSvc.setRequestDetails.and.returnValue($q.when());
-                        ontologyStateSvc.listItem.ontologyRecord.branchId = this.requestObj.targetBranch['@id'];
-                        this.controller.acceptRequest();
-                        scope.$apply();
-                        expect(mergeRequestManagerSvc.acceptRequest).toHaveBeenCalledWith('request');
-                        expect(mergeRequestManagerSvc.getRequest).toHaveBeenCalledWith('request');
-                        expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.requestToAccept);
-                        expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'request', this.newRequest));
-                        expect(utilSvc.createSuccessToast).toHaveBeenCalled();
-                        expect(this.controller.closeAccept).toHaveBeenCalled();
-                        expect(ontologyStateSvc.listItem.upToDate).toEqual(false);
-                        expect(this.controller.errorMessage).toEqual('');
+                    describe('if setRequestDetails resolves', function() {
+                        beforeEach(function() {
+                            mergeRequestsStateSvc.setRequestDetails.and.returnValue($q.when());
+                        });
+                        it('and the ontology editor is not open to an ontology', function() {
+                            var listItem = angular.copy(ontologyStateSvc.listItem);
+                            this.controller.acceptRequest();
+                            scope.$apply();
+                            expect(mergeRequestManagerSvc.acceptRequest).toHaveBeenCalledWith('request');
+                            expect(mergeRequestManagerSvc.getRequest).toHaveBeenCalledWith('request');
+                            expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.requestToAccept);
+                            expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'request', this.newRequest));
+                            expect(utilSvc.createSuccessToast).toHaveBeenCalled();
+                            expect(this.controller.closeAccept).toHaveBeenCalled();
+                            expect(ontologyStateSvc.listItem).toEqual(listItem);
+                            expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
+                            expect(this.controller.errorMessage).toEqual('');
+                        });
+                        describe('and the ontology editor is on the target branch', function() {
+                            beforeEach(function() {
+                                ontologyStateSvc.listItem.ontologyRecord.branchId = this.requestObj.targetBranch['@id'];
+                            });
+                            it('and it not in the middle of a merge', function() {
+                                this.controller.acceptRequest();
+                                scope.$apply();
+                                expect(mergeRequestManagerSvc.acceptRequest).toHaveBeenCalledWith('request');
+                                expect(mergeRequestManagerSvc.getRequest).toHaveBeenCalledWith('request');
+                                expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.requestToAccept);
+                                expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'request', this.newRequest));
+                                expect(utilSvc.createSuccessToast).toHaveBeenCalled();
+                                expect(this.controller.closeAccept).toHaveBeenCalled();
+                                expect(ontologyStateSvc.listItem.upToDate).toEqual(false);
+                                expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
+                                expect(this.controller.errorMessage).toEqual('');
+                            });
+                            it('and is in the middle of a merge', function() {
+                                ontologyStateSvc.listItem.merge.active = true;
+                                this.controller.acceptRequest();
+                                scope.$apply();
+                                expect(mergeRequestManagerSvc.acceptRequest).toHaveBeenCalledWith('request');
+                                expect(mergeRequestManagerSvc.getRequest).toHaveBeenCalledWith('request');
+                                expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.requestToAccept);
+                                expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'request', this.newRequest));
+                                expect(utilSvc.createSuccessToast).toHaveBeenCalled();
+                                expect(this.controller.closeAccept).toHaveBeenCalled();
+                                expect(ontologyStateSvc.listItem.upToDate).toEqual(false);
+                                expect(utilSvc.createWarningToast).toHaveBeenCalled();
+                                expect(this.controller.errorMessage).toEqual('');
+                            });
+                        });
+                        it('and the ontology editor is in the middle of merging into the target', function() {
+                            ontologyStateSvc.listItem.merge.active = true;
+                            ontologyStateSvc.listItem.merge.target = {'@id': this.requestObj.targetBranch['@id']};
+                            var upToDate = ontologyStateSvc.listItem.upToDate;
+                            this.controller.acceptRequest();
+                            scope.$apply();
+                            expect(mergeRequestManagerSvc.acceptRequest).toHaveBeenCalledWith('request');
+                            expect(mergeRequestManagerSvc.getRequest).toHaveBeenCalledWith('request');
+                            expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.requestToAccept);
+                            expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'request', this.newRequest));
+                            expect(utilSvc.createSuccessToast).toHaveBeenCalled();
+                            expect(this.controller.closeAccept).toHaveBeenCalled();
+                            expect(ontologyStateSvc.listItem.upToDate).toEqual(upToDate);
+                            expect(utilSvc.createWarningToast).toHaveBeenCalled();
+                            expect(this.controller.errorMessage).toEqual('');
+                        });
                     });
                     it('unless setRequestDetails rejects', function() {
                         mergeRequestsStateSvc.setRequestDetails.and.returnValue($q.reject('Error Message'));

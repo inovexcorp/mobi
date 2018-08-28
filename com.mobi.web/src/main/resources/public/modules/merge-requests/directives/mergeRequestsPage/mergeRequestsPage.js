@@ -93,7 +93,7 @@
                     dvm.errorMessage = '';
                 }
                 dvm.acceptRequest = function() {
-                    var branchId = dvm.state.requestToAccept.targetBranch['@id'];
+                    var targetBranchId = dvm.state.requestToAccept.targetBranch['@id'];
                     mm.acceptRequest(dvm.state.requestToAccept.request['@id'])
                         .then(() => {
                             util.createSuccessToast('Request successfully accepted');
@@ -106,8 +106,16 @@
                         .then(() => {
                             dvm.state.selected = dvm.state.requestToAccept;
                             dvm.closeAccept();
-                            if (os.listItem && os.listItem.ontologyRecord.branchId === branchId) {
-                                os.listItem.upToDate = false;
+                            if (os.listItem) {
+                                if (os.listItem.ontologyRecord.branchId === targetBranchId) {
+                                    os.listItem.upToDate = false;
+                                    if (os.listItem.merge.active) {
+                                        util.createWarningToast('You have a merge in process in the Ontology Editor that is out of date. Please reopen the merge form.');
+                                    }
+                                }
+                                if (os.listItem.merge.active && _.get(os.listItem.merge.target, '@id') === targetBranchId) {
+                                    util.createWarningToast('You have a merge in process in the Ontology Editor that is out of date. Please reopen the merge form to avoid conflicts.');
+                                }
                             }
                         }, error => dvm.errorMessage = error);
                 }
