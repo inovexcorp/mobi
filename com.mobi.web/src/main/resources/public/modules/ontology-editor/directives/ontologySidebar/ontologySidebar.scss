@@ -7,6 +7,10 @@
     padding: 0;
     background-color: var(--light-dark);
 
+    .nav-container {
+        flex: 1;
+        min-height: 0;
+    }
     .nav-item {
         .nav-link {
             color: initial;

@@ -20,16 +20,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="ontology-sidebar">
+<div class="ontology-sidebar d-flex flex-column">
     <div class="button-container text-center my-2">
         <button class="btn btn-primary" ng-click="dvm.onClick()">Ontologies</button>
     </div>
-    <ul class="nav flex-column">
-        <li class="nav-item" ng-repeat="item in dvm.os.list track by item.ontologyId" ng-class="{'active': item.active}">
-            <div class="d-flex">
-                <a class="nav-link" ng-click="dvm.onClick(item)">{{item.ontologyRecord.title}}</a><span class="close-icon" ng-click="dvm.onClose(item)" class="fa fa-times"></span>
-            </div>
-            <ontology-branch-select ng-if="item.active" ng-model="item.ontologyRecord.branchId"></ontology-branch-select>
-        </li>
-    </ul>
+    <div class="nav-container vertical-scroll pb-2">
+        <ul class="nav flex-column">
+            <li class="nav-item" ng-repeat="item in dvm.os.list track by item.ontologyId" ng-class="{'active': item.active}">
+                <div class="d-flex">
+                    <a class="nav-link text-truncate" ng-click="dvm.onClick(item)">{{item.ontologyRecord.title}}</a><span class="close-icon fa fa-times" ng-click="dvm.onClose(item)"></span>
+                </div>
+                <ontology-branch-select ng-if="item.active" ng-model="item.ontologyRecord.branchId"></ontology-branch-select>
+            </li>
+        </ul>
+    </div>
 </div>
