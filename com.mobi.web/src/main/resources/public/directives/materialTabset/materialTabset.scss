@@ -1,0 +1,16 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.material-tabset {
+    .nav .nav-link {
+        color: inherit;
+
+        &.active {
+            color: var(--primary);
+        }
+    }
+    .material-tabset-contents {
+        flex: 1;
+        min-height: 0;
+    }
+}
