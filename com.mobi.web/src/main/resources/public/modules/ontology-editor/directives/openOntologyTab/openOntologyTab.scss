@@ -22,7 +22,7 @@
                 .ontology {
                     border-bottom: 1px solid var(--light);
                     cursor: pointer;
-                    padding: 10px;
+                    padding: 10px 0 10px 10px;
 
                     &:last-child {
                         border-bottom: none;
@@ -37,7 +37,6 @@
                             margin: 0 0 5px;
                         }
                     }
-
                     .action-container {
                         .action {
                             text-decoration: none;

@@ -45,6 +45,7 @@
                     var sm = stateManagerService;
                     var cm = catalogManagerService;
                     var ontologyRecords = [];
+                    var openIndicator = '<span class="text-muted">(Open)</span> ';
 
                     dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
@@ -57,9 +58,25 @@
                     dvm.filteredList = [];
                     dvm.id = "openOntologyTabTargetedSpinner";
 
+                    dvm.getRecordTitle = function(record) {
+                        var title = '';
+                        if (dvm.isOpened(record)) {
+                            title = openIndicator;
+                        }
+                        return title + dvm.util.getDctermsValue(record, 'title');
+                    }
+                    dvm.isOpened = function(record) {
+                        return _.some(dvm.os.list, {ontologyRecord: {recordId: record['@id']}});
+                    }
                     dvm.open = function(record) {
-                        dvm.os.openOntology(record['@id'], dvm.util.getDctermsValue(record, 'title'))
-                            .then(_.noop, dvm.util.createErrorToast);
+                        var listItem = _.find(dvm.os.list, {ontologyRecord: {recordId: record['@id']}});
+                        if (listItem) {
+                            dvm.os.listItem = listItem;
+                            dvm.os.listItem.active = true;
+                        } else {
+                            dvm.os.openOntology(record['@id'], dvm.util.getDctermsValue(record, 'title'))
+                                .then(_.noop, dvm.util.createErrorToast);
+                        }
                     }
                     dvm.newOntology = function() {
                         var date = new Date();
@@ -115,8 +132,7 @@
                         };
                         httpService.cancel(dvm.id);
                         cm.getRecords(catalogId, paginatedConfig, dvm.id).then(response => {
-                            var ontologyRecords = response.data;
-                            dvm.filteredList = getFilteredRecords(ontologyRecords);
+                            dvm.filteredList = response.data;
                             if (response.headers() !== undefined) {
                                 dvm.totalSize = _.get(response.headers(), 'x-total-count');
                             }
@@ -133,10 +149,6 @@
                     $scope.$watch(() => dvm.os.list.length, () => {
                         dvm.getPageOntologyRecords();
                     });
-
-                    function getFilteredRecords(records) {
-                        return _.reject(records, record => _.find(dvm.os.list, {ontologyRecord: {recordId: record['@id']}}));
-                    }
                 }]
             }
         }

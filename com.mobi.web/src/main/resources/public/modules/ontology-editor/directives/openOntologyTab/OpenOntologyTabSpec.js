@@ -127,7 +127,7 @@ describe('Open Ontology Tab directive', function() {
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
         });
-        it('depending on how many unopened ontologies there are', function() {
+        it('depending on how many ontologies there are', function() {
             expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(10);
             expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(0);
             this.controller.filteredList = [];
@@ -145,26 +145,45 @@ describe('Open Ontology Tab directive', function() {
         });
     });
     describe('controller methods', function() {
+        it('should return the correct title depending on whether the ontology is open', function() {
+            expect(this.controller.getRecordTitle({'@id': 'id'})).toEqual('A');
+            ontologyStateSvc.list = [{ontologyRecord: {recordId: 'id'}}];
+            expect(this.controller.getRecordTitle({'@id': 'id'})).toEqual('<span class="text-muted">(Open)</span> A');
+        });
+        it('should determine whether an ontology is open', function() {
+            expect(this.controller.isOpened({'@id': 'id'})).toEqual(false);
+            ontologyStateSvc.list = [{ontologyRecord: {recordId: 'id'}}];
+            expect(this.controller.isOpened({'@id': 'id'})).toEqual(true);
+        });
         describe('should open an ontology', function() {
             beforeEach(function() {
                 utilSvc.getDctermsValue.and.returnValue('title');
             });
-            it('successfully', function() {
-                var ontologyId = 'ontologyId';
-                ontologyStateSvc.openOntology.and.returnValue($q.resolve(ontologyId));
+            it('if it is already open', function() {
+                ontologyStateSvc.list = [{ontologyRecord: {recordId: 'id'}}];
                 this.controller.open({'@id': 'id'});
-                scope.$apply();
-                expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': 'id'}, 'title');
-                expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith('id', 'title');
+                expect(ontologyStateSvc.openOntology).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.listItem).toEqual({ontologyRecord: {recordId: 'id'}, active: true});
             });
-            it('unless an error occurs', function() {
-                ontologyStateSvc.openOntology.and.returnValue($q.reject('Error message'));
-                this.controller.open({'@id': 'id'});
-                scope.$apply();
-                expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': 'id'}, 'title');
-                expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith('id', 'title');
-                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
+            describe('if it is not already open', function() {
+                it('successfully', function() {
+                    var ontologyId = 'ontologyId';
+                    ontologyStateSvc.openOntology.and.returnValue($q.resolve(ontologyId));
+                    this.controller.open({'@id': 'id'});
+                    scope.$apply();
+                    expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': 'id'}, 'title');
+                    expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith('id', 'title');
+                    expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                });
+                it('unless an error occurs', function() {
+                    ontologyStateSvc.openOntology.and.returnValue($q.reject('Error message'));
+                    this.controller.open({'@id': 'id'});
+                    scope.$apply();
+                    expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': 'id'}, 'title');
+                    expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith('id', 'title');
+                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
+                });
             });
         });
         it('should set the correct state for creating a new ontology', function() {
@@ -229,7 +248,7 @@ describe('Open Ontology Tab directive', function() {
                 expect(this.controller.mappingErrorMessage).toBeUndefined();
             });
         });
-        it('should get the list of unopened ontology records', function() {
+        it('should get the list of ontology records', function() {
             var catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
             var sortOption = {field: 'http://purl.org/dc/terms/title', asc: true};
             catalogManagerSvc.sortOptions = [sortOption];
@@ -245,7 +264,7 @@ describe('Open Ontology Tab directive', function() {
             this.controller.getPageOntologyRecords();
             scope.$apply();
             expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, paginatedConfig, this.controller.id);
-            expect(this.controller.filteredList).not.toContain(jasmine.objectContaining({'@id': 'recordA'}));
+            expect(this.controller.filteredList).toContain(jasmine.objectContaining({'@id': 'recordA'}));
         });
         it('should perform a search if the key pressed was ENTER', function() {
             spyOn(this.controller, 'getPageOntologyRecords');

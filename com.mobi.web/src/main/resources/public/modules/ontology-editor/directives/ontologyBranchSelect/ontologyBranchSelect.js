@@ -24,7 +24,36 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name ontologyBranchSelect
+         *
+         * @description
+         * The `ontologyBranchSelect` module provides the `ontologyBranchSelect` directive which creates a
+         * selector for the current ontology's branches.
+         */
         .module('ontologyBranchSelect', [])
+        /**
+         * @ngdoc directive
+         * @name ontologyBranchSelect.directive:ontologyBranchSelect
+         * @scope
+         * @restrict E
+         * @requires catalogManager.service:catalogManagerService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires prefixes.service:prefixes
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires util.service:utilService
+         * @requires stateManager.service:stateManagerService
+         *
+         * @description
+         * `ontologyBranchSelect` is a directive that creates a `ui-select` containing the branches of the current
+         * {@link ontologyState.service:ontologyStateService listItem and binds the selected branch to `bindModel`.
+         * Each branch in the `ui-select` has buttons for editing the metadata and deleting the branch which will bring
+         * up a {@link confirmationOverlay.directive:confirmationOverlay}. The directive is replaced by the contents of
+         * its template.
+         *
+         * @param {Object} bindModel The currently selected branch
+         */
         .directive('ontologyBranchSelect', ontologyBranchSelect);
 
         ontologyBranchSelect.$inject = ['$filter', '$q', '$timeout', 'catalogManagerService', 'ontologyStateService', 'prefixes',
