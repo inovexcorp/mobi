@@ -20,7 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="ontology-editor container-fluid h-100 clearfix">
-    <ontology-editor-page></ontology-editor-page>
-    <ontology-overlays></ontology-overlays>
+<div class="ontology-editor-page row h-100">
+    <ontology-sidebar></ontology-sidebar>
+    <ontology-tab class="col p-0" ng-if="!dvm.isDefaultTab()" ng-class="{'up-to-date': dvm.os.listItem.upToDate && !dvm.os.listItem.userBranch}"></ontology-tab>
+    <ontology-default-tab class="col p-0" ng-if="dvm.isDefaultTab()"></ontology-default-tab>
 </div>
