@@ -33,6 +33,13 @@
                     {{dvm.util.getDctermsValue(dvm.state.selected.request, 'description') || 'No description'}}
                 </div>
                 <div class="request-summary"><strong>{{dvm.state.selected.sourceTitle}}</strong> into <strong>{{dvm.state.selected.targetTitle ? dvm.state.selected.targetTitle : 'NO TARGET'}}</strong> in <strong>{{dvm.state.selected.recordTitle}}</strong></div>
+                <div class="assignees">
+                    <span class="field-name">Assignee(s): </span>
+                    <ul class="assignees">
+                        <li ng-if="dvm.state.selected.assignees.length === 0" class="last">(None specified)</li>
+                        <li ng-repeat="assignee in dvm.state.selected.assignees" ng-class="{'last': $last}">{{assignee}}</li>
+                    </ul>
+                </div>
                 <div class="alert alert-warning" role="alert" ng-if="dvm.state.selected.hasConflicts || !dvm.state.selected.targetTitle">
                     <span class="fa fa-exclamation-triangle" />
                     <span ng-if="dvm.state.selected.targetTitle && dvm.state.selected.hasConflicts">This request has conflicts. You can resolve them during the merge process.</span>

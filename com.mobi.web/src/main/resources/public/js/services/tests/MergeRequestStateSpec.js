@@ -64,7 +64,8 @@ describe('Merge Requests State service', function() {
             description: 'description',
             sourceBranchId: 'id',
             targetBranchId: 'id',
-            recordId: 'id'
+            recordId: 'id',
+            assignees: ['user']
         };
         mergeRequestsStateSvc.createRequestStep = 1;
         mergeRequestsStateSvc.createRequest = true;
@@ -78,27 +79,27 @@ describe('Merge Requests State service', function() {
             description: '',
             sourceBranchId: '',
             targetBranchId: '',
-            recordId: ''
+            recordId: '',
+            assignees: []
         });
         expect(mergeRequestsStateSvc.createRequest).toEqual(false);
         expect(mergeRequestsStateSvc.createRequestStep).toEqual(0);
         expect(mergeRequestsStateSvc.selected).toBeUndefined();
     });
     describe('should set the requests list properly if accepted is', function() {
+        beforeEach(function() {
+            mergeRequestsStateSvc.initialize();
+            utilSvc.getDctermsValue.and.callFake((entity, propId) => propId);
+            utilSvc.getDctermsId.and.callFake((entity, propId) => propId);
+            utilSvc.getPropertyId.and.returnValue('recordId');
+            utilSvc.getDate.and.returnValue('date');
+            userManagerSvc.users = [{iri: 'creator', username: 'username1'}, {iri: 'assignee', username: 'username2'}];
+            this.requestJsonld = {id: 'request1', [prefixes.mergereq + 'assignee']: [{'@id': 'assignee'}]};
+        });
         describe('true and getRequests', function() {
             describe('resolves', function() {
                 beforeEach(function() {
-                    mergeRequestsStateSvc.initialize();
-                    mergeRequestManagerSvc.getRequests.and.returnValue($q.when([{id: 'request1'}]));
-                    utilSvc.getDctermsValue.and.callFake(function(entity, propId) {
-                        return propId;
-                    });
-                    utilSvc.getDctermsId.and.callFake(function(entity, propId) {
-                        return propId;
-                    });
-                    utilSvc.getPropertyId.and.returnValue('recordId');
-                    utilSvc.getDate.and.returnValue('date');
-                    userManagerSvc.users = [{iri: 'creator', username: 'username'}];
+                    mergeRequestManagerSvc.getRequests.and.returnValue($q.when([angular.copy(this.requestJsonld)]));
                 });
                 describe('and getRecord ', function() {
                     it('resolves', function() {
@@ -106,21 +107,22 @@ describe('Merge Requests State service', function() {
                         mergeRequestsStateSvc.setRequests(true);
                         scope.$apply();
                         expect(mergeRequestManagerSvc.getRequests).toHaveBeenCalledWith({accepted: true});
-                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({id: 'request1'}, 'title');
-                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({id: 'request1'}, 'issued');
+                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(this.requestJsonld, 'title');
+                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(this.requestJsonld, 'issued');
                         expect(utilSvc.getDate).toHaveBeenCalledWith('issued', 'shortDate');
-                        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({id: 'request1'}, prefixes.mergereq + 'onRecord');
+                        expect(utilSvc.getPropertyId).toHaveBeenCalledWith(this.requestJsonld, prefixes.mergereq + 'onRecord');
                         expect(catalogManagerSvc.getRecord.calls.count()).toEqual(1);
                         expect(catalogManagerSvc.getRecord).toHaveBeenCalledWith('recordId', 'catalogId');
                         expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': 'recordId'}, 'title');
                         expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                         expect(mergeRequestsStateSvc.requests).toEqual([{
-                            request: {id: 'request1'},
+                            request: this.requestJsonld,
                             title: 'title',
-                            creator: 'username',
+                            creator: 'username1',
                             date: 'date',
                             recordIri: 'recordId',
-                            recordTitle: 'title'
+                            recordTitle: 'title',
+                            assignees: ['username2']
                         }]);
                     });
                     it('rejects', function() {
@@ -128,10 +130,10 @@ describe('Merge Requests State service', function() {
                         mergeRequestsStateSvc.setRequests(true);
                         scope.$apply();
                         expect(mergeRequestManagerSvc.getRequests).toHaveBeenCalledWith({accepted: true});
-                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({id: 'request1'}, 'title');
-                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({id: 'request1'}, 'issued');
+                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(this.requestJsonld, 'title');
+                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(this.requestJsonld, 'issued');
                         expect(utilSvc.getDate).toHaveBeenCalledWith('issued', 'shortDate');
-                        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({id: 'request1'}, prefixes.mergereq + 'onRecord');
+                        expect(utilSvc.getPropertyId).toHaveBeenCalledWith(this.requestJsonld, prefixes.mergereq + 'onRecord');
                         expect(catalogManagerSvc.getRecord.calls.count()).toEqual(1);
                         expect(catalogManagerSvc.getRecord).toHaveBeenCalledWith('recordId', 'catalogId');
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
@@ -155,17 +157,7 @@ describe('Merge Requests State service', function() {
         describe('false and getRequests', function() {
             describe('resolves', function() {
                 beforeEach(function() {
-                    mergeRequestsStateSvc.initialize();
-                    mergeRequestManagerSvc.getRequests.and.returnValue($q.when([{id: 'request1'}]));
-                    utilSvc.getDctermsValue.and.callFake(function(entity, propId) {
-                        return propId;
-                    });
-                    utilSvc.getDctermsId.and.callFake(function(entity, propId) {
-                        return propId;
-                    });
-                    utilSvc.getPropertyId.and.returnValue('recordId');
-                    utilSvc.getDate.and.returnValue('date');
-                    userManagerSvc.users = [{iri: 'creator', username: 'username'}];
+                    mergeRequestManagerSvc.getRequests.and.returnValue($q.when([this.requestJsonld]));
                 });
                 describe('and getRecord ', function() {
                     it('resolves', function() {
@@ -173,21 +165,22 @@ describe('Merge Requests State service', function() {
                         mergeRequestsStateSvc.setRequests();
                         scope.$apply();
                         expect(mergeRequestManagerSvc.getRequests).toHaveBeenCalledWith({accepted: false});
-                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({id: 'request1'}, 'title');
-                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({id: 'request1'}, 'issued');
+                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(this.requestJsonld, 'title');
+                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(this.requestJsonld, 'issued');
                         expect(utilSvc.getDate).toHaveBeenCalledWith('issued', 'shortDate');
-                        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({id: 'request1'}, prefixes.mergereq + 'onRecord');
+                        expect(utilSvc.getPropertyId).toHaveBeenCalledWith(this.requestJsonld, prefixes.mergereq + 'onRecord');
                         expect(catalogManagerSvc.getRecord.calls.count()).toEqual(1);
                         expect(catalogManagerSvc.getRecord).toHaveBeenCalledWith('recordId', 'catalogId');
                         expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': 'recordId'}, 'title');
                         expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                         expect(mergeRequestsStateSvc.requests).toEqual([{
-                            request: {id: 'request1'},
+                            request: this.requestJsonld,
                             title: 'title',
-                            creator: 'username',
+                            creator: 'username1',
                             date: 'date',
                             recordIri: 'recordId',
-                            recordTitle: 'title'
+                            recordTitle: 'title',
+                            assignees: ['username2']
                         }]);
                     });
                     it('rejects', function() {
@@ -195,10 +188,10 @@ describe('Merge Requests State service', function() {
                         mergeRequestsStateSvc.setRequests();
                         scope.$apply();
                         expect(mergeRequestManagerSvc.getRequests).toHaveBeenCalledWith({accepted: false});
-                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({id: 'request1'}, 'title');
-                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({id: 'request1'}, 'issued');
+                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(this.requestJsonld, 'title');
+                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(this.requestJsonld, 'issued');
                         expect(utilSvc.getDate).toHaveBeenCalledWith('issued', 'shortDate');
-                        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({id: 'request1'}, prefixes.mergereq + 'onRecord');
+                        expect(utilSvc.getPropertyId).toHaveBeenCalledWith(this.requestJsonld, prefixes.mergereq + 'onRecord');
                         expect(catalogManagerSvc.getRecord.calls.count()).toEqual(1);
                         expect(catalogManagerSvc.getRecord).toHaveBeenCalledWith('recordId', 'catalogId');
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
@@ -222,15 +215,9 @@ describe('Merge Requests State service', function() {
     });
     describe('should set metadata on a merge request if it is', function() {
         beforeEach(function() {
-            utilSvc.getPropertyId.and.callFake(function(obj, prop) {
-                return prop;
-            });
-            utilSvc.getPropertyValue.and.callFake(function(obj, prop) {
-                return prop;
-            });
-            utilSvc.getDctermsValue.and.callFake(function(obj, prop) {
-                return prop;
-            });
+            utilSvc.getPropertyId.and.callFake((obj, prop) => prop);
+            utilSvc.getPropertyValue.and.callFake((obj, prop) => prop);
+            utilSvc.getDctermsValue.and.callFake((obj, prop) => prop);
             this.request = {
                 recordIri: 'recordIri',
                 targetTitle: '',
@@ -308,12 +295,7 @@ describe('Merge Requests State service', function() {
                     });
                 });
                 it('unless target IRI is not set', function() {
-                    utilSvc.getPropertyId.and.callFake(function(obj, prop) {
-                        if (prop === 'mergereq:targetBranch') {
-                            return '';
-                        }
-                        return prop;
-                    });
+                    utilSvc.getPropertyId.and.callFake((obj, prop) => prop === 'mergereq:targetBranch' ? '' : prop);
                     this.expected.targetBranch = '';
                     this.expected.targetTitle = '';
                     this.expected.targetCommit = '';

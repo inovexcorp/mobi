@@ -82,6 +82,7 @@
                         if (dvm.state.createRequestStep === 1) {
                             dvm.state.requestConfig.title = '';
                             dvm.state.requestConfig.description = '';
+                            dvm.state.requestConfig.assignees = [];
                         } else if (dvm.state.createRequestStep === 0) {
                             dvm.state.requestConfig.sourceBranchId = '';
                             dvm.state.requestConfig.targetBranchId = '';
