@@ -160,6 +160,16 @@ describe('Merge Tab directive', function() {
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
+        it('depending on whether the source branch is up to date', function() {
+            ontologyStateSvc.listItem.merge.target = this.targetBranch;
+            scope.$digest();
+            var button = angular.element(this.element.querySelectorAll('block-footer .btn-merge')[0]);
+            expect(button.attr('disabled')).toBeFalsy();
+
+            ontologyStateSvc.listItem.upToDate = false;
+            scope.$digest();
+            expect(button.attr('disabled')).toBeTruthy();
+        });
     });
     describe('controller methods', function() {
         beforeEach(function() {

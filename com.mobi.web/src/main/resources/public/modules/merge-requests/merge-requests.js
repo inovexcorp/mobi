@@ -26,11 +26,10 @@
     angular
         .module('merge-requests', [
             /* Custom Directives */
-            'createRequestTabset',
+            'createRequest',
             'mergeRequestList',
-            'mergeRequestsTabset',
+            'mergeRequestsPage',
             'mergeRequestView',
-            'openTab',
             'requestBranchSelect',
             'requestDetailsForm',
             'requestRecordSelect'
