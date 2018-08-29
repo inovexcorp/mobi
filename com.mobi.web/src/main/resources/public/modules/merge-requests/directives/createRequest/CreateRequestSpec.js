@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Create Request Tabset directive', function() {
+describe('Create Request directive', function() {
     var $compile, scope, $q, mergeRequestsStateSvc, mergeRequestManagerSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
-        module('createRequestTabset');
+        module('createRequest');
         mockMergeRequestsState();
         mockMergeRequestManager();
         mockUtil();
@@ -39,9 +39,9 @@ describe('Create Request Tabset directive', function() {
             utilSvc = _utilService_;
         });
 
-        this.element = $compile(angular.element('<create-request-tabset></create-request-tabset>'))(scope);
+        this.element = $compile(angular.element('<create-request></create-request>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('createRequestTabset');
+        this.controller = this.element.controller('createRequest');
     });
 
     afterEach(function() {
@@ -157,15 +157,7 @@ describe('Create Request Tabset directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('create-request-tabset')).toEqual(true);
-            expect(this.element.querySelectorAll('.row').length).toEqual(1);
-            expect(this.element.querySelectorAll('.wrapping-column').length).toEqual(1);
-        });
-        it('with a tabset', function() {
-            expect(this.element.find('block').length).toEqual(1);
-        });
-        it('with a tab', function() {
-            expect(this.element.find('tab').length).toEqual(1);
+            expect(this.element.hasClass('create-request')).toEqual(true);
         });
         it('with a block', function() {
             expect(this.element.find('block').length).toEqual(1);

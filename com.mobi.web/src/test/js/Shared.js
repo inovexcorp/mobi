@@ -1272,6 +1272,7 @@ function mockMergeRequestManager() {
             this.createRequest = jasmine.createSpy('createRequest').and.returnValue($q.when());
             this.getRequest = jasmine.createSpy('getRequest').and.returnValue($q.when({}));
             this.deleteRequest = jasmine.createSpy('deleteRequest').and.returnValue($q.when());
+            this.acceptRequest = jasmine.createSpy('acceptRequest').and.returnValue($q.when());
             this.isAccepted = jasmine.createSpy('isAccepted').and.returnValue(false);
         });
     });
@@ -1280,13 +1281,13 @@ function mockMergeRequestManager() {
 function mockMergeRequestsState() {
     module(function($provide) {
         $provide.service('mergeRequestsStateService', function() {
-            this.open = {
-                active: true,
-                selected: undefined
-            };
+            this.selected = undefined;
+            this.acceptedFilter = false;
             this.requests = [];
             this.showDelete = false;
-            this.requestToDelete = false;
+            this.requestToDelete = undefined;
+            this.showAccept = false;
+            this.requestToAccept = undefined;
             this.createRequest = false;
             this.createRequestStep = 0;
             this.requestConfig = {};
@@ -1295,7 +1296,6 @@ function mockMergeRequestsState() {
             this.setRequests = jasmine.createSpy('setRequests');
             this.setRequestDetails = jasmine.createSpy('setRequestDetails');
             this.startCreate = jasmine.createSpy('startCreate');
-            this.getCurrentTab = jasmine.createSpy('getCurrentTab').and.returnValue(this.open);
         });
     });
 }

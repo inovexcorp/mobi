@@ -51,7 +51,7 @@ describe('Merge Request List directive', function() {
 
     describe('should initialize correctly', function() {
         it('calling setRequests', function() {
-            expect(mergeRequestsStateSvc.setRequests).toHaveBeenCalled();
+            expect(mergeRequestsStateSvc.setRequests).toHaveBeenCalledWith(mergeRequestsStateSvc.acceptedFilter);
         });
     });
     describe('controller methods', function() {
@@ -64,6 +64,7 @@ describe('Merge Request List directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('merge-request-list')).toEqual(true);
+            expect(this.element.querySelectorAll('.search-container').length).toEqual(1);
         });
         it('with a block', function() {
             expect(this.element.find('block').length).toEqual(1);
@@ -84,11 +85,10 @@ describe('Merge Request List directive', function() {
     it('should set the correct state when a request is clicked', function() {
         mergeRequestsStateSvc.requests = [{}];
         scope.$digest();
-        mergeRequestsStateSvc.getCurrentTab.and.returnValue(mergeRequestsStateSvc.open);
 
         var request = angular.element(this.element.querySelectorAll('.request')[0]);
         request.triggerHandler('click');
-        expect(mergeRequestsStateSvc.open.selected).toEqual({});
+        expect(mergeRequestsStateSvc.selected).toEqual({});
     });
     it('should call showDeleteOverlay when the delete link is clicked', function() {
         mergeRequestsStateSvc.requests = [{}];
