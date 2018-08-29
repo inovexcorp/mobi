@@ -20,12 +20,12 @@
             padding: 10px 1rem 10px 0;
             cursor: pointer;
         }
-        &.active,
-        &:hover {
-            .nav-link {
-                color: var(--primary);
-                font-weight: bold;
-            }
+        &.active .nav-link,
+        &:hover .nav-link {
+            color: var(--primary);
+        }
+        &.active .nav-link {
+            font-weight: bold;
         }
     }
 }
