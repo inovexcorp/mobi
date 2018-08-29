@@ -36,9 +36,9 @@
          */
         .directive('recordAccessOverlay', recordAccessOverlay);
 
-        recordAccessOverlay.$inject = ['utilService', 'userManagerService', 'policyManagerService']
+        recordAccessOverlay.$inject = ['utilService', 'userManagerService', 'policyManagerService', 'prefixes']
 
-        function recordAccessOverlay(utilService, userManagerService, policyManagerService) {
+        function recordAccessOverlay(utilService, userManagerService, policyManagerService, prefixes) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -48,35 +48,27 @@
                 },
                 bindToController: {
                     overlayFlag: '=',
-                    resource: '='
+                    resource: '<',
+                    ruleId: '@',
+                    masterBranch: '<'
                 },
                 controller: function() {
                     var dvm = this;
-                    dvm.util = utilService;
-                    dvm.um = userManagerService;
-                    dvm.pm = policyManagerService;
+                    var util = utilService;
+                    var um = userManagerService;
+                    var pm = policyManagerService;
+                    var groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + prefixes.foaf + 'member' + '>') + ')';
+                    var userRole = 'http://mobi.com/roles/user';
 
-                    var policy = '';
+                    dvm.policy = '';
 
-                    dvm.getPolicy = function() {
-                        // var action;
-
-                        // switch (dvm.action) {
-                        //     case 'Read':
-                        //         action = pm.actionRead;
-                        //         break;
-                        //     case 'Update':
-                        //         action = pm.actionUpdate;
-                        //         break;
-                        //     case ''
-                        // }
-                        pm.getPolicies(dvm.resource)
+                    dvm.getPolicy = function(resourceId) {
+                        pm.getPolicies(resourceId)
                             .then(result => {
-                                policy = _.chain(result)
+                                dvm.policy = _.chain(result)
                                     .map(policy => ({
                                         policy,
                                         id: policy.PolicyId,
-                                        type: getRecordType(policy),
                                         changed: false,
                                         everyone: false,
                                         users: [],
@@ -88,22 +80,50 @@
                                         selectedUser: undefined,
                                         selectedGroup: undefined
                                     }))
-                                    .filter('type')
                                     .forEach(setInfo)
-                                    .value();
+                                    .value()[0];
                             }, util.createErrorToast);
                     }
 
                     function setInfo(item) {
-                        var matches = _.chain(item.policy)
-                            .get('Rule[0].Target.AnyOf[0].AllOf', [])
-                            .map('Match[0]')
-                            .map(match => ({
-                                id: _.get(match, 'AttributeDesignator.AttributeId'),
-                                value: _.get(match, 'AttributeValue.content[0]')
-                            }))
-                            .value();
-                        if (_.find(matches, {id: prefixes.user + 'hasUserRole', value: userRole})) {
+                        var matches = undefined;
+                        if (!dvm.masterBranch) {
+                            matches = _.chain(item.policy)
+                                .get('Rule', [])
+                                .filter(rule => rule.RuleId === dvm.ruleId)
+                                .get('[0]Target.AnyOf', [])
+                                .map(anyOf => _.map(anyOf,
+                                    allOfArray => _.map(allOfArray,
+                                        allOf => _.map(allOf,
+                                            matchArray => _.map(matchArray,
+                                                match => ({
+                                                    id: _.get(match, 'AttributeDesignator.AttributeId'),
+                                                    value: _.get(match, 'AttributeValue.content[0]')
+                                                }))))))
+                                .flattenDepth(4)
+                                .value();
+                        } else {
+                            matches = _.chain(item.policy)
+                                .get('Rule', [])
+                                .filter(rule => rule.RuleId === dvm.ruleId)
+                                .get('[0]Condition.Expression.value.Expression')
+                                .map(expression => {
+                                    if (typeof expression.value !== undefined && typeof expression.value.Expression !== undefined)
+                                        return expression.value.Expression;
+                                })
+                                .map(expression => {
+                                    if (typeof expression.value !== undefined && typeof expression.value.Expression !== undefined)
+                                        return expression.value.Expression;
+                                })
+                                .map(expression => {
+                                    if (typeof expression.value !== undefined && typeof expression.value.content !== undefined)
+                                        return expression.value.content;
+                                }).value();
+                                // .flatten()
+                                // .value();
+                        }
+
+                        if (_.find(matches, {id: prefixes.user + 'hasUserRole', value: userRole}) && !dvm.masterBranch) {
                             item.everyone = true;
                         } else {
                             item.selectedUsers = sortUsers(_.chain(matches)
@@ -119,17 +139,6 @@
                         }
                         item.users = sortUsers(_.difference(um.users, item.selectedUsers));
                         item.groups = sortGroups(_.difference(um.groups, item.selectedGroups));
-                    }
-
-                    function getRecordType(policy) {
-                        return _.chain(policy)
-                            .get('Target.AnyOf', [])
-                            .map('AllOf').flatten()
-                            .map('Match').flatten()
-                            .find(['AttributeDesignator.AttributeId', prefixes.rdf + 'type'])
-                            .get('AttributeValue.content', [])
-                            .head()
-                            .value();
                     }
 
                     function sortUsers(users) {
@@ -152,6 +161,8 @@
                                 dvm.util.createSuccessToast('Permissions updated')
                             }, utilService.createErrorToast);
                     }
+
+                    dvm.getPolicy(dvm.resource);
                 },
                 templateUrl: 'directives/recordAccessOverlay/recordAccessOverlay.html'
             }
