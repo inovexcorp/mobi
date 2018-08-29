@@ -19,4 +19,18 @@
         margin-top: 20px;
         flex: 1;
     }
+    .assignees {
+        display: inline-block;
+
+        li {
+            display: inline;
+
+            &:after {
+                content: ', ';
+            }
+            &.last:after {
+                content: '';
+            }
+        }
+    }
 }

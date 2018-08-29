@@ -171,7 +171,8 @@
                 sourceBranchId: '',
                 targetBranchId: '',
                 title: '',
-                description: ''
+                description: '',
+                assignees: []
             };
             /**
              * @ngdoc property
@@ -211,7 +212,8 @@
                     sourceBranchId: '',
                     targetBranchId: '',
                     title: '',
-                    description: ''
+                    description: '',
+                    assignees: []
                 };
             }
             /**
@@ -240,7 +242,8 @@
                     sourceBranchId: '',
                     targetBranchId: '',
                     title: '',
-                    description: ''
+                    description: '',
+                    assignees: []
                 };
                 self.createRequest = false;
                 self.createRequestStep = 0;
@@ -346,7 +349,8 @@
                     title: util.getDctermsValue(request, 'title'),
                     date: getDate(request),
                     creator: getCreator(request),
-                    recordIri: util.getPropertyId(request, prefixes.mergereq + 'onRecord')
+                    recordIri: util.getPropertyId(request, prefixes.mergereq + 'onRecord'),
+                    assignees: _.map(_.get(request, "['" + prefixes.mergereq + "assignee']"), obj => _.get(_.find(um.users, {iri: obj['@id']}), 'username'))
                 };
             }
         }

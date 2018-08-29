@@ -43,5 +43,19 @@
                 }
             }
         }
+        .request-assignees {
+            .assignees {
+                li {
+                    display: inline;
+
+                    &:after {
+                        content: ', ';
+                    }
+                    &.last:after {
+                        content: '';
+                    }
+                }
+            }
+        }
     }
 }

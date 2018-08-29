@@ -102,7 +102,8 @@ describe('Create Request directive', function() {
                         sourceBranch: {},
                         targetBranchId: 'targetBranchId',
                         targetBranch: {},
-                        difference: {}
+                        difference: {},
+                        assignees: ['user']
                     };
                 });
                 it('1', function() {
@@ -123,6 +124,7 @@ describe('Create Request directive', function() {
                     expect(mergeRequestsStateSvc.createRequest).toEqual(true);
                     expect(mergeRequestsStateSvc.requestConfig.title).toEqual('');
                     expect(mergeRequestsStateSvc.requestConfig.description).toEqual('');
+                    expect(mergeRequestsStateSvc.requestConfig.assignees).toEqual([]);
                 });
             });
             it('unless it is the first step', function() {

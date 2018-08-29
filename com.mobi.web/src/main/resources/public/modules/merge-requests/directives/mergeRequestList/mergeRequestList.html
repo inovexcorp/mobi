@@ -35,6 +35,12 @@
                     <h3>{{request.title}}</h3>
                     <div class="request-info"><small>Created on {{request.date}} by {{request.creator}}</small></div>
                     <div class="request-record"><span class="field-name">Record: </span>{{request.recordTitle}}</div>
+                    <div class="request-assignees"><span class="field-name">Assignee(s): </span>
+                        <ul class="assignees">
+                            <li ng-if="request.assignees.length === 0" class="last">(None specified)</li>
+                            <li ng-repeat="assignee in request.assignees" ng-class="{'last': $last}">{{assignee}}</li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="action-container">
                     <a ng-click="dvm.showDeleteOverlay(request); $event.stopPropagation()" class="action text-muted d-inline-block"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
