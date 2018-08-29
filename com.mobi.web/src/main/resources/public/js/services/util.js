@@ -379,9 +379,10 @@
              * Creates a warning toast with the passed success text that will disappear after 3 seconds
              *
              * @param {string} text The text for the body of the warning toast
+             * @param {Object} config The configuration for the toast. Defaults to a timeout of 3 seconds
              */
-            self.createWarningToast = function(text) {
-                toastr.warning(text, 'Warning', {timeOut: 3000});
+            self.createWarningToast = function(text, config = {timeOut: 3000}) {
+                toastr.warning(text, 'Warning', config);
             }
             /**
              * @ngdoc method
