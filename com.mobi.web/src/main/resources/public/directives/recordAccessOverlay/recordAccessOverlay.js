@@ -62,6 +62,7 @@
                     var userPrefix = 'http://mobi.com/users/';
 
                     dvm.policy = '';
+                    dvm.ruleTitle = '';
 
                     dvm.getPolicy = function(resourceId) {
                         pm.getPolicies(resourceId)
@@ -122,8 +123,6 @@
                                     value: n
                                 }))
                                 .value();
-                                // .flatten()
-                                // .value();
                         }
 
                         if (_.find(matches, {id: prefixes.user + 'hasUserRole', value: userRole}) && !dvm.masterBranch) {
@@ -144,14 +143,6 @@
                         item.groups = sortGroups(_.difference(um.groups, item.selectedGroups));
                     }
 
-                    function sortUsers(users) {
-                        return _.sortBy(users, 'username');
-                    }
-
-                    function sortGroups(groups) {
-                        return _.sortBy(groups, 'title');
-                    }
-
                     dvm.cancel = function() {
                         dvm.overlayFlag = false;
                     }
@@ -165,7 +156,36 @@
                             }, utilService.createErrorToast);
                     }
 
+                    function sortUsers(users) {
+                        return _.sortBy(users, 'username');
+                    }
+
+                    function sortGroups(groups) {
+                        return _.sortBy(groups, 'title');
+                    }
+
+                    function getRuleTitle() {
+                        switch (dvm.ruleId) {
+                            case 'urn:read':
+                                dvm.ruleTitle = "View Record";
+                                break;
+                            case 'urn:delete':
+                                dvm.ruleTitle = "Delete Record";
+                                break;
+                            case 'urn:': //TODO: MANAGE A RECORD?
+                                break;
+                            case 'urn:modify':
+                                if (dvm.masterBranch) {
+                                    dvm.ruleTitle = 'Modify Master Branch';
+                                } else {
+                                    dvm.ruleTitle = 'Modify Record';
+                                }
+                                break;
+                        }
+                    }
+
                     dvm.getPolicy(dvm.resource);
+                    getRuleTitle();
                 },
                 templateUrl: 'directives/recordAccessOverlay/recordAccessOverlay.html'
             }

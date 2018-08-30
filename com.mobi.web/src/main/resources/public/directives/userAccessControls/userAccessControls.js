@@ -75,7 +75,7 @@
             controllerAs: 'dvm',
             scope: {
                 item: '<',
-
+                ruleTitle: '@'
             },
             controller: ['$scope', function($scope) {
                 var dvm = this;

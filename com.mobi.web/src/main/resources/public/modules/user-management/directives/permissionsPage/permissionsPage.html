@@ -26,8 +26,7 @@
             <block-content>
                 <div class="policy row" ng-repeat="item in dvm.policies track by item.id">
                     <div class="col-6 offset-3">
-                        <h3>Create {{(item.type | splitIRI).end | beautify}}</h3>
-                        <user-access-controls item="item" ruleId="urn:createOntologyRecord"></user-access-controls>
+                        <user-access-controls item="item" rule-title="Create (item.type | splitIRI).end | beautify"></user-access-controls>
                     </div>
                 </div>
             </block-content>
