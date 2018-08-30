@@ -21,6 +21,7 @@
         border-bottom: 1px solid var(--light);
         display: flex;
         flex-direction: row;
+        cursor: pointer;
 
         h3 {
             margin: 0;
@@ -39,6 +40,20 @@
 
                 &:hover {
                     color: var(--grey) !important;
+                }
+            }
+        }
+        .request-assignees {
+            .assignees {
+                li {
+                    display: inline;
+
+                    &:after {
+                        content: ', ';
+                    }
+                    &.last:after {
+                        content: '';
+                    }
                 }
             }
         }

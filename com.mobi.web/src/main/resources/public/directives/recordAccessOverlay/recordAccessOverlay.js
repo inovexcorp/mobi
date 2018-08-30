@@ -59,6 +59,7 @@
                     var pm = policyManagerService;
                     var groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + prefixes.foaf + 'member' + '>') + ')';
                     var userRole = 'http://mobi.com/roles/user';
+                    var userPrefix = 'http://mobi.com/users/';
 
                     dvm.policy = '';
 
@@ -107,18 +108,20 @@
                                 .get('Rule', [])
                                 .filter(rule => rule.RuleId === dvm.ruleId)
                                 .get('[0]Condition.Expression.value.Expression')
-                                .map(expression => {
-                                    if (typeof expression.value !== undefined && typeof expression.value.Expression !== undefined)
-                                        return expression.value.Expression;
-                                })
-                                .map(expression => {
-                                    if (typeof expression.value !== undefined && typeof expression.value.Expression !== undefined)
-                                        return expression.value.Expression;
-                                })
-                                .map(expression => {
-                                    if (typeof expression.value !== undefined && typeof expression.value.content !== undefined)
-                                        return expression.value.content;
-                                }).value();
+                                .map(expression => _.map(expression.value.Expression,
+                                        nestedExpression => _.map(nestedExpression.value.Expression,
+                                                nestedExpression2 => _.map(nestedExpression2,
+                                                        values => { if(typeof values.content != 'undefined')
+                                                            return values.content[0]
+                                                }))))
+                                .flattenDepth(3)
+                                .filter(n => n)
+                                .filter(n => _.startsWith(n, userPrefix))
+                                .map(n => ({
+                                    id: pm.subjectId,
+                                    value: n
+                                }))
+                                .value();
                                 // .flatten()
                                 // .value();
                         }

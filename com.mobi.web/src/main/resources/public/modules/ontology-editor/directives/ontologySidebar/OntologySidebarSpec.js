@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology Editor Tabset directive', function() {
+describe('Ontology Sidebar directive', function() {
     var $compile, scope, ontologyManagerSvc, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('ontologyEditorTabset');
+        module('ontologySidebar');
         mockOntologyManager();
         mockOntologyState();
 
@@ -36,12 +36,12 @@ describe('Ontology Editor Tabset directive', function() {
             ontologyStateSvc = _ontologyStateService_;
         });
 
-        this.listItemA = { ontologyId: 'A', ontologyRecord: { recordId: 'A', recordTitle: 'A'}, active: false, upToDate: false };
-        this.listItemB = { ontologyId: 'B', ontologyRecord: { recordId: 'B', recordTitle: 'B'}, active: false, upToDate: true };
+        this.listItemA = { ontologyId: 'A', ontologyRecord: { recordId: 'A', recordTitle: 'A'}, active: false};
+        this.listItemB = { ontologyId: 'B', ontologyRecord: { recordId: 'B', recordTitle: 'B'}, active: false };
         ontologyStateSvc.list = [this.listItemA, this.listItemB];
-        this.element = $compile(angular.element('<ontology-editor-tabset></ontology-editor-tabset>'))(scope);
+        this.element = $compile(angular.element('<ontology-sidebar></ontology-sidebar>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('ontologyEditorTabset');
+        this.controller = this.element.controller('ontologySidebar');
     });
 
     afterEach(function() {
@@ -52,29 +52,6 @@ describe('Ontology Editor Tabset directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
-        it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('ontology-editor-tabset')).toBe(true);
-        });
-        it('with a tabset', function() {
-            expect(this.element.find('tabset').length).toBe(1);
-        });
-        it('with a ontology-default-tab', function() {
-            expect(this.element.find('ontology-default-tab').length).toBe(1);
-        });
-        it('with tabs', function() {
-            expect(this.element.find('tab').length).toBe(3);
-        });
-        it('with ontology-tabs', function() {
-            expect(this.element.find('ontology-tab').length).toBe(2);
-        });
-        it('depending on whether a ontology is up to date', function() {
-            var tabs = this.element.find('tab');
-            expect(angular.element(tabs[0]).hasClass('up-to-date')).toBe(false);
-            expect(angular.element(tabs[1]).hasClass('up-to-date')).toBe(true);
-        });
-    });
     describe('controller methods', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem = this.listItemA;
@@ -99,33 +76,60 @@ describe('Ontology Editor Tabset directive', function() {
                 expect(ontologyStateSvc.closeOntology).toHaveBeenCalledWith('B');
             });
         });
-        describe('onClick should set the listItem and page title correctly if listItem is', function() {
+        describe('onClick should set the listItem and active state correctly if listItem is', function() {
             beforeEach(function () {
-                ontologyStateSvc.listItem = {id: 'id'};
+                this.oldListItem = {id: 'id'};
+                ontologyStateSvc.listItem = this.oldListItem;
             });
             it('defined', function() {
                 this.controller.onClick({ontologyRecord: {type: 'type'}});
-                expect(ontologyStateSvc.listItem).toEqual({ontologyRecord: {type: 'type'}});
+                expect(ontologyStateSvc.listItem).toEqual({ontologyRecord: {type: 'type'}, active: true});
+                expect(this.oldListItem.active).toEqual(false);
             });
             it('undefined', function() {
                 this.controller.onClick(undefined);
                 expect(ontologyStateSvc.listItem).toEqual({});
+                expect(this.oldListItem.active).toEqual(false);
             });
         });
     });
-    describe('should correctly set newTabActive when listItem changes to', function() {
-        beforeEach(function() {
-            this.controller.newTabActive = true;
+    describe('replaces the element with the correct html', function() {
+        it('for wrapping containers', function() {
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('ontology-sidebar')).toBe(true);
+            expect(this.element.querySelectorAll('.button-container').length).toEqual(1);
         });
-        it('an empty object', function() {
-            ontologyStateSvc.listItem = {};
+        it('with a .nav', function() {
+            expect(this.element.querySelectorAll('ul.nav').length).toBe(1);
+        });
+        it('depending on how many ontologies are open', function() {
+            var tabs = this.element.querySelectorAll('li.nav-item');
+            expect(tabs.length).toEqual(ontologyStateSvc.list.length);
+        });
+        it('depending on whether an ontology is open', function() {
+            this.listItemA.active = true;
             scope.$digest();
-            expect(this.controller.newTabActive).toEqual(true);
+            var tab = angular.element(this.element.querySelectorAll('li.nav-item')[0]);
+            expect(tab.hasClass('active')).toEqual(true);
+            expect(tab.find('ontology-branch-select').length).toEqual(1);
         });
-        it('another listItem', function() {
-            ontologyStateSvc.listItem = {ontologyId: 'something'};
-            scope.$digest();
-            expect(this.controller.newTabActive).toEqual(false);
-        });
+    });
+    it('should call onClick when the Ontologies button is clicked', function() {
+        spyOn(this.controller, 'onClick');
+        var button = angular.element(this.element.querySelectorAll('.button-container button')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.onClick).toHaveBeenCalled();
+    });
+    it('should call onClick when an ontology nav item is clicked', function() {
+        spyOn(this.controller, 'onClick');
+        var link = angular.element(this.element.querySelectorAll('a.nav-link')[0]);
+        link.triggerHandler('click');
+        expect(this.controller.onClick).toHaveBeenCalledWith(this.listItemA);
+    });
+    it('should call onClose when a close icon on an ontology nav item is clicked', function() {
+        spyOn(this.controller, 'onClose');
+        var closeIcon = angular.element(this.element.querySelectorAll('.nav-item span.close-icon')[0]);
+        closeIcon.triggerHandler('click');
+        expect(this.controller.onClose).toHaveBeenCalledWith(this.listItemA);
     });
 });

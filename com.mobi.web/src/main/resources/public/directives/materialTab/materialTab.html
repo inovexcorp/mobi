@@ -20,15 +20,4 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="merge-requests-tabset">
-    <tabset class="centered" ng-if="!dvm.state.createRequest">
-        <tab heading="'Open'" active="dvm.state.open.active">
-            <open-tab></open-tab>
-        </tab>
-    </tabset>
-    <create-request-tabset ng-if="dvm.state.createRequest"></create-request-tabset>
-    <confirmation-overlay ng-if="dvm.state.showDelete" header-text="'Delete Merge Request'" confirm-click="dvm.deleteRequest()" cancel-click="dvm.cancelDelete()" confirm-text="'Yes'" cancel-text="'No'">
-        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-        <p>Are you sure that you want to delete <strong>{{dvm.state.requestToDelete.title}}</strong>?</p>
-    </confirmation-overlay>
-</div>
+<div class="material-tab h-100" ng-if="active" ng-transclude></div>

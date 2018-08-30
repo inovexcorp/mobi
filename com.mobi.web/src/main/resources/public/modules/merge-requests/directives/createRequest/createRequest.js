@@ -26,34 +26,36 @@
     angular
         /**
          * @ngdoc overview
-         * @name createRequestTabset
+         * @name createRequest
          *
          * @description
-         * The `createRequestTabset` module only provides the `createRequestTabset` directive
+         * The `createRequest` module only provides the `createRequest` directive
          * which creates the main div containing the Merge Requests page.
          */
-        .module('createRequestTabset', [])
+        .module('createRequest', [])
         /**
          * @ngdoc directive
-         * @name createRequestTabset.directive:createRequestTabset
+         * @name createRequest.directive:createRequest
          * @scope
          * @restrict E
          * @requires mergeRequestsState.service:mergeRequestsStateService
          *
          * @description
-         * `createRequestTabset` is a directive which creates a div containing a
-         * {@link tabset.directive:tabset} with the main tabs of the Merge Requests page. These tabs
-         * are the {@link openTab.directive:openTab}. The directive is replaced by the contents
+         * `createRequest` is a directive which creates a div containing a
+         * {@link block.directive:block} with the workflow steps of creating a MergeRequest. These steps are
+         * {@link requestRecordSelect.directive:requestRecordSelect},
+         * {@link requestBranchSelect.directive:requestBranchSelect}, and
+         * {@link requestDetailsForm.directive:requestDetailsForm}. The directive is replaced by the contents
          * of its template.
          */
-        .directive('createRequestTabset', createRequestTabset);
+        .directive('createRequest', createRequest);
 
-    createRequestTabset.$inject = ['mergeRequestManagerService', 'mergeRequestsStateService', 'utilService'];
+    createRequest.$inject = ['mergeRequestManagerService', 'mergeRequestsStateService', 'utilService'];
 
-    function createRequestTabset(mergeRequestManagerService, mergeRequestsStateService, utilService) {
+    function createRequest(mergeRequestManagerService, mergeRequestsStateService, utilService) {
         return {
             restrict: 'E',
-            templateUrl: 'modules/merge-requests/directives/createRequestTabset/createRequestTabset.html',
+            templateUrl: 'modules/merge-requests/directives/createRequest/createRequest.html',
             replace: true,
             scope: {},
             controllerAs: 'dvm',
@@ -80,6 +82,7 @@
                         if (dvm.state.createRequestStep === 1) {
                             dvm.state.requestConfig.title = '';
                             dvm.state.requestConfig.description = '';
+                            dvm.state.requestConfig.assignees = [];
                         } else if (dvm.state.createRequestStep === 0) {
                             dvm.state.requestConfig.sourceBranchId = '';
                             dvm.state.requestConfig.targetBranchId = '';

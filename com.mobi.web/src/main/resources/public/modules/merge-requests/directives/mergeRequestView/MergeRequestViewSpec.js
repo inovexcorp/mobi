@@ -41,7 +41,7 @@ describe('Merge Request View directive', function() {
 
         this.getDefer = $q.defer();
         mergeRequestManagerSvc.getRequest.and.returnValue(this.getDefer.promise);
-        mergeRequestsStateSvc.open.selected = {request: {}};
+        mergeRequestsStateSvc.selected = {request: {}};
         this.element = $compile(angular.element('<merge-request-view></merge-request-view>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('mergeRequestView');
@@ -61,26 +61,26 @@ describe('Merge Request View directive', function() {
         it('resolves', function() {
             this.getDefer.resolve();
             scope.$apply();
-            expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.open.selected);
+            expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.selected);
             expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
-            expect(mergeRequestsStateSvc.open.selected).toBeDefined();
+            expect(mergeRequestsStateSvc.selected).toBeDefined();
         });
         it('rejects', function() {
             this.getDefer.reject();
             scope.$apply();
             expect(mergeRequestsStateSvc.setRequestDetails).not.toHaveBeenCalled();
             expect(utilSvc.createWarningToast).toHaveBeenCalled();
-            expect(mergeRequestsStateSvc.open.selected).toBeUndefined();
+            expect(mergeRequestsStateSvc.selected).toBeUndefined();
         });
     });
     describe('controller methods', function() {
         it('should go back', function() {
             this.controller.back();
-            expect(mergeRequestsStateSvc.open.selected).toBeUndefined();
+            expect(mergeRequestsStateSvc.selected).toBeUndefined();
         });
         it('show the delete overlay', function() {
             this.controller.showDelete();
-            expect(mergeRequestsStateSvc.requestToDelete).toEqual(mergeRequestsStateSvc.open.selected);
+            expect(mergeRequestsStateSvc.requestToDelete).toEqual(mergeRequestsStateSvc.selected);
             expect(mergeRequestsStateSvc.showDelete).toEqual(true);
         });
     });
@@ -98,31 +98,43 @@ describe('Merge Request View directive', function() {
         it('with a block-footer', function() {
             expect(this.element.find('block-footer').length).toEqual(1);
         });
-        it('with buttons to Delete and go Back', function() {
-            var buttons = this.element.querySelectorAll('block-footer button');
-            expect(buttons.length).toEqual(2);
-            expect(['Delete', 'Back']).toContain(angular.element(buttons[0]).text().trim());
-            expect(['Delete', 'Back']).toContain(angular.element(buttons[1]).text().trim());
+        it('with a commit-difference-tabset', function() {
+            expect(this.element.find('commit-difference-tabset').length).toEqual(1);
+        });
+        it('with a button to Delete', function() {
+            var button = this.element.querySelectorAll('block-footer button.btn-danger');
+            expect(button.length).toEqual(1);
+            expect(button.text().trim()).toContain('Delete');
+        });
+        it('with a button to go Back', function() {
+            var button = this.element.querySelectorAll('block-footer button:not(.btn-primary):not(.btn-danger)');
+            expect(button.length).toEqual(1);
+            expect(button.text().trim()).toContain('Back');
+        });
+        it('depending on how many assignees the request has', function() {
+            mergeRequestsStateSvc.selected.assignees = ['user1', 'user2'];
+            scope.$digest();
+            expect(this.element.querySelectorAll('.assignees li').length).toEqual(2);
         });
         it('depending on whether the merge request is accepted', function() {
             var indicator = angular.element(this.element.querySelectorAll('.open-indicator')[0]);
             expect(indicator.hasClass('badge-primary')).toEqual(true);
             expect(indicator.hasClass('badge-success')).toEqual(false);
             expect(indicator.text().trim()).toEqual('Open');
-            expect(this.element.find('commit-difference-tabset').length).toEqual(1);
+            expect(this.element.querySelectorAll('block-footer button.btn-primary').length).toEqual(1);
 
             mergeRequestManagerSvc.isAccepted.and.returnValue(true);
             scope.$digest();
             expect(indicator.hasClass('badge-primary')).toEqual(false);
             expect(indicator.hasClass('badge-success')).toEqual(true);
             expect(indicator.text().trim()).toEqual('Accepted');
-            expect(this.element.find('commit-difference-tabset').length).toEqual(0);
+            expect(this.element.querySelectorAll('block-footer button.btn-primary').length).toEqual(0);
         });
         it('depending on whether the merge request has merge conflicts', function() {
-            mergeRequestsStateSvc.open.selected.targetTitle = 'targetBranch';
+            mergeRequestsStateSvc.selected.targetTitle = 'targetBranch';
             scope.$apply();
             expect(angular.element(this.element.querySelectorAll('.alert')).length).toEqual(0);
-            mergeRequestsStateSvc.open.selected.hasConflicts = true;
+            mergeRequestsStateSvc.selected.hasConflicts = true;
             scope.$apply();
             var indicator = angular.element(this.element.querySelectorAll('.alert')[0]);
             expect(indicator.hasClass('alert-warning')).toEqual(true);
@@ -131,11 +143,11 @@ describe('Merge Request View directive', function() {
             expect(indicator.children().hasClass('fa-exclamation-triangle')).toEqual(true);
         });
         it('depending on whether the merge request has does not have a target branch set', function() {
-            mergeRequestsStateSvc.open.selected.targetTitle = 'targetBranch';
-            mergeRequestsStateSvc.open.selected.hasConflicts = false;
+            mergeRequestsStateSvc.selected.targetTitle = 'targetBranch';
+            mergeRequestsStateSvc.selected.hasConflicts = false;
             scope.$apply();
             expect(angular.element(this.element.querySelectorAll('.alert')).length).toEqual(0);
-            mergeRequestsStateSvc.open.selected.targetTitle = '';
+            mergeRequestsStateSvc.selected.targetTitle = '';
             scope.$apply();
             var indicator = angular.element(this.element.querySelectorAll('.alert')[0]);
             expect(indicator.hasClass('alert-warning')).toEqual(true);
@@ -152,7 +164,7 @@ describe('Merge Request View directive', function() {
     });
     it('should call back when the button is clicked', function() {
         spyOn(this.controller, 'back');
-        var button = angular.element(this.element.querySelectorAll('block-footer button:not(.btn-danger)')[0]);
+        var button = angular.element(this.element.querySelectorAll('block-footer button:not(.btn-danger):not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(this.controller.back).toHaveBeenCalled();
     });

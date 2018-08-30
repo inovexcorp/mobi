@@ -62,24 +62,25 @@
 
             /**
              * @ngdoc property
-             * @name open
+             * @name selected
              * @propertyOf mergeRequestsState.service:mergeRequestsStateService
              * @type {Object}
              *
              * @description
-             * `open` contains an object with the state of the {@link openTab.directive:openTab open tab}. The structure
-             * looks like the following:
-             * ```
-             * {
-             *     active: true // Whether the tab is displayed
-             *     selected: {...} // An object representing the currently selected request
-             * }
-             * ```
+             * `selected` contains an object representing the currently selected request.
              */
-            self.open = {
-                active: true,
-                selected: undefined
-            };
+            self.selected = undefined;
+            /**
+             * @ngdoc property
+             * @name acceptedFilter
+             * @propertyOf mergeRequestsState.service.mergeRequestsStateService
+             * @type {boolean}
+             *
+             * @description
+             * `acceptedFilter` determines whether accepted or open Merge Requests should be shown in the
+             * {@link mergeRequestList.directive:mergeRequestList}.
+             */
+            self.acceptedFilter = false
             /**
              * @ngdoc property
              * @name showDelete
@@ -93,6 +94,17 @@
             self.showDelete = false;
             /**
              * @ngdoc property
+             * @name showAccept
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             * @type {boolean}
+             *
+             * @description
+             * `showAccept` determines whether the Accept Merge Request {@link confirmationOverlay.directive:confirmationOverlay}
+             * should be shown.
+             */
+            self.showAccept = false;
+            /**
+             * @ngdoc property
              * @name requestToDelete
              * @propertyOf mergeRequestsState.service:mergeRequestsStateService
              * @type {Object}
@@ -102,6 +114,17 @@
              * Delete Merge Request {@link confirmationOverlay.directive:confirmationOverlay}.
              */
             self.requestToDelete = undefined;
+            /**
+             * @ngdoc property
+             * @name requestToAccept
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             * @type {Object}
+             *
+             * @description
+             * `requestToAccept` contains an object representing the request that will be accepted in the
+             * Accept Merge Request {@link confirmationOverlay.directive:confirmationOverlay}.
+             */
+            self.requestToAccept = undefined;
             /**
              * @ngdoc property
              * @name createRequest
@@ -148,7 +171,8 @@
                 sourceBranchId: '',
                 targetBranchId: '',
                 title: '',
-                description: ''
+                description: '',
+                assignees: []
             };
             /**
              * @ngdoc property
@@ -188,7 +212,8 @@
                     sourceBranchId: '',
                     targetBranchId: '',
                     title: '',
-                    description: ''
+                    description: '',
+                    assignees: []
                 };
             }
             /**
@@ -217,14 +242,12 @@
                     sourceBranchId: '',
                     targetBranchId: '',
                     title: '',
-                    description: ''
+                    description: '',
+                    assignees: []
                 };
                 self.createRequest = false;
                 self.createRequestStep = 0;
-                self.open = {
-                    active: true,
-                    selected: undefined
-                };
+                self.selected = undefined;
             }
             /**
              * @ngdoc method
@@ -238,15 +261,9 @@
              * @param {boolean} [accepted=false] Whether the list should be accepted Merge Requests or just open ones.
              */
             self.setRequests = function(accepted = false) {
-                mm.getRequests()
+                mm.getRequests({accepted})
                     .then(data => {
-                        self.requests = _.map(data, request => ({
-                            request,
-                            title: util.getDctermsValue(request, 'title'),
-                            date: getDate(request),
-                            creator: getCreator(request),
-                            recordIri: util.getPropertyId(request, prefixes.mergereq + 'onRecord')
-                        }));
+                        self.requests = _.map(data, getRequestObj);
                         var recordsToRetrieve = _.uniq(_.map(self.requests, 'recordIri'));
                         return $q.all(_.map(recordsToRetrieve, iri => cm.getRecord(iri, catalogId)));
                     }, $q.reject)
@@ -317,19 +334,6 @@
                     }
                 }
             }
-            /**
-             * @ngdoc method
-             * @name getCurrentTab
-             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
-             *
-             * @description
-             * Retrieves the current tab of the Merge Requests module, either `open` or `accepted`.
-             *
-             * @return {Object} Either the `open` object or the `accepted` object
-             */
-            self.getCurrentTab = function() {
-                return _.find([self.open], 'active');
-            }
 
             function getDate(request) {
                 var dateStr = util.getDctermsValue(request, 'issued');
@@ -338,6 +342,16 @@
             function getCreator(request) {
                 var iri = util.getDctermsId(request, 'creator');
                 return _.get(_.find(um.users, {iri}), 'username');
+            }
+            function getRequestObj(request) {
+                return {
+                    request,
+                    title: util.getDctermsValue(request, 'title'),
+                    date: getDate(request),
+                    creator: getCreator(request),
+                    recordIri: util.getPropertyId(request, prefixes.mergereq + 'onRecord'),
+                    assignees: _.map(_.get(request, "['" + prefixes.mergereq + "assignee']"), obj => _.get(_.find(um.users, {iri: obj['@id']}), 'username'))
+                };
             }
         }
 })();
