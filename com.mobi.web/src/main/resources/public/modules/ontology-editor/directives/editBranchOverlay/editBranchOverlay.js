@@ -37,7 +37,8 @@
                 scope: {},
                 bindToController: {
                     branch: '=',
-                    overlayFlag: '='
+                    overlayFlag: '=',
+                    onSubmit: '&'
                 },
                 controllerAs: 'dvm',
                 controller: function() {
@@ -52,14 +53,17 @@
                     dvm.branchDescription = util.getDctermsValue(dvm.branch, 'description');
 
                     dvm.edit = function() {
-                        util.setDctermsValue(dvm.branch, 'title', dvm.branchTitle);
+                        util.updateDctermsValue(dvm.branch, 'title', dvm.branchTitle);
                         if (dvm.branchDescription === '') {
                             _.unset(dvm.branch, prefixes.dcterms + 'description');
                         } else {
-                            util.setDctermsValue(dvm.branch, 'description', dvm.branchDescription);
+                            util.updateDctermsValue(dvm.branch, 'description', dvm.branchDescription);
                         }
                         cm.updateRecordBranch(dvm.branch['@id'], os.listItem.ontologyRecord.recordId, catalogId, dvm.branch)
-                            .then(() => dvm.overlayFlag = false, errorMessage => dvm.error = errorMessage);
+                            .then(() => {
+                                dvm.overlayFlag = false;
+                                dvm.onSubmit();
+                            }, errorMessage => dvm.error = errorMessage);
                     }
                 }
             }

@@ -158,6 +158,16 @@ describe('Util service', function() {
         utilSvc.removePropertyValue(entity, prop, other['@value']);
         expect(_.has(entity, prop)).toEqual(false);
     });
+    it('should replace a property value from an entity', function() {
+        var prop = 'property';
+        var value = {'@value': 'value'};
+        var other = {'@value': 'other'};
+        var entity = {'property': [value]};
+
+        utilSvc.replacePropertyValue(entity, prop, value['@value'], other['@value']);
+        expect(entity[prop]).toContain(other);
+        expect(entity[prop]).not.toContain(value);
+    });
     describe('should get a property id value from an entity', function() {
         it('if it contains the property', function() {
             var entity = {'property': [{'@id': 'id'}]};
@@ -208,6 +218,7 @@ describe('Util service', function() {
 
         utilSvc.replacePropertyId(entity, prop, value['@id'], other['@id']);
         expect(entity[prop]).toContain(other);
+        expect(entity[prop]).not.toContain(value);
     });
     describe('should get a dcterms property value from an entity', function() {
         it('if it contains the property', function() {
@@ -227,6 +238,19 @@ describe('Util service', function() {
         var expected = {};
         expected[prefixes.dcterms + prop] = [{'@value': value}];
         utilSvc.setDctermsValue(entity, prop, value);
+        expect(entity).toEqual(expected);
+    });
+    it('should update a dcterms property value for an entity', function() {
+        var prop = 'prop';
+        var value = 'value';
+        var newValue = 'newValue';
+        var entity = {};
+        var expected = {};
+        expected[prefixes.dcterms + prop] = [{'@value': value}];
+        utilSvc.setDctermsValue(entity, prop, value);
+        expect(entity).toEqual(expected);
+        expected[prefixes.dcterms + prop] = [{'@value': newValue}];
+        utilSvc.updateDctermsValue(entity, prop, newValue);
         expect(entity).toEqual(expected);
     });
     describe('should get a dcterms property id value from an entity', function() {
@@ -258,9 +282,15 @@ describe('Util service', function() {
         utilSvc.createSuccessToast('Text');
         expect(toastr.success).toHaveBeenCalledWith('Text', 'Success', {timeOut: 3000});
     });
-    it('should create a warning toast', function() {
-        utilSvc.createWarningToast('Text');
-        expect(toastr.warning).toHaveBeenCalledWith('Text', 'Warning', {timeOut: 3000});
+    describe('should create a warning toast', function() {
+        it('with provided config', function() {
+            utilSvc.createWarningToast('Text', {timeOut: 10000});
+            expect(toastr.warning).toHaveBeenCalledWith('Text', 'Warning', {timeOut: 10000});
+        });
+        it('with default config', function() {
+            utilSvc.createWarningToast('Text');
+            expect(toastr.warning).toHaveBeenCalledWith('Text', 'Warning', {timeOut: 3000});
+        });
     });
     it('should get the namespace of an iri', function() {
         var result = utilSvc.getIRINamespace('iri');

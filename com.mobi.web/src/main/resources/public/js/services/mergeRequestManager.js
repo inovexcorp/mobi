@@ -88,7 +88,7 @@
              * @param {string} requestConfig.recordId The required IRI of the VersionedRDFRecord of the new MergeRequest
              * @param {string} requestConfig.sourceBranchId The required IRI of the source Branch for the new MergeRequest
              * @param {string} requestConfig.targetBranchId The required IRI of the target Branch for the new MergeRequest
-             * @param {string[]} requestConfig.assignees The optional assignees of the new MergeRequest.
+             * @param {string[]} requestConfig.assignees The optional usernames of the assignees of the new MergeRequest.
              * @return {Promise} A promise that resolves to the IRI of the new MergeRequest or is rejected with
              * an error message
              */
@@ -145,6 +145,24 @@
              */
             self.deleteRequest = function(requestId) {
                 return $http.delete(prefix + '/' + encodeURIComponent(requestId))
+                    .then(_.noop, util.rejectError);
+            }
+
+            /**
+             * @ngdoc method
+             * @name acceptRequest
+             * @methodOf mergeRequestManager.service:mergeRequestManagerService
+             *
+             * @description
+             * Calls the POST /mobirest/merge-requests/{requestId} endpoint to accept a Merge Request
+             * with a matching IRI and perform the represented merge.
+             *
+             * @param {string} params An IRI ID of a Merge Request
+             * @returns {Promise} A promise that resolves if the request was accepted or rejects with an
+             * error message.
+             */
+            self.acceptRequest = function(requestId) {
+                return $http.post(prefix + '/' + encodeURIComponent(requestId))
                     .then(_.noop, util.rejectError);
             }
 

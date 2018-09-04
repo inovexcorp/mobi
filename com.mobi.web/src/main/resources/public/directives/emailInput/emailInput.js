@@ -86,7 +86,9 @@
                     changeEvent: '&',
                     mutedText: '<',
                     required: '<',
-                    inputName: '<'
+                    inputName: '<',
+                    isInvalid: '<',
+                    isValid: '<'
                 },
                 templateUrl: 'directives/emailInput/emailInput.html'
             }

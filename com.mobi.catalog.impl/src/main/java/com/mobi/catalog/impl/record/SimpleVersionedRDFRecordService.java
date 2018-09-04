@@ -29,14 +29,26 @@ import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
+import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
+import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 
-@Component
+@Component(
+        immediate = true,
+        provide = { RecordService.class, SimpleVersionedRDFRecordService.class }
+)
 public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordService<VersionedRDFRecord> {
+
+    @Reference
+    void setCatalogFactory(CatalogFactory catalogFactory) {
+        this.catalogFactory = catalogFactory;
+    }
 
     @Reference
     void setUtilsService(CatalogUtilsService utilsService) {
@@ -73,8 +85,23 @@ public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordS
         this.mergeRequestManager = mergeRequestManager;
     }
 
+    @Reference
+    void setPolicyManager(XACMLPolicyManager xacmlPolicyManager) {
+        this.xacmlPolicyManager = xacmlPolicyManager;
+    }
+
+    @Reference
+    void setVersioningManager(VersioningManager versioningManager) {
+        this.versioningManager = versioningManager;
+    }
+
     @Override
     public Class<VersionedRDFRecord> getType() {
         return VersionedRDFRecord.class;
+    }
+
+    @Override
+    public String getTypeIRI() {
+        return VersionedRDFRecord.TYPE;
     }
 }

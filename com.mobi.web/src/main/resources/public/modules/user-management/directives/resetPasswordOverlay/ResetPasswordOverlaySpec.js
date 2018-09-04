@@ -107,7 +107,7 @@ describe('Reset Password Overlay directive', function() {
         });
     });
     it('should set the correct state when the cancel button is clicked', function() {
-        var cancelButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var cancelButton = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         cancelButton.triggerHandler('click');
         expect(userStateSvc.displayResetPasswordOverlay).toBe(false);
     });

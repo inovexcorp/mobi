@@ -48,10 +48,14 @@
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.list = [];
+                    dvm.shownList = getList();
                     dvm.checkedStatements = {
                         additions: [],
                         deletions: []
                     };
+                    
+                    dvm.index = 0;
+                    dvm.size = 100;
 
                     dvm.go = function($event, id) {
                         $event.stopPropagation();
@@ -89,7 +93,7 @@
                                 return sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, createdBranchId, commitId);
                             }, $q.reject)
                             .then(() => {
-                                return om.deleteOntology(dvm.os.listItem.ontologyRecord.recordId, userBranchId);
+                                return om.deleteOntologyBranch(dvm.os.listItem.ontologyRecord.recordId, userBranchId);
                             }, $q.reject)
                             .then(() => {
                                 dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, userBranchId);
@@ -109,10 +113,12 @@
                     }
 
                     $scope.$watchGroup(['dvm.os.listItem.inProgressCommit.additions', 'dvm.os.listItem.inProgressCommit.deletions'], () => {
+                    
                         var ids = _.unionWith(_.map(dvm.os.listItem.inProgressCommit.additions, '@id'), _.map(dvm.os.listItem.inProgressCommit.deletions, '@id'), _.isEqual);
                         dvm.list = _.map(ids, id => {
                             var additions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.additions);
                             var deletions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.deletions);
+
                             return {
                                 id,
                                 additions,
@@ -120,6 +126,9 @@
                                 disableAll: hasSpecificType(additions) || hasSpecificType(deletions)
                             }
                         });
+                        
+                        dvm.list = _.sortBy(dvm.list, dvm.orderByIRI)
+                        dvm.showList = getList();
                     });
 
                     function changeUserBranchesCreatedFrom(oldCreatedFromId, newCreatedFromId) {
@@ -140,6 +149,20 @@
 
                     function hasSpecificType(array) {
                         return !!_.intersection(_.map(_.filter(array, {p: typeIRI}), 'o'), types).length;
+                    }
+                    
+                    dvm.getMoreResults = function() {
+                        dvm.index++;
+                        var currChunk = _.get(dvm.chunks, dvm.index, []);
+                        dvm.showList = _.concat(dvm.showList, currChunk);
+                    }
+                    
+                    function getList() {
+                        var list = dvm.showList || [];
+                        dvm.chunks = _.chunk(dvm.list, dvm.size);
+                        var currChunk = _.get(dvm.chunks, dvm.index, []);
+                        list = _.concat(list, currChunk);
+                        return list;
                     }
                 }]
             }

@@ -27,6 +27,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.mobi.catalog.api.Catalogs;
+import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
@@ -64,10 +66,12 @@ import org.junit.rules.ExpectedException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -973,15 +977,15 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     @Test
     public void removeBranchTest() throws Exception {
         // Setup:
-        Resource commitIdToRemove = VALUE_FACTORY.createIRI(COMMITS + "conflict2");
-        IRI additionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "conflict2");
-        IRI deletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "conflict2");
-        IRI revisionToRemove = VALUE_FACTORY.createIRI(REVISIONS + "conflict2");
+        Resource commitIdToRemove = VALUE_FACTORY.createIRI(COMMITS + "commitA1");
+        IRI additionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "commitA1");
+        IRI deletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "commitA1");
+        IRI revisionToRemove = VALUE_FACTORY.createIRI(REVISIONS + "commitA1");
 
-        Resource commitIdToKeep = VALUE_FACTORY.createIRI(COMMITS + "conflict0");
-        IRI additionsToKeep = VALUE_FACTORY.createIRI(ADDITIONS + "conflict0");
-        IRI deletionsToKeep = VALUE_FACTORY.createIRI(DELETIONS + "conflict0");
-        IRI revisionToKeep = VALUE_FACTORY.createIRI(REVISIONS + "conflict0");
+        Resource commitIdToKeep = VALUE_FACTORY.createIRI(COMMITS + "commitA0");
+        IRI additionsToKeep = VALUE_FACTORY.createIRI(ADDITIONS + "commitA0");
+        IRI deletionsToKeep = VALUE_FACTORY.createIRI(DELETIONS + "commitA0");
+        IRI revisionToKeep = VALUE_FACTORY.createIRI(REVISIONS + "commitA0");
 
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
@@ -1011,15 +1015,15 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     @Test
     public void removeBranchWithDeletedCommitListTest() throws Exception {
         // Setup:
-        Resource commitIdToRemove = VALUE_FACTORY.createIRI(COMMITS + "conflict2");
-        IRI additionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "conflict2");
-        IRI deletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "conflict2");
-        IRI revisionToRemove = VALUE_FACTORY.createIRI(REVISIONS + "conflict2");
+        Resource commitIdToRemove = VALUE_FACTORY.createIRI(COMMITS + "commitA1");
+        IRI additionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "commitA1");
+        IRI deletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "commitA1");
+        IRI revisionToRemove = VALUE_FACTORY.createIRI(REVISIONS + "commitA1");
 
-        Resource commitIdToKeep = VALUE_FACTORY.createIRI(COMMITS + "conflict0");
-        IRI additionsToKeep = VALUE_FACTORY.createIRI(ADDITIONS + "conflict0");
-        IRI deletionsToKeep = VALUE_FACTORY.createIRI(DELETIONS + "conflict0");
-        IRI revisionToKeep = VALUE_FACTORY.createIRI(REVISIONS + "conflict0");
+        Resource commitIdToKeep = VALUE_FACTORY.createIRI(COMMITS + "commitA0");
+        IRI additionsToKeep = VALUE_FACTORY.createIRI(ADDITIONS + "commitA0");
+        IRI deletionsToKeep = VALUE_FACTORY.createIRI(DELETIONS + "commitA0");
+        IRI revisionToKeep = VALUE_FACTORY.createIRI(REVISIONS + "commitA0");
 
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
@@ -1711,7 +1715,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     public void addCommitTest() {
         // Setup:
         IRI newIRI = VALUE_FACTORY.createIRI("http://mobi.com/test#new");
-        IRI headCommitIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#conflict2");
+        IRI headCommitIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commitA1");
         IRI headIRI = VALUE_FACTORY.createIRI(Branch.head_IRI);
         Branch branch = branchFactory.createNew(BRANCH_IRI);
         Commit commit = commitFactory.createNew(newIRI);
@@ -2086,6 +2090,237 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         assertFalse(result.contains(toDelete));
     }
 
+    /* getConflicts */
+
+    @Test
+    public void testGetConflictsFullDeletionWithAddition() throws Exception {
+        // Setup:
+        // Scenario 1: One branch fully deletes a subject while the other adds to it
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-1");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-2");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Conflict> result = service.getConflicts(leftId, rightId, conn);
+            assertEquals(1, result.size());
+
+            List<Resource> validIRIs = Arrays.asList(typeIRI, descriptionIRI);
+            result.forEach(conflict -> {
+                Difference left = conflict.getLeftDifference();
+                Difference right = conflict.getRightDifference();
+                assertEquals(0, left.getAdditions().size());
+                assertEquals(1, right.getAdditions().size());
+                assertEquals(0, right.getDeletions().size());
+                assertEquals(1, left.getDeletions().size());
+                Stream.of(left.getDeletions(), right.getAdditions()).forEach(model -> model.forEach(statement -> {
+                    assertEquals(sub, statement.getSubject());
+                    assertTrue(validIRIs.contains(statement.getPredicate()));
+                }));
+            });
+        }
+    }
+
+    @Test
+    public void testGetConflictsFullDeletionWithModification() throws Exception {
+        // Setup:
+        // Scenario 2: One branch fully deletes a subject while the other modifies something on it
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-1");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-2");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Conflict> result = service.getConflicts(leftId, rightId, conn);
+            assertEquals(1, result.size());
+            result.forEach(conflict -> {
+                Difference left = conflict.getLeftDifference();
+                Difference right = conflict.getRightDifference();
+                assertEquals(1, left.getAdditions().size());
+                assertEquals(0, right.getAdditions().size());
+                assertEquals(1, left.getDeletions().size());
+                assertEquals(2, right.getDeletions().size());
+
+                Stream.of(left.getAdditions(), right.getAdditions()).forEach(model -> model.forEach(statement -> {
+                    assertEquals(sub, statement.getSubject());
+                    assertEquals(titleIRI, statement.getPredicate());
+                }));
+            });
+        }
+    }
+
+    @Test
+    public void testGetConflictsSamePropertyAltered() throws Exception {
+        // Setup:
+        // Scenario 3: Both branches change the same property
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict3-1");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict3-2");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Conflict> result = service.getConflicts(leftId, rightId, conn);
+            assertEquals(1, result.size());
+            result.forEach(conflict -> {
+                Difference left = conflict.getLeftDifference();
+                Difference right = conflict.getRightDifference();
+                assertEquals(1, left.getAdditions().size());
+                assertEquals(1, right.getAdditions().size());
+                assertEquals(1, right.getDeletions().size());
+                assertEquals(1, left.getDeletions().size());
+
+                Stream.of(left.getAdditions(), right.getAdditions()).forEach(model -> model.forEach(statement -> {
+                    assertEquals(sub, statement.getSubject());
+                    assertEquals(titleIRI, statement.getPredicate());
+                }));
+            });
+        }
+    }
+
+    @Test
+    public void testGetConflictsChainAddsAndRemovesStatement() throws Exception {
+        // Setup:
+        // Scenario 4: Second chain has two commits which adds then removes something
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict4-1");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict4-3");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Conflict> results = service.getConflicts(leftId, rightId, conn);
+            assertEquals(0, results.size());
+        }
+    }
+
+    @Test
+    public void testGetConflictsPropertyChangeOnSingleBranch() throws Exception {
+        // Setup:
+        // Scenario 5: Change a property on one branch
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict5-1");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict5-2");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Conflict> result = service.getConflicts(leftId, rightId, conn);
+            assertEquals(0, result.size());
+        }
+    }
+
+    @Test
+    public void testGetConflictsOneRemovesOtherAddsToProperty() throws Exception {
+        // Setup:
+        // Scenario 6: One branch removes property while other adds another to it
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict6-1");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict6-2");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Conflict> result = service.getConflicts(leftId, rightId, conn);
+            assertEquals(0, result.size());
+        }
+    }
+
+    @Test
+    public void testGetConflictsWithOnlyOneCommit() throws Exception {
+        // Setup:
+        // Scenario 7: The right is the base commit of the left
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict7-1");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict7-0");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Conflict> result = service.getConflicts(leftId, rightId, conn);
+            assertEquals(0, result.size());
+        }
+    }
+
+    @Test
+    public void testGetConflictsDisconnectedNodes() throws Exception {
+        // Setup:
+        // Scenario 8: Two nodes with no common parents
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict8-1");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict8-0");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Conflict> result = service.getConflicts(leftId, rightId, conn);
+            assertEquals(0, result.size());
+        }
+    }
+
+    @Test
+    public void testGetConflictsDisconnectedNodesSamePropertyAltered() throws Exception {
+        // Setup:
+        // Scenario 9: Both altered same property, no common parents
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict9-1");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict9-2");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Conflict> result = service.getConflicts(leftId, rightId, conn);
+            // TODO: This should be a conflict scenario
+            assertEquals(0, result.size());
+            /*assertEquals(1, result.size());
+            result.forEach(conflict -> {
+                Difference left = conflict.getLeftDifference();
+                Difference right = conflict.getRightDifference();
+                assertEquals(1, left.getAdditions().size());
+                assertEquals(1, right.getAdditions().size());
+                assertEquals(1, right.getDeletions().size());
+                assertEquals(1, left.getDeletions().size());
+
+                Stream.of(left.getAdditions(), right.getAdditions()).forEach(model -> model.forEach(statement -> {
+                    assertEquals(sub, statement.getSubject());
+                    assertEquals(titleIRI, statement.getPredicate());
+                }));
+            });*/
+        }
+    }
+
+    @Test
+    public void testGetConflictsDisconnectedNodesFullDeletionWithAddition() throws Exception {
+        // Setup:
+        // Scenario 10: Disconnected nodes where one side fully deletes a subject while the other adds to it
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict10-1");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict10-2");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Conflict> result = service.getConflicts(leftId, rightId, conn);
+            assertEquals(0, result.size());
+        }
+    }
+
+    @Test
+    public void testGetConflictsDisconnectedNodesPropertyChangeOnSingleBranch() throws Exception {
+        // Setup:
+        // Scenario 11: Change a property on one branch
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict11-1");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict11-2");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Conflict> result = service.getConflicts(leftId, rightId, conn);
+            assertEquals(0, result.size());
+        }
+    }
+
+    @Test
+    public void testGetConflictsDisconnectedNodesOneRemovesOtherAddsToProperty() throws Exception {
+        // Setup:
+        // Scenario 12: One branch removes property while other adds another to it
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict12-1");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict12-2");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Conflict> result = service.getConflicts(leftId, rightId, conn);
+            assertEquals(0, result.size());
+        }
+    }
+
+    @Test
+    public void testGetConflictDisconnectedNodesFullDeletionWithModification() throws Exception {
+        // Setup:
+        // Scenario 13: One branch fully removes a subject while the other modifies something on it
+        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
+        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict13-1");
+        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict13-2");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Conflict> result = service.getConflicts(leftId, rightId, conn);
+            assertEquals(0, result.size());
+        }
+    }
+
     /* throwAlreadyExists */
 
     @Test
@@ -2111,6 +2346,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
 
         // Expected list should have the first commit removed
         List<Resource> expected = commitChain.subList(1, commitChain.size());
+        Collections.reverse(expected);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             List<Resource> actual = service.getDifferenceChain(sourceId, targetId, conn);
@@ -2122,13 +2358,20 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     @Test
     public void testGetDifferenceChainCommonParent() {
         // Setup:
+        List<Resource> commitChain = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4b")).collect(Collectors.toList());
         Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4b");
         Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#testLoner");
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage(String.format("No common parent between Commit %s and %s", sourceId.stringValue(), targetId.stringValue()));
+
+        // Expected should contain all commits from the source chain
+        Collections.reverse(commitChain);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             List<Resource> actual = service.getDifferenceChain(sourceId, targetId, conn);
+
+            assertEquals(actual, commitChain);
         }
     }
 
@@ -2183,7 +2426,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void isCommitBranchHeadTest() {
-        Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#conflict2");
+        Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commitA1");
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(service.commitInBranch(BRANCH_IRI, commitId, conn));
         }
@@ -2191,7 +2434,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void isCommitBranchNotHeadTest() {
-        Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#conflict0");
+        Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commitA0");
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(service.commitInBranch(BRANCH_IRI, commitId, conn));
         }

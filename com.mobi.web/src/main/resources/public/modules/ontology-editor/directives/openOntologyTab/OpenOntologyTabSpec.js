@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Open Ontology Tab directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, prefixes, utilSvc, mapperStateSvc;
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, prefixes, utilSvc, mapperStateSvc, catalogManagerSvc, httpSvc;
 
     beforeEach(function() {
         module('templates');
@@ -30,12 +30,14 @@ describe('Open Ontology Tab directive', function() {
         injectTrustedFilter();
         mockOntologyManager();
         mockOntologyState();
+        mockCatalogManager();
         mockPrefixes();
         mockStateManager();
         mockUtil();
         mockMapperState();
+        mockHttpService();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _stateManagerService_, _prefixes_, _utilService_, _mapperStateService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _stateManagerService_, _prefixes_, _utilService_, _mapperStateService_, _catalogManagerService_, _httpService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -45,12 +47,30 @@ describe('Open Ontology Tab directive', function() {
             prefixes = _prefixes_;
             utilSvc = _utilService_;
             mapperStateSvc = _mapperStateService_;
+            catalogManagerSvc = _catalogManagerService_;
+            httpSvc = _httpService_;
         });
 
-        this.records = [{'@id': 'recordA'}, {'@id': 'recordB'}];
-        this.records[0][prefixes.dcterms + 'identifier'] = [{'@value': 'A'}];
-        this.records[1][prefixes.dcterms + 'identifier'] = [{'@value': 'B'}];
-        ontologyManagerSvc.getAllOntologyRecords.and.returnValue($q.when(this.records));
+        this.records = {
+            data: [],
+            headers: () => [{'x-total-count': 11}]
+        };
+        this.recordsData = [{'@id': 'recordA', [prefixes.dcterms + 'identifier']: [{'@value': 'A'}]},
+            {'@id': 'recordB', [prefixes.dcterms + 'identifier']: [{'@value': 'B'}]},
+            {'@id': 'recordC', [prefixes.dcterms + 'identifier']: [{'@value': 'C'}]},
+            {'@id': 'recordD', [prefixes.dcterms + 'identifier']: [{'@value': 'D'}]},
+            {'@id': 'recordE', [prefixes.dcterms + 'identifier']: [{'@value': 'E'}]},
+            {'@id': 'recordF', [prefixes.dcterms + 'identifier']: [{'@value': 'F'}]},
+            {'@id': 'recordG', [prefixes.dcterms + 'identifier']: [{'@value': 'G'}]},
+            {'@id': 'recordH', [prefixes.dcterms + 'identifier']: [{'@value': 'H'}]},
+            {'@id': 'recordI', [prefixes.dcterms + 'identifier']: [{'@value': 'I'}]},
+            {'@id': 'recordJ', [prefixes.dcterms + 'identifier']: [{'@value': 'J'}]},
+            {'@id': 'recordK', [prefixes.dcterms + 'identifier']: [{'@value': 'K'}]}];
+
+        catalogManagerSvc.getRecords.and.callFake((catalogId, paginatedConfig, id) => {
+            this.records.data = _.chunk(this.recordsData, paginatedConfig.limit)[paginatedConfig.pageIndex];
+            return $q.when(this.records);
+        });
         utilSvc.getDctermsValue.and.returnValue('A');
         this.element = $compile(angular.element('<open-ontology-tab></open-ontology-tab>'))(scope);
         scope.$digest();
@@ -67,6 +87,8 @@ describe('Open Ontology Tab directive', function() {
         prefixes = null;
         utilSvc = null;
         mapperStateSvc = null;
+        catalogManagerSvc = null;
+        httpSvc = null;
         this.element.remove();
     });
 
@@ -80,7 +102,7 @@ describe('Open Ontology Tab directive', function() {
             expect(this.element.querySelectorAll('.ontologies').length).toBe(1);
             expect(this.element.querySelectorAll('.paging-container').length).toBe(1);
         });
-        _.forEach(['block', 'block-content', 'form', 'block-footer', 'pagination'], function(item) {
+        _.forEach(['block', 'block-content', 'form', 'block-footer', 'pagination'], (item) => {
             it('with a ' + item, function() {
                 expect(this.element.find(item).length).toBe(1);
             });
@@ -105,18 +127,13 @@ describe('Open Ontology Tab directive', function() {
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
         });
-        it('depending on how many unopened ontologies there are, the limit, and the offset', function() {
-            this.controller.filteredList = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}];
-            this.controller.limit = 10;
-            this.controller.begin = 0;
-            scope.$digest();
+        it('depending on how many ontologies there are', function() {
             expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(10);
             expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(0);
-
-            this.controller.begin = 10;
+            this.controller.filteredList = [];
             scope.$digest();
-            expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(1);
-            expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(0);
+            expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(0);
+            expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(1);
         });
         it('depending on if the ontology being deleted is currently being used in the mapping tool', function() {
             this.controller.showDeleteConfirmation = true;
@@ -128,26 +145,45 @@ describe('Open Ontology Tab directive', function() {
         });
     });
     describe('controller methods', function() {
+        it('should return the correct title depending on whether the ontology is open', function() {
+            expect(this.controller.getRecordTitle({'@id': 'id'})).toEqual('A');
+            ontologyStateSvc.list = [{ontologyRecord: {recordId: 'id'}}];
+            expect(this.controller.getRecordTitle({'@id': 'id'})).toEqual('<span class="text-muted">(Open)</span> A');
+        });
+        it('should determine whether an ontology is open', function() {
+            expect(this.controller.isOpened({'@id': 'id'})).toEqual(false);
+            ontologyStateSvc.list = [{ontologyRecord: {recordId: 'id'}}];
+            expect(this.controller.isOpened({'@id': 'id'})).toEqual(true);
+        });
         describe('should open an ontology', function() {
             beforeEach(function() {
                 utilSvc.getDctermsValue.and.returnValue('title');
             });
-            it('successfully', function() {
-                var ontologyId = 'ontologyId';
-                ontologyStateSvc.openOntology.and.returnValue($q.resolve(ontologyId));
+            it('if it is already open', function() {
+                ontologyStateSvc.list = [{ontologyRecord: {recordId: 'id'}}];
                 this.controller.open({'@id': 'id'});
-                scope.$apply();
-                expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': 'id'}, 'title');
-                expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith('id', 'title');
+                expect(ontologyStateSvc.openOntology).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.listItem).toEqual({ontologyRecord: {recordId: 'id'}, active: true});
             });
-            it('unless an error occurs', function() {
-                ontologyStateSvc.openOntology.and.returnValue($q.reject('Error message'));
-                this.controller.open({'@id': 'id'});
-                scope.$apply();
-                expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': 'id'}, 'title');
-                expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith('id', 'title');
-                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
+            describe('if it is not already open', function() {
+                it('successfully', function() {
+                    var ontologyId = 'ontologyId';
+                    ontologyStateSvc.openOntology.and.returnValue($q.resolve(ontologyId));
+                    this.controller.open({'@id': 'id'});
+                    scope.$apply();
+                    expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': 'id'}, 'title');
+                    expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith('id', 'title');
+                    expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                });
+                it('unless an error occurs', function() {
+                    ontologyStateSvc.openOntology.and.returnValue($q.reject('Error message'));
+                    this.controller.open({'@id': 'id'});
+                    scope.$apply();
+                    expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': 'id'}, 'title');
+                    expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith('id', 'title');
+                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
+                });
             });
         });
         it('should set the correct state for creating a new ontology', function() {
@@ -158,15 +194,6 @@ describe('Open Ontology Tab directive', function() {
             expect(ontologyStateSvc.newOntology[prefixes.dcterms + 'description']).toEqual([{'@value': ''}]);
             expect(ontologyStateSvc.newLanguage).toEqual(undefined);
             expect(ontologyStateSvc.newKeywords).toEqual([]);
-        });
-        it('should get a page of results', function() {
-            var begin = this.controller.begin;
-            this.controller.getPage('next');
-            expect(this.controller.begin).toBe(begin + this.controller.limit);
-
-            begin = this.controller.begin;
-            this.controller.getPage('prev');
-            expect(this.controller.begin).toBe(begin - this.controller.limit);
         });
         describe('should show the delete confirmation overlay', function() {
             beforeEach(function() {
@@ -202,7 +229,7 @@ describe('Open Ontology Tab directive', function() {
                 this.controller.deleteOntology();
                 scope.$apply();
                 expect(ontologyManagerSvc.deleteOntology).toHaveBeenCalledWith(this.controller.recordId);
-                expect(this.records).toContain(jasmine.objectContaining({'@id': 'recordA'}));
+                expect(this.records.data).toContain(jasmine.objectContaining({'@id': 'recordA'}));
                 expect(stateManagerSvc.getOntologyStateByRecordId).not.toHaveBeenCalled();
                 expect(stateManagerSvc.deleteState).not.toHaveBeenCalled();
                 expect(this.controller.showDeleteConfirmation).toBe(true);
@@ -221,12 +248,34 @@ describe('Open Ontology Tab directive', function() {
                 expect(this.controller.mappingErrorMessage).toBeUndefined();
             });
         });
-        it('should get the list of unopened ontology records', function() {
+        it('should get the list of ontology records', function() {
+            var catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
+            var sortOption = {field: 'http://purl.org/dc/terms/title', asc: true};
+            catalogManagerSvc.sortOptions = [sortOption];
+            var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
+            var paginatedConfig = {
+                pageIndex: 0,
+                limit: 10,
+                recordType: ontologyRecordType,
+                sortOption,
+                searchText: undefined
+            };
             ontologyStateSvc.list = [{ontologyRecord: {'recordId': 'recordA'}}];
-            this.controller.getAllOntologyRecords('sort');
+            this.controller.getPageOntologyRecords();
             scope.$apply();
-            expect(ontologyManagerSvc.getAllOntologyRecords).toHaveBeenCalledWith('sort');
-            expect(this.controller.filteredList).not.toContain(jasmine.objectContaining({'@id': 'recordA'}));
+            expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, paginatedConfig, this.controller.id);
+            expect(this.controller.filteredList).toContain(jasmine.objectContaining({'@id': 'recordA'}));
+        });
+        it('should perform a search if the key pressed was ENTER', function() {
+            spyOn(this.controller, 'getPageOntologyRecords');
+            this.controller.currentPage = 10;
+            this.controller.search({});
+            expect(this.controller.currentPage).toEqual(10);
+            expect(this.controller.getPageOntologyRecords).not.toHaveBeenCalled();
+
+            this.controller.search({keyCode: 13});
+            expect(this.controller.currentPage).toEqual(1);
+            expect(this.controller.getPageOntologyRecords).toHaveBeenCalled();
         });
     });
     it('should filter the ontology list when the filter text changes', function() {

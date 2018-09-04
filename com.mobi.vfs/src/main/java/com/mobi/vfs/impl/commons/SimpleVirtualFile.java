@@ -27,9 +27,8 @@ import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystemException;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
-import com.mobi.vfs.api.VirtualFile;
-import com.mobi.vfs.api.VirtualFilesystemException;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
@@ -105,6 +104,28 @@ public class SimpleVirtualFile implements VirtualFile {
         try {
             return this.file.getContent().getOutputStream(append);
         } catch (FileSystemException e) {
+            throw new VirtualFilesystemException(e);
+        }
+    }
+
+    @Override
+    public void writeToContent(byte[] fileBytes) throws VirtualFilesystemException {
+        try (OutputStream os = this.writeContent()) {
+            os.write(fileBytes);
+        } catch (IOException e) {
+            throw new VirtualFilesystemException(e);
+        }
+    }
+
+    @Override
+    public void writeToContent(InputStream inputStream) throws VirtualFilesystemException {
+        byte[] buffer = new byte[8192];
+        int bytesRead = 0;
+        try (OutputStream os = this.writeContent(true)) {
+            while ((bytesRead = inputStream.read(buffer)) >= 0) {
+                os.write(buffer, 0, bytesRead);
+            }
+        } catch (IOException e) {
             throw new VirtualFilesystemException(e);
         }
     }

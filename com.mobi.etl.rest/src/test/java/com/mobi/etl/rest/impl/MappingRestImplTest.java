@@ -23,7 +23,7 @@ package com.mobi.etl.rest.impl;
  * #L%
  */
 
-import static com.mobi.rest.util.RestUtils.encode;
+import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -41,6 +41,7 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.config.delimited.MappingRecordConfig;
 import com.mobi.etl.api.delimited.MappingId;
 import com.mobi.etl.api.delimited.MappingManager;
@@ -129,6 +130,9 @@ public class MappingRestImplTest extends MobiRestTestNg {
     private MappingId mappingId;
 
     @Mock
+    private CatalogConfigProvider configProvider;
+
+    @Mock
     private CatalogManager catalogManager;
 
     @Mock
@@ -197,11 +201,14 @@ public class MappingRestImplTest extends MobiRestTestNg {
 
         MockitoAnnotations.initMocks(this);
 
+        when(configProvider.getLocalCatalogIRI()).thenReturn(vf.createIRI(CATALOG_IRI));
+
         rest = new MappingRestImpl();
         rest.setManager(manager);
         rest.setVf(vf);
         rest.setTransformer(new SimpleSesameTransformer());
         rest.setEngineManager(engineManager);
+        rest.setConfigProvider(configProvider);
         rest.setCatalogManager(catalogManager);
         rest.setVersioningManager(versioningManager);
         rest.setProvUtils(provUtils);
@@ -222,10 +229,6 @@ public class MappingRestImplTest extends MobiRestTestNg {
     @BeforeMethod
     public void setupMocks() throws Exception {
         reset(mappingId, mappingWrapper, manager, provUtils, catalogManager, versioningManager);
-
-        when(catalogManager.getLocalCatalogIRI()).thenReturn(vf.createIRI(CATALOG_IRI));
-        when(catalogManager.getRecord(eq(vf.createIRI(CATALOG_IRI)), eq(record.getResource()), any(MappingRecordFactory.class)))
-                .thenReturn(Optional.of(record));
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 

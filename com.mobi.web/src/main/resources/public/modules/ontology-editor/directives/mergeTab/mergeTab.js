@@ -80,7 +80,7 @@
                             .then(commitId => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.merge.target['@id'], commitId), $q.reject)
                             .then(() => {
                                 if (checkbox) {
-                                    om.deleteOntology(dvm.os.listItem.ontologyRecord.recordId, sourceId)
+                                    om.deleteOntologyBranch(dvm.os.listItem.ontologyRecord.recordId, sourceId)
                                         .then(() => {
                                             dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, sourceId);
                                             onSuccess();
@@ -103,6 +103,7 @@
                     }
 
                     function onSuccess() {
+                        dvm.os.resetStateTabs();
                         dvm.util.createSuccessToast('Your merge was successful.');
                         dvm.cancel();
                     }

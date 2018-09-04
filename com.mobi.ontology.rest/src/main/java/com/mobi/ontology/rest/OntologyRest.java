@@ -27,7 +27,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-
 import java.io.InputStream;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
@@ -134,23 +133,19 @@ public interface OntologyRest {
                          @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit);
 
     /**
-     * Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is
-     * specified. In which case the branch specified by the branchId query parameter will be removed and nothing else.
+     * Deletes the ontology associated with the requested record ID in the requested format.
      *
+     * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
-     *                    master Branch.
      * @return OK.
      */
     @DELETE
     @Path("{recordId}")
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the ontology in the requested format.")
+    @ApiOperation("Deletes the OntologyRecord with the requested recordId.")
     Response deleteOntology(@Context ContainerRequestContext context,
-                            @PathParam("recordId") String recordIdStr,
-                            @QueryParam("branchId") String branchIdStr);
+                            @PathParam("recordId") String recordIdStr);
 
     /**
      * Streams the ontology associated with the requested record ID to an OutputStream.
@@ -241,6 +236,25 @@ public interface OntologyRest {
                                    @QueryParam("branchId") String branchIdStr,
                                    @QueryParam("commitId") String commitIdStr,
                                    @FormDataParam("file") InputStream fileInputStream);
+
+    /**
+     Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is
+     * specified. In which case the branch specified by the branchId query parameter will be removed and nothing else.
+     *
+     * @param context     the context of the request.
+     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @return OK.
+     */
+    @DELETE
+    @Path("{recordId}/branches/{branchId}")
+    @RolesAllowed("user")
+    @ApiOperation("Deletes the Branch with the requested BranchId from the OntologyRecord with the provided recordId.")
+    Response deleteOntologyBranch(@Context ContainerRequestContext context,
+                            @PathParam("recordId") String recordIdStr,
+                            @PathParam("branchId") String branchIdStr);
 
     /**
      * Returns a JSON object with keys for the list of IRIs of derived skos:Concepts, the list of IRIs of derived

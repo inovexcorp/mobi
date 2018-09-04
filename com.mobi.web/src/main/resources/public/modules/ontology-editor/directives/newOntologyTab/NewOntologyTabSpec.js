@@ -72,7 +72,6 @@ describe('New Ontology Tab directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('new-ontology-tab')).toBe(true);
-            expect(this.element.querySelectorAll('.actions').length).toBe(1);
             expect(this.element.querySelectorAll('.form-container').length).toBe(1);
         });
         _.forEach(['block', 'block-content', 'form', 'custom-label', 'text-input', 'text-area', 'keyword-select'], function(item) {
@@ -99,8 +98,8 @@ describe('New Ontology Tab directive', function() {
             expect(this.element.find('error-display').length).toBe(1);
         });
         it('depending on whether the ontology iri is valid', function() {
-            var formGroup = angular.element(this.element.querySelectorAll('.form-group')[0]);
-            expect(formGroup.hasClass('has-error')).toBe(false);
+            var iriInput = angular.element(this.element.querySelectorAll('.form-group input')[0]);
+            expect(iriInput.hasClass('is-invalid')).toBe(false);
 
             this.controller.form = {
                 iri: {
@@ -110,7 +109,7 @@ describe('New Ontology Tab directive', function() {
                 }
             }
             scope.$digest();
-            expect(formGroup.hasClass('has-error')).toBe(true);
+            expect(iriInput.hasClass('is-invalid')).toBe(true);
         });
         it('depending on the form validity', function() {
             var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
@@ -203,7 +202,7 @@ describe('New Ontology Tab directive', function() {
         expect(this.controller.create).toHaveBeenCalled();
     });
     it('should set the correct state when the cancel button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(ontologyStateSvc.showNewTab).toBe(false);
     });

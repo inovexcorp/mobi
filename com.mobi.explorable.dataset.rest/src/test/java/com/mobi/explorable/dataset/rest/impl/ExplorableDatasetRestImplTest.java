@@ -27,7 +27,7 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
-import static com.mobi.rest.util.RestUtils.encode;
+import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -39,6 +39,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.api.builder.OntologyIdentifier;
@@ -131,6 +132,9 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
     private DatasetManager datasetManager;
 
     @Mock
+    private CatalogConfigProvider configProvider;
+
+    @Mock
     private CatalogManager catalogManager;
 
     @Mock
@@ -195,6 +199,8 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         dataProperties.add(dataProperty);
         objectProperties.add(objectProperty);
 
+        when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
+
         when(dataProperty.getIRI()).thenReturn(dataPropertyId);
         when(objectProperty.getIRI()).thenReturn(objectPropertyId);
         when(ontologyManager.retrieveOntology(ontologyRecordId, vf.createIRI(branchId), vf.createIRI(commitId))).thenReturn(Optional.of(ontology));
@@ -202,6 +208,7 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
         rest = new ExplorableDatasetRestImpl();
         injectOrmFactoryReferencesIntoService(rest);
+        rest.setConfigProvider(configProvider);
         rest.setCatalogManager(catalogManager);
         rest.setDatasetManager(datasetManager);
         rest.setFactory(vf);
@@ -221,7 +228,6 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.of(record));
         when(datasetManager.getConnection(recordId)).thenReturn(datasetConnection);
 
-        when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogId);
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(compiledModel);
         when(catalogManager.getRecord(catalogId, ontologyRecordId, ontologyRecordFactory)).thenReturn(Optional.empty());
 

@@ -50,9 +50,9 @@
          */
         .directive('requestDetailsForm', requestDetailsForm);
 
-    requestDetailsForm.$inject = ['mergeRequestsStateService', 'utilService'];
+    requestDetailsForm.$inject = ['mergeRequestsStateService', 'userManagerService', 'utilService', 'prefixes'];
 
-    function requestDetailsForm(mergeRequestsStateService, utilService) {
+    function requestDetailsForm(mergeRequestsStateService, userManagerService, utilService, prefixes) {
         return {
             restrict: 'E',
             templateUrl: 'modules/merge-requests/directives/requestDetailsForm/requestDetailsForm.html',
@@ -62,7 +62,9 @@
             controller: function() {
                 var dvm = this;
                 dvm.util = utilService;
+                dvm.prefixes = prefixes;
                 dvm.state = mergeRequestsStateService;
+                dvm.um = userManagerService;
 
                 dvm.state.requestConfig.title = dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title');
             }

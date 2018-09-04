@@ -69,10 +69,12 @@ import org.osgi.framework.BundleContext;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,13 +112,16 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     private Map<String, Policy> entries;
     private IRI missingPolicyId = VALUE_FACTORY.createIRI("urn:missing");
     private IRI policyId = VALUE_FACTORY.createIRI("http://mobi.com/policies/policy1");
+    private IRI defaultPolicyId = VALUE_FACTORY.createIRI("http://mobi.com/policies/ontology-creation");
     private IRI relatedResource = VALUE_FACTORY.createIRI("http://mobi.com/catalog-local");
     private IRI relatedAction = VALUE_FACTORY.createIRI("http://mobi.com/ontologies/policy#Create");
     private PolicyFile policyFile;
     private PolicyFile missingPolicyFile;
+    private PolicyFile defaultPolicyFile;
     private PolicyType policyType;
     private PolicyType newPolicyType;
     private PolicyType missingPolicyType;
+    private PolicyType defaultPolicyType;
     private String filePath;
     private Map<String, Object> props;
 
@@ -144,6 +149,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         policyType = JAXB.unmarshal(getClass().getResourceAsStream("/policy1.xml"), PolicyType.class);
         newPolicyType = JAXB.unmarshal(getClass().getResourceAsStream("/newPolicy.xml"), PolicyType.class);
         missingPolicyType = JAXB.unmarshal(getClass().getResourceAsStream("/missingPolicy.xml"), PolicyType.class);
+        defaultPolicyType = JAXB.unmarshal(getClass().getResourceAsStream("/http%3A%2F%2Fmobi.com%2Fpolicies%2Fontology-creation.xml"), PolicyType.class);
 
         // Setup PolicyCache
         MockitoAnnotations.initMocks(this);
@@ -187,7 +193,7 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
     public void cleanup() throws Exception {
         VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
         for (VirtualFile child : directory.getChildren()) {
-            child.delete();
+            child.deleteAll();
         }
     }
 
@@ -231,6 +237,64 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         setUpMissingFileTest();
 
         manager.start(context, props);
+    }
+
+    @Test
+    public void startWithBundleNoDefaultsTest() throws Exception {
+        // Setup:
+        setUpBundleTest();
+        manager.start(context, props);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Model model = RepositoryResults.asModel(conn.getStatements(null, null, null, defaultPolicyId), MODEL_FACTORY);
+            assertFalse(model.isEmpty());
+            Optional<PolicyFile> optPolicyFile = policyFileFactory.getExisting(defaultPolicyId, model);
+            assertTrue(optPolicyFile.isPresent());
+            PolicyFile policyFile = optPolicyFile.get();
+            Optional<IRI> retrievalURL = policyFile.getRetrievalURL();
+            assertTrue(retrievalURL.isPresent());
+            VirtualFile virtualFile = vfs.resolveVirtualFile(retrievalURL.get().stringValue());
+            assertTrue(virtualFile.exists() && virtualFile.isFile());
+            Optional<String> fileName = policyFile.getFileName();
+            assertTrue(fileName.isPresent());
+            Optional<Double> fileSize = policyFile.getSize();
+            assertTrue(fileSize.isPresent());
+            assertEquals((double) virtualFile.getSize(), fileSize.get(), 0.01);
+            assertTrue(policyFile.getChecksum().isPresent());
+            assertTrue(policyFile.getRelatedSubject().isEmpty());
+            assertTrue(!policyFile.getRelatedResource().isEmpty() && policyFile.getRelatedResource().contains(relatedResource));
+        }
+    }
+
+    @Test
+    public void startWithBundleDefaultsTest() throws Exception {
+        // Setup:
+        setUpBundleTest();
+        defaultPolicyFile = policyFileFactory.createNew(defaultPolicyId);
+        VirtualFile file = vfs.resolveVirtualFile(getClass().getResourceAsStream("/http%3A%2F%2Fmobi.com%2Fpolicies%2Fontology-creation.xml"), fileLocation);
+        defaultPolicyFile.setRetrievalURL(VALUE_FACTORY.createIRI(file.getIdentifier()));
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(defaultPolicyFile.getModel(), defaultPolicyId);
+        }
+        manager.start(context, props);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Model model = RepositoryResults.asModel(conn.getStatements(null, null, null, defaultPolicyId), MODEL_FACTORY);
+            assertFalse(model.isEmpty());
+            Optional<PolicyFile> optPolicyFile = policyFileFactory.getExisting(defaultPolicyId, model);
+            assertTrue(optPolicyFile.isPresent());
+            PolicyFile policyFile = optPolicyFile.get();
+            Optional<IRI> retrievalURL = policyFile.getRetrievalURL();
+            assertTrue(retrievalURL.isPresent());
+            VirtualFile virtualFile = vfs.resolveVirtualFile(retrievalURL.get().stringValue());
+            assertTrue(virtualFile.exists() && virtualFile.isFile());
+            Optional<String> fileName = policyFile.getFileName();
+            assertTrue(fileName.isPresent());
+            Optional<Double> fileSize = policyFile.getSize();
+            assertTrue(fileSize.isPresent());
+            assertEquals((double) virtualFile.getSize(), fileSize.get(), 0.01);
+            assertTrue(policyFile.getChecksum().isPresent());
+            assertTrue(policyFile.getRelatedSubject().isEmpty());
+            assertTrue(!policyFile.getRelatedResource().isEmpty() && policyFile.getRelatedResource().contains(relatedResource));
+        }
     }
 
     @Test
@@ -428,7 +492,6 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
 
         manager.updatePolicy(policy);
         verify(policyCache, atLeastOnce()).getPolicyCache();
-        verify(cache).replace(eq(policyId.stringValue()), any(Policy.class));
         assertTrue(entries.containsKey(policyId.stringValue()));
         Policy cachedPolicy = entries.get(policyId.stringValue());
         assertTrue(cachedPolicy instanceof BalanaPolicy);
@@ -437,11 +500,14 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
             Optional<PolicyFile> optPolicyFile = policyFileFactory.getExisting(policyId, RepositoryResults.asModel(conn.getStatements(null, null, null, policyId), MODEL_FACTORY));
             assertTrue(optPolicyFile.isPresent());
             PolicyFile newPolicyFile = optPolicyFile.get();
-            Optional<IRI> filePath = policyFile.getRetrievalURL();
-            assertTrue(filePath.isPresent());
+            Optional<IRI> filePathOld = policyFile.getRetrievalURL();
+            Optional<IRI> filePathNew = newPolicyFile.getRetrievalURL();
+            assertTrue(filePathNew.isPresent());
             assertTrue(newPolicyFile.getChecksum().isPresent());
-            VirtualFile virtualFile = vfs.resolveVirtualFile(filePath.get().stringValue());
-            assertTrue(virtualFile.exists() && virtualFile.isFile());
+            VirtualFile virtualFileOld = vfs.resolveVirtualFile(filePathOld.get().stringValue());
+            assertFalse(virtualFileOld.exists());
+            VirtualFile virtualFileNew = vfs.resolveVirtualFile(filePathNew.get().stringValue());
+            assertTrue(virtualFileNew.exists() && virtualFileNew.isFile());
             assertTrue(!newPolicyFile.getRelatedResource().isEmpty() && newPolicyFile.getRelatedResource().contains(relatedResource));
             assertTrue(!newPolicyFile.getRelatedAction().isEmpty() && newPolicyFile.getRelatedAction().contains(relatedAction));
             assertTrue(newPolicyFile.getRelatedSubject().isEmpty());
@@ -464,11 +530,14 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
                     RepositoryResults.asModel(conn.getStatements(null, null, null, policyFile.getResource()), MODEL_FACTORY));
             assertTrue(optPolicyFile.isPresent());
             PolicyFile newPolicyFile = optPolicyFile.get();
-            Optional<IRI> filePath = policyFile.getRetrievalURL();
-            assertTrue(filePath.isPresent());
+            Optional<IRI> filePathOld = policyFile.getRetrievalURL();
+            Optional<IRI> filePathNew = newPolicyFile.getRetrievalURL();
+            assertTrue(filePathNew.isPresent());
             assertTrue(newPolicyFile.getChecksum().isPresent());
-            VirtualFile virtualFile = vfs.resolveVirtualFile(filePath.get().stringValue());
-            assertTrue(virtualFile.exists() && virtualFile.isFile());
+            VirtualFile virtualFileOld = vfs.resolveVirtualFile(filePathOld.get().stringValue());
+            assertFalse(virtualFileOld.exists());
+            VirtualFile virtualFileNew = vfs.resolveVirtualFile(filePathNew.get().stringValue());
+            assertTrue(virtualFileNew.exists() && virtualFileNew.isFile());
             assertTrue(!newPolicyFile.getRelatedResource().isEmpty() && newPolicyFile.getRelatedResource().contains(relatedResource));
             assertTrue(!newPolicyFile.getRelatedAction().isEmpty() && newPolicyFile.getRelatedAction().contains(relatedAction));
             assertTrue(newPolicyFile.getRelatedSubject().isEmpty());
@@ -559,6 +628,27 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(missingPolicyFile.getModel(), missingPolicyId);
         }
+    }
+
+    private void setUpBundleTest() {
+        URL url = BalanaPolicyManagerTest.class.getResource("/http%3A%2F%2Fmobi.com%2Fpolicies%2Fontology-creation.xml");
+        when(bundle.findEntries("/policies", "*.xml", true)).thenReturn(new Enumeration<URL>() {
+            boolean grabbed = false;
+            @Override
+            public boolean hasMoreElements() {
+                return !grabbed;
+            }
+
+            @Override
+            public URL nextElement() {
+                grabbed = true;
+                try {
+                    return url;
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        });
     }
 
     private void initializeRepo() throws Exception {

@@ -128,15 +128,15 @@ describe('Imports Overlay directive', function() {
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
         it('depending on whether the url pattern is incorrect', function() {
-            var formGroup = angular.element(this.element.querySelectorAll('.form-group')[0]);
-            expect(formGroup.hasClass('has-error')).toBe(false);
+            var formGroup = angular.element(this.element.querySelectorAll('.form-group input')[0]);
+            expect(formGroup.hasClass('is-invalid')).toBe(false);
             this.controller.form.url = {
                 '$error': {
                     pattern: true
                 }
             };
             scope.$digest();
-            expect(formGroup.hasClass('has-error')).toBe(true);
+            expect(formGroup.hasClass('is-invalid')).toBe(true);
         });
         it('depending on how many ontologies there are', function() {
             expect(this.element.find('info-message').length).toEqual(1);
@@ -343,7 +343,7 @@ describe('Imports Overlay directive', function() {
         expect(this.controller.addImport).toHaveBeenCalled();
     });
     it('should call onClose when the button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(scope.onClose).toHaveBeenCalled();
     });

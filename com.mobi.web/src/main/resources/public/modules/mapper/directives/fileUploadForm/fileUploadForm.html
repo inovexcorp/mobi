@@ -25,11 +25,7 @@
     <div class="form-group">
         <file-input ng-model="dvm.fileObj" accept=".csv,.xls,.xlsx,.tsv" on-change="dvm.upload()" required></file-input>
     </div>
-    <div class="checkbox">
-        <label>
-            <input type="checkbox" ng-model="dvm.dm.containsHeaders"/> Contains headers
-        </label>
-    </div>
+    <checkbox display-text="'Contains headers'" ng-model="dvm.dm.containsHeaders"></checkbox>
     <div ng-if="dvm.fileObj && !dvm.isExcel()" class="form-group">
         <custom-label>Separator</custom-label>
         <radio-button value="','" ng-model="dvm.dm.separator" display-text="'Comma'"></radio-button>

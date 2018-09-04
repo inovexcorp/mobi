@@ -2,7 +2,7 @@
 @import "./src/main/resources/public/css/variables";
 
 .catalog {
-    background-color: $gray-lighter;
+    background-color: var(--light);
 
     .entity-title {
         text-align: center;
@@ -15,8 +15,9 @@
         .list-group-item {
             outline: 0;
             border-radius: 0;
-            border-bottom: 1px solid $gray-lighter;
+            border-bottom: 1px solid var(--light);
             padding: 0.5em;
+            text-align: left;
 
             h3 {
                 display: inline-block;

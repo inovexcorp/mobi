@@ -82,6 +82,7 @@ describe('Property Values directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('property-values')).toBe(true);
+            expect(this.element.querySelectorAll('.value-header').length).toBe(1);
         });
         it('based on the number of values', function() {
             var values = this.element.querySelectorAll('.value-container');
@@ -96,7 +97,7 @@ describe('Property Values directive', function() {
             expect(deleteButtons.length).toBe(2);
         });
         it('depending on whether the values are open or closed', function() {
-            var icon = angular.element(this.element.querySelectorAll('h5 i')[0]);
+            var icon = angular.element(this.element.querySelectorAll('.value-header i')[0]);
             var values = this.element.querySelectorAll('.value-container');
             expect(icon.hasClass('fa-chevron-up')).toBe(true);
             _.forEach(values, function(value) {

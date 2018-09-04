@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Instance Block directive', function() {
-    var $compile, scope, discoverStateSvc, $httpBackend, exploreSvc, utilSvc, uuid, splitIRI;
+    var $compile, scope, $q, discoverStateSvc, $httpBackend, exploreSvc, utilSvc, uuid, splitIRI;
 
     beforeEach(function() {
         module('templates');
@@ -37,9 +37,10 @@ describe('Instance Block directive', function() {
             });
         });
 
-        inject(function(_$compile_, _$rootScope_, _discoverStateService_, _$httpBackend_, _exploreService_, _utilService_, _uuid_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _discoverStateService_, _$httpBackend_, _exploreService_, _utilService_, _uuid_, _splitIRIFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             discoverStateSvc = _discoverStateService_;
             $httpBackend = _$httpBackend_;
             exploreSvc = _exploreService_;
@@ -56,6 +57,7 @@ describe('Instance Block directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        $q = null;
         discoverStateSvc = null;
         $httpBackend = null;
         exploreSvc = null;
@@ -91,60 +93,40 @@ describe('Instance Block directive', function() {
         it('with a block-footer', function() {
             expect(this.element.find('block-footer').length).toBe(1);
         });
-        it('with a paging-details.pull-left', function() {
-            expect(this.element.querySelectorAll('paging-details.pull-left').length).toBe(1);
+        it('with a paging-details.float-left', function() {
+            expect(this.element.querySelectorAll('paging-details.float-left').length).toBe(1);
         });
-        it('with a pagination.pull-right', function() {
-            expect(this.element.querySelectorAll('pagination.pull-right').length).toBe(1);
+        it('with a pagination.float-right', function() {
+            expect(this.element.querySelectorAll('pagination.float-right').length).toBe(1);
         });
-        it('with a paging-details.pull-left', function() {
-            expect(this.element.querySelectorAll('paging-details.pull-left').length).toBe(1);
+        it('with a paging-details.float-left', function() {
+            expect(this.element.querySelectorAll('paging-details.float-left').length).toBe(1);
         });
-        it('with a pagination.pull-right', function() {
-            expect(this.element.querySelectorAll('pagination.pull-right').length).toBe(1);
+        it('with a pagination.float-right', function() {
+            expect(this.element.querySelectorAll('pagination.float-right').length).toBe(1);
         });
     });
-
     describe('controller methods', function() {
-        describe('getPage should hit the correct endpoint when direction is', function() {
+        describe('setPage should call the correct methods when getClassInstanceDetails', function() {
             beforeEach(function() {
-                this.nextLink = 'http://mobi.com/next';
-                this.prevLink = 'http://mobi.com/prev';
-                discoverStateSvc.explore.instanceDetails.links = {
-                    next: this.nextLink,
-                    prev: this.prevLink
-                }
-                exploreSvc.createPagedResultsObject.and.returnValue({prop: 'paged', currentPage: 0});
+                exploreSvc.createPagedResultsObject.and.returnValue({prop: 'paged', currentPage: 1});
             });
-            describe('next and get', function() {
-                it('succeeds', function() {
-                    $httpBackend.expectGET(this.nextLink).respond(200, [{}]);
-                    this.controller.getPage('next');
-                    flushAndVerify($httpBackend);
-                    expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith(jasmine.objectContaining({status: 200, data: [{}]}));
-                    expect(discoverStateSvc.explore.instanceDetails).toEqual(jasmine.objectContaining({prop: 'paged', currentPage: 1}));
-                });
-                it('fails', function() {
-                    $httpBackend.expectGET(this.nextLink).respond(400, null, null, 'error');
-                    this.controller.getPage('next');
-                    flushAndVerify($httpBackend);
-                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
-                });
+            it('resolves', function() {
+                exploreSvc.getClassInstanceDetails.and.returnValue($q.when({}));
+                this.controller.setPage();
+                scope.$apply();
+                expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {limit: discoverStateSvc.explore.instanceDetails.limit, offset: (discoverStateSvc.explore.instanceDetails.currentPage - 1) * discoverStateSvc.explore.instanceDetails.limit});
+                expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith({});
+                expect(discoverStateSvc.explore.instanceDetails).toEqual(jasmine.objectContaining({prop: 'paged', currentPage: 1}));
+                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
-            describe('prev and get', function() {
-                it('succeeds', function() {
-                    $httpBackend.expectGET(this.prevLink).respond(200, [{}]);
-                    this.controller.getPage('prev');
-                    flushAndVerify($httpBackend);
-                    expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith(jasmine.objectContaining({status: 200, data: [{}]}));
-                    expect(discoverStateSvc.explore.instanceDetails).toEqual(jasmine.objectContaining({prop: 'paged', currentPage: -1}));
-                });
-                it('fails', function() {
-                    $httpBackend.expectGET(this.prevLink).respond(400, null, null, 'error');
-                    this.controller.getPage('prev');
-                    flushAndVerify($httpBackend);
-                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
-                });
+            it('rejects', function() {
+                exploreSvc.getClassInstanceDetails.and.returnValue($q.reject('Error'));
+                this.controller.setPage();
+                scope.$apply();
+                expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {limit: discoverStateSvc.explore.instanceDetails.limit, offset: (discoverStateSvc.explore.instanceDetails.currentPage - 1) * discoverStateSvc.explore.instanceDetails.limit});
+                expect(exploreSvc.createPagedResultsObject).not.toHaveBeenCalled();
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error');
             });
         });
         it('create should set the correct variables', function() {

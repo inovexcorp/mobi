@@ -77,7 +77,7 @@ describe('Mapping Commits Page directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('mapping-commits-page')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-8').length).toBe(1);
         });
         it('with a block', function() {
             expect(this.element.find('block').length).toBe(1);
@@ -88,14 +88,8 @@ describe('Mapping Commits Page directive', function() {
         it('with a block-content', function() {
             expect(this.element.find('block-content').length).toBe(1);
         });
-        it('depending on whether a new mapping is being created', function() {
-            expect(this.element.find('p').length).toBe(0);
+        it('with a commit-history-table', function() {
             expect(this.element.find('commit-history-table').length).toBe(1);
-
-            mapperStateSvc.newMapping = true;
-            scope.$digest();
-            expect(this.element.find('p').length).toBe(1);
-            expect(this.element.find('commit-history-table').length).toBe(0);
         });
     });
 });

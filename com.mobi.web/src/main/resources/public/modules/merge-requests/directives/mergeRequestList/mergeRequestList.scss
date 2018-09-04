@@ -18,9 +18,10 @@
     }
 
     .request {
-        border-bottom: 1px solid $gray-lighter;
+        border-bottom: 1px solid var(--light);
         display: flex;
         flex-direction: row;
+        cursor: pointer;
 
         h3 {
             margin: 0;
@@ -35,12 +36,24 @@
             align-items: center;
 
             .action {
-                color: $gray-light;
-                display: inline-block;
                 text-decoration: none;
 
                 &:hover {
-                    color: $gray;
+                    color: var(--grey) !important;
+                }
+            }
+        }
+        .request-assignees {
+            .assignees {
+                li {
+                    display: inline;
+
+                    &:after {
+                        content: ', ';
+                    }
+                    &.last:after {
+                        content: '';
+                    }
                 }
             }
         }

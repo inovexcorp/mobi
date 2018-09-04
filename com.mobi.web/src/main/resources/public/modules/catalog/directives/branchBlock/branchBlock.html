@@ -20,18 +20,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="branch-block col-xs-12">
+<div class="branch-block col">
     <block>
         <block-header>
             <catalog-breadcrumb></catalog-breadcrumb>
-            <h3 class="entity-title">{{dvm.util.getDctermsValue(dvm.branch, 'title')}}</h3>
         </block-header>
         <block-content class="padding">
+            <h3 class="entity-title">{{dvm.util.getDctermsValue(dvm.branch, 'title')}}</h3>
             <entity-publisher entity="dvm.branch"></entity-publisher>
             <entity-dates entity="dvm.branch"></entity-dates>
             <entity-description entity="dvm.branch"></entity-description>
             <custom-label>Commits:</custom-label>
-            <commit-history-table branch="dvm.branch" record-id="dvm.recordId" graph></commit-history-table>
+            <commit-history-table branch-title="dvm.util.getDctermsValue(dvm.branch, 'title')" commit-id="dvm.util.getPropertyId(dvm.branch, dvm.prefixes.catalog + 'head')" graph></commit-history-table>
         </block-content>
     </block>
 </div>

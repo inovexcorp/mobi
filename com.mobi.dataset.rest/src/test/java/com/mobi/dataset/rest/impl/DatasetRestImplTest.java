@@ -26,10 +26,9 @@ package com.mobi.dataset.rest.impl;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
-import static com.mobi.rest.util.RestUtils.encode;
+import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -46,10 +45,10 @@ import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.api.builder.DatasetRecordConfig;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
-import com.mobi.dataset.ontology.dataset.DatasetRecordFactory;
 import com.mobi.dataset.pagination.DatasetPaginatedSearchParams;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.rdf.RDFImportService;
@@ -131,6 +130,9 @@ public class DatasetRestImplTest extends MobiRestTestNg {
     private CatalogManager catalogManager;
 
     @Mock
+    private CatalogConfigProvider configProvider;
+
+    @Mock
     private PaginatedSearchResults<DatasetRecord> results;
 
     @Mock
@@ -173,12 +175,16 @@ public class DatasetRestImplTest extends MobiRestTestNg {
         deleteActivity = deleteActivityFactory.createNew(vf.createIRI("http://example.com/activity/delete"));
 
         MockitoAnnotations.initMocks(this);
+
+        when(configProvider.getLocalCatalogIRI()).thenReturn(localIRI);
+
         rest = new DatasetRestImpl();
         rest.setManager(datasetManager);
         rest.setVf(vf);
         rest.setMf(mf);
         rest.setTransformer(transformer);
         rest.setEngineManager(engineManager);
+        rest.setConfigProvider(configProvider);
         rest.setCatalogManager(catalogManager);
         rest.setBNodeService(service);
         rest.setProvUtils(provUtils);
@@ -213,8 +219,6 @@ public class DatasetRestImplTest extends MobiRestTestNg {
         when(datasetManager.safeDeleteDataset(record1.getResource())).thenReturn(record1);
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 
-        when(catalogManager.getLocalCatalogIRI()).thenReturn(localIRI);
-        when(catalogManager.getRecord(eq(localIRI), eq(record1.getResource()), any(DatasetRecordFactory.class))).thenReturn(Optional.of(record1));
         when(catalogManager.getMasterBranch(localIRI, ontologyRecordIRI)).thenReturn(branch);
 
         when(results.getPage()).thenReturn(Stream.of(record1, record2, record3).collect(Collectors.toList()));

@@ -118,7 +118,7 @@ describe('Merge Tab directive', function() {
             });
         });
         it('with a button to cancel', function() {
-            var buttons = this.element.querySelectorAll('block-footer .btn-default');
+            var buttons = this.element.querySelectorAll('block-footer .btn:not(.btn-primary)');
             expect(buttons.length).toEqual(1);
             expect(angular.element(buttons[0]).text().trim()).toEqual('Cancel');
         });
@@ -159,6 +159,16 @@ describe('Merge Tab directive', function() {
             ontologyStateSvc.listItem.merge.target = this.targetBranch;
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
+        });
+        it('depending on whether the source branch is up to date', function() {
+            ontologyStateSvc.listItem.merge.target = this.targetBranch;
+            scope.$digest();
+            var button = angular.element(this.element.querySelectorAll('block-footer .btn-merge')[0]);
+            expect(button.attr('disabled')).toBeFalsy();
+
+            ontologyStateSvc.listItem.upToDate = false;
+            scope.$digest();
+            expect(button.attr('disabled')).toBeTruthy();
         });
     });
     describe('controller methods', function() {
@@ -230,23 +240,23 @@ describe('Merge Tab directive', function() {
                         beforeEach(function() {
                             ontologyStateSvc.listItem.merge.checkbox = true;
                         });
-                        it('and deleteOntology is resolved', function() {
-                            ontologyManagerSvc.deleteOntology.and.returnValue($q.when());
+                        it('and deleteOntologyBranch is resolved', function() {
+                            ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.when());
                             this.controller.merge();
                             scope.$apply();
                             expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, jasmine.any(Object));
                             expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.targetId, this.commitId);
-                            expect(ontologyManagerSvc.deleteOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.branchId);
+                            expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.branchId);
                             expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.branchId);
                             expect(util.createSuccessToast).toHaveBeenCalled();
                         });
-                        it('and deleteOntology is rejected', function() {
-                            ontologyManagerSvc.deleteOntology.and.returnValue($q.reject(this.error));
+                        it('and deleteOntologyBranch is rejected', function() {
+                            ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.reject(this.error));
                             this.controller.merge();
                             scope.$apply();
                             expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, jasmine.any(Object));
                             expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.targetId, this.commitId);
-                            expect(ontologyManagerSvc.deleteOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.branchId);
+                            expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.branchId);
                             expect(this.controller.error).toEqual(this.error);
                         });
                     });
@@ -311,7 +321,7 @@ describe('Merge Tab directive', function() {
     it('should call cancel when the button is clicked', function() {
         this.compile();
         spyOn(this.controller, 'cancel');
-        var button = angular.element(this.element.querySelectorAll('block-footer .btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('block-footer .btn:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });

@@ -28,7 +28,7 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getOrmFactoryRegistry;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
-import static com.mobi.rest.util.RestUtils.encode;
+import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -63,6 +63,7 @@ import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -163,6 +164,9 @@ public class CatalogRestImplTest extends MobiRestTestNg {
     private CatalogManager catalogManager;
 
     @Mock
+    private CatalogConfigProvider configProvider;
+
+    @Mock
     private VersioningManager versioningManager;
 
     @Mock
@@ -249,12 +253,15 @@ public class CatalogRestImplTest extends MobiRestTestNg {
 
         MockitoAnnotations.initMocks(this);
         when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
+        when(configProvider.getLocalCatalogIRI()).thenReturn(vf.createIRI(LOCAL_IRI));
+        when(configProvider.getDistributedCatalogIRI()).thenReturn(vf.createIRI(DISTRIBUTED_IRI));
 
         rest = new CatalogRestImpl();
         injectOrmFactoryReferencesIntoService(rest);
         rest.setVf(vf);
         rest.setEngineManager(engineManager);
         rest.setTransformer(transformer);
+        rest.setConfigProvider(configProvider);
         rest.setCatalogManager(catalogManager);
         rest.setFactoryRegistry(getOrmFactoryRegistry());
         rest.setVersioningManager(versioningManager);
@@ -291,8 +298,6 @@ public class CatalogRestImplTest extends MobiRestTestNg {
 
         when(catalogManager.getLocalCatalog()).thenReturn(localCatalog);
         when(catalogManager.getDistributedCatalog()).thenReturn(distributedCatalog);
-        when(catalogManager.getLocalCatalogIRI()).thenReturn(vf.createIRI(LOCAL_IRI));
-        when(catalogManager.getDistributedCatalogIRI()).thenReturn(vf.createIRI(DISTRIBUTED_IRI));
         when(catalogManager.getRecordIds(any(Resource.class))).thenReturn(Collections.singleton(testRecord.getResource()));
         when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(results);
         when(catalogManager.getRecord(any(Resource.class), any(Resource.class), eq(recordFactory)))
@@ -2190,13 +2195,13 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
         assertEquals(response.getLinks().size(), 0);
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), COMMIT_IRIS.length);
-            for (Object aResult : result) {
-                JSONObject commitObj = JSONObject.fromObject(aResult);
+            JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(array.size(), COMMIT_IRIS.length);
+            array.forEach(result -> {
+                JSONObject commitObj = JSONObject.fromObject(result);
                 assertTrue(commitObj.containsKey("id"));
                 assertTrue(Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id")));
-            }
+            });
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -2213,13 +2218,13 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
         assertEquals(response.getLinks().size(), 0);
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), COMMIT_IRIS.length);
-            for (Object aResult : result) {
-                JSONObject commitObj = JSONObject.fromObject(aResult);
+            JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(array.size(), COMMIT_IRIS.length);
+            array.forEach(result -> {
+                JSONObject commitObj = JSONObject.fromObject(result);
                 assertTrue(commitObj.containsKey("id"));
                 assertTrue(Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id")));
-            }
+            });
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -2242,9 +2247,9 @@ public class CatalogRestImplTest extends MobiRestTestNg {
             assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
         });
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), 1);
-            JSONObject commitObj = result.getJSONObject(0);
+            JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(array.size(), 1);
+            JSONObject commitObj = array.getJSONObject(0);
             assertTrue(commitObj.containsKey("id"));
             assertEquals(commitObj.getString("id"), COMMIT_IRIS[1]);
         } catch (Exception e) {
@@ -2292,13 +2297,13 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
         assertEquals(response.getLinks().size(), 0);
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), COMMIT_IRIS.length);
-            for (Object aResult : result) {
-                JSONObject commitObj = JSONObject.fromObject(aResult);
+            JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(array.size(), COMMIT_IRIS.length);
+            array.forEach(result -> {
+                JSONObject commitObj = JSONObject.fromObject(result);
                 assertTrue(commitObj.containsKey("id"));
                 assertTrue(Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id")));
-            }
+            });
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }

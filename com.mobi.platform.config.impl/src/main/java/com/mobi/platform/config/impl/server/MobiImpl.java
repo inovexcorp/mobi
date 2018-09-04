@@ -26,24 +26,20 @@ package com.mobi.platform.config.impl.server;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.exception.MobiException;
 import com.mobi.platform.config.api.server.Mobi;
 import com.mobi.platform.config.api.server.MobiConfig;
 import com.mobi.platform.config.api.server.ServerUtils;
+import org.apache.commons.validator.routines.UrlValidator;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
@@ -58,6 +54,7 @@ public class MobiImpl implements Mobi {
 
     private ConfigurationAdmin configurationAdmin;
     private UUID serverId;
+    private String hostName;
     private ServerUtils utils;
 
     @Reference
@@ -77,7 +74,7 @@ public class MobiImpl implements Mobi {
             updateServiceConfig(data);
         } else {
             final String id = serviceConfig.serverId();
-            LOGGER.info("Server ID already present in service configuration! {}", id);
+            LOGGER.info("Server ID present in service configuration. {}", id);
             try {
                 this.serverId = UUID.fromString(id);
             } catch (IllegalArgumentException e) {
@@ -86,6 +83,31 @@ public class MobiImpl implements Mobi {
             }
         }
         LOGGER.info("Initialized core platform server service with id {}", this.serverId);
+
+        String[] schemes = {"http", "https"};
+        UrlValidator urlValidator = new UrlValidator(schemes, UrlValidator.ALLOW_LOCAL_URLS);
+        if (serviceConfig.hostName() == null) {
+            LOGGER.info("Host Name not present in service configuration. Setting to empty string.");
+            this.hostName = "";
+        } else if (urlValidator.isValid(serviceConfig.hostName())) {
+            LOGGER.info("Host Name present in service configuration. Setting to {}", serviceConfig.hostName());
+            this.hostName = serviceConfig.hostName();
+        } else {
+            LOGGER.info("Host Name in service configuration is invalid. Setting to empty string.");
+            this.hostName = "";
+        }
+
+    }
+
+    /**
+     * Method triggered when the configuration changes for this service.
+     *
+     * @param configuration The configuration map for this service
+     */
+    @Modified
+    void modified(Map<String, Object> configuration) {
+        LOGGER.warn("Modified configuration of service. Going to re-activate with new configuration...");
+        activate(configuration);
     }
 
     /**
@@ -102,6 +124,15 @@ public class MobiImpl implements Mobi {
     @Override
     public UUID getServerIdentifier() {
         return this.serverId;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     */
+    @Override
+    public String getHostName() {
+        return this.hostName;
     }
 
     /**

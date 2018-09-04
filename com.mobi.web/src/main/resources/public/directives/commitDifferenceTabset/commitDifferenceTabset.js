@@ -59,10 +59,11 @@
             restrict: 'E',
             templateUrl: 'directives/commitDifferenceTabset/commitDifferenceTabset.html',
             replace: true,
-            scope: {
-                recordId: '<',
-                sourceBranch: '<',
-                targetBranchId: '<',
+            scope: {},
+            bindToController: {
+                branchTitle: '<',
+                commitId: '<',
+                targetId: '<',
                 difference: '<'
             },
             controllerAs: 'dvm',

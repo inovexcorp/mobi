@@ -20,50 +20,49 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="ontology-tab full-height">
+<div class="ontology-tab h-100">
     <merge-tab ng-if="dvm.sm.listItem.merge.active"></merge-tab>
-    <div class="main-tabs full-height" ng-if="!dvm.sm.listItem.merge.active">
-        <ontology-branch-select ng-model="dvm.sm.listItem.ontologyRecord.branchId"></ontology-branch-select>
-        <tabset class="centered">
-            <tab heading="'Project'" active="dvm.sm.listItem.editorTabStates.project.active"
+    <div class="main-tabs h-100" ng-if="!dvm.sm.listItem.merge.active">
+        <material-tabset>
+            <material-tab heading="'Project'" active="dvm.sm.listItem.editorTabStates.project.active"
                  on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.project.entityIRI, false)">
-                <project-tab></project-tab>
-            </tab>
-            <tab heading="'Overview'" active="dvm.sm.listItem.editorTabStates.overview.active"
+                <project-tab class="h-100"></project-tab>
+            </material-tab>
+            <material-tab heading="'Overview'" active="dvm.sm.listItem.editorTabStates.overview.active"
                  on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.overview.entityIRI)">
-                <overview-tab></overview-tab>
-            </tab>
-            <tab heading="'Classes'" active="dvm.sm.listItem.editorTabStates.classes.active"
+                <overview-tab class="h-100"></overview-tab>
+            </material-tab>
+            <material-tab heading="'Classes'" active="dvm.sm.listItem.editorTabStates.classes.active"
                  on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.classes.entityIRI)">
-                <classes-tab></classes-tab>
-            </tab>
-            <tab heading="'Properties'" active="dvm.sm.listItem.editorTabStates.properties.active"
+                <classes-tab class="h-100"></classes-tab>
+            </material-tab>
+            <material-tab heading="'Properties'" active="dvm.sm.listItem.editorTabStates.properties.active"
                  on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.properties.entityIRI)">
-                <properties-tab></properties-tab>
-            </tab>
-            <tab heading="'Individuals'" active="dvm.sm.listItem.editorTabStates.individuals.active"
+                <properties-tab class="h-100"></properties-tab>
+            </material-tab>
+            <material-tab heading="'Individuals'" active="dvm.sm.listItem.editorTabStates.individuals.active"
                  on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.individuals.entityIRI, false)">
-                <individuals-tab></individuals-tab>
-            </tab>
-            <tab heading="'Schemes'" active="dvm.sm.listItem.editorTabStates.schemes.active" hide-tab="!dvm.sm.listItem.isVocabulary"
+                <individuals-tab class="h-100"></individuals-tab>
+            </material-tab>
+            <material-tab heading="'Schemes'" active="dvm.sm.listItem.editorTabStates.schemes.active" hide-tab="!dvm.sm.listItem.isVocabulary"
                 on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.schemes.entityIRI, false)">
-                <concept-schemes-tab></concept-schemes-tab>
-            </tab>
-            <tab heading="'Concepts'" active="dvm.sm.listItem.editorTabStates.concepts.active" hide-tab="!dvm.sm.listItem.isVocabulary"
+                <concept-schemes-tab class="h-100"></concept-schemes-tab>
+            </material-tab>
+            <material-tab heading="'Concepts'" active="dvm.sm.listItem.editorTabStates.concepts.active" hide-tab="!dvm.sm.listItem.isVocabulary"
                 on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.concepts.entityIRI, false)">
-                <concepts-tab></concepts-tab>
-            </tab>
-            <tab heading="'Search'" active="dvm.sm.listItem.editorTabStates.search.active"
+                <concepts-tab class="h-100"></concepts-tab>
+            </material-tab>
+            <material-tab heading="'Search'" active="dvm.sm.listItem.editorTabStates.search.active"
                  on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.search.entityIRI, false)">
-                <search-tab></search-tab>
-            </tab>
-            <tab heading="dvm.savedChanges" active="dvm.sm.listItem.editorTabStates.savedChanges.active">
-                <saved-changes-tab></saved-changes-tab>
-            </tab>
-            <tab heading="'Commits'" active="dvm.sm.listItem.editorTabStates.commits.active">
-                <commits-tab></commits-tab>
-            </tab>
-        </tabset>
+                <search-tab class="h-100"></search-tab>
+            </material-tab>
+            <material-tab heading="dvm.savedChanges" active="dvm.sm.listItem.editorTabStates.savedChanges.active">
+                <saved-changes-tab class="h-100"></saved-changes-tab>
+            </material-tab>
+            <material-tab heading="'Commits'" active="dvm.sm.listItem.editorTabStates.commits.active">
+                <commits-tab class="h-100"></commits-tab>
+            </material-tab>
+        </material-tabset>
         <span ng-if="dvm.sm.listItem.isSaved" class="saved-text text-muted">Saved</span>
         <ontology-button-stack></ontology-button-stack>
     </div>

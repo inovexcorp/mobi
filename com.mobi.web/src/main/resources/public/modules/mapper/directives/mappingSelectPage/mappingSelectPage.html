@@ -22,28 +22,28 @@
   -->
 <div class="mapping-select-page row">
     <mapping-list-block></mapping-list-block>
-    <div class="col-xs-8 full-height">
+    <div class="col-8 h-100">
         <block>
             <block-header>
                 <div class="mapping-preview-header" ng-class="{'invisible': !dvm.state.mapping}">
                     <span>{{dvm.state.mapping.record.title}}</span>
-                    <div uib-dropdown class="pull-right">
-                        <button uib-dropdown-toggle title="Actions" class="btn btn-xs btn-default">
+                    <div uib-dropdown class="float-right">
+                        <button uib-dropdown-toggle title="Actions" class="btn btn-xs">
                             <i class="fa fa-fw fa-ellipsis-h"></i>
                         </button>
-                        <ul uib-dropdown-menu>
-                            <li><a class="run-btn" ng-click="dvm.run()" a-disabled="!dvm.state.mapping.ontology">
+                        <ul uib-dropdown-menu class="dropdown-menu-right">
+                            <a class="dropdown-item run-btn" ng-click="dvm.run()" a-disabled="!dvm.state.mapping.ontology">
                                 <i class="fa fa-play-circle-o"></i>Run
-                            </a></li>
-                            <li><a class="edit-btn" ng-click="dvm.edit()" a-disabled="!dvm.state.mapping.ontology">
+                            </a>
+                            <a class="dropdown-item edit-btn" ng-click="dvm.edit()" a-disabled="!dvm.state.mapping.ontology">
                                 <i class="fa fa-pencil"></i>Edit
-                            </a></li>
-                            <li><a class="duplicate-btn" ng-click="dvm.duplicate()" a-disabled="!dvm.state.mapping.ontology">
+                            </a>
+                            <a class="dropdown-item duplicate-btn" ng-click="dvm.duplicate()" a-disabled="!dvm.state.mapping.ontology">
                                 <i class="fa fa-files-o"></i>Duplicate
-                            </a></li>
-                            <li><a class="download-btn" ng-click="dvm.download()">
+                            </a>
+                            <a class="dropdown-item download-btn" ng-click="dvm.download()">
                                 <i class="fa fa-download"></i>Download
-                            </a></li>
+                            </a>
                         </ul>
                     </div>
                 </div>

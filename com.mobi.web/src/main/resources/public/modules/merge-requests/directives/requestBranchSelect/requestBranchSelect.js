@@ -52,9 +52,9 @@
          */
         .directive('requestBranchSelect', requestBranchSelect);
 
-    requestBranchSelect.$inject = ['mergeRequestsStateService', 'mergeRequestManagerService', 'catalogManagerService', 'utilService'];
+    requestBranchSelect.$inject = ['mergeRequestsStateService', 'mergeRequestManagerService', 'catalogManagerService', 'utilService', 'prefixes'];
 
-    function requestBranchSelect(mergeRequestsStateService, mergeRequestManagerService, catalogManagerService, utilService) {
+    function requestBranchSelect(mergeRequestsStateService, mergeRequestManagerService, catalogManagerService, utilService, prefixes) {
         return {
             restrict: 'E',
             templateUrl: 'modules/merge-requests/directives/requestBranchSelect/requestBranchSelect.html',
@@ -68,6 +68,7 @@
                 var catalogId = _.get(cm.localCatalog, '@id');
                 dvm.util = utilService;
                 dvm.state = mergeRequestsStateService;
+                dvm.prefixes = prefixes;
 
                 dvm.state.requestConfig.difference = undefined;
                 dvm.branches = [];
@@ -108,7 +109,7 @@
                 }
 
                 function updateDifference() {
-                    cm.getBranchDifference(dvm.state.requestConfig.sourceBranchId, dvm.state.requestConfig.targetBranchId, dvm.state.requestConfig.recordId, catalogId)
+                    cm.getDifference(dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head'), dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head'))
                         .then(diff => {
                             dvm.state.requestConfig.difference = diff;
                         }, errorMessage => {

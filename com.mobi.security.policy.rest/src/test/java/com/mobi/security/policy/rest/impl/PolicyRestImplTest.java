@@ -24,7 +24,7 @@ package com.mobi.security.policy.rest.impl;
  */
 
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
-import static com.mobi.rest.util.RestUtils.encode;
+import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;

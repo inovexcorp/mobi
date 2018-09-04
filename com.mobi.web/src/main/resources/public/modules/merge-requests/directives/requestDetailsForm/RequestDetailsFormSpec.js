@@ -28,6 +28,10 @@ describe('Request Details Form directive', function() {
         module('requestDetailsForm');
         mockMergeRequestsState();
         mockUtil();
+        mockPrefixes();
+        mockUserManager();
+        injectTrustedFilter();
+        injectHighlightFilter();
 
         inject(function(_$compile_, _$rootScope_, _mergeRequestsStateService_, _utilService_) {
             $compile = _$compile_;
@@ -36,9 +40,7 @@ describe('Request Details Form directive', function() {
             utilSvc = _utilService_;
         });
 
-        utilSvc.getDctermsValue.and.callFake(function(obj, prop) {
-            return prop;
-        });
+        utilSvc.getDctermsValue.and.callFake((obj, prop) => prop);
         this.element = $compile(angular.element('<request-details-form></request-details-form>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('requestDetailsForm');
@@ -69,6 +71,9 @@ describe('Request Details Form directive', function() {
         });
         it('with a text-area', function() {
             expect(this.element.find('text-area').length).toEqual(1);
+        });
+        it('with a ui-select', function() {
+            expect(this.element.find('ui-select').length).toEqual(1);
         });
     });
 });

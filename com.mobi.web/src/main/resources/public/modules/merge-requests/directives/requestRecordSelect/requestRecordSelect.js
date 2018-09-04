@@ -69,10 +69,7 @@
                 dvm.util = utilService;
                 dvm.records = [];
                 dvm.totalSize = 0;
-                dvm.links = {
-                    prev: '',
-                    next: ''
-                };
+                dvm.currentPage = 1;
                 dvm.config = {
                     recordType: prefixes.ontologyEditor + 'OntologyRecord',
                     limit: 25,
@@ -86,42 +83,25 @@
                     dvm.state.requestConfig.record = record;
                 }
                 dvm.setRecords = function() {
+                    dvm.config.pageIndex = dvm.currentPage - 1;
                     cm.getRecords(catalogId, dvm.config)
                         .then(response => setPagination(response), error => {
                             dvm.records = [];
                             dvm.totalSize = 0;
-                            dvm.links = {
-                                prev: '',
-                                next: ''
-                            };
                             dvm.util.createErrorToast(error);
                         });
                 }
-                dvm.getPage = function(direction) {
-                    var original = dvm.config.pageIndex;
-                    dvm.config.pageIndex = dvm.config.pageIndex + (direction === 'prev' ? -1 : 1);
-                    dvm.util.getResultsPage(dvm.links[direction])
-                        .then(response => setPagination(response), error => {
-                            dvm.records = [];
-                            dvm.config.pageIndex = original;
-                            dvm.totalSize = 0;
-                            dvm.links = {
-                                prev: '',
-                                next: ''
-                            };
-                            dvm.util.createErrorToast(error);
-                        });
+                dvm.setInitialRecords = function() {
+                    dvm.currentPage = 1;
+                    dvm.setRecords();
                 }
 
-                dvm.setRecords();
+                dvm.setInitialRecords();
 
                 function setPagination(response) {
                     dvm.records = _.chunk(response.data, 2);
                     var headers = response.headers();
                     dvm.totalSize = _.get(headers, 'x-total-count', 0);
-                    var links = dvm.util.parseLinks(_.get(headers, 'link', ''));
-                    dvm.links.prev = _.get(links, 'prev', '');
-                    dvm.links.next = _.get(links, 'next', '');
                 }
             }
         }

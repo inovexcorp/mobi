@@ -4,7 +4,6 @@
 .merge-form {
     display: flex;
     flex-direction: column;
-    height: 100%;
 
     .tabset {
         flex: 1;
@@ -15,7 +14,7 @@
             font-size: 14px;
         }
         .tabset-headings {
-            border-top: 1px solid $gray-light;
+            border-top: 1px solid var(--light-dark);
 
             .heading {
                 line-height: 18px;

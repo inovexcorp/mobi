@@ -29,16 +29,16 @@
             <div class="branch-display" ng-init="branchTitle = dvm.util.getDctermsValue(branch, 'title')" ng-class="{'master': branchTitle === 'MASTER', 'active': branch['@id'] === dvm.bindModel}">
                 <span ng-bind-html="branchTitle | highlight:$select.search | trusted" title="{{branchTitle}}"></span>
                 <a ng-if="dvm.cm.isUserBranch(branch)" class="fa fa-exclamation-triangle fa-fw-red"></a>
-                <a ng-if="branch['@id'] !== dvm.os.listItem.ontologyRecord.branchId" class="fa fa-trash-o fa-fw" ng-click="dvm.openDeleteConfirmation($event, branch);"></a>
-                <a class="fa fa-pencil fa-fw" ng-click="dvm.openEditOverlay($event, branch);"></a>
+                <a ng-if="branch['@id'] !== dvm.os.listItem.ontologyRecord.branchId" class="fa fa-trash-o fa-fw text-muted" ng-click="dvm.openDeleteConfirmation($event, branch);"></a>
+                <a class="fa fa-pencil fa-fw text-muted" ng-click="dvm.openEditOverlay($event, branch);"></a>
             </div>
         </ui-select-choices>
     </ui-select>
     <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Branch'" confirm-click="dvm.delete()"
                           cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Submit'" cancel-text="'Cancel'">
-        <error-message ng-if="dvm.deleteError">{{deleteError}}</error-message>
+        <error-display ng-if="dvm.deleteError">{{dvm.deleteError}}</error-display>
         <p class="branch-delete-message" ng-if="!dvm.cm.isUserBranch(dvm.branch)">Are you sure that you want to delete Branch: <strong>{{dvm.util.getDctermsValue(dvm.branch, 'title')}}</strong>?</p>
         <p class="user-branch-delete-message" ng-if="dvm.cm.isUserBranch(dvm.branch)">You have made diverging changes from the head of Branch: <strong>{{dvm.util.getDctermsValue(dvm.branch, 'title')}}</strong>. Continuing with this operation will only delete your diverging changes.</p>
     </confirmation-overlay>
-    <edit-branch-overlay ng-if="dvm.showEditOverlay" overlay-flag="dvm.showEditOverlay" branch="dvm.branch"></edit-branch-overlay>
+    <edit-branch-overlay ng-if="dvm.showEditOverlay" overlay-flag="dvm.showEditOverlay" branch="dvm.branch" on-submit="dvm.submit()"></edit-branch-overlay>
 </div>

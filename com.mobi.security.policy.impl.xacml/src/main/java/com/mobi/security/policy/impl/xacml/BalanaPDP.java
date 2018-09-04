@@ -63,10 +63,12 @@ import org.wso2.balana.finder.PolicyFinder;
 import org.wso2.balana.finder.PolicyFinderModule;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.xml.bind.JAXBContext;
 
 @Component(immediate = true, provide = {PDP.class, BalanaPDP.class})
 public class BalanaPDP implements PDP {
@@ -77,9 +79,13 @@ public class BalanaPDP implements PDP {
 
     private Balana balana;
 
+    protected JAXBContext jaxbContext;
+
     @Activate
-    public void setUp() {
-        balana = Balana.getInstance();
+    public void setUp() throws Exception {
+        this.balana = Balana.getInstance();
+        this.jaxbContext = JAXBContext.newInstance("com.mobi.security.policy.api.xacml.jaxb",
+                com.mobi.security.policy.api.xacml.jaxb.ObjectFactory.class.getClassLoader());
     }
 
     @Reference(type = '*', dynamic = true)
@@ -105,7 +111,7 @@ public class BalanaPDP implements PDP {
     public Request createRequest(IRI subjectId, Map<String, Literal> subjectAttrs, IRI resourceId,
                                  Map<String, Literal> resourceAttrs, IRI actionId, Map<String, Literal> actionAttrs) {
         BalanaRequest.Builder builder = new BalanaRequest.Builder(subjectId, resourceId, actionId, OffsetDateTime.now(),
-                vf);
+                vf, jaxbContext);
         if (subjectAttrs != null) {
             subjectAttrs.forEach((key, value) -> {
                 if (value != null) {
@@ -138,11 +144,9 @@ public class BalanaPDP implements PDP {
     @Override
     public Response evaluate(Request request, IRI policyAlgorithm) {
         try {
-            BalanaRequest balanaRequest = getRequest(request);
-            org.wso2.balana.PDP pdp = getPDP(policyAlgorithm);
-            return new XACMLResponse(pdp.evaluate(balanaRequest.toString()), vf);
+            return new XACMLResponse(getPDP(policyAlgorithm).evaluate(getRequest(request).toString()), vf, jaxbContext);
         } catch (ProcessingException e) {
-            return new XACMLResponse.Builder(Decision.INDETERMINATE, Status.PROCESSING_ERROR)
+            return new XACMLResponse.Builder(Decision.INDETERMINATE, Status.PROCESSING_ERROR, jaxbContext)
                     .statusMessage(e.getMessage()).build();
         }
     }
@@ -150,15 +154,15 @@ public class BalanaPDP implements PDP {
     private org.wso2.balana.PDP getPDP(IRI policyAlgorithm) {
         PDPConfig config = balana.getPdpConfig();
 
-        PolicyFinder policyFinder = config.getPolicyFinder();
+        PolicyFinder policyFinder = new PolicyFinder();
         Set<PolicyFinderModule> policyFinderModules = new HashSet<>();
         policyFinderModules.add(balanaPRP);
         policyFinder.setModules(policyFinderModules);
 
-        AttributeFinder attributeFinder = config.getAttributeFinder();
-        List<AttributeFinderModule> attributeFinderModules = attributeFinder.getModules();
+        AttributeFinder attributeFinder = new AttributeFinder();
+        List<AttributeFinderModule> attributeFinderModules = new ArrayList<>(config.getAttributeFinder().getModules());
         pips.forEach(pip -> {
-            MobiAttributeFinder mobiAttributeFinder = new MobiAttributeFinder(vf, pip);
+            MobiAttributeFinder mobiAttributeFinder = new MobiAttributeFinder(vf, pip, jaxbContext);
             attributeFinderModules.add(mobiAttributeFinder);
         });
         attributeFinder.setModules(attributeFinderModules);
@@ -174,7 +178,7 @@ public class BalanaPDP implements PDP {
             return (BalanaRequest) request;
         }
         BalanaRequest.Builder builder = new BalanaRequest.Builder(request.getSubjectId(), request.getResourceId(),
-                request.getActionId(), request.getRequestTime(), vf);
+                request.getActionId(), request.getRequestTime(), vf, jaxbContext);
         request.getSubjectAttrs().forEach(builder::addSubjectAttr);
         request.getResourceAttrs().forEach(builder::addResourceAttr);
         request.getActionAttrs().forEach(builder::addActionAttr);

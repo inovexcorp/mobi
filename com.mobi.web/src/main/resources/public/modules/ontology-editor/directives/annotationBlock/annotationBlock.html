@@ -23,7 +23,7 @@
 <div class="annotation-block">
     <block>
         <block-header>
-            <span>Annotations</span><a ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.mobi.imported" class="pull-right" ng-click="dvm.openAddOverlay()"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
+            <span>Annotations</span><a ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.mobi.imported" class="float-right" ng-click="dvm.openAddOverlay()"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
         </block-header>
         <block-content>
             <property-values ng-repeat="annotation in dvm.os.listItem.selected | showProperties:dvm.annotations | orderBy:dvm.ontoUtils.getLabelForIRI" property="annotation" entity="dvm.os.listItem.selected" remove="dvm.openRemoveOverlay(iri, index)" edit="dvm.editClicked(property, index)"></property-values>

@@ -27,13 +27,22 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.record.AbstractRecordService;
+import com.mobi.catalog.api.record.RecordService;
 import com.mobi.rdf.api.ValueFactory;
 
-@Component
+@Component(
+        immediate = true,
+        provide = { RecordService.class, SimpleRecordService.class }
+)
 public class SimpleRecordService extends AbstractRecordService<Record> {
+    @Reference
+    void setCatalogFactory(CatalogFactory catalogFactory) {
+        this.catalogFactory = catalogFactory;
+    }
 
     @Reference
     void setUtilsService(CatalogUtilsService utilsService) {
@@ -58,5 +67,10 @@ public class SimpleRecordService extends AbstractRecordService<Record> {
     @Override
     public Class<Record> getType() {
         return Record.class;
+    }
+
+    @Override
+    public String getTypeIRI() {
+        return Record.TYPE;
     }
 }

@@ -41,7 +41,6 @@
          * @requires mergeRequestManager.service:mergeRequestManagerService
          * @requires mergeRequestState.service:mergeRequestStateService
          * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
          *
          * @description
          * `mergeRequestView` is a directive which creates a div containing a {@link block.directive:block}
@@ -49,14 +48,15 @@
          * {@link mergeRequestsState.service:mergeRequestsStateService selected MergeRequest} including a
          * {@link commitDifferenceTabset.directive:commitDifferenceTabset} to display the changes and commits
          * between the source and target branch of the MergeRequest. The block also contains buttons to delete
-         * the MergeRequest and go back to the {@link mergeRequestList.directive:mergeRequestList} of the current
-         * tab. This directive is replaced by the contents of its template.
+         * the MergeRequest, accept the MergeRequest, and go back to the
+         * {@link mergeRequestList.directive:mergeRequestList}. This directive is replaced by the contents of its
+         * template.
          */
         .directive('mergeRequestView', mergeRequestView);
 
-        mergeRequestView.$inject = ['mergeRequestManagerService', 'mergeRequestsStateService', 'utilService', 'prefixes'];
+        mergeRequestView.$inject = ['mergeRequestManagerService', 'mergeRequestsStateService', 'utilService'];
 
-        function mergeRequestView(mergeRequestManagerService, mergeRequestsStateService, utilService, prefixes) {
+        function mergeRequestView(mergeRequestManagerService, mergeRequestsStateService, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/merge-requests/directives/mergeRequestView/mergeRequestView.html',
@@ -68,24 +68,26 @@
                     dvm.mm = mergeRequestManagerService;
                     dvm.util = utilService;
                     dvm.state = mergeRequestsStateService;
-                    var currentTab = dvm.state.getCurrentTab();
-                    dvm.selected = currentTab.selected;
 
-                    dvm.mm.getRequest(dvm.selected.request['@id'])
+                    dvm.mm.getRequest(dvm.state.selected.request['@id'])
                         .then(request => {
-                            dvm.selected.request = request;
-                            dvm.state.setRequestDetails(dvm.selected);
+                            dvm.state.selected.request = request;
+                            dvm.state.setRequestDetails(dvm.state.selected);
                         }, error => {
                             dvm.util.createWarningToast('The request you had selected no longer exists');
                             dvm.back();
                         });
 
                     dvm.back = function() {
-                        currentTab.selected = undefined;
+                        dvm.state.selected = undefined;
                     }
                     dvm.showDelete = function() {
-                        dvm.state.requestToDelete = dvm.selected;
+                        dvm.state.requestToDelete = dvm.state.selected;
                         dvm.state.showDelete = true;
+                    }
+                    dvm.showAccept = function() {
+                        dvm.state.requestToAccept = dvm.state.selected;
+                        dvm.state.showAccept = true;
                     }
                 }
             }

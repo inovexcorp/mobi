@@ -137,6 +137,24 @@
             }
             /**
              * @ngdoc method
+             * @name replacePropertyValue
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Remove the passed valueToRemove value of the property from the passed entity and replace with
+             * the provided valueToAdd value.
+             *
+             * @param {Object} entity The entity to remove the property id value from
+             * @param {string} propertyIRI The IRI of a property
+             * @param {string} valueToRemove The value to remove
+             * @param {string} valueToAdd The value to Add
+             */
+            self.replacePropertyValue = function(entity, propertyIRI, valueToRemove, valueToAdd) {
+                self.removePropertyValue(entity, propertyIRI, valueToRemove);
+                self.setPropertyValue(entity, propertyIRI, valueToAdd);
+            }
+            /**
+             * @ngdoc method
              * @name getPropertyId
              * @methodOf util.service:utilService
              *
@@ -198,7 +216,6 @@
             self.removePropertyId = function(entity, propertyIRI, id) {
                 removeValue(entity, propertyIRI, {'@id': id});
             }
-
             /**
              * @ngdoc method
              * @name replacePropertyId
@@ -217,7 +234,6 @@
                 self.removePropertyId(entity, propertyIRI, idToRemove);
                 self.setPropertyId(entity, propertyIRI, idToAdd);
             }
-
             /**
              * @ngdoc method
              * @name getDctermsValue
@@ -240,7 +256,8 @@
              * @methodOf util.service:utilService
              *
              * @description
-             * Sets the first value of the specified dcterms property of the passed entity to the passed value.
+             * Sets the first value or appends to the values of the specified dcterms property of the passed entity
+             * with the passed value.
              *
              * @param {Object} entity The entity to set the property value of
              * @param {string} property The local name of a dcterms property IRI
@@ -248,6 +265,23 @@
              */
             self.setDctermsValue = function(entity, property, value) {
                 self.setPropertyValue(entity, prefixes.dcterms + property, value);
+            }
+            /**
+             * @ngdoc method
+             * @name updateDctermsValue
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Removes the first value of the specified dcterms property and appends the provided value to the specified
+             * dcterms property of the passed entity
+             *
+             * @param {Object} entity The entity to update the property value of
+             * @param {string} property The local name of a dcterms property IRI
+             * @param {string} value The new value for the property
+             */
+            self.updateDctermsValue = function(entity, property, value) {
+                var valueToRemove = self.getPropertyValue(entity, prefixes.dcterms + property);
+                self.replacePropertyValue(entity, prefixes.dcterms + property, valueToRemove, value);
             }
             /**
              * @ngdoc method
@@ -345,9 +379,10 @@
              * Creates a warning toast with the passed success text that will disappear after 3 seconds
              *
              * @param {string} text The text for the body of the warning toast
+             * @param {Object} config The configuration for the toast. Defaults to a timeout of 3 seconds
              */
-            self.createWarningToast = function(text) {
-                toastr.warning(text, 'Warning', {timeOut: 3000});
+            self.createWarningToast = function(text, config = {timeOut: 3000}) {
+                toastr.warning(text, 'Warning', config);
             }
             /**
              * @ngdoc method

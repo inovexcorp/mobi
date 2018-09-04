@@ -23,30 +23,42 @@ package com.mobi.catalog.rest.impl;
  * #L%
  */
 
+import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitJson;
+import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitResponse;
+import static com.mobi.catalog.rest.utils.CatalogRestUtils.getDifferenceJsonString;
+import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJson;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.rest.CommitRest;
-import com.mobi.catalog.rest.utils.CatalogRestUtils;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.LinksUtils;
 import net.sf.json.JSONArray;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 @Component(immediate = true)
 public class CommitRestImpl implements CommitRest {
+
+    private static final Logger logger = LoggerFactory.getLogger(CommitRestImpl.class);
+
     private BNodeService bNodeService;
     private CatalogManager catalogManager;
     private SesameTransformer transformer;
@@ -81,44 +93,76 @@ public class CommitRestImpl implements CommitRest {
 
     @Override
     public Response getCommit(String commitId, String format) {
-        Response response = Response.status(Response.Status.NOT_FOUND).build();
-        Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(commitId));
+        long start = System.currentTimeMillis();
+        try {
+            Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(commitId));
 
-        if (optCommit.isPresent()) {
-            response = CatalogRestUtils.createCommitResponse(optCommit.get(),
-                    catalogManager.getCommitDifference(optCommit.get().getResource()),
-                    format, transformer, bNodeService);
+            if (optCommit.isPresent()) {
+                return createCommitResponse(optCommit.get(),
+                        catalogManager.getCommitDifference(optCommit.get().getResource()),
+                        format, transformer, bNodeService);
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        } finally {
+            logger.trace("getCommit took {}ms", System.currentTimeMillis() - start);
         }
-        return response;
     }
 
     @Override
-    public Response getCommitHistory(UriInfo uriInfo, String commitId, int offset, int limit) {
-        if (offset < 0) {
-            throw ErrorUtils.sendError("Offset cannot be negative.", Response.Status.BAD_REQUEST);
-        }
-
-        if (limit < 0 || (offset > 0 && limit == 0)) {
-            throw ErrorUtils.sendError("Limit must be positive.", Response.Status.BAD_REQUEST);
-        }
-
+    public Response getCommitHistory(UriInfo uriInfo, String commitId, String targetId, int offset, int limit) {
+        long start = System.currentTimeMillis();
         try {
-            JSONArray commitChain = new JSONArray();
+            LinksUtils.validateParams(limit, offset);
 
-            final List<Commit> commits = catalogManager.getCommitChain(vf.createIRI(commitId));
+            try {
+                final List<Commit> commits;
 
-            Stream<Commit> result = commits.stream();
-            if (limit > 0) {
-                result = result.skip(offset)
-                        .limit(limit);
+                if (StringUtils.isBlank(targetId)) {
+                    commits = catalogManager.getCommitChain(vf.createIRI(commitId));
+                } else {
+                    commits = catalogManager.getCommitChain(vf.createIRI(commitId), vf.createIRI(targetId));
+                }
+
+                Stream<Commit> result = commits.stream();
+
+                if (limit > 0) {
+                    result = result.skip(offset)
+                            .limit(limit);
+                }
+
+                JSONArray commitChain = result.map(r -> createCommitJson(r, vf, engineManager))
+                        .collect(JSONArray::new, JSONArray::add, JSONArray::add);
+
+                return createPaginatedResponseWithJson(uriInfo, commitChain, commits.size(), limit, offset);
+            } catch (IllegalArgumentException ex) {
+                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            } catch (IllegalStateException | MobiException ex) {
+                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
             }
-            result.map(r -> CatalogRestUtils.createCommitJson(r, vf, engineManager)).forEach(commitChain::add);
-            return CatalogRestUtils.createPaginatedResponseWithJson(uriInfo, commitChain, commits.size(), limit,
-                    offset);
-        } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            logger.trace("getCommitHistory took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    @Override
+    public Response getDifference(String sourceId, String targetId, String rdfFormat) {
+        long start = System.currentTimeMillis();
+        try {
+            checkStringParam(sourceId, "Source commit is required");
+            checkStringParam(targetId, "Target commit is required");
+
+            try {
+                Difference diff = catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId));
+                return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
+                        MediaType.APPLICATION_JSON).build();
+            } catch (IllegalArgumentException ex) {
+                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            } catch (IllegalStateException | MobiException ex) {
+                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            }
+        } finally {
+            logger.trace("getDifference took {}ms", System.currentTimeMillis() - start);
         }
     }
 }

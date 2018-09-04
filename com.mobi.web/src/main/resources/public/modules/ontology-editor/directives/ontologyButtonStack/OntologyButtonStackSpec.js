@@ -86,9 +86,17 @@ describe('Ontology Button Stack directive', function() {
             scope.$digest();
             expect(mergeButton.attr('disabled')).toBeTruthy();
         });
+        it('depending on whether the branch is out of date', function() {
+            var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
+            expect(mergeButton.attr('disabled')).toBeFalsy();
+
+            ontologyStateSvc.listItem.upToDate = false;
+            scope.$digest();
+            expect(mergeButton.attr('disabled')).toBeTruthy();
+        });
     });
     it('should set the correct state when the upload changes button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('circle-button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('circle-button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(ontologyStateSvc.showUploadChangesOverlay).toEqual(true);
     });
