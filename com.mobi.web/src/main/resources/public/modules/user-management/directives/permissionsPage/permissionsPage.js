@@ -56,9 +56,9 @@
          */
         .directive('permissionsPage', permissionsPage);
 
-    permissionsPage.$inject = ['$q', 'policyManagerService', 'catalogManagerService', 'utilService', 'prefixes', 'userManagerService'];
+    permissionsPage.$inject = ['$q', 'policyManagerService', 'catalogManagerService', 'utilService', 'prefixes', 'userManagerService', '$filter'];
 
-    function permissionsPage($q, policyManagerService, catalogManagerService, utilService, prefixes, userManagerService) {
+    function permissionsPage($q, policyManagerService, catalogManagerService, utilService, prefixes, userManagerService, $filter) {
         return {
             restrict: 'E',
             replace: true,
@@ -75,6 +75,10 @@
                 var userRole = 'http://mobi.com/roles/user';
 
                 dvm.policies = [];
+
+                dvm.getTitle = function(item) {
+                    return 'Create ' + $filter('beautify')($filter('splitIRI')(item.type).end);
+                }
 
                 // dvm.filterUsers = function(users, searchText) {
                 //     return _.filter(users, user => _.includes(user.username.toLowerCase(), searchText.toLowerCase()));

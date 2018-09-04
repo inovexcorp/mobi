@@ -52,22 +52,8 @@
                         }
                     }
 
-                    .access-controls {
-                        .record-action {
-                            padding: 0 0 0 20px;
-                        }
-                        md-switch {
-                            margin-top: 0;
-                            margin-bottom: 0;
-
-                            .users {
-                                text-decoration: none;
-
-                                &:hover {
-                                    color: var(--gray);
-                                }
-                            }
-                        }
+                    .access-controls .record-action {
+                        padding: 5px 0 0 20px;
                     }
                 }
             }

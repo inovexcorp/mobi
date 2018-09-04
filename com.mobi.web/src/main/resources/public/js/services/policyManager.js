@@ -67,6 +67,8 @@
             self.resourceCategory = 'urn:oasis:names:tc:xacml:3.0:attribute-category:resource';
             self.actionCategory = 'urn:oasis:names:tc:xacml:3.0:attribute-category:action';
             self.stringEqual = 'urn:oasis:names:tc:xacml:1.0:function:string-equal';
+            self.functionOr = 'urn:oasis:names:tc:xacml:1.0:function:or';
+            self.functionAnyOf = 'urn:oasis:names:tc:xacml:1.0:function:any-of';
 
             /**
              * @ngdoc method

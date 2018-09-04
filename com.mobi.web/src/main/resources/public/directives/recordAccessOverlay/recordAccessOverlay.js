@@ -149,7 +149,7 @@
 
                     dvm.save = function() {
                         dvm.overlayFlag = false;
-                        pm.updatePolicy(dvm.policy)
+                        pm.updatePolicy(dvm.policy.policy)
                             .then(() => {
                                 dvm.policy.changed = false;
                                 dvm.util.createSuccessToast('Permissions updated')
