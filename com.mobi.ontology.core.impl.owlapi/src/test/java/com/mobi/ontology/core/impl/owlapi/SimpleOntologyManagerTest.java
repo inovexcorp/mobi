@@ -172,7 +172,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(SimpleOntologyValues.owlapiIRI(versionIRI)).thenReturn(owlVersionIRI);
         when(SimpleOntologyValues.mobiIRI(owlOntologyIRI)).thenReturn(ontologyIRI);
         when(SimpleOntologyValues.mobiIRI(owlVersionIRI)).thenReturn(versionIRI);
-        when(SimpleOntologyValues.mobiOntology(any(OWLOntology.class))).thenReturn(ontology);
 
         when(mockCache.containsKey(anyString())).thenReturn(false);
 

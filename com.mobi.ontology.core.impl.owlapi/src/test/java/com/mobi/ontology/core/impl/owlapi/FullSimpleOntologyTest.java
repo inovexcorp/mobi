@@ -73,6 +73,7 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Optional;
@@ -192,26 +193,6 @@ public class FullSimpleOntologyTest {
         // Setup:
         InputStream stream = this.getClass().getResourceAsStream("/test-imports.owl");
         Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
-
-        Set<Ontology> ontologies = ont.getImportsClosure();
-        assertEquals(5, ontologies.size());
-    }
-
-    @Test
-    public void getImportsClosureFromModelTest() throws Exception {
-        // Setup:
-        InputStream stream = this.getClass().getResourceAsStream("/test-imports.owl");
-
-        OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-        OWLOntology ontology = manager.createOntology();
-
-        Model sesameModel = Rio.parse(stream, "", RDFFormat.RDFXML);
-
-        OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration()
-                .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
-        RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
-        parser.parse(new RioMemoryTripleSource(sesameModel), ontology, config);
-        Ontology ont = new SimpleOntology(ontology, null, ontologyManager, transformer, bNodeService);
 
         Set<Ontology> ontologies = ont.getImportsClosure();
         assertEquals(5, ontologies.size());
@@ -413,7 +394,10 @@ public class FullSimpleOntologyTest {
         Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, true);
 
         String jsonld = listOntology.asJsonLD(true).toString();
-        assertEquals(IOUtils.toString(expected, Charset.defaultCharset()), jsonld);
+        assertEquals(IOUtils.toString(expected, Charset.defaultCharset())
+                        .replaceAll("/genid/genid[a-zA-Z0-9-]+\"", "").replaceAll("/genid/node[a-zA-Z0-9]+\"", ""),
+                jsonld.replaceAll("/genid/genid[a-zA-Z0-9-]+\"", "").replaceAll("/genid/node[a-zA-Z0-9]+\"", ""));
+
         verify(blankNodeService).skolemize(any(com.mobi.rdf.api.Model.class));
     }
 
@@ -428,7 +412,8 @@ public class FullSimpleOntologyTest {
         Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, true);
 
         String jsonld = listOntology.asJsonLD(false).toString();
-        assertEquals(IOUtils.toString(expected, Charset.defaultCharset()), jsonld);
+        assertEquals(IOUtils.toString(expected, Charset.defaultCharset()).replaceAll("_:node[a-zA-Z0-9]+\"", ""),
+                jsonld.replaceAll("_:node[a-zA-Z0-9]+\"", ""));
         verify(blankNodeService, times(0)).skolemize(any(com.mobi.rdf.api.Model.class));
     }
 }
