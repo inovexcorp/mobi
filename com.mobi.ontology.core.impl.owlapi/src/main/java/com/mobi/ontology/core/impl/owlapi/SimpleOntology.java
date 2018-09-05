@@ -12,12 +12,12 @@ package com.mobi.ontology.core.impl.owlapi;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -216,22 +216,13 @@ public class SimpleOntology implements Ontology {
     public SimpleOntology(InputStream inputStream, OntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService, boolean resolveImports) throws MobiOntologyException {
         initialize(ontologyManager, transformer, bNodeService, resolveImports);
+        byte[] bytes = inputStreamToByteArray(inputStream);
         try {
-            byte[] bytes = inputStreamToByteArray(inputStream);
-            try {
-                initializeSesameModel(new ByteArrayInputStream(bytes));
-            } catch (IOException e) {
-                LOG.warn("Unable to initialize sesame model", e);
-            }
-
-            owlOntology = owlManager.loadOntologyFromOntologyDocument(new ByteArrayInputStream(bytes));
-            createOntologyId(null);
-            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
-        } catch (OWLOntologyCreationException e) {
-            throw new MobiOntologyException("Error in ontology creation", e);
-        } catch (MobiOntologyException e) {
-            LOG.error("Input stream error.", e);
+            sesameModel = createSesameModel(new ByteArrayInputStream(bytes));
+        } catch (IOException e) {
+            LOG.error("InputStream error. Unable to initialize sesame model", e);
         }
+        createOntologyFromSesameModel();
     }
 
     /**
@@ -262,33 +253,10 @@ public class SimpleOntology implements Ontology {
     public SimpleOntology(Model model, OntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService) throws MobiOntologyException {
         initialize(ontologyManager, transformer, bNodeService, true);
+        sesameModel = new LinkedHashModel();
+        sesameModel = this.transformer.sesameModel(model);
+        createOntologyFromSesameModel();
 
-        try {
-            owlOntology = owlManager.createOntology();
-            sesameModel = new LinkedHashModel();
-            RDFHandler handler = new BufferedGroupingRDFHandler(new StatementCollector(sesameModel));
-            Rio.write(this.transformer.sesameModel(model), handler);
-            RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
-            parser.parse(new RioMemoryTripleSource(sesameModel), owlOntology, config);
-            createOntologyId(null);
-            /*PrefixDocumentFormat pf = owlManager.getOntologyFormat(owlOntology).asPrefixOWLDocumentFormat();
-            if (pf != null) {
-                Map<String, String> prefixes = pf.getPrefixName2PrefixMap();
-                if (pf.getDefaultPrefix() == null && !owlOntology.isAnonymous()) {
-                    owlOntology.getOntologyID().getOntologyIRI().ifPresent(iri -> {
-                        String defaultPrefix = iri.getIRIString();
-                        if (!iri.getIRIString().endsWith("/")) {
-                            defaultPrefix = iri.getIRIString() + '#';
-                        }
-                        pf.setDefaultPrefix(defaultPrefix);
-                    });
-                }
-                prefixes.forEach((prefix, namespace) -> sesameModel.setNamespace(prefix.replace(":", ""), namespace));
-            }*/
-            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
-        } catch (OWLOntologyCreationException e) {
-            throw new MobiOntologyException("Error in ontology creation", e);
-        }
     }
 
     /**
@@ -437,6 +405,21 @@ public class SimpleOntology implements Ontology {
             this.ontologyId = ontologyManager.createOntologyId(resource);
         } else {
             this.ontologyId = ontologyManager.createOntologyId();
+        }
+    }
+
+    /**
+     * Creates an Ontology from an initialized sesame model.
+     */
+    private void createOntologyFromSesameModel() {
+        try {
+            owlOntology = owlManager.createOntology();
+            RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
+            parser.parse(new RioMemoryTripleSource(sesameModel), owlOntology, config);
+            createOntologyId(null);
+            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
+        } catch (OWLOntologyCreationException e) {
+            throw new MobiOntologyException("Error in ontology creation", e);
         }
     }
 
@@ -959,14 +942,14 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     * Parses and intitializes the {@link org.eclipse.rdf4j.model.Model} for the ontology represented by the
+     * Parses and intitializes a {@link org.eclipse.rdf4j.model.Model} for the ontology represented by the
      * {@link InputStream}.
      *
-     * @param inputStream
+     * @param inputStream the InputStream to parse
      * @throws IOException
      */
-    private void initializeSesameModel(InputStream inputStream) throws IOException {
-        sesameModel = new LinkedHashModel();
+    private org.eclipse.rdf4j.model.Model createSesameModel(InputStream inputStream) throws IOException {
+        org.eclipse.rdf4j.model.Model model = new LinkedHashModel();
 
         Set<RDFFormat> formats = new HashSet<>(asList(RDFFormat.JSONLD, RDFFormat.TRIG, RDFFormat.TURTLE,
                 RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS));
@@ -980,7 +963,7 @@ public class SimpleOntology implements Ontology {
             while (rdfFormatIterator.hasNext()) {
                 RDFFormat format = rdfFormatIterator.next();
                 try {
-                    sesameModel = Rio.parse(markSupported, "", format);
+                    model = Rio.parse(markSupported, "", format);
                     LOG.debug("File is {} formatted.", format.getName());
                     break;
                 } catch (RDFParseException | UnsupportedRDFormatException e) {
@@ -995,6 +978,8 @@ public class SimpleOntology implements Ontology {
                 IOUtils.closeQuietly(inputStream);
             }
         }
+
+        return model;
     }
 
     private class NoImportLoader implements OWLOntologyIRIMapper {
