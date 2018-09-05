@@ -32,11 +32,13 @@
         function createConceptOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, utilService, ontologyUtilsManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/createConceptOverlay/createConceptOverlay.html',
-                scope: {},
+                scope: {
+                    close: '&',
+                    dismiss: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var pm = propertyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
@@ -86,14 +88,18 @@
                         dvm.ontoUtils.addIndividual(dvm.concept);
                         // select the new class
                         dvm.os.selectItem(_.get(dvm.concept, '@id'));
-                        // hide the overlay
-                        dvm.os.showCreateConceptOverlay = false;
+                        // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
+                        // hide the overlay
+                        $scope.close();
                     }
                     dvm.getSchemes = function(searchText) {
                         dvm.schemes = dvm.ontoUtils.getSelectList(dvm.schemeIRIs, searchText);
                     }
-                }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
+                    }
+                }]
             }
         }
 })();

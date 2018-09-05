@@ -32,11 +32,13 @@
         function createPropertyOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/createPropertyOverlay/createPropertyOverlay.html',
-                scope: {},
+                scope: {
+                    close: '&',
+                    dismiss: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var setAsObject = false;
                     var setAsDatatype = false;
@@ -116,9 +118,10 @@
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.property);
                         // select the new property
                         dvm.os.selectItem(_.get(dvm.property, '@id'));
-                        // hide the overlay
-                        dvm.os.showCreatePropertyOverlay = false;
+                        // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
+                        // hide the overlay
+                        $scope.close();
                     }
                     dvm.getKey = function() {
                         if (dvm.om.isDataTypeProperty(dvm.property)) {
@@ -143,6 +146,9 @@
                     dvm.characteristicsFilter = function(obj) {
                         return !obj.objectOnly || dvm.om.isObjectProperty(dvm.property);
                     }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
+                    }
 
                     function commonUpdate(key, setThisOpened) {
                         dvm.os.listItem[key].iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
@@ -158,7 +164,7 @@
                         }
                         setThisOpened(dvm.os.listItem.ontologyRecord.recordId, true);
                     }
-                }
+                }]
             }
         }
 })();

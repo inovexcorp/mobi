@@ -20,17 +20,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="remove-property-overlay overlay">
-    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
-        <h6>Remove</h6>
-        <div class="main">
-            <p>Are you sure you want to remove:<br><strong>{{dvm.key}}</strong></p>
-            <p>with value:<br><strong>{{dvm.getValueDisplay()}}</strong></p>
-            <p>from:<br><strong>{{dvm.os.listItem.selected['@id']}}</strong>?</p>
-        </div>
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary float-right" ng-click="dvm.removeProperty()">Yes</button>
-            <button class="btn float-right" ng-click="dvm.overlayFlag = false">No</button>
-        </div>
-    </form>
+<div class="static-iri">
+    <error-display ng-if="dvm.duplicateCheck && dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">This IRI already exists</error-display>
+    <span>
+        <strong class="text-muted" ng-class="{'duplicate-iri': dvm.duplicateCheck && dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)}" click-to-copy="dvm.iri">{{dvm.iri}}</strong>
+        <a ng-if="!dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showIriOverlay()"><i class="fa fa-pencil"></i></a>
+    </span>
 </div>

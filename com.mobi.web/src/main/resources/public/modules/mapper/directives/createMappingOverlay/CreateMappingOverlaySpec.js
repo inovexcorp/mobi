@@ -190,8 +190,8 @@ describe('Create Mapping Overlay directive', function() {
             expect(this.element.hasClass('create-mapping-overlay')).toBe(true);
             expect(this.element.querySelectorAll('form.content').length).toBe(1);
         });
-        it('with a title field', function() {
-            expect(this.element.querySelectorAll('input[name="title"]').length).toBe(1);
+        it('with a text-input', function() {
+            expect(this.element.find('text-input').length).toBe(1);
         });
         it('with a text-area', function() {
             expect(this.element.find('text-area').length).toBe(1);

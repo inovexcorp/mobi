@@ -20,15 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="imports-overlay overlay">
-    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
-        <h1>Import Ontology</h1>
+<div class="modal-header">
+    <h3>Import Ontology</h3>
+</div>
+<div class="modal-body">
+    <form name="dvm.form" novalidate autocomplete="off">
         <tabset class="in-overlay">
             <tab heading="'Web URL'" active="dvm.tabs.url" on-click="dvm.clickTab('url')" class="web-url">
                 <error-display ng-if="dvm.urlError">{{dvm.urlError}}</error-display>
                 <div class="form-group">
                     <custom-label>URL</custom-label>
-                    <input class="form-control" name="url" ng-model="dvm.url" ng-pattern="dvm.iriPattern" ng-required="dvm.tabs.url" ng-class="{'is-invalid': dvm.form.url.$error.pattern}" focus-me />
+                    <input class="form-control" name="url" ng-model="dvm.url" ng-pattern="dvm.iriPattern" ng-required="dvm.tabs.url" ng-class="{'is-invalid': dvm.form.url.$error.pattern}" focus-me="true" />
                     <p ng-messages="dvm.form.url.$error" class="invalid-feedback">
                         <ng-message when="pattern">The value provided is not a valid URL.</ng-message>
                     </p>
@@ -50,9 +52,9 @@
                 </div>
             </tab>
         </tabset>
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary float-right" ng-disabled="dvm.form.$invalid || (dvm.tabs.server && !dvm.ontologyIsSelected())" ng-click="dvm.addImport()">Submit</button>
-            <button class="btn float-right" ng-click="dvm.onClose()">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-disabled="dvm.form.$invalid || (dvm.tabs.server && !dvm.ontologyIsSelected())" ng-click="dvm.addImport()">Submit</button>
 </div>

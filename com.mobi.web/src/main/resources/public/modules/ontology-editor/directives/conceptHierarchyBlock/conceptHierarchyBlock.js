@@ -27,9 +27,9 @@
         .module('conceptHierarchyBlock', [])
         .directive('conceptHierarchyBlock', conceptHierarchyBlock);
 
-        conceptHierarchyBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
+        conceptHierarchyBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'modalService'];
 
-        function conceptHierarchyBlock(ontologyStateService, ontologyUtilsManagerService) {
+        function conceptHierarchyBlock(ontologyStateService, ontologyUtilsManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,9 +41,12 @@
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
 
-                    dvm.deleteEntity = function() {
-                        dvm.ontoUtils.deleteConcept();
-                        dvm.showDeleteConfirmation = false;
+                    dvm.showDeleteConfirmation = function() {
+                        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.ontoUtils.deleteConcept);
+                    }
+                    dvm.showCreateConceptOverlay = function() {
+                        dvm.os.unSelectItem();
+                        modalService.openModal('createConceptOverlay');
                     }
                 }
             }

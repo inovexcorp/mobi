@@ -27,13 +27,14 @@
         .module('ontologyUtilsManager', [])
         .service('ontologyUtilsManagerService', ontologyUtilsManagerService);
 
-        ontologyUtilsManagerService.$inject = ['$q', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'prefixes', 'utilService'];
+        ontologyUtilsManagerService.$inject = ['$q', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'propertyManagerService', 'prefixes', 'utilService'];
 
-        function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateService, updateRefsService, prefixes, utilService) {
+        function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateService, updateRefsService, propertyManagerService, prefixes, utilService) {
             var self = this;
             var om = ontologyManagerService;
             var os = ontologyStateService;
             var ur = updateRefsService;
+            var pm = propertyManagerService;
             var util = utilService;
 
             var broaderRelations = [
@@ -393,6 +394,40 @@
                     }
                 });
                 return array;
+            }
+
+            self.getRemovePropOverlayMessage = function(key, index) {
+                return '<p>Are you sure you want to remove:<br><strong>' + key + '</strong></p><p>with value:<br><strong>' + self.getPropValueDisplay(key, index) + '</strong></p><p>from:<br><strong>' + os.listItem.selected['@id'] + '</strong>?</p>';
+            }
+
+            self.getPropValueDisplay = function(key, index) {
+                return _.get(os.listItem.selected[key], '[' + index + ']["@value"]')
+                    || _.truncate(self.getBlankNodeValue(_.get(os.listItem.selected[key], '[' + index + ']["@id"]')), {length: 150})
+                    || _.get(os.listItem.selected[key], '[' + index + ']["@id"]');
+            }
+
+            self.removeProperty = function(key, index) {
+                var axiomObject = os.listItem.selected[key][index];
+                var json = {
+                    '@id': os.listItem.selected['@id'],
+                    [key]: [angular.copy(axiomObject)]
+                };
+                os.addToDeletions(os.listItem.ontologyRecord.recordId, json);
+                if (om.isBlankNodeId(axiomObject['@id'])) {
+                    var removed = os.removeEntity(os.listItem, axiomObject['@id']);
+                    _.forEach(removed, entity => os.addToDeletions(os.listItem.ontologyRecord.recordId, entity));
+                }
+                pm.remove(os.listItem.selected, key, index);
+                if (prefixes.rdfs + 'domain' === key && !om.isBlankNodeId(axiomObject['@id'])) {
+                    os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                } else if (prefixes.rdfs + 'range' === key) {
+                    os.updatePropertyIcon(os.listItem.selected);
+                }
+                return self.saveCurrentChanges()
+                    .then(() => {
+                        self.updateLabel();
+                        return axiomObject;
+                    });
             }
 
             function containsProperty(entity, properties, value) {

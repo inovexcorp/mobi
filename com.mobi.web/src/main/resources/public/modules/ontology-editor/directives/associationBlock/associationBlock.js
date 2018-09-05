@@ -27,9 +27,9 @@
         .module('associationBlock', [])
         .directive('associationBlock', associationBlock);
 
-        associationBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
+        associationBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'modalService'];
 
-        function associationBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
+        function associationBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,6 +42,9 @@
                     dvm.om = ontologyManagerService;
                     dvm.utils = ontologyUtilsManagerService;
 
+                    dvm.showDeleteConfirmation = function() {
+                        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.sm.listItem.selected['@id'] + '</strong>?</p>', dvm.deleteEntity);
+                    }
                     dvm.deleteEntity = function() {
                         if (dvm.om.isClass(dvm.sm.listItem.selected)) {
                             dvm.utils.deleteClass();
@@ -50,7 +53,6 @@
                         } else if (dvm.om.isDataTypeProperty(dvm.sm.listItem.selected)) {
                             dvm.utils.deleteDataTypeProperty();
                         }
-                        dvm.showDeleteConfirmation = false;
                     }
                 }
             }

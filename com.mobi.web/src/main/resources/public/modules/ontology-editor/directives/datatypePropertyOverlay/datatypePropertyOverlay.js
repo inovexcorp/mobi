@@ -32,11 +32,13 @@
         function datatypePropertyOverlay(ontologyStateService, utilService, prefixes, ontologyUtilsManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/datatypePropertyOverlay/datatypePropertyOverlay.html',
-                scope: {},
+                scope: {
+                    close: '&',
+                    dismiss: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var pm = propertyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
@@ -44,6 +46,20 @@
                     dvm.util = utilService;
                     dvm.dataProperties = _.keys(dvm.os.listItem.dataProperties.iris);
 
+                    dvm.isDisabled = function() {
+                        var isDisabled = dvm.propertyForm.$invalid || !dvm.os.propertyValue;
+                        if (!dvm.os.editingProperty) {
+                            isDisabled = isDisabled || dvm.os.propertySelect === undefined;
+                        }
+                        return isDisabled;
+                    }
+                    dvm.submit = function(select, value, type, language) {
+                        if (dvm.os.editingProperty) {
+                            dvm.editProperty(select, value, type, language);
+                        } else {
+                            dvm.addProperty(select, value, type, language);
+                        }
+                    }
                     dvm.addProperty = function(select, value, type, language) {
                         var lang = getLang(language);
                         var realType = getType(lang, type);
@@ -54,7 +70,7 @@
                         } else {
                             dvm.util.createWarningToast('Duplicate property values not allowed');
                         }
-                        dvm.os.showDataPropertyOverlay = false;
+                        $scope.close();
                     }
                     dvm.editProperty = function(select, value, type, language) {
                         var oldObj = angular.copy(dvm.os.listItem.selected[select][dvm.os.propertyIndex]);
@@ -68,19 +84,22 @@
                         } else {
                             dvm.util.createWarningToast('Duplicate property values not allowed');
                         }
-                        dvm.os.showDataPropertyOverlay = false;
+                        $scope.close();
                     }
-
                     dvm.isLangString = function() {
                         return prefixes.rdf + 'langString' === dvm.os.propertyType;
                     }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
+                    }
+
                     function getType(language, type) {
                         return language ? '' : type || prefixes.xsd + 'string';
                     }
                     function getLang(language) {
                         return language && dvm.isLangString() ? language : '';
                     }
-                }
+                }]
             }
         }
 })();

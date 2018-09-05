@@ -51,9 +51,9 @@
          */
         .directive('ontologySidebar', ontologySidebar);
 
-        ontologySidebar.$inject = ['ontologyManagerService', 'ontologyStateService'];
+        ontologySidebar.$inject = ['ontologyManagerService', 'ontologyStateService', 'modalService'];
 
-        function ontologySidebar(ontologyManagerService, ontologyStateService) {
+        function ontologySidebar(ontologyManagerService, ontologyStateService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -68,7 +68,7 @@
                     dvm.onClose = function(listItem) {
                         if (dvm.os.hasChanges(listItem)) {
                             dvm.os.recordIdToClose = listItem.ontologyRecord.recordId;
-                            dvm.os.showCloseOverlay = true;
+                            modalService.openModal('ontologyCloseOverlay');
                         } else {
                             dvm.os.closeOntology(listItem.ontologyRecord.recordId);
                         }

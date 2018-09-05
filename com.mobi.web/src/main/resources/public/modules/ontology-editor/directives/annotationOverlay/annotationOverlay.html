@@ -20,9 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="annotation-overlay overlay">
-    <form name="dvm.annotationForm" class="content clearfix" novalidate autocomplete="off">
-        <h6>{{dvm.os.editingAnnotation ? 'Edit Annotation' : 'Add Annotation'}}</h6>
+<div class="modal-header">
+    <h3>{{dvm.os.editingAnnotation ? 'Edit Annotation' : 'Add Annotation'}}</h3>
+</div>
+<div class="modal-body">
+    <form name="dvm.annotationForm" novalidate autocomplete="off">
         <div class="form-group">
             <label class="control-label">Annotation</label>
             <ui-select ng-model="dvm.os.annotationSelect" ng-disabled="dvm.os.editingAnnotation" autofocus on-select="dvm.selectProp()">
@@ -41,12 +43,9 @@
             <radio-button display-text="'False'" value="'false'" ng-model="dvm.os.annotationValue"></radio-button>
         </div>
         <!--<iri-select ng-model="dvm.os.annotationType" display-text="'Type'" multi-select="false" select-list="dvm.os.listItem.dataPropertyRange"></iri-select>-->
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary float-right" ng-if="!dvm.os.editingAnnotation" ng-click="dvm.addAnnotation()"
-                    ng-disabled="dvm.annotationForm.$invalid || dvm.os.annotationSelect === undefined || dvm.os.annotationValue === ''">Add</button>
-            <button class="btn btn-primary float-right" ng-if="dvm.os.editingAnnotation" ng-click="dvm.editAnnotation()"
-                    ng-disabled="dvm.annotationForm.$invalid || dvm.os.annotationValue === ''">Edit</button>
-            <button class="btn float-right" ng-click="dvm.os.showAnnotationOverlay = false;">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-click="dvm.submit()" ng-disabled="dvm.isDisabled()">Submit</button>
 </div>

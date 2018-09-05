@@ -21,31 +21,31 @@
  * #L%
  */
 describe('Focus Me directive', function() {
-    var $compile, $timeout, scope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('focusMe');
 
-        inject(function(_$compile_, _$rootScope_, _$timeout_) {
+        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            $timeout = _$timeout_;
         });
 
-        this.element = $compile(angular.element('<input type="text" focus-me />'))(scope);
+        scope.focus = false
+        this.element = $compile(angular.element('<input type="text" focus-me="focus" />'))(scope);
         scope.$digest();
     });
 
     afterEach(function() {
         $compile = null;
         scope = null;
-        $timeout = null;
         this.element.remove();
     });
 
     it('should set the focus on timeout', function() {
         spyOn(this.element[0], 'focus');
-        $timeout.flush();
+        scope.focus = true;
+        scope.$digest();
         expect(this.element[0].focus).toHaveBeenCalled();
     });
 });

@@ -57,16 +57,14 @@
         function relationshipOverlay(ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/relationshipOverlay/relationshipOverlay.html',
                 scope: {
-                    relationshipList: '<'
-                },
-                bindToController: {
-                    onSubmit: '&?'
+                    resolve: '<',
+                    close: '&',
+                    dismiss: '&'
                 },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var pm = propertyManagerService;
                     var om = ontologyManagerService;
@@ -88,14 +86,12 @@
                             dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [dvm.relationship]: addedValueObjs});
                             dvm.ontoUtils.saveCurrentChanges()
                                 .then(() => {
-                                    if (dvm.onSubmit) {
-                                        dvm.onSubmit({relationship: dvm.relationship, values: addedValueObjs})
-                                    }
+                                    $scope.close({$value: {relationship: dvm.relationship, values: addedValueObjs}})
                                 });
+                        } else {
+                            $scope.close();
                         }
-                        dvm.os.showRelationshipOverlay = false;
                     }
-
                     dvm.getValues = function(searchText) {
                         var isSchemeRelationship = _.includes(pm.conceptSchemeRelationshipList, dvm.relationship);
                         var isSemanticRelation = _.includes(dvm.os.listItem.derivedSemanticRelations, dvm.relationship);
@@ -111,7 +107,10 @@
 
                         dvm.array = dvm.ontoUtils.getSelectList(list, searchText);
                     }
-                }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
+                    }
+                }]
             }
         }
 })();

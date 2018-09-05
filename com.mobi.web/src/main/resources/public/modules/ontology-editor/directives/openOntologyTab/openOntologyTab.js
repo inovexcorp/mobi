@@ -27,11 +27,9 @@
         .module('openOntologyTab', [])
         .directive('openOntologyTab', openOntologyTab);
 
-        openOntologyTab.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
-            'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService'];
+        openOntologyTab.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService', 'modalService'];
 
-        function openOntologyTab(httpService, ontologyManagerService, ontologyStateService, prefixes,
-            stateManagerService, utilService, mapperStateService, catalogManagerService) {
+        function openOntologyTab(httpService, ontologyManagerService, ontologyStateService, prefixes, stateManagerService, utilService, mapperStateService, catalogManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -94,18 +92,15 @@
                         dvm.os.newLanguage = undefined;
                         dvm.os.showNewTab = true;
                     }
-                    dvm.showDeleteConfirmationOverlay = function(record) {
+                    dvm.showDeleteConfirmationOverlay = function(event, record) {
+                        event.stopPropagation();
                         dvm.recordId = _.get(record, '@id', '');
-                        dvm.recordTitle = dvm.util.getDctermsValue(record, 'title');
-                        dvm.errorMessage = '';
 
+                        var msg = '';
                         if (_.find(dvm.ms.sourceOntologies, {recordId: dvm.recordId})) {
-                            dvm.mappingErrorMessage = "Warning: The ontology you're about to delete is currently open in the mapping tool.";
-                        } else {
-                            dvm.mappingErrorMessage = '';
+                            msg += '<error-display>Warning: The ontology you\'re about to delete is currently open in the mapping tool.</error-display>';
                         }
-
-                        dvm.showDeleteConfirmation = true;
+                        modalService.openConfirmModal(msg + '<p>Are you sure that you want to delete <strong>' + dvm.util.getDctermsValue(record, 'title') + '</strong>?</p>', dvm.deleteOntology);
                     }
                     dvm.deleteOntology = function() {
                         dvm.om.deleteOntology(dvm.recordId)
@@ -117,8 +112,7 @@
                                 }
                                 dvm.currentPage = 1;
                                 dvm.getPageOntologyRecords();
-                                dvm.showDeleteConfirmation = false;
-                            }, errorMessage => dvm.errorMessage = errorMessage);
+                            }, dvm.util.createErrorToast);
                     }
                     dvm.getPageOntologyRecords = function() {
                         var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';

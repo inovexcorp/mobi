@@ -55,21 +55,19 @@
         function uploadOntologyOverlay(ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/uploadOntologyOverlay/uploadOntologyOverlay.html',
-                scope: {},
-                bindToController: {
-                    closeOverlay: '&',
-                    files: '='
+                scope: {
+                    close: '&',
+                    dismiss: '&'
                 },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var om = ontologyManagerService;
                     var state = ontologyStateService;
                     var file = undefined;
                     var uploadOffset = state.uploadList.length;
-                    dvm.total = dvm.files.length;
+                    dvm.total = state.uploadFiles.length;
                     dvm.index = 0;
                     dvm.title = '';
                     dvm.description = '';
@@ -84,23 +82,21 @@
                             dvm.index++;
                             setFormValues();
                         } else {
-                            dvm.closeOverlay();
+                            $scope.close();
                         }
                     }
-
                     dvm.submitAll = function() {
                         for (var i = dvm.index; i < dvm.total; i++) {
                             dvm.submit();
                         }
                     }
-
                     dvm.cancel = function() {
-                        dvm.files.splice(0);
-                        dvm.closeOverlay();
+                        state.uploadFiles.splice(0);
+                        $scope.dismiss();
                     }
 
                     function setFormValues() {
-                        file = _.pullAt(dvm.files, 0)[0];
+                        file = _.pullAt(state.uploadFiles, 0)[0];
                         dvm.title = file.name;
                         dvm.description = '';
                         dvm.keywords = [];
@@ -109,7 +105,7 @@
                     if (dvm.total) {
                         setFormValues();
                     }
-                }
+                }]
             };
         }
 })();

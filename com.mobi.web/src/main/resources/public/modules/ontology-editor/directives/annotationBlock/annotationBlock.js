@@ -27,9 +27,9 @@
         .module('annotationBlock', [])
         .directive('annotationBlock', annotationBlock);
 
-        annotationBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
+        annotationBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'modalService'];
 
-        function annotationBlock(ontologyStateService, ontologyUtilsManagerService) {
+        function annotationBlock(ontologyStateService, ontologyUtilsManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -49,12 +49,12 @@
                         dvm.os.annotationType = undefined;
                         dvm.os.annotationIndex = 0;
                         dvm.os.annotationLanguage = 'en';
-                        dvm.os.showAnnotationOverlay = true;
+                        modalService.openModal('annotationOverlay');
                     }
                     dvm.openRemoveOverlay = function(key, index) {
-                        dvm.key = key;
-                        dvm.index = index;
-                        dvm.showRemoveOverlay = true;
+                        modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
+                            dvm.ontoUtils.removeProperty(key, index);
+                        });
                     }
                     dvm.editClicked = function(annotation, index) {
                         var annotationObj = dvm.os.listItem.selected[annotation][index];
@@ -64,7 +64,7 @@
                         dvm.os.annotationIndex = index;
                         dvm.os.annotationType = _.get(annotationObj, '@type');
                         dvm.os.annotationLanguage = _.get(annotationObj, '@language');
-                        dvm.os.showAnnotationOverlay = true;
+                        modalService.openModal('annotationOverlay');
                     }
                 }
             }

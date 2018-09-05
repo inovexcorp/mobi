@@ -20,11 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="datatype-property-overlay overlay">
-    <form name="dvm.propertyForm" class="content clearfix" novalidate autocomplete="off">
-        <!-- section header -->
-        <h6>{{dvm.os.editingProperty ? 'Edit' : 'Add'}} Individual Data Property</h6>
-
+<div class="modal-header">
+    <h3>{{dvm.os.editingProperty ? 'Edit' : 'Add'}} Individual Data Property</h3>
+</div>
+<div class="modal-body">
+    <form name="dvm.propertyForm" novalidate autocomplete="off">
         <!-- data property list -->
         <div class="form-group">
             <label class="control-label">Data Property</label>
@@ -44,18 +44,9 @@
 
         <!-- language -->
         <language-select ng-if="dvm.isLangString()" ng-model="dvm.os.propertyLanguage" required></language-select>
-
-        <!-- data property buttons -->
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary float-right" ng-if="!dvm.os.editingProperty"
-                    ng-disabled="dvm.propertyForm.$invalid || dvm.os.propertySelect === undefined || !dvm.os.propertyValue"
-                    ng-click="dvm.addProperty(dvm.os.propertySelect, dvm.os.propertyValue, dvm.os.propertyType, dvm.os.propertyLanguage)">Add</button>
-
-            <button class="btn btn-primary float-right" ng-if="dvm.os.editingProperty"
-                    ng-disabled="dvm.propertyForm.$invalid || !dvm.os.propertyValue"
-                    ng-click="dvm.editProperty(dvm.os.propertySelect, dvm.os.propertyValue, dvm.os.propertyType, dvm.os.propertyLanguage)">Edit</button>
-
-            <button class="btn float-right" ng-click="dvm.os.showDataPropertyOverlay = false">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-disabled="dvm.isDisabled()" ng-click="dvm.submit(dvm.os.propertySelect, dvm.os.propertyValue, dvm.os.propertyType, dvm.os.propertyLanguage)">Submit</button>
 </div>

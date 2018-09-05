@@ -27,9 +27,9 @@
         .module('conceptSchemeHierarchyBlock', [])
         .directive('conceptSchemeHierarchyBlock', conceptSchemeHierarchyBlock);
 
-        conceptSchemeHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
+        conceptSchemeHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'modalService'];
 
-        function conceptSchemeHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
+        function conceptSchemeHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,13 +42,19 @@
                     dvm.om = ontologyManagerService
                     dvm.ontoUtils = ontologyUtilsManagerService;
 
+                    dvm.showDeleteConfirmation = function() {
+                        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.deleteEntity);
+                    }
                     dvm.deleteEntity = function() {
                         if (dvm.om.isConcept(dvm.os.listItem.selected, dvm.os.listItem.derivedConcepts)) {
                             dvm.ontoUtils.deleteConcept();
                         } else if (dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)) {
                             dvm.ontoUtils.deleteConceptScheme();
                         }
-                        dvm.showDeleteConfirmation = false;
+                    }
+                    dvm.showCreateConceptSchemeOverlay = function() {
+                        dvm.os.unSelectItem();
+                        modalService.openModal('createConceptSchemeOverlay');
                     }
                 }
             }

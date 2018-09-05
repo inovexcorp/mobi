@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology Properties Block directive', function() {
-    var $compile, scope, ontologyStateSvc, propertyManagerSvc;
+    var $compile, scope, ontologyStateSvc, propertyManagerSvc, ontoUtils, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -30,12 +30,15 @@ describe('Ontology Properties Block directive', function() {
         mockOntologyState();
         mockPropertyManager();
         mockOntologyUtilsManager();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _ontologyUtilsManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             propertyManagerSvc = _propertyManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_;
+            modalSvc = _modalService_;
         });
 
         ontologyStateSvc.listItem.selected = {
@@ -52,6 +55,8 @@ describe('Ontology Properties Block directive', function() {
         scope = null;
         ontologyStateSvc = null;
         propertyManagerSvc = null;
+        ontoUtils = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -76,16 +81,6 @@ describe('Ontology Properties Block directive', function() {
             scope.$digest();
             expect(this.element.find('property-values').length).toBe(0);
         });
-        it('depending on whether an ontology property is being deleted', function() {
-            this.controller.showRemoveOverlay = true;
-            scope.$digest();
-            expect(this.element.find('remove-property-overlay').length).toBe(1);
-        });
-        it('depending on whether an ontology property is being shown', function() {
-            ontologyStateSvc.showOntologyPropertyOverlay = true;
-            scope.$digest();
-            expect(this.element.find('ontology-property-overlay').length).toBe(1);
-        });
     });
     describe('controller methods', function() {
         it('should set the correct manager values when opening the Add Overlay', function() {
@@ -96,13 +91,12 @@ describe('Ontology Properties Block directive', function() {
             expect(ontologyStateSvc.ontologyPropertyIRI).toBe('');
             expect(ontologyStateSvc.ontologyPropertyType).toBeUndefined();
             expect(ontologyStateSvc.ontologyPropertyLanguage).toBe('');
-            expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(true);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('ontologyPropertyOverlay');
         });
         it('should set the correct manager values when opening the Remove Ontology Property Overlay', function() {
             this.controller.openRemoveOverlay('key', 1);
-            expect(this.controller.key).toBe('key');
-            expect(this.controller.index).toBe(1);
-            expect(this.controller.showRemoveOverlay).toBe(true);
+            expect(ontoUtils.getRemovePropOverlayMessage).toHaveBeenCalledWith('key', 1);
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith('', jasmine.any(Function));
         });
         it('should set the correct manager values when editing an ontology property', function() {
             var propertyIRI = 'prop1';
@@ -118,7 +112,7 @@ describe('Ontology Properties Block directive', function() {
             expect(ontologyStateSvc.ontologyPropertyType).toBe('type');
             expect(ontologyStateSvc.ontologyPropertyIndex).toBe(0);
             expect(ontologyStateSvc.ontologyPropertyLanguage).toBe('lang');
-            expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(true);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('ontologyPropertyOverlay');
         });
     });
     it('should call openAddOverlay when the link is clicked', function() {

@@ -32,11 +32,13 @@
         function createClassOverlay($filter, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/createClassOverlay/createClassOverlay.html',
-                scope: {},
+                scope: {
+                    close: '&',
+                    dismiss: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.prefixes = prefixes;
                     dvm.os = ontologyStateService;
@@ -90,11 +92,15 @@
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.clazz);
                         // select the new class
                         dvm.os.selectItem(_.get(dvm.clazz, '@id'));
-                        // hide the overlay
-                        dvm.os.showCreateClassOverlay = false;
+                        // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
+                        // hide the overlay
+                        $scope.close()
                     }
-                }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
+                    }
+                }]
             }
         }
 })();

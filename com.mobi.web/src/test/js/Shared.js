@@ -739,7 +739,7 @@ function mockOntologyState() {
 
 function mockOntologyUtilsManager() {
     module(function($provide) {
-        $provide.service('ontologyUtilsManagerService', function() {
+        $provide.service('ontologyUtilsManagerService', function($q) {
             this.containsDerivedConcept = jasmine.createSpy('containsDerivedConcept');
             this.containsDerivedSemanticRelation = jasmine.createSpy('containsDerivedSemanticRelation');
             this.containsDerivedConceptScheme = jasmine.createSpy('containsDerivedConceptScheme');
@@ -769,6 +769,9 @@ function mockOntologyUtilsManager() {
             this.updateflatIndividualsHierarchy = jasmine.createSpy('updateflatIndividualsHierarchy');
             this.checkIri = jasmine.createSpy('checkIri');
             this.getSelectList = jasmine.createSpy('getSelectList');
+            this.getRemovePropOverlayMessage = jasmine.createSpy('getRemovePropOverlayMessage').and.returnValue('');
+            this.getPropValueDisplay = jasmine.createSpy('getPropValueDisplay').and.returnValue('');
+            this.removeProperty = jasmine.createSpy('removeProperty').and.returnValue($q.when({}));
         });
     });
 }
@@ -1325,6 +1328,15 @@ function mockPolicyEnforcement() {
     module(function($provide) {
         $provide.service('policyEnforcementService', function($q) {
             this.evaluateRequest = jasmine.createSpy('evaulateRequest').and.returnValue($q.when());
+        });
+    });
+}
+
+function mockModal() {
+    module(function($provide) {
+        $provide.service('modalService', function() {
+            this.openModal = jasmine.createSpy('openModal');
+            this.openConfirmModal = jasmine.createSpy('openConfirmModal');
         });
     });
 }

@@ -33,11 +33,14 @@
         function createBranchOverlay($q, catalogManagerService, ontologyStateService, stateManagerService, prefixes) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/createBranchOverlay/createBranchOverlay.html',
-                scope: {},
+                scope: {
+                    resolve: '<',
+                    dismiss: '&',
+                    close: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var cm = catalogManagerService;
                     var sm = stateManagerService;
@@ -65,16 +68,18 @@
                             return sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, commitId);
                         }, $q.reject)
                         .then(() => {
-                            dvm.os.showCreateBranchOverlay = false;
+                            $scope.close();
                             dvm.os.resetStateTabs();
                         }, onError);
-
+                    }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
                     }
 
                     function onError(errorMessage) {
                         dvm.error = errorMessage;
                     }
-                }
+                }]
             }
         }
 })();

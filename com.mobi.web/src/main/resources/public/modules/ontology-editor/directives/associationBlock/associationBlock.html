@@ -27,11 +27,7 @@
             <everything-tree></everything-tree>
         </block-content>
         <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.sm.listItem.selected || dvm.sm.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Entity</span></button>
+            <button class="btn btn-link" ng-disabled="!dvm.sm.listItem.selected || dvm.sm.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()"><i class="fa fa-trash-o"></i><span>Delete Entity</span></button>
         </block-footer>
     </block>
-    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Entity'" confirm-click="dvm.deleteEntity()"
-                          cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
-        <p>Are you sure that you want to delete <strong>{{dvm.sm.listItem.selected['@id']}}</strong>?</p>
-    </confirmation-overlay>
 </div>

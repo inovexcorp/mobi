@@ -32,11 +32,13 @@
         function uploadChangesOverlay(ontologyStateService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/uploadChangesOverlay/uploadChangesOverlay.html',
-                scope: {},
+                scope: {
+                    close: '&',
+                    dismiss: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.error = '';
                     dvm.os = ontologyStateService;
@@ -49,16 +51,14 @@
                             dvm.os.uploadChanges(dvm.file, ontRecord.recordId, ontRecord.branchId, ontRecord.commitId).then(() => {
                                 dvm.os.getActivePage().active = false;
                                 dvm.os.listItem.editorTabStates.savedChanges.active = true;
-                                dvm.closeOverlay();
+                                $scope.close();
                             }, errorMessage => dvm.error = errorMessage);
                         }
                     };
-                    
-                    dvm.closeOverlay = function() {
-                        dvm.os.showUploadChangesOverlay = false;
-                        dvm.error = '';
+                    dvm.cancel = function() {
+                        $scope.dismiss();
                     };
-                }
+                }]
             };
         }
 })();

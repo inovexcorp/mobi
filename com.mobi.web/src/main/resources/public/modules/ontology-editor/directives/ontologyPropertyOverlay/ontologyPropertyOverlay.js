@@ -32,11 +32,13 @@
         function ontologyPropertyOverlay(ontologyStateService, REGEX, propertyManagerService, utilService, ontologyUtilsManagerService, prefixes) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/ontologyPropertyOverlay/ontologyPropertyOverlay.html',
-                scope: {},
+                scope: {
+                    close: '&',
+                    dismiss: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var pm = propertyManagerService;
                     dvm.prefixes = prefixes;
@@ -46,6 +48,14 @@
                     dvm.util = utilService;
                     dvm.properties = _.union(pm.ontologyProperties, _.keys(dvm.os.listItem.annotations.iris));
 
+
+                    dvm.submit = function() {
+                        if (dvm.os.editingOntologyProperty) {
+                            dvm.editProperty();
+                        } else {
+                            dvm.addProperty();
+                        }
+                    }
                     dvm.isOntologyProperty = function() {
                         return !!dvm.os.ontologyProperty && _.some(pm.ontologyProperties, property => dvm.os.ontologyProperty === property);
                     }
@@ -77,7 +87,7 @@
                         } else {
                             dvm.util.createWarningToast('Duplicate property values not allowed');
                         }
-                        dvm.os.showOntologyPropertyOverlay = false;
+                        $scope.close();
                     }
                     dvm.editProperty = function() {
                         var oldObj = angular.copy(_.get(dvm.os.listItem.selected, "['" + dvm.os.ontologyProperty + "']['" + dvm.os.ontologyPropertyIndex + "']"));
@@ -96,10 +106,10 @@
                         } else {
                             dvm.util.createWarningToast('Duplicate property values not allowed');
                         }
-                        dvm.os.showOntologyPropertyOverlay = false;
+                        $scope.close();
                     }
-                    dvm.cannotEdit = function() {
-                        return dvm.propertyForm.$invalid;
+                    dvm.cancel = function() {
+                        $scope.dismiss();
                     }
 
                     function createJson(value, type, language) {
@@ -111,7 +121,7 @@
                         }
                         return dvm.util.createJson(dvm.os.listItem.selected['@id'], dvm.os.ontologyProperty, valueObj);
                     }
-                }
+                }]
             }
         }
 })();

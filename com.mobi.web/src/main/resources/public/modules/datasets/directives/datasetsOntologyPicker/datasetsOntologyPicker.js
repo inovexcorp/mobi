@@ -114,21 +114,7 @@
                     }
 
                     // Begin Initialization...
-                    dvm.setInitialOntologies()
-                        .then(() => {
-                            if (state.showEditOverlay) {
-                                dvm.selectedOntologies = [];
-                                var selectedOntologies = _.map(state.selectedDataset.identifiers, identifier => dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
-                                _.forEach(selectedOntologies, id => {
-                                    var ontology = _.find(dvm.ontologies, {'@id': id});
-                                    if (ontology) {
-                                        dvm.selectedOntologies.push(ontology);
-                                    } else {
-                                        onError('Selected ontology could not be found');
-                                    }
-                                });
-                            }
-                        });
+                    dvm.setInitialOntologies();
                 }
             }
         }

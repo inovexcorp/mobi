@@ -32,11 +32,13 @@
         function annotationOverlay(propertyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/annotationOverlay/annotationOverlay.html',
-                scope: {},
+                scope: {
+                    close: '&',
+                    dismiss: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.pm = propertyManagerService;
@@ -63,6 +65,20 @@
                             dvm.os.annotationLanguage = 'en';
                         }
                     }
+                    dvm.submit = function() {
+                        if (dvm.os.editingAnnotation) {
+                            dvm.editAnnotation();
+                        } else {
+                            dvm.addAnnotation();
+                        }
+                    }
+                    dvm.isDisabled = function() {
+                        var isDisabled = dvm.annotationForm.$invalid || dvm.os.annotationValue === ''
+                        if (!dvm.os.editingAnnotation) {
+                            isDisabled = isDisabled || dvm.os.annotationSelect === undefined;
+                        }
+                        return isDisabled;
+                    }
                     dvm.addAnnotation = function() {
                         var added = dvm.pm.addValue(dvm.os.listItem.selected, dvm.os.annotationSelect, dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage);
                         if (added) {
@@ -72,7 +88,7 @@
                         } else {
                             dvm.util.createWarningToast('Duplicate property values not allowed');
                         }
-                        dvm.os.showAnnotationOverlay = false;
+                        $scope.close();
                     }
                     dvm.editAnnotation = function() {
                         var oldObj = angular.copy(_.get(dvm.os.listItem.selected, "['" + dvm.os.annotationSelect + "']['" + dvm.os.annotationIndex + "']"));
@@ -85,9 +101,12 @@
                         } else {
                             dvm.util.createWarningToast('Duplicate property values not allowed');
                         }
-                        dvm.os.showAnnotationOverlay = false;
+                        $scope.close();
                     }
-                }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
+                    }
+                }]
             }
         }
 })();

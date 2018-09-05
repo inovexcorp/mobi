@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Commit History Table directive', function() {
-    var $compile, scope, $q, catalogManagerSvc, Snap;
+    var $compile, scope, $q, catalogManagerSvc, Snap, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -31,6 +31,7 @@ describe('Commit History Table directive', function() {
         mockCatalogManager();
         mockUserManager();
         mockUtil();
+        mockModal();
 
         module(function($provide) {
             $provide.constant('Snap', jasmine.createSpy('Snap').and.returnValue({
@@ -39,12 +40,13 @@ describe('Commit History Table directive', function() {
             }));
         });
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _Snap_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _Snap_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
             Snap = _Snap_;
+            modalSvc = _modalService_;
         });
 
         this.error = 'error';
@@ -66,6 +68,7 @@ describe('Commit History Table directive', function() {
         $q = null;
         catalogManagerSvc = null;
         Snap = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -109,13 +112,6 @@ describe('Commit History Table directive', function() {
             scope.$apply();
             expect(this.element.find('info-message').length).toBe(1);
         });
-        it('depending on whether the commit overlay should be shown', function() {
-            expect(this.element.find('commit-info-overlay').length).toBe(0);
-
-            this.controller.showOverlay = true;
-            scope.$digest();
-            expect(this.element.find('commit-info-overlay').length).toBe(1);
-        });
     });
     describe('controller bound variable', function() {
         it('branchTitle should be one way bound', function() {
@@ -138,6 +134,26 @@ describe('Commit History Table directive', function() {
         });
     });
     describe('controller methods', function() {
+        describe('should open the commitInfoOverlay', function() {
+            beforeEach(function() {
+                this.controller.commits = this.commits;
+            });
+            it('if getCommit resolves', function() {
+                catalogManagerSvc.getCommit.and.returnValue($q.when({additions: [], deletions: []}));
+                this.controller.openCommitOverlay(this.commitId);
+                scope.$apply();
+                expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
+                expect(modalSvc.openModal).toHaveBeenCalledWith('commitInfoOverlay', {commit: {id: this.commitId}, additions: [], deletions: []});
+            });
+            it('unless getCommit rejects', function() {
+                catalogManagerSvc.getCommit.and.returnValue($q.reject('Error Message'));
+                this.controller.openCommitOverlay(this.commitId);
+                scope.$apply();
+                expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
+                expect(modalSvc.openModal).not.toHaveBeenCalled();
+                expect(this.controller.error).toEqual('Error Message');
+            });
+        });
         describe('should get the list of commits', function() {
             beforeEach(function() {
                 spyOn(this.controller, 'drawGraph');
@@ -236,7 +252,7 @@ describe('Commit History Table directive', function() {
         });
     });
     describe('$scope.$watch triggers when changing the', function() {
-        beforeEach(function() { 
+        beforeEach(function() {
             spyOn(this.controller, 'getCommits');
         });
         it('commitId', function() {

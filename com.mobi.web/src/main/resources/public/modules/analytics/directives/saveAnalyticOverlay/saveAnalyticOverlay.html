@@ -24,10 +24,7 @@
     <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
         <h1>Save Analytic</h1>
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <div class="form-group">
-            <custom-label>Title</custom-label>
-            <input class="form-control" type="text" name="title" ng-model="dvm.config.title" required focus-me>
-        </div>
+        <text-input display-text="'Title'" ng-model="dvm.config.title" required="true" is-focus-me="true"></text-input>
         <text-area ng-model="dvm.config.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <keyword-select ng-model="dvm.config.keywords"></keyword-select>
         <div class="btn-container">

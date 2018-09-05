@@ -28,10 +28,7 @@
             <p><small><custom-label>Repository ID:</custom-label> {{dvm.recordConfig.repositoryId}}</small></p>
         </div>
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <div class="form-group">
-            <custom-label>Title</custom-label>
-            <input class="form-control" type="text" name="title" value="dvm.recordConfig.title" ng-model="dvm.recordConfig.title" required focus-me>
-        </div>
+        <text-input display-text="'Title'" ng-model="dvm.recordConfig.title" required="true" is-focus-me="true"></text-input>
         <text-area ng-model="dvm.recordConfig.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <keyword-select ng-model="dvm.keywords"></keyword-select>
         <datasets-ontology-picker selected-ontologies="dvm.selectedOntologies" error="dvm.error"></datasets-ontology-picker>

@@ -20,16 +20,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="relationship-overlay overlay">
-    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
-        <h6>Add Relationship</h6>
+<div class="modal-header">
+    <h3>Add Relationship</h3>
+</div>
+<div class="modal-body">
+    <form name="dvm.form" novalidate autocomplete="off">
         <div class="form-group">
             <custom-label>Relationship</custom-label>
             <ui-select ng-model="dvm.relationship" on-select="dvm.values = []" autofocus>
                 <ui-select-match placeholder="Select Relationship">
                     <span>{{$select.selected}}</span>
                 </ui-select-match>
-                <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="relationship in relationshipList | filter:$select.search | orderBy:dvm.util.getIRILocalName">
+                <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="relationship in resolve.relationshipList | filter:$select.search | orderBy:dvm.util.getIRILocalName">
                     <div title="{{relationship}}" ng-bind-html="dvm.util.getIRILocalName(relationship) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
@@ -45,9 +47,9 @@
                 </ui-select-choices>
             </ui-select>
         </div>
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary float-right" ng-click="dvm.addRelationship()" ng-disabled="dvm.relationship === undefined || !dvm.values.length">Add</button>
-            <button class="btn float-right" ng-click="dvm.os.showRelationshipOverlay = false">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-click="dvm.addRelationship()" ng-disabled="dvm.relationship === undefined || !dvm.values.length">Submit</button>
 </div>

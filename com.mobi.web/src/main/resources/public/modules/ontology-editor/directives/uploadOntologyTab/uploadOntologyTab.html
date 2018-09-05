@@ -25,7 +25,7 @@
         <div class="col-6 offset-3">
             <block>
                 <block-content class="padding">
-                    <drag-file files="dvm.files" on-drop="dvm.showOverlay = true"></drag-file>
+                    <drag-file files="dvm.state.uploadFiles" on-drop="dvm.showUploadOntologyOverlay()"></drag-file>
                     <md-list>
                         <md-list-item ng-repeat="item in dvm.state.uploadList | orderBy:'title'" class="md-2-line">
                             <i ng-class="{'fa-spinner fa-spin': dvm.hasStatus(item.promise, 0), 'fa-check': dvm.hasStatus(item.promise, 1) && !item.error, 'fa-times': item.error}" class="fa fa-fw"></i>
@@ -42,5 +42,4 @@
             </block>
         </div>
     </div>
-    <upload-ontology-overlay ng-if="dvm.showOverlay" close-overlay="dvm.showOverlay = false" files="dvm.files" list="dvm.uploadList"></upload-ontology-overlay>
 </div>

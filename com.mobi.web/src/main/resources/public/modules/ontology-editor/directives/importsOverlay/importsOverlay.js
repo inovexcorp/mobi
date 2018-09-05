@@ -32,15 +32,13 @@
         function importsOverlay($http, httpService, $q, REGEX, ontologyStateService, ontologyManagerService, utilService, prefixes, propertyManagerService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/importsOverlay/importsOverlay.html',
-                scope: {},
-                bindToController: {
-                    onClose: '&',
-                    onSubmit: '&'
+                scope: {
+                    close: '&',
+                    dismiss: '&'
                 },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var om = ontologyManagerService;
                     var os = ontologyStateService;
@@ -105,12 +103,14 @@
                                 .then(() => os.updateOntology(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, os.listItem.upToDate, os.listItem.inProgressCommit), $q.reject)
                                 .then(() => {
                                     os.listItem.isSaved = os.isCommittable(os.listItem);
-                                    dvm.onSubmit();
-                                    dvm.onClose();
+                                    $scope.close()
                                 }, errorMessage => onError(errorMessage, tabKey));
                         } else {
-                            dvm.onClose();
+                            $scope.dismiss();
                         }
+                    }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
                     }
 
                     function isOntologyUnused(ontologyRecord) {
@@ -123,7 +123,7 @@
                             dvm.serverError = errorMessage;
                         }
                     }
-                }
+                }]
             }
         }
 })();

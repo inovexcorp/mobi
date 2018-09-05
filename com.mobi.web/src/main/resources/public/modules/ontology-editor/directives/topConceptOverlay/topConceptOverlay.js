@@ -58,15 +58,13 @@
         function topConceptOverlay(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes, utilService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/topConceptOverlay/topConceptOverlay.html',
-                scope: {},
-                bindToController: {
-                    closeOverlay: '&',
-                    onSubmit: '&'
+                scope: {
+                    close: '&',
+                    dismiss: '&'
                 },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var om = ontologyManagerService;
                     var os = ontologyStateService;
@@ -81,12 +79,14 @@
                     dvm.addTopConcept = function() {
                         os.listItem.selected[axiom] = _.union(_.get(os.listItem.selected, axiom, []), dvm.values);
                         os.addToAdditions(os.listItem.ontologyRecord.recordId, {'@id': os.listItem.selected['@id'], [axiom]: dvm.values});
-                        dvm.closeOverlay();
                         dvm.ontoUtils.saveCurrentChanges();
-                        dvm.onSubmit({relationship: prefixes.skos + 'hasTopConcept', values: dvm.values})
+                        $scope.close({$value: {relationship: prefixes.skos + 'hasTopConcept', values: dvm.values}});
                     }
                     dvm.getConcepts = function(searchText) {
                         dvm.filteredConcepts = dvm.ontoUtils.getSelectList(concepts, searchText);
+                    }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
                     }
 
                     function getConceptList() {
@@ -94,7 +94,7 @@
                         var set = _.map(_.get(os.listItem.selected, axiom), '@id');
                         return _.difference(all, set);
                     }
-                }
+                }]
             }
         }
 })();

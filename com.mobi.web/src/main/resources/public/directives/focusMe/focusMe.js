@@ -39,18 +39,17 @@
          * @restrict A
          *
          * @description
-         * `focusMe` is a directive that sets the focus of the element it is set on when it becomes visible.
+         * `focusMe` is a directive that sets the focus of the element it is set on when it becomes visible if the
+         * directive value is set to true.
          */
         .directive('focusMe', focusMe);
 
-        focusMe.$inject = ['$timeout'];
-
-        function focusMe($timeout) {
+        function focusMe() {
             return {
                 restrict: 'A',
-                link: function(scope, elem) {
-                    $timeout(function() {
-                        elem[0].focus();
+                link: function(scope, elem, attrs) {
+                    scope.$watch(attrs.focusMe, function(newValue) {
+                        newValue && elem[0].focus()
                     });
                 }
             }

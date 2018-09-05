@@ -20,11 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="object-property-overlay overlay">
+<div class="modal-header">
+    <h3>Add Individual Object Property</h3>
+</div>
+<div class="modal-body">
     <form name="dvm.propertyForm" class="content clearfix" novalidate autocomplete="off">
-        <!-- section header -->
-        <h6>Add Individual Object Property</h6>
-
         <!-- object property list -->
         <div class="form-group">
             <label class="control-label">Object Property</label>
@@ -38,11 +38,9 @@
 
         <!-- value -->
         <iri-select ng-model="dvm.os.propertyValue" display-text="'Value'" select-list="dvm.individuals" multi-select="false"></iri-select>
-
-        <!-- object property buttons -->
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary float-right" ng-disabled="dvm.propertyForm.$invalid || dvm.os.propertySelect === undefined || !dvm.os.propertyValue" ng-click="dvm.addProperty(dvm.os.propertySelect, dvm.os.propertyValue)">Submit</button>
-            <button class="btn float-right" ng-click="dvm.os.showObjectPropertyOverlay = false;">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-disabled="dvm.propertyForm.$invalid || dvm.os.propertySelect === undefined || !dvm.os.propertyValue" ng-click="dvm.addProperty(dvm.os.propertySelect, dvm.os.propertyValue)">Submit</button>
 </div>

@@ -32,16 +32,14 @@
         function axiomOverlay(ontologyStateService, utilService, ontologyUtilsManagerService, prefixes, manchesterConverterService, ontologyManagerService, propertyManagerService, $filter) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/axiomOverlay/axiomOverlay.html',
                 scope: {
-                    axiomList: '<'
-                },
-                bindToController: {
-                    onSubmit: '&?'
+                    resolve: '<',
+                    dismiss: '&',
+                    close: '&'
                 },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var mc = manchesterConverterService;
                     var om = ontologyManagerService;
@@ -110,18 +108,14 @@
                             dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [axiom]: valueObjs});
                             dvm.ontoUtils.saveCurrentChanges()
                                 .then(() => {
-                                    if (dvm.onSubmit) {
-                                        var returnValues = [];
-                                        if (dvm.tabs.list) {
-                                            returnValues = _.intersection(values, addedValues);
-                                        }
-                                        dvm.onSubmit({axiom: axiom, values: returnValues});
+                                    var returnValues = [];
+                                    if (dvm.tabs.list) {
+                                        returnValues = _.intersection(values, addedValues);
                                     }
+                                    $scope.close({$value: {axiom: axiom, values: returnValues}});
                                 });
                         }
-                        dvm.os.showAxiomOverlay = false;
                     }
-
                     dvm.getValues = function(searchText) {
                         var valuesKey = _.get(dvm.axiom, 'valuesKey');
                         if (!valuesKey) {
@@ -132,6 +126,9 @@
                         var filtered = $filter('removeIriFromArray')(array, dvm.os.listItem.selected['@id']);
                         dvm.array = dvm.ontoUtils.getSelectList(filtered, searchText, dvm.ontoUtils.getDropDownText);
                     }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
+                    }
 
                     function createLocalNameMap() {
                         var map = {};
@@ -140,7 +137,7 @@
                         });
                         return map;
                     }
-                }
+                }]
             }
         }
 })();

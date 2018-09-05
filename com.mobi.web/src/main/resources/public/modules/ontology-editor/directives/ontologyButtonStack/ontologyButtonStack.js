@@ -27,9 +27,9 @@
         .module('ontologyButtonStack', [])
         .directive('ontologyButtonStack', ontologyButtonStack);
 
-        ontologyButtonStack.$inject = ['ontologyStateService'];
+        ontologyButtonStack.$inject = ['ontologyStateService', 'modalService'];
 
-        function ontologyButtonStack(ontologyStateService) {
+        function ontologyButtonStack(ontologyStateService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,6 +39,16 @@
                 controller: function() {
                     var dvm = this;
                     dvm.os = ontologyStateService;
+
+                    dvm.showCreateBranchOverlay = function() {
+                        modalService.openModal('createBranchOverlay');
+                    }
+                    dvm.showCommitOverlay = function() {
+                        modalService.openModal('commitOverlay');
+                    }
+                    dvm.showUploadChangesOverlay = function() {
+                        modalService.openModal('uploadChangesOverlay');
+                    }
                 }
             }
         }

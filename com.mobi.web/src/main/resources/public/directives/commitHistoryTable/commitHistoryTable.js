@@ -56,9 +56,9 @@
          */
         .directive('commitHistoryTable', commitHistoryTable);
 
-        commitHistoryTable.$inject = ['catalogManagerService', 'utilService', 'userManagerService', 'Snap', 'chroma'];
+        commitHistoryTable.$inject = ['catalogManagerService', 'utilService', 'userManagerService', 'modalService', 'Snap', 'chroma'];
 
-        function commitHistoryTable(catalogManagerService, utilService, userManagerService, Snap, chroma) {
+        function commitHistoryTable(catalogManagerService, utilService, userManagerService, modalService, Snap, chroma) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -88,7 +88,6 @@
 
                     dvm.util = utilService;
                     dvm.um = userManagerService;
-                    dvm.showOverlay = false;
                     dvm.error = '';
                     dvm.commit = undefined;
                     dvm.additions = [];
@@ -105,10 +104,11 @@
                     dvm.openCommitOverlay = function(commitId) {
                         cm.getCommit(commitId)
                             .then(response => {
-                                dvm.commit = _.find(dvm.commits, {id: commitId});
-                                dvm.additions = response.additions;
-                                dvm.deletions = response.deletions;
-                                dvm.showOverlay = true;
+                                modalService.openModal('commitInfoOverlay', {
+                                    commit: _.find(dvm.commits, {id: commitId}),
+                                    additions: response.additions,
+                                    deletions: response.deletions
+                                }, undefined, 'lg');
                             }, errorMessage => dvm.error = errorMessage);
                     }
                     dvm.getCommits = function() {

@@ -27,9 +27,9 @@
         .module('previewBlock', [])
         .directive('previewBlock', previewBlock);
 
-        previewBlock.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService'];
+        previewBlock.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService', 'modalService'];
 
-        function previewBlock($filter, ontologyStateService, ontologyManagerService) {
+        function previewBlock($filter, ontologyStateService, ontologyManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -64,6 +64,9 @@
                         om.getOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.activePage.serialization, false, true)
                             .then(ontology => dvm.activePage.preview = (dvm.activePage.serialization === 'jsonld' ? $filter('json')(ontology) : ontology),
                                 response => dvm.activePage.preview = response);
+                    }
+                    dvm.showDownloadOverlay = function() {
+                        modalService.openModal('ontologyDownloadOverlay');
                     }
                 }
             }

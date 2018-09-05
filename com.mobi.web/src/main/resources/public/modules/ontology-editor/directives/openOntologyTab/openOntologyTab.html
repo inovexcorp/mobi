@@ -42,7 +42,7 @@
                                 <p class="description m-0" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
                             </div>
                             <div class="action-container d-flex align-items-center">
-                                <a ng-click="dvm.showDeleteConfirmationOverlay(record); $event.stopPropagation()" class="action d-inline-block text-muted"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
+                                <a ng-click="dvm.showDeleteConfirmationOverlay($event, record)" class="action d-inline-block text-muted"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
                             </div>
                         </div>
                         <info-message ng-if="!dvm.filteredList.length && dvm.filterText">No ontologies match your filtered text.</info-message>
@@ -58,9 +58,4 @@
             </block>
         </div>
     </div>
-    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Ontology'" confirm-click="dvm.deleteOntology()" cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
-        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-        <error-display ng-if="dvm.mappingErrorMessage">{{dvm.mappingErrorMessage}}</error-display>
-        <p>Are you sure that you want to delete <strong>{{dvm.recordTitle}}</strong>?</p>
-    </confirmation-overlay>
 </div>

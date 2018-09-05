@@ -27,9 +27,9 @@
         .module('individualHierarchyBlock', [])
         .directive('individualHierarchyBlock', individualHierarchyBlock);
 
-        individualHierarchyBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
+        individualHierarchyBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'modalService'];
 
-        function individualHierarchyBlock(ontologyStateService, ontologyUtilsManagerService) {
+        function individualHierarchyBlock(ontologyStateService, ontologyUtilsManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,9 +41,12 @@
                     dvm.sm = ontologyStateService;
                     dvm.utils = ontologyUtilsManagerService;
 
-                    dvm.deleteIndividual = function() {
-                        dvm.utils.deleteIndividual();
-                        dvm.showDeleteConfirmation = false;
+                    dvm.showDeleteConfirmation = function() {
+                        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.sm.listItem.selected['@id'] + '</strong>?</p>', dvm.utils.deleteIndividual);
+                    }
+                    dvm.showCreateIndividualOverlay = function() {
+                        dvm.sm.unSelectItem();
+                        modalService.openModal('createIndividualOverlay');
                     }
                 }
             }

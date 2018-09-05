@@ -75,14 +75,8 @@ describe('Save Analytic Overlay directive', function() {
         it('with a form', function() {
             expect(this.element.find('form').length).toBe(1);
         });
-        it('with a .form-group', function() {
-            expect(this.element.querySelectorAll('.form-group').length).toBe(1);
-        });
-        it('with a custom-label', function() {
-            expect(this.element.find('custom-label').length).toBe(1);
-        });
-        it('with a title field', function() {
-            expect(this.element.querySelectorAll('input[name="title"]').length).toBe(1);
+        it('with a text-input', function() {
+            expect(this.element.find('text-input').length).toBe(1);
         });
         it('with a text-area', function() {
             expect(this.element.find('text-area').length).toBe(1);

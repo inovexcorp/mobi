@@ -27,9 +27,9 @@
         .module('importsBlock', [])
         .directive('importsBlock', importsBlock);
 
-        importsBlock.$inject = ['$q', '$timeout', 'ontologyStateService', 'prefixes', 'utilService', 'propertyManagerService'];
+        importsBlock.$inject = ['$q', '$timeout', 'ontologyStateService', 'prefixes', 'utilService', 'propertyManagerService', 'modalService'];
 
-        function importsBlock($q, $timeout, ontologyStateService, prefixes, utilService, propertyManagerService) {
+        function importsBlock($q, $timeout, ontologyStateService, prefixes, utilService, propertyManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,15 +42,20 @@
                     var pm = propertyManagerService;
                     dvm.prefixes = prefixes;
                     dvm.os = ontologyStateService;
-                    dvm.showNewOverlay = false;
                     dvm.showRemoveOverlay = false;
                     dvm.indirectImports = [];
 
                     dvm.setupRemove = function(url) {
                         dvm.url = url;
                         dvm.showRemoveOverlay = true;
+                        var msg = '';
+                        if (dvm.os.hasChanges(dvm.os.listItem)) {
+                            msg = '<p><strong>NOTE: You have some unsaved changes.</strong></p><p>Would you like to save those changes and remove the import: <strong>' + url + '</strong>?</p>';
+                        } else {
+                            msg = '<p>Are you sure you want to remove the import: <strong>' + url + '</strong>?</p>';
+                        }
+                        modalService.openConfirmModal(msg, dvm.remove);
                     }
-
                     dvm.remove = function() {
                         var importsIRI = dvm.prefixes.owl + 'imports';
                         dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, util.createJson(dvm.os.listItem.selected['@id'], importsIRI, {'@id': dvm.url}));
@@ -61,18 +66,14 @@
                             .then(() => {
                                 dvm.os.listItem.isSaved = dvm.os.isCommittable(dvm.os.listItem);
                                 dvm.setIndirectImports();
-                                dvm.showRemoveOverlay = false;
-                            }, errorMessage => dvm.error = errorMessage);
+                            }, util.createErrorToast);
                     }
-
                     dvm.get = function(obj) {
                         return _.get(obj, '@id');
                     }
-
                     dvm.failed = function(iri) {
                         return _.includes(dvm.os.listItem.failedImports, iri);
                     }
-
                     dvm.refresh = function() {
                         dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.upToDate, dvm.os.listItem.inProgressCommit, true)
                             .then(response => {
@@ -80,7 +81,6 @@
                                 util.createSuccessToast('');
                             }, util.createErrorToast);
                     }
-
                     dvm.setIndirectImports = function() {
                         var directImports = _.map(_.get(dvm.os.listItem.selected, prefixes.owl + 'imports'), '@id');
                         var goodImports = _.map(dvm.os.listItem.importedOntologies, item => _.pick(item, 'id', 'ontologyId'));
@@ -88,6 +88,9 @@
                         var allImports = _.concat(goodImports, failedImports);
                         var filtered = _.reject(allImports, item => _.includes(directImports, item.id) || _.includes(directImports, item.ontologyId));
                         dvm.indirectImports = _.sortBy(_.map(filtered, 'ontologyId'));
+                    }
+                    dvm.showNewOverlay = function() {
+                        modalService.openModal('importsOverlay', {}, dvm.setIndirectImports);
                     }
 
                     $timeout(dvm.setIndirectImports);

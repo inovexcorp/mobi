@@ -24,17 +24,14 @@
 <div class="relationships-block axiom-block">
     <block>
         <block-header ng-if="!dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)">
-            <span class="relationship-header">Relationships</span><button ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.mobi.imported" class="btn btn-link float-right" ng-disabled="!dvm.relationshipList.length" ng-click="dvm.os.showRelationshipOverlay = true"><i class="fa fa-fw fa-plus"></i>Add Relationship{{dvm.relationshipList.length ? '' : ' (none available)'}}</button>
+            <span class="relationship-header">Relationships</span><button ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.mobi.imported" class="btn btn-link float-right" ng-disabled="!dvm.relationshipList.length" ng-click="dvm.showRelationshipOverlay()"><i class="fa fa-fw fa-plus"></i>Add Relationship{{dvm.relationshipList.length ? '' : ' (none available)'}}</button>
         </block-header>
         <block-header ng-if="dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)">
-            <span class="top-concept-header">Top Concepts</span><button ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.mobi.imported" ng-disabled="!dvm.hasTopConceptProperty()" class="btn btn-link float-right" ng-click="dvm.showTopConceptOverlay = true"><i class="fa fa-fw fa-plus"></i>Add Top Concept{{dvm.hasTopConceptProperty() ? '' : ' (none available)'}}</button>
+            <span class="top-concept-header">Top Concepts</span><button ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.mobi.imported" ng-disabled="!dvm.hasTopConceptProperty()" class="btn btn-link float-right" ng-click="dvm.showTopConceptOverlay()"><i class="fa fa-fw fa-plus"></i>Add Top Concept{{dvm.hasTopConceptProperty() ? '' : ' (none available)'}}</button>
         </block-header>
         <block-content>
             <property-values ng-repeat="relationship in dvm.os.listItem.selected | showProperties:dvm.relationshipList | orderBy:dvm.ontoUtils.getLabelForIRI"
                              property="relationship" entity="dvm.os.listItem.selected" remove="dvm.openRemoveOverlay(iri, index)"></property-values>
         </block-content>
     </block>
-    <relationship-overlay ng-if="dvm.os.showRelationshipOverlay" relationship-list="dvm.relationshipList" on-submit="dvm.updateHierarchy(relationship, values)"></relationship-overlay>
-    <remove-property-overlay overlay-flag="dvm.showRemoveOverlay" ng-if="dvm.showRemoveOverlay" index="dvm.index" key="dvm.key" on-submit="dvm.removeFromHierarchy(axiomObject)"></remove-property-overlay>
-    <top-concept-overlay ng-if="dvm.showTopConceptOverlay" on-submit="dvm.updateHierarchy(relationship, values)" close-overlay="dvm.showTopConceptOverlay = false"></top-concept-overlay>
 </div>

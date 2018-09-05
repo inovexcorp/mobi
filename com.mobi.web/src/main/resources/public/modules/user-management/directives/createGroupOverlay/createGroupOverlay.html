@@ -27,7 +27,7 @@
 
         <div class="form-group title">
             <custom-label>Group Title</custom-label>
-            <input class="form-control" type="text" name="title" ng-model="dvm.newGroup.title" unique-value="dvm.getTitles()" ng-class="{'is-invalid': dvm.form.title.$dirty && dvm.form.title.$invalid}" required focus-me/>
+            <input class="form-control" type="text" name="title" ng-model="dvm.newGroup.title" unique-value="dvm.getTitles()" ng-class="{'is-invalid': dvm.form.title.$dirty && dvm.form.title.$invalid}" required focus-me="true" />
             <p ng-messages="dvm.form.title.$error" class="invalid-feedback">
                 <ng-message when="uniqueTitle">This group title has already been taken.</ng-message>
             </p>

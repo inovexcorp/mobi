@@ -32,11 +32,13 @@
         function createConceptSchemeOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/createConceptSchemeOverlay/createConceptSchemeOverlay.html',
-                scope: {},
+                scope: {
+                    close: '&',
+                    dismiss: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefixes = prefixes;
@@ -61,13 +63,11 @@
                                 dvm.scheme[prefixes.dcterms + 'title'][0]['@value'], 'class');
                         }
                     }
-
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.scheme['@id'] = iriBegin + iriThen + iriEnd;
                         dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
-
                     dvm.create = function() {
                         if (dvm.selectedConcepts.length) {
                             dvm.scheme[prefixes.skos + 'hasTopConcept'] = dvm.selectedConcepts;
@@ -90,14 +90,18 @@
                         dvm.ontoUtils.addIndividual(dvm.scheme);
                         // select the new concept
                         dvm.os.selectItem(_.get(dvm.scheme, '@id'));
-                        // hide the overlay
-                        dvm.os.showCreateConceptSchemeOverlay = false;
+                        // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
+                        // hide the overlay
+                        $scope.close();
                     }
                     dvm.getConcepts = function(searchText) {
                         dvm.concepts = dvm.ontoUtils.getSelectList(dvm.conceptIRIs, searchText);
                     }
-                }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
+                    }
+                }]
             }
         }
 })();

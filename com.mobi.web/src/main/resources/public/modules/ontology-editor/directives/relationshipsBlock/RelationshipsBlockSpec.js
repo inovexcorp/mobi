@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Relationships Block directive', function() {
-    var $compile, scope, ontologyStateSvc, prefixes, ontologyManagerSvc, ontoUtils;
+    var $compile, scope, ontologyStateSvc, prefixes, ontologyManagerSvc, ontoUtils, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -31,14 +31,16 @@ describe('Relationships Block directive', function() {
         mockPrefixes();
         mockOntologyUtilsManager();
         mockOntologyManager();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyManagerService_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyManagerService_, _ontologyUtilsManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontoUtils = _ontologyUtilsManagerService_;
+            modalSvc = _modalService_;
         });
 
         scope.relationshipList = [];
@@ -62,6 +64,7 @@ describe('Relationships Block directive', function() {
         prefixes = null;
         ontologyManagerSvc = null;
         ontoUtils = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -93,22 +96,6 @@ describe('Relationships Block directive', function() {
         it('with a block-content', function() {
             expect(this.element.find('block-content').length).toBe(1);
         });
-        it('with a remove-property-overlay', function() {
-            expect(this.element.find('remove-property-overlay').length).toBe(0);
-
-            this.controller.showRemoveOverlay = true;
-            scope.$apply();
-
-            expect(this.element.find('remove-property-overlay').length).toBe(1);
-        });
-        it('with a relationship-overlay', function() {
-            expect(this.element.find('relationship-overlay').length).toBe(0);
-
-            ontologyStateSvc.showRelationshipOverlay = true;
-            scope.$apply();
-
-            expect(this.element.find('relationship-overlay').length).toBe(1);
-        });
         it('with a .fa-plus', function() {
             expect(this.element.querySelectorAll('.fa-plus').length).toBe(1);
         });
@@ -136,12 +123,6 @@ describe('Relationships Block directive', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('.top-concept-header').length).toBe(1);
         });
-        it('with a top-concept-overlay', function() {
-            expect(this.element.find('top-concept-overlay').length).toBe(0);
-            this.controller.showTopConceptOverlay = true;
-            scope.$digest();
-            expect(this.element.find('top-concept-overlay').length).toBe(1);
-        });
         it('depending on whether there is a top concept property', function() {
             ontologyManagerSvc.isConceptScheme.and.returnValue(true);
             spyOn(this.controller, 'hasTopConceptProperty').and.returnValue(true);
@@ -165,14 +146,18 @@ describe('Relationships Block directive', function() {
         });
     });
     describe('controller methods', function() {
+        it('showRelationshipOverlay opens the relationshipOverlay', function() {
+            this.controller.showRelationshipOverlay();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('relationshipOverlay', {relationshipList: this.controller.relationshipList}, this.controller.updateHierarchy);
+        });
         it('openRemoveOverlay sets the correct variables', function() {
             this.controller.openRemoveOverlay('key', 1);
             expect(this.controller.key).toBe('key');
-            expect(this.controller.index).toBe(1);
-            expect(this.controller.showRemoveOverlay).toBe(true);
+            expect(ontoUtils.getRemovePropOverlayMessage).toHaveBeenCalledWith('key', 1);
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith('', jasmine.any(Function));
         });
         it('updateHierarchy should call proper methods', function() {
-            this.controller.updateHierarchy('test', []);
+            this.controller.updateHierarchy({relationship: 'test', values: []});
             expect(ontoUtils.updateVocabularyHierarchies).toHaveBeenCalledWith('test', []);
         });
         it('removeFromHierarchy should call the proper methods', function() {
@@ -192,10 +177,15 @@ describe('Relationships Block directive', function() {
                 expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, prefixes.skos + 'hasTopConcept', ontologyStateSvc.listItem);
             });
         });
+        it('showTopConceptOverlay opens the topConceptOverlay', function() {
+            this.controller.showTopConceptOverlay();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('topConceptOverlay', {}, this.controller.updateHierarchy);
+        });
     });
-    it('should set the correct state when the add relationship button is clicked', function() {
+    it('should call showRelationshipOverlay when the add relationship button is clicked', function() {
+        spyOn(this.controller, 'showRelationshipOverlay');
         var button = angular.element(this.element.querySelectorAll('block-header button')[0]);
         button.triggerHandler('click');
-        expect(ontologyStateSvc.showRelationshipOverlay).toBe(true);
+        expect(this.controller.showRelationshipOverlay).toHaveBeenCalled();
     });
 });

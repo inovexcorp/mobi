@@ -27,9 +27,9 @@
         .module('datatypePropertyAxioms', [])
         .directive('datatypePropertyAxioms', datatypePropertyAxioms);
 
-        datatypePropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'prefixes', 'ontologyUtilsManagerService', 'ontologyManagerService'];
+        datatypePropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'prefixes', 'ontologyUtilsManagerService', 'ontologyManagerService', 'modalService'];
 
-        function datatypePropertyAxioms(ontologyStateService, propertyManagerService, prefixes, ontologyUtilsManagerService, ontologyManagerService) {
+        function datatypePropertyAxioms(ontologyStateService, propertyManagerService, prefixes, ontologyUtilsManagerService, ontologyManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -48,15 +48,9 @@
                     }
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
-                        dvm.index = index;
-                        dvm.showRemoveOverlay = true;
-                    }
-                    dvm.updateHierarchy = function(axiom, values) {
-                        if (axiom === prefixes.rdfs + 'subPropertyOf' && values.length) {
-                            dvm.ontoUtils.setSuperProperties(dvm.os.listItem.selected['@id'], values, 'dataProperties');
-                        } else if (axiom === prefixes.rdfs + 'domain' && values.length) {
-                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
-                        }
+                        modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
+                            dvm.ontoUtils.removeProperty(key, index).then(dvm.removeFromHierarchy);
+                        });
                     }
                     dvm.removeFromHierarchy = function(axiomObject) {
                         if (prefixes.rdfs + 'subPropertyOf' === dvm.key && !om.isBlankNodeId(axiomObject['@id'])) {

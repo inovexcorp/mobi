@@ -56,11 +56,9 @@
          */
         .directive('ontologyBranchSelect', ontologyBranchSelect);
 
-        ontologyBranchSelect.$inject = ['$filter', '$q', '$timeout', 'catalogManagerService', 'ontologyStateService', 'prefixes',
-            'ontologyManagerService', 'utilService', 'stateManagerService'];
+        ontologyBranchSelect.$inject = ['$filter', '$q', '$timeout', 'catalogManagerService', 'ontologyStateService', 'prefixes', 'ontologyManagerService', 'utilService', 'stateManagerService', 'modalService'];
 
-        function ontologyBranchSelect($filter, $q, $timeout, catalogManagerService, ontologyStateService, prefixes, ontologyManagerService, utilService,
-            stateManagerService) {
+        function ontologyBranchSelect($filter, $q, $timeout, catalogManagerService, ontologyStateService, prefixes, ontologyManagerService, utilService, stateManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -78,8 +76,6 @@
                     dvm.os = ontologyStateService;
                     dvm.cm = catalogManagerService;
                     dvm.util = utilService;
-                    dvm.showDeleteConfirmation = false;
-                    dvm.showEditOverlay = false;
                     dvm.deleteError = '';
 
                     var catalogId = _.get(dvm.cm.localCatalog, '@id', '');
@@ -101,32 +97,31 @@
                             }, $q.reject)
                             .then(() => dvm.os.resetStateTabs(), dvm.util.createErrorToast);
                     }
-
                     dvm.openDeleteConfirmation = function($event, branch) {
                         $event.stopPropagation();
                         dvm.branch = branch;
-                        dvm.showDeleteConfirmation = true;
+                        var title = dvm.util.getDctermsValue(branch, 'title');
+                        var msg = '';
+                        if (dvm.cm.isUserBranch(branch)) {
+                            msg += '<p>You have made diverging changes from the head of Branch: <strong>' + title + '</strong>. Continuing with this operation will only delete your diverging changes.</p>'
+                        }
+                        modalService.openConfirmModal(msg + '<p>Are you sure that you want to delete Branch: <strong>' + title + '</strong>?</p>', dvm.delete);
                     }
-
                     dvm.openEditOverlay = function($event, branch) {
                         $event.stopPropagation();
-                        dvm.branch = branch;
-                        dvm.showEditOverlay = true;
+                        modalService.openModal('editBranchOverlay', {branch}, () => dvm.submit(branch));
                     }
-
                     dvm.delete = function() {
                         om.deleteOntologyBranch(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id'])
                             .then(() => {
                                 dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id']);
-                                dvm.showDeleteConfirmation = false;
-                            }, errorMessage => dvm.deleteError = errorMessage);
+                            }, dvm.util.createErrorToast);
                     }
-
-                    dvm.submit = function() {
-                        if (dvm.branch['@id'] === dvm.bindModel) {
+                    dvm.submit = function(branch) {
+                        if (branch['@id'] === dvm.bindModel) {
                             dvm.bindModel = '';
                             $timeout(function() {
-                                dvm.bindModel = dvm.branch['@id'];
+                                dvm.bindModel = branch['@id'];
                             });
                         }
                     }

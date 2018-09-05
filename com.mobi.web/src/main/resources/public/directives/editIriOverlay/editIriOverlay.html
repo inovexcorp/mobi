@@ -4,7 +4,7 @@
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -20,21 +20,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<error-display ng-if="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd) && dvm.isOverlay()">This IRI already exists</error-display>
-<span class="static-iri">
-    <strong class="text-muted" ng-class="{'duplicate-iri': dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd) && dvm.isOverlay()}" uib-tooltip="Copy to clipboard" ngclipboard data-clipboard-text="{{dvm.iri}}" ngclipboard-success="dvm.onSuccess()">{{dvm.iri}}</strong>
-    <a ng-if="!dvm.os.listItem.selected.mobi.imported" ng-click="dvm.os.showIriOverlay = true"><i class="fa fa-pencil"></i></a>
-</span>
-<div ng-if="dvm.os.showIriOverlay" class="overlay">
-    <form name="dvm.iriForm" class="content clearfix" novalidate autocomplete="off">
-        <!-- section header -->
-        <h6>Edit IRI</h6>
-        <div ng-transclude></div>
-        <error-display ng-if="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">This IRI already exists</error-display>
+<div class="modal-header">
+    <h3>Edit IRI</h3>
+</div>
+<div class="modal-body">
+    <form name="dvm.iriForm" novalidate autocomplete="off">
+        <error-display ng-if="resolve.customValidation && resolve.customValidation.func(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">{{resolve.customValidation.msg}}</error-display>
         <!-- Begins with -->
         <div class="form-group begin-container">
             <custom-label>Begins with</custom-label>
-            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="dvm.iriBegin" ng-pattern="dvm.namespacePattern" ng-trim="false" ng-class="{'is-invalid': dvm.iriForm.iriBegin.$error.pattern}" required focus-me />
+            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="dvm.iriBegin" ng-pattern="dvm.namespacePattern" ng-trim="false" ng-class="{'is-invalid': dvm.iriForm.iriBegin.$error.pattern}" required focus-me="true" />
             <p ng-messages="dvm.iriForm.iriBegin.$error" class="invalid-feedback">
                 <ng-message when="pattern">Value is not a valid namespace.</ng-message>
             </p>
@@ -56,12 +51,10 @@
                 <ng-message when="pattern">Spaces are not allowed.</ng-message>
             </p>
         </div>
-        <!-- buttons -->
-        <div class="btn-container clearfix">
-            <button type="button" class="btn btn-primary pull-right" ng-click="onEdit({iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}); dvm.os.showIriOverlay = false" ng-disabled="dvm.iriForm.$invalid || dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">Submit</button>
-            <button type="button" class="btn pull-right" ng-click="dvm.resetVariables(); dvm.os.showIriOverlay = false">Cancel</button>
-            <button type="button" class="btn btn-primary pull-left" ng-click="dvm.resetVariables()"><i class="fa fa-refresh"></i></button>
-        </div>
     </form>
 </div>
-
+<div class="modal-footer">
+    <button type="button" class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button type="button" class="btn btn-primary" ng-click="dvm.submit()" ng-disabled="dvm.iriForm.$invalid || (resolve.customValidation && resolve.customValidation.func(dvm.iriBegin + dvm.iriThen + dvm.iriEnd))">Submit</button>
+    <button type="button" class="btn btn-primary refresh-button float-left" ng-click="dvm.resetVariables()"><i class="fa fa-refresh"></i></button>
+</div>

@@ -27,9 +27,9 @@
         .module('classAxioms', [])
         .directive('classAxioms', classAxioms);
 
-        classAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'prefixes', 'ontologyUtilsManagerService', 'ontologyManagerService'];
+        classAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'prefixes', 'ontologyUtilsManagerService', 'ontologyManagerService', 'modalService'];
 
-        function classAxioms(ontologyStateService, propertyManagerService, prefixes, ontologyUtilsManagerService, ontologyManagerService) {
+        function classAxioms(ontologyStateService, propertyManagerService, prefixes, ontologyUtilsManagerService, ontologyManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -48,17 +48,9 @@
                     }
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
-                        dvm.index = index;
-                        dvm.showRemoveOverlay = true;
-                    }
-                    dvm.updateHierarchy = function(axiom, values) {
-                        if (axiom === prefixes.rdfs + 'subClassOf' && values.length) {
-                            dvm.ontoUtils.setSuperClasses(dvm.os.listItem.selected['@id'], values);
-                            if (_.includes(dvm.os.listItem.individualsParentPath, dvm.os.listItem.selected['@id'])) {
-                                dvm.ontoUtils.updateflatIndividualsHierarchy(values);
-                            }
-                            dvm.os.setVocabularyStuff();
-                        }
+                        modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
+                            dvm.ontoUtils.removeProperty(key, index).then(dvm.removeFromHierarchy);
+                        });
                     }
                     dvm.removeFromHierarchy = function(axiomObject) {
                         if (prefixes.rdfs + 'subClassOf' === dvm.key && !om.isBlankNodeId(axiomObject['@id'])) {

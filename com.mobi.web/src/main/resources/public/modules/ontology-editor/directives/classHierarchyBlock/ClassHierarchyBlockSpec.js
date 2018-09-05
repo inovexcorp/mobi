@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Class Hierarchy Block directive', function() {
-    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, ontologyUtilsManagerSvc;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, ontologyUtilsManagerSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -29,13 +29,15 @@ describe('Class Hierarchy Block directive', function() {
         mockOntologyState();
         mockOntologyManager();
         mockOntologyUtilsManager();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _ontologyUtilsManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
+            modalSvc = _modalService_;
         });
 
         this.element = $compile(angular.element('<class-hierarchy-block></class-hierarchy-block>'))(scope);
@@ -49,6 +51,7 @@ describe('Class Hierarchy Block directive', function() {
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
         ontologyUtilsManagerSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -77,13 +80,6 @@ describe('Class Hierarchy Block directive', function() {
             expect(button.length).toBe(1);
             expect(angular.element(button[0]).text()).toContain('Delete Class');
         });
-        it('based on whether a delete should be confirmed', function() {
-            expect(this.element.find('confirmation-overlay').length).toBe(0);
-
-            this.controller.showDeleteConfirmation = true;
-            scope.$digest();
-            expect(this.element.find('confirmation-overlay').length).toBe(1);
-        });
         it('based on whether something is selected', function() {
             var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
             expect(button.attr('disabled')).toBeFalsy();
@@ -94,20 +90,26 @@ describe('Class Hierarchy Block directive', function() {
         });
     });
     describe('controller methods', function() {
-        it('should delete a class', function() {
-            this.controller.deleteClass();
-            expect(ontologyUtilsManagerSvc.deleteClass).toHaveBeenCalled();
-            expect(this.controller.showDeleteConfirmation).toBe(false);
+        it('should open a delete confirmaiton modal', function() {
+            this.controller.showDeleteConfirmation();
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.any(String), ontologyUtilsManagerSvc.deleteClass);
+        });
+        it('should open the createClassOverlay', function() {
+            this.controller.showCreateClassOverlay();
+            expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('createClassOverlay');
         });
     });
-    it('should set the correct state when the create class link is clicked', function() {
+    it('should call showCreateClassOverlay when the create class link is clicked', function() {
+        spyOn(this.controller, 'showCreateClassOverlay');
         var link = angular.element(this.element.querySelectorAll('block-header a')[0]);
         link.triggerHandler('click');
-        expect(ontologyStateSvc.showCreateClassOverlay).toBe(true);
+        expect(this.controller.showCreateClassOverlay).toHaveBeenCalled();
     });
-    it('should set the correct state when the delete class button is clicked', function() {
+    it('should call showDeleteConfirmation when the delete class button is clicked', function() {
+        spyOn(this.controller, 'showDeleteConfirmation');
         var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
         button.triggerHandler('click');
-        expect(this.controller.showDeleteConfirmation).toBe(true);
+        expect(this.controller.showDeleteConfirmation).toHaveBeenCalled();
     });
 });

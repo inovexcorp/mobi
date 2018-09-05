@@ -48,19 +48,19 @@ describe('Datasets Ontology Picker directive', function() {
                         'http://mobi.com/ontologies/catalog#VersionedRecord',
                         'http://mobi.com/ontologies/ontology-editor#OntologyRecord',
                         'http://mobi.com/ontologies/catalog#VersionedRDFRecord'],
-                'catalog:branch': [{ '@id': 'ontology1Branch' }],
-                'catalog:catalog': [{ '@id': 'http://mobi.com/catalog-local' }],
-                'catalog:masterBranch': [{ '@id': 'ontology1Branch' }],
-                'ontEdit:ontologyIRI': [{ '@id': 'ontology1' }],
-                'dcterms:description': [{ '@value': '' }],
-                'dcterms:issued': [{
-                        '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
+                [prefixes.catalog + 'branch']: [{ '@id': 'ontology1Branch' }],
+                [prefixes.catalog + 'catalog']: [{ '@id': 'http://mobi.com/catalog-local' }],
+                [prefixes.catalog + 'masterBranch']: [{ '@id': 'ontology1Branch' }],
+                [prefixes.ontEdit + 'ontologyIRI']: [{ '@id': 'ontology1' }],
+                [prefixes.dcterms + 'description']: [{ '@value': '' }],
+                [prefixes.dcterms + 'issued']: [{
+                        '@type': prefixes.xsd + 'dateTime',
                         '@value': '2017-07-12T10:28:15-04:00' }],
-                'dcterms:modified': [{
-                        '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
+                [prefixes.dcterms + 'modified']: [{
+                        '@type': prefixes.xsd + 'dateTime',
                         '@value': '2017-07-12T10:28:15-04:00' }],
-                'dcterms:publisher': [{ '@id': 'http://mobi.com/users/user1' }],
-                'dcterms:title': [{ '@value': 'Ontology 1' }]
+                [prefixes.dcterms + 'publisher']: [{ '@id': 'http://mobi.com/users/user1' }],
+                [prefixes.dcterms + 'title']: [{ '@value': 'Ontology 1' }]
         };
         this.ontology2Record = {
                 '@id': 'ontology2Record',
@@ -69,19 +69,19 @@ describe('Datasets Ontology Picker directive', function() {
                         'http://mobi.com/ontologies/catalog#VersionedRecord',
                         'http://mobi.com/ontologies/ontology-editor#OntologyRecord',
                         'http://mobi.com/ontologies/catalog#VersionedRDFRecord'],
-                'catalog:branch': [{ '@id': 'ontology2Branch' }],
-                'catalog:catalog': [{ '@id': 'http://mobi.com/catalog-local' }],
-                'catalog:masterBranch': [{ '@id': 'ontology2Branch' }],
-                'ontEdit:ontologyIRI': [{ '@id': 'ontology2' }],
-                'dcterms:description': [{ '@value': '' }],
-                'dcterms:issued': [{
+                [prefixes.catalog + 'branch']: [{ '@id': 'ontology2Branch' }],
+                [prefixes.catalog + 'catalog']: [{ '@id': 'http://mobi.com/catalog-local' }],
+                [prefixes.catalog + 'masterBranch']: [{ '@id': 'ontology2Branch' }],
+                [prefixes.ontEdit + 'ontologyIRI']: [{ '@id': 'ontology2' }],
+                [prefixes.dcterms + 'description']: [{ '@value': '' }],
+                [prefixes.dcterms + 'issued']: [{
                         '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
                         '@value': '2017-07-12T10:28:15-04:00' }],
-                'dcterms:modified': [{
+                [prefixes.dcterms + 'modified']: [{
                         '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
                         '@value': '2017-07-12T10:28:15-04:00' }],
-                'dcterms:publisher': [{ '@id': 'http://mobi.com/users/user1' }],
-                'dcterms:title': [{ '@value': 'Ontology 2' }]
+                [prefixes.dcterms + 'publisher']: [{ '@id': 'http://mobi.com/users/user1' }],
+                [prefixes.dcterms + 'title']: [{ '@value': 'Ontology 2' }]
         };
 
         catalogManagerSvc.localCatalog = {'@id': 'http://mobi.com/catalog-local'};

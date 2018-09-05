@@ -20,12 +20,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="top-concept-overlay overlay">
-    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
-        <h6>Add Top Concepts</h6>
+<div class="modal-header">
+    <h3>Add Top Concepts</h3>
+</div>
+<div class="modal-body">
+    <form name="dvm.form" novalidate autocomplete="off">
         <div class="form-group">
             <custom-label>Value(s)</custom-label>
-            <ui-select multiple ng-model="dvm.values">
+            <ui-select multiple ng-model="dvm.values" autofocus>
                 <ui-select-match placeholder="Select Concept(s)">
                     <span title="{{$item}}">{{dvm.ontoUtils.getLabelForIRI($item)}}</span>
                 </ui-select-match>
@@ -34,9 +36,9 @@
                 </ui-select-choices>
             </ui-select>
         </div>
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary float-right" ng-click="dvm.addTopConcept()" ng-disabled="!dvm.values.length">Add</button>
-            <button class="btn float-right" ng-click="dvm.closeOverlay()">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-click="dvm.addTopConcept()" ng-disabled="!dvm.values.length">Submit</button>
 </div>

@@ -51,9 +51,9 @@
          */
         .directive('instanceForm', instanceForm);
 
-        instanceForm.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'prefixes', 'REGEX', 'exploreUtilsService'];
+        instanceForm.$inject = ['$q', '$filter', 'discoverStateService', 'utilService', 'exploreService', 'prefixes', 'REGEX', 'exploreUtilsService', 'modalService'];
 
-        function instanceForm($q, discoverStateService, utilService, exploreService, prefixes, REGEX, exploreUtilsService) {
+        function instanceForm($q, $filter, discoverStateService, utilService, exploreService, prefixes, REGEX, exploreUtilsService, modalService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceForm/instanceForm.html',
@@ -96,6 +96,13 @@
                     dvm.instance = dvm.ds.getInstance();
                     dvm.eu = exploreUtilsService;
 
+                    dvm.showIriConfirm = function() {
+                        modalService.openConfirmModal('<p>Changing this IRI might break relationships within the dataset. Are you sure you want to continue?</p>', dvm.showIriOverlay);
+                    }
+                    dvm.showIriOverlay = function() {
+                        var split = $filter('splitIRI')(dvm.instance['@id']);
+                        modalService.openModal('editIriOverlay', {iriBegin: split.begin, iriThen: split.then, iriEnd: split.end}, dvm.setIRI);
+                    }
                     dvm.getOptions = function(propertyIRI) {
                         var range = dvm.eu.getRange(propertyIRI, dvm.properties);
                         if (range) {
@@ -113,33 +120,27 @@
                         }
                         return $q.when([]);
                     }
-
                     dvm.addToChanged = function(propertyIRI) {
                         dvm.changed = _.uniq(_.concat(dvm.changed, [propertyIRI]));
                         dvm.missingProperties = dvm.getMissingProperties();
                     }
-
                     dvm.isChanged = function(propertyIRI) {
                         return _.includes(dvm.changed, propertyIRI);
                     }
-
-                    dvm.setIRI = function(begin, then, end) {
-                        dvm.instance['@id'] = begin + then + end;
+                    dvm.setIRI = function(iriObj) {
+                        dvm.instance['@id'] = iriObj.iriBegin + iriObj.iriThen + iriObj.iriEnd;
                     }
-
                     dvm.addNewProperty = function(property) {
                         dvm.instance[property] = [];
                         dvm.addToChanged(property);
                         dvm.showOverlay = false;
                     }
-
                     dvm.onSelect = function(text, propertyIRI, index) {
                         dvm.fullText = text;
                         dvm.propertyIRI = propertyIRI;
                         dvm.index = index;
                         dvm.showPropertyValueOverlay = true;
                     }
-
                     dvm.getMissingProperties = function() {
                         var missing = [];
                         _.forEach(dvm.properties, property => {
@@ -157,7 +158,6 @@
                         dvm.isValid = !missing.length;
                         return missing;
                     }
-
                     dvm.getRestrictionText = function(propertyIRI) {
                         var details = _.find(dvm.properties, {propertyIRI});
                         var results = [];
@@ -172,7 +172,6 @@
                         });
                         return results.length ? ('[' + _.join(results, ', ') + ']') : '';
                     }
-
                     dvm.cleanUpReification = function($chip, propertyIRI) {
                         var object = angular.copy($chip);
                         _.remove(dvm.ds.explore.instance.entity, {
@@ -180,7 +179,6 @@
                             [prefixes.rdf + 'object']: [object]
                         });
                     }
-
                     dvm.transformChip = function(item) {
                         dvm.ds.explore.instance.objectMap[item.instanceIRI] = item.title;
                         return dvm.eu.createIdObj(item.instanceIRI)

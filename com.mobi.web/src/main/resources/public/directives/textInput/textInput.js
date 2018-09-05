@@ -69,7 +69,8 @@
                     required: '<',
                     inputName: '<',
                     isInvalid: '<',
-                    isValid: '<'
+                    isValid: '<',
+                    isFocusMe: '<?'
                 },
                 templateUrl: 'directives/textInput/textInput.html'
             }

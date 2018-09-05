@@ -20,18 +20,20 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="ontology-close-overlay overlay">
-    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
-        <h6>Close Ontology</h6>
+<div class="modal-header">
+    <h3>Close Ontology</h3>
+</div>
+<div class="modal-body">
+    <form name="dvm.form" novalidate autocomplete="off">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <div class="main">
             <p>Are you sure that you want to close <strong>{{dvm.os.listItem.ontologyId}}</strong> from your workspace without saving?</p>
             <p><strong>NOTE: You will lose all unsaved changes.</strong></p>
         </div>
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary float-right save-close-btn" ng-click="dvm.saveThenClose()">Save and Close</button>
-            <button class="btn btn-primary float-right close-btn" ng-click="dvm.close()">Close Without Saving</button>
-            <button class="btn float-right" ng-click="dvm.os.showCloseOverlay = false">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary close-btn" ng-click="dvm.close()">Close Without Saving</button>
+    <button class="btn btn-primary save-close-btn" ng-click="dvm.saveThenClose()">Save and Close</button>
 </div>

@@ -32,11 +32,13 @@
         function createIndividualOverlay($filter, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/createIndividualOverlay/createIndividualOverlay.html',
-                scope: {},
+                scope: {
+                    close: '&',
+                    dismiss: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
@@ -76,11 +78,15 @@
                         } else if (dvm.ontoUtils.containsDerivedConceptScheme(dvm.individual['@type'])) {
                             dvm.ontoUtils.addConceptScheme(dvm.individual);
                         }
-                        // hide the overlay
-                        dvm.os.showCreateIndividualOverlay = false;
+                        // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
+                        // hide the overlay
+                        $scope.close();
                     }
-                }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
+                    }
+                }]
             }
         }
 })();

@@ -32,11 +32,13 @@
         function ontologyCloseOverlay($q, ontologyStateService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/ontologyCloseOverlay/ontologyCloseOverlay.html',
-                scope: {},
+                scope: {
+                    close: '&',
+                    dismiss: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.os = ontologyStateService;
                     dvm.error = '';
@@ -46,12 +48,14 @@
                             .then(() => dvm.os.afterSave(), $q.reject)
                             .then(() => dvm.close(), errorMessage => dvm.error = errorMessage);
                     }
-
                     dvm.close = function() {
                         dvm.os.closeOntology(dvm.os.recordIdToClose);
-                        dvm.os.showCloseOverlay = false;
+                        $scope.close();
                     }
-                }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
+                    }
+                }]
             }
         }
 })();

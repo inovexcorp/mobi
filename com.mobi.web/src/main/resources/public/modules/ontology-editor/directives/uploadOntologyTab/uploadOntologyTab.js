@@ -47,9 +47,9 @@
          */
         .directive('uploadOntologyTab', uploadOntologyTab);
 
-        uploadOntologyTab.$inject = ['httpService', 'ontologyStateService'];
+        uploadOntologyTab.$inject = ['httpService', 'ontologyStateService', 'modalService'];
 
-        function uploadOntologyTab(httpService, ontologyStateService) {
+        function uploadOntologyTab(httpService, ontologyStateService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -59,18 +59,19 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = ontologyStateService;
-                    dvm.files = [];
                     dvm.showOntology = false;
 
+                    dvm.showUploadOntologyOverlay = function() {
+                        modalService.openModal('uploadOntologyOverlay');
+                    }
                     dvm.hasStatus = function(promise, value) {
                         return _.get(promise, '$$state.status') === value;
                     }
-
                     dvm.cancel = function() {
                         dvm.state.showUploadTab = false;
                         dvm.state.uploadList = [];
+                        dvm.state.uploadFiles = [];
                     }
-
                     dvm.hasPending = function() {
                         return _.some(dvm.state.uploadList, item => httpService.isPending(item.id));
                     }

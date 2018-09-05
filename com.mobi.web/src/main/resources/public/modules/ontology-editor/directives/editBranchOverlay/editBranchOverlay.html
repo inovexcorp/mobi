@@ -20,15 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="edit-branch-overlay overlay">
-    <form name="dvm.form" class="clearfix content" novalidate autocomplete="off">
-        <h6>Edit Branch</h6>
+<div class="modal-header">
+    <h3>Edit Branch</h3>
+</div>
+<div class="modal-body">
+    <form name="dvm.form" novalidate autocomplete="off">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <text-input ng-model="dvm.branchTitle" display-text="'Title'" required="true"></text-input>
+        <text-input ng-model="dvm.branchTitle" display-text="'Title'" required="true" is-focus-me="true"></text-input>
         <text-area ng-model="dvm.branchDescription" display-text="'Description'" muted-text="'(Optional)'"></text-area>
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary float-right" ng-disabled="dvm.form.$invalid" ng-click="dvm.edit()">Submit</button>
-            <button class="btn float-right" ng-click="dvm.overlayFlag = false">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-disabled="dvm.form.$invalid" ng-click="dvm.edit()">Submit</button>
 </div>

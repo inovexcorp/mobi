@@ -51,9 +51,9 @@
          */
         .directive('relationshipsBlock', relationshipsBlock);
 
-        relationshipsBlock.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'prefixes'];
+        relationshipsBlock.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'modalService', 'prefixes'];
 
-        function relationshipsBlock(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes) {
+        function relationshipsBlock(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, modalService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -71,19 +71,26 @@
                     dvm.showTopConceptOverlay = false;
                     dvm.showRemoveOverlay = false;
 
+                    dvm.showRelationshipOverlay = function() {
+                        modalService.openModal('relationshipOverlay', {relationshipList: dvm.relationshipList}, dvm.updateHierarchy);
+                    }
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
-                        dvm.index = index;
-                        dvm.showRemoveOverlay = true;
+                        modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
+                            dvm.ontoUtils.removeProperty(key, index).then(dvm.removeFromHierarchy);
+                        });
                     }
-                    dvm.updateHierarchy = function(relationship, values) {
-                        dvm.ontoUtils.updateVocabularyHierarchies(relationship, values);
+                    dvm.updateHierarchy = function(updatedRelationshipObj) {
+                        dvm.ontoUtils.updateVocabularyHierarchies(updatedRelationshipObj.relationship, updatedRelationshipObj.values);
                     }
                     dvm.removeFromHierarchy = function(axiomObject) {
                         dvm.ontoUtils.removeFromVocabularyHierarchies(dvm.key, axiomObject);
                     }
                     dvm.hasTopConceptProperty = function() {
                         return !_.isEmpty(dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, prefixes.skos + 'hasTopConcept', dvm.os.listItem));
+                    }
+                    dvm.showTopConceptOverlay = function() {
+                        modalService.openModal('topConceptOverlay', {}, dvm.updateHierarchy);
                     }
                 }
             }

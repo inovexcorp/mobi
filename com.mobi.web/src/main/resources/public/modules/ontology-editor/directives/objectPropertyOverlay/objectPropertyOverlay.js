@@ -32,11 +32,13 @@
         function objectPropertyOverlay(ontologyStateService, utilService, ontologyUtilsManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/objectPropertyOverlay/objectPropertyOverlay.html',
-                scope: {},
+                scope: {
+                    close: '&',
+                    dismiss: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var pm = propertyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
@@ -54,17 +56,19 @@
                         } else {
                             dvm.util.createWarningToast('Duplicate property values not allowed');
                         }
-                        dvm.os.showObjectPropertyOverlay = false;
-
                         var types = dvm.os.listItem.selected['@type'];
                         if (dvm.ontoUtils.containsDerivedConcept(types) || dvm.ontoUtils.containsDerivedConceptScheme(types)) {
                             dvm.ontoUtils.updateVocabularyHierarchies(select, [valueObj]);
                         }
+                        $scope.close();
                     }
                     dvm.getValues = function(searchText) {
                         dvm.values = dvm.ontoUtils.getSelectList(_.keys(dvm.os.listItem.objectProperties.iris), searchText, dvm.ontoUtils.getDropDownText);
                     }
-                }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
+                    }
+                }]
             }
         }
 })();

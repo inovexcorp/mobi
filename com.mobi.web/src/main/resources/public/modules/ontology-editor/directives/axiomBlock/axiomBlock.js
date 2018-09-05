@@ -27,9 +27,9 @@
         .module('axiomBlock', [])
         .directive('axiomBlock', axiomBlock);
 
-        axiomBlock.$inject = ['ontologyStateService', 'ontologyManagerService'];
+        axiomBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'propertyManagerService', 'modalService', 'prefixes'];
 
-        function axiomBlock(ontologyStateService, ontologyManagerService) {
+        function axiomBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, propertyManagerService, modalService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,8 +38,46 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var pm = propertyManagerService;
+                    var ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
-                    dvm.sm = ontologyStateService;
+                    dvm.os = ontologyStateService;
+
+                    dvm.showAxiomOverlay = function() {
+                        if (dvm.om.isClass(dvm.os.listItem.selected)) {
+                            modalService.openModal('axiomOverlay', {axiomList: pm.classAxiomList}, dvm.updateClassHierarchy);
+                        } else if (dvm.om.isObjectProperty(dvm.os.listItem.selected)) {
+                            modalService.openModal('axiomOverlay', {axiomList: pm.objectAxiomList}, dvm.updateObjectPropHierarchy);
+                        } else if (dvm.om.isDataTypeProperty(dvm.os.listItem.selected)) {
+                            modalService.openModal('axiomOverlay', {axiomList: pm.datatypeAxiomList}, dvm.updateDataPropHierarchy);
+                        }
+                    }
+                    dvm.updateClassHierarchy = function(updatedAxiomObj) {
+                        if (updatedAxiomObj.axiom === prefixes.rdfs + 'subClassOf' && updatedAxiomObj.values.length) {
+                            ontoUtils.setSuperClasses(dvm.os.listItem.selected['@id'], updatedAxiomObj.values);
+                            if (_.includes(dvm.os.listItem.individualsParentPath, dvm.os.listItem.selected['@id'])) {
+                                ontoUtils.updateflatIndividualsHierarchy(updatedAxiomObj.values);
+                            }
+                            dvm.os.setVocabularyStuff();
+                        }
+                    }
+                    dvm.updateDataPropHierarchy = function(updatedAxiomObj) {
+                        if (updatedAxiomObj.axiom === prefixes.rdfs + 'subPropertyOf' && updatedAxiomObj.values.length) {
+                            ontoUtils.setSuperProperties(dvm.os.listItem.selected['@id'], updatedAxiomObj.values, 'dataProperties');
+                        } else if (updatedAxiomObj.axiom === prefixes.rdfs + 'domain' && updatedAxiomObj.values.length) {
+                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
+                        }
+                    }
+                    dvm.updateObjectPropHierarchy = function(updatedAxiomObj) {
+                        if (updatedAxiomObj.axiom === prefixes.rdfs + 'subPropertyOf' && updatedAxiomObj.values.length) {
+                            ontoUtils.setSuperProperties(dvm.os.listItem.selected['@id'], updatedAxiomObj.values, 'objectProperties');
+                            if (ontoUtils.containsDerivedSemanticRelation(updatedAxiomObj.values)) {
+                                dvm.os.setVocabularyStuff();
+                            }
+                        } else if (updatedAxiomObj.axiom === prefixes.rdfs + 'domain' && updatedAxiomObj.values.length) {
+                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
+                        }
+                    }
                 }
             }
         }

@@ -61,7 +61,8 @@
                     displayText: '<',
                     mutedText: '<',
                     required: '<',
-                    textAreaName: '<'
+                    textAreaName: '<',
+                    isFocusMe: '<?'
                 },
                 templateUrl: 'directives/textArea/textArea.html'
             }

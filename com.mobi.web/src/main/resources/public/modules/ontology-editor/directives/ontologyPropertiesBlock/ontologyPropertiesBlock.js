@@ -27,9 +27,9 @@
         .module('ontologyPropertiesBlock', [])
         .directive('ontologyPropertiesBlock', ontologyPropertiesBlock);
 
-        ontologyPropertiesBlock.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyUtilsManagerService'];
+        ontologyPropertiesBlock.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyUtilsManagerService', 'modalService'];
 
-        function ontologyPropertiesBlock(ontologyStateService, propertyManagerService, ontologyUtilsManagerService) {
+        function ontologyPropertiesBlock(ontologyStateService, propertyManagerService, ontologyUtilsManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -50,12 +50,12 @@
                         dvm.os.ontologyPropertyValue = '';
                         dvm.os.ontologyPropertyType = undefined;
                         dvm.os.ontologyPropertyLanguage = '';
-                        dvm.os.showOntologyPropertyOverlay = true;
+                        modalService.openModal('ontologyPropertyOverlay');
                     }
                     dvm.openRemoveOverlay = function(key, index) {
-                        dvm.key = key;
-                        dvm.index = index;
-                        dvm.showRemoveOverlay = true;
+                        modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
+                            dvm.ontoUtils.removeProperty(key, index);
+                        });
                     }
                     dvm.editClicked = function(property, index) {
                         var propertyObj = dvm.os.listItem.selected[property][index];
@@ -66,7 +66,7 @@
                         dvm.os.ontologyPropertyType = _.get(propertyObj, '@type');
                         dvm.os.ontologyPropertyIndex = index;
                         dvm.os.ontologyPropertyLanguage = _.get(propertyObj, '@language');
-                        dvm.os.showOntologyPropertyOverlay = true;
+                        modalService.openModal('ontologyPropertyOverlay');
                     }
 
                     $scope.$watch('dvm.os.listItem.selected', () => {

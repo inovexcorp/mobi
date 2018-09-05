@@ -27,9 +27,9 @@
         .module('objectPropertyBlock', [])
         .directive('objectPropertyBlock', objectPropertyBlock);
 
-        objectPropertyBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
+        objectPropertyBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'modalService'];
 
-        function objectPropertyBlock(ontologyStateService, ontologyUtilsManagerService) {
+        function objectPropertyBlock(ontologyStateService, ontologyUtilsManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -47,12 +47,13 @@
                         dvm.os.propertySelect = undefined;
                         dvm.os.propertyValue = '';
                         dvm.os.propertyIndex = 0;
-                        dvm.os.showObjectPropertyOverlay = true;
+                        modalService.openModal('objectPropertyOverlay');
                     }
                     dvm.showRemovePropertyOverlay = function(key, index) {
                         dvm.key = key;
-                        dvm.index = index;
-                        dvm.showRemoveOverlay = true;
+                        modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
+                            dvm.ontoUtils.removeProperty(key, index).then(dvm.removeObjectProperty);
+                        });
                     }
                     dvm.removeObjectProperty = function(axiomObject) {
                         var types = dvm.os.listItem.selected['@type'];

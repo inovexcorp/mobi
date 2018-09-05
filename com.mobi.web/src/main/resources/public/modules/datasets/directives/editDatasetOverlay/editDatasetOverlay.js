@@ -84,6 +84,15 @@
                     dvm.keywords = _.map(ds.selectedDataset.record[prefixes.catalog + 'keyword'], '@value');
                     dvm.keywords.sort();
                     dvm.selectedOntologies = [];
+                    var selectedOntologies = _.map(ds.selectedDataset.identifiers, identifier => dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
+                    $q.all(_.map(selectedOntologies, id => cm.getRecord(id, cm.localCatalog['@id'])))
+                        .then(responses => {
+                            return _.filter(responses, r => !!r);
+                        }, () => onError('A selected ontology could not be found'))
+                        .then(filteredList => {
+                            dvm.selectedOntologies = filteredList
+                        })
+                        .catch(_.noop);
 
                     dvm.update = function() {
                         var newRecord = angular.copy(ds.selectedDataset.record);

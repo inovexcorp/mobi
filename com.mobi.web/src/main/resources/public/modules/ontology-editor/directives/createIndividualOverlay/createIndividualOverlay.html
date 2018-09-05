@@ -20,32 +20,31 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="create-individual-overlay overlay">
-    <div class="content">
-        <h6>Create New OWL Named Individual</h6>
-        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <static-iri iri="dvm.individual['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
-        <form name="dvm.form" class="clearfix" novalidate autocomplete="off">
-            <div class="form-group">
-                <custom-label>Name</custom-label>
-                <input type="text" name="name" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required ng-model="dvm.name" focus-me />
-            </div>
-            <div class="form-group">
-                <custom-label>Type</custom-label>
-                <ui-select multiple ng-model="dvm.individual['@type']">
-                    <ui-select-match placeholder="Select a Class">
-                        <span title="{{$item}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
-                    </ui-select-match>
-                    <ui-select-choices group-by="dvm.getClassOntologyIri" repeat="iri in dvm.classes | removeIriFromArray:dvm.individual['@type'] | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
-                        <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getDropDownText(iri) | highlight:$select.search | trusted"></div>
-                    </ui-select-choices>
-                </ui-select>
-            </div>
-            <div class="btn-container clearfix">
-                <button class="btn btn-primary float-right" ng-disabled="dvm.form.$invalid || !dvm.individual['@type'].length || dvm.ontoUtils.checkIri(dvm.individual['@id'])"
-                        ng-click="dvm.create()">Create</button>
-                <button class="btn float-right" ng-click="dvm.os.showCreateIndividualOverlay = false">Cancel</button>
-            </div>
-        </form>
-    </div>
+<div class="modal-header">
+    <h3>Create New OWL Named Individual</h3>
+</div>
+<div class="modal-body">
+    <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+    <static-iri iri="dvm.individual['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+    <form name="dvm.form" class="clearfix" novalidate autocomplete="off">
+        <div class="form-group">
+            <custom-label>Name</custom-label>
+            <input type="text" name="name" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required ng-model="dvm.name" focus-me="true" />
+        </div>
+        <div class="form-group">
+            <custom-label>Type</custom-label>
+            <ui-select multiple ng-model="dvm.individual['@type']">
+                <ui-select-match placeholder="Select a Class">
+                    <span title="{{$item}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
+                </ui-select-match>
+                <ui-select-choices group-by="dvm.getClassOntologyIri" repeat="iri in dvm.classes | removeIriFromArray:dvm.individual['@type'] | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
+                    <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getDropDownText(iri) | highlight:$select.search | trusted"></div>
+                </ui-select-choices>
+            </ui-select>
+        </div>
+    </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-disabled="dvm.form.$invalid || !dvm.individual['@type'].length || dvm.ontoUtils.checkIri(dvm.individual['@id'])" ng-click="dvm.create()">Submit</button>
 </div>

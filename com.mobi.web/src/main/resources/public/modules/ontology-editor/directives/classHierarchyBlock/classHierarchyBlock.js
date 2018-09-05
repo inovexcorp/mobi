@@ -27,9 +27,9 @@
         .module('classHierarchyBlock', [])
         .directive('classHierarchyBlock', classHierarchyBlock);
 
-        classHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
+        classHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'modalService'];
 
-        function classHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
+        function classHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,9 +42,12 @@
                     dvm.om = ontologyManagerService;
                     dvm.utils = ontologyUtilsManagerService;
 
-                    dvm.deleteClass = function() {
-                        dvm.utils.deleteClass();
-                        dvm.showDeleteConfirmation = false;
+                    dvm.showDeleteConfirmation = function() {
+                        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.utils.deleteClass);
+                    }
+                    dvm.showCreateClassOverlay = function() {
+                        dvm.os.unSelectItem();
+                        modalService.openModal('createClassOverlay');
                     }
                 }
             }

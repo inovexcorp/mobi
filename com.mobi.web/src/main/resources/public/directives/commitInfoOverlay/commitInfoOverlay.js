@@ -65,24 +65,19 @@
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
-                replace: true,
                 scope: {
-                    commit: '<',
-                    additions: '<',
-                    deletions: '<'
+                    resolve: '<',
+                    dismiss: '&'
                 },
-                bindToController: {
-                    overlayFlag: '='
-                },
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.util = utilService;
                     dvm.um = userManagerService;
 
-                    dvm.close = function() {
-                        dvm.overlayFlag = false;
+                    dvm.cancel = function() {
+                        $scope.dismiss();
                     }
-                },
+                }],
                 templateUrl: 'directives/commitInfoOverlay/commitInfoOverlay.html'
             }
         }

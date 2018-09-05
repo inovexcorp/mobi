@@ -20,15 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="axiom-overlay overlay">
-    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
-        <h1>Add Axiom</h1>
+<div class="modal-header">
+    <h3>Add Axiom</h3>
+</div>
+<div class="modal-body">
+    <form name="dvm.form" novalidate autocomplete="off">
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
         <div class="form-group">
             <custom-label>Axiom</custom-label>
             <ui-select ng-model="dvm.axiom" on-select="dvm.values = []; dvm.editorOptions.readOnly = false" autofocus>
                 <ui-select-match placeholder="Select an axiom">{{$select.selected.iri}}</ui-select-match>
-                <ui-select-choices group-by="dvm.getIRINamespace" repeat="axiom in axiomList | filter:$select.search | orderBy:dvm.getIRILocalName">
+                <ui-select-choices group-by="dvm.getIRINamespace" repeat="axiom in resolve.axiomList | filter:$select.search | orderBy:dvm.getIRILocalName">
                     <div ng-bind-html="dvm.getIRILocalName(axiom) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
@@ -54,10 +56,9 @@
                 </div>
             </tab>
         </tabset>
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary float-right" ng-click="dvm.addAxiom()"
-                    ng-disabled="dvm.form.$invalid || dvm.axiom === undefined || (dvm.tabs.list && !dvm.values.length) || (dvm.tabs.editor && !dvm.expression)">Add</button>
-            <button class="btn float-right" ng-click="dvm.os.showAxiomOverlay = false">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-click="dvm.addAxiom()" ng-disabled="dvm.form.$invalid || dvm.axiom === undefined || (dvm.tabs.list && !dvm.values.length) || (dvm.tabs.editor && !dvm.expression)">Submit</button>
 </div>
