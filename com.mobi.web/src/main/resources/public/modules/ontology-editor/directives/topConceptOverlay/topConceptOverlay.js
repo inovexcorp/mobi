@@ -30,7 +30,7 @@
          *
          * @description
          * The `topConceptOverlay` module only provides the `topConceptOverlay` directive which creates
-         * the top concept overlay within the ontology editor.
+         * content for a modal to add a top concept to a concept scheme.
          */
         .module('topConceptOverlay', [])
         /**
@@ -45,11 +45,14 @@
          * @requires util.service:utilService
          *
          * @description
-         * HTML contents in the top concept overlay with provides the users with an overlay which can be used to add
-         * skos:hasTopConcept(s) to the selected skos:ConceptScheme.
+         * `axiomOverlay` is a directive that creates content for a modal that adds skos:hasTopConcept(s) to the
+         * {@link ontologyState.service:ontologyStateService selected concept scheme}. The form in the modal
+         * contains a `ui-select` with all the concepts in the current
+         * {@link ontologyState.service:ontologyStateService selected ontology}. Meant to be used in conjunction with
+         * the {@link modalService.directive:modalService}.
          *
-         * @param {function} closeOverlay the function to be called to close the overlay
-         * @param {function} onSubmit the function to be called after a top concept is added
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
          */
         .directive('topConceptOverlay', topConceptOverlay);
 

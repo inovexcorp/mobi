@@ -30,7 +30,7 @@
          *
          * @description
          * The `relationshipOverlay` module only provides the `relationshipOverlay` directive which creates
-         * the relationship overlay within the ontology editor.
+         * content for a modal to add a relationship to a concept in an ontology.
          */
         .module('relationshipOverlay', [])
         /**
@@ -42,13 +42,19 @@
          * @requires ontologyState.service:ontologyStateService
          * @requires util.service:utilService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires propertyManager.service:propertyManagerService
          *
          * @description
-         * HTML contents in the relationship overlay with provides the users with an overlay which can be used to add
-         * a SKOS relationship to the selected entity.
+         * `axiomOverlay` is a directive that creates content for a modal that adds a SKOS relationship to the
+         * {@link ontologyState.service:ontologyStateService selected concept}. The form in the modal contains a
+         * `ui-select` of the provided relationships and a `ui-select` of the appropriate values for the selected
+         * relationship (concepts or concept schemes). Meant to be used in conjunction with the
+         * {@link modalService.directive:modalService}.
          *
-         * @param {Object[]} relationshipList the list of relationships available to add to the selected entity
-         * @param {function=undefined} onSubmit the function to be called after a relationship is added
+         * @param {Object} resolve Information provided to the modal
+         * @param {Object[]} resolve.relationshipList The list of relationships available to add to the selected concept
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
          */
         .directive('relationshipOverlay', relationshipOverlay);
 

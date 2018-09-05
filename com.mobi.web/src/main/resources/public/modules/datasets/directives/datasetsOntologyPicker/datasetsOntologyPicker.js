@@ -38,13 +38,19 @@
          * @name datasetsTabset.directive:datasetsOntologyPicker
          * @scope
          * @restrict E
-         * @requires datasetState.service:datasetStateService
          * @requires catalogManager.service:catalogManagerService
+         * @requires datasetState.service:datasetStateService
          * @requires util.service:utilService
          * @requires prefixes.service:prefixes
          *
          * @description
-         * `datasetsOntologyPicker` is a directive which creates a paged list for selecting ontologies.
+         * `datasetsOntologyPicker` is a directive which creates a searchable paged list for selecting ontologies along
+         * with an editable display of selected ontologies. All selected ontologies are set on the provided
+         * `selectedOntologies` variable. If an error occurs when retrieving ontologies, the error message is set on
+         * the provided `error` variable. The directive is replaced by the contents of its template.
+         *
+         * @param {string} error The error message that is set if retrieving ontologies fails
+         * @param {Object[]} The selected ontologies from the list
          */
         .directive('datasetsOntologyPicker', datasetsOntologyPicker);
 

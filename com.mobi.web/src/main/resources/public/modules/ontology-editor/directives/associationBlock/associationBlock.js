@@ -24,7 +24,32 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name associationBlock
+         *
+         * @description
+         * The `associationBlock` module only provides the `associationBlock` directive which creates a
+         * {@link block.directive:block} for displaying the classes and properties in an ontology.
+         */
         .module('associationBlock', [])
+        /**
+         * @ngdoc directive
+         * @name associationBlock.directive:associationBlock
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `associationBlock` is a directive that creates a {@link block.directive:block} that displays the
+         * {@link everythingTree.directive:everythingTree} for the current
+         * {@link ontologyState.service:ontologyStateService selected ontology} along with a button to delete an entity.
+         * The directive houses the methods for opening the modal for deleting an entity. The directive is replaced by
+         * the contents of its template.
+         */
         .directive('associationBlock', associationBlock);
 
         associationBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'modalService'];

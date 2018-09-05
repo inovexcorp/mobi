@@ -24,7 +24,39 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name ontologyPropertyOverlay
+         *
+         * @description
+         * The `ontologyPropertyOverlay` module only provides the `ontologyPropertyOverlay` directive which creates
+         * content for a modal to add or edit an ontology property on an ontology.
+         */
         .module('ontologyPropertyOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name ontologyPropertyOverlay.directive:ontologyPropertyOverlay
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires propertyManager.service:propertyManagerService
+         * @requires util.service:utilService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires prefixes.service:prefixes
+         *
+         * @description
+         * `ontologyPropertyOverlay` is a directive that creates content for a modal that adds or edits an ontology
+         * property on the current {@link ontologyState.service:ontologyStateService selected ontology}. The form in
+         * the modal contains a `ui-select` for the ontology property (or annotation). If an ontology property is
+         * selected, text input is provided for the value (must be a valid IRI). If an annotation is selected, a
+         * {@link textArea.directive:textArea} is provided for the annotation value with a
+         * {@link languageSelect.directive:languageSelect}, unless the annotation is owl:deprecated in which case the
+         * `textArea` and `languageSelect` are replaced by {@link radioButton.directive:radioButton radio buttons} for
+         * the boolean value. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
+         */
         .directive('ontologyPropertyOverlay', ontologyPropertyOverlay);
 
         ontologyPropertyOverlay.$inject = ['ontologyStateService', 'REGEX', 'propertyManagerService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];

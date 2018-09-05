@@ -30,7 +30,7 @@
          *
          * @description
          * The `uploadOntologyTab` module only provides the `uploadOntologyTab` directive which creates
-         * upload ontology tab.
+         * page for uploading ontologies.
          */
         .module('uploadOntologyTab', [])
         /**
@@ -42,8 +42,12 @@
          * @requires ontologyState.service:ontologyStateService
          *
          * @description
-         * HTML contents in the upload ontology tab which provides an area to drop or browse for files and
-         * displays a list of ontologies actively being uploaded to the system.
+         * `openOntologyTab` is a directive that creates a page for uploading ontologies. The page includes a
+         * {@link dragFile.directive:dragFile} area for dragging/dropping to upload and a display of the list of
+         * ontologies actively being uploaded to the Mobi instance. There is also a button for navigating back to the
+         * {@link openOntologyTab.directive:openOntologyTab}. The directive houses a method for
+         * {@link uploadOntologyOverlay.directive:uploadOntologyOverlay uploading ontologies}. The directive is replaced
+         * by the contents of its template.
          */
         .directive('uploadOntologyTab', uploadOntologyTab);
 

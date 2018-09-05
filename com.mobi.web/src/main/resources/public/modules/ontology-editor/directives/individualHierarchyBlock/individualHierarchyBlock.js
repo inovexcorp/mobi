@@ -24,7 +24,32 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name individualHierarchyBlock
+         *
+         * @description
+         * The `individualHierarchyBlock` module only provides the `individualHierarchyBlock` directive which creates a
+         * {@link block.directive:block} for displaying the individuals in an ontology.
+         */
         .module('individualHierarchyBlock', [])
+        /**
+         * @ngdoc directive
+         * @name individualHierarchyBlock.directive:individualHierarchyBlock
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `individualHierarchyBlock` is a directive that creates a {@link block.directive:block} that displays a
+         * {@link hierarchyTree.directive:hierarchyTree} of the individuals in the current
+         * {@link ontologyState.service:ontologyStateService selected ontology} underneath their class types. The
+         * `block` also has buttons to add and delete individuals. The directive houses the methods for opening modals
+         * for {@link createIndividualOverlay.directive:createIndividualOverlay adding} and deleting individuals. The
+         * directive is replaced by the contents of its template.
+         */
         .directive('individualHierarchyBlock', individualHierarchyBlock);
 
         individualHierarchyBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'modalService'];

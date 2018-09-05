@@ -24,7 +24,35 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name staticIri
+         *
+         * @description
+         * The `staticIri` module only provides the `staticIri` directive which creates a display of an entity's IRI.
+         */
         .module('staticIri', [])
+        /**
+         * @ngdoc directive
+         * @name staticIri.directive:staticIri
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `staticIri` is a directive that creates a `div` with a display of the provided IRI of an entity. If
+         * `duplicateCheck` is true, an {@link errorDisplay.directive:errorDisplay} will be displayed if the IRI already
+         * exists in the current {@link ontologyState.service:ontologyStateService selected ontology}. The the IRI if
+         * for an entity that is not imported, an edit button is displayed that will open the
+         * {@link editIriOverlay.directive:editIriOverlay}. The directive accepts a method that will be called when an
+         * edit of the IRI is completed.The directive is replaced by the contents of its template.
+         *
+         * @param {Function} onEdit A function to be called when the `editIriOverlay` is confirmed
+         * @param {string} iri The IRI to be displayed and optionally edited
+         * @param {boolean} duplicateCheck Whether the IRI should be checked for duplicates within the selected ontology
+         */
         .directive('staticIri', staticIri);
 
         staticIri.$inject = ['$filter', 'ontologyStateService', 'ontologyUtilsManagerService', 'modalService'];

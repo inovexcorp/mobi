@@ -24,7 +24,36 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name importsOverlay
+         *
+         * @description
+         * The `importsOverlay` module only provides the `importsOverlay` directive which creates content
+         * for a modal to add an import to an ontology.
+         */
         .module('importsOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name importsOverlay.directive:importsOverlay
+         * @scope
+         * @restrict E
+         * @requires httpService.service:httpService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
+         * @requires propertyManager.service:propertyManagerService
+         *
+         * @description
+         * `importsOverlay` is a directive that creates content for a modal that adds an imported ontology to the
+         * current {@link ontologyState.service:ontologyStateService selected ontology}. The form in the modal contains
+         * a {@link tabset.directive:tabset} to choose between a URL import or an ontology within the Mobi instance.
+         * Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
+         */
         .directive('importsOverlay', importsOverlay);
 
         importsOverlay.$inject = ['$http', 'httpService', '$q', 'REGEX', 'ontologyStateService', 'ontologyManagerService', 'utilService', 'prefixes', 'propertyManagerService'];

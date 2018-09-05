@@ -29,8 +29,7 @@
          * @name textInput
          *
          * @description
-         * The `textInput` module only provides the `textInput` directive which creates
-         * a text input field with a {@link customLabel.directive:customLabel customLabel}
+         * The `textInput` module only provides the `textInput` directive which creates a labeled text input field
          * and several optional customization variables.
          */
         .module('textInput', [])
@@ -41,19 +40,24 @@
          * @restrict E
          *
          * @description
-         * `textInput` is a directive that creates a Bootstrap "form-group" div with a
-         * text input element and a {@link customLabel.directive:customLabel customLabel}.
-         * The text input is bound to the passed bindModel variable and has several
-         * optional customization variables. The directive is replaced by the contents of
+         * `textInput` is a directive that creates a Bootstrap "form-group" div with a text input element and a
+         * {@link customLabel.directive:customLabel customLabel}. The `customLabel` uses the provided `displayText` and
+         * `mutedText` for display. The text input is bound to the passed `bindModel` variable. It can also have a
+         * custom on change function. The name of the input is configurable along with whether it is required. The input
+         * can optionally be focused on rendering as well. The `isInvalid` and `isValid` parameters provide a way to
+         * change the styling based on the validity of the input. The directive is replaced by the contents of
          * its template.
          *
          * @param {*} bindModel The variable to bind the value of the text input field to
-         * @param {function} changeEvent A function to be called when the value of the
+         * @param {Function} changeEvent A function to be called when the value of the
          * text input field changes
          * @param {string} [displayText=''] The text to be displayed in the customLabel
          * @param {string} [mutedText=''] The muted text to be displayed in the customLabel
-         * @param {boolean} [required=false] whether or not the text input should be required
-         * @param {string} [inputName=''] the name to give the text input
+         * @param {boolean} [required=false] Whether the text input should be required
+         * @param {string} [inputName=''] The name to give the text input
+         * @param {boolean} [isInvalid=false] Whether the text input is invalid
+         * @param {boolean} [isValid=false] Whether the text input is valid
+         * @param {boolean} isFocusMe Whether the text input should be focused once rendered
          */
         .directive('textInput', textInput);
 

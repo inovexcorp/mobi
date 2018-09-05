@@ -24,7 +24,34 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name ontologyPropertiesBlock
+         *
+         * @description
+         * The `ontologyPropertiesBlock` module only provides the `ontologyPropertiesBlock` directive which creates a
+         * {@link block.directive:block} for displaying the properties of an ontology.
+         */
         .module('ontologyPropertiesBlock', [])
+        /**
+         * @ngdoc directive
+         * @name ontologyPropertiesBlock.directive:ontologyPropertiesBlock
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires propertyManager.service:propertyManagerService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `ontologyPropertiesBlock` is a directive that creates a {@link block.directive:block} that displays the
+         * ontology properties (and annotations) on the current
+         * {@link ontologyState.service:ontologyStateService selected ontology} using
+         * {@link propertyValues.directive:propertyValues}. The `block` contains a button for adding a property.
+         * The directive houses the methods for opening the modal for
+         * {@link ontologyPropertyOverlay.directive:ontologyPropertyOverlay editing, adding}, and removing
+         * ontology properties. The directive is replaced by the contents of its template.
+         */
         .directive('ontologyPropertiesBlock', ontologyPropertiesBlock);
 
         ontologyPropertiesBlock.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyUtilsManagerService', 'modalService'];

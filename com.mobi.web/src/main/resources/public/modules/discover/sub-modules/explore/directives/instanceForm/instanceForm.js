@@ -29,25 +29,31 @@
          * @name instanceForm
          *
          * @description
-         * The `instanceForm` module only provides the `instanceForm` directive which creates
-         * the instance form.
+         * The `instanceForm` module only provides the `instanceForm` directive which creates a form for
+         * editing an instance within a dataset.
          */
         .module('instanceForm', [])
         /**
          * @ngdoc directive
-         * @name instanceEditor.directive:instanceEditor
+         * @name instanceForm.directive:instanceForm
          * @scope
          * @restrict E
-         * @requires $q
          * @requires discoverState.service:discoverStateService
          * @requires util.service:utilService
          * @requires explore.service:exploreService
          * @requires prefixes.service:prefixes
          * @requires exploreUtils.service:exploreUtilsService
+         * @requires modal.service:modalService
          *
          * @description
-         * HTML contents in the instance view page which shows the complete list of properites
-         * associated with the instance in an editable format.
+         * `instanceForm` is a directive that creates a form with the complete list of properites associated with the
+         * {@link discoverState.service:discoverStateService selected instance} in an editable format. Also provides a
+         * way to {@link editIriOverlay.directive:editIriOverlay edit the instance IRI} after acknowledging the danger.
+         * If there are requierd properties not set on the instance, the provided `isValid` variable is set to false.
+         * The directive is replaced by the contents of its template.
+         *
+         * @param {string} header The configurable header for the form
+         * @param {boolean} isValid Whether all the required properties for the instance are set
          */
         .directive('instanceForm', instanceForm);
 

@@ -24,7 +24,34 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name datatypePropertyAxioms
+         *
+         * @description
+         * The `datatypePropertyAxioms` module only provides the `datatypePropertyAxioms` directive which creates a
+         * list of the axioms on a data property.
+         */
         .module('datatypePropertyAxioms', [])
+        /**
+         * @ngdoc directive
+         * @name datatypePropertyAxioms.directive:datatypePropertyAxioms
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires propertyManager.service:propertyManagerService
+         * @requires prefixes.service:prefixes
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `datatypePropertyAxioms` is a directive that creates a list of
+         * {@link propertyValues.directive:propertyValues} of the axioms on the
+         * {@link ontologyState.service:ontologyStateService selected data property}.
+         * The directive houses the methods for opening the modal for removing property axioms. The
+         * directive is replaced by the contents of its template.
+         */
         .directive('datatypePropertyAxioms', datatypePropertyAxioms);
 
         datatypePropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'prefixes', 'ontologyUtilsManagerService', 'ontologyManagerService', 'modalService'];

@@ -24,7 +24,34 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name classAxioms
+         *
+         * @description
+         * The `classAxioms` module only provides the `classAxioms` directive which creates a
+         * list of the axioms on a class.
+         */
         .module('classAxioms', [])
+        /**
+         * @ngdoc directive
+         * @name classAxioms.directive:classAxioms
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires propertyManager.service:propertyManagerService
+         * @requires prefixes.service:prefixes
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `classAxioms` is a directive that creates a list of
+         * {@link propertyValues.directive:propertyValues} of the axioms on the
+         * {@link ontologyState.service:ontologyStateService selected class}.
+         * The directive houses the methods for opening the modal for removing class axioms. The
+         * directive is replaced by the contents of its template.
+         */
         .directive('classAxioms', classAxioms);
 
         classAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'prefixes', 'ontologyUtilsManagerService', 'ontologyManagerService', 'modalService'];

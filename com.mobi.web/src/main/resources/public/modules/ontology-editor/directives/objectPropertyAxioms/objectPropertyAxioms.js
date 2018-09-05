@@ -24,7 +24,34 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name objectPropertyAxioms
+         *
+         * @description
+         * The `objectPropertyAxioms` module only provides the `objectPropertyAxioms` directive which creates a
+         * list of the axioms on an object property.
+         */
         .module('objectPropertyAxioms', [])
+        /**
+         * @ngdoc directive
+         * @name objectPropertyAxioms.directive:objectPropertyAxioms
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires propertyManager.service:propertyManagerService
+         * @requires prefixes.service:prefixes
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `objectPropertyAxioms` is a directive that creates a list of
+         * {@link propertyValues.directive:propertyValues} of the axioms on the
+         * {@link ontologyState.service:ontologyStateService selected object property}.
+         * The directive houses the methods for opening the modal for removing property axioms. The
+         * directive is replaced by the contents of its template.
+         */
         .directive('objectPropertyAxioms', objectPropertyAxioms);
 
         objectPropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'prefixes', 'ontologyUtilsManagerService', 'ontologyManagerService', 'modalService'];
@@ -48,8 +75,6 @@
                     }
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
-                        // dvm.index = index;
-                        // dvm.showRemoveOverlay = true;
                         modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
                             dvm.ontoUtils.removeProperty(key, index).then(dvm.removeFromHierarchy);
                         });

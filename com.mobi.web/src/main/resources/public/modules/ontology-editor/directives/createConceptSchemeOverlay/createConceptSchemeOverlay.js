@@ -24,7 +24,37 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name createConceptSchemeOverlay
+         *
+         * @description
+         * The `createConceptSchemeOverlay` module only provides the `createConceptSchemeOverlay` directive which
+         * creates content for a modal to add a concept scheme to an ontology/vocabulary.
+         */
         .module('createConceptSchemeOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name createConceptSchemeOverlay.directive:createConceptSchemeOverlay
+         * @scope
+         * @restrict E
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires prefixes.service:prefixes
+         * @requires util.service:utilService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         *
+         * @description
+         * `createConceptSchemeOverlay` is a directive that creates content for a modal that creates a concept scheme
+         * in the current {@link ontologyState.service:ontologyStateService selected ontology/vocabulary}. The form in
+         * the modal contains a text input for the concept scheme name (which populates the
+         * {@link staticIri.directive:staticIri IRI}),
+         * an {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a `ui-select` for the top concepts.
+         * Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
+         */
         .directive('createConceptSchemeOverlay', createConceptSchemeOverlay);
 
         createConceptSchemeOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'ontologyUtilsManagerService'];

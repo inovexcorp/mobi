@@ -24,7 +24,36 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name createClassOverlay
+         *
+         * @description
+         * The `createClassOverlay` module only provides the `createClassOverlay` directive which creates content
+         * for a modal to add an class to an ontology.
+         */
         .module('createClassOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name createClassOverlay.directive:createClassOverlay
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires prefixes.service:prefixes
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         *
+         * @description
+         * `createClassOverlay` is a directive that creates content for a modal that creates a class in the current
+         * {@link ontologyState.service:ontologyStateService selected ontology}. The form in the modal contains a
+         * text input for the class name (which populates the {@link staticIri.directive:staticIri IRI}), a
+         * {@link textArea.directive:textArea} for the class description, an
+         * {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a
+         * {@link superClassSelect.directive:superClassSelect}. Meant to be used in conjunction with the
+         * {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
+         */
         .directive('createClassOverlay', createClassOverlay);
 
         createClassOverlay.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];

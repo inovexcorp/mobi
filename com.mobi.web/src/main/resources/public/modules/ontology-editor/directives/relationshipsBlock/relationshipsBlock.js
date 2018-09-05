@@ -30,7 +30,7 @@
          *
          * @description
          * The `relationshipsBlock` module only provides the `relationshipsBlock` directive which creates
-         * the relationships block within the ontology editor.
+         * {@link block.directive:block} for displaying the relationships on a concept or concept scheme.
          */
         .module('relationshipsBlock', [])
         /**
@@ -41,11 +41,18 @@
          * @requires ontologyManager.service:ontologyManagerService
          * @requires ontologyState.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires modal.service:modalService
          * @requires prefixes.service:prefixes
          *
          * @description
-         * HTML contents in the relationships block with provides the users with a display of SKOS relationships
-         * for the selected entity. A link to add additional relationships is also provided.
+         * `annotationBlock` is a directive that creates a {@link block.directive:block} that displays the
+         * SKOS relationships on the
+         * {@link ontologyState.service:ontologyStateService selected concept or concept scheme} using
+         * {@link propertyValues.directive:propertyValues}. If the selected entity is a concept, the `block` contains a
+         * button to {@link relationshipOverlay.directive:relationshipOverlay add a relationship}. If the selected
+         * entity is a concept scheme, the `block` contains a button to
+         * {@link topConceptOverlay.directive:topConceptOverlay add a top concept}. The directive is replaced by the
+         * contents of its template.
          *
          * @param {Object[]} relationshipList the list of relationships to display
          */

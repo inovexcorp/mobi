@@ -39,6 +39,7 @@
          * @scope
          * @restrict E
          * @requires datasetState.service:datasetStateService
+         * @requires datasetManager.service:datasetManagerService
          * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
          * @requires prefixes.service:prefixes
@@ -47,7 +48,7 @@
          * `editDatasetOverlay` is a directive that creates an overlay with a form containing fields for editing an
          * existing Dataset Record. The form contains fields for the title, description,
          * {@link keywordSelect.directive:keywordSelect keywords}, and a searchable list of Ontology Records that can
-         * be linked to the Dataset Record.
+         * be linked to the Dataset Record. The directive is replaced by the contents of its template.
          *
          * @param {Function} onClose The method to be called when closing the overlay
          */
@@ -86,9 +87,7 @@
                     dvm.selectedOntologies = [];
                     var selectedOntologies = _.map(ds.selectedDataset.identifiers, identifier => dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
                     $q.all(_.map(selectedOntologies, id => cm.getRecord(id, cm.localCatalog['@id'])))
-                        .then(responses => {
-                            return _.filter(responses, r => !!r);
-                        }, () => onError('A selected ontology could not be found'))
+                        .then(responses => _.filter(responses, r => !!r), () => onError('A selected ontology could not be found'))
                         .then(filteredList => {
                             dvm.selectedOntologies = filteredList
                         })

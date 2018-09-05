@@ -24,7 +24,37 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name datatypePropertyOverlay
+         *
+         * @description
+         * The `datatypePropertyOverlay` module only provides the `datatypePropertyOverlay` directive which creates
+         * content for a modal to add a data property to an individual.
+         */
         .module('datatypePropertyOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name datatypePropertyOverlay.directive:datatypePropertyOverlay
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires propertyManager.service:propertyManagerService
+         *
+         * @description
+         * `datatypePropertyOverlay` is a directive that creates content for a modal that adds a data property value to
+         * the {@link ontologyState.service:ontologyStateService selected individual}. The form in the modal contains a
+         * `ui-select` of all the data properties in the ontology, a {@link textArea.directive:textArea} for the data
+         * property value, an {@link iriSelect.directive:iriSelect} for the datatype, and a
+         * {@link languageSelect.directive:languageSelect}. Meant to be used in conjunction with the
+         * {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
+         */
         .directive('datatypePropertyOverlay', datatypePropertyOverlay);
 
         datatypePropertyOverlay.$inject = ['ontologyStateService', 'utilService', 'prefixes', 'ontologyUtilsManagerService', 'propertyManagerService'];

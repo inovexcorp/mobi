@@ -24,7 +24,34 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name commitOverlay
+         *
+         * @description
+         * The `commitOverlay` module only provides the `commitOverlay` directive which creates content
+         * for a modal to commit changes to an ontology.
+         */
         .module('commitOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name commitOverlay.directive:commitOverlay
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires stateManager.service:stateManagerService
+         * @requires util.service:utilService
+         *
+         * @description
+         * `commitOverlay` is a directive that creates content for a modal to commit the changes to the
+         * {@link ontologyState.service:ontologyStateService selected ontology}. The form in the modal contains a
+         * {@link textArea.directive:textArea} for the commit message. Meant to be used in conjunction with the
+         * {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
+         */
         .directive('commitOverlay', commitOverlay);
 
         commitOverlay.$inject = ['$q', 'ontologyStateService', 'catalogManagerService', 'stateManagerService', 'utilService'];

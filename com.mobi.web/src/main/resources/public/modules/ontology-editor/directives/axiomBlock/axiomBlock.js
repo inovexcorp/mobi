@@ -24,7 +24,37 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name axiomBlock
+         *
+         * @description
+         * The `axiomBlock` module only provides the `axiomBlock` directive which creates a
+         * {@link block.directive:block} for displaying the axioms on an entity.
+         */
         .module('axiomBlock', [])
+        /**
+         * @ngdoc directive
+         * @name axiomBlock.directive:axiomBlock
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires propertyManager.service:propertyManagerService
+         * @requires modal.service:modalService
+         * @requires prefixes.service:prefixes
+         *
+         * @description
+         * `axiomBlock` is a directive that creates a {@link block.directive:block} that displays the appropriate axioms
+         * on the {@link ontologyState.service:ontologyStateService selected entity} based on its type. The directives
+         * used for display are {@link classAxioms.directive:classAxioms},
+         * {@link objectPropertyAxioms.directive:objectPropertyAxioms}, and
+         * {@link datatypePropertyAxioms.directive:datatypePropertyAxioms}. The `block` contains a button for adding an
+         * axiom. The directive houses the methods for opening the modal for
+         * {@link axiomOverlay.directive:axiomOverlay adding} and removing axioms. The directive is replaced by the
+         * contents of its template.
+         */
         .directive('axiomBlock', axiomBlock);
 
         axiomBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'propertyManagerService', 'modalService', 'prefixes'];

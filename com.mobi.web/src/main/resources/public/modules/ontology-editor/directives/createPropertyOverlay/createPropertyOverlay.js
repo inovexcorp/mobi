@@ -24,7 +24,42 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name createPropertyOverlay
+         *
+         * @description
+         * The `createPropertyOverlay` module only provides the `createPropertyOverlay` directive which creates
+         * content for a modal to add a data, object, or annotation property to an ontology.
+         */
         .module('createPropertyOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name createPropertyOverlay.directive:createPropertyOverlay
+         * @scope
+         * @restrict E
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires prefixes.service:prefixes
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         *
+         * @description
+         * `createPropertyOverlay` is a directive that creates content for a modal that creates a data, object, or
+         * annotation property in the current {@link ontologyState.service:ontologyStateService selected ontology}.
+         * The form in the modal contains a text input for the property name (which populates the
+         * {@link staticIri.directive:staticIri IRI}), a {@link textArea.directive:textArea} for the property
+         * description, {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and
+         * {@link radioButton.directive:radioButton radioButtons} to select the type of the property. The form will
+         * contain other fields depending on the property type selected. If the property type is data or object
+         * property, the fields shown are {@link checkbox.directive:checkbox checkboxes} for the property
+         * characteristics, an {@link iriSelect.directive:iriSelect} for the domain, an
+         * {@link iriSelect.directive:iriSelect} for the range, and a
+         * {@link superPropertySelect.directive:superPropertySelect}. Meant to be used in conjunction with the
+         * {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
+         */
         .directive('createPropertyOverlay', createPropertyOverlay);
 
         createPropertyOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];

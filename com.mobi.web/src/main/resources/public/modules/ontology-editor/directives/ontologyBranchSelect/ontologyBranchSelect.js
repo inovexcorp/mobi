@@ -44,13 +44,15 @@
          * @requires ontologyManager.service:ontologyManagerService
          * @requires util.service:utilService
          * @requires stateManager.service:stateManagerService
+         * @requires modal.service:modalService
          *
          * @description
          * `ontologyBranchSelect` is a directive that creates a `ui-select` containing the branches of the current
-         * {@link ontologyState.service:ontologyStateService listItem and binds the selected branch to `bindModel`.
-         * Each branch in the `ui-select` has buttons for editing the metadata and deleting the branch which will bring
-         * up a {@link confirmationOverlay.directive:confirmationOverlay}. The directive is replaced by the contents of
-         * its template.
+         * {@link ontologyState.service:ontologyStateService listItem} and binds the selected branch to `bindModel`.
+         * Each branch in the `ui-select` has buttons for editing the metadata and deleting the branch which will open
+         * a {@link confirmModal.directive:confirmModal}. The directive also houses the method for opening a modal for
+         * {@link editBranchOverlay.directive:editBranchOverlay editing a branch}. The directive is replaced by the
+         * contents of its template.
          *
          * @param {Object} bindModel The currently selected branch
          */

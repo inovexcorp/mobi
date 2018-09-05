@@ -41,6 +41,7 @@
          * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
          * @requires userManager.service:userManagerService
+         * @requires modal.service:modalService
          *
          * @description
          * `commitHistoryTable` is a directive that creates a table containing the commit chain of the head commit of
@@ -51,7 +52,7 @@
          *
          * @param {string} commitId The IRI string of a commit in the local catalog
          * @param {string} branchTitle The title of the branch the user is currently on.
-         * @param {string} [targetId=''] targetId limits the commits displayed to only go as far back as this specified 
+         * @param {string} [targetId=''] targetId limits the commits displayed to only go as far back as this specified
          *      commit.
          */
         .directive('commitHistoryTable', commitHistoryTable);

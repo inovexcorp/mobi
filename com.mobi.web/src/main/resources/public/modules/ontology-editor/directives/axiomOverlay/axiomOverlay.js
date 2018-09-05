@@ -24,7 +24,40 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name axiomOverlay
+         *
+         * @description
+         * The `axiomOverlay` module only provides the `axiomOverlay` directive which creates content for a modal to add
+         * an axiom on an entity.
+         */
         .module('axiomOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name axiomOverlay.directive:axiomOverlay
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires util.service:utilService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires prefixes.service:prefixes
+         * @requires manchesterConverter.service:manchesterConverterService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires propertyManager.service:propertyManagerService
+         *
+         * @description
+         * `axiomOverlay` is a directive that creates content for a modal that adds an axiom to the
+         * {@link ontologyState.service:ontologyStateService selected entity}. The form in the modal contains a
+         * `ui-select` of the provided axioms for the property and a {@link tabset.directive:tabset} to choose between
+         * using simple values or restriction via a manchester string as the value of the axiom. Meant to be used in
+         * conjunction with the {@link modalService.directive:modalService}.
+         *
+         * @param {Object} resolve Information provided to the modal
+         * @param {Object[]} resolve.axiomList A list of the axioms to select from
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
+         */
         .directive('axiomOverlay', axiomOverlay);
 
         axiomOverlay.$inject = ['ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes', 'manchesterConverterService', 'ontologyManagerService', 'propertyManagerService', '$filter'];

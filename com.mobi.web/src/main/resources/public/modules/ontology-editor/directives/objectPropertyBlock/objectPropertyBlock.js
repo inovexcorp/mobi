@@ -24,7 +24,33 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name objectPropertyBlock
+         *
+         * @description
+         * The `objectPropertyBlock` module only provides the `objectPropertyBlock` directive which creates a
+         * {@link block.directive:block} for displaying the object properties on an individual.
+         */
         .module('objectPropertyBlock', [])
+        /**
+         * @ngdoc directive
+         * @name objectPropertyBlock.directive:objectPropertyBlock
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires prefixes.service:prefixes
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `objectPropertyBlock` is a directive that creates a {@link block.directive:block} that displays the
+         * object properties on the {@link ontologyState.service:ontologyStateService selected individual} using
+         * {@link propertyValues.directive:propertyValues}. The `block` contains a button for adding an object property.
+         * The directive houses the methods for opening the modal for
+         * {@link objectPropertyOverlay.directive:objectPropertyOverlay adding} and removing object property values.
+         * The directive is replaced by the contents of its template.
+         */
         .directive('objectPropertyBlock', objectPropertyBlock);
 
         objectPropertyBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'modalService'];

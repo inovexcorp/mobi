@@ -24,7 +24,29 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name ontologyUtilsManager
+         *
+         * @description
+         * The `ontologyUtilsManager` module only provides the `ontologyUtilsManagerService` service which
+         * contains various utility methods used throughout the Ontology Editor.
+         */
         .module('ontologyUtilsManager', [])
+        /**
+         * @ngdoc service
+         * @name ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires updateRefs.service:updateRefsService
+         * @requires propertyManager.service:propertyManagerService
+         * @requires prefixes.service:prefixes
+         * @requires util.service:utilService
+         *
+         * @description
+         * `mergeRequestsStateService` is a service which contains various utility methods used throughout the Ontology
+         * Editor for actions such as deleting specific types of entities and creating displays for the frontend.
+         */
         .service('ontologyUtilsManagerService', ontologyUtilsManagerService);
 
         ontologyUtilsManagerService.$inject = ['$q', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'propertyManagerService', 'prefixes', 'utilService'];
@@ -396,16 +418,56 @@
                 return array;
             }
 
+            /**
+             * @ngdoc method
+             * @name getRemovePropOverlayMessage
+             * @methodOf ontologyUtilsManager.service:ontologyUtilsManagerService
+             *
+             * @description
+             * Creates an HTML string of the body of a {@link confirmModal.directive:confirmModal} for confirming the
+             * deletion of the specified property value on the current
+             * {@link ontologyState.service:ontologyStateService selected entity}.
+             *
+             * @param {string} key The IRI of a property on the current entity
+             * @param {number} index The index of the specific property value being deleted
+             * @return {string} A string with HTML for the body of a `confirmModal`
+             */
             self.getRemovePropOverlayMessage = function(key, index) {
                 return '<p>Are you sure you want to remove:<br><strong>' + key + '</strong></p><p>with value:<br><strong>' + self.getPropValueDisplay(key, index) + '</strong></p><p>from:<br><strong>' + os.listItem.selected['@id'] + '</strong>?</p>';
             }
-
+            /**
+             * @ngdoc method
+             * @name getPropValueDisplay
+             * @methodOf ontologyUtilsManager.service:ontologyUtilsManagerService
+             *
+             * @description
+             * Creates a display of the specified property value on the current
+             * {@link ontologyState.service:ontologyStateService selected entity} based on whether it is a
+             * data property value, object property value, or blank node.
+             *
+             * @param {string} key The IRI of a property on the current entity
+             * @param {number} index The index of a specific property value
+             * @return {string} A string a display of the property value
+             */
             self.getPropValueDisplay = function(key, index) {
                 return _.get(os.listItem.selected[key], '[' + index + ']["@value"]')
                     || _.truncate(self.getBlankNodeValue(_.get(os.listItem.selected[key], '[' + index + ']["@id"]')), {length: 150})
                     || _.get(os.listItem.selected[key], '[' + index + ']["@id"]');
             }
-
+            /**
+             * @ngdoc method
+             * @name removeProperty
+             * @methodOf ontologyUtilsManager.service:ontologyUtilsManagerService
+             *
+             * @description
+             * Removes the specified property value on the current
+             * {@link ontologyState.service:ontologyStateService selected entity}, updating the InProgressCommit,
+             * everything hierarchy, and property hierarchy.
+             *
+             * @param {string} key The IRI of a property on the current entity
+             * @param {number} index The index of a specific property value
+             * @return {Promise} A Promise that resolves with the JSON-LD value object that was removed
+             */
             self.removeProperty = function(key, index) {
                 var axiomObject = os.listItem.selected[key][index];
                 var json = {

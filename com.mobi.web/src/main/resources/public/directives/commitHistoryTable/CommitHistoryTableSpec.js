@@ -143,7 +143,7 @@ describe('Commit History Table directive', function() {
                 this.controller.openCommitOverlay(this.commitId);
                 scope.$apply();
                 expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
-                expect(modalSvc.openModal).toHaveBeenCalledWith('commitInfoOverlay', {commit: {id: this.commitId}, additions: [], deletions: []});
+                expect(modalSvc.openModal).toHaveBeenCalledWith('commitInfoOverlay', {commit: {id: this.commitId}, additions: [], deletions: []}, undefined, 'lg');
             });
             it('unless getCommit rejects', function() {
                 catalogManagerSvc.getCommit.and.returnValue($q.reject('Error Message'));

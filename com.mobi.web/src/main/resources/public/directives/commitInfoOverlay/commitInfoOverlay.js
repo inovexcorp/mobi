@@ -30,7 +30,7 @@
          *
          * @description
          * The `commitInfoOverlay` module only provides the `commitInfoOverlay` directive which creates
-         * an overlay with information about a particular commit.
+         * content for a modal with information about a particular commit.
          */
         .module('commitInfoOverlay', [])
         /**
@@ -42,20 +42,21 @@
          * @requires userManager.service:userManagerService
          *
          * @description
-         * `commitInfoOverlay` is a directive that creates an overlay displaying information about the passed
+         * `commitInfoOverlay` is a directive that creates content for a modal displaying information about the passed
          * commit object including a {@link commitChangesDisplay.directive:commitChangesDisplay commit changes display}
-         * of the passed additions and deletions for the commit. The passed overlayFlag should determine whether
-         * or not this overlay should be shown. The directive is replaced by the contents of its template.
+         * of the passed additions and deletions for the commit. Meant to be used in conjunction with the
+         * {@link modalService.directive:modalService}.
          *
-         * @param {Object} commit The commit to display information about
-         * @param {string} commit.id The IRI string identifying the commit
-         * @param {string} commit.message The message associated with the commit
-         * @param {Object} commit.creator An object containing information about the creator of the commit, including the
-         * username, first name, and last name
-         * @param {string} commit.date The date string of when the commit was created
-         * @param {Object[]} additions An array of JSON-LD objects representing statements added in the commit
-         * @param {Object[]} deletions An array of JSON-LD objects representing statements deleted in the commit
-         * @param {boolean} overlayFlag A booelan representing whether or not the overlay should be shown
+         * @param {Object} resolve Information provided to the modal
+         * @param {Object} resolve.commit The commit to display information about
+         * @param {string} resolve.commit.id The IRI string identifying the commit
+         * @param {string} resolve.commit.message The message associated with the commit
+         * @param {Object} resolve commit.creator An object containing information about the creator of the commit,
+         * including the username, first name, and last name
+         * @param {string} resolve.commit.date The date string of when the commit was created
+         * @param {Object[]} resolve.additions An array of JSON-LD objects representing statements added in the commit
+         * @param {Object[]} resolve.deletions An array of JSON-LD objects representing statements deleted in the commit
+         * @param {Function} dismiss A function that dismisses the modal
          */
         .directive('commitInfoOverlay', commitInfoOverlay);
 

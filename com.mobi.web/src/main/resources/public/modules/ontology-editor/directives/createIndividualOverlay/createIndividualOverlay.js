@@ -24,7 +24,34 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name createIndividualOverlay
+         *
+         * @description
+         * The `createIndividualOverlay` module only provides the `createIndividualOverlay` directive which creates
+         * content for a modal to add an individual to an ontology.
+         */
         .module('createIndividualOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name createIndividualOverlay.directive:createIndividualOverlay
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires prefixes.service:prefixes
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         *
+         * @description
+         * `createIndividualOverlay` is a directive that creates content for a modal that creates an individual in the
+         * current {@link ontologyState.service:ontologyStateService selected ontology}. The form in the modal contains
+         * a text input for the indivdiual name (which populates the {@link staticIri.directive:staticIri IRI}) and
+         * a 'ui-select' for the classes this individual will be an instance of. Meant to be used in conjunction with
+         * the {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
+         */
         .directive('createIndividualOverlay', createIndividualOverlay);
 
         createIndividualOverlay.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];

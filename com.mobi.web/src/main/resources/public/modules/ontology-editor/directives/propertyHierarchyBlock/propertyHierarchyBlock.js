@@ -24,7 +24,33 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name propertyHierarchyBlock
+         *
+         * @description
+         * The `propertyHierarchyBlock` module only provides the `propertyHierarchyBlock` directive which creates a
+         * {@link block.directive:block} for displaying the properties in an ontology.
+         */
         .module('propertyHierarchyBlock', [])
+        /**
+         * @ngdoc directive
+         * @name propertyHierarchyBlock.directive:propertyHierarchyBlock
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `propertyHierarchyBlock` is a directive that creates a {@link block.directive:block} that displays a
+         * manual hierarchy tree of the data, object, and annotation properties in the current
+         * {@link ontologyState.service:ontologyStateService selected ontology} within separate "folders". The `block`
+         * also contains buttons to add and delete properties. The directive houses the methods for opening modals for
+         * {@link createPropertyOverlay.directive:createPropertyOverlay adding} and deleting properties. The directive
+         * is replaced by the contents of its template.
+         */
         .directive('propertyHierarchyBlock', propertyHierarchyBlock);
 
         propertyHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'modalService', 'INDENT'];
