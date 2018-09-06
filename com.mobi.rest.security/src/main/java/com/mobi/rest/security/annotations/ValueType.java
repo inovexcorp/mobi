@@ -24,5 +24,5 @@ package com.mobi.rest.security.annotations;
  */
 
 public enum ValueType {
-    PRIMITIVE, PATH, QUERY, BODY
+    PRIMITIVE, PATH, QUERY, BODY, PROP_PATH
 }

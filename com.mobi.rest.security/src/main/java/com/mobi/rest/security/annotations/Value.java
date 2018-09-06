@@ -29,31 +29,23 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An annotation to set a custom value for the Action ID of a REST endpoint request. If the annotation
- * is not set, the Action ID will be the ID representing the HTTP request method.
+ * An annotation to set the starting point for a {@link ValueType#PROP_PATH} value. This should result in an IRI so
+ * the SPARQL query works. It does not currently support a {@link ValueType#PROP_PATH} value.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface ActionId {
-
+public @interface Value {
     /**
-     * The {@link ValueType type} of data provided for the Action ID.
+     * The {@link ValueType type} of data provided for the Value.
      */
     ValueType type() default ValueType.PRIMITIVE;
 
     /**
-     * A string representing the ID of the Action of a request. If the type is {@link ValueType#PATH}, this will be the
+     * A string representing the value of the Value. If the type is {@link ValueType#PATH}, this will be the
      * {@link javax.ws.rs.PathParam} id. If the type is {@link ValueType#QUERY}, this will be the
      * {@link javax.ws.rs.QueryParam} id. If the type is {@link ValueType#BODY}, this will be the
      * {@link org.glassfish.jersey.media.multipart.FormDataParam} id. If the type is a {@link ValueType#PROP_PATH},
      * this will the the property path string.
      */
     String value();
-
-    /**
-     * The starting point for a {@link ValueType#PROP_PATH} type. Should be a single value, the array is simply to have
-     * a default. Should also result in an IRI so the SPARQL query works. This value will be ignored for any other
-     * ValueType.
-     */
-    Value[] start() default {};
 }

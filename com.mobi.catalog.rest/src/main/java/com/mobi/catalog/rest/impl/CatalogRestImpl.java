@@ -280,7 +280,7 @@ public class CatalogRestImpl implements CatalogRest {
     @ActionAttributes(
             @AttributeValue(id = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", value = "type",
                     type = ValueType.BODY))
-    @ResourceId(id = "catalogId", type = ValueType.PATH)
+    @ResourceId(value = "catalogId", type = ValueType.PATH)
     public Response createRecord(ContainerRequestContext context, String catalogId, String typeIRI, String title,
                                  String identifierIRI, String description, List<FormDataBodyPart> keywords) {
         checkStringParam(title, "Record title is required");
@@ -320,7 +320,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getRecord(String catalogId, String recordId) {
         try {
             Record record = catalogManager.getRecord(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -335,7 +335,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteRecord(ContainerRequestContext context, String catalogId, String recordId) {
         User activeUser = getActiveUser(context, engineManager);
         IRI recordIri = vf.createIRI(recordId);
@@ -356,7 +356,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateRecord(String catalogId, String recordId, String newRecordJson) {
         try {
             Record newRecord = getNewThing(newRecordJson, vf.createIRI(recordId),
@@ -638,7 +638,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranches(ContainerRequestContext context, UriInfo uriInfo, String catalogId, String recordId,
                                 String sort, int offset, int limit, boolean asc, boolean applyUserFilter) {
         try {
@@ -667,8 +667,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createBranch(ContainerRequestContext context, String catalogId, String recordId,
                                  String typeIRI, String title, String description) {
         try {
@@ -691,7 +691,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getMasterBranch(String catalogId, String recordId) {
         try {
             Branch masterBranch = catalogManager.getMasterBranch(vf.createIRI(catalogId), vf.createIRI(recordId));
@@ -705,7 +705,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranch(String catalogId, String recordId, String branchId) {
         try {
             Branch branch = catalogManager.getBranch(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -720,8 +720,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     @ActionAttributes(
             @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
     )
@@ -737,8 +737,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateBranch(String catalogId, String recordId, String branchId, String newBranchJson) {
         try {
             Branch newBranch = getNewThing(newBranchJson, vf.createIRI(branchId),
@@ -753,7 +753,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getCommitChain(UriInfo uriInfo, String catalogId, String recordId, String branchId, String targetId,
                                    int offset, int limit) {
         LinksUtils.validateParams(limit, offset);
@@ -784,8 +784,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     @ActionAttributes(
             @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
     )
@@ -805,14 +805,14 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getHead(String catalogId, String recordId, String branchId, String format) {
         long start = System.currentTimeMillis();
         try {
             Commit headCommit = catalogManager.getHeadCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId));
-            return createCommitResponse(headCommit, catalogManager.getCommitDifference(headCommit.getResource()), format,
-                    transformer, bNodeService);
+            return createCommitResponse(headCommit, catalogManager.getCommitDifference(headCommit.getResource()),
+                    format, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -823,7 +823,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getBranchCommit(String catalogId, String recordId, String branchId, String commitId,
                                     String format) {
         long start = System.currentTimeMillis();
@@ -843,7 +843,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDifference(String catalogId, String recordId, String branchId, String targetBranchId,
                                   String rdfFormat) {
         try {
@@ -863,7 +863,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConflicts(String catalogId, String recordId, String branchId, String targetBranchId,
                                  String rdfFormat) {
         try {
@@ -886,11 +886,11 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
+    @ActionId(value = Modify.TYPE)
     @ActionAttributes(
             @AttributeValue(type = ValueType.QUERY, id = VersionedRDFRecord.branch_IRI, value = "targetId")
     )
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response merge(ContainerRequestContext context, String catalogId, String recordId, String sourceBranchId,
                           String targetBranchId, String additionsJson, String deletionsJson) {
         try {
@@ -908,7 +908,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getCompiledResource(ContainerRequestContext context, String catalogId, String recordId,
                                         String branchId, String commitId, String rdfFormat, boolean apply) {
         try {
@@ -934,7 +934,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadCompiledResource(ContainerRequestContext context, String catalogId, String recordId,
                                              String branchId, String commitId, String rdfFormat, boolean apply,
                                              String fileName) {
@@ -1016,8 +1016,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id="recordId")
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateInProgressCommit(ContainerRequestContext context, String catalogId, String recordId,
                                            String additionsJson, String deletionsJson) {
         try {
@@ -1054,10 +1054,10 @@ public class CatalogRestImpl implements CatalogRest {
 
     /**
      * Creates a JSONObject for the Difference statements in the specified RDF format of the Commit with the specified
-     * id. Key "additions" has value of the Commit's addition statements and key "deletions" has value of the Commit's
-     * deletion statements.
+     * value. Key "additions" has value of the Commit's addition statements and key "deletions" has value of the
+     * Commit's deletion statements.
      *
-     * @param commitId The id of the Commit to retrieve the Difference of.
+     * @param commitId The value of the Commit to retrieve the Difference of.
      * @param format   A string representing the RDF format to return the statements in.
      *
      * @return A JSONObject with a key for the Commit's addition statements and a key for the Commit's deletion

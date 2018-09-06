@@ -41,7 +41,7 @@ public @interface AttributeValue {
     ValueType type() default ValueType.PRIMITIVE;
 
     /**
-     * Am IRI string representing the ID of the Attribute.
+     * An IRI string representing the ID of the Attribute.
      */
     String id();
 
@@ -51,9 +51,20 @@ public @interface AttributeValue {
     String datatype() default "http://www.w3.org/2001/XMLSchema#string";
 
     /**
-     * A string representing the value of the Attribute.
+     * A string representing the value of the Attribute. If the type is {@link ValueType#PATH}, this will be the
+     * {@link javax.ws.rs.PathParam} id. If the type is {@link ValueType#QUERY}, this will be the
+     * {@link javax.ws.rs.QueryParam} id. If the type is {@link ValueType#BODY}, this will be the
+     * {@link org.glassfish.jersey.media.multipart.FormDataParam} id. If the type is a {@link ValueType#PROP_PATH},
+     * this will the the property path string.
      */
     String value();
+
+    /**
+     * The starting point for a {@link ValueType#PROP_PATH} type. Should be a single value, the array is simply to have
+     * a default. Should also result in an IRI so the SPARQL query works. This value will be ignored for any other
+     * ValueType.
+     */
+    Value[] start() default {};
 
     /**
      * A boolean indicating if the value is required.
