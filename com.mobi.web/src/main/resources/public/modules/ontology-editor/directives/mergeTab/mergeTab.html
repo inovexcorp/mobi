@@ -20,11 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="merge-tab h-100 d-flex flex-column">
-    <div class="row row-container">
-        <div class="col">
-            <merge-block class="h-100" ng-if="!dvm.os.listItem.merge.conflicts.length"></merge-block>
-            <resolve-conflicts-block class="h-100" ng-if="dvm.os.listItem.merge.conflicts.length"></resolve-conflicts-block>
-        </div>
+<div class="merge-tab row m-0 h-100">
+    <div class="col p-3">
+        <merge-block class="h-100" ng-if="!dvm.os.listItem.merge.conflicts.length"></merge-block>
+        <resolve-conflicts-block class="h-100" ng-if="dvm.os.listItem.merge.conflicts.length"></resolve-conflicts-block>
     </div>
 </div>
