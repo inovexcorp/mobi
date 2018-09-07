@@ -53,7 +53,7 @@
                         additions: [],
                         deletions: []
                     };
-                    
+
                     dvm.index = 0;
                     dvm.size = 100;
 
@@ -61,7 +61,6 @@
                         $event.stopPropagation();
                         dvm.os.goTo(id);
                     }
-
                     dvm.update = function() {
                         cm.getBranchHeadCommit(dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(headCommit => {
@@ -70,7 +69,6 @@
                             }, $q.reject)
                             .then(() => dvm.util.createSuccessToast('Your ontology has been updated.'), dvm.util.createErrorToast);
                     }
-
                     dvm.restoreBranchWithUserBranch = function() {
                         var userBranchId = dvm.os.listItem.ontologyRecord.branchId;
                         var userBranch = _.find(dvm.os.listItem.branches, {'@id': userBranchId})
@@ -101,19 +99,38 @@
                                 dvm.util.createSuccessToast('Branch has been restored with changes.');
                             }, dvm.util.createErrorToast);
                     }
-
+                    dvm.mergeUserBranch = function() {
+                        var branch = _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
+                        dvm.os.listItem.merge.target = _.find(dvm.os.listItem.branches, {'@id': dvm.util.getPropertyId(branch, prefixes.catalog + 'createdFrom')});
+                        dvm.os.listItem.merge.checkbox = true;
+                        dvm.os.checkConflicts()
+                            .then(() => {
+                                dvm.os.merge()
+                                    .then(() => {
+                                        dvm.os.resetStateTabs();
+                                        dvm.util.createSuccessToast('Changes have been pulled successfully');
+                                        dvm.os.cancelMerge();
+                                    }, () => {
+                                        dvm.util.createErrorToast('Pulling changes failed');
+                                        dvm.os.cancelMerge();
+                                    });
+                            }, () => dvm.os.listItem.merge.active = true);
+                    }
                     dvm.removeChanges = function() {
                         cm.deleteInProgressCommit(dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(() => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.upToDate), $q.reject)
                             .then(() => dvm.os.clearInProgressCommit(), errorMessage => dvm.error = errorMessage);
                     }
-
                     dvm.orderByIRI = function(item) {
                         return dvm.util.getBeautifulIRI(item.id);
                     }
+                    dvm.getMoreResults = function() {
+                        dvm.index++;
+                        var currChunk = _.get(dvm.chunks, dvm.index, []);
+                        dvm.showList = _.concat(dvm.showList, currChunk);
+                    }
 
                     $scope.$watchGroup(['dvm.os.listItem.inProgressCommit.additions', 'dvm.os.listItem.inProgressCommit.deletions'], () => {
-                    
                         var ids = _.unionWith(_.map(dvm.os.listItem.inProgressCommit.additions, '@id'), _.map(dvm.os.listItem.inProgressCommit.deletions, '@id'), _.isEqual);
                         dvm.list = _.map(ids, id => {
                             var additions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.additions);
@@ -126,7 +143,7 @@
                                 disableAll: hasSpecificType(additions) || hasSpecificType(deletions)
                             }
                         });
-                        
+
                         dvm.list = _.sortBy(dvm.list, dvm.orderByIRI)
                         dvm.showList = getList();
                     });
@@ -146,17 +163,9 @@
                         dvm.os.listItem.userBranch = false;
                         dvm.os.listItem.createdFromExists = true;
                     }
-
                     function hasSpecificType(array) {
                         return !!_.intersection(_.map(_.filter(array, {p: typeIRI}), 'o'), types).length;
                     }
-                    
-                    dvm.getMoreResults = function() {
-                        dvm.index++;
-                        var currChunk = _.get(dvm.chunks, dvm.index, []);
-                        dvm.showList = _.concat(dvm.showList, currChunk);
-                    }
-                    
                     function getList() {
                         var list = dvm.showList || [];
                         dvm.chunks = _.chunk(dvm.list, dvm.size);

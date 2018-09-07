@@ -733,6 +733,10 @@ function mockOntologyState() {
             this.addToClassIRIs = jasmine.createSpy('addToClassIRIs');
             this.removeFromClassIRIs = jasmine.createSpy('removeFromClassIRIs');
             this.addErrorToUploadItem = jasmine.createSpy('addErrorToUploadItem');
+            this.attemptMerge = jasmine.createSpy('attemptMerge').and.returnValue($q.when());
+            this.checkConflicts = jasmine.createSpy('checkConflicts').and.returnValue($q.when());
+            this.merge = jasmine.createSpy('merge').and.returnValue($q.when());
+            this.cancelMerge = jasmine.createSpy('cancelMerge');
         });
     });
 }
@@ -1283,7 +1287,7 @@ function mockMergeRequestManager() {
 
 function mockMergeRequestsState() {
     module(function($provide) {
-        $provide.service('mergeRequestsStateService', function() {
+        $provide.service('mergeRequestsStateService', function($q) {
             this.selected = undefined;
             this.acceptedFilter = false;
             this.requests = [];
@@ -1299,6 +1303,7 @@ function mockMergeRequestsState() {
             this.setRequests = jasmine.createSpy('setRequests');
             this.setRequestDetails = jasmine.createSpy('setRequestDetails');
             this.startCreate = jasmine.createSpy('startCreate');
+            this.resolveRequestConflicts = jasmine.createSpy('resolveRequestConflicts').and.returnValue($q.when());
         });
     });
 }

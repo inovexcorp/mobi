@@ -37,8 +37,7 @@ describe('Resolve Conflicts Form directive', function() {
         scope.branchTitle = '';
         scope.targetTitle = '';
         scope.conflicts = [];
-        scope.resolutions = [];
-        this.element = $compile(angular.element('<resolve-conflicts-form branch-title="branchTitle" target-title="targetTitle" conflicts="conflicts" resolutions="resolutions"></resolve-conflicts-form>'))(scope);
+        this.element = $compile(angular.element('<resolve-conflicts-form branch-title="branchTitle" target-title="targetTitle" conflicts="conflicts"></resolve-conflicts-form>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('resolveConflictsForm');
     });
@@ -50,31 +49,21 @@ describe('Resolve Conflicts Form directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
-        beforeEach(function() {
-            this.isolatedScope = this.element.isolateScope();
-        });
+    describe('controller bound variable', function() {
         it('branchTitle is one way bound', function() {
-            this.isolatedScope.branchTitle = 'test';
+            this.controller.branchTitle = 'test';
             scope.$digest();
             expect(scope.branchTitle).toEqual('');
         });
         it('targetTitle is one way bound', function() {
-            this.isolatedScope.targetTitle = 'test';
+            this.controller.targetTitle = 'test';
             scope.$digest();
             expect(scope.targetTitle).toEqual('');
         });
-    });
-    describe('controller bound variable', function() {
         it('conflicts is one way bound', function() {
             this.controller.conflicts = [{}];
             scope.$digest();
             expect(scope.conflicts).toEqual([]);
-        });
-        it('resolutions is two way bound', function() {
-            this.controller.resolutions = [{}];
-            scope.$digest();
-            expect(scope.resolutions).toEqual([{}]);
         });
     });
     describe('replaces the element with the correct html', function() {

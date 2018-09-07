@@ -185,7 +185,7 @@
              * The structure of the objects looks like the following:
              * ```
              * {
-             *     request: {...}, // The JSON-LD object of the Merge Request
+             *     jsonld: {...}, // The JSON-LD object of the Merge Request
              *     title: '', // The title of the Merge Request
              *     date: '', // A string representation of the date the Merge Request was created
              *     creator: {...}, // The object representing the user that created the Merge Request
@@ -297,18 +297,18 @@
                 request.sourceCommit = '';
                 request.targetCommit = '';
                 request.difference = '';
-                if (mm.isAccepted(request.request)) {
-                    request.sourceTitle = util.getPropertyValue(request.request, prefixes.mergereq + 'sourceBranchTitle');
-                    request.targetTitle = util.getPropertyValue(request.request, prefixes.mergereq + 'targetBranchTitle');
-                    request.sourceCommit = util.getPropertyId(request.request, prefixes.mergereq + 'sourceCommit')
-                    request.targetCommit = util.getPropertyId(request.request, prefixes.mergereq + 'targetCommit')
+                if (mm.isAccepted(request.jsonld)) {
+                    request.sourceTitle = util.getPropertyValue(request.jsonld, prefixes.mergereq + 'sourceBranchTitle');
+                    request.targetTitle = util.getPropertyValue(request.jsonld, prefixes.mergereq + 'targetBranchTitle');
+                    request.sourceCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceCommit')
+                    request.targetCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetCommit')
                     cm.getDifference(request.sourceCommit, request.targetCommit)
                         .then(diff => {
                             request.difference = diff;
                         }, util.createErrorToast)
                 } else {
-                    var sourceIri = util.getPropertyId(request.request, prefixes.mergereq + 'sourceBranch');
-                    var targetIri = util.getPropertyId(request.request, prefixes.mergereq + 'targetBranch');
+                    var sourceIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceBranch');
+                    var targetIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetBranch');
                     var promise = cm.getRecordBranch(sourceIri, request.recordIri, catalogId)
                         .then(branch => {
                             request.sourceBranch = branch;
@@ -328,29 +328,51 @@
                                 request.difference = diff;
                                 return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
                             }, $q.reject)
-                            .then(conflicts => request.hasConflicts = !_.isEmpty(conflicts), util.createErrorToast);
+                            .then(conflicts => request.conflicts = conflicts, util.createErrorToast);
                     } else {
                         promise.then(_.noop, util.createErrorToast);
                     }
                 }
             }
+            /**
+             * @ngdoc method
+             * @name setRequestDetails
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             *
+             * @description
+             * Resolves the conflicts for the provided Merge Request by making a merge from the request's target into
+             * the source with the provided resolution statments. Will also reset the details on the provided request
+             * after a successful merge.
+             *
+             * @param {Object} request An item from the `requests` array that represents the request to resolve
+             * conflicts for
+             * @param {Object} resolutions An object with keys for the `additions` and `deletions` JSON-LD objects for
+             * the merge commit
+             * @return {Promise} A Promise indicating the success of the resolution
+             */
+            self.resolveRequestConflicts = function(request, resolutions) {
+                return cm.mergeBranches(request.targetBranch['@id'], request.sourceBranch['@id'], request.recordIri, catalogId, resolutions)
+                    .then(() => {
+                        self.setRequestDetails(request);
+                    }, $q.reject);
+            }
 
-            function getDate(request) {
-                var dateStr = util.getDctermsValue(request, 'issued');
+            function getDate(jsonld) {
+                var dateStr = util.getDctermsValue(jsonld, 'issued');
                 return util.getDate(dateStr, 'shortDate');
             }
-            function getCreator(request) {
-                var iri = util.getDctermsId(request, 'creator');
+            function getCreator(jsonld) {
+                var iri = util.getDctermsId(jsonld, 'creator');
                 return _.get(_.find(um.users, {iri}), 'username');
             }
-            function getRequestObj(request) {
+            function getRequestObj(jsonld) {
                 return {
-                    request,
-                    title: util.getDctermsValue(request, 'title'),
-                    date: getDate(request),
-                    creator: getCreator(request),
-                    recordIri: util.getPropertyId(request, prefixes.mergereq + 'onRecord'),
-                    assignees: _.map(_.get(request, "['" + prefixes.mergereq + "assignee']"), obj => _.get(_.find(um.users, {iri: obj['@id']}), 'username'))
+                    jsonld,
+                    title: util.getDctermsValue(jsonld, 'title'),
+                    date: getDate(jsonld),
+                    creator: getCreator(jsonld),
+                    recordIri: util.getPropertyId(jsonld, prefixes.mergereq + 'onRecord'),
+                    assignees: _.map(_.get(jsonld, "['" + prefixes.mergereq + "assignee']"), obj => _.get(_.find(um.users, {iri: obj['@id']}), 'username'))
                 };
             }
         }
