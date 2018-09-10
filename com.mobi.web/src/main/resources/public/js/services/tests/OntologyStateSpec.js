@@ -1794,7 +1794,6 @@ describe('Ontology State Service', function() {
         ontologyStateSvc.reset();
         expect(ontologyStateSvc.list).toEqual([]);
         expect(ontologyStateSvc.listItem).toEqual({});
-        expect(ontologyStateSvc.showNewTab).toEqual(false);
         expect(ontologyStateSvc.showUploadTab).toEqual(false);
         expect(ontologyStateSvc.uploadList).toEqual([]);
     });

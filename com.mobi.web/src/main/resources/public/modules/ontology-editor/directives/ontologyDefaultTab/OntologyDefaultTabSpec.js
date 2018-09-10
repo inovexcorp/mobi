@@ -50,15 +50,6 @@ describe('Ontology Default Tab directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('ontology-default-tab')).toBe(true);
         });
-        it('depending on whether a new ontology is being created', function() {
-            expect(this.element.find('open-ontology-tab').length).toBe(1);
-            expect(this.element.find('new-ontology-tab').length).toBe(0);
-
-            ontologyStateSvc.showNewTab = true;
-            scope.$digest();
-            expect(this.element.find('open-ontology-tab').length).toBe(0);
-            expect(this.element.find('new-ontology-tab').length).toBe(1);
-        });
         it('depending on whether an ontology is being uploaded', function() {
             expect(this.element.find('open-ontology-tab').length).toBe(1);
             expect(this.element.find('upload-ontology-tab').length).toBe(0);

@@ -118,7 +118,8 @@
                         };
                         dvm.os.newKeywords = [];
                         dvm.os.newLanguage = undefined;
-                        dvm.os.showNewTab = true;
+                        modalService.openModal('newOntologyOverlay');
+                        // dvm.os.showNewTab = true;
                     }
                     dvm.showDeleteConfirmationOverlay = function(event, record) {
                         event.stopPropagation();
