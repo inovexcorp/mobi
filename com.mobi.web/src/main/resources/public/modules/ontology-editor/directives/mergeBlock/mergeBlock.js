@@ -24,7 +24,34 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name mergeBlock
+         *
+         * @description
+         * The `mergeBlock` module only provides the `mergeBlock` directive which creates a form and display for
+         * merging two branches of an ontology together.
+         */
         .module('mergeBlock', [])
+        /**
+         * @ngdoc directive
+         * @name mergeBlock.directive:mergeBlock
+         * @scope
+         * @restrict E
+         * @requires util.service:utilService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires catalogManager.service:catalogManagerService
+         *
+         * @description
+         * `mergeBlock` is a directive that creates a form for merging the current branch of the opened
+         * {@link ontologyState.service:ontologyStateService ontology} into another branch. The form contains a
+         * {@link branchSelect.directive:branchSelect} for the target branch, a {@link checkbox.directive:checkbox}
+         * for indicating whether the source branch should be removed after the merge, a button to submit the merge,
+         * and a button to cancel the merge. Once a target is selected, a
+         * {@link commitDifferenceTabset.directive:commitDifferenceTabset} is displayed. The form calls the appropriate
+         * methods to check for conflicts before performing the merge. The directive is replaced by the contents of its
+         * template.
+         */
         .directive('mergeBlock', mergeBlock);
 
         mergeBlock.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', '$q'];

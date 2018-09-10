@@ -60,7 +60,7 @@
                 templateUrl: 'modules/ontology-editor/directives/previewBlock/previewBlock.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var om = ontologyManagerService;
                     dvm.os = ontologyStateService;
@@ -92,7 +92,11 @@
                     dvm.showDownloadOverlay = function() {
                         modalService.openModal('ontologyDownloadOverlay');
                     }
-                }
+                    $scope.$watch(() => dvm.os.getActivePage(), newValue => {
+                        dvm.activePage = newValue;
+                        dvm.options.mode = dvm.activePage.mode;
+                    });
+                }]
             }
         }
 })();

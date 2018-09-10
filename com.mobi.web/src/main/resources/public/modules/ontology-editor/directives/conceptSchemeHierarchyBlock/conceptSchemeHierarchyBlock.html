@@ -20,16 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="concept-scheme-hierarchy-block">
-    <block>
-        <block-header>
-            <span>Concept Schemes</span><a class="float-right scheme-link" ng-click="dvm.showCreateConceptSchemeOverlay()"><i class="fa fa-plus"></i><span>Scheme</span></a>
-        </block-header>
-        <block-content>
-            <hierarchy-tree hierarchy="dvm.os.listItem.conceptSchemes.flat"></hierarchy-tree>
-        </block-content>
-        <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()"><i class="fa fa-trash-o"></i><span>Delete Entity</span></button>
-        </block-footer>
-    </block>
+<div class="concept-scheme-hierarchy-block d-flex flex-column">
+    <div class="section-header">
+        <h5>Concept Schemes</h5><a class="float-right fa fa-plus" ng-click="dvm.showCreateConceptSchemeOverlay()"></a>
+    </div>
+    <div class="flex-1 horizontal-scroll">
+        <hierarchy-tree hierarchy="dvm.os.listItem.conceptSchemes.flat"></hierarchy-tree>
+    </div>
 </div>

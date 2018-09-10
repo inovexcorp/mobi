@@ -24,7 +24,30 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name usagesBlock
+         *
+         * @description
+         * The `usagesBlock` module only provides the `usagesBlock` directive which creates a section for
+         * displaying the usages of an entity within an otnology.
+         */
         .module('usagesBlock', [])
+        /**
+         * @ngdoc directive
+         * @name usagesBlock.directive:usagesBlock
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         *
+         * @description
+         * `usagesBlock` is a directive that creates a section that displays the usages of the
+         * {@link ontologyState.service:ontologyStateService selected entity} using
+         * {@link propertyValues.directive:propertyValues}. The usages are only shown 100 at a time to save rendering
+         * time with a link at the bottom to load more. The directive is replaced by the contents of its template.
+         */
         .directive('usagesBlock', usagesBlock);
 
         usagesBlock.$inject = ['$filter', 'ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];

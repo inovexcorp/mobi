@@ -56,13 +56,11 @@ describe('Resolve Conflicts Block directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('resolve-conflicts-block')).toBe(true);
         });
-        _.forEach(['resolve-conflicts-form', 'block', 'block-content', 'block-footer'], function(item) {
-            it('with a ' + item, function() {
-                expect(this.element.find(item).length).toBe(1);
-            });
+        it('with a resolve-conflicts-form', function() {
+            expect(this.element.find('resolve-conflicts-form').length).toBe(1);
         });
         it('with buttons to submit with resolutions and cancel', function() {
-            var buttons = this.element.querySelectorAll('block-footer .btn');
+            var buttons = this.element.querySelectorAll('.btn-container .btn');
             expect(buttons.length).toEqual(2);
             expect(['Cancel', 'Submit with Resolutions'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
             expect(['Cancel', 'Submit with Resolutions'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
@@ -74,17 +72,17 @@ describe('Resolve Conflicts Block directive', function() {
             expect(this.element.find('error-display').length).toBe(1);
         });
         it('depending on the value of the merge checkbox', function() {
-            expect(this.element.querySelectorAll('block-header p').length).toEqual(1);
+            expect(this.element.querySelectorAll('.merge-details p').length).toEqual(1);
 
             ontologyStateSvc.listItem.merge.checkbox = true;
             scope.$digest();
-            expect(this.element.querySelectorAll('block-header p').length).toEqual(2);
+            expect(this.element.querySelectorAll('.merge-details p').length).toEqual(2);
         });
         it('depending on whether all conflicts are resolved', function() {
             ontologyStateSvc.listItem.merge.conflicts = [{}];
             spyOn(this.controller, 'allResolved').and.returnValue(false);
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('block-footer .btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.btn-container .btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.allResolved.and.returnValue(true);
@@ -92,7 +90,7 @@ describe('Resolve Conflicts Block directive', function() {
             expect(button.attr('disabled')).toBeFalsy();
         });
         it('depending on whether the source branch is up to date', function() {
-            var button = angular.element(this.element.querySelectorAll('block-footer .btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.btn-container .btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
             ontologyStateSvc.listItem.upToDate = false;
@@ -143,12 +141,12 @@ describe('Resolve Conflicts Block directive', function() {
     });
     it('should call submit when the button is clicked', function() {
         spyOn(this.controller, 'submit');
-        var button = angular.element(this.element.querySelectorAll('block-footer .btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container .btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.submit).toHaveBeenCalled();
     });
     it('should call the correct method when the button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('block-footer .btn:not(.btn-primary)')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container .btn:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(ontologyStateSvc.cancelMerge).toHaveBeenCalled();
     });

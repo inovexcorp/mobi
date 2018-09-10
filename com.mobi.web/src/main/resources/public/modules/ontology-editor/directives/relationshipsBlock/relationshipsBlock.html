@@ -22,16 +22,9 @@
   -->
 
 <div class="relationships-block axiom-block">
-    <block>
-        <block-header ng-if="!dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)">
-            <span class="relationship-header">Relationships</span><button ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.mobi.imported" class="btn btn-link float-right" ng-disabled="!dvm.relationshipList.length" ng-click="dvm.showRelationshipOverlay()"><i class="fa fa-fw fa-plus"></i>Add Relationship{{dvm.relationshipList.length ? '' : ' (none available)'}}</button>
-        </block-header>
-        <block-header ng-if="dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)">
-            <span class="top-concept-header">Top Concepts</span><button ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.mobi.imported" ng-disabled="!dvm.hasTopConceptProperty()" class="btn btn-link float-right" ng-click="dvm.showTopConceptOverlay()"><i class="fa fa-fw fa-plus"></i>Add Top Concept{{dvm.hasTopConceptProperty() ? '' : ' (none available)'}}</button>
-        </block-header>
-        <block-content>
-            <property-values ng-repeat="relationship in dvm.os.listItem.selected | showProperties:dvm.relationshipList | orderBy:dvm.ontoUtils.getLabelForIRI"
-                             property="relationship" entity="dvm.os.listItem.selected" remove="dvm.openRemoveOverlay(iri, index)"></property-values>
-        </block-content>
-    </block>
+    <div class="section-header">
+        <h5>{{dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes) ? 'Top Concepts' : 'Relationships'}}</h5>
+        <button ng-if="!dvm.os.listItem.selected.mobi.imported" class="btn btn-link float-right fa fa-fw fa-plus" ng-disabled="dvm.isDisabled()" ng-click="dvm.clickPlus()"></button>
+    </div>
+    <property-values ng-repeat="relationship in dvm.os.listItem.selected | showProperties:dvm.relationshipList | orderBy:dvm.ontoUtils.getLabelForIRI" property="relationship" entity="dvm.os.listItem.selected" remove="dvm.openRemoveOverlay(iri, index)"></property-values>
 </div>

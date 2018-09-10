@@ -24,7 +24,29 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name commitsTab
+         *
+         * @description
+         * The `commitsTab` module only provides the `commitsTab` directive which creates a page for viewing the
+         * commit history of an ontology.
+         */
         .module('commitsTab', [])
+        /**
+         * @ngdoc directive
+         * @name commitsTab.directive:commitsTab
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires util.service:utilService
+         *
+         * @description
+         * `commitsTab` is a directive that creates a page containing the
+         * {@link commitHistoryTable.directive:commitHistoryTable} for the current
+         * {@link ontologyState.service:ontologyStateService selected ontology} with a graph. The directive is replaced
+         * by the contents of its template.
+         */
         .directive('commitsTab', commitsTab);
 
         commitsTab.$inject = ['ontologyStateService', 'utilService'];

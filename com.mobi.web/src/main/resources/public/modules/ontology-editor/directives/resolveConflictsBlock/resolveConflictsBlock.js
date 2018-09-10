@@ -24,7 +24,31 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name resolveConflictsBlock
+         *
+         * @description
+         * The `resolveConflictsBlock` module only provides the `resolveConflictsBlock` directive which creates a
+         * display for resolving conflicts between two branches of an ontology being merged together.
+         */
         .module('resolveConflictsBlock', [])
+        /**
+         * @ngdoc directive
+         * @name resolveConflictsBlock.directive:resolveConflictsBlock
+         * @scope
+         * @restrict E
+         * @requires util.service:utilService
+         * @requires ontologyState.service:ontologyStateService
+         *
+         * @description
+         * `resolveConflictsBlock` is a directive that creates a series of displays for resolving conflicts between the
+         * current branch of the opened {@link ontologyState.service:ontologyStateService ontology} into a target
+         * branch. The display includes information about the branches being merged, a
+         * {@link resolveConflictsForm.directive:resolveConflictsForm}, a button to submit the merge, and a button to
+         * cancel the merge. The directive calls the appropriate methods to merge with the selected resolutions from
+         * the `resolveConflictsForm`. The directive is replaced by the contents of its template.
+         */
         .directive('resolveConflictsBlock', resolveConflictsBlock);
 
         resolveConflictsBlock.$inject = ['utilService', 'ontologyStateService'];

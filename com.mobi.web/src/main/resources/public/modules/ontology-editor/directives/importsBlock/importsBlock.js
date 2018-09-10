@@ -29,8 +29,8 @@
          * @name importsBlock
          *
          * @description
-         * The `importsBlock` module only provides the `importsBlock` directive which creates a
-         * {@link block.directive:block} for displaying the imports of an ontology.
+         * The `importsBlock` module only provides the `importsBlock` directive which creates a section for displaying
+         * the imports of an ontology.
          */
         .module('importsBlock', [])
         /**
@@ -45,10 +45,10 @@
          * @requires modal.service:modalService
          *
          * @description
-         * `importsBlock` is a directive that creates a {@link block.directive:block} that displays the imports
-         * on the current {@link ontologyState.service:ontologyStateService selected ontology}. The `block` contains
-         * buttons for adding an import and reloading the imports. Each import is displayed as its IRI and with a remove
-         * button. The directive houses the methods for opening the modal for
+         * `importsBlock` is a directive that creates a section that displays the imports on the current
+         * {@link ontologyState.service:ontologyStateService selected ontology}. The section contains buttons for
+         * adding an import and reloading the imports. Each import is displayed as its IRI and with a remove button.
+         * The directive houses the methods for opening the modal for
          * {@link importsOverlay.directive:importsOverlay adding} and removing imports. The directive is replaced by the
          * contents of its template.
          */

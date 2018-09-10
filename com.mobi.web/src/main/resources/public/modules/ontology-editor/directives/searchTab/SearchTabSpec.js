@@ -68,9 +68,7 @@ describe('Search Tab directive', function() {
             searchText: 'searchText',
             selected: ontologyStateSvc.listItem.selected
         }
-        ontoUtils.isLinkable.and.callFake(function(id) {
-            return !!id;
-        });
+        ontoUtils.isLinkable.and.callFake(id => !!id);
         this.element = $compile(angular.element('<search-tab></search-tab>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('searchTab');
@@ -92,14 +90,11 @@ describe('Search Tab directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('search-tab')).toBe(true);
         });
-        it('with blocks', function() {
-            expect(this.element.find('block').length).toBe(2);
+        it('with .section-headers', function() {
+            expect(this.element.querySelectorAll('.section-header').length).toBe(2);
         });
-        it('with block-headers', function() {
-            expect(this.element.find('block-header').length).toBe(2);
-        });
-        it('with block-contents', function() {
-            expect(this.element.find('block-content').length).toBe(2);
+        it('with a .search', function() {
+            expect(this.element.querySelectorAll('.search').length).toBe(1);
         });
         it('with an error-display', function() {
             expect(this.element.find('error-display').length).toBe(1);

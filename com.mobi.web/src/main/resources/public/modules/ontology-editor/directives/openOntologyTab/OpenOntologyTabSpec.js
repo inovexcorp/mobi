@@ -99,13 +99,13 @@ describe('Open Ontology Tab directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('open-ontology-tab')).toBe(true);
+            expect(this.element.hasClass('row')).toBe(true);
+            expect(this.element.querySelectorAll('.col-8').length).toBe(1);
             expect(this.element.querySelectorAll('.actions').length).toBe(1);
-            expect(this.element.querySelectorAll('.list').length).toBe(1);
-            expect(this.element.querySelectorAll('.open-ontology-content').length).toBe(1);
             expect(this.element.querySelectorAll('.ontologies').length).toBe(1);
             expect(this.element.querySelectorAll('.paging-container').length).toBe(1);
         });
-        _.forEach(['block', 'block-content', 'form', 'block-footer', 'pagination'], (item) => {
+        _.forEach(['form', 'pagination'], item => {
             it('with a ' + item, function() {
                 expect(this.element.find(item).length).toBe(1);
             });

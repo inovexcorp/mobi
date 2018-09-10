@@ -66,14 +66,8 @@ describe('Ontology Properties Block directive', function() {
             expect(this.element.hasClass('ontology-properties-block')).toBe(true);
             expect(this.element.hasClass('annotation-block')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
-        });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(1);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
+        it('with a .section-header', function() {
+            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
         it('depending on how many ontology properties there are', function() {
             expect(this.element.find('property-values').length).toBe(2);
@@ -117,7 +111,7 @@ describe('Ontology Properties Block directive', function() {
     });
     it('should call openAddOverlay when the link is clicked', function() {
         spyOn(this.controller, 'openAddOverlay');
-        var link = angular.element(this.element.querySelectorAll('block-header a')[0]);
+        var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
         link.triggerHandler('click');
         expect(this.controller.openAddOverlay).toHaveBeenCalled();
     });

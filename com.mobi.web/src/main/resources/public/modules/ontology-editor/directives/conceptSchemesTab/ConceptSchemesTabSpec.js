@@ -28,14 +28,18 @@ describe('Concept Schemes Tab directive', function() {
         module('conceptSchemesTab');
         mockOntologyManager();
         mockOntologyState();
+        mockOntologyUtilsManager();
         mockPropertyManager();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _propertyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _ontologyUtilsManagerService_, _propertyManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
+            ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
             propertyManagerSvc = _propertyManagerService_;
+            modalSvc = _modalService_;
         });
 
         this.element = $compile(angular.element('<concept-schemes-tab></concept-schemes-tab>'))(scope);
@@ -48,7 +52,9 @@ describe('Concept Schemes Tab directive', function() {
         scope = null;
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
+        ontologyUtilsManagerSvc = null;
         propertyManagerSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -61,9 +67,6 @@ describe('Concept Schemes Tab directive', function() {
         it('with a concept-scheme-hierarchy-block', function() {
             expect(this.element.find('concept-scheme-hierarchy-block').length).toBe(1);
         });
-        it('with a .editor', function() {
-            expect(this.element.querySelectorAll('.editor').length).toBe(1);
-        });
         it('with a selected-details', function() {
             expect(this.element.find('selected-details').length).toBe(1);
         });
@@ -75,6 +78,47 @@ describe('Concept Schemes Tab directive', function() {
         });
         it('with a usages-block', function() {
             expect(this.element.find('usages-block').length).toBe(1);
+        });
+        it('with a button to delete a concept scheme', function() {
+            var button = this.element.querySelectorAll('button');
+            expect(button.length).toBe(1);
+            expect(angular.element(button[0]).text()).toContain('Delete');
+        });
+        it('based on whether something is selected', function() {
+            expect(this.element.querySelectorAll('.selected-entity').length).toEqual(1);
+
+            ontologyStateSvc.listItem.selected = undefined;
+            scope.$digest();
+            expect(this.element.querySelectorAll('.selected-entity').length).toEqual(0);
+        });
+        it('depending on whether the selected entity is imported', function() {
+            var button = angular.element(this.element.querySelectorAll('button')[0]);
+            expect(button.attr('disabled')).toBeFalsy();
+
+            ontologyStateSvc.listItem.selected.mobi = {imported: true};
+            scope.$digest();
+            expect(button.attr('disabled')).toBeTruthy();
+        });
+    });
+    describe('controller methods', function() {
+        it('should open a delete confirmation modal', function() {
+            this.controller.showDeleteConfirmation();
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.any(String), this.controller.deleteEntity);
+        });
+        describe('should delete an entity', function() {
+            it('if it is a concept', function() {
+                this.controller.deleteEntity();
+                expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.listItem.derivedConcepts);
+                expect(ontologyUtilsManagerSvc.deleteConcept).toHaveBeenCalled();
+                expect(ontologyUtilsManagerSvc.deleteConceptScheme).not.toHaveBeenCalled();
+            });
+            it('if it is a concept scheme', function() {
+                ontologyManagerSvc.isConcept.and.returnValue(false);
+                this.controller.deleteEntity();
+                expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.listItem.derivedConceptSchemes);
+                expect(ontologyUtilsManagerSvc.deleteConcept).not.toHaveBeenCalled();
+                expect(ontologyUtilsManagerSvc.deleteConceptScheme).toHaveBeenCalled();
+            });
         });
     });
     describe('should update dvm.relationshipList when a', function() {
@@ -97,5 +141,11 @@ describe('Concept Schemes Tab directive', function() {
             scope.$digest();
             expect(this.controller.relationshipList).toEqual(['relationshipD']);
         });
+    });
+    it('should call showDeleteConfirmation when the delete concept scheme button is clicked', function() {
+        spyOn(this.controller, 'showDeleteConfirmation');
+        var button = angular.element(this.element.querySelectorAll('button')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.showDeleteConfirmation).toHaveBeenCalled();
     });
 });

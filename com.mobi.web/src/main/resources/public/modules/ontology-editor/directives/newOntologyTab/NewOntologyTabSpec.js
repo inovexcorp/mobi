@@ -72,9 +72,9 @@ describe('New Ontology Tab directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('new-ontology-tab')).toBe(true);
-            expect(this.element.querySelectorAll('.form-container').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-6').length).toBe(1);
         });
-        _.forEach(['block', 'block-content', 'form', 'custom-label', 'text-input', 'text-area', 'keyword-select'], function(item) {
+        _.forEach(['form', 'custom-label', 'text-input', 'text-area', 'keyword-select'], function(item) {
             it('with a ' + item, function() {
                 expect(this.element.find(item).length).toBe(1);
             });

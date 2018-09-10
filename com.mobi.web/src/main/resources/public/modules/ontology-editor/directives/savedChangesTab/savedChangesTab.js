@@ -24,7 +24,41 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name savedChangesTab
+         *
+         * @description
+         * The `savedChangesTab` module only provides the `savedChangesTab` directive which creates a page for viewing
+         * the saved changes (aka inProgressCommit) of an ontology.
+         */
         .module('savedChangesTab', [])
+        /**
+         * @ngdoc directive
+         * @name savedChangesTab.directive:savedChangesTab
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires stateManager.service:stateManagerService
+         * @requires util.service:utilService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires prefixes.service:prefixes
+         *
+         * @description
+         * `savedChangesTab` is a directive that creates a page that displays all the current users's saved changes
+         * (aka inProgressCommit) of the current
+         * {@link ontologyState.service:ontologyStateService selected ontology and branch}. The changes are grouped by
+         * subject. The display will include a button to remove all the saved changes if there are any. If there are
+         * no changes, an {@link infoMessage.directive:infoMessage} is shown stating as such. If the current branch is
+         * not up to date and there are changes, an {@link errorDisplay.directive:errorDisplay} is shown. If there are
+         * no changes and the current branch is not up to date, an `errorDisplay` is shown with a link to pull in the
+         * latest changes. If there are no changes and the user is on a UserBranch then an `errorDisplay` is shown with
+         * a lin to "pull changes" which will perform a merge of the UserBranch into the parent branch. If there are
+         * no changes, the user is on a UserBranch, and the parent branch no longer exists, an `errorDisplay` is shown
+         * with a link to restore the parent branch with the UserBranch. The directive is replaced by the contents of
+         * its template.
+         */
         .directive('savedChangesTab', savedChangesTab);
 
         savedChangesTab.$inject = ['$q', 'ontologyStateService', 'ontologyManagerService', 'stateManagerService', 'utilService', 'catalogManagerService', 'prefixes'];

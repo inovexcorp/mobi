@@ -30,7 +30,7 @@
          *
          * @description
          * The `relationshipsBlock` module only provides the `relationshipsBlock` directive which creates
-         * {@link block.directive:block} for displaying the relationships on a concept or concept scheme.
+         * section for displaying the relationships on a concept or concept scheme.
          */
         .module('relationshipsBlock', [])
         /**
@@ -45,12 +45,11 @@
          * @requires prefixes.service:prefixes
          *
          * @description
-         * `annotationBlock` is a directive that creates a {@link block.directive:block} that displays the
-         * SKOS relationships on the
+         * `annotationBlock` is a directive that creates a section that displays the SKOS relationships on the
          * {@link ontologyState.service:ontologyStateService selected concept or concept scheme} using
-         * {@link propertyValues.directive:propertyValues}. If the selected entity is a concept, the `block` contains a
-         * button to {@link relationshipOverlay.directive:relationshipOverlay add a relationship}. If the selected
-         * entity is a concept scheme, the `block` contains a button to
+         * {@link propertyValues.directive:propertyValues}. If the selected entity is a concept, the section header
+         * contains a button to {@link relationshipOverlay.directive:relationshipOverlay add a relationship}. If the
+         * selected entity is a concept scheme, the section header contains a button to
          * {@link topConceptOverlay.directive:topConceptOverlay add a top concept}. The directive is replaced by the
          * contents of its template.
          *
@@ -78,6 +77,20 @@
                     dvm.showTopConceptOverlay = false;
                     dvm.showRemoveOverlay = false;
 
+                    dvm.clickPlus = function() {
+                        if (dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)) {
+                            dvm.showTopConceptOverlay();
+                        } else {
+                            dvm.showRelationshipOverlay();
+                        }
+                    }
+                    dvm.isDisabled = function() {
+                        if (dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)) {
+                            return !dvm.hasTopConceptProperty();
+                        } else {
+                            return !dvm.relationshipList.length;
+                        }
+                    }
                     dvm.showRelationshipOverlay = function() {
                         modalService.openModal('relationshipOverlay', {relationshipList: dvm.relationshipList}, dvm.updateHierarchy);
                     }

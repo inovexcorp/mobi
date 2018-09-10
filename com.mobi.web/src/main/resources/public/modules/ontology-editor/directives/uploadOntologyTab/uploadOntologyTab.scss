@@ -2,62 +2,38 @@
 @import "./src/main/resources/public/css/variables";
 
 .upload-ontology-tab {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-
-    .row-container {
+    .list-container {
         flex: 1;
-        min-height: 0;
-        padding: 15px 0;
+    }
+    md-list {
+        md-list-item {
+            border-bottom: 1px solid var(--light);
+            min-height: 50px;
 
-        .block-content {
-            display: flex;
-            flex-direction: column;
-
-            .drag-file {
-                margin-bottom: 15px;
+            &:before {
+                min-height: 50px;
             }
+            &:last-child {
+                border-bottom: none;
+            }
+            &:hover {
+                background-color: var(--light);
+            }
+            .fa {
+                font-size: 1.5em;
+                margin: auto 5px auto 0;
 
-            md-list {
-                flex: 1;
-                overflow-y: auto;
-                padding: 0;
-
-                md-list-item {
-                    border-bottom: 1px solid var(--light);
-                    min-height: 50px;
-
-                    &:before {
-                        min-height: 50px;
-                    }
-                    &:last-child {
-                        border-bottom: none;
-                    }
-                    &:hover {
-                        background-color: var(--light);
-                    }
-                    .fa {
-                        font-size: 1.5em;
-                        margin: auto 5px auto 0;
-
-                        &.fa-check {
-                            color: var(--success);
-                        }
-                    }
-                    .fa.fa-times,
-                    p {
-                        color: var(--danger);
-                    }
-                    p {
-                        line-height: 1;
-                    }
+                &.fa-check {
+                    color: var(--success);
                 }
             }
-        }
-
-        .block-footer {
-            border: none;
+            .fa.fa-times,
+            p {
+                color: var(--danger);
+            }
+            p {
+                line-height: 1;
+            }
         }
     }
 }

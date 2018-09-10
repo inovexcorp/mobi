@@ -30,7 +30,7 @@
          *
          * @description
          * The `classHierarchyBlock` module only provides the `classHierarchyBlock` directive which creates a
-         * {@link block.directive:block} for displaying the classes in an ontology.
+         * section for displaying the classes in an ontology.
          */
         .module('classHierarchyBlock', [])
         /**
@@ -39,23 +39,21 @@
          * @scope
          * @restrict E
          * @requires ontologyState.service:ontologyStateService
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          * @requires modal.service:modalService
          *
          * @description
-         * `classHierarchyBlock` is a directive that creates a {@link block.directive:block} that displays a
+         * `classHierarchyBlock` is a directive that creates a section that displays a
          * {@link hierarchyTree.directive:hierarchyTree} of the clases in the current
-         * {@link ontologyState.service:ontologyStateService selected ontology} along with buttons to add and delete
-         * classes. The directive houses the methods for opening modals for
-         * {@link createClassOverlay.directive:createClassOverlay adding} and deleting classes. The directive is
-         * replaced by the contents of its template.
+         * {@link ontologyState.service:ontologyStateService selected ontology} along with a button to add a class.
+         * The directive houses the method for opening a modal for
+         * {@link createClassOverlay.directive:createClassOverlay adding} classes. The directive is replaced by the
+         * contents of its template.
          */
         .directive('classHierarchyBlock', classHierarchyBlock);
 
-        classHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'modalService'];
+        classHierarchyBlock.$inject = ['ontologyStateService', 'modalService'];
 
-        function classHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, modalService) {
+        function classHierarchyBlock(ontologyStateService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -65,12 +63,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.os = ontologyStateService;
-                    dvm.om = ontologyManagerService;
-                    dvm.utils = ontologyUtilsManagerService;
 
-                    dvm.showDeleteConfirmation = function() {
-                        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.utils.deleteClass);
-                    }
                     dvm.showCreateClassOverlay = function() {
                         dvm.os.unSelectItem();
                         modalService.openModal('createClassOverlay');

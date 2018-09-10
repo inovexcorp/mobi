@@ -30,7 +30,7 @@
          *
          * @description
          * The `openOntologyTab` module only provides the `openOntologyTab` directive which creates a
-         * page with a list of ontologies in the Mobi and buttons to add to the list.
+         * page with a list of ontologies in the Mobi instance and buttons to add to the list.
          */
         .module('openOntologyTab', [])
         /**
@@ -50,7 +50,7 @@
          *
          * @description
          * `openOntologyTab` is a directive that creates a page for opening ontologies. The page includes a search bar
-         * and a {@link block.directive:block} with a paginated list of ontologies in addition to buttons for
+         * and a paginated list of ontologies in addition to buttons for
          * {@link newOntologyTab.directive:newOntologyTab creating new ontologies} and
          * {@link uploadOntologyTab.directive:uploadOntologyTab uploading ontologies}. The directive houses a method
          * for opening the modal deleting an ontology. The directive is replaced by the contents of its template.

@@ -30,7 +30,7 @@
          *
          * @description
          * The `ontologyPropertiesBlock` module only provides the `ontologyPropertiesBlock` directive which creates a
-         * {@link block.directive:block} for displaying the properties of an ontology.
+         * section for displaying the properties of an ontology.
          */
         .module('ontologyPropertiesBlock', [])
         /**
@@ -44,10 +44,9 @@
          * @requires modal.service:modalService
          *
          * @description
-         * `ontologyPropertiesBlock` is a directive that creates a {@link block.directive:block} that displays the
-         * ontology properties (and annotations) on the current
-         * {@link ontologyState.service:ontologyStateService selected ontology} using
-         * {@link propertyValues.directive:propertyValues}. The `block` contains a button for adding a property.
+         * `ontologyPropertiesBlock` is a directive that creates a section that displays the ontology properties (and
+         * annotations) on the current {@link ontologyState.service:ontologyStateService selected ontology} using
+         * {@link propertyValues.directive:propertyValues}. The section header contains a button for adding a property.
          * The directive houses the methods for opening the modal for
          * {@link ontologyPropertyOverlay.directive:ontologyPropertyOverlay editing, adding}, and removing
          * ontology properties. The directive is replaced by the contents of its template.

@@ -21,23 +21,21 @@
  * #L%
  */
 describe('Property Hierarchy Block directive', function() {
-    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, ontologyUtilsManagerSvc, modalSvc;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
         module('propertyHierarchyBlock');
         mockOntologyState();
         mockOntologyManager();
-        mockOntologyUtilsManager();
         mockModal();
         injectIndentConstant();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _ontologyUtilsManagerService_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
-            ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
             modalSvc = _modalService_;
         });
 
@@ -51,7 +49,6 @@ describe('Property Hierarchy Block directive', function() {
         scope = null;
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
-        ontologyUtilsManagerSvc = null;
         modalSvc = null;
         this.element.remove();
     });
@@ -64,30 +61,11 @@ describe('Property Hierarchy Block directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('property-hierarchy-block')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
+        it('with a .section-header', function() {
+            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(1);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
-        });
-        it('with a block-footer', function() {
-            expect(this.element.find('block-footer').length).toBe(1);
-        });
-        it('with a button to delete a property', function() {
-            var button = this.element.querySelectorAll('block-footer button');
-            expect(button.length).toBe(1);
-            expect(angular.element(button[0]).text()).toContain('Delete Property');
-        });
-        it('based on whether something is selected', function() {
-            var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
-            expect(button.attr('disabled')).toBeFalsy();
-
-            ontologyStateSvc.listItem.selected = undefined;
-            scope.$digest();
-            expect(button.attr('disabled')).toBeTruthy();
+        it('with a link to add a property', function() {
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
         });
         it('depending on whether there is a flat data property hierarchy', function() {
             expect(this.element.querySelectorAll('.tree-item').length).toBe(0);
@@ -118,39 +96,6 @@ describe('Property Hierarchy Block directive', function() {
         });
     });
     describe('controller methods', function() {
-        it('showDeleteConfirmation opens a delete confirmation modal', function() {
-            this.controller.showDeleteConfirmation();
-            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.any(String), this.controller.deleteProperty);
-        });
-        describe('should delete', function() {
-            it('an object property', function() {
-                ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-                this.controller.deleteProperty();
-                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
-                expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).not.toHaveBeenCalled();
-                expect(ontologyUtilsManagerSvc.deleteObjectProperty).toHaveBeenCalled();
-                expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).not.toHaveBeenCalled();
-            });
-            it('a datatype property', function() {
-                ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
-                this.controller.deleteProperty();
-                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
-                expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
-                expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).toHaveBeenCalled();
-                expect(ontologyUtilsManagerSvc.deleteObjectProperty).not.toHaveBeenCalled();
-                expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).not.toHaveBeenCalled();
-            });
-            it('an annotation property', function() {
-                ontologyManagerSvc.isAnnotation.and.returnValue(true);
-                this.controller.deleteProperty();
-                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
-                expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
-                expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
-                expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).not.toHaveBeenCalled();
-                expect(ontologyUtilsManagerSvc.deleteObjectProperty).not.toHaveBeenCalled();
-                expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).toHaveBeenCalled();
-            });
-        });
         describe('isShown returns', function() {
             beforeEach(function() {
                 this.get = jasmine.createSpy('get').and.returnValue(true);
@@ -211,14 +156,8 @@ describe('Property Hierarchy Block directive', function() {
     });
     it('should call showCreatePropertyOverlay when the create property link is clicked', function() {
         spyOn(this.controller, 'showCreatePropertyOverlay');
-        var link = angular.element(this.element.querySelectorAll('block-header a')[0]);
+        var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
         link.triggerHandler('click');
         expect(this.controller.showCreatePropertyOverlay).toHaveBeenCalled();
-    });
-    it('should call showDeleteConfirmation when the delete property button is clicked', function() {
-        spyOn(this.controller, 'showDeleteConfirmation');
-        var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
-        button.triggerHandler('click');
-        expect(this.controller.showDeleteConfirmation).toHaveBeenCalled();
     });
 });
