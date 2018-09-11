@@ -22,6 +22,7 @@
   -->
 <div class="modal-header">
     <h3>{{dvm.os.editingAnnotation ? 'Edit Annotation' : 'Add Annotation'}}</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
 </div>
 <div class="modal-body">
     <form name="dvm.annotationForm" novalidate autocomplete="off">
