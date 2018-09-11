@@ -22,6 +22,7 @@
   -->
 <div class="modal-header">
     <h3>Create Concept</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
 </div>
 <div class="modal-body">
     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
