@@ -52,7 +52,9 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
@@ -61,17 +63,11 @@ import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.eclipse.rdf4j.rio.WriterConfig;
-import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
-import org.semanticweb.owlapi.io.IRIDocumentSource;
-import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
-import org.semanticweb.owlapi.io.OWLParser;
-import org.semanticweb.owlapi.io.OWLParserFactory;
-import org.semanticweb.owlapi.model.AddImport;
 import org.semanticweb.owlapi.model.AsOWLClass;
 import org.semanticweb.owlapi.model.AsOWLDatatype;
 import org.semanticweb.owlapi.model.HasDomain;
@@ -100,7 +96,6 @@ import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyFactory;
-import org.semanticweb.owlapi.model.OWLOntologyID;
 import org.semanticweb.owlapi.model.OWLOntologyIRIMapper;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -115,7 +110,6 @@ import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
-import org.semanticweb.owlapi.rio.RioJsonLDParserFactory;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.semanticweb.owlapi.rio.RioRenderer;
@@ -130,13 +124,10 @@ import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -282,6 +273,10 @@ public class SimpleOntology implements Ontology {
             this.ontologyId = ontologyManager.createOntologyId(resource);
         } else {
             this.ontologyId = ontologyManager.createOntologyId();
+            ValueFactory vf = SimpleValueFactory.getInstance();
+            sesameModel.add((org.eclipse.rdf4j.model.IRI) this.ontologyId.getOntologyIdentifier(),
+                    vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
+                    vf.createIRI(com.mobi.ontologies.owl.Ontology.TYPE));
         }
     }
 

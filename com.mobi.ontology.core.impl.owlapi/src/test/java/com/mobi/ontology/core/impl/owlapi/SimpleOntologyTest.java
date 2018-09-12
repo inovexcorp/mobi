@@ -76,6 +76,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     private ValueFactory vf = SimpleValueFactory.getInstance();
     private InputStream restrictionInputStream;
     private File testFile;
+    private IRI ontologyIRI;
 
     @Mock
     private OntologyId ontologyIdMock;
@@ -90,9 +91,6 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     private BNodeService bNodeService;
 
     @Mock
-    private IRI ontologyIRI;
-
-    @Mock
     private IRI versionIRI;
 
     @Before
@@ -102,7 +100,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
         MockitoAnnotations.initMocks(this);
 
-        when(ontologyIRI.stringValue()).thenReturn("http://test.com/ontology1");
+        ontologyIRI = VALUE_FACTORY.createIRI("http://test.com/ontology1");
         when(versionIRI.stringValue()).thenReturn("http://test.com/ontology1/1.0.0");
 
         mockStatic(SimpleOntologyValues.class);
@@ -115,9 +113,11 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
         when(ontologyIdMock.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
         when(ontologyIdMock.getVersionIRI()).thenReturn(Optional.of(versionIRI));
+        when(ontologyIdMock.getOntologyIdentifier()).thenReturn(ontologyIRI);
 
         when(ontologyManager.createOntologyId(any(IRI.class), any(IRI.class))).thenReturn(ontologyIdMock);
         when(ontologyManager.createOntologyId(any(IRI.class))).thenReturn(ontologyIdMock);
+        when(ontologyManager.createOntologyId()).thenReturn(ontologyIdMock);
         when(ontologyManager.getOntologyRecordResource(any(IRI.class))).thenReturn(Optional.empty());
         when(transformer.sesameModel(any(Model.class))).thenReturn(new LinkedHashModel());
     }
