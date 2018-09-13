@@ -68,6 +68,7 @@ public class PolicyRestImplTest extends MobiRestTestNg {
 
     private String xml;
     private String json;
+    private String recordJson;
     private XACMLPolicy policy;
     private IRI policyId;
 
@@ -79,8 +80,9 @@ public class PolicyRestImplTest extends MobiRestTestNg {
         MockitoAnnotations.initMocks(this);
         vf = getValueFactory();
 
-        xml = IOUtils.toString(getClass().getResourceAsStream("/policy.xml"));
-        json = IOUtils.toString(getClass().getResourceAsStream("/policy.json"));
+        xml = IOUtils.toString(getClass().getResourceAsStream("/policy.xml"), "UTF-8");
+        json = IOUtils.toString(getClass().getResourceAsStream("/policy.json"), "UTF-8");
+        recordJson = IOUtils.toString(getClass().getResourceAsStream("/recordPolicy.json"), "UTF-8");
         policy = new XACMLPolicy(xml, vf);
         policyId = vf.createIRI("http://mobi.com/policies/policy1");
 
@@ -111,16 +113,6 @@ public class PolicyRestImplTest extends MobiRestTestNg {
     }
 
     // GET policies
-
-    /*@Test
-    public void test() throws Exception {
-        PolicyType original = JAXB.unmarshal(new StringReader(xml), PolicyType.class);
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JaxbAnnotationModule());
-        StringWriter writer = new StringWriter();
-        objectMapper.writerWithDefaultPrettyPrinter().writeValue(writer, original);
-        System.out.println(writer.toString());
-    }*/
 
     @Test
     public void getPoliciesTest() {
@@ -282,5 +274,11 @@ public class PolicyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 500);
         verify(policyManager).createPolicy(any(PolicyType.class));
         verify(policyManager).updatePolicy(any(XACMLPolicy.class));
+    }
+
+    @Test
+    public void updateRecordPolicyTest() {
+        Response response = target().path("policies/record-permissions/" + encode(policyId.stringValue())).request().put(Entity.json(recordJson));
+        assertEquals(response.getStatus(), 200);
     }
 }

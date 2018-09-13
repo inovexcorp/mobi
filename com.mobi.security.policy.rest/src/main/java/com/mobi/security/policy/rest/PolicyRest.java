@@ -104,4 +104,34 @@ public interface PolicyRest {
     @RolesAllowed("admin")
     @ApiOperation("Updates an existing security policy using the provided JSON body.")
     Response updatePolicy(@PathParam("policyId") String policyId, String policyJson);
+
+    /**
+     * Retrieves a specific record policy identified by its ID. If the policy could not be found, returns a 400.
+     *
+     * @param policyId The String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
+     *                 begins with "_:"
+     * @return A JSON representation of the identified policy
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/record-permissions/{policyId}")
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves a specific record security policy by its ID.")
+    Response retrieveRecordPolicy(@PathParam("policyId") String policyId);
+
+    /**
+     * Updates the identified record policy with the provided JSON representation in the body. Provided policy must have
+     * the same ID.
+     *
+     * @param policyId The String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
+     *                 begins with "_:"
+     * @param policyJson A JSON representation of the new version of the policy
+     * @return A Response indicating the success of the request
+     */
+    @PUT
+    @Path("/record-permissions/{policyId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @RolesAllowed("admin")
+    @ApiOperation("Updates an existing record security policy using the provided JSON body.")
+    Response updateRecordPolicy(@PathParam("policyId") String policyId, String policyJson);
 }

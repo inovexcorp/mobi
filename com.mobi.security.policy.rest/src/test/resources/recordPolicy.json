@@ -1,0 +1,32 @@
+{
+  "urn:read": {
+    "everyone": true,
+    "users": [],
+    "groups": []
+  },
+
+  "urn:delete": {
+    "everyone": false,
+    "users": ["urn:userIRI1", "urn:userIRI2"],
+    "groups": []
+  },
+
+  "urn:update": {
+    "everyone": false,
+    "users": ["urn:userIRI1"],
+    "groups": ["urn:groupIRI1"]
+  },
+
+  "urn:modify": {
+    "everyone": false,
+    "users": ["urn:userIRI1", "urn:userIRI2"],
+    "groups": ["urn:groupIRI1"]
+  },
+
+  "urn:modifyMaster": {
+    "everyone": false,
+    "users": ["urn:userIRI1"],
+    "groups": ["urn:groupIRI2"],
+    "master": "urn:masterBranch"
+  }
+}
