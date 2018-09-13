@@ -229,6 +229,7 @@ describe('Open Ontology Tab directive', function() {
                 this.controller.deleteOntology();
                 scope.$apply();
                 expect(ontologyManagerSvc.deleteOntology).toHaveBeenCalledWith(this.controller.recordId);
+                expect(ontologyStateSvc.closeOntology).not.toHaveBeenCalled();
                 expect(this.records.data).toContain(jasmine.objectContaining({'@id': 'recordA'}));
                 expect(stateManagerSvc.getOntologyStateByRecordId).not.toHaveBeenCalled();
                 expect(stateManagerSvc.deleteState).not.toHaveBeenCalled();
@@ -240,6 +241,7 @@ describe('Open Ontology Tab directive', function() {
                 this.controller.deleteOntology();
                 scope.$apply();
                 expect(ontologyManagerSvc.deleteOntology).toHaveBeenCalledWith(this.controller.recordId);
+                expect(ontologyStateSvc.closeOntology).toHaveBeenCalledWith(this.controller.recordId);
                 expect(this.records).not.toContain(jasmine.objectContaining({'@id': 'recordA'}));
                 expect(stateManagerSvc.getOntologyStateByRecordId).toHaveBeenCalled();
                 expect(stateManagerSvc.deleteState).toHaveBeenCalledWith('state');
