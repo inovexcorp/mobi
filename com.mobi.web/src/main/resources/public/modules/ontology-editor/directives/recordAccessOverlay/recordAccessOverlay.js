@@ -187,7 +187,7 @@
                     dvm.getPolicy(dvm.resource);
                     getRuleTitle();
                 },
-                templateUrl: 'directives/recordAccessOverlay/recordAccessOverlay.html'
+                templateUrl: 'modules/ontology-editor/directives/recordAccessOverlay/recordAccessOverlay.html'
             }
         }
 })();

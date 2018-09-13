@@ -90,7 +90,6 @@
             'pagination',
             'pagingDetails',
             'passwordConfirmInput',
-            'recordAccessOverlay',
             'radioButton',
             'rdfVisualization',
             'recordKeywords',
