@@ -84,8 +84,8 @@
              * @return {Promise} A Promise that resolves if the update was successful or is rejected with an error
              * message
              */
-            self.updateRecordPolicy = function(newPolicy) {
-                return $http.put(prefix + '/' + encodeURIComponent(newPolicy.PolicyId), newPolicy)
+            self.updateRecordPolicy = function(policyId, newPolicy) {
+                return $http.put(prefix + '/' + encodeURIComponent(policyId), newPolicy)
                     .then(_.noop, util.rejectError);
             }
         }

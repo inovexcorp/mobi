@@ -49,23 +49,20 @@
                 bindToController: {
                     overlayFlag: '=',
                     resource: '<',
-                    ruleId: '@',
-                    masterBranch: '<'
+                    ruleId: '@'
                 },
                 controller: function() {
                     var dvm = this;
                     var util = utilService;
                     var um = userManagerService;
                     var rp = recordPermissionsManagerService;
-                    var groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + prefixes.foaf + 'member' + '>') + ')';
-                    var userRole = 'http://mobi.com/roles/user';
-                    var userPrefix = 'http://mobi.com/users/';
+                    var recordPolicyId;
 
                     dvm.policy = '';
                     dvm.ruleTitle = '';
 
                     dvm.getPolicy = function(resourceId) {
-                        var recordPolicyId = 'http://mobi.com/policies/record/' + encodeURIComponent(resourceId);
+                        recordPolicyId = 'http://mobi.com/policies/record/' + encodeURIComponent(resourceId);
                         rp.getRecordPolicy(recordPolicyId)
                             .then(result => {
                                 dvm.policy = {
@@ -110,10 +107,15 @@
 
                     dvm.save = function() {
                         dvm.overlayFlag = false;
-                        rp.updateRecordPolicy(dvm.policy.policy)
+                        dvm.policy.policy[dvm.ruleId] = {
+                            everyone: dvm.policy.everyone,
+                            users: _.map(dvm.policy.selectedUsers, user => user.iri),
+                            groups: _.map(dvm.policy.selectedGroups, user => user.iri),
+                        }
+                        rp.updateRecordPolicy(recordPolicyId, dvm.policy.policy)
                             .then(() => {
                                 dvm.policy.changed = false;
-                                dvm.util.createSuccessToast('Permissions updated')
+                                util.createSuccessToast('Permissions updated')
                             }, utilService.createErrorToast);
                     }
 

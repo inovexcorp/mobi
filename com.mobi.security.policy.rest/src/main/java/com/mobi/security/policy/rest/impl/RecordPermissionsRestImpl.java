@@ -237,6 +237,7 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
                     userAttrVal.getContent().add(jsonArray.getString(i));
 
                     MatchType userMatch = new MatchType();
+                    userMatch.setMatchId(XACML.STRING_EQUALS);
                     if (jsonArray.getString(i).contains("http://mobi.com/groups")) {
                         userMatch.setAttributeDesignator(groupAttrDesig);
                     } else {
