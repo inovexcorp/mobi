@@ -4,29 +4,37 @@
     "users": [],
     "groups": []
   },
-
   "urn:delete": {
     "everyone": false,
-    "users": ["urn:userIRI1", "urn:userIRI2"],
+    "users": [
+      "http://mobi.com/users/testUser1",
+      "http://mobi.com/users/testUser2"
+    ],
     "groups": []
   },
-
   "urn:update": {
     "everyone": false,
-    "users": ["urn:userIRI1"],
-    "groups": ["urn:groupIRI1"]
+    "users": [
+      "http://mobi.com/users/testUser1"
+    ],
+    "groups": [
+      "http://mobi.com/groups/group1"
+    ]
   },
-
   "urn:modify": {
-    "everyone": false,
-    "users": ["urn:userIRI1", "urn:userIRI2"],
-    "groups": ["urn:groupIRI1"]
+    "everyone": true,
+    "users": [],
+    "groups": []
   },
-
   "urn:modifyMaster": {
     "everyone": false,
-    "users": ["urn:userIRI1"],
-    "groups": ["urn:groupIRI2"],
-    "master": "urn:masterBranch"
+    "users": [
+      "http://mobi.com/users/testUser1",
+      "http://mobi.com/users/testUser2"
+    ],
+    "groups": [
+      "http://mobi.com/groups/group1",
+      "http://mobi.com/groups/group2"
+    ]
   }
 }

@@ -84,6 +84,7 @@ public class PolicyCacheConfiguration implements CacheConfiguration {
         return Eh107Configuration.fromEhcacheCacheConfiguration(CacheConfigurationBuilder
                 .newCacheConfigurationBuilder(String.class, Policy.class,
                         ResourcePoolsBuilder.newResourcePoolsBuilder().heap(maxHeapSize, MemoryUnit.MB))
+                .withSizeOfMaxObjectGraph(2000)
                 .withExpiry(Expirations.noExpiration())
                 .add(eventConfig)
                 .build());
