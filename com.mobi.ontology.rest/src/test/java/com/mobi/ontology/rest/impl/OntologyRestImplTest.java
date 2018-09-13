@@ -392,7 +392,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class))).thenReturn(record);
 
         when(ontologyManager.createOntology(any(FileInputStream.class), anyBoolean())).thenReturn(ontology);
-        when(ontologyManager.createOntology(anyString(), anyBoolean())).thenReturn(ontology);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class))).thenReturn(Optional.of(ontology));

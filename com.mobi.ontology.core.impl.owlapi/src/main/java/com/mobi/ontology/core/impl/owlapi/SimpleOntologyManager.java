@@ -53,8 +53,6 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
@@ -206,28 +204,8 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public Ontology createOntology(OntologyId ontologyId) {
-        return new SimpleOntology(ontologyId, this, sesameTransformer, bNodeService);
-    }
-
-    @Override
-    public Ontology createOntology(File file, boolean resolveImports) throws FileNotFoundException {
-        return new SimpleOntology(file, this, sesameTransformer, bNodeService, resolveImports);
-    }
-
-    @Override
-    public Ontology createOntology(IRI iri) {
-        return new SimpleOntology(iri, this, sesameTransformer, bNodeService);
-    }
-
-    @Override
     public Ontology createOntology(InputStream inputStream, boolean resolveImports) {
         return new SimpleOntology(inputStream, this, sesameTransformer, bNodeService, resolveImports);
-    }
-
-    @Override
-    public Ontology createOntology(String json, boolean resolveImports) {
-        return new SimpleOntology(json, this, sesameTransformer, bNodeService, resolveImports);
     }
 
     @Override
