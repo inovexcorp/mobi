@@ -31,7 +31,6 @@ import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-import com.mobi.ontologies.rdfs.Resource;
 import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
@@ -39,19 +38,21 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.axiom.Axiom;
 import com.mobi.ontology.core.api.classexpression.OClass;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
+import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
+import com.mobi.persistence.utils.api.BNodeService;
+import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.core.impl.sesame.SimpleIRI;
+import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
-import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -62,7 +63,6 @@ import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -120,6 +120,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         when(ontologyManager.createOntologyId()).thenReturn(ontologyIdMock);
         when(ontologyManager.getOntologyRecordResource(any(IRI.class))).thenReturn(Optional.empty());
         when(transformer.sesameModel(any(Model.class))).thenReturn(new LinkedHashModel());
+        when(transformer.sesameResource(any(Resource.class))).thenReturn(new SimpleIRI("http://test.com/ontology1"));
     }
 
     @Test

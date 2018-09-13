@@ -273,7 +273,7 @@ public class SimpleOntology implements Ontology {
             this.ontologyId = ontologyManager.createOntologyId(resource);
         } else {
             this.ontologyId = ontologyManager.createOntologyId();
-            sesameModel.add(transformer.sesameResource(this.ontologyId.getOntologyIdentifier()), RDF.TYPE,
+            sesameModel.add(transformer.sesameResource(this.ontologyId.getOntologyIRI().get()), RDF.TYPE,
                     OWL.ONTOLOGY);
         }
     }
