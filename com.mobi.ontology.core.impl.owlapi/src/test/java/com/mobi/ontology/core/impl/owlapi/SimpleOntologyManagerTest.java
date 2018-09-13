@@ -42,7 +42,6 @@ import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.ontology.core.api.Ontology;
-import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
@@ -112,9 +111,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     @Mock
     private RepositoryManager mockRepoManager;
-
-    @Mock
-    private OntologyId ontologyIdMock;
 
     @Mock
     private BNodeService bNodeService;
@@ -200,7 +196,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
         when(configProvider.getRepository()).thenReturn(repo);
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
-        PowerMockito.when(sesameTransformer.sesameResource(any(Resource.class))).thenReturn(new SimpleIRI("http://test.com/ontology1"));
+        when(sesameTransformer.sesameResource(any(Resource.class))).thenReturn(new SimpleIRI("http://test.com/ontology1"));
 
 
         manager = Mockito.spy(new SimpleOntologyManager());
@@ -236,8 +232,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         branch.setHead(commitFactory.createNew(commitIRI));
         when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
         when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
-        when(manager.createOntologyId()).thenReturn(ontologyIdMock);
-        when(ontologyIdMock.getOntologyIRI()).thenReturn(Optional.of(VALUE_FACTORY.createIRI("http://test.com/ontology1")));
 
         Optional<Ontology> result = manager.retrieveOntologyByIRI(ontologyIRI);
         assertTrue(result.isPresent());
@@ -309,8 +303,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         branch.setHead(commitFactory.createNew(commitIRI));
         when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
         when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
-        when(manager.createOntologyId()).thenReturn(ontologyIdMock);
-        when(ontologyIdMock.getOntologyIRI()).thenReturn(Optional.of(VALUE_FACTORY.createIRI("http://test.com/ontology1")));
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI);
         assertTrue(optionalOntology.isPresent());
@@ -391,8 +383,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         branch.setHead(commitFactory.createNew(commitIRI));
         when(catalogManager.getBranch(catalogIRI, recordIRI, branchIRI, branchFactory)).thenReturn(Optional.of(branch));
         when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
-        when(manager.createOntologyId()).thenReturn(ontologyIdMock);
-        when(ontologyIdMock.getOntologyIRI()).thenReturn(Optional.of(VALUE_FACTORY.createIRI("http://test.com/ontology1")));
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI);
         assertTrue(optionalOntology.isPresent());
@@ -462,8 +452,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         Commit commit = commitFactory.createNew(commitIRI);
         when(catalogManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI)).thenReturn(Optional.of(commit));
         when(catalogManager.getCompiledResource(commitIRI)).thenReturn(MODEL_FACTORY.createModel());
-        when(manager.createOntologyId()).thenReturn(ontologyIdMock);
-        when(ontologyIdMock.getOntologyIRI()).thenReturn(Optional.of(VALUE_FACTORY.createIRI("http://test.com/ontology1")));
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
         assertTrue(optionalOntology.isPresent());
