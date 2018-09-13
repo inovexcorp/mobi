@@ -52,10 +52,10 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.Models;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
@@ -273,10 +273,8 @@ public class SimpleOntology implements Ontology {
             this.ontologyId = ontologyManager.createOntologyId(resource);
         } else {
             this.ontologyId = ontologyManager.createOntologyId();
-            ValueFactory vf = SimpleValueFactory.getInstance();
-            sesameModel.add((org.eclipse.rdf4j.model.IRI) this.ontologyId.getOntologyIdentifier(),
-                    vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
-                    vf.createIRI(com.mobi.ontologies.owl.Ontology.TYPE));
+            sesameModel.add(transformer.sesameResource(this.ontologyId.getOntologyIdentifier()), RDF.TYPE,
+                    OWL.ONTOLOGY);
         }
     }
 
