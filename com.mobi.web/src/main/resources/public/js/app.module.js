@@ -147,6 +147,7 @@
             'prefixes',
             'propertyManager',
             'provManager',
+            'recordPermissionsManager',
             'settingsManager',
             'sparqlManager',
             'stateManager',

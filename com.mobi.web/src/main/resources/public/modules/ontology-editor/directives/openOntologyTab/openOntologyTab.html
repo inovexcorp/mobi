@@ -71,7 +71,7 @@
                                 <div class="d-flex align-items-center">
                                     <span class="record-action">Modify Master Branch</span>
                                     <a ng-if="!record.modifyMaster" class="users ml-auto"><i ng-click="record.showModifyMaster = true; $event.stopPropagation()" class="fa fa-lg fa-fw fa-users"></i></a>
-                                    <record-access-overlay ng-if="record.showModifyMaster" overlay-flag="record.showModifyMaster" resource="record['@id']" rule-id="urn:modify" master-branch="true"></record-access-overlay>
+                                    <record-access-overlay ng-if="record.showModifyMaster" overlay-flag="record.showModifyMaster" resource="record['@id']" rule-id="urn:modifyMaster" master-branch="true"></record-access-overlay>
                                 </div>
                             </div>
                         </div>

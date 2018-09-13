@@ -36,9 +36,9 @@
          */
         .directive('recordAccessOverlay', recordAccessOverlay);
 
-        recordAccessOverlay.$inject = ['utilService', 'userManagerService', 'policyManagerService', 'prefixes']
+        recordAccessOverlay.$inject = ['utilService', 'userManagerService', 'recordPermissionsManagerService', 'prefixes']
 
-        function recordAccessOverlay(utilService, userManagerService, policyManagerService, prefixes) {
+        function recordAccessOverlay(utilService, userManagerService, recordPermissionsManagerService, prefixes) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -56,7 +56,7 @@
                     var dvm = this;
                     var util = utilService;
                     var um = userManagerService;
-                    var pm = policyManagerService;
+                    var rp = recordPermissionsManagerService;
                     var groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + prefixes.foaf + 'member' + '>') + ')';
                     var userRole = 'http://mobi.com/roles/user';
                     var userPrefix = 'http://mobi.com/users/';
@@ -65,12 +65,12 @@
                     dvm.ruleTitle = '';
 
                     dvm.getPolicy = function(resourceId) {
-                        pm.getPolicies(resourceId)
+                        var recordPolicyId = 'http://mobi.com/policies/record/' + encodeURIComponent(resourceId);
+                        rp.getRecordPolicy(recordPolicyId)
                             .then(result => {
-                                dvm.policy = _.chain(result)
-                                    .map(policy => ({
-                                        policy,
-                                        id: policy.PolicyId,
+                                dvm.policy = {
+                                        policy: result,
+                                        id: recordPolicyId,
                                         changed: false,
                                         everyone: false,
                                         users: [],
@@ -81,61 +81,22 @@
                                         groupSearchText: '',
                                         selectedUser: undefined,
                                         selectedGroup: undefined
-                                    }))
-                                    .forEach(setInfo)
-                                    .value()[0];
-                            }, util.createErrorToast);
+                                    };
+                                setInfo(dvm.policy);
+                                }, util.createErrorToast);
                     }
 
                     function setInfo(item) {
-                        var matches = undefined;
-                        if (!dvm.masterBranch) {
-                            matches = _.chain(item.policy)
-                                .get('Rule', [])
-                                .filter(rule => rule.RuleId === dvm.ruleId)
-                                .get('[0]Target.AnyOf', [])
-                                .map(anyOf => _.map(anyOf,
-                                    allOfArray => _.map(allOfArray,
-                                        allOf => _.map(allOf,
-                                            matchArray => _.map(matchArray,
-                                                match => ({
-                                                    id: _.get(match, 'AttributeDesignator.AttributeId'),
-                                                    value: _.get(match, 'AttributeValue.content[0]')
-                                                }))))))
-                                .flattenDepth(4)
-                                .value();
-                        } else {
-                            matches = _.chain(item.policy)
-                                .get('Rule', [])
-                                .filter(rule => rule.RuleId === dvm.ruleId)
-                                .get('[0]Condition.Expression.value.Expression')
-                                .map(expression => _.map(expression.value.Expression,
-                                        nestedExpression => _.map(nestedExpression.value.Expression,
-                                                nestedExpression2 => _.map(nestedExpression2,
-                                                        values => { if(typeof values.content != 'undefined')
-                                                            return values.content[0]
-                                                }))))
-                                .flattenDepth(3)
-                                .filter(n => n)
-                                .filter(n => _.startsWith(n, userPrefix))
-                                .map(n => ({
-                                    id: pm.subjectId,
-                                    value: n
-                                }))
-                                .value();
-                        }
-
-                        if (_.find(matches, {id: prefixes.user + 'hasUserRole', value: userRole}) && !dvm.masterBranch) {
+                        var ruleInfo = item.policy[dvm.ruleId];
+                        if (ruleInfo.everyone) {
                             item.everyone = true;
                         } else {
-                            item.selectedUsers = sortUsers(_.chain(matches)
-                                .filter({id: pm.subjectId})
-                                .map(obj => _.find(um.users, {iri: obj.value}))
+                            item.selectedUsers = sortUsers(_.chain(ruleInfo.users)
+                                .map(obj => _.find(um.users, {iri: obj}))
                                 .reject(_.isNull)
                                 .value());
-                            item.selectedGroups = sortGroups(_.chain(matches)
-                                .filter({id: groupAttributeId})
-                                .map(obj => _.find(um.groups, {iri: obj.value}))
+                            item.selectedGroups = sortGroups(_.chain(ruleInfo.groups)
+                                .map(obj => _.find(um.groups, {iri: obj}))
                                 .reject(_.isNull)
                                 .value());
                         }
@@ -149,7 +110,7 @@
 
                     dvm.save = function() {
                         dvm.overlayFlag = false;
-                        pm.updatePolicy(dvm.policy.policy)
+                        rp.updateRecordPolicy(dvm.policy.policy)
                             .then(() => {
                                 dvm.policy.changed = false;
                                 dvm.util.createSuccessToast('Permissions updated')
@@ -172,14 +133,13 @@
                             case 'urn:delete':
                                 dvm.ruleTitle = "Delete Record";
                                 break;
-                            case 'urn:': //TODO: MANAGE A RECORD?
+                            case 'urn:update': //TODO: MANAGE A RECORD?
                                 break;
                             case 'urn:modify':
-                                if (dvm.masterBranch) {
-                                    dvm.ruleTitle = 'Modify Master Branch';
-                                } else {
-                                    dvm.ruleTitle = 'Modify Record';
-                                }
+                                dvm.ruleTitle = 'Modify Record';
+                                break;
+                            case 'urn:modifyMaster':
+                                dvm.ruleTitle = 'Modify Master Branch';
                                 break;
                         }
                     }

@@ -30,7 +30,7 @@
          *
          * @description
          * The `policyManager` module only provides the `policyManagerService` service which
-         * provides access to the Mobi polict REST endpoints and variables with common IRIs
+         * provides access to the Mobi policy REST endpoints and variables with common IRIs
          * used in policies.
          */
         .module('policyManager', [])
@@ -67,8 +67,6 @@
             self.resourceCategory = 'urn:oasis:names:tc:xacml:3.0:attribute-category:resource';
             self.actionCategory = 'urn:oasis:names:tc:xacml:3.0:attribute-category:action';
             self.stringEqual = 'urn:oasis:names:tc:xacml:1.0:function:string-equal';
-            self.functionOr = 'urn:oasis:names:tc:xacml:1.0:function:or';
-            self.functionAnyOf = 'urn:oasis:names:tc:xacml:1.0:function:any-of';
 
             /**
              * @ngdoc method
@@ -129,43 +127,6 @@
              * message
              */
             self.updatePolicy = function(newPolicy) {
-                return $http.put(prefix + '/' + encodeURIComponent(newPolicy.PolicyId), newPolicy)
-                    .then(_.noop, util.rejectError);
-            }
-
-            /**
-             * @ngdoc method
-             * @name getRecordPolicy
-             * @methodOf policyManager.service:policyManagerService
-             *
-             * @description
-             * Calls the GET /mobirest/policies/record-permissions/{policyId} endpoint to get the Record Policy JSON
-             * representation of users who are permitted to perform each action (read, delete, update, modify,
-             * modifyMaster)  for the provided ID.
-             *
-             * @param {string} policyId The ID of a Record Policy JSON to retrieve
-             * @return {Promise} A Promise that resolves with the matching Record Policy JSON if found or is rejected
-             * with an error message
-             */
-            self.getRecordPolicy = function(policyId) {
-                return $http.get(prefix + '/' + encodeURIComponent(policyId))
-                    .then(response => response.data, util.rejectError);
-            }
-
-            /**
-             * @ngdoc method
-             * @name updateRecordPolicy
-             * @methodOf policyManager.service:policyManagerService
-             *
-             * @description
-             * Calls the PUT /mobirest/policies/record-permissions/{policyId} endpoint with the provided new Policy object and updates
-             * the Policy with the matching ID.
-             *
-             * @param {Object} newPolicy A Policy JSON object to replace the original with
-             * @return {Promise} A Promise that resolves if the update was successful or is rejected with an error
-             * message
-             */
-            self.updateRecordPolicy = function(newPolicy) {
                 return $http.put(prefix + '/' + encodeURIComponent(newPolicy.PolicyId), newPolicy)
                     .then(_.noop, util.rejectError);
             }

@@ -198,7 +198,6 @@
                             _.remove(_.get(policy, 'Rule[0].Target.AnyOf[0].AllOf', []), ['Match[0].AttributeValue.content[0]', value]);
                             break;
                     }
-
                 }
                 function addUserMatch(value, policy) {
                     addMatch(value, pm.subjectId, policy);
