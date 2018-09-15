@@ -28,7 +28,7 @@
             <div class="selected-items">
                 <div class="selected-item" ng-repeat="user in item.selectedUsers track by user.iri">
                     <span>{{user.username}}</span>
-                    <a ng-click="dvm.removeUser(user, item)"><i class="fa fa-times"></i></a>
+                    <a ng-if="user.iri != dvm.lm.currentUserIRI" ng-click="dvm.removeUser(user, item)"><i class="fa fa-times"></i></a>
                 </div>
             </div>
             <div class="selector-container">

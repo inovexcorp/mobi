@@ -28,10 +28,11 @@
         .directive('openOntologyTab', openOntologyTab);
 
         openOntologyTab.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
-            'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService', 'policyEnforcementService'];
+            'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService', 'policyEnforcementService',
+            'policyManagerService'];
 
         function openOntologyTab(httpService, ontologyManagerService, ontologyStateService, prefixes,
-            stateManagerService, utilService, mapperStateService, catalogManagerService, policyEnforcementService) {
+            stateManagerService, utilService, mapperStateService, catalogManagerService, policyEnforcementService, policyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -45,6 +46,7 @@
                     var sm = stateManagerService;
                     var cm = catalogManagerService;
                     var pe = policyEnforcementService;
+                    var pm = policyManagerService;
                     var ontologyRecords = [];
                     var openIndicator = '<span class="text-muted">(Open)</span> ';
 
@@ -137,6 +139,7 @@
                             if (response.headers() !== undefined) {
                                 dvm.totalSize = _.get(response.headers(), 'x-total-count');
                             }
+                            dvm.manageRecords();
                         });
                     }
                     dvm.search = function(event) {
@@ -146,8 +149,14 @@
                             dvm.getPageOntologyRecords();
                         }
                     }
-                    dvm.manageRecord = function() {
-                        return true;
+                    dvm.manageRecords = function() {
+                        _.forEach(dvm.filteredList, record => {
+                            var request = {
+                                resourceId: 'http://mobi.com/policies/record/' + encodeURIComponent(record['@id']),
+                                actionId: pm.actionUpdate
+                            }
+                            pe.evaluateRequest(request).then(decision => record.userCanManage = decision == pe.permit);
+                        })
                     }
 
                     $scope.$watch(() => dvm.os.list.length, () => {

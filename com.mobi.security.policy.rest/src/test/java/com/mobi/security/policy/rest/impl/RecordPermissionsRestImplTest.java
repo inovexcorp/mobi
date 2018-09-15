@@ -27,6 +27,7 @@ import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -60,6 +61,7 @@ public class RecordPermissionsRestImplTest extends MobiRestTestNg {
 
     private String recordJson;
     private XACMLPolicy recordPolicy;
+    private XACMLPolicy policyPolicy;
     private IRI recordPolicyId;
     private IRI policyPolicyId;
 
@@ -73,6 +75,7 @@ public class RecordPermissionsRestImplTest extends MobiRestTestNg {
 
         recordJson = IOUtils.toString(getClass().getResourceAsStream("/recordPolicy.json"), "UTF-8");
         recordPolicy = new XACMLPolicy(IOUtils.toString(getClass().getResourceAsStream("/recordPolicy.xml"), "UTF-8"), vf);
+        policyPolicy = new XACMLPolicy(IOUtils.toString(getClass().getResourceAsStream("/policyPolicy.xml"), "UTF-8"), vf);
         recordPolicyId = vf.createIRI("http://mobi.com/policies/record/https%3A%2F%2Fmobi.com%2Frecords%testRecord1");
         policyPolicyId = vf.createIRI("http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%testRecord1");
 
@@ -95,8 +98,9 @@ public class RecordPermissionsRestImplTest extends MobiRestTestNg {
     public void setUpMocks() throws Exception {
         reset(policyManager);
         when(policyManager.getPolicy(recordPolicyId)).thenReturn(Optional.of(recordPolicy));
-
+        when(policyManager.getPolicy(policyPolicyId)).thenReturn(Optional.of(policyPolicy));
     }
+
     /* GET /policies/record-permissions/{policyId} */
 
     @Test
@@ -118,12 +122,35 @@ public class RecordPermissionsRestImplTest extends MobiRestTestNg {
     @Test
     public void updateRecordPolicyTest() {
         // Setup
-        when(policyManager.createPolicy(any(PolicyType.class))).thenReturn(recordPolicy);
+        when(policyManager.createPolicy(any(PolicyType.class))).thenAnswer(invocation -> {
+            PolicyType pt = invocation.getArgumentAt(0, PolicyType.class);
+            if (pt.getPolicyId().equals(recordPolicyId.stringValue())) {
+                return recordPolicy;
+            } else {
+                return policyPolicy;
+            }
+        });
 
         Response response = target().path("record-permissions/" + encode(recordPolicyId.stringValue())).request().put(Entity.json(recordJson));
         assertEquals(response.getStatus(), 200);
         verify(policyManager).getPolicy(recordPolicyId);
-        verify(policyManager).createPolicy(any(PolicyType.class));
-        verify(policyManager).updatePolicy(any(XACMLPolicy.class));
+        verify(policyManager).getPolicy(policyPolicyId);
+        verify(policyManager, times(2)).createPolicy(any(PolicyType.class));
+        verify(policyManager, times(2)).updatePolicy(any(XACMLPolicy.class));
     }
 }
+
+
+//class PolicyTypeWithId implements ArgumentMatcher<PolicyType> {
+//    String id;
+//
+//    PolicyTypeWithId(String id) {
+//        this.id = id;
+//    }
+//
+//    @Override
+//    public boolean matches(PolicyType pt) {
+//        return pt.getPolicyId().equals(id);
+//    }
+//
+//}

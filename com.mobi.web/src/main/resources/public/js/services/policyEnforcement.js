@@ -53,6 +53,10 @@
             var prefix = REST_PREFIX + 'pep';
             var util = utilService;
 
+            self.permit = 'Permit';
+            self.deny = 'Deny';
+            self.indeterminate = 'Indeterminate';
+
             /**
              * @ngdoc method
              * @name evaluateRequest

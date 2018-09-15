@@ -135,7 +135,8 @@
                             case 'urn:delete':
                                 dvm.ruleTitle = "Delete Record";
                                 break;
-                            case 'urn:update': //TODO: MANAGE A RECORD?
+                            case 'urn:update':
+                                dvm.ruleTitle = "Manage Record"
                                 break;
                             case 'urn:modify':
                                 dvm.ruleTitle = 'Modify Record';

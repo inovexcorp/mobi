@@ -100,16 +100,31 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
     @ResourceId(type = ValueType.PATH, id = "policyId")
     public Response updateRecordPolicy(String policyId, String policyJson) {
         try {
-            Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(policyId));
-            if (!policy.isPresent()) {
+            // Record Policy
+            Optional<XACMLPolicy> recordPolicy = policyManager.getPolicy(vf.createIRI(policyId));
+            if (!recordPolicy.isPresent()) {
                 throw ErrorUtils.sendError("Record policy to update could not be found", Response.Status.BAD_REQUEST);
             }
-            XACMLPolicy updatedPolicy = recordJsonToPolicy(policyJson, policy.get().getJaxbPolicy());
 
-            if (!updatedPolicy.getId().equals(vf.createIRI(policyId))) {
+            XACMLPolicy updatedRecordPolicy = recordJsonToPolicy(policyJson, recordPolicy.get().getJaxbPolicy());
+            if (!updatedRecordPolicy.getId().equals(vf.createIRI(policyId))) {
                 throw ErrorUtils.sendError("Policy Id does not match provided policy", Response.Status.BAD_REQUEST);
             }
-            policyManager.updatePolicy(updatedPolicy);
+
+            // Policy Policy
+            String policyPolicyId = policyId.replaceFirst("http://mobi.com/policies/record/", "http://mobi.com/policies/policy/record/");
+            Optional<XACMLPolicy> policyPolicy = policyManager.getPolicy(vf.createIRI(policyPolicyId));
+            if (!policyPolicy.isPresent()) {
+                throw ErrorUtils.sendError("Policy policy to update could not be found", Response.Status.BAD_REQUEST);
+            }
+
+            XACMLPolicy updatedPolicyPolicy = updatePolicyPolicy(policyJson, policyPolicy.get().getJaxbPolicy());
+            if (!updatedPolicyPolicy.getId().equals(vf.createIRI(policyPolicyId))) {
+                throw ErrorUtils.sendError("PolicyPolicy Id does not match provided policy", Response.Status.BAD_REQUEST);
+            }
+
+            policyManager.updatePolicy(updatedRecordPolicy);
+            policyManager.updatePolicy(updatedPolicyPolicy);
             return Response.ok().build();
         } catch (IllegalArgumentException | PolicySyntaxException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -118,6 +133,74 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
         }
     }
 
+    private XACMLPolicy updatePolicyPolicy(String json, PolicyType policyType) {
+        AttributeDesignatorType subjectIdAttrDesig = new AttributeDesignatorType();
+        subjectIdAttrDesig.setAttributeId(XACML.SUBJECT_ID);
+        subjectIdAttrDesig.setCategory(XACML.SUBJECT_CATEGORY);
+        subjectIdAttrDesig.setDataType(XSD.STRING);
+        subjectIdAttrDesig.setMustBePresent(true);
+
+        AttributeDesignatorType groupAttrDesig = new AttributeDesignatorType();
+        groupAttrDesig.setAttributeId("http://mobi.com/policy/prop-path(%5E%3Chttp%3A%2F%2Fxmlns.com%2Ffoaf%2F0.1%2Fmember%3E)");
+        groupAttrDesig.setCategory(XACML.SUBJECT_CATEGORY);
+        groupAttrDesig.setDataType(XSD.STRING);
+        groupAttrDesig.setMustBePresent(true);
+
+        AttributeDesignatorType userRoleAttrDesig = new AttributeDesignatorType();
+        userRoleAttrDesig.setAttributeId(User.hasUserRole_IRI);
+        userRoleAttrDesig.setCategory(XACML.SUBJECT_CATEGORY);
+        userRoleAttrDesig.setDataType(XSD.STRING);
+        userRoleAttrDesig.setMustBePresent(true);
+
+        AttributeValueType userRoleAttrVal = new AttributeValueType();
+        userRoleAttrVal.setDataType(XSD.STRING);
+        userRoleAttrVal.getContent().add("http://mobi.com/roles/user");
+
+        JSONObject jsonObject = JSONObject.fromObject(json);
+        JSONObject updateObj = jsonObject.getJSONObject("urn:update");
+
+        List<AllOfType> readUserAllOfs = policyType.getRule().get(0).getTarget().getAnyOf().get(1).getAllOf();
+        List<AllOfType> updateUserAllOfs = policyType.getRule().get(1).getTarget().getAnyOf().get(1).getAllOf();
+        readUserAllOfs.clear();
+        updateUserAllOfs.clear();
+        if (updateObj.getBoolean("everyone")) {
+            MatchType userRoleMatch = new MatchType();
+            userRoleMatch.setMatchId(XACML.STRING_EQUALS);
+            userRoleMatch.setAttributeDesignator(userRoleAttrDesig);
+            userRoleMatch.setAttributeValue(userRoleAttrVal);
+
+            AllOfType everyoneAllOf = new AllOfType();
+            everyoneAllOf.getMatch().add(userRoleMatch);
+            readUserAllOfs.add(everyoneAllOf);
+            updateUserAllOfs.add(everyoneAllOf);
+        } else {
+            JSONArray usersOrGroups = updateObj.getJSONArray("users");
+            usersOrGroups.addAll(updateObj.getJSONArray("groups"));
+
+            for (int i = 0; i < usersOrGroups.size(); i++) {
+                AttributeValueType userAttrVal = new AttributeValueType();
+                userAttrVal.setDataType(XSD.STRING);
+                userAttrVal.getContent().add(usersOrGroups.getString(i));
+
+                MatchType userMatch = new MatchType();
+                userMatch.setMatchId(XACML.STRING_EQUALS);
+                if (usersOrGroups.getString(i).contains("http://mobi.com/groups")) {
+                    userMatch.setAttributeDesignator(groupAttrDesig);
+                } else {
+                    userMatch.setAttributeDesignator(subjectIdAttrDesig);
+                }
+                userMatch.setAttributeValue(userAttrVal);
+
+                AllOfType userAllOf = new AllOfType();
+                userAllOf.getMatch().add(userMatch);
+
+                readUserAllOfs.add(userAllOf);
+                updateUserAllOfs.add(userAllOf);
+            }
+        }
+
+        return policyManager.createPolicy(policyType);
+    }
     private XACMLPolicy recordJsonToPolicy(String json, PolicyType policyType) {
         String masterBranch = policyType.getRule().get(4).getTarget().getAnyOf().get(0).getAllOf().get(0).getMatch()
                 .get(1).getAttributeValue().getContent().get(0).toString();
@@ -166,7 +249,6 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
 
         while (keys.hasNext()) {
             String key = (String)keys.next();
-            JSONObject jsonRule = jsonObject.getJSONObject(key);
 
             RuleType rule = new RuleType();
             TargetType target = new TargetType();
@@ -219,6 +301,7 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
 
             // Setup Users
             AnyOfType usersGroups = new AnyOfType();
+            JSONObject jsonRule = jsonObject.getJSONObject(key);
             if (jsonRule.getBoolean("everyone")) {
                 MatchType userRoleMatch = new MatchType();
                 userRoleMatch.setMatchId(XACML.STRING_EQUALS);
@@ -268,9 +351,6 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
         // Innermost expression list
         FunctionType strEqFunctionType = new FunctionType();
         strEqFunctionType.setFunctionId(XACML.STRING_EQUALS);
-        JAXBElement<FunctionType> stringEqual = new JAXBElement<>(
-                new QName("urn:oasis:names:tc:xacml:3.0:core:schema:wd-17", "Function"),
-                FunctionType.class, strEqFunctionType);
 
         AttributeValueType branchAttrVal = new AttributeValueType();
         branchAttrVal.setDataType(XSD.STRING);
@@ -288,6 +368,9 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
                 new QName("urn:oasis:names:tc:xacml:3.0:core:schema:wd-17", "AttributeDesignator"),
                 AttributeDesignatorType.class, branchAttrDesig);
 
+        JAXBElement<FunctionType> stringEqual = new JAXBElement<>(
+                new QName("urn:oasis:names:tc:xacml:3.0:core:schema:wd-17", "Function"),
+                FunctionType.class, strEqFunctionType);
         List<JAXBElement<?>> branchExpression = Arrays.asList(stringEqual, branchValue, branchDesignator);
 
         // AnyOf the branchIRI
@@ -302,10 +385,9 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
         ApplyType branchNotApply = new ApplyType();
         branchNotApply.setFunctionId(XACML.NOT_FUNCTION);
         branchNotApply.getExpression().add(branchAnyOf);
-        JAXBElement<ApplyType> branchNot = new JAXBElement<>(
+        return new JAXBElement<>(
                 new QName("urn:oasis:names:tc:xacml:3.0:core:schema:wd-17", "Apply"),
                 ApplyType.class, branchNotApply);
-        return branchNot;
     }
 
     private String recordPolicyToJson(XACMLPolicy policy) {

@@ -26,7 +26,6 @@ package com.mobi.security.policy.rest;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
-import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -40,22 +39,42 @@ import javax.ws.rs.core.Response;
 @Api(value = "/record-permissions")
 public interface RecordPermissionsRest {
     /**
-     * Retrieves a specific record policy identified by its ID. If the policy could not be found, returns a 400.
+     * Retrieves a specific record policy JSON identified by its ID of which users can perform each rule. If the policy
+     * could not be found, returns a 400. Return JSON is structured like:
+     * {
+     *   "urn:read": {
+     *     "everyone": false,
+     *     "users": [
+     *       "http://mobi.com/users/userIRI1",
+     *       "http://mobi.com/users/userIRI2"
+     *     ],
+     *     "groups": []
+     *   }, ...
+     * }
      *
      * @param policyId The String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
      *                 begins with "_:"
-     * @return A JSON representation of the identified policy
+     * @return A JSON representation of which user can perform each rule.
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("{policyId}")
-    @RolesAllowed("user")
     @ApiOperation("Retrieves a specific record security policy by its ID.")
     Response retrieveRecordPolicy(@PathParam("policyId") String policyId);
 
     /**
      * Updates the identified record policy with the provided JSON representation in the body. Provided policy must have
-     * the same ID.
+     * the same ID. JSON object defines who has permission to perform each rule. Each rule is structured like:
+     * {
+     *   "urn:read": {
+     *     "everyone": false,
+     *     "users": [
+     *       "http://mobi.com/users/userIRI1",
+     *       "http://mobi.com/users/userIRI2"
+     *     ],
+     *     "groups": []
+     *   }, ...
+     * }
      *
      * @param policyId The String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
      *                 begins with "_:"
@@ -65,7 +84,6 @@ public interface RecordPermissionsRest {
     @PUT
     @Path("{policyId}")
     @Consumes(MediaType.APPLICATION_JSON)
-    @RolesAllowed("admin")
     @ApiOperation("Updates an existing record security policy using the provided JSON body.")
     Response updateRecordPolicy(@PathParam("policyId") String policyId, String policyJson);
 }

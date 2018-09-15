@@ -26,49 +26,43 @@
     angular
         /**
          * @ngdoc overview
-         * @name permissionsPage
+         * @name userAccessControls
          *TODO: SWITCH ALL THIS TO USERACCESSCONTROLS
          * @description
-         * The `permissionsPage` module only provides the `permissionsPage` directive which which creates
-         * a Bootstrap `row` with a {@link block.directive:block block} for viewing and updating overall
-         * permissions of the application.
+         * The `userAccessControls` module only provides the `userAccessControls` directive which which creates
+         * selectors for viewing and updating permissions of the application.
          */
         .module('userAccessControls', [])
         /**
          * @ngdoc directive
-         * @name permissionsPage.directive:permissionsPage
+         * @name userAccessControls.directive:userAccessControls
          * @scope
          * @restrict E
          * @requires policyManager.service:policyManagerService
          * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
          * @requires prefixes.service:prefixes
-         * @requires userManager.service:userManagerService
          *
          * @description
-         * `permissionsPage` is a directive that creates a Bootstrap `row` div with a single column
+         * `userAccessControls` is a directive that creates a Bootstrap `row` div with a single column
          * containing a {@link block.directive:block block} for viewing and updating overall permissions
-         * from policies retrieved through the {@link policyManager.service:policyManagerService}.
-         * The list is refreshed everytime this directive is rendered for the first time so any changes
-         * made to the policies will reset when navigating away and back. Currently, the only policies
-         * displayed are those for restrictions on record creation. The directive is replaced by the
-         * contents of its template.
+         * from policies. The directive is replaced by the contents of its template.
          */
         .directive('userAccessControls', userAccessControls)
         /**
          * @ngdoc directive
-         * @name permissionsPage.directive:hideLabel
+         * @name userAccessControls.directive:hideLabel
          * @restrict A
-         *hid
+         *
          * @description
          * `hideLabel` is a utility directive for working with Angular Material inputs so that
          * the placeholder for a md-autocomplete is set appropriately on the underlying <input>.
          */
         .directive('hideLabel', hideLabel);
 
-    userAccessControls.$inject = ['$q', 'policyManagerService', 'catalogManagerService', 'utilService', 'prefixes', 'userManagerService'];
+    userAccessControls.$inject = ['$q', 'policyManagerService', 'catalogManagerService', 'utilService', 'prefixes', 'loginManagerService'];
 
-    function userAccessControls($q, policyManagerService, catalogManagerService, utilService, prefixes, userManagerService) {
+    function userAccessControls($q, policyManagerService, catalogManagerService, utilService, prefixes, loginManagerService) {
         return {
             restrict: 'E',
             replace: true,
@@ -82,6 +76,7 @@
             },
             controller: ['$scope', function($scope) {
                 var dvm = this;
+                dvm.lm = loginManagerService;
                 var pm = policyManagerService;
                 var groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + prefixes.foaf + 'member' + '>') + ')';
                 var userRole = 'http://mobi.com/roles/user';
@@ -152,8 +147,11 @@
                         item.selectedUsers = [];
                         item.groups = sortGroups(_.concat(item.groups, item.selectedGroups));
                         item.selectedGroups = [];
-                    } else if (!dvm.ruleId) {
-                        removeMatch(userRole, item.policy);
+                    } else {
+                        if (!dvm.ruleId) {
+                            removeMatch(userRole, item.policy);
+                        }
+                        dvm.addUser(_.find(item.users, {iri: dvm.lm.currentUserIRI}), item);
                     }
                     item.changed = true;
                 }

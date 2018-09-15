@@ -43,11 +43,11 @@
                                     <p class="description m-0" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
                                 </div>
                                 <div class="action-container d-flex align-items-center">
-                                    <a ng-show="dvm.manageRecord()" ng-click="showAccessControls = !showAccessControls; $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-lock"></i></a>
+                                    <a ng-show="record.userCanManage" ng-click="showAccessControls = !showAccessControls; $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-lock"></i></a>
                                     <a ng-click="dvm.showDeleteConfirmationOverlay(record); $event.stopPropagation()" class="action d-inline-block text-muted"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
                                 </div>
                             </div>
-                            <div ng-if="dvm.manageRecord() && showAccessControls" class="access-controls d-flex flex-column" uib-collapse="!showAccessControls">
+                            <div ng-if="record.userCanManage && showAccessControls" class="access-controls d-flex flex-column" uib-collapse="!showAccessControls">
                                 <div class="d-flex align-items-center">
                                     <span class="record-action">View Record</span>
                                     <a ng-if="!record.viewRecord" class="users ml-auto"><i ng-click="record.showViewRecord = true; $event.stopPropagation()" class="fa fa-lg fa-fw fa-users"></i></a>
@@ -61,7 +61,7 @@
                                 <div class="d-flex align-items-center">
                                     <span class="record-action">Manage Record</span>
                                     <a ng-if="!record.manageRecord" class="users ml-auto"><i ng-click="record.showManageRecord = true; $event.stopPropagation()" class="fa fa-lg fa-fw fa-users"></i></a>
-                                    <record-access-overlay ng-if="record.showManageRecord" overlay-flag="record.showManageRecord" resource="record['@id']" rule-id="urn:update"></record-access-overlay> <!-- PolicyPolicy READ? -->
+                                    <record-access-overlay ng-if="record.showManageRecord" overlay-flag="record.showManageRecord" resource="record['@id']" rule-id="urn:update"></record-access-overlay>
                                 </div>
                                 <div class="d-flex align-items-center">
                                     <span class="record-action">Modify Record</span>
