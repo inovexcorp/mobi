@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('User Access Controls directive', function() {
+describe('User Access Controls directive', function() {
     var $compile, scope, $q, policyManagerSvc, catalogManagerSvc, utilSvc, loginManagerSvc, prefixes;
 
     beforeEach(function() {
@@ -112,91 +112,6 @@ fdescribe('User Access Controls directive', function() {
         prefixes = null;
         this.element.remove();
     });
-
-    // describe('initializes policies correctly when getPolicies', function() {
-    //     describe('resolves', function() {
-    //         beforeEach(function() {
-    //             this.typePolicy = {
-    //                 PolicyId: 'id',
-    //                 Target: {AnyOf: [{AllOf: [{Match: [{
-    //                     AttributeDesignator: {AttributeId: prefixes.rdf + 'type'},
-    //                     AttributeValue: {content: ['type']}
-    //                 }]}]}]}
-    //             };
-    //         });
-    //         it('with a policy that is not for creation restriction', function() {
-    //             var policies = [{}];
-    //             this.getPolicyDefer.resolve(policies);
-    //             scope.$apply();
-    //             expect(this.controller.policies).toEqual([]);
-    //         });
-    //         it('with a policy that allows everyone', function() {
-    //             var policies = [_.set(angular.copy(this.typePolicy), 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', angular.copy(this.everyoneMatch))];
-    //             this.getPolicyDefer.resolve(policies);
-    //             scope.$apply();
-    //             expect(this.controller.policies).toEqual([{
-    //                 policy: policies[0],
-    //                 id: this.typePolicy.PolicyId,
-    //                 type: 'type',
-    //                 changed: false,
-    //                 everyone: true,
-    //                 users: this.users,
-    //                 groups: this.groups,
-    //                 selectedUsers: [],
-    //                 selectedGroups: [],
-    //                 userSearchText: '',
-    //                 groupSearchText: '',
-    //                 selectedUser: undefined,
-    //                 selectedGroup: undefined
-    //             }]);
-    //         });
-    //         it('with a policy that has selected users', function() {
-    //             var policies = [_.set(angular.copy(this.typePolicy), 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', angular.copy(this.userMatch))];
-    //             this.getPolicyDefer.resolve(policies);
-    //             scope.$apply();
-    //             expect(this.controller.policies).toEqual([{
-    //                 policy: policies[0],
-    //                 id: this.typePolicy.PolicyId,
-    //                 type: 'type',
-    //                 changed: false,
-    //                 everyone: false,
-    //                 users: _.reject(this.user, {iri: 'user1', username: 'user1'}),
-    //                 groups: this.groups,
-    //                 selectedUsers: [{iri: 'user1', username: 'user1'}],
-    //                 selectedGroups: [],
-    //                 userSearchText: '',
-    //                 groupSearchText: '',
-    //                 selectedUser: undefined,
-    //                 selectedGroup: undefined
-    //             }]);
-    //         });
-    //         it('with a policy that has selected groups', function() {
-    //             var policies = [_.set(angular.copy(this.typePolicy), 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', angular.copy(this.groupMatch))];
-    //             this.getPolicyDefer.resolve(policies);
-    //             scope.$apply();
-    //             expect(this.controller.policies).toEqual([{
-    //                 policy: policies[0],
-    //                 id: this.typePolicy.PolicyId,
-    //                 type: 'type',
-    //                 changed: false,
-    //                 everyone: false,
-    //                 users: this.user,
-    //                 groups: _.reject(this.groups, {iri: 'group1', title: 'group1'}),
-    //                 selectedUsers: [],
-    //                 selectedGroups: [{iri: 'group1', title: 'group1'}],
-    //                 userSearchText: '',
-    //                 groupSearchText: '',
-    //                 selectedUser: undefined,
-    //                 selectedGroup: undefined
-    //             }]);
-    //         });
-    //     });
-    //     it('rejects', function() {
-    //         this.getPolicyDefer.reject('Error Message');
-    //         scope.$apply();
-    //         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
-    //     });
-    // });
     describe('controller methods', function() {
         beforeEach(function() {
             this.policy = {
@@ -319,42 +234,6 @@ fdescribe('User Access Controls directive', function() {
                 expect(this.policy.Rule[0].Target.AnyOf[0].AllOf).toEqual([]);
             });
         });
-        // describe('should save changes to the policies', function() {
-        //     beforeEach(function() {
-        //         this.item.changed = true;
-        //     });
-        //     it('successfully', function() {
-        //         this.controller.policies = [this.item];
-        //         this.controller.saveChanges();
-        //         scope.$apply();
-        //         expect(policyManagerSvc.updatePolicy).toHaveBeenCalledWith(this.policy);
-        //         expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
-        //         expect(utilSvc.createSuccessToast).toHaveBeenCalled();
-        //         expect(this.item.changed).toEqual(false);
-        //     });
-        //     it('unless no policies were changed', function() {
-        //         this.controller.saveChanges();
-        //         scope.$apply();
-        //         expect(policyManagerSvc.updatePolicy).not.toHaveBeenCalled();
-        //     });
-        //     it('unless an error occurs', function() {
-        //         this.controller.policies = [this.item];
-        //         policyManagerSvc.updatePolicy.and.returnValue($q.reject('Error'));
-        //         this.controller.saveChanges();
-        //         scope.$apply();
-        //         expect(policyManagerSvc.updatePolicy).toHaveBeenCalledWith(this.policy);
-        //         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error');
-        //         expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
-        //         expect(this.item.changed).toEqual(true);
-        //     });
-        // });
-        // it('should determine whether there are changes to save', function() {
-        //     expect(this.controller.hasChanges()).toEqual(false);
-        //     this.controller.policies = [{changed: false}];
-        //     expect(this.controller.hasChanges()).toEqual(false);
-        //     this.controller.policies = [{changed: true}];
-        //     expect(this.controller.hasChanges()).toEqual(true);
-        // });
     });
     // describe('replaces the element with the correct html', function() {
     //     it('for wrapping containers', function() {

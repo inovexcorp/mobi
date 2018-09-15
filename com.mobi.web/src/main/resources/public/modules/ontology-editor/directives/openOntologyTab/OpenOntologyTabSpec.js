@@ -21,7 +21,8 @@
  * #L%
  */
 describe('Open Ontology Tab directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, prefixes, utilSvc, mapperStateSvc, catalogManagerSvc, httpSvc;
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, prefixes, utilSvc, mapperStateSvc,
+        catalogManagerSvc, policyManagerSvc, policyEnforcementSvc, httpSvc;
 
     beforeEach(function() {
         module('templates');
@@ -36,8 +37,12 @@ describe('Open Ontology Tab directive', function() {
         mockUtil();
         mockMapperState();
         mockHttpService();
+        mockPolicyEnforcement();
+        mockPolicyManager();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _stateManagerService_, _prefixes_, _utilService_, _mapperStateService_, _catalogManagerService_, _httpService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_,
+                        _stateManagerService_, _prefixes_, _utilService_, _mapperStateService_, _catalogManagerService_,
+                        _policyManagerService_, _policyEnforcementService_, _httpService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -48,6 +53,8 @@ describe('Open Ontology Tab directive', function() {
             utilSvc = _utilService_;
             mapperStateSvc = _mapperStateService_;
             catalogManagerSvc = _catalogManagerService_;
+            policyManagerSvc = _policyManagerService_;
+            policyEnforcementSvc = _policyEnforcementService_;
             httpSvc = _httpService_;
         });
 
@@ -299,7 +306,7 @@ describe('Open Ontology Tab directive', function() {
     });
     it('should call showDeleteConfirmationOverlay when a delete link is clicked', function() {
         spyOn(this.controller, 'showDeleteConfirmationOverlay');
-        var link = angular.element(this.element.querySelectorAll('.ontologies .ontology .action-container a')[0]);
+        var link = angular.element(this.element.querySelectorAll('.ontologies .ontology .ontology-info .action-container')[0]);
         link.triggerHandler('click');
         expect(this.controller.showDeleteConfirmationOverlay).toHaveBeenCalledWith(this.controller.filteredList[0]);
     });

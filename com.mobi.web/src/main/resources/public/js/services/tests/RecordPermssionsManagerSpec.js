@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Record Permissions service', function() {
-    var analyticManagerSvc, scope, $httpBackend, $httpParamSerializer, $q;
+    var recordPermissionsSvc, utilSvc, scope, $httpBackend, $httpParamSerializer, $q;
 
     beforeEach(function() {
         module('recordPermissionsManager');
@@ -29,8 +29,9 @@ describe('Record Permissions service', function() {
         injectRestPathConstant();
         mockPrefixes();
 
-        inject(function(recordPermissionsService, _$rootScope_, _$httpBackend_, _$httpParamSerializer_, _$q_) {
-            recordPermissionsSvc = recordPermissionsService;
+        inject(function(recordPermissionsManagerService, _utilService_,  _$rootScope_, _$httpBackend_, _$httpParamSerializer_, _$q_) {
+            recordPermissionsSvc = recordPermissionsManagerService;
+            utilSvc = _utilService_;
             scope = _$rootScope_;
             $httpBackend = _$httpBackend_;
             $httpParamSerializer = _$httpParamSerializer_;
@@ -38,7 +39,8 @@ describe('Record Permissions service', function() {
         });
 
         utilSvc.rejectError.and.returnValue($q.reject('Error Message'));
-        this.policy = {PolicyId: 'id'};
+        this.policyId = 'id';
+        this.policy = {};
     });
 
     afterEach(function() {
@@ -49,10 +51,10 @@ describe('Record Permissions service', function() {
         $q = null;
     });
 
-    describe('should retrieve a policy', function() {
+    describe('should retrieve a record policy json representation', function() {
         it('unless an error occurs', function() {
-            $httpBackend.whenGET('/mobirest/policies/' + this.policy.PolicyId).respond(400, null, null, 'Error Message');
-            recordPermissionsSvc.getPolicy(this.policy.PolicyId)
+            $httpBackend.whenGET('/mobirest/record-permissions/' + this.policyId).respond(400, null, null, 'Error Message');
+            recordPermissionsSvc.getRecordPolicy(this.policyId)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
@@ -65,8 +67,8 @@ describe('Record Permissions service', function() {
             }));
         });
         it('successfully', function() {
-            $httpBackend.whenGET('/mobirest/policies/' + this.policy.PolicyId).respond(200, this.policy);
-            recordPermissionsSvc.getPolicy(this.policy.PolicyId)
+            $httpBackend.whenGET('/mobirest/record-permissions/' + this.policyId).respond(200, this.policy);
+            recordPermissionsSvc.getRecordPolicy(this.policyId)
                 .then(function(response) {
                     expect(response).toEqual(this.policy);
                 }.bind(this), function() {
@@ -75,13 +77,13 @@ describe('Record Permissions service', function() {
             flushAndVerify($httpBackend);
         });
     });
-    describe('should update a policy', function() {
+    describe('should update a record policy with the json representation', function() {
         it('unless an error occurs', function() {
-            $httpBackend.whenPUT('/mobirest/policies/' + this.policy.PolicyId,
+            $httpBackend.whenPUT('/mobirest/record-permissions/' + this.policyId,
                 function(data) {
                     return _.isEqual(data, JSON.stringify(this.policy));
                 }.bind(this)).respond(400, null, null, 'Error Message');
-            recordPermissionsSvc.updatePolicy(this.policy)
+            recordPermissionsSvc.updateRecordPolicy(this.policyId, this.policy)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
@@ -94,11 +96,11 @@ describe('Record Permissions service', function() {
             }));
         });
         it('when resolved', function() {
-            $httpBackend.whenPUT('/mobirest/policies/' + this.policy.PolicyId,
+            $httpBackend.whenPUT('/mobirest/record-permissions/' + this.policyId,
                 function(data) {
                     return _.isEqual(data, JSON.stringify(this.policy));
                 }.bind(this)).respond(200);
-            recordPermissionsSvc.updatePolicy(this.policy)
+            recordPermissionsSvc.updateRecordPolicy(this.policyId, this.policy)
                 .then(_.noop, function() {
                     fail('Promise should have resolved');
                 });

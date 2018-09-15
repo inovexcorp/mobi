@@ -27,7 +27,6 @@
         /**
          * @ngdoc overview
          * @name userAccessControls
-         *TODO: SWITCH ALL THIS TO USERACCESSCONTROLS
          * @description
          * The `userAccessControls` module only provides the `userAccessControls` directive which which creates
          * selectors for viewing and updating permissions of the application.
@@ -41,6 +40,7 @@
          * @requires policyManager.service:policyManagerService
          * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
+         * @requires loginManager.service:loginManagerService
          * @requires prefixes.service:prefixes
          *
          * @description
@@ -60,9 +60,9 @@
          */
         .directive('hideLabel', hideLabel);
 
-    userAccessControls.$inject = ['$q', 'policyManagerService', 'catalogManagerService', 'utilService', 'prefixes', 'loginManagerService'];
+    userAccessControls.$inject = ['$q', 'policyManagerService', 'catalogManagerService', 'utilService', 'loginManagerService', 'prefixes'];
 
-    function userAccessControls($q, policyManagerService, catalogManagerService, utilService, prefixes, loginManagerService) {
+    function userAccessControls($q, policyManagerService, catalogManagerService, utilService, loginManagerService, prefixes) {
         return {
             restrict: 'E',
             replace: true,

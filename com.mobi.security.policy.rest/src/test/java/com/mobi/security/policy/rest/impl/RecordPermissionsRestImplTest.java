@@ -34,6 +34,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
@@ -117,6 +118,13 @@ public class RecordPermissionsRestImplTest extends MobiRestTestNg {
         }
     }
 
+    @Test
+    public void retrieveRecordPolicyDoesNotExistTest() {
+        when(policyManager.getPolicy(any(Resource.class))).thenReturn(Optional.empty());
+        Response response = target().path("record-permissions/" + encode("urn:invalidRecordId")).request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
     /* PUT /policies/record-permissions/{policyId} */
 
     @Test
@@ -138,19 +146,11 @@ public class RecordPermissionsRestImplTest extends MobiRestTestNg {
         verify(policyManager, times(2)).createPolicy(any(PolicyType.class));
         verify(policyManager, times(2)).updatePolicy(any(XACMLPolicy.class));
     }
+
+    @Test
+    public void updateRecordPolicyDoesNotExistTest() {
+        when(policyManager.getPolicy(any(Resource.class))).thenReturn(Optional.empty());
+        Response response = target().path("record-permissions/" + encode("urn:invalidRecordId")).request().put(Entity.json(recordJson));
+        assertEquals(response.getStatus(), 400);
+    }
 }
-
-
-//class PolicyTypeWithId implements ArgumentMatcher<PolicyType> {
-//    String id;
-//
-//    PolicyTypeWithId(String id) {
-//        this.id = id;
-//    }
-//
-//    @Override
-//    public boolean matches(PolicyType pt) {
-//        return pt.getPolicyId().equals(id);
-//    }
-//
-//}

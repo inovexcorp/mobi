@@ -27,18 +27,30 @@
         /**
          * @ngdoc overview
          * @name recordAccessOverlay
-         *
          * @description
-         * TODO
+         * The `recordAccessOverlay` module only provides the `recordAccessOverlay` directive which which creates
+         * an overlay that retrieves a record policy and supplies the policy information to the `userAccessControls`
+         * overlay. The `recordAccessOverlay` controls saving any changes of a record policy access control.
          */
         .module('recordAccessOverlay', [])
-        /** TODO
+        /**
+         * @ngdoc directive
+         * @name recordAccessOverlay.directive:recordAccessOverlay
+         * @scope
+         * @restrict E
+         * @requires util.service:utilService
+         * @requires userManager.service:userManagerService
+         * @requires recordPermissionsManager.service:recordPermissionsManagerService
+         *
+         * @description
+         * `recordAccessOverlay` is a directive that creates a form to contain a `userAccessControls` module that will
+         * control the access controls for a record policy. The directive is replaced by the contents of its template.
          */
         .directive('recordAccessOverlay', recordAccessOverlay);
 
-        recordAccessOverlay.$inject = ['utilService', 'userManagerService', 'recordPermissionsManagerService', 'prefixes']
+        recordAccessOverlay.$inject = ['utilService', 'userManagerService', 'recordPermissionsManagerService']
 
-        function recordAccessOverlay(utilService, userManagerService, recordPermissionsManagerService, prefixes) {
+        function recordAccessOverlay(utilService, userManagerService, recordPermissionsManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
