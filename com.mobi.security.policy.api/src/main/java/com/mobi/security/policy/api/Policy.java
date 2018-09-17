@@ -24,14 +24,12 @@ package com.mobi.security.policy.api;
  */
 
 import com.mobi.rdf.api.IRI;
-import org.ehcache.sizeof.annotations.IgnoreSizeOf;
 
 import java.util.Optional;
 
 /**
  * A high level API for a security policy. Should also implement the toString method.
  */
-@IgnoreSizeOf
 public interface Policy {
 
     /**
