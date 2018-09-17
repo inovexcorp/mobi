@@ -114,6 +114,7 @@
                         dvm.om.deleteOntology(dvm.recordId)
                             .then(response => {
                                 _.remove(ontologyRecords, record => _.get(record, '@id', '') === dvm.recordId);
+                                dvm.os.closeOntology(dvm.recordId);
                                 var state = sm.getOntologyStateByRecordId(dvm.recordId);
                                 if (!_.isEmpty(state)) {
                                     sm.deleteState(_.get(state, 'id', ''));
