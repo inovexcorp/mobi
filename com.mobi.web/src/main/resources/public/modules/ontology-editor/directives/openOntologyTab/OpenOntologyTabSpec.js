@@ -150,6 +150,11 @@ describe('Open Ontology Tab directive', function() {
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
         });
+        it('depending if a user has access to manage a record', function() {
+            this.controller.filteredList = [{userCanManage: true}];
+            scope.$digest();
+            expect(this.element.querySelectorAll('.ontologies .ontology .ontology-info .action-container a').length).toBe(2);
+        });
     });
     describe('controller methods', function() {
         it('should return the correct title depending on whether the ontology is open', function() {
@@ -306,7 +311,7 @@ describe('Open Ontology Tab directive', function() {
     });
     it('should call showDeleteConfirmationOverlay when a delete link is clicked', function() {
         spyOn(this.controller, 'showDeleteConfirmationOverlay');
-        var link = angular.element(this.element.querySelectorAll('.ontologies .ontology .ontology-info .action-container')[0]);
+        var link = angular.element(this.element.querySelectorAll('.ontologies .ontology .ontology-info .action-container a')[1]);
         link.triggerHandler('click');
         expect(this.controller.showDeleteConfirmationOverlay).toHaveBeenCalledWith(this.controller.filteredList[0]);
     });

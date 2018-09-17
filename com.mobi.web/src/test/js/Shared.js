@@ -1331,7 +1331,7 @@ function mockPolicyEnforcement() {
 
 function mockRecordPermissionsManager() {
     module(function($provide) {
-        $provide.service('policyManagerService', function($q) {
+        $provide.service('recordPermissionsManagerService', function($q) {
             this.getRecordPolicy = jasmine.createSpy('getRecordPolicy').and.returnValue($q.when({}));
             this.updateRecordPolicy = jasmine.createSpy('getRecordPolicy').and.returnValue($q.when());
         });

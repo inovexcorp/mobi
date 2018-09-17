@@ -92,10 +92,10 @@ describe('User Access Controls directive', function() {
 
         this.users = [{iri: 'user1', username: 'user1'}, {iri: 'user2', username: 'user2'}];
         this.groups = [{iri: 'group1', title: 'group1'}, {iri: 'group2', title: 'group2'}];
-        // this.getPolicyDefer = $q.defer();
-        // policyManagerSvc.getPolicies.and.returnValue(this.getPolicyDefer.promise);
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
-        this.element = $compile(angular.element('<user-access-controls></user-access-controls>'))(scope);
+        this.scopeItem = {selectedUsers: [this.users[0]], selectedGroups: [this.groups[0]], users: [], groups: []};
+        scope.item = this.scopeItem;
+        this.element = $compile(angular.element('<user-access-controls item="item"></user-access-controls>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('userAccessControls');
         this.scope = this.element.isolateScope();
@@ -235,62 +235,19 @@ describe('User Access Controls directive', function() {
             });
         });
     });
-    // describe('replaces the element with the correct html', function() {
-    //     it('for wrapping containers', function() {
-    //         expect(this.element.hasClass('permissions-page')).toEqual(true);
-    //         expect(this.element.hasClass('row')).toEqual(true);
-    //         expect(this.element.querySelectorAll('.col-xs-12').length).toEqual(1);
-    //     });
-    //     it('with a block', function() {
-    //         expect(this.element.find('block').length).toEqual(1);
-    //     });
-    //     it('with a block-content', function() {
-    //         expect(this.element.find('block-content').length).toEqual(1);
-    //     });
-    //     it('with a circle-button', function() {
-    //         var div = this.element.querySelectorAll('.save-container');
-    //         expect(div.length).toEqual(1);
-    //         expect(angular.element(div[0]).find('circle-button').length).toEqual(1);
-    //     });
-    //     it('depending on how many policies there are', function() {
-    //         expect(this.element.querySelectorAll('.policy').length).toEqual(0);
-    //
-    //         this.controller.policies = [{}];
-    //         scope.$digest();
-    //         expect(this.element.querySelectorAll('.policy').length).toEqual(this.controller.policies.length);
-    //     });
-    //     it('depending on how many users are selected for a policy', function() {
-    //         this.controller.policies = [{selectedUsers: [{}]}];
-    //         scope.$digest();
-    //         expect(this.element.querySelectorAll('.policy .selected-item').length).toEqual(1);
-    //     });
-    //     it('depending on how many groups are selected for a policy', function() {
-    //         this.controller.policies = [{selectedGroups: [{}]}];
-    //         scope.$digest();
-    //         expect(this.element.querySelectorAll('.policy .selected-item').length).toEqual(1);
-    //     });
-    //     it('with md-autocompletes for the users and groups for a policy', function() {
-    //         this.controller.policies = [{}];
-    //         scope.$digest();
-    //         expect(this.element.querySelectorAll('.policy md-autocomplete').length).toEqual(2);
-    //     });
-    // });
     it('should call removeUser when the link is clicked', function() {
-        this.controller.policies = [{selectedUsers: [this.users[0]]}];
         scope.$digest();
         spyOn(this.controller, 'removeUser');
-
-        var link = angular.element(this.element.querySelectorAll('.policy .selected-item a')[0]);
+        var link = angular.element(this.element.querySelectorAll('.row .selected-items .selected-item a')[0]);
         link.triggerHandler('click');
-        expect(this.controller.removeUser).toHaveBeenCalledWith(this.users[0], this.controller.policies[0]);
+        expect(this.controller.removeUser).toHaveBeenCalledWith(this.users[0], this.scopeItem);
     });
     it('should call removeGroup when the link is clicked', function() {
-        this.controller.policies = [{selectedGroups: [this.groups[0]]}];
         scope.$digest();
         spyOn(this.controller, 'removeGroup');
 
-        var link = angular.element(this.element.querySelectorAll('.policy .selected-item a')[0]);
+        var link = angular.element(this.element.querySelectorAll('.row .selected-items .selected-item a')[1]);
         link.triggerHandler('click');
-        expect(this.controller.removeGroup).toHaveBeenCalledWith(this.groups[0], this.controller.policies[0]);
+        expect(this.controller.removeGroup).toHaveBeenCalledWith(this.groups[0], this.scopeItem);
     });
 });
