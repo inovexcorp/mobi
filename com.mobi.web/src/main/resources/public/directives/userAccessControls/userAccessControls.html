@@ -26,8 +26,8 @@
     <div class="row">
         <div class="col-6">
             <div class="selected-items">
-                <div class="selected-item" ng-repeat="user in dvm.item.selectedUsers track by user.iri">
-                    <span>{{user.username}}</span>
+                <div class="d-flex selected-item" ng-repeat="user in dvm.item.selectedUsers track by user.iri">
+                    <span class="flex-1 text-truncate">{{user.username}}</span>
                     <a ng-if="user.iri != dvm.lm.currentUserIRI" ng-click="dvm.removeUser(user)"><i class="fa fa-times"></i></a>
                 </div>
             </div>
@@ -42,8 +42,8 @@
         </div>
         <div class="col-6">
             <div class="selected-items">
-                <div class="selected-item" ng-repeat="group in dvm.item.selectedGroups track by group.iri">
-                    <span>{{group.title}}</span>
+                <div class="d-flex selected-item" ng-repeat="group in dvm.item.selectedGroups track by group.iri">
+                    <span class="flex-1 text-truncate">{{group.title}}</span>
                     <a ng-click="dvm.removeGroup(group)"><i class="fa fa-times"></i></a>
                 </div>
             </div>

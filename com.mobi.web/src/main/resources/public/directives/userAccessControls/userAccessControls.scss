@@ -2,7 +2,7 @@
 @import "./src/main/resources/public/css/variables";
 
 .user-access-controls {
-    margin: auto;
+    width: 100%;
     .selected-items {
         width: 100%;
         border: 1px solid lightgray;
@@ -16,6 +16,7 @@
             a {
                 float: right;
                 cursor: pointer;
+                margin-left: auto;
             }
         }
     }
