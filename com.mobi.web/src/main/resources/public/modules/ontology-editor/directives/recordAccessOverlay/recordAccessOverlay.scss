@@ -1,0 +1,9 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.record-access-overlay {
+    z-index: 50 !important;
+    .main {
+        height: 360px;
+    }
+}

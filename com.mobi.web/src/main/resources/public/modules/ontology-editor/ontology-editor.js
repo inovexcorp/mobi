@@ -87,6 +87,7 @@
             'propertiesTab',
             'propertyValues',
             'propertyHierarchyBlock',
+            'recordAccessOverlay',
             'relationshipOverlay',
             'relationshipsBlock',
             'removePropertyOverlay',
