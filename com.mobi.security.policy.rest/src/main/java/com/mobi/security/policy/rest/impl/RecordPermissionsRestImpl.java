@@ -164,6 +164,13 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
         }
     }
 
+    /**
+     * Gets the associated record policy ID for the provided Record ID.
+     *
+     * @param recordId The ID of the Record
+     * @param conn A RepositoryConnection for lookup
+     * @return The ID of the record policy
+     */
     private String getRecordPolicyId(String recordId, RepositoryConnection conn) {
         RepositoryResult<Statement> results = conn.getStatements(null,
                 vf.createIRI(Policy.relatedResource_IRI), vf.createIRI(recordId));
@@ -173,6 +180,14 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
         }
         return results.next().getSubject().stringValue();
     }
+
+    /**
+     * Gets the ID of the policy policy for the provided record policy ID.
+     *
+     * @param recordPolicyId The ID of the record policy
+     * @param conn A RepositoryConnection for lookip
+     * @return The ID of the policy policy
+     */
     private String getPolicyPolicyId(String recordPolicyId, RepositoryConnection conn) {
         RepositoryResult<Statement> results = conn.getStatements(null, vf.createIRI(Policy.relatedResource_IRI),
                 vf.createIRI(recordPolicyId));
@@ -184,53 +199,57 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
         return results.next().getSubject().stringValue();
     }
 
+    /**
+     * Updates the policy policy file with the corresponding 'update' permissions from the record policy.
+     *
+     * @param json The json from record policy update
+     * @param policyType The PolicyType from the policy policy
+     * @return The update XACML policy
+     */
     private XACMLPolicy updatePolicyPolicy(String json, PolicyType policyType) {
         AttributeDesignatorType subjectIdAttrDesig = createSubjectIdAttrDesig();
         AttributeDesignatorType groupAttrDesig = createGroupAttrDesig();
 
         JSONObject jsonObject = JSONObject.fromObject(json);
-        JSONObject updateObj = jsonObject.getJSONObject("urn:update");
+        JSONObject updateObj = jsonObject.optJSONObject("urn:update");
+        if (updateObj == null) {
+            throw new IllegalArgumentException("Invalid JSON representation of a Policy. Missing update rule.");
+        }
 
-        List<AllOfType> readUserAllOfs = policyType.getRule().get(0).getTarget().getAnyOf().get(1).getAllOf();
-        List<AllOfType> updateUserAllOfs = policyType.getRule().get(1).getTarget().getAnyOf().get(1).getAllOf();
-        readUserAllOfs.clear();
-        updateUserAllOfs.clear();
+        AnyOfType readUserAnyOf = policyType.getRule().get(0).getTarget().getAnyOf().get(1);
+        AnyOfType updateUserAnyOf = policyType.getRule().get(1).getTarget().getAnyOf().get(1);
+        readUserAnyOf.getAllOf().clear();
+        updateUserAnyOf.getAllOf().clear();
+        if (updateObj.opt("everyone") == null) {
+            throw new IllegalArgumentException("Invalid JSON representation of a Policy. Missing everyone field.");
+        }
         if (updateObj.getBoolean("everyone")) {
             MatchType userRoleMatch = createUserRoleMatch();
-
             AllOfType everyoneAllOf = new AllOfType();
             everyoneAllOf.getMatch().add(userRoleMatch);
-            readUserAllOfs.add(everyoneAllOf);
-            updateUserAllOfs.add(everyoneAllOf);
+            readUserAnyOf.getAllOf().add(everyoneAllOf);
+            updateUserAnyOf.getAllOf().add(everyoneAllOf);
         } else {
-            JSONArray usersOrGroups = updateObj.getJSONArray("users");
-            usersOrGroups.addAll(updateObj.getJSONArray("groups"));
-
-            for (int i = 0; i < usersOrGroups.size(); i++) {
-                AttributeValueType userAttrVal = new AttributeValueType();
-                userAttrVal.setDataType(XSD.STRING);
-                userAttrVal.getContent().add(usersOrGroups.getString(i));
-
-                MatchType userMatch = new MatchType();
-                userMatch.setMatchId(XACML.STRING_EQUALS);
-                if (usersOrGroups.getString(i).contains("http://mobi.com/groups")) {
-                    userMatch.setAttributeDesignator(groupAttrDesig);
-                } else {
-                    userMatch.setAttributeDesignator(subjectIdAttrDesig);
-                }
-                userMatch.setAttributeValue(userAttrVal);
-
-                AllOfType userAllOf = new AllOfType();
-                userAllOf.getMatch().add(userMatch);
-
-                readUserAllOfs.add(userAllOf);
-                updateUserAllOfs.add(userAllOf);
+            JSONArray usersArray = updateObj.optJSONArray("users");
+            JSONArray groupsArray = updateObj.optJSONArray("groups");
+            if (usersArray == null || groupsArray == null) {
+                throw new IllegalArgumentException("Invalid JSON representation of a Policy."
+                        + " Users or groups not set properly for update rule");
             }
+            addUsersOrGroupsToAnyOf(usersArray, subjectIdAttrDesig, readUserAnyOf, updateUserAnyOf);
+            addUsersOrGroupsToAnyOf(groupsArray, groupAttrDesig, readUserAnyOf, updateUserAnyOf);
         }
 
         return policyManager.createPolicy(policyType);
     }
 
+    /**
+     * Converts a record policy abridged JSON into a XACML policy object.
+     *
+     * @param json The record policy JSON
+     * @param policyType the PolicyType from the record policy
+     * @return The updated XACMLPolicy object
+     */
     private XACMLPolicy recordJsonToPolicy(String json, PolicyType policyType) {
         String masterBranch = policyType.getRule().get(4).getTarget().getAnyOf().get(0).getAllOf().get(0).getMatch()
                 .get(1).getAttributeValue().getContent().get(0).toString();
@@ -249,7 +268,6 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
             String key = (String)keys.next();
             TargetType target = new TargetType();
             RuleType rule = createRule(EffectType.PERMIT, key, target);
-
             AttributeValueType ruleTypeAttrVal = new AttributeValueType();
             ruleTypeAttrVal.setDataType(XSD.STRING);
 
@@ -289,17 +307,28 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
 
             // Setup Users
             AnyOfType usersGroups = new AnyOfType();
-            JSONObject jsonRule = jsonObject.getJSONObject(key);
+            JSONObject jsonRule = jsonObject.optJSONObject(key);
+            if (jsonRule == null) {
+                throw new IllegalArgumentException("Invalid JSON representation of a Policy. Missing rule " + key);
+            }
+            if (jsonRule.opt("everyone") == null) {
+                throw new IllegalArgumentException("Invalid JSON representation of a Policy. Missing everyone field"
+                        + "for " + key);
+            }
             if (jsonRule.getBoolean("everyone")) {
                 MatchType userRoleMatch = createUserRoleMatch();
                 AllOfType everyoneAllOf = new AllOfType();
                 everyoneAllOf.getMatch().add(userRoleMatch);
                 usersGroups.getAllOf().add(everyoneAllOf);
             } else {
-                JSONArray usersArray = jsonRule.getJSONArray("users");
+                JSONArray usersArray = jsonRule.optJSONArray("users");
+                JSONArray groupsArray = jsonRule.optJSONArray("groups");
+                if (usersArray == null || groupsArray == null) {
+                    throw new IllegalArgumentException("Invalid JSON representation of a Policy."
+                            + " Users or groups not set properly for " + key);
+                }
                 addUsersOrGroupsToAnyOf(usersArray, subjectIdAttrDesig, usersGroups);
-                JSONArray groupsArray = jsonRule.getJSONArray("groups");
-                addUsersOrGroupsToAnyOf(groupsArray, groupAttrDesig,usersGroups);
+                addUsersOrGroupsToAnyOf(groupsArray, groupAttrDesig, usersGroups);
             }
             rule.getTarget().getAnyOf().add(usersGroups);
 
@@ -319,16 +348,23 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
      *
      * @param array The JSONArray of users or groups to iterate over
      * @param attributeDesignator the AttributeDesignatorType to apply to the MatchType
-     * @param anyOf the AnyOfType to add the AllOf statement to
+     * @param anyOfArray the AnyOfType to add the AllOf statement to
      */
-    private void addUsersOrGroupsToAnyOf(JSONArray array, AttributeDesignatorType attributeDesignator, AnyOfType anyOf) {
+    private void addUsersOrGroupsToAnyOf(JSONArray array, AttributeDesignatorType attributeDesignator, AnyOfType... anyOfArray) {
         for (int i = 0; i < array.size(); i++) {
-            AttributeValueType userAttrVal = createAttributeValue(XSD.STRING, array.getString(i));
+            String value = array.optString(i);
+            if (StringUtils.isEmpty(value)) {
+                throw new IllegalArgumentException("Invalid JSON representation of a Policy."
+                        + " User or group not set properly.");
+            }
+            AttributeValueType userAttrVal = createAttributeValue(XSD.STRING, value);
 
             MatchType userMatch = createMatch(XACML.STRING_EQUALS, attributeDesignator, userAttrVal);
             AllOfType userAllOf = new AllOfType();
             userAllOf.getMatch().add(userMatch);
-            anyOf.getAllOf().add(userAllOf);
+            for (AnyOfType anyOf : anyOfArray) {
+                anyOf.getAllOf().add(userAllOf);
+            }
         }
     }
 
@@ -371,6 +407,22 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
                 ApplyType.class, branchNotApply);
     }
 
+    /**
+     * Converts a XACMLPolicy object of a record policy to an abridged JSON format of users who can perform each rule.
+     * {
+     *   "urn:read": {
+     *     "everyone": false,
+     *     "users": [
+     *       "http://mobi.com/users/userIRI1",
+     *       "http://mobi.com/users/userIRI2"
+     *     ],
+     *     "groups": []
+     *   }, ...
+     * }
+     *
+     * @param policy the XACMLPolicy to convert to JSON
+     * @return the String representation of the JSON
+     */
     private String recordPolicyToJson(XACMLPolicy policy) {
         List<RuleType> rules = policy.getJaxbPolicy().getRule();
         JSONObject json = new JSONObject();
