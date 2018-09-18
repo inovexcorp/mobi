@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Open Ontology Tab directive', function() {
+fdescribe('Open Ontology Tab directive', function() {
     var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, prefixes, utilSvc, mapperStateSvc, catalogManagerSvc, policyManagerSvc, policyEnforcementSvc, httpSvc;
 
     beforeEach(function() {
@@ -211,7 +211,10 @@ describe('Open Ontology Tab directive', function() {
                 utilSvc.getDctermsValue.and.returnValue('title');
             });
             it('and ask the user for confirmation', function() {
-                this.controller.showDeleteConfirmationOverlay({'@id': 'record'});
+                var event = scope.$emit('click');
+                spyOn(event, 'stopPropagation');
+                this.controller.showDeleteConfirmationOverlay({'@id': 'record'}, event);
+                expect(event.stopPropagation).toHaveBeenCalled();
                 expect(this.controller.recordId).toBe('record');
                 expect(this.controller.recordTitle).toBe('title');
                 expect(this.controller.errorMessage).toBe('');
@@ -219,9 +222,11 @@ describe('Open Ontology Tab directive', function() {
             });
             it('and should warn the user if the ontology is open in the mapping tool', function() {
                 mapperStateSvc.sourceOntologies = [{'recordId':'record'}];
+                var event = scope.$emit('click');
+                spyOn(event, 'stopPropagation');
+                this.controller.showDeleteConfirmationOverlay({'@id': 'record'}, event);
 
-                this.controller.showDeleteConfirmationOverlay({'@id': 'record'});
-
+                expect(event.stopPropagation).toHaveBeenCalled();
                 expect(this.controller.recordId).toBe('record');
                 expect(this.controller.recordTitle).toBe('title');
                 expect(this.controller.errorMessage).toBe('');
@@ -314,6 +319,6 @@ describe('Open Ontology Tab directive', function() {
         spyOn(this.controller, 'showDeleteConfirmationOverlay');
         var link = angular.element(this.element.querySelectorAll('.ontologies .ontology .ontology-info .action-container a')[1]);
         link.triggerHandler('click');
-        expect(this.controller.showDeleteConfirmationOverlay).toHaveBeenCalledWith(this.controller.filteredList[0]);
+        expect(this.controller.showDeleteConfirmationOverlay).toHaveBeenCalledWith(this.controller.filteredList[0], jasmine.any(Object));
     });
 });
