@@ -33,6 +33,7 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
+import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
@@ -100,11 +101,10 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response retrieveRecordPolicy(String recordId) {
         try (RepositoryConnection conn = repo.getConnection()) {
-            String recordPolicyId = getRecordPolicyId(recordId, conn);
-            if (StringUtils.isEmpty(recordPolicyId)) {
-                throw ErrorUtils.sendError("Policy for record " + recordId + "does not exist in repository",
-                        Response.Status.BAD_REQUEST);
-            }
+            Optional<String> recordPolicyIdOpt = getRelatedResourceId(recordId, conn);
+            String recordPolicyId = recordPolicyIdOpt.orElseThrow(() -> ErrorUtils.sendError("Policy for record "
+                            + recordId + " does not exist in repository", Response.Status.BAD_REQUEST));
+
             Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(recordPolicyId));
             if (!policy.isPresent()) {
                 throw ErrorUtils.sendError("Policy could not be found", Response.Status.BAD_REQUEST);
@@ -117,15 +117,14 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
     }
 
     @Override
+    @ActionId(id = Update.TYPE)
     @ResourceId(type = ValueType.PATH, id = "recordId")
     public Response updateRecordPolicy(String recordId, String policyJson) {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Record Policy
-            String recordPolicyId = getRecordPolicyId(recordId, conn);
-            if (StringUtils.isEmpty(recordPolicyId)) {
-                throw ErrorUtils.sendError("Policy for record " + recordId + "does not exist in repository",
-                        Response.Status.BAD_REQUEST);
-            }
+            Optional<String> recordPolicyIdOpt = getRelatedResourceId(recordId, conn);
+            String recordPolicyId = recordPolicyIdOpt.orElseThrow(() -> ErrorUtils.sendError("Policy for record "
+                    + recordId + " does not exist in repository", Response.Status.BAD_REQUEST));
             IRI recordPolicyIRI = vf.createIRI(recordPolicyId);
             Optional<XACMLPolicy> recordPolicy = policyManager.getPolicy(recordPolicyIRI);
             if (!recordPolicy.isPresent()) {
@@ -138,7 +137,9 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
             }
 
             // Policy Policy
-            String policyPolicyId = getPolicyPolicyId(recordPolicyId, conn);
+            Optional<String> policyPolicyIdOpt = getRelatedResourceId(recordPolicyId, conn);
+            String policyPolicyId = policyPolicyIdOpt.orElseThrow(() -> ErrorUtils.sendError("Policy for record "
+                    + "policy " + recordId + " does not exist in repository", Response.Status.BAD_REQUEST));
             if (StringUtils.isEmpty(policyPolicyId)) {
                 throw ErrorUtils.sendError("Policy for policy " + recordPolicyId + "does not exist in repository",
                         Response.Status.BAD_REQUEST);
@@ -151,7 +152,7 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
 
             XACMLPolicy updatedPolicyPolicy = updatePolicyPolicy(policyJson, policyPolicy.get().getJaxbPolicy());
             if (!updatedPolicyPolicy.getId().equals(vf.createIRI(policyPolicyId))) {
-                throw ErrorUtils.sendError("PolicyPolicy Id does not match provided policy", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError("Policy policy Id does not match provided policy", Response.Status.BAD_REQUEST);
             }
 
             policyManager.updatePolicy(updatedRecordPolicy);
@@ -165,38 +166,20 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
     }
 
     /**
-     * Gets the associated record policy ID for the provided Record ID.
+     * Gets an Optional of the String value of the associated related resource for the provided identifier.
      *
-     * @param recordId The ID of the Record
+     * @param resourceId The ID of the record or policy
      * @param conn A RepositoryConnection for lookup
-     * @return The ID of the record policy
+     * @return The Optional containing the ID of the related resource
      */
-    private String getRecordPolicyId(String recordId, RepositoryConnection conn) {
+    private Optional<String> getRelatedResourceId(String resourceId, RepositoryConnection conn) {
         RepositoryResult<Statement> results = conn.getStatements(null,
-                vf.createIRI(Policy.relatedResource_IRI), vf.createIRI(recordId));
+                vf.createIRI(Policy.relatedResource_IRI), vf.createIRI(resourceId));
         if (!results.hasNext()) {
-            LOGGER.info("Could not find policy for record: " + recordId);
-            return "";
+            LOGGER.info("Could not find related resource for: " + resourceId);
+            return Optional.empty();
         }
-        return results.next().getSubject().stringValue();
-    }
-
-    /**
-     * Gets the ID of the policy policy for the provided record policy ID.
-     *
-     * @param recordPolicyId The ID of the record policy
-     * @param conn A RepositoryConnection for lookip
-     * @return The ID of the policy policy
-     */
-    private String getPolicyPolicyId(String recordPolicyId, RepositoryConnection conn) {
-        RepositoryResult<Statement> results = conn.getStatements(null, vf.createIRI(Policy.relatedResource_IRI),
-                vf.createIRI(recordPolicyId));
-        if (!results.hasNext()) {
-            LOGGER.info("Could not find policy policy for record policy: " + recordPolicyId
-                    + " with a policyId of: " + recordPolicyId);
-            return "";
-        }
-        return results.next().getSubject().stringValue();
+        return Optional.of(results.next().getSubject().stringValue());
     }
 
     /**
