@@ -39,7 +39,7 @@ describe('Record Access Overlay directive', function() {
             recordPermissionsManagerSvc = _recordPermissionsManagerService_;
         });
 
-        this.policyId = 'http://mobi.com/policies/record/' + encodeURIComponent('urn:resource');
+        this.recordId = 'urn:resource';
         userManagerSvc.users = [{iri: 'user1', username: 'user1'}, {iri: 'user2', username: 'user2'}];
         userManagerSvc.groups = [{iri: 'group1', title: 'group1'}, {iri: 'group2', title: 'group2'}];
         this.getPolicyDefer = $q.defer();
@@ -80,7 +80,7 @@ describe('Record Access Overlay directive', function() {
                 scope.$apply();
                 expect(this.controller.policy).toEqual({
                     policy: this.typePolicy,
-                    id: this.policyId,
+                    id: this.recordId,
                     changed: false,
                     everyone: true,
                     users: userManagerSvc.users,
@@ -101,7 +101,7 @@ describe('Record Access Overlay directive', function() {
                 scope.$apply();
                 expect(this.controller.policy).toEqual({
                     policy: policy,
-                    id: this.policyId,
+                    id: this.recordId,
                     changed: false,
                     everyone: false,
                     users: _.reject(userManagerSvc.users, {iri: 'user1', username: 'user1'}),
@@ -122,7 +122,7 @@ describe('Record Access Overlay directive', function() {
                 scope.$apply();
                 expect(this.controller.policy).toEqual({
                     policy: policy,
-                    id: this.policyId,
+                    id: this.recordId,
                     changed: false,
                     everyone: false,
                     users: userManagerSvc.users,
@@ -165,9 +165,9 @@ describe('Record Access Overlay directive', function() {
             });
             it('successfully', function() {
                 this.controller.policy = this.item;
-                this.controller.save();
+                this.controller.save(this.recordId);
                 scope.$apply();
-                expect(recordPermissionsManagerSvc.updateRecordPolicy).toHaveBeenCalledWith(this.policyId, this.policy);
+                expect(recordPermissionsManagerSvc.updateRecordPolicy).toHaveBeenCalledWith(this.recordId, this.policy);
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                 expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                 expect(this.item.changed).toEqual(false);
@@ -175,9 +175,9 @@ describe('Record Access Overlay directive', function() {
             it('unless an error occurs', function() {
                 this.controller.policy = this.item;
                 recordPermissionsManagerSvc.updateRecordPolicy.and.returnValue($q.reject('Error'));
-                this.controller.save();
+                this.controller.save(this.recordId);
                 scope.$apply();
-                expect(recordPermissionsManagerSvc.updateRecordPolicy).toHaveBeenCalledWith(this.policyId, this.policy);
+                expect(recordPermissionsManagerSvc.updateRecordPolicy).toHaveBeenCalledWith(this.recordId, this.policy);
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error');
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
                 expect(this.item.changed).toEqual(true);

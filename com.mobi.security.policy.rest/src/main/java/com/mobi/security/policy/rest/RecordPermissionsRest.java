@@ -39,8 +39,8 @@ import javax.ws.rs.core.Response;
 @Api(value = "/record-permissions")
 public interface RecordPermissionsRest {
     /**
-     * Retrieves a specific record policy JSON identified by its ID of which users can perform each rule. If the policy
-     * could not be found, returns a 400. Return JSON is structured like:
+     * Retrieves a specific record policy JSON identified for the recordId of which users can perform each rule. If
+     * the policy for the specified recordId could not be found, returns a 400. Return JSON is structured like:
      * {
      *   "urn:read": {
      *     "everyone": false,
@@ -52,19 +52,19 @@ public interface RecordPermissionsRest {
      *   }, ...
      * }
      *
-     * @param policyId The String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
-     *                 begins with "_:"
+     * @param recordId The String representing a resource for which to retrieve a policy ID. NOTE: Assumes ID
+     *                   represents an IRI unless String begins with "_:"
      * @return A JSON representation of which user can perform each rule.
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("{policyId}")
+    @Path("{recordId}")
     @ApiOperation("Retrieves a specific record security policy by its ID.")
-    Response retrieveRecordPolicy(@PathParam("policyId") String policyId);
+    Response retrieveRecordPolicy(@PathParam("recordId") String recordId);
 
     /**
-     * Updates the identified record policy with the provided JSON representation in the body. Provided policy must have
-     * the same ID. JSON object defines who has permission to perform each rule. Each rule is structured like:
+     * Updates the record policy for the identified record recordId with the provided JSON representation in the body.
+     * JSON object defines who has permission to perform each rule. Each rule is structured like:
      * {
      *   "urn:read": {
      *     "everyone": false,
@@ -76,15 +76,15 @@ public interface RecordPermissionsRest {
      *   }, ...
      * }
      *
-     * @param policyId The String representing a policy ID. NOTE: Assumes ID represents an IRI unless String
-     *                 begins with "_:"
-     * @param policyJson A JSON representation of the new version of the policy
+     * @param recordId The String representing a recordId whose corresponding policy should be updated.
+     *                   NOTE: Assumes ID represents an IRI unless String begins with "_:"
+     * @param policyJson A JSON representation of the new version of the record policy
      * @return A Response indicating the success of the request
      */
     @PUT
-    @Path("{policyId}")
+    @Path("{recordId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation("Updates an existing record security policy using the provided JSON body.")
-    Response updateRecordPolicy(@PathParam("policyId") String policyId, String policyJson);
+    Response updateRecordPolicy(@PathParam("recordId") String recordId, String policyJson);
 }
 

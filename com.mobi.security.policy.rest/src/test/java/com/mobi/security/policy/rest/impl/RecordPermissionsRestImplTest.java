@@ -26,6 +26,7 @@ package com.mobi.security.policy.rest.impl;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -35,9 +36,14 @@ import static org.testng.Assert.fail;
 
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.base.RepositoryResult;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
+import com.mobi.security.policy.api.ontologies.policy.Policy;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
@@ -63,11 +69,30 @@ public class RecordPermissionsRestImplTest extends MobiRestTestNg {
     private String recordJson;
     private XACMLPolicy recordPolicy;
     private XACMLPolicy policyPolicy;
-    private IRI recordPolicyId;
-    private IRI policyPolicyId;
+    private IRI recordIRI;
+    private IRI recordPolicyIRI;
+    private IRI policyPolicyIRI;
+    private IRI invalidIRI;
+    private Statement recordStatement;
+    private Statement policyStatement;
 
     @Mock
     private XACMLPolicyManager policyManager;
+
+    @Mock
+    private RepositoryConnection conn;
+
+    @Mock
+    private Repository repo;
+
+    @Mock
+    private RepositoryResult recordRepoResult;
+
+    @Mock
+    private RepositoryResult policyRepoResult;
+
+    @Mock
+    private RepositoryResult emptyRepoResult;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -77,12 +102,20 @@ public class RecordPermissionsRestImplTest extends MobiRestTestNg {
         recordJson = IOUtils.toString(getClass().getResourceAsStream("/recordPolicy.json"), "UTF-8");
         recordPolicy = new XACMLPolicy(IOUtils.toString(getClass().getResourceAsStream("/recordPolicy.xml"), "UTF-8"), vf);
         policyPolicy = new XACMLPolicy(IOUtils.toString(getClass().getResourceAsStream("/policyPolicy.xml"), "UTF-8"), vf);
-        recordPolicyId = vf.createIRI("http://mobi.com/policies/record/https%3A%2F%2Fmobi.com%2Frecords%testRecord1");
-        policyPolicyId = vf.createIRI("http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%testRecord1");
+        recordIRI = vf.createIRI("http://mobi.com/records/testRecord1");
+        recordPolicyIRI = vf.createIRI("http://mobi.com/policies/record/https%3A%2F%2Fmobi.com%2Frecords%testRecord1");
+        policyPolicyIRI = vf.createIRI("http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%testRecord1");
+        invalidIRI = vf.createIRI("urn:invalidRecordId");
+
+        IRI type = vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+        IRI policyType = vf.createIRI(Policy.TYPE);
+        recordStatement = vf.createStatement(recordPolicyIRI, type, policyType);
+        policyStatement = vf.createStatement(policyPolicyIRI, type, policyType);
 
         rest = new RecordPermissionsRestImpl();
         rest.setVf(vf);
         rest.setPolicyManager(policyManager);
+        rest.setRepo(repo);
 
         return new ResourceConfig()
                 .register(rest)
@@ -98,17 +131,29 @@ public class RecordPermissionsRestImplTest extends MobiRestTestNg {
     @BeforeMethod
     public void setUpMocks() throws Exception {
         reset(policyManager);
-        when(policyManager.getPolicy(recordPolicyId)).thenReturn(Optional.of(recordPolicy));
-        when(policyManager.getPolicy(policyPolicyId)).thenReturn(Optional.of(policyPolicy));
+        when(repo.getConnection()).thenReturn(conn);
+        when(conn.getStatements(eq(null), eq(vf.createIRI(Policy.relatedResource_IRI)), eq(recordIRI)))
+                .thenReturn(recordRepoResult);
+        when(conn.getStatements(eq(null), eq(vf.createIRI(Policy.relatedResource_IRI)), eq(recordPolicyIRI)))
+                .thenReturn(policyRepoResult);
+        when(conn.getStatements(eq(null), eq(vf.createIRI(Policy.relatedResource_IRI)), eq(invalidIRI)))
+                .thenReturn(emptyRepoResult);
+        when(recordRepoResult.next()).thenReturn(recordStatement);
+        when(policyRepoResult.next()).thenReturn(policyStatement);
+        when(recordRepoResult.hasNext()).thenReturn(true);
+        when(policyRepoResult.hasNext()).thenReturn(true);
+        when(emptyRepoResult.hasNext()).thenReturn(false);
+        when(policyManager.getPolicy(recordPolicyIRI)).thenReturn(Optional.of(recordPolicy));
+        when(policyManager.getPolicy(policyPolicyIRI)).thenReturn(Optional.of(policyPolicy));
     }
 
     /* GET /policies/record-permissions/{policyId} */
 
     @Test
     public void retrieveRecordPolicyTest() {
-        Response response = target().path("record-permissions/" + encode(recordPolicyId.stringValue())).request().get();
+        Response response = target().path("record-permissions/" + encode(recordIRI.stringValue())).request().get();
         assertEquals(response.getStatus(), 200);
-        verify(policyManager).getPolicy(recordPolicyId);
+        verify(policyManager).getPolicy(recordPolicyIRI);
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
             assertEquals(result, JSONObject.fromObject(recordJson));
@@ -121,7 +166,7 @@ public class RecordPermissionsRestImplTest extends MobiRestTestNg {
     @Test
     public void retrieveRecordPolicyDoesNotExistTest() {
         when(policyManager.getPolicy(any(Resource.class))).thenReturn(Optional.empty());
-        Response response = target().path("record-permissions/" + encode("urn:invalidRecordId")).request().get();
+        Response response = target().path("record-permissions/" + encode(invalidIRI.stringValue())).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
@@ -132,17 +177,17 @@ public class RecordPermissionsRestImplTest extends MobiRestTestNg {
         // Setup
         when(policyManager.createPolicy(any(PolicyType.class))).thenAnswer(invocation -> {
             PolicyType pt = invocation.getArgumentAt(0, PolicyType.class);
-            if (pt.getPolicyId().equals(recordPolicyId.stringValue())) {
+            if (pt.getPolicyId().equals(recordPolicyIRI.stringValue())) {
                 return recordPolicy;
             } else {
                 return policyPolicy;
             }
         });
 
-        Response response = target().path("record-permissions/" + encode(recordPolicyId.stringValue())).request().put(Entity.json(recordJson));
+        Response response = target().path("record-permissions/" + encode(recordIRI.stringValue())).request().put(Entity.json(recordJson));
         assertEquals(response.getStatus(), 200);
-        verify(policyManager).getPolicy(recordPolicyId);
-        verify(policyManager).getPolicy(policyPolicyId);
+        verify(policyManager).getPolicy(recordPolicyIRI);
+        verify(policyManager).getPolicy(policyPolicyIRI);
         verify(policyManager, times(2)).createPolicy(any(PolicyType.class));
         verify(policyManager, times(2)).updatePolicy(any(XACMLPolicy.class));
     }
@@ -150,7 +195,7 @@ public class RecordPermissionsRestImplTest extends MobiRestTestNg {
     @Test
     public void updateRecordPolicyDoesNotExistTest() {
         when(policyManager.getPolicy(any(Resource.class))).thenReturn(Optional.empty());
-        Response response = target().path("record-permissions/" + encode("urn:invalidRecordId")).request().put(Entity.json(recordJson));
+        Response response = target().path("record-permissions/" + encode(invalidIRI.stringValue())).request().put(Entity.json(recordJson));
         assertEquals(response.getStatus(), 400);
     }
 }

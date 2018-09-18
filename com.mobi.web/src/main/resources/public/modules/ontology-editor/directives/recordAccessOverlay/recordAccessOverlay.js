@@ -55,9 +55,7 @@
                 restrict: 'E',
                 controllerAs: 'dvm',
                 replace: true,
-                scope: {
-
-                },
+                scope: {},
                 bindToController: {
                     overlayFlag: '=',
                     resource: '<',
@@ -68,18 +66,16 @@
                     var util = utilService;
                     var um = userManagerService;
                     var rp = recordPermissionsManagerService;
-                    var recordPolicyId;
 
                     dvm.policy = '';
                     dvm.ruleTitle = '';
 
-                    dvm.getPolicy = function(resourceId) {
-                        recordPolicyId = 'http://mobi.com/policies/record/' + encodeURIComponent(resourceId);
-                        rp.getRecordPolicy(recordPolicyId)
+                    dvm.getPolicy = function(recordId) {
+                        rp.getRecordPolicy(recordId)
                             .then(result => {
                                 dvm.policy = {
                                         policy: result,
-                                        id: recordPolicyId,
+                                        id: recordId,
                                         changed: false,
                                         everyone: false,
                                         users: [],
@@ -92,9 +88,8 @@
                                         selectedGroup: undefined
                                     };
                                 setInfo(dvm.policy);
-                                }, util.createErrorToast);
+                            }, util.createErrorToast);
                     }
-
                     function setInfo(item) {
                         var ruleInfo = item.policy[dvm.ruleId];
                         if (ruleInfo.everyone) {
@@ -112,20 +107,18 @@
                         item.users = sortUsers(_.difference(um.users, item.selectedUsers));
                         item.groups = sortGroups(_.difference(um.groups, item.selectedGroups));
                     }
-
                     dvm.cancel = function() {
                         dvm.overlayFlag = false;
                     }
-
-                    dvm.save = function() {
-                        dvm.overlayFlag = false;
+                    dvm.save = function(recordId) {
                         dvm.policy.policy[dvm.ruleId] = {
                             everyone: dvm.policy.everyone,
                             users: _.map(dvm.policy.selectedUsers, user => user.iri),
                             groups: _.map(dvm.policy.selectedGroups, user => user.iri),
                         }
-                        rp.updateRecordPolicy(recordPolicyId, dvm.policy.policy)
+                        rp.updateRecordPolicy(recordId, dvm.policy.policy)
                             .then(() => {
+                                dvm.overlayFlag = false;
                                 dvm.policy.changed = false;
                                 util.createSuccessToast('Permissions updated')
                             }, utilService.createErrorToast);
@@ -134,11 +127,9 @@
                     function sortUsers(users) {
                         return _.sortBy(users, 'username');
                     }
-
                     function sortGroups(groups) {
                         return _.sortBy(groups, 'title');
                     }
-
                     function getRuleTitle() {
                         switch (dvm.ruleId) {
                             case 'urn:read':

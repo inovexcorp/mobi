@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function () {
+(function() {
     'use strict';
 
     angular
@@ -64,7 +64,7 @@
             replace: true,
             controllerAs: 'dvm',
             scope: {},
-            controller: ['$scope', function ($scope) {
+            controller: ['$scope', function($scope) {
                 var dvm = this;
                 var pm = policyManagerService;
                 var um = userManagerService;
@@ -77,9 +77,9 @@
                 dvm.policies = [];
 
                 dvm.getTitle = function(item) {
-                    return 'Create ' + $filter('beautify')($filter('splitIRI')(item.type).end);
+                    return util.getBeautifulIRI(item.type);
                 }
-                dvm.saveChanges = function () {
+                dvm.saveChanges = function() {
                     var changedPolicies = _.filter(dvm.policies, 'changed');
                     $q.all(_.map(changedPolicies, item => pm.updatePolicy(item.policy)))
                         .then(() => {
@@ -87,7 +87,7 @@
                             util.createSuccessToast('Permissions updated');
                         }, util.createErrorToast);
                 }
-                dvm.hasChanges = function () {
+                dvm.hasChanges = function() {
                     return _.some(dvm.policies, 'changed');
                 }
 
@@ -118,7 +118,6 @@
                                 .value();
                         }, util.createErrorToast);
                 }
-
                 function getRecordType(policy) {
                     return _.chain(policy)
                         .get('Target.AnyOf', [])
@@ -129,7 +128,6 @@
                         .head()
                         .value();
                 }
-
                 function setInfo(item) {
                     var matches = _.chain(item.policy)
                         .get('Rule[0].Target.AnyOf[0].AllOf', [])
@@ -156,11 +154,9 @@
                     item.users = sortUsers(_.difference(um.users, item.selectedUsers));
                     item.groups = sortGroups(_.difference(um.groups, item.selectedGroups));
                 }
-
                 function sortUsers(users) {
                     return _.sortBy(users, 'username');
                 }
-
                 function sortGroups(groups) {
                     return _.sortBy(groups, 'title');
                 }

@@ -38,7 +38,6 @@
          * @scope
          * @restrict E
          * @requires policyManager.service:policyManagerService
-         * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
          * @requires loginManager.service:loginManagerService
          * @requires prefixes.service:prefixes
@@ -60,18 +59,17 @@
          */
         .directive('hideLabel', hideLabel);
 
-    userAccessControls.$inject = ['$q', 'policyManagerService', 'catalogManagerService', 'utilService', 'loginManagerService', 'prefixes'];
+    userAccessControls.$inject = ['$q', 'policyManagerService', 'utilService', 'loginManagerService', 'prefixes'];
 
-    function userAccessControls($q, policyManagerService, catalogManagerService, utilService, loginManagerService, prefixes) {
+    function userAccessControls($q, policyManagerService, utilService, loginManagerService, prefixes) {
         return {
             restrict: 'E',
             replace: true,
             controllerAs: 'dvm',
-            scope: {
-                item: '=',
-                ruleTitle: '<'
-            },
+            scope: {},
             bindToController: {
+                item: '=',
+                ruleTitle: '<',
                 ruleId: '<'
             },
             controller: ['$scope', function($scope) {
@@ -87,73 +85,73 @@
                 dvm.filterGroups = function(groups, searchText) {
                     return _.filter(groups, group => _.includes(group.title.toLowerCase(), searchText.toLowerCase()));
                 }
-                dvm.addUser = function(user, item) {
+                dvm.addUser = function(user) {
                     if (user) {
-                        item.selectedUsers.push(user);
-                        item.selectedUsers = sortUsers(item.selectedUsers);
-                        _.remove(item.users, user);
-                        item.selectedUser = undefined;
-                        item.userSearchText = '';
+                        dvm.item.selectedUsers.push(user);
+                        dvm.item.selectedUsers = sortUsers(dvm.item.selectedUsers);
+                        _.remove(dvm.item.users, user);
+                        dvm.item.selectedUser = undefined;
+                        dvm.item.userSearchText = '';
                         $scope.$$childTail.userSearchText = '';
                         $scope.$$childTail.selectedUser = undefined;
                         document.activeElement.blur();
                         if (!dvm.ruleId) {
-                            addUserMatch(user.iri, item.policy);
+                            addUserMatch(user.iri, dvm.item.policy);
                         }
-                        item.changed = true;
+                        dvm.item.changed = true;
                     }
                 }
-                dvm.removeUser = function(user, item) {
-                    item.users.push(user);
-                    item.users = sortUsers(item.users);
-                    _.remove(item.selectedUsers, user);
+                dvm.removeUser = function(user) {
+                    dvm.item.users.push(user);
+                    dvm.item.users = sortUsers(dvm.item.users);
+                    _.remove(dvm.item.selectedUsers, user);
                     if (!dvm.ruleId) {
-                        removeMatch(user.iri, item.policy);
+                        removeMatch(user.iri, dvm.item.policy);
                     }
-                    item.changed = true;
+                    dvm.item.changed = true;
                 }
-                dvm.addGroup = function(group, item) {
+                dvm.addGroup = function(group) {
                     if (group) {
-                        item.selectedGroups.push(group);
-                        item.selectedGroups = sortGroups(item.selectedGroups);
-                        _.remove(item.groups, group);
-                        item.selectedGroup = undefined;
-                        item.groupSearchText = '';
+                        dvm.item.selectedGroups.push(group);
+                        dvm.item.selectedGroups = sortGroups(dvm.item.selectedGroups);
+                        _.remove(dvm.item.groups, group);
+                        dvm.item.selectedGroup = undefined;
+                        dvm.item.groupSearchText = '';
                         $scope.$$childTail.groupSearchText = '';
                         $scope.$$childTail.selectedGroup = undefined;
                         document.activeElement.blur();
                         if (!dvm.ruleId) {
-                            addGroupMatch(group.iri, item.policy);
+                            addGroupMatch(group.iri, dvm.item.policy);
                         }
-                        item.changed = true;
+                        dvm.item.changed = true;
                     }
                 }
-                dvm.removeGroup = function(group, item) {
-                    item.groups.push(group);
-                    item.groups = sortGroups(item.groups);
-                    _.remove(item.selectedGroups, group);
+                dvm.removeGroup = function(group) {
+                    dvm.item.groups.push(group);
+                    dvm.item.groups = sortGroups(dvm.item.groups);
+                    _.remove(dvm.item.selectedGroups, group);
                     if (!dvm.ruleId) {
-                        removeMatch(group.iri, item.policy);
+                        removeMatch(group.iri, dvm.item.policy);
                     }
-                    item.changed = true;
+                    dvm.item.changed = true;
                 }
-                dvm.toggleEveryone = function(item) {
-                    if (item.everyone) {
+                dvm.toggleEveryone = function() {
+                    if (dvm.item.everyone) {
                         if (!dvm.ruleId) {
-                            _.set(item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);
-                            addMatch(userRole, prefixes.user + 'hasUserRole', item.policy);
+                            _.set(dvm.item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);
+                            addMatch(userRole, prefixes.user + 'hasUserRole', dvm.item.policy);
                         }
-                        item.users = sortUsers(_.concat(item.users, item.selectedUsers));
-                        item.selectedUsers = [];
-                        item.groups = sortGroups(_.concat(item.groups, item.selectedGroups));
-                        item.selectedGroups = [];
+                        dvm.item.users = sortUsers(_.concat(dvm.item.users, dvm.item.selectedUsers));
+                        dvm.item.selectedUsers = [];
+                        dvm.item.groups = sortGroups(_.concat(dvm.item.groups, dvm.item.selectedGroups));
+                        dvm.item.selectedGroups = [];
                     } else {
                         if (!dvm.ruleId) {
-                            removeMatch(userRole, item.policy);
+                            removeMatch(userRole, dvm.item.policy);
                         }
-                        dvm.addUser(_.find(item.users, {iri: dvm.lm.currentUserIRI}), item);
+                        dvm.addUser(_.find(dvm.item.users, {iri: dvm.lm.currentUserIRI}));
                     }
-                    item.changed = true;
+                    dvm.item.changed = true;
                 }
 
                 function removeMatch(value, policy) {

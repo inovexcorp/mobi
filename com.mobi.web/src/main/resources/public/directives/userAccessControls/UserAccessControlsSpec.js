@@ -26,21 +26,16 @@ describe('User Access Controls directive', function() {
     beforeEach(function() {
         module('templates');
         module('userAccessControls');
-        mockCatalogManager();
-        mockUtil();
-        mockPrefixes();
-        mockUserManager();
         mockPolicyManager();
+        mockUtil();
         mockLoginManager();
-        injectSplitIRIFilter();
-        injectBeautifyFilter();
+        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _policyManagerService_, _catalogManagerService_, _utilService_, _loginManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _policyManagerService_, _utilService_, _loginManagerService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             policyManagerSvc = _policyManagerService_;
-            catalogManagerSvc = _catalogManagerService_;
             utilSvc = _utilService_;
             loginManagerSvc = _loginManagerService_;
             prefixes = _prefixes_;
@@ -92,7 +87,6 @@ describe('User Access Controls directive', function() {
 
         this.users = [{iri: 'user1', username: 'user1'}, {iri: 'user2', username: 'user2'}];
         this.groups = [{iri: 'group1', title: 'group1'}, {iri: 'group2', title: 'group2'}];
-        catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
         this.scopeItem = {selectedUsers: [this.users[0]], selectedGroups: [this.groups[0]], users: [], groups: []};
         scope.item = this.scopeItem;
         this.element = $compile(angular.element('<user-access-controls item="item"></user-access-controls>'))(scope);
@@ -117,7 +111,7 @@ describe('User Access Controls directive', function() {
             this.policy = {
                 Rule: [{Target: {AnyOf: [{AllOf: []}]}}]
             };
-            this.item = {
+            this.controller.item = {
                 changed: false,
                 users: this.users,
                 groups: this.groups,
@@ -129,8 +123,8 @@ describe('User Access Controls directive', function() {
         });
         describe('should add a user to a policy', function() {
             beforeEach(function() {
-                this.item.selectedUser = {};
-                this.item.userSearchText = 'test';
+                this.controller.item.selectedUser = {};
+                this.controller.item.userSearchText = 'test';
                 this.scope.$$childTail = {
                     userSearchText: 'test',
                     selectedUser: {}
@@ -139,20 +133,20 @@ describe('User Access Controls directive', function() {
             it('if the user is defined', function() {
                 var user = this.users[0];
                 var newMatch = _.set(angular.copy(this.userMatch), 'AttributeValue.content[0]', user.iri);
-                this.controller.addUser(user, this.item);
-                expect(this.item.changed).toEqual(true);
-                expect(this.item.userSearchText).toEqual('');
-                expect(this.item.selectedUser).toBeUndefined();
-                expect(this.item.selectedUsers).toEqual([user]);
-                expect(this.item.users).toEqual(_.reject(this.users, user));
+                this.controller.addUser(user);
+                expect(this.controller.item.changed).toEqual(true);
+                expect(this.controller.item.userSearchText).toEqual('');
+                expect(this.controller.item.selectedUser).toBeUndefined();
+                expect(this.controller.item.selectedUsers).toEqual([user]);
+                expect(this.controller.item.users).toEqual(_.reject(this.users, user));
                 expect(this.scope.$$childTail).toEqual({userSearchText: '', selectedUser: undefined});
                 expect(this.policy.Rule[0].Target.AnyOf[0].AllOf).toEqual([{Match: [newMatch]}]);
             });
             it('unless the user is undefined', function() {
-                var copyItem = angular.copy(this.item);
+                var copyItem = angular.copy(this.controller.item);
                 var copyChildTail = angular.copy(this.scope.$$childTail);
-                this.controller.addUser(undefined, this.item);
-                expect(this.item).toEqual(copyItem);
+                this.controller.addUser(undefined);
+                expect(this.controller.item).toEqual(copyItem);
                 expect(this.scope.$$childTail).toEqual(copyChildTail);
             });
         });
@@ -160,18 +154,18 @@ describe('User Access Controls directive', function() {
             var user = this.users[0];
             var blankPolicy = angular.copy(this.policy);
             this.policy.Rule[0].Target.AnyOf[0].AllOf = [{Match: [_.set(angular.copy(this.userMatch), 'AttributeValue.content[0]', user.iri)]}];
-            this.item.users = _.reject(this.users, user);
-            this.item.selectedUsers = [user];
-            this.controller.removeUser(user, this.item);
-            expect(this.item.changed).toEqual(true);
-            expect(this.item.selectedUsers).toEqual([]);
-            expect(this.item.users).toEqual(this.users);
+            this.controller.item.users = _.reject(this.users, user);
+            this.controller.item.selectedUsers = [user];
+            this.controller.removeUser(user);
+            expect(this.controller.item.changed).toEqual(true);
+            expect(this.controller.item.selectedUsers).toEqual([]);
+            expect(this.controller.item.users).toEqual(this.users);
             expect(this.policy).toEqual(blankPolicy);
         });
         describe('should add a group to a policy', function() {
             beforeEach(function() {
-                this.item.selectedGroup = {};
-                this.item.groupSearchText = 'test';
+                this.controller.item.selectedGroup = {};
+                this.controller.item.groupSearchText = 'test';
                 this.scope.$$childTail = {
                     groupSearchText: 'test',
                     selectedGroup: {}
@@ -180,20 +174,20 @@ describe('User Access Controls directive', function() {
             it('if the user is defined', function() {
                 var group = this.groups[0];
                 var newMatch = _.set(angular.copy(this.groupMatch), 'AttributeValue.content[0]', group.iri);
-                this.controller.addGroup(group, this.item);
-                expect(this.item.changed).toEqual(true);
-                expect(this.item.groupSearchText).toEqual('');
-                expect(this.item.selectedGroup).toBeUndefined();
-                expect(this.item.selectedGroups).toEqual([group]);
-                expect(this.item.groups).toEqual(_.reject(this.groups, group));
+                this.controller.addGroup(group, this.controller.item);
+                expect(this.controller.item.changed).toEqual(true);
+                expect(this.controller.item.groupSearchText).toEqual('');
+                expect(this.controller.item.selectedGroup).toBeUndefined();
+                expect(this.controller.item.selectedGroups).toEqual([group]);
+                expect(this.controller.item.groups).toEqual(_.reject(this.groups, group));
                 expect(this.scope.$$childTail).toEqual({groupSearchText: '', selectedGroup: undefined});
                 expect(this.policy.Rule[0].Target.AnyOf[0].AllOf).toEqual([{Match: [newMatch]}]);
             });
             it('unless the user is undefined', function() {
-                var copyItem = angular.copy(this.item);
+                var copyItem = angular.copy(this.controller.item);
                 var copyChildTail = angular.copy(this.scope.$$childTail);
-                this.controller.addGroup(undefined, this.item);
-                expect(this.item).toEqual(copyItem);
+                this.controller.addGroup(undefined, this.controller.item);
+                expect(this.controller.item).toEqual(copyItem);
                 expect(this.scope.$$childTail).toEqual(copyChildTail);
             });
         });
@@ -201,36 +195,36 @@ describe('User Access Controls directive', function() {
             var group = this.groups[0];
             var blankPolicy = angular.copy(this.policy);
             this.policy.Rule[0].Target.AnyOf[0].AllOf = [{Match: [_.set(angular.copy(this.groupMatch), 'AttributeValue.content[0]', group.iri)]}];
-            this.item.groups = _.reject(this.groups, group);
-            this.item.selectedGroups = [group];
-            this.controller.removeGroup(group, this.item);
-            expect(this.item.changed).toEqual(true);
-            expect(this.item.selectedGroups).toEqual([]);
-            expect(this.item.groups).toEqual(this.groups);
+            this.controller.item.groups = _.reject(this.groups, group);
+            this.controller.item.selectedGroups = [group];
+            this.controller.removeGroup(group, this.controller.item);
+            expect(this.controller.item.changed).toEqual(true);
+            expect(this.controller.item.selectedGroups).toEqual([]);
+            expect(this.controller.item.groups).toEqual(this.groups);
             expect(this.policy).toEqual(blankPolicy);
         });
         describe('should properly toggle everyone to', function() {
             it('true', function() {
                 this.policy.Rule[0].Target.AnyOf[0].AllOf = [{Match: [angular.copy(this.userMatch)]}, {Match: [angular.copy(this.groupMatch)]}];
                 var user = this.users[0];
-                this.item.users = _.reject(this.users, user);
-                this.item.selectedUsers = [user];
+                this.controller.item.users = _.reject(this.users, user);
+                this.controller.item.selectedUsers = [user];
                 var group = this.groups[0];
-                this.item.groups = _.reject(this.groups, group);
-                this.item.selectedGroups = [group];
-                this.item.everyone = true;
-                this.controller.toggleEveryone(this.item);
-                expect(this.item.changed).toEqual(true);
-                expect(this.item.users).toEqual(this.users);
-                expect(this.item.selectedUsers).toEqual([]);
-                expect(this.item.groups).toEqual(this.groups);
-                expect(this.item.selectedGroups).toEqual([]);
+                this.controller.item.groups = _.reject(this.groups, group);
+                this.controller.item.selectedGroups = [group];
+                this.controller.item.everyone = true;
+                this.controller.toggleEveryone();
+                expect(this.controller.item.changed).toEqual(true);
+                expect(this.controller.item.users).toEqual(this.users);
+                expect(this.controller.item.selectedUsers).toEqual([]);
+                expect(this.controller.item.groups).toEqual(this.groups);
+                expect(this.controller.item.selectedGroups).toEqual([]);
                 expect(this.policy.Rule[0].Target.AnyOf[0].AllOf).toEqual([{Match: [this.everyoneMatch]}]);
             });
             it('false', function() {
                 this.policy.Rule[0].Target.AnyOf[0].AllOf = [{Match: [angular.copy(this.everyoneMatch)]}];
-                this.controller.toggleEveryone(this.item);
-                expect(this.item.changed).toEqual(true);
+                this.controller.toggleEveryone();
+                expect(this.controller.item.changed).toEqual(true);
                 expect(this.policy.Rule[0].Target.AnyOf[0].AllOf).toEqual([]);
             });
         });
@@ -240,7 +234,7 @@ describe('User Access Controls directive', function() {
         spyOn(this.controller, 'removeUser');
         var link = angular.element(this.element.querySelectorAll('.row .selected-items .selected-item a')[0]);
         link.triggerHandler('click');
-        expect(this.controller.removeUser).toHaveBeenCalledWith(this.users[0], this.scopeItem);
+        expect(this.controller.removeUser).toHaveBeenCalledWith(this.users[0]);
     });
     it('should call removeGroup when the link is clicked', function() {
         scope.$digest();
@@ -248,6 +242,6 @@ describe('User Access Controls directive', function() {
 
         var link = angular.element(this.element.querySelectorAll('.row .selected-items .selected-item a')[1]);
         link.triggerHandler('click');
-        expect(this.controller.removeGroup).toHaveBeenCalledWith(this.groups[0], this.scopeItem);
+        expect(this.controller.removeGroup).toHaveBeenCalledWith(this.groups[0],);
     });
 });

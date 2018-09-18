@@ -21,36 +21,36 @@
   #L%
   -->
 <div class="user-access-controls">
-    <h4>{{ruleTitle}}</h4>
-    <md-switch ng-model="item.everyone" ng-change="dvm.toggleEveryone(item)" aria-label="Everyone">Everyone</md-switch>
+    <h4>{{dvm.ruleTitle}}</h4>
+    <md-switch ng-model="dvm.item.everyone" ng-change="dvm.toggleEveryone()" aria-label="Everyone">Everyone</md-switch>
     <div class="row">
-        <div class="col-xs-6">
+        <div class="col-6">
             <div class="selected-items">
-                <div class="selected-item" ng-repeat="user in item.selectedUsers track by user.iri">
+                <div class="selected-item" ng-repeat="user in dvm.item.selectedUsers track by user.iri">
                     <span>{{user.username}}</span>
-                    <a ng-if="user.iri != dvm.lm.currentUserIRI" ng-click="dvm.removeUser(user, item)"><i class="fa fa-times"></i></a>
+                    <a ng-if="user.iri != dvm.lm.currentUserIRI" ng-click="dvm.removeUser(user)"><i class="fa fa-times"></i></a>
                 </div>
             </div>
             <div class="selector-container">
-                <md-autocomplete hide-label md-no-cache="true" md-min-length="0" md-selected-item="item.selectedUser" md-search-text="item.userSearchText" md-selected-item-change="dvm.addUser(user, item)" md-items="user in dvm.filterUsers(item.users, item.userSearchText)" md-item-text="user.username" placeholder="Select a user..." md-floating-label="Test" ng-disabled="item.everyone">
+                <md-autocomplete hide-label md-no-cache="true" md-min-length="0" md-selected-item="item.selectedUser" md-search-text="dvm.item.userSearchText" md-selected-item-change="dvm.addUser(user)" md-items="user in dvm.filterUsers(dvm.item.users, dvm.item.userSearchText)" md-item-text="user.username" placeholder="Select a user..." md-floating-label="Test" ng-disabled="dvm.item.everyone">
                     <md-item-template>
-                        <span md-highlight-text="item.userSearchText" md-highlight-flags="i">{{user.username}}</span>
+                        <span md-highlight-text="dvm.item.userSearchText" md-highlight-flags="i">{{user.username}}</span>
                     </md-item-template>
                     <md-not-found><span class="text-muted">No users to show</span></md-not-found>
                 </md-autocomplete>
             </div>
         </div>
-        <div class="col-xs-6">
+        <div class="col-6">
             <div class="selected-items">
-                <div class="selected-item" ng-repeat="group in item.selectedGroups track by group.iri">
+                <div class="selected-item" ng-repeat="group in dvm.item.selectedGroups track by group.iri">
                     <span>{{group.title}}</span>
-                    <a ng-click="dvm.removeGroup(group, item)"><i class="fa fa-times"></i></a>
+                    <a ng-click="dvm.removeGroup(group)"><i class="fa fa-times"></i></a>
                 </div>
             </div>
             <div class="selector-container">
-                <md-autocomplete hide-label md-no-cache="true" md-min-length="0" md-selected-item="item.selectedGroup" md-search-text="item.groupSearchText" md-selected-item-change="dvm.addGroup(group, item)" md-items="group in dvm.filterGroups(item.groups, item.groupSearchText)" md-item-text="group.title" placeholder="Select a group..." md-floating-label="Test" ng-disabled="item.everyone">
+                <md-autocomplete hide-label md-no-cache="true" md-min-length="0" md-selected-item="dvm.item.selectedGroup" md-search-text="dvm.item.groupSearchText" md-selected-item-change="dvm.addGroup(group)" md-items="group in dvm.filterGroups(dvm.item.groups, dvm.item.groupSearchText)" md-item-text="group.title" placeholder="Select a group..." md-floating-label="Test" ng-disabled="dvm.item.everyone">
                     <md-item-template>
-                        <span md-highlight-text="item.groupSearchText" md-highlight-flags="i">{{group.title}}</span>
+                        <span md-highlight-text="dvm.item.groupSearchText" md-highlight-flags="i">{{group.title}}</span>
                     </md-item-template>
                     <md-not-found><span class="text-muted">No groups to show</span></md-not-found>
                 </md-autocomplete>

@@ -27,13 +27,18 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rest.security.annotations.ActionId;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.base.RepositoryResult;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.exception.PolicySyntaxException;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
+import com.mobi.security.policy.api.ontologies.policy.Policy;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.security.policy.api.ontologies.policy.Update;
 import com.mobi.security.policy.api.xacml.XACML;
@@ -55,6 +60,9 @@ import com.mobi.security.policy.rest.RecordPermissionsRest;
 import com.mobi.vocabularies.xsd.XSD;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,8 +75,11 @@ import javax.xml.namespace.QName;
 
 @Component(immediate = true)
 public class RecordPermissionsRestImpl implements RecordPermissionsRest {
+    private final Logger LOGGER = LoggerFactory.getLogger(RecordPermissionsRestImpl.class);
+
     private ValueFactory vf;
     private XACMLPolicyManager policyManager;
+    private Repository repo;
 
     @Reference
     void setVf(ValueFactory vf) {
@@ -80,11 +91,21 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
         this.policyManager = policyManager;
     }
 
+    @Reference(target = "(id=system)")
+    public void setRepo(Repository repo) {
+        this.repo = repo;
+    }
+
     @Override
-    @ResourceId(type = ValueType.PATH, id = "policyId")
-    public Response retrieveRecordPolicy(String policyId) {
-        try {
-            Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(policyId));
+    @ResourceId(type = ValueType.PATH, id = "recordId")
+    public Response retrieveRecordPolicy(String recordId) {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            String recordPolicyId = getRecordPolicyId(recordId, conn);
+            if (StringUtils.isEmpty(recordPolicyId)) {
+                throw ErrorUtils.sendError("Policy for record " + recordId + "does not exist in repository",
+                        Response.Status.BAD_REQUEST);
+            }
+            Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(recordPolicyId));
             if (!policy.isPresent()) {
                 throw ErrorUtils.sendError("Policy could not be found", Response.Status.BAD_REQUEST);
             }
@@ -96,24 +117,34 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
     }
 
     @Override
-    @ActionId(id = Update.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "policyId")
-    public Response updateRecordPolicy(String policyId, String policyJson) {
-        try {
+    @ResourceId(type = ValueType.PATH, id = "recordId")
+    public Response updateRecordPolicy(String recordId, String policyJson) {
+        try (RepositoryConnection conn = repo.getConnection()) {
             // Record Policy
-            Optional<XACMLPolicy> recordPolicy = policyManager.getPolicy(vf.createIRI(policyId));
+            String recordPolicyId = getRecordPolicyId(recordId, conn);
+            if (StringUtils.isEmpty(recordPolicyId)) {
+                throw ErrorUtils.sendError("Policy for record " + recordId + "does not exist in repository",
+                        Response.Status.BAD_REQUEST);
+            }
+            IRI recordPolicyIRI = vf.createIRI(recordPolicyId);
+            Optional<XACMLPolicy> recordPolicy = policyManager.getPolicy(recordPolicyIRI);
             if (!recordPolicy.isPresent()) {
                 throw ErrorUtils.sendError("Record policy to update could not be found", Response.Status.BAD_REQUEST);
             }
 
             XACMLPolicy updatedRecordPolicy = recordJsonToPolicy(policyJson, recordPolicy.get().getJaxbPolicy());
-            if (!updatedRecordPolicy.getId().equals(vf.createIRI(policyId))) {
-                throw ErrorUtils.sendError("Policy Id does not match provided policy", Response.Status.BAD_REQUEST);
+            if (!updatedRecordPolicy.getId().equals(recordPolicyIRI)) {
+                throw ErrorUtils.sendError("Policy Id does not match provided record policy", Response.Status.BAD_REQUEST);
             }
 
             // Policy Policy
-            String policyPolicyId = policyId.replaceFirst("http://mobi.com/policies/record/", "http://mobi.com/policies/policy/record/");
-            Optional<XACMLPolicy> policyPolicy = policyManager.getPolicy(vf.createIRI(policyPolicyId));
+            String policyPolicyId = getPolicyPolicyId(recordPolicyId, conn);
+            if (StringUtils.isEmpty(policyPolicyId)) {
+                throw ErrorUtils.sendError("Policy for policy " + recordPolicyId + "does not exist in repository",
+                        Response.Status.BAD_REQUEST);
+            }
+            IRI policyPolicyIRI = vf.createIRI(policyPolicyId);
+            Optional<XACMLPolicy> policyPolicy = policyManager.getPolicy(policyPolicyIRI);
             if (!policyPolicy.isPresent()) {
                 throw ErrorUtils.sendError("Policy policy to update could not be found", Response.Status.BAD_REQUEST);
             }
@@ -133,28 +164,29 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
         }
     }
 
+    private String getRecordPolicyId(String recordId, RepositoryConnection conn) {
+        RepositoryResult<Statement> results = conn.getStatements(null,
+                vf.createIRI(Policy.relatedResource_IRI), vf.createIRI(recordId));
+        if (!results.hasNext()) {
+            LOGGER.info("Could not find policy for record: " + recordId);
+            return "";
+        }
+        return results.next().getSubject().stringValue();
+    }
+    private String getPolicyPolicyId(String recordPolicyId, RepositoryConnection conn) {
+        RepositoryResult<Statement> results = conn.getStatements(null, vf.createIRI(Policy.relatedResource_IRI),
+                vf.createIRI(recordPolicyId));
+        if (!results.hasNext()) {
+            LOGGER.info("Could not find policy policy for record policy: " + recordPolicyId
+                    + " with a policyId of: " + recordPolicyId);
+            return "";
+        }
+        return results.next().getSubject().stringValue();
+    }
+
     private XACMLPolicy updatePolicyPolicy(String json, PolicyType policyType) {
-        AttributeDesignatorType subjectIdAttrDesig = new AttributeDesignatorType();
-        subjectIdAttrDesig.setAttributeId(XACML.SUBJECT_ID);
-        subjectIdAttrDesig.setCategory(XACML.SUBJECT_CATEGORY);
-        subjectIdAttrDesig.setDataType(XSD.STRING);
-        subjectIdAttrDesig.setMustBePresent(true);
-
-        AttributeDesignatorType groupAttrDesig = new AttributeDesignatorType();
-        groupAttrDesig.setAttributeId("http://mobi.com/policy/prop-path(%5E%3Chttp%3A%2F%2Fxmlns.com%2Ffoaf%2F0.1%2Fmember%3E)");
-        groupAttrDesig.setCategory(XACML.SUBJECT_CATEGORY);
-        groupAttrDesig.setDataType(XSD.STRING);
-        groupAttrDesig.setMustBePresent(true);
-
-        AttributeDesignatorType userRoleAttrDesig = new AttributeDesignatorType();
-        userRoleAttrDesig.setAttributeId(User.hasUserRole_IRI);
-        userRoleAttrDesig.setCategory(XACML.SUBJECT_CATEGORY);
-        userRoleAttrDesig.setDataType(XSD.STRING);
-        userRoleAttrDesig.setMustBePresent(true);
-
-        AttributeValueType userRoleAttrVal = new AttributeValueType();
-        userRoleAttrVal.setDataType(XSD.STRING);
-        userRoleAttrVal.getContent().add("http://mobi.com/roles/user");
+        AttributeDesignatorType subjectIdAttrDesig = createSubjectIdAttrDesig();
+        AttributeDesignatorType groupAttrDesig = createGroupAttrDesig();
 
         JSONObject jsonObject = JSONObject.fromObject(json);
         JSONObject updateObj = jsonObject.getJSONObject("urn:update");
@@ -164,10 +196,7 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
         readUserAllOfs.clear();
         updateUserAllOfs.clear();
         if (updateObj.getBoolean("everyone")) {
-            MatchType userRoleMatch = new MatchType();
-            userRoleMatch.setMatchId(XACML.STRING_EQUALS);
-            userRoleMatch.setAttributeDesignator(userRoleAttrDesig);
-            userRoleMatch.setAttributeValue(userRoleAttrVal);
+            MatchType userRoleMatch = createUserRoleMatch();
 
             AllOfType everyoneAllOf = new AllOfType();
             everyoneAllOf.getMatch().add(userRoleMatch);
@@ -201,69 +230,31 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
 
         return policyManager.createPolicy(policyType);
     }
+
     private XACMLPolicy recordJsonToPolicy(String json, PolicyType policyType) {
         String masterBranch = policyType.getRule().get(4).getTarget().getAnyOf().get(0).getAllOf().get(0).getMatch()
                 .get(1).getAttributeValue().getContent().get(0).toString();
         policyType.getRule().clear();
 
-        AttributeDesignatorType actionIdAttrDesig = new AttributeDesignatorType();
-        actionIdAttrDesig.setAttributeId(XACML.ACTION_ID);
-        actionIdAttrDesig.setCategory(XACML.ACTION_CATEGORY);
-        actionIdAttrDesig.setDataType(XSD.STRING);
-        actionIdAttrDesig.setMustBePresent(true);
-
-        AttributeDesignatorType subjectIdAttrDesig = new AttributeDesignatorType();
-        subjectIdAttrDesig.setAttributeId(XACML.SUBJECT_ID);
-        subjectIdAttrDesig.setCategory(XACML.SUBJECT_CATEGORY);
-        subjectIdAttrDesig.setDataType(XSD.STRING);
-        subjectIdAttrDesig.setMustBePresent(true);
-
-        AttributeDesignatorType groupAttrDesig = new AttributeDesignatorType();
-        groupAttrDesig.setAttributeId("http://mobi.com/policy/prop-path(%5E%3Chttp%3A%2F%2Fxmlns.com%2Ffoaf%2F0.1%2Fmember%3E)");
-        groupAttrDesig.setCategory(XACML.SUBJECT_CATEGORY);
-        groupAttrDesig.setDataType(XSD.STRING);
-        groupAttrDesig.setMustBePresent(true);
-
-        AttributeDesignatorType userRoleAttrDesig = new AttributeDesignatorType();
-        userRoleAttrDesig.setAttributeId(User.hasUserRole_IRI);
-        userRoleAttrDesig.setCategory(XACML.SUBJECT_CATEGORY);
-        userRoleAttrDesig.setDataType(XSD.STRING);
-        userRoleAttrDesig.setMustBePresent(true);
-
-        AttributeValueType userRoleAttrVal = new AttributeValueType();
-        userRoleAttrVal.setDataType(XSD.STRING);
-        userRoleAttrVal.getContent().add("http://mobi.com/roles/user");
-
-        AttributeDesignatorType branchAttrDesig = new AttributeDesignatorType();
-        branchAttrDesig.setAttributeId("http://mobi.com/ontologies/catalog#branch");
-        branchAttrDesig.setCategory(XACML.ACTION_CATEGORY);
-        branchAttrDesig.setDataType(XSD.STRING);
-        branchAttrDesig.setMustBePresent(false);
-
-        AttributeValueType branchAttrVal = new AttributeValueType();
-        branchAttrVal.setDataType(XSD.STRING);
-        branchAttrVal.getContent().add(masterBranch);
+        AttributeDesignatorType actionIdAttrDesig = createActionIdAttrDesig();
+        AttributeDesignatorType subjectIdAttrDesig = createSubjectIdAttrDesig();
+        AttributeDesignatorType groupAttrDesig = createGroupAttrDesig();
+        AttributeDesignatorType branchAttrDesig = createBranchAttrDesig();
+        AttributeValueType branchAttrVal = createAttributeValue(XSD.STRING, masterBranch);
 
         JSONObject jsonObject = JSONObject.fromObject(json);
         Iterator<?> keys = jsonObject.keys();
 
         while (keys.hasNext()) {
             String key = (String)keys.next();
-
-            RuleType rule = new RuleType();
             TargetType target = new TargetType();
-            rule.setEffect(EffectType.PERMIT);
-            rule.setRuleId(key);
-            rule.setTarget(target);
+            RuleType rule = createRule(EffectType.PERMIT, key, target);
 
             AttributeValueType ruleTypeAttrVal = new AttributeValueType();
             ruleTypeAttrVal.setDataType(XSD.STRING);
 
             // Setup Rule Type
-            MatchType ruleTypeMatch = new MatchType();
-            ruleTypeMatch.setMatchId(XACML.STRING_EQUALS);
-            ruleTypeMatch.setAttributeDesignator(actionIdAttrDesig);
-            ruleTypeMatch.setAttributeValue(ruleTypeAttrVal);
+            MatchType ruleTypeMatch = createMatch(XACML.STRING_EQUALS, actionIdAttrDesig, ruleTypeAttrVal);
             ruleTypeAttrVal.getContent().clear();
             switch (key) {
                 case "urn:read":
@@ -291,10 +282,7 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
             allOfType.getMatch().add(ruleTypeMatch);
 
             if (key.equalsIgnoreCase("urn:modifyMaster")) {
-                MatchType branchMatch = new MatchType();
-                branchMatch.setMatchId(XACML.STRING_EQUALS);
-                branchMatch.setAttributeDesignator(branchAttrDesig);
-                branchMatch.setAttributeValue(branchAttrVal);
+                MatchType branchMatch = createMatch(XACML.STRING_EQUALS, branchAttrDesig, branchAttrVal);
                 allOfType.getMatch().add(branchMatch);
             }
             rule.getTarget().getAnyOf().add(anyOfType);
@@ -303,36 +291,15 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
             AnyOfType usersGroups = new AnyOfType();
             JSONObject jsonRule = jsonObject.getJSONObject(key);
             if (jsonRule.getBoolean("everyone")) {
-                MatchType userRoleMatch = new MatchType();
-                userRoleMatch.setMatchId(XACML.STRING_EQUALS);
-                userRoleMatch.setAttributeDesignator(userRoleAttrDesig);
-                userRoleMatch.setAttributeValue(userRoleAttrVal);
-
+                MatchType userRoleMatch = createUserRoleMatch();
                 AllOfType everyoneAllOf = new AllOfType();
                 everyoneAllOf.getMatch().add(userRoleMatch);
                 usersGroups.getAllOf().add(everyoneAllOf);
             } else {
-                JSONArray jsonArray = jsonRule.getJSONArray("users");
-                jsonArray.addAll(jsonRule.getJSONArray("groups"));
-                for (int i = 0; i < jsonArray.size(); i++) {
-                    AttributeValueType userAttrVal = new AttributeValueType();
-                    userAttrVal.setDataType(XSD.STRING);
-                    userAttrVal.getContent().add(jsonArray.getString(i));
-
-                    MatchType userMatch = new MatchType();
-                    userMatch.setMatchId(XACML.STRING_EQUALS);
-                    if (jsonArray.getString(i).contains("http://mobi.com/groups")) {
-                        userMatch.setAttributeDesignator(groupAttrDesig);
-                    } else {
-                        userMatch.setAttributeDesignator(subjectIdAttrDesig);
-                    }
-                    userMatch.setAttributeValue(userAttrVal);
-
-                    AllOfType userAllOf = new AllOfType();
-                    userAllOf.getMatch().add(userMatch);
-
-                    usersGroups.getAllOf().add(userAllOf);
-                }
+                JSONArray usersArray = jsonRule.getJSONArray("users");
+                addUsersOrGroupsToAnyOf(usersArray, subjectIdAttrDesig, usersGroups);
+                JSONArray groupsArray = jsonRule.getJSONArray("groups");
+                addUsersOrGroupsToAnyOf(groupsArray, groupAttrDesig,usersGroups);
             }
             rule.getTarget().getAnyOf().add(usersGroups);
 
@@ -347,27 +314,41 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
         return policyManager.createPolicy(policyType);
     }
 
+    /**
+     * Iterates over the JSONArray of users or groups and adds an AllOf with a single Match to the provided AnyOf.
+     *
+     * @param array The JSONArray of users or groups to iterate over
+     * @param attributeDesignator the AttributeDesignatorType to apply to the MatchType
+     * @param anyOf the AnyOfType to add the AllOf statement to
+     */
+    private void addUsersOrGroupsToAnyOf(JSONArray array, AttributeDesignatorType attributeDesignator, AnyOfType anyOf) {
+        for (int i = 0; i < array.size(); i++) {
+            AttributeValueType userAttrVal = createAttributeValue(XSD.STRING, array.getString(i));
+
+            MatchType userMatch = createMatch(XACML.STRING_EQUALS, attributeDesignator, userAttrVal);
+            AllOfType userAllOf = new AllOfType();
+            userAllOf.getMatch().add(userMatch);
+            anyOf.getAllOf().add(userAllOf);
+        }
+    }
+
+    /**
+     * Creates the JAXBElement representing the master branch condition statement
+     *
+     * @param masterBranch the String representation of the master branch
+     * @return JAXBElement representing the master branch condition statement
+     */
     private JAXBElement<?> createMasterBranchExpression(String masterBranch) {
         // Innermost expression list
         FunctionType strEqFunctionType = new FunctionType();
         strEqFunctionType.setFunctionId(XACML.STRING_EQUALS);
 
-        AttributeValueType branchAttrVal = new AttributeValueType();
-        branchAttrVal.setDataType(XSD.STRING);
-        branchAttrVal.getContent().add(masterBranch);
         JAXBElement<AttributeValueType> branchValue = new JAXBElement<>(
                 new QName("urn:oasis:names:tc:xacml:3.0:core:schema:wd-17", "AttributeValue"),
-                AttributeValueType.class, branchAttrVal);
-
-        AttributeDesignatorType branchAttrDesig = new AttributeDesignatorType();
-        branchAttrDesig.setAttributeId("http://mobi.com/ontologies/catalog#branch");
-        branchAttrDesig.setCategory(XACML.ACTION_CATEGORY);
-        branchAttrDesig.setDataType(XSD.STRING);
-        branchAttrDesig.setMustBePresent(false);
+                AttributeValueType.class, createAttributeValue(XSD.STRING, masterBranch));
         JAXBElement<AttributeDesignatorType> branchDesignator = new JAXBElement<>(
                 new QName("urn:oasis:names:tc:xacml:3.0:core:schema:wd-17", "AttributeDesignator"),
-                AttributeDesignatorType.class, branchAttrDesig);
-
+                AttributeDesignatorType.class, createBranchAttrDesig());
         JAXBElement<FunctionType> stringEqual = new JAXBElement<>(
                 new QName("urn:oasis:names:tc:xacml:3.0:core:schema:wd-17", "Function"),
                 FunctionType.class, strEqFunctionType);
@@ -421,5 +402,70 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
             json.put(rule.getRuleId(), people);
         }
         return json.toString();
+    }
+
+    private RuleType createRule(EffectType effect, String ruleId, TargetType target) {
+        RuleType rule = new RuleType();
+        rule.setEffect(effect);
+        rule.setRuleId(ruleId);
+        rule.setTarget(target);
+        return rule;
+    }
+
+    private MatchType createMatch(String matchId, AttributeDesignatorType attributeDesignator,
+                                  AttributeValueType attributeValue) {
+        MatchType match = new MatchType();
+        match.setMatchId(matchId);
+        match.setAttributeDesignator(attributeDesignator);
+        match.setAttributeValue(attributeValue);
+        return match;
+    }
+
+    private MatchType createUserRoleMatch() {
+        return createMatch(XACML.STRING_EQUALS, createUserAttrDesig(), createUserAttrVal());
+    }
+
+    private AttributeDesignatorType createAttributeDesignator(String attributeId, String category, String dataType,
+                                                              boolean mustBePresent) {
+        AttributeDesignatorType attrDesig = new AttributeDesignatorType();
+        attrDesig.setAttributeId(attributeId);
+        attrDesig.setCategory(category);
+        attrDesig.setDataType(dataType);
+        attrDesig.setMustBePresent(mustBePresent);
+        return attrDesig;
+    }
+
+    private AttributeValueType createAttributeValue(String dataType, String content) {
+        AttributeValueType attrVal = new AttributeValueType();
+        attrVal.setDataType(dataType);
+        attrVal.getContent().add(content);
+        return attrVal;
+    }
+
+    private AttributeDesignatorType createSubjectIdAttrDesig() {
+        return createAttributeDesignator(XACML.SUBJECT_ID, XACML.SUBJECT_CATEGORY, XSD.STRING, true);
+    }
+
+    private AttributeDesignatorType createActionIdAttrDesig() {
+        return createAttributeDesignator(XACML.ACTION_ID, XACML.ACTION_CATEGORY, XSD.STRING, true);
+    }
+
+    private AttributeDesignatorType createGroupAttrDesig() {
+        return createAttributeDesignator(
+                "http://mobi.com/policy/prop-path(%5E%3Chttp%3A%2F%2Fxmlns.com%2Ffoaf%2F0.1%2Fmember%3E)",
+                XACML.SUBJECT_CATEGORY, XSD.STRING, true);
+    }
+
+    private AttributeDesignatorType createBranchAttrDesig() {
+        return createAttributeDesignator("http://mobi.com/ontologies/catalog#branch", XACML.ACTION_CATEGORY,
+                XSD.STRING, false);
+    }
+
+    private AttributeDesignatorType createUserAttrDesig() {
+        return createAttributeDesignator(User.hasUserRole_IRI,  XACML.SUBJECT_CATEGORY, XSD.STRING, true);
+    }
+
+    private AttributeValueType createUserAttrVal() {
+        return createAttributeValue(XSD.STRING, "http://mobi.com/roles/user");
     }
 }

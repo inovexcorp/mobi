@@ -30,8 +30,7 @@
          *
          * @description
          * The `recordPermissionsManager` module only provides the `recordPermissionsManagerService` service which
-         * provides access to the Mobi policy REST endpoints and variables with common IRIs
-         * used in policies.
+         * provides access to the Mobi record-permissions REST endpoints to get and update record permissions.
          */
             .module('recordPermissionsManager', [])
             /**
@@ -58,16 +57,16 @@
              * @methodOf recordPermissionsManager.service:recordPermissionsManagerService
              *
              * @description
-             * Calls the GET /mobirest/record-permissions/{policyId} endpoint to get the Record Policy JSON
+             * Calls the GET /mobirest/record-permissions/{recordId} endpoint to get the Record Policy JSON
              * representation of users who are permitted to perform each action (read, delete, update, modify,
              * modifyMaster)  for the provided ID.
              *
-             * @param {string} policyId The ID of a Record Policy JSON to retrieve
+             * @param {string} recordId The ID of a Record whose Record Policy JSON to retrieve
              * @return {Promise} A Promise that resolves with the matching Record Policy JSON if found or is rejected
              * with an error message
              */
-            self.getRecordPolicy = function(policyId) {
-                return $http.get(prefix + '/' + encodeURIComponent(policyId))
+            self.getRecordPolicy = function(recordId) {
+                return $http.get(prefix + '/' + encodeURIComponent(recordId))
                     .then(response => response.data, util.rejectError);
             }
 
@@ -77,15 +76,16 @@
              * @methodOf recordPermissionsManager.service:recordPermissionsManagerService
              *
              * @description
-             * Calls the PUT /mobirest/record-permissions/{policyId} endpoint with the provided new Policy object and updates
-             * the Policy with the matching ID.
+             * Calls the PUT /mobirest/record-permissions/{recordId} endpoint with the provided new Policy object and updates
+             * the Policy with the associated recordId.
              *
+             * @param {string} recordId The ID of a Record whose Record Policy JSON to update
              * @param {Object} newPolicy A Policy JSON object to replace the original with
              * @return {Promise} A Promise that resolves if the update was successful or is rejected with an error
              * message
              */
-            self.updateRecordPolicy = function(policyId, newPolicy) {
-                return $http.put(prefix + '/' + encodeURIComponent(policyId), newPolicy)
+            self.updateRecordPolicy = function(recordId, newPolicy) {
+                return $http.put(prefix + '/' + encodeURIComponent(recordId), newPolicy)
                     .then(_.noop, util.rejectError);
             }
         }

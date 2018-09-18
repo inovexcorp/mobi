@@ -27,12 +27,9 @@
         .module('openOntologyTab', [])
         .directive('openOntologyTab', openOntologyTab);
 
-        openOntologyTab.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
-            'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService', 'policyEnforcementService',
-            'policyManagerService'];
+        openOntologyTab.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService', 'policyEnforcementService', 'policyManagerService'];
 
-        function openOntologyTab(httpService, ontologyManagerService, ontologyStateService, prefixes,
-            stateManagerService, utilService, mapperStateService, catalogManagerService, policyEnforcementService, policyManagerService) {
+        function openOntologyTab(httpService, ontologyManagerService, ontologyStateService, prefixes, stateManagerService, utilService, mapperStateService, catalogManagerService, policyEnforcementService, policyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -97,7 +94,8 @@
                         dvm.os.newLanguage = undefined;
                         dvm.os.showNewTab = true;
                     }
-                    dvm.showDeleteConfirmationOverlay = function(record) {
+                    dvm.showDeleteConfirmationOverlay = function(record, event) {
+                        event.stopPropagation();
                         dvm.recordId = _.get(record, '@id', '');
                         dvm.recordTitle = dvm.util.getDctermsValue(record, 'title');
                         dvm.errorMessage = '';
@@ -158,6 +156,10 @@
                             }
                             pe.evaluateRequest(request).then(decision => record.userCanManage = decision == pe.permit);
                         })
+                    }
+                    dvm.showAccessOverlay = function(record, overlayName, event) {
+                        record[overlayName] = true;
+                        event.stopPropagation();
                     }
 
                     $scope.$watch(() => dvm.os.list.length, () => {

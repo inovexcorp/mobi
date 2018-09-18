@@ -32,12 +32,10 @@ import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 import com.mobi.exception.MobiException;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.exception.PolicySyntaxException;
-import com.mobi.security.policy.api.ontologies.policy.Update;
 import com.mobi.security.policy.api.xacml.PolicyQueryParams;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
@@ -114,7 +112,6 @@ public class PolicyRestImpl implements PolicyRest {
     }
 
     @Override
-    @ActionId(id = Update.TYPE)
     @ResourceId(type = ValueType.PATH, id = "policyId")
     public Response updatePolicy(String policyId, String policyJson) {
         try {

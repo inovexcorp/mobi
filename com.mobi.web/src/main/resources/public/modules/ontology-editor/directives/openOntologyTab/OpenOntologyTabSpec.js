@@ -21,8 +21,7 @@
  * #L%
  */
 describe('Open Ontology Tab directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, prefixes, utilSvc, mapperStateSvc,
-        catalogManagerSvc, policyManagerSvc, policyEnforcementSvc, httpSvc;
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, prefixes, utilSvc, mapperStateSvc, catalogManagerSvc, policyManagerSvc, policyEnforcementSvc, httpSvc;
 
     beforeEach(function() {
         module('templates');
