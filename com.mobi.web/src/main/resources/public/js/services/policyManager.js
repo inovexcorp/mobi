@@ -30,7 +30,7 @@
          *
          * @description
          * The `policyManager` module only provides the `policyManagerService` service which
-         * provides access to the Mobi polict REST endpoints and variables with common IRIs
+         * provides access to the Mobi policy REST endpoints and variables with common IRIs
          * used in policies.
          */
         .module('policyManager', [])

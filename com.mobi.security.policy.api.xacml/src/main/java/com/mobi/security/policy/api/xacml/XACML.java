@@ -62,4 +62,9 @@ public class XACML {
     public static final String POLICY_ONLY_ONE_APPLICABLE =
             "urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:only-one-applicable";
 
+    // Functions
+    public static final String OR_FUNCTION = "urn:oasis:names:tc:xacml:1.0:function:or";
+    public static final String NOT_FUNCTION = "urn:oasis:names:tc:xacml:1.0:function:not";
+    public static final String ANY_OF_FUNCTION = "urn:oasis:names:tc:xacml:1.0:function:any-of";
+    public static final String STRING_EQUALS = "urn:oasis:names:tc:xacml:1.0:function:string-equal";
 }
