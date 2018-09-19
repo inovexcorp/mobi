@@ -620,7 +620,7 @@
             self.getClassProps = function(ontologies, classId) {
                 var props = [];
                 _.forEach(ontologies, ontology => {
-                    var classProps = _.filter(_.union(om.getClassProperties([ontology.entities], classId), om.getNoDomainProperties([ontology.entities])), prop => !(om.isObjectProperty(prop) && om.isDataTypeProperty(prop)));
+                    var classProps = _.filter(_.union(om.getClassProperties([ontology.entities], classId), om.getNoDomainProperties([ontology.entities]), om.getAnnotations([ontology.entities])), prop => !(om.isObjectProperty(prop) && om.isDataTypeProperty(prop)));
                     props = _.union(props, _.map(classProps, prop => {
                         return {ontologyId: ontology.id, propObj: prop};
                     }));

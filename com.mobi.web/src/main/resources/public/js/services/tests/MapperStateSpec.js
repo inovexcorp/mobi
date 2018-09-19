@@ -286,16 +286,19 @@ describe('Mapper State service', function() {
         var classId = 'class';
         var classProps = [{propObj: {'@id': 'prop1'}}, {propObj: {'@id': 'prop2'}}];
         var noDomainProps = [{propObj: {'@id': 'prop3'}}, {propObj: {'@id': 'prop4'}}];
-        var propMappings = [{}, {}];
+        var annotationProps = [{propObj: {'@id': 'prop5'}}, {propObj: {'@id': 'prop6'}}];
+        var propMappings = [{}, {}, {}];
         propMappings[0][prefixes.delim + 'hasProperty'] = classProps[0].propObj['@id'];
         propMappings[1][prefixes.delim + 'hasProperty'] = noDomainProps[0].propObj['@id'];
+        propMappings[2][prefixes.delim + 'hasProperty'] = annotationProps[0].propObj['@id'];
+
         mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
         utilSvc.getPropertyId.and.callFake(function(obj, prop) {
             return obj[prop];
         });
         mappingManagerSvc.getClassIdByMappingId.and.returnValue(classId);
         mappingManagerSvc.annotationProperties = ['test'];
-        spyOn(mapperStateSvc, 'getClassProps').and.returnValue(_.union(classProps, noDomainProps));
+        spyOn(mapperStateSvc, 'getClassProps').and.returnValue(_.union(classProps, noDomainProps, annotationProps));
         mapperStateSvc.setAvailableProps(classMapId);
         _.forEach(propMappings, function(propMapping) {
             expect(utilSvc.getPropertyId).toHaveBeenCalledWith(propMapping, prefixes.delim + 'hasProperty');
@@ -307,6 +310,8 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.availablePropsByClass[classMapId]).toContain(classProps[1]);
         expect(mapperStateSvc.availablePropsByClass[classMapId] ).not.toContain(noDomainProps[0]);
         expect(mapperStateSvc.availablePropsByClass[classMapId]).toContain(noDomainProps[1]);
+        expect(mapperStateSvc.availablePropsByClass[classMapId] ).not.toContain(annotationProps[0]);
+        expect(mapperStateSvc.availablePropsByClass[classMapId]).toContain(annotationProps[1]);
         _.forEach(mappingManagerSvc.annotationProperties, function(prop) {
             expect(mapperStateSvc.availablePropsByClass[classMapId]).toContain({ontologyId: '', propObj: {'@id': prop}});
         });
@@ -323,19 +328,26 @@ describe('Mapper State service', function() {
         var ontologies = [{id: 'ontology1', entities: []}, {id: 'ontology2', entities: [{}]}];
         var classProps = [{'@id': 'prop1'}, {'@id': 'prop2'}];
         var noDomainProps = [{'@id': 'prop3'}, {'@id': 'prop4'}];
+        var annotationProps = [{'@id': 'prop5'}, {'@id': 'prop6'}];
         ontologyManagerSvc.getClassProperties.and.callFake(function(entities, classId) {
             return _.isEqual(entities, [ontologies[0].entities]) ? [classProps[0]] : [classProps[1]];
         });
         ontologyManagerSvc.getNoDomainProperties.and.callFake(function(entities) {
             return _.isEqual(entities, [ontologies[0].entities]) ? noDomainProps : [];
         });
+        ontologyManagerSvc.getAnnotations.and.callFake(function(entities) {
+            return _.isEqual(entities, [ontologies[0].entities]) ? annotationProps : [];
+        })
         var result = mapperStateSvc.getClassProps(ontologies, 'class');
         expect(ontologyManagerSvc.getClassProperties.calls.count()).toBe(ontologies.length);
         expect(ontologyManagerSvc.getNoDomainProperties.calls.count()).toBe(ontologies.length);
+        expect(ontologyManagerSvc.getAnnotations.calls.count()).toBe(ontologies.length);
         expect(result).toContain({ontologyId: ontologies[0].id, propObj: classProps[0]});
         expect(result).toContain({ontologyId: ontologies[1].id, propObj: classProps[1]});
         expect(result).toContain({ontologyId: ontologies[0].id, propObj: noDomainProps[0]});
         expect(result).toContain({ontologyId: ontologies[0].id, propObj: noDomainProps[1]});
+        expect(result).toContain({ontologyId: ontologies[0].id, propObj: annotationProps[0]});
+        expect(result).toContain({ontologyId: ontologies[0].id, propObj: annotationProps[1]});
     });
     it('should get the list of classes from a list of ontologies', function() {
         var ontologies = [{id: 'ontology1', entities: []}, {id: 'ontology2', entities: [{}]}];
