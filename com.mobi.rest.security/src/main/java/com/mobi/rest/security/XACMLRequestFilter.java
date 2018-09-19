@@ -24,20 +24,29 @@ package com.mobi.rest.security;
  */
 
 import static com.mobi.web.security.util.AuthenticationProps.ANON_USER;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.UNAUTHORIZED;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.persistence.utils.Bindings;
+import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.Binding;
+import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceAttributes;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.SubjectAttributes;
+import com.mobi.rest.security.annotations.Value;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.Decision;
@@ -85,6 +94,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
     private PDP pdp;
     private ValueFactory vf;
     private EngineManager engineManager;
+    private Repository repository;
 
     @Reference
     void setVf(ValueFactory vf) {
@@ -99,6 +109,11 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
     @Reference
     void setPdp(PDP pdp) {
         this.pdp = pdp;
+    }
+
+    @Reference(target = "(id=system)")
+    void setRepository(Repository repository) {
+        this.repository = repository;
     }
 
     @Context
@@ -140,24 +155,35 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         if (resourceIdAnnotation == null) {
             resourceId = vf.createIRI(uriInfo.getAbsolutePath().toString());
         } else {
-            String resourceIdStr = resourceIdAnnotation.id();
+            String resourceValueStr = resourceIdAnnotation.value();
             switch (resourceIdAnnotation.type()) {
                 case PATH:
-                    validatePathParam(resourceIdStr, pathParameters, true);
-                    resourceId = vf.createIRI(pathParameters.getFirst(resourceIdStr));
+                    validatePathParam(resourceValueStr, pathParameters, true);
+                    resourceId = vf.createIRI(pathParameters.getFirst(resourceValueStr));
                     break;
                 case QUERY:
-                    validateQueryParam(resourceIdStr, queryParameters, true);
-                    resourceId = vf.createIRI(queryParameters.getFirst(resourceIdStr));
+                    validateQueryParam(resourceValueStr, queryParameters, true);
+                    resourceId = vf.createIRI(queryParameters.getFirst(resourceValueStr));
                     break;
                 case BODY:
                     FormDataMultiPart form = getFormData(context);
-                    validateFormParam(resourceIdStr, form, true);
-                    resourceId = vf.createIRI(form.getField(resourceIdStr).getValue());
+                    validateFormParam(resourceValueStr, form, true);
+                    resourceId = vf.createIRI(form.getField(resourceValueStr).getValue());
+                    break;
+                case PROP_PATH:
+                    IRI pathStart = getPropPathStart(validatePropPathValue(resourceIdAnnotation.start()),
+                            pathParameters, queryParameters, context, true);
+                    try (RepositoryConnection conn = repository.getConnection()) {
+                        TupleQueryResult result = getPropPathResult(pathStart, resourceIdAnnotation.value(), conn);
+                        if (!result.hasNext()) {
+                            throw ErrorUtils.sendError("No results returned for property path", INTERNAL_SERVER_ERROR);
+                        }
+                        resourceId = (IRI) Bindings.requiredResource(result.next(), "value");
+                    }
                     break;
                 case PRIMITIVE:
                 default:
-                    resourceId = vf.createIRI(resourceIdAnnotation.id());
+                    resourceId = vf.createIRI(resourceIdAnnotation.value());
                     break;
             }
         }
@@ -190,7 +216,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                     break;
             }
         } else {
-            actionId = vf.createIRI(actionIdAnnotation.id());
+            actionId = vf.createIRI(actionIdAnnotation.value());
         }
 
         ActionAttributes actionAttributesAnnotation = method.getAnnotation(ActionAttributes.class);
@@ -209,12 +235,13 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         Decision decision = response.getDecision();
         if (decision != Decision.PERMIT) {
             if (decision == Decision.DENY) {
-                String statusMessage = getMessageOrDefault(response, "You do not have permission to perform this action");
-                throw ErrorUtils.sendError(statusMessage, javax.ws.rs.core.Response.Status.UNAUTHORIZED);
+                String statusMessage = getMessageOrDefault(response,
+                        "You do not have permission to perform this action");
+                throw ErrorUtils.sendError(statusMessage, UNAUTHORIZED);
             }
             if (decision == Decision.INDETERMINATE) {
                 String statusMessage = getMessageOrDefault(response, "Request indeterminate");
-                throw ErrorUtils.sendError(statusMessage, javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR);
+                throw ErrorUtils.sendError(statusMessage, INTERNAL_SERVER_ERROR);
             }
         }
         log.info(String.format("Request permitted. %dms", System.currentTimeMillis() - start));
@@ -230,26 +257,31 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
 
     private boolean validatePathParam(String key, MultivaluedMap<String, String> params, boolean isRequired) {
         if (!params.containsKey(key) && isRequired) {
-            throw ErrorUtils.sendError("Path does not contain parameter " + key,
-                    javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR);
+            throw ErrorUtils.sendError("Path does not contain parameter " + key, INTERNAL_SERVER_ERROR);
         }
         return params.containsKey(key);
     }
 
     private boolean validateQueryParam(String key, MultivaluedMap<String, String> params, boolean isRequired) {
         if (!params.containsKey(key) && isRequired) {
-            throw ErrorUtils.sendError("Query parameters do not contain " + key,
-                    javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR);
+            throw ErrorUtils.sendError("Query parameters do not contain " + key, INTERNAL_SERVER_ERROR);
         }
         return params.containsKey(key);
     }
 
     private boolean validateFormParam(String key, FormDataMultiPart params, boolean isRequired) {
         if (params.getField(key) == null && isRequired) {
-            throw ErrorUtils.sendError("Form parameters do not contain " + key,
-                    javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR);
+            throw ErrorUtils.sendError("Form parameters do not contain " + key, INTERNAL_SERVER_ERROR);
         }
         return params.getField(key) == null;
+    }
+
+    private Value validatePropPathValue(Value[] values) {
+        if (values.length != 1) {
+            throw ErrorUtils.sendError("A Property Path value requires exactly one starting point",
+                    INTERNAL_SERVER_ERROR);
+        }
+        return values[0];
     }
 
     private FormDataMultiPart getFormData(ContainerRequestContext context) {
@@ -261,8 +293,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                 return request.readEntity(FormDataMultiPart.class);
             }
         }
-        throw ErrorUtils.sendError("Expected Request to have form data",
-                javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR);
+        throw ErrorUtils.sendError("Expected Request to have form data", INTERNAL_SERVER_ERROR);
     }
 
     private void setAttributes(Map<String, Literal> attrs, AttributeValue[] values,
@@ -291,6 +322,26 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                                     ? getLiteral(form.getField(valueStr).getValue(), datatype)
                                     : null;
                             break;
+                        case PROP_PATH:
+                            IRI pathStart = getPropPathStart(validatePropPathValue(attributeValue.start()),
+                                    pathParameters, queryParameters, context, isRequired);
+                            try (RepositoryConnection conn = repository.getConnection()) {
+                                TupleQueryResult result = getPropPathResult(pathStart, attributeValue.value(), conn);
+                                if (!result.hasNext()) {
+                                    if (isRequired) {
+                                        value = null;
+                                    } else {
+                                        throw ErrorUtils.sendError("No results returned for property path",
+                                                INTERNAL_SERVER_ERROR);
+                                    }
+                                } else {
+                                    Binding binding = result.next().getBinding("value").orElseThrow(() ->
+                                            ErrorUtils.sendError("Property Value binding is not present",
+                                                    INTERNAL_SERVER_ERROR));
+                                    value = getLiteral(binding.getValue().stringValue(), datatype);
+                                }
+                            }
+                            break;
                         case PRIMITIVE:
                         default:
                             value = getLiteral(valueStr, datatype);
@@ -301,5 +352,44 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                         attrs.put(attributeValue.id(), value);
                     }
                 });
+    }
+
+    private IRI getPropPathStart(Value valueAnnotation, MultivaluedMap<String, String> pathParameters,
+                                 MultivaluedMap<String, String> queryParameters, ContainerRequestContext context,
+                                 boolean isRequired) {
+        IRI propPathStart;
+        String propPathValue = valueAnnotation.value();
+        switch (valueAnnotation.type()) {
+            case PATH:
+                propPathStart = validatePathParam(propPathValue, pathParameters, isRequired)
+                        ? vf.createIRI(pathParameters.getFirst(propPathValue))
+                        : null;
+                break;
+            case QUERY:
+                propPathStart = validateQueryParam(propPathValue, queryParameters, isRequired)
+                        ? vf.createIRI(queryParameters.getFirst(propPathValue))
+                        : null;
+                break;
+            case BODY:
+                FormDataMultiPart form = getFormData(context);
+                propPathStart = validateFormParam(propPathValue, form, isRequired)
+                        ? vf.createIRI(form.getField(propPathValue).getValue())
+                        : null;
+                break;
+            case PROP_PATH:
+                throw ErrorUtils.sendError("Property Path not supported as a property path starting point",
+                        INTERNAL_SERVER_ERROR);
+            case PRIMITIVE:
+            default:
+                propPathStart = vf.createIRI(valueAnnotation.value());
+                break;
+        }
+        return propPathStart;
+    }
+
+    private TupleQueryResult getPropPathResult(IRI start, String propPath, RepositoryConnection conn) {
+        TupleQuery query = conn.prepareTupleQuery("select ?value where { ?start " + propPath + " ?value }");
+        query.setBinding("start", start);
+        return query.evaluate();
     }
 }
