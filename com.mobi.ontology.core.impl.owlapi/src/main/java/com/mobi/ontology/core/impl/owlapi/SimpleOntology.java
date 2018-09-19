@@ -23,6 +23,9 @@ package com.mobi.ontology.core.impl.owlapi;
  * #L%
  */
 
+import static java.util.Arrays.asList;
+import static java.util.Arrays.copyOf;
+
 import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.Individual;
 import com.mobi.ontology.core.api.NamedIndividual;
@@ -51,23 +54,20 @@ import com.mobi.rdf.api.Resource;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.util.Models;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.eclipse.rdf4j.rio.WriterConfig;
-import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
-import org.semanticweb.owlapi.io.IRIDocumentSource;
-import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
-import org.semanticweb.owlapi.io.OWLParser;
-import org.semanticweb.owlapi.io.OWLParserFactory;
-import org.semanticweb.owlapi.model.AddImport;
 import org.semanticweb.owlapi.model.AsOWLClass;
 import org.semanticweb.owlapi.model.AsOWLDatatype;
 import org.semanticweb.owlapi.model.HasDomain;
@@ -96,7 +96,6 @@ import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyFactory;
-import org.semanticweb.owlapi.model.OWLOntologyID;
 import org.semanticweb.owlapi.model.OWLOntologyIRIMapper;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -111,7 +110,6 @@ import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
-import org.semanticweb.owlapi.rio.RioJsonLDParserFactory;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.semanticweb.owlapi.rio.RioRenderer;
@@ -121,19 +119,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -164,191 +161,42 @@ public class SimpleOntology implements Ontology {
     private OWLOntologyManager owlManager;
 
     /**
-     * Creates a brand new SimpleOntology using an OntologyId.
-     *
-     * @param ontologyId The ID for the new ontology
-     * @param ontologyManager An OntologyManager
-     * @param transformer A SesameTransformer
-     * @param bNodeService A BNodeService
-     * @throws MobiOntologyException If an error occurs during ontology creation
-     */
-    public SimpleOntology(OntologyId ontologyId, OntologyManager ontologyManager, SesameTransformer transformer,
-                          BNodeService bNodeService) throws MobiOntologyException {
-        this.ontologyId = ontologyId;
-        initialize(ontologyManager, transformer, bNodeService, true);
-
-        try {
-            Optional<org.semanticweb.owlapi.model.IRI> owlOntIRI = Optional.empty();
-            Optional<org.semanticweb.owlapi.model.IRI> owlVerIRI = Optional.empty();
-            Optional<IRI> matOntIRI = ontologyId.getOntologyIRI();
-            Optional<IRI> matVerIRI = ontologyId.getVersionIRI();
-
-            if (matOntIRI.isPresent()) {
-                owlOntIRI = Optional.of(SimpleOntologyValues.owlapiIRI(matOntIRI.get()));
-                if (matVerIRI.isPresent()) {
-                    owlVerIRI = Optional.of(SimpleOntologyValues.owlapiIRI(matVerIRI.get()));
-                }
-            }
-
-            OWLOntologyID owlOntologyID = new OWLOntologyID(owlOntIRI, owlVerIRI);
-            owlOntology = owlManager.createOntology(owlOntologyID);
-            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
-        } catch (OWLOntologyCreationException e) {
-            throw new MobiOntologyException("Error in ontology creation", e);
-        }
-    }
-
-    /**
      * Creates a SimpleOntology using the ontology data in an InputStream.
      *
-     * @param inputStream An InputStream containing a serialized ontology
+     * @param inputStream     An InputStream containing a serialized ontology
      * @param ontologyManager An OntologyManager
-     * @param transformer A SesameTransformer
-     * @param bNodeService A BNodeService
+     * @param transformer     A SesameTransformer
+     * @param bNodeService    A BNodeService
      * @throws MobiOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(InputStream inputStream, OntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService, boolean resolveImports) throws MobiOntologyException {
         initialize(ontologyManager, transformer, bNodeService, resolveImports);
-
+        byte[] bytes = inputStreamToByteArray(inputStream);
         try {
-            owlOntology = owlManager.loadOntologyFromOntologyDocument(inputStream);
-            createOntologyId(null);
-            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
-        } catch (OWLOntologyCreationException e) {
-            throw new MobiOntologyException("Error in ontology creation", e);
-        } finally {
-            IOUtils.closeQuietly(inputStream);
+            sesameModel = createSesameModel(new ByteArrayInputStream(bytes));
+        } catch (IOException e) {
+            LOG.error("InputStream error. Unable to initialize sesame model", e);
         }
+        createOntologyFromSesameModel();
     }
 
     /**
-     * Creates a SimpleOntology using the ontology data in a File.
+     * Creates a SimpleOntology using the ontology data in a Mobi Model.
      *
-     * @param file A File containing a serialized ontology
+     * @param model           A model containing statements that make up an ontology
      * @param ontologyManager An OntologyManager
-     * @param transformer A SesameTransformer
-     * @param bNodeService A BNodeService
-     * @throws MobiOntologyException If an error occurs during ontology creation
-     * @throws FileNotFoundException If the provided File cannot be found
-     */
-    public SimpleOntology(File file, OntologyManager ontologyManager, SesameTransformer transformer,
-                          BNodeService bNodeService, boolean resolveImports) throws MobiOntologyException,
-            FileNotFoundException {
-        this(new FileInputStream(file), ontologyManager, transformer, bNodeService, resolveImports);
-    }
-
-    /**
-     * Creates a SimpleOntology using the ontology data in a File.
-     *
-     * @param model A model containing statements that make up an ontology
-     * @param ontologyManager An OntologyManager
-     * @param transformer A SesameTransformer
-     * @param bNodeService A BNodeService
+     * @param transformer     A SesameTransformer
+     * @param bNodeService    A BNodeService
      * @throws MobiOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(Model model, OntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService) throws MobiOntologyException {
         initialize(ontologyManager, transformer, bNodeService, true);
+        sesameModel = new LinkedHashModel();
+        sesameModel = this.transformer.sesameModel(model);
+        createOntologyFromSesameModel();
 
-        try {
-            owlOntology = owlManager.createOntology();
-            sesameModel = new LinkedHashModel();
-            RDFHandler handler = new BufferedGroupingRDFHandler(new StatementCollector(sesameModel));
-            Rio.write(this.transformer.sesameModel(model), handler);
-            RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
-            parser.parse(new RioMemoryTripleSource(sesameModel), owlOntology, config);
-            createOntologyId(null);
-            /*PrefixDocumentFormat pf = owlManager.getOntologyFormat(owlOntology).asPrefixOWLDocumentFormat();
-            if (pf != null) {
-                Map<String, String> prefixes = pf.getPrefixName2PrefixMap();
-                if (pf.getDefaultPrefix() == null && !owlOntology.isAnonymous()) {
-                    owlOntology.getOntologyID().getOntologyIRI().ifPresent(iri -> {
-                        String defaultPrefix = iri.getIRIString();
-                        if (!iri.getIRIString().endsWith("/")) {
-                            defaultPrefix = iri.getIRIString() + '#';
-                        }
-                        pf.setDefaultPrefix(defaultPrefix);
-                    });
-                }
-                prefixes.forEach((prefix, namespace) -> sesameModel.setNamespace(prefix.replace(":", ""), namespace));
-            }*/
-            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
-        } catch (OWLOntologyCreationException e) {
-            throw new MobiOntologyException("Error in ontology creation", e);
-        }
-    }
-
-    /**
-     * Creates a SimpleOntology using an IRI to collect the document.
-     *
-     * @param iri An IRI of an existing ontology
-     * @param ontologyManager An OntologyManager
-     * @param transformer A SesameTransformer
-     * @param bNodeService A BNodeService
-     * @throws MobiOntologyException If an error occurs during ontology creation
-     */
-    public SimpleOntology(IRI iri, SimpleOntologyManager ontologyManager, SesameTransformer transformer,
-                          BNodeService bNodeService) throws MobiOntologyException {
-        initialize(ontologyManager, transformer, bNodeService, true);
-
-        try {
-            OWLOntologyDocumentSource documentSource = new IRIDocumentSource(SimpleOntologyValues.owlapiIRI(iri));
-            owlOntology = owlManager.loadOntologyFromOntologyDocument(documentSource, config);
-            createOntologyId(null);
-            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
-        } catch (OWLOntologyCreationException e) {
-            throw new MobiOntologyException("Error in ontology creation", e);
-        }
-    }
-
-    /**
-     * Creates a SimpleOntology using the ontology data in a JSON-LD string.
-     *
-     * @param json A JSON-LD string with a serialized ontology
-     * @param ontologyManager An OntologyManager
-     * @param transformer A SesameTransformer
-     * @param bNodeService A BNodeService
-     * @throws MobiOntologyException If an error occurs during ontology creation
-     */
-    public SimpleOntology(String json, OntologyManager ontologyManager, SesameTransformer transformer,
-                          BNodeService bNodeService, boolean resolveImports) throws MobiOntologyException {
-        initialize(ontologyManager, transformer, bNodeService, resolveImports);
-
-        OWLParserFactory factory = new RioJsonLDParserFactory();
-        OWLParser parser = factory.createParser();
-
-        try {
-            OWLOntologyDocumentSource source = new RioMemoryTripleSource(
-                    Rio.parse(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)), "", RDFFormat.JSONLD));
-            owlOntology = owlManager.createOntology();
-            parser.parse(source, owlOntology, config);
-            createOntologyId(null);
-            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
-        } catch (IOException | RDFParseException | OWLOntologyCreationException e) {
-            throw new MobiOntologyException("Error in ontology creation", e);
-        }
-
-    }
-
-    protected SimpleOntology(OWLOntology ontology, Resource resource, OntologyManager ontologyManager,
-                             SesameTransformer transformer, BNodeService bNodeService) {
-        initialize(ontologyManager, transformer, bNodeService, true);
-
-        try {
-            owlOntology = owlManager.copyOntology(ontology, OntologyCopy.DEEP);
-
-            // Copy Imports
-            ontology.importsDeclarations().forEach(declaration -> {
-                this.owlManager.makeLoadImportRequest(declaration, config);
-                this.owlManager.applyChange(new AddImport(this.owlOntology, declaration));
-            });
-        } catch (OWLOntologyCreationException e) {
-            throw new MobiOntologyException("Error in ontology creation", e);
-        }
-
-        createOntologyId(resource);
-        owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
     }
 
     private void initialize(OntologyManager ontologyManager, SesameTransformer transformer, BNodeService bNodeService, boolean resolveImports) {
@@ -425,6 +273,23 @@ public class SimpleOntology implements Ontology {
             this.ontologyId = ontologyManager.createOntologyId(resource);
         } else {
             this.ontologyId = ontologyManager.createOntologyId();
+            sesameModel.add(transformer.sesameResource(this.ontologyId.getOntologyIdentifier()), RDF.TYPE,
+                    OWL.ONTOLOGY);
+        }
+    }
+
+    /**
+     * Creates an Ontology from an initialized sesame model.
+     */
+    private void createOntologyFromSesameModel() {
+        try {
+            owlOntology = owlManager.createOntology();
+            RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
+            parser.parse(new RioMemoryTripleSource(sesameModel), owlOntology, config);
+            createOntologyId(null);
+            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
+        } catch (OWLOntologyCreationException e) {
+            throw new MobiOntologyException("Error in ontology creation", e);
         }
     }
 
@@ -436,13 +301,6 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<IRI> getUnloadableImportIRIs() {
         return missingImports;
-    }
-
-    @Override
-    public Set<Ontology> getDirectImports() {
-        return owlOntology.directImports()
-                .map(SimpleOntologyValues::mobiOntology)
-                .collect(Collectors.toSet());
     }
 
     @Override
@@ -920,6 +778,73 @@ public class SimpleOntology implements Ontology {
         return stream.map(HasDomain::getDomain).count() == 0;
     }
 
+    /**
+     * Reads the provided {@link InputStream} into a {@link byte[]}
+     *
+     * @param inputStream
+     * @return {@link byte[]}
+     */
+    private byte[] inputStreamToByteArray(InputStream inputStream) {
+        int size = 8192;
+        byte[] bytes = new byte[0];
+        try {
+            while (size == 8192) {
+                byte[] read = new byte[size];
+                size = inputStream.read(read);
+                int offset = bytes.length;
+                bytes = copyOf(bytes, offset + size);
+                System.arraycopy(read, 0, bytes, offset, size);
+            }
+        } catch (IOException e) {
+            LOG.error("Unable to read ontology file.", e);
+            throw new MobiOntologyException(e);
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
+        return bytes;
+    }
+
+    /**
+     * Parses and intitializes a {@link org.eclipse.rdf4j.model.Model} for the ontology represented by the
+     * {@link InputStream}.
+     *
+     * @param inputStream the InputStream to parse
+     * @throws IOException
+     */
+    private org.eclipse.rdf4j.model.Model createSesameModel(InputStream inputStream) throws IOException {
+        org.eclipse.rdf4j.model.Model model = new LinkedHashModel();
+
+        Set<RDFFormat> formats = new HashSet<>(asList(RDFFormat.JSONLD, RDFFormat.TRIG, RDFFormat.TURTLE,
+                RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS));
+
+        Iterator<RDFFormat> rdfFormatIterator = formats.iterator();
+        InputStream markSupported = inputStream.markSupported() ? inputStream : new BufferedInputStream(inputStream);
+
+        try {
+            markSupported.mark(0);
+
+            while (rdfFormatIterator.hasNext()) {
+                RDFFormat format = rdfFormatIterator.next();
+                try {
+                    model = Rio.parse(markSupported, "", format);
+                    LOG.debug("File is {} formatted.", format.getName());
+                    break;
+                } catch (RDFParseException | UnsupportedRDFormatException e) {
+                    markSupported.reset();
+                    LOG.info("File is not {} formatted.", format.getName());
+                }
+            }
+        } finally {
+            if (markSupported != null) {
+                IOUtils.closeQuietly(markSupported);
+            } else {
+                IOUtils.closeQuietly(inputStream);
+            }
+        }
+
+        return model;
+    }
+
     private class NoImportLoader implements OWLOntologyIRIMapper {
         private static final long serialVersionUID = 1053401035177616554L;
         // Copy and pasted from a blank Protégé document.
@@ -939,7 +864,8 @@ public class SimpleOntology implements Ontology {
                 BufferedWriter out = new BufferedWriter(new FileWriter(tmp));
                 out.write(blankDocument);
                 out.close();
-            } catch (IOException ignored) { }
+            } catch (IOException ignored) {
+            }
             return org.semanticweb.owlapi.model.IRI.create(tmp); // create blank IRI
         }
     }

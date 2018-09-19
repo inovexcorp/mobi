@@ -1,0 +1,44 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.user-access-controls {
+    width: 100%;
+    .selected-items {
+        width: 100%;
+        border: 1px solid lightgray;
+        border-radius: 5px;
+        height: 200px;
+        overflow-y: auto;
+
+        .selected-item {
+            padding: 5px;
+
+            a {
+                float: right;
+                cursor: pointer;
+                margin-left: auto;
+            }
+        }
+    }
+    md-autocomplete[hide-label] label {
+        display: none;
+    }
+    md-autocomplete-wrap {
+        height: 40px !important;
+    }
+    md-switch {
+        margin-left: 0;
+        margin-top: 0;
+    }
+    .save-container {
+        height: auto;
+        bottom: 25px;
+        position: absolute;
+        right: 25px;
+        z-index: 5001;
+    }
+
+    .selector-container {
+        z-index: 5001;
+    }
+}
