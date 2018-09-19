@@ -119,7 +119,7 @@
 			<xs:element ref="xacml:Attribute" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 		<xs:attribute name="Category" type="xs:anyURI" use="required"/>
-		<xs:attribute ref="xml:id" use="optional"/>
+		<!--<xs:attribute ref="xml:id" use="optional"/>-->
 	</xs:complexType>
 
 	<xs:element name="Attribute" type="xacml:AttributeType"/>
