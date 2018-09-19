@@ -114,7 +114,7 @@ describe('Open Ontology Tab directive', function() {
                 expect(this.element.find(item).length).toBe(1);
             });
         });
-        it('with custom buttons to upload an ontology and make a new ontology', function() {
+        it('with buttons to upload an ontology and make a new ontology', function() {
             var buttons = this.element.querySelectorAll('.actions button');
             expect(buttons.length).toBe(2);
             expect(['Upload Ontology', 'New Ontology'].indexOf(angular.element(buttons[0]).text().trim()) >= 0).toBe(true);
@@ -262,6 +262,13 @@ describe('Open Ontology Tab directive', function() {
             this.controller.search({keyCode: 13});
             expect(this.controller.currentPage).toEqual(1);
             expect(this.controller.getPageOntologyRecords).toHaveBeenCalled();
+        });
+        it('should show a record access overlay', function() {
+            var event = scope.$emit('click');
+            spyOn(event, 'stopPropagation');
+            this.controller.showAccessOverlay({'@id': 'recordId'}, 'rule', event);
+            expect(event.stopPropagation).toHaveBeenCalled();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('recordAccessOverlay', {ruleId: 'rule', resource: 'recordId'});
         });
     });
     it('should filter the ontology list when the filter text changes', function() {

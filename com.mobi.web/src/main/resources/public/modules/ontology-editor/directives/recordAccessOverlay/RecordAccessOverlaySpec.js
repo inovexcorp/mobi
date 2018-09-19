@@ -45,9 +45,13 @@ describe('Record Access Overlay directive', function() {
         this.getPolicyDefer = $q.defer();
         recordPermissionsManagerSvc.getRecordPolicy.and.returnValue(this.getPolicyDefer.promise);
 
-        scope.overlayFlag = true;
-        scope.resource = 'urn:resource';
-        this.element = $compile(angular.element('<record-access-overlay overlay-flag="overlayFlag" resource="resource" rule-id="urn:read"></record-access-overlay>'))(scope);
+        scope.resolve = {
+            resource: this.recordId,
+            ruleId: 'urn:read'
+        };
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<record-access-overlay resolve="resolve" close="close()" dismiss="dismiss()"></record-access-overlay>'))(scope);
         scope.$digest();
         this.isolatedScope = this.element.isolateScope();
         this.controller = this.element.controller('recordAccessOverlay');
@@ -161,7 +165,6 @@ describe('Record Access Overlay directive', function() {
                     everyone: false,
                     policy: this.policy
                 };
-                this.controller.overlayFlag = true;
             });
             it('successfully', function() {
                 this.controller.policy = this.item;
@@ -171,6 +174,7 @@ describe('Record Access Overlay directive', function() {
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                 expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                 expect(this.item.changed).toEqual(false);
+                expect(scope.close).toHaveBeenCalled();
             });
             it('unless an error occurs', function() {
                 this.controller.policy = this.item;
@@ -181,7 +185,47 @@ describe('Record Access Overlay directive', function() {
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error');
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
                 expect(this.item.changed).toEqual(true);
+                expect(scope.close).not.toHaveBeenCalled();
             });
         });
+        it('should cancel the overlay', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
+    });
+    describe('replaces the element with the correct html', function() {
+        it('for wrapping containers', function() {
+            expect(this.element.prop('tagName')).toBe('RECORD-ACCESS-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
+        });
+        it('with a form', function() {
+            expect(this.element.find('form').length).toBe(1);
+        });
+        it('with a h3', function() {
+            expect(this.element.find('h3').length).toBe(1);
+        });
+        it('with a user-access-controls', function() {
+            expect(this.element.find('user-access-controls').length).toBe(1);
+        });
+        it('with buttons to submit and cancel', function() {
+            var buttons = this.element.querySelectorAll('.modal-footer button');
+            expect(buttons.length).toBe(2);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+        });
+    });
+    it('should call save when the submit button is clicked', function() {
+        spyOn(this.controller, 'save');
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.save).toHaveBeenCalledWith(this.recordId);
+    });
+    it('should call cancel when the button is clicked', function() {
+        spyOn(this.controller, 'cancel');
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
 });

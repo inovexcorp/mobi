@@ -182,9 +182,9 @@
                             pe.evaluateRequest(request).then(decision => record.userCanManage = decision == pe.permit);
                         })
                     }
-                    dvm.showAccessOverlay = function(record, overlayName, event) {
-                        record[overlayName] = true;
+                    dvm.showAccessOverlay = function(record, ruleId, event) {
                         event.stopPropagation();
+                        modalService.openModal('recordAccessOverlay', {ruleId, resource: record['@id']});
                     }
 
                     $scope.$watch(() => dvm.os.list.length, () => {
