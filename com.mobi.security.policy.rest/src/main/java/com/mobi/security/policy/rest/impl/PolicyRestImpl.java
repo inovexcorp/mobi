@@ -98,7 +98,7 @@ public class PolicyRestImpl implements PolicyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "policyId")
+    @ResourceId(type = ValueType.PATH, value = "policyId")
     public Response retrievePolicy(String policyId) {
         try {
             Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(policyId));
@@ -112,7 +112,7 @@ public class PolicyRestImpl implements PolicyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "policyId")
+    @ResourceId(type = ValueType.PATH, value = "policyId")
     public Response updatePolicy(String policyId, String policyJson) {
         try {
             XACMLPolicy policy = jsonToPolicy(policyJson);
@@ -132,7 +132,7 @@ public class PolicyRestImpl implements PolicyRest {
         try {
             PolicyType converted = getMapper().readValue(json, PolicyType.class);
             if (StringUtils.isEmpty(converted.getPolicyId())) {
-                throw ErrorUtils.sendError("Policy must have a id", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError("Policy must have a value", Response.Status.BAD_REQUEST);
             }
             return policyManager.createPolicy(converted);
         } catch (IOException ex) {

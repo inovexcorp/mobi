@@ -1,0 +1,40 @@
+{
+  "urn:read": {
+    "everyone": true,
+    "users": [],
+    "groups": []
+  },
+  "urn:delete": {
+    "everyone": false,
+    "users": [
+      "http://mobi.com/users/testUser1",
+      "http://mobi.com/users/testUser2"
+    ],
+    "groups": []
+  },
+  "urn:update": {
+    "everyone": false,
+    "users": [
+      "http://mobi.com/users/testUser1"
+    ],
+    "groups": [
+      "http://mobi.com/groups/group1"
+    ]
+  },
+  "urn:modify": {
+    "everyone": true,
+    "users": [],
+    "groups": []
+  },
+  "urn:modifyMaster": {
+    "everyone": false,
+    "users": [
+      "http://mobi.com/users/testUser1",
+      "http://mobi.com/users/testUser2"
+    ],
+    "groups": [
+      "http://mobi.com/groups/group1",
+      "http://mobi.com/groups/group2"
+    ]
+  }
+}
