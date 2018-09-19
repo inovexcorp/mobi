@@ -98,8 +98,8 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
     }
 
     @Override
-    @ActionId(id = Update.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Update.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response retrieveRecordPolicy(String recordId) {
         try (RepositoryConnection conn = repo.getConnection()) {
             Optional<String> recordPolicyIdOpt = getRelatedResourceId(recordId, conn);
@@ -118,7 +118,7 @@ public class RecordPermissionsRestImpl implements RecordPermissionsRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateRecordPolicy(String recordId, String policyJson) {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Record Policy
