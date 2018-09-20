@@ -34,7 +34,6 @@ import com.mobi.security.policy.api.cache.config.PolicyCacheServiceConfig;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheEventListenerConfigurationBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.config.units.MemoryUnit;
 import org.ehcache.core.events.CacheEventListenerConfiguration;
 import org.ehcache.event.EventType;
 import org.ehcache.expiry.Expirations;
@@ -54,14 +53,19 @@ public class PolicyCacheConfiguration implements CacheConfiguration {
     private static final Logger LOG = LoggerFactory.getLogger(PolicyCacheConfiguration.class);
 
     private String cacheId;
-    private int maxHeapSize;
+    private int numEntries;
 
     @Activate
     public void start(Map<String, Object> props) {
         PolicyCacheServiceConfig config = Configurable.createConfigurable(PolicyCacheServiceConfig.class, props);
 
         this.cacheId = config.id();
-        this.maxHeapSize = config.maxHeapSize();
+
+        if (props.containsKey("numEntries")) {
+            this.numEntries = config.numEntries();
+        } else {
+            this.numEntries = 250;
+        }
     }
 
     @Modified
@@ -83,7 +87,8 @@ public class PolicyCacheConfiguration implements CacheConfiguration {
                 .build();
         return Eh107Configuration.fromEhcacheCacheConfiguration(CacheConfigurationBuilder
                 .newCacheConfigurationBuilder(String.class, Policy.class,
-                        ResourcePoolsBuilder.newResourcePoolsBuilder().heap(maxHeapSize, MemoryUnit.MB))
+                        ResourcePoolsBuilder.heap(numEntries))
+                .withSizeOfMaxObjectGraph(2000)
                 .withExpiry(Expirations.noExpiration())
                 .add(eventConfig)
                 .build());

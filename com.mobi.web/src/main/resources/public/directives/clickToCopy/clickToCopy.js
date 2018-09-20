@@ -40,7 +40,7 @@
          * @requires toastr
          *
          * @description
-         * `clickToCopy` is a directive that adds directives to the parent element so thata user can click on the
+         * `clickToCopy` is a directive that adds directives to the parent element so that a user can click on the
          * element and copy provided text that is resolved from the parent scope.
          *
          * @param {*} clickToCopy The expression to be evaluated in the parent scope that should result in text that

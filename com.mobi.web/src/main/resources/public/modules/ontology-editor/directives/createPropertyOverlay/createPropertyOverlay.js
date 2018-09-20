@@ -75,8 +75,6 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    var setAsObject = false;
-                    var setAsDatatype = false;
 
                     dvm.characteristics = [
                         {

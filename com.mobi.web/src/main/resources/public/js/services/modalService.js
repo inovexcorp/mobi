@@ -39,7 +39,7 @@
          * @requires $uibModal
          *
          * @description
-         * `modalService` is a service that privides functionality to open modals based on the name of the directive.
+         * `modalService` is a service that provides functionality to open modals based on the name of the directive.
          * It uses the $uibModal service to create modals.
          */
         .service('modalService', modalService);

@@ -42,9 +42,9 @@
          * @requires ontologyState.service:ontologyStateService
          *
          * @description
-         * `axiomOverlay` is a directive that creates content for a modal that provides a form for entering catalog
-         * record metadata about each of the {@link ontologyState.service:ontologyStateService uploaded files}. The
-         * form contains a {@link textInput.directive:textInput} for the record title, a
+         * `uploadOntologyOverlay` is a directive that creates content for a modal that provides a form for entering
+         * catalog record metadata about each of the {@link ontologyState.service:ontologyStateService uploaded files}.
+         * The form contains a {@link textInput.directive:textInput} for the record title, a
          * {@link textArea.directive:textArea} for the record description, and a
          * {@link keywordSelect.directive:keywordSelect} for each uploaded file. The title defaults to the file name.
          * The modal contains buttons to Cancel, Submit the current ontology upload, and Submit all the subsequent

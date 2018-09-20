@@ -37,6 +37,8 @@ import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
+import com.mobi.catalog.api.ontologies.mcat.Modify;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFactory;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -48,6 +50,12 @@ import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rest.security.annotations.ActionAttributes;
+import com.mobi.rest.security.annotations.ActionId;
+import com.mobi.rest.security.annotations.AttributeValue;
+import com.mobi.rest.security.annotations.ResourceId;
+import com.mobi.rest.security.annotations.Value;
+import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import net.sf.json.JSONArray;
@@ -179,6 +187,11 @@ public class MergeRequestRestImpl implements MergeRequestRest {
         }
     }
 
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PROP_PATH, value = "<" + MergeRequest.onRecord_IRI + ">",
+            start = @Value(type = ValueType.PATH, value = "requestId"))
+    @ActionAttributes(@AttributeValue(type = ValueType.PROP_PATH, value = "<" + MergeRequest.targetBranch_IRI + ">",
+            id = VersionedRDFRecord.branch_IRI, start = @Value(type = ValueType.PATH, value = "requestId")))
     @Override
     public Response acceptMergeRequest(ContainerRequestContext context, String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
