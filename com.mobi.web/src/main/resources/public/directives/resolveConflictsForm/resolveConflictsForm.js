@@ -33,14 +33,12 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/resolveConflictsForm/resolveConflictsForm.html',
-                scope: {
-                    branchTitle: '<',
-                    targetTitle: '<'
-                },
+                templateUrl: 'directives/resolveConflictsForm/resolveConflictsForm.html',
+                scope: {},
                 bindToController: {
                     conflicts: '<',
-                    resolutions: '='
+                    branchTitle: '<',
+                    targetTitle: '<'
                 },
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {

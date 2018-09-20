@@ -1,0 +1,43 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="merge-block">
+    <block>
+        <block-header>
+            <div class="row justify-content-center">
+                <form name="dvm.form" novalidate autocomplete="off">
+                    <span class="merge-message">Merge <strong>Branch: {{dvm.branchTitle}}</strong> into</span>
+                    <branch-select ng-model="dvm.os.listItem.merge.target" required="true" class="select-branch" is-disabled-when="dvm.os.listItem.userBranch" change-event="dvm.changeTarget()" branches="dvm.branches"></branch-select>
+                    <checkbox ng-if="dvm.branchTitle !== 'MASTER' && !dvm.os.listItem.userBranch" ng-model="dvm.os.listItem.merge.checkbox" display-text="'Remove Branch: ' + dvm.branchTitle + ' after merge.'"></checkbox>
+                </form>
+            </div>
+        </block-header>
+        <block-content class="padding">
+            <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+            <commit-difference-tabset ng-if="dvm.os.listItem.merge.target" class="in-overlay" branch-title="dvm.branchTitle" commit-id="dvm.os.listItem.ontologyRecord.commitId" target-id="dvm.targetHeadCommitId" difference="dvm.os.listItem.merge.difference"></commit-difference-tabset>
+        </block-content>
+        <block-footer>
+            <button class="btn btn-primary float-right" ng-click="dvm.submit()" ng-disabled="!dvm.os.listItem.merge.target || !dvm.os.listItem.upToDate">Submit</button>
+            <button class="btn float-right mr-2" ng-click="dvm.os.cancelMerge()">Cancel</button>
+        </block-footer>
+    </block>
+</div>

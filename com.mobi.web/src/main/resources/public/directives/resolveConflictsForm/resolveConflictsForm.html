@@ -21,8 +21,6 @@
   #L%
   -->
 <div class="resolve-conflicts-form">
-    <p class="text-center">Merge <strong>Branch: {{branchTitle}}</strong> into <strong>Branch: {{targetTitle}}</strong></p>
-    <p class="text-center" ng-if="dvm.checkbox">Branch: {{branchTitle}} will be removed after conflicts are resolved.</p>
     <div class="list-info" ng-if="dvm.index === undefined">
         <p><strong>NOTE:</strong> There were conflicts found for the following entities. Please select the entity you want to resolve first.</p>
         <p ng-repeat="conflict in dvm.conflicts" class="conflict-list-item" ng-class="{'text-danger': !conflict.resolved, 'text-success': conflict.resolved}">
@@ -38,7 +36,7 @@
             </div>
             <div class="property-values conflict flex-grow-1 left" ng-click="dvm.selected.resolved = 'left'" ng-class="{'active': dvm.selected.resolved === 'left', 'not-selected': dvm.selected.resolved === 'right'}">
                 <div class="value-header d-flex align-items-center clearfix">
-                    <span class="text flex-grow-1">Branch: {{branchTitle}}</span>
+                    <span class="text flex-grow-1">Branch: {{dvm.branchTitle}}</span>
                     <input type="radio" name="resolution" class="float-right" ng-model="dvm.selected.resolved" ng-value="'left'" />
                 </div>
                 <div class="value-container">
@@ -56,7 +54,7 @@
             </div>
             <div class="property-values conflict flex-grow-1 right" ng-click="dvm.selected.resolved = 'right'" ng-class="{'active': dvm.selected.resolved === 'right', 'not-selected': dvm.selected.resolved === 'left'}">
                 <div class="value-header d-flex align-items-center clearfix">
-                    <span class="text flex-grow-1">Branch: {{targetTitle}}</span>
+                    <span class="text flex-grow-1">Branch: {{dvm.targetTitle}}</span>
                     <input type="radio" name="resolution" class="float-right" ng-model="dvm.selected.resolved" ng-value="'right'" />
                 </div>
                 <div class="value-container">
