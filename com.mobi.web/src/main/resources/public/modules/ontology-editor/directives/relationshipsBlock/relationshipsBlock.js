@@ -45,7 +45,7 @@
          * @requires prefixes.service:prefixes
          *
          * @description
-         * `annotationBlock` is a directive that creates a {@link block.directive:block} that displays the
+         * `relationshipsBlock` is a directive that creates a {@link block.directive:block} that displays the
          * SKOS relationships on the
          * {@link ontologyState.service:ontologyStateService selected concept or concept scheme} using
          * {@link propertyValues.directive:propertyValues}. If the selected entity is a concept, the `block` contains a
