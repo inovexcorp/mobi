@@ -331,7 +331,7 @@
                 // Check if class mapping exists and the property exists in the ontology or the property is one of the
                 // supported annotations
                 var propEntity = om.getEntity([ontology], propId);
-                if (entityExists(mapping, classMappingId) && ((propEntity && om.isDataTypeProperty(propEntity)) || _.includes(self.annotationProperties, propId))) {
+                if (entityExists(mapping, classMappingId) && ((propEntity && om.isDataTypeProperty(propEntity)) || _.includes(self.annotationProperties, propId) || om.isAnnotation(propEntity))) {
                     // Add new data mapping id to data properties of class mapping
                     propMapping = {
                         '@id': self.getMappingEntity(mapping)['@id'] + '/' + uuid.v4()

@@ -39,35 +39,6 @@ import javax.annotation.Nonnull;
 public interface OntologyManager {
 
     /**
-     * Creates a new Ontology Object using the provided OntologyId.
-     *
-     * @param ontologyId the ontology id for the Ontology you want to create.
-     * @return an Ontology with the desired recordId.
-     * @throws MobiOntologyCreationException - if the ontology can't be created.
-     */
-    Ontology createOntology(OntologyId ontologyId);
-
-    /**
-     * Creates a new Ontology Object using the provided File.
-     *
-     * @param file the File that contains the data to make up the Ontology.
-     * @param resolveImports Whether or not imports should be resolved when creating this ontology
-     * @return an Ontology created with the provided File.
-     * @throws MobiOntologyCreationException - if the ontology can't be created.
-     * @throws FileNotFoundException            - if the file path is invalid.
-     */
-    Ontology createOntology(File file, boolean resolveImports) throws FileNotFoundException;
-
-    /**
-     * Creates a new Ontology Object using the provided IRI.
-     *
-     * @param iri the IRI of the Ontology you want to create.
-     * @return an Ontology resolved from the provided IRI.
-     * @throws MobiOntologyCreationException - if the ontology can't be created.
-     */
-    Ontology createOntology(IRI iri);
-
-    /**
      * Creates a new Ontology Object using the provided InputStream.
      *
      * @param inputStream the InputStream which contains the ontology data.
@@ -76,16 +47,6 @@ public interface OntologyManager {
      * @throws MobiOntologyCreationException - if the ontology can't be created.
      */
     Ontology createOntology(InputStream inputStream, boolean resolveImports);
-
-    /**
-     * Creates a new Ontology Object using the provided JSON-LD String.
-     *
-     * @param json the JSON-LD of the ontology you want to create.
-     * @param resolveImports Whether or not imports should be resolved when creating this ontology
-     * @return an Ontology created with the provided JSON-LD String.
-     * @throws MobiOntologyCreationException - if the ontology can't be created.
-     */
-    Ontology createOntology(String json, boolean resolveImports);
 
     /**
      * Creates a new Ontology Object using the provided Model.

@@ -139,9 +139,7 @@ describe('Ontology Utils Manager service', function() {
         beforeEach(function() {
             spyOn(ontologyUtilsManagerSvc, 'containsDerivedConcept').and.returnValue(true);
             spyOn(ontologyUtilsManagerSvc, 'containsDerivedConceptScheme').and.returnValue(true);
-            ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, id) {
-                return this.createDummyEntity(id);
-            }.bind(this));
+            ontologyStateSvc.getEntityByRecordId.and.callFake((recordId, id) => this.createDummyEntity(id));
             ontologyStateSvc.listItem = {
                 ontologyRecord: {recordId: 'recordId'},
                 selected: {'@id': 'selectedId', '@type': ['selected']},
@@ -201,14 +199,14 @@ describe('Ontology Utils Manager service', function() {
                     selectedTypeExpect: 'containsDerivedConceptScheme',
                     targetTypeExpect: 'containsDerivedConcept'
                 },
-            ].forEach(function(test) {
-                _.forEach(test.targetArray, function(relationship) {
+            ].forEach(test => {
+                _.forEach(test.targetArray, relationship => {
                     describe(relationship + ' and', function() {
                         it('should be updated', function() {
                             ontologyUtilsManagerSvc.updateVocabularyHierarchies(prefixes.skos + relationship, this.values);
                             expect(ontologyUtilsManagerSvc[test.selectedTypeExpect]).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@type']);
                             expect(ontologyUtilsManagerSvc[test.targetTypeExpect]).toHaveBeenCalledWith(['dummy']);
-                            _.forEach(this.values, function(value) {
+                            _.forEach(this.values, value => {
                                 expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
                                 expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem[test.key].hierarchy, test.entityIRI || value['@id'], ontologyStateSvc.listItem[test.key].index, test.parentIRI || value['@id']);
                             });
@@ -228,13 +226,11 @@ describe('Ontology Utils Manager service', function() {
                                 describe('has relationship', function() {
                                     _.forEach(test.otherArray, function(otherRelationship) {
                                         it(otherRelationship, function() {
-                                            ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, id) {
-                                                return this.createDummyEntity(id, otherRelationship, [{'@id': 'selectedId'}]);
-                                            }.bind(this));
+                                            ontologyStateSvc.getEntityByRecordId.and.callFake((recordId, id) => this.createDummyEntity(id, otherRelationship, [{'@id': 'selectedId'}]));
                                             ontologyUtilsManagerSvc.updateVocabularyHierarchies(prefixes.skos + relationship, this.values);
                                             expect(ontologyUtilsManagerSvc[test.selectedTypeExpect]).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@type']);
                                             expect(ontologyUtilsManagerSvc[test.targetTypeExpect]).not.toHaveBeenCalledWith(['dummy']);
-                                            _.forEach(this.values, function(value) {
+                                            _.forEach(this.values, value => {
                                                 expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
                                             });
                                             expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
@@ -243,13 +239,11 @@ describe('Ontology Utils Manager service', function() {
                                     });
                                 });
                                 it('is incorrect type', function() {
-                                    ontologyUtilsManagerSvc[test.targetTypeExpect].and.callFake(function(types) {
-                                        return !_.includes(types, 'dummy');
-                                    });
+                                    ontologyUtilsManagerSvc[test.targetTypeExpect].and.callFake(types => !_.includes(types, 'dummy'));
                                     ontologyUtilsManagerSvc.updateVocabularyHierarchies(prefixes.skos + relationship, this.values);
                                     expect(ontologyUtilsManagerSvc[test.selectedTypeExpect]).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@type']);
                                     expect(ontologyUtilsManagerSvc[test.targetTypeExpect]).toHaveBeenCalledWith(['dummy']);
-                                    _.forEach(this.values, function(value) {
+                                    _.forEach(this.values, value => {
                                         expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
                                     });
                                     expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
@@ -266,9 +260,7 @@ describe('Ontology Utils Manager service', function() {
         beforeEach(function() {
             spyOn(ontologyUtilsManagerSvc, 'containsDerivedConcept').and.returnValue(true);
             spyOn(ontologyUtilsManagerSvc, 'containsDerivedConceptScheme').and.returnValue(true);
-            ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, id) {
-                return this.createDummyEntity(id);
-            }.bind(this));
+            ontologyStateSvc.getEntityByRecordId.and.callFake((recordId, id) => this.createDummyEntity(id));
             ontologyStateSvc.listItem = {
                 ontologyRecord: {recordId: 'recordId'},
                 selected: {'@id': 'selectedId', '@type': ['selected']},
@@ -330,8 +322,8 @@ describe('Ontology Utils Manager service', function() {
                     selectedTypeExpect: 'containsDerivedConceptScheme',
                     targetTypeExpect: 'containsDerivedConcept'
                 }
-            ].forEach(function(test) {
-                _.forEach(test.targetArray, function(relationship) {
+            ].forEach(test => {
+                _.forEach(test.targetArray, relationship => {
                     describe(relationship + ' and', function() {
                         beforeEach(function() {
                             _.set(ontologyStateSvc.listItem, 'editorTabStates.schemes.entityIRI', test.entityIRI);
@@ -362,9 +354,7 @@ describe('Ontology Utils Manager service', function() {
                                 describe('has relationship', function() {
                                     _.forEach(test.otherArray, function(otherRelationship) {
                                         it(otherRelationship, function() {
-                                            ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, id) {
-                                                return this.createDummyEntity(id, otherRelationship, [{'@id': 'selectedId'}]);
-                                            }.bind(this));
+                                            ontologyStateSvc.getEntityByRecordId.and.callFake((recordId, id) => this.createDummyEntity(id, otherRelationship, [{'@id': 'selectedId'}]));
                                             ontologyUtilsManagerSvc.removeFromVocabularyHierarchies(prefixes.skos + relationship, {'@id': 'value1'});
                                             expect(ontologyUtilsManagerSvc[test.selectedTypeExpect]).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@type']);
                                             expect(ontologyUtilsManagerSvc[test.targetTypeExpect]).not.toHaveBeenCalledWith(['dummy']);
@@ -379,9 +369,7 @@ describe('Ontology Utils Manager service', function() {
                                     });
                                 });
                                 it('is incorrect type', function() {
-                                    ontologyUtilsManagerSvc[test.targetTypeExpect].and.callFake(function(types) {
-                                        return !_.includes(types, 'dummy');
-                                    });
+                                    ontologyUtilsManagerSvc[test.targetTypeExpect].and.callFake(types => !_.includes(types, 'dummy'));
                                     ontologyUtilsManagerSvc.removeFromVocabularyHierarchies(prefixes.skos + relationship, {'@id': 'value1'});
                                     expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
                                     expect(ontologyUtilsManagerSvc[test.selectedTypeExpect]).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@type']);
@@ -433,7 +421,7 @@ describe('Ontology Utils Manager service', function() {
             });
             it('and when updateEverythingTree is false', function() {
                 ontologyUtilsManagerSvc.commonDelete('iri')
-                    .then(_.noop, function() {
+                    .then(_.noop, () => {
                         fail('Promise should have resolved');
                     });
                 scope.$apply();
@@ -450,7 +438,7 @@ describe('Ontology Utils Manager service', function() {
             });
             it('and when updateEverythingTree is true', function() {
                 ontologyUtilsManagerSvc.commonDelete('iri', true)
-                    .then(_.noop, function() {
+                    .then(_.noop, () => {
                         fail('Promise should have resolved');
                     });
                 scope.$apply();
@@ -469,7 +457,7 @@ describe('Ontology Utils Manager service', function() {
         it('when getEntityUsages rejects', function() {
             ontologyManagerSvc.getEntityUsages.and.returnValue($q.reject('error'));
             ontologyUtilsManagerSvc.commonDelete('iri')
-                .then(function() {
+                .then(() => {
                     fail('Promise should have rejected');
                 });
             scope.$apply();
@@ -745,40 +733,36 @@ describe('Ontology Utils Manager service', function() {
             expect(entity).toEqual({});
         });
         describe('when language is provided', function() {
-            beforeEach(function () {
+            beforeEach(function() {
                 this.language = 'en';
             });
             it('and it has a dcterms:title', function() {
-                var entity = {};
-                entity[prefixes.dcterms + 'title'] = [{'@value': 'value'}];
-                var expected = {};
-                expected[prefixes.dcterms + 'title'] = [{'@value': 'value', '@language': this.language}];
+                var entity = {[prefixes.dcterms + 'title']: [{'@value': 'value'}]};
+                var expected = {[prefixes.dcterms + 'title']: [{'@value': 'value', '@language': this.language}]};
                 ontologyUtilsManagerSvc.addLanguageToNewEntity(entity, this.language);
                 expect(entity).toEqual(expected);
             });
             it('and it has a dcterms:description', function() {
-                var entity = {};
-                entity[prefixes.dcterms + 'description'] = [{'@value': 'value'}];
-                var expected = {};
-                expected[prefixes.dcterms + 'description'] = [{'@value': 'value', '@language': this.language}];
+                var entity = {[prefixes.dcterms + 'description']: [{'@value': 'value'}]};
+                var expected = {[prefixes.dcterms + 'description']: [{'@value': 'value', '@language': this.language}]};
                 ontologyUtilsManagerSvc.addLanguageToNewEntity(entity, this.language);
                 expect(entity).toEqual(expected);
             });
             it('and it has both dcterms:title and dcterms:description', function() {
-                var entity = {};
-                entity[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
-                entity[prefixes.dcterms + 'title'] = [{'@value': 'title'}];
-                var expected = {};
-                expected[prefixes.dcterms + 'description'] = [{'@value': 'description', '@language': this.language}];
-                expected[prefixes.dcterms + 'title'] = [{'@value': 'title', '@language': this.language}];
+                var entity = {
+                    [prefixes.dcterms + 'description']: [{'@value': 'description'}],
+                    [prefixes.dcterms + 'title']: [{'@value': 'title'}]
+                };
+                var expected = {
+                    [prefixes.dcterms + 'description']: [{'@value': 'description', '@language': this.language}],
+                    [prefixes.dcterms + 'title']: [{'@value': 'title', '@language': this.language}]
+                };
                 ontologyUtilsManagerSvc.addLanguageToNewEntity(entity, this.language);
                 expect(entity).toEqual(expected);
             });
             it('and it has a skos:prefLabel', function() {
-                var entity = {};
-                entity[prefixes.skos + 'prefLabel'] = [{'@value': 'value'}];
-                var expected = {};
-                expected[prefixes.skos + 'prefLabel'] = [{'@value': 'value', '@language': this.language}];
+                var entity = {[prefixes.skos + 'prefLabel']: [{'@value': 'value'}]};
+                var expected = {[prefixes.skos + 'prefLabel']: [{'@value': 'value', '@language': this.language}]};
                 ontologyUtilsManagerSvc.addLanguageToNewEntity(entity, this.language);
                 expect(entity).toEqual(expected);
             });
@@ -807,7 +791,7 @@ describe('Ontology Utils Manager service', function() {
                     ontologyStateSvc.getActiveKey.and.returnValue('');
                     ontologyStateSvc.getActiveEntityIRI.and.returnValue(id);
                     ontologyUtilsManagerSvc.saveCurrentChanges()
-                        .then(_.noop, function() {
+                        .then(_.noop, () => {
                             fail('Promise should have resolved');
                         });
                     scope.$apply();
@@ -820,7 +804,7 @@ describe('Ontology Utils Manager service', function() {
                 it('if getActiveKey is project', function() {
                     ontologyStateSvc.getActiveKey.and.returnValue('project');
                     ontologyUtilsManagerSvc.saveCurrentChanges()
-                        .then(_.noop, function() {
+                        .then(_.noop, () => {
                             fail('Promise should have resolved');
                         });
                     scope.$apply();
@@ -833,7 +817,7 @@ describe('Ontology Utils Manager service', function() {
                 it('if getActiveKey is individuals', function() {
                     ontologyStateSvc.getActiveKey.and.returnValue('individuals');
                     ontologyUtilsManagerSvc.saveCurrentChanges()
-                        .then(_.noop, function() {
+                        .then(_.noop, () => {
                             fail('Promise should have resolved');
                         });
                     scope.$apply();
@@ -846,7 +830,7 @@ describe('Ontology Utils Manager service', function() {
                 it('if getActiveEntityIRI is undefined', function() {
                     ontologyStateSvc.getActiveEntityIRI.and.returnValue(undefined);
                     ontologyUtilsManagerSvc.saveCurrentChanges()
-                        .then(_.noop, function() {
+                        .then(_.noop, () => {
                             fail('Promise should have resolved');
                         });
                     scope.$apply();
@@ -860,7 +844,7 @@ describe('Ontology Utils Manager service', function() {
             it('when afterSave is rejected', function() {
                 ontologyStateSvc.afterSave.and.returnValue($q.reject('error'));
                 ontologyUtilsManagerSvc.saveCurrentChanges()
-                    .then(function() {
+                    .then(() => {
                         fail('Promise should have rejected');
                     });
                 scope.$apply();
@@ -872,7 +856,7 @@ describe('Ontology Utils Manager service', function() {
         it('when rejected, sets the correct variable', function() {
             ontologyStateSvc.saveChanges.and.returnValue($q.reject('error'));
             ontologyUtilsManagerSvc.saveCurrentChanges()
-                .then(function() {
+                .then(() => {
                     fail('Promise should have rejected');
                 });
             scope.$apply();
@@ -1038,7 +1022,7 @@ describe('Ontology Utils Manager service', function() {
         ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'flattened'}]);
         var classIRIs = ['classId1', 'classId2'];
         ontologyUtilsManagerSvc.setSuperClasses('iri', classIRIs);
-        _.forEach(classIRIs, function(value) {
+        _.forEach(classIRIs, value => {
             expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.hierarchy, 'iri', ontologyStateSvc.listItem.classes.index, value);
         });
         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
@@ -1047,12 +1031,10 @@ describe('Ontology Utils Manager service', function() {
     describe('updateflatIndividualsHierarchy should call the corret methods when getPathsTo', function() {
         it('has paths', function() {
             var classIRIs = ['class1', 'class2']
-            ontologyStateSvc.getPathsTo.and.callFake(function(hierarchy, index, iri) {
-                return ['default', iri];
-            });
+            ontologyStateSvc.getPathsTo.and.callFake((hierarchy, index, iri) => ['default', iri]);
             ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'tree'}]);
             ontologyUtilsManagerSvc.updateflatIndividualsHierarchy(classIRIs);
-            _.forEach(classIRIs, function(classIRI) {
+            _.forEach(classIRIs, classIRI => {
                 expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.hierarchy, ontologyStateSvc.listItem.classes.index, classIRI);
             });
             expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['default', 'class1', 'class2']);
@@ -1069,7 +1051,7 @@ describe('Ontology Utils Manager service', function() {
         ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'flattened'}]);
         var propertyIRIs = ['classId1', 'classId2'];
         ontologyUtilsManagerSvc.setSuperProperties('iri', propertyIRIs, 'dataProperties');
-        _.forEach(propertyIRIs, function(value) {
+        _.forEach(propertyIRIs, value => {
             expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataProperties.hierarchy, 'iri', ontologyStateSvc.listItem.index, value);
         });
         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataProperties.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
@@ -1118,7 +1100,6 @@ describe('Ontology Utils Manager service', function() {
         beforeEach(function() {
             this.dataProp = 'd';
             this.objProp = 'o';
-            this.objProp2 = 'o2';
             ontologyStateSvc.listItem.selected = {
                 [this.dataProp]: [{'@value': 'data'}],
                 [this.objProp]: [{'@id': 'obj'}]

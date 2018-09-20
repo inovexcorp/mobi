@@ -151,23 +151,6 @@ public class SimpleOntologyValues {
     /**
      * .
      */
-    public static Ontology mobiOntology(OWLOntology ontology, Resource resource) {
-        if (ontology == null) {
-            return null;
-        }
-        return new SimpleOntology(ontology, resource, ontologyManager, sesameTransformer, bNodeService);
-    }
-
-    /**
-     * .
-     */
-    public static Ontology mobiOntology(OWLOntology ontology) {
-        return mobiOntology(ontology, null);
-    }
-
-    /**
-     * .
-     */
     public static OWLOntology owlapiOntology(Ontology ontology) {
         if (ontology == null) {
             return null;

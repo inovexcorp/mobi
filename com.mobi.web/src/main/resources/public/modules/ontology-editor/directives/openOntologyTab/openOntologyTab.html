@@ -32,14 +32,39 @@
             </form>
         </div>
         <div class="ontologies flex-1 vertical-scroll" targeted-spinner="dvm.id">
-            <div class="ontology d-flex" ng-click="dvm.open(record)" ng-repeat="record in dvm.filteredList">
-                <div class="details flex-grow-1">
-                    <h2 class="header" ng-bind-html="dvm.getRecordTitle(record) | highlight:dvm.filterText | trusted"></h2>
-                    <small class="ontology-iri text-muted">{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small>
-                    <p class="description m-0" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
+            <div class="ontology" ng-repeat="record in dvm.filteredList">
+                <div class="ontology-info d-flex" ng-click="dvm.open(record)">
+                    <div class="details flex-grow-1">
+                        <h2 class="header" ng-bind-html="dvm.getRecordTitle(record) | highlight:dvm.filterText | trusted"></h2>
+                        <small class="ontology-iri text-muted">{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small>
+                        <p class="description m-0" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
+                    </div>
+                    <div class="action-container d-flex align-items-center">
+                        <a ng-show="record.userCanManage" ng-click="showAccessControls = !showAccessControls; $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-lock"></i></a>
+                        <a ng-click="dvm.showDeleteConfirmationOverlay(record, $event);" class="action d-inline-block text-muted"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
+                    </div>
                 </div>
-                <div class="action-container d-flex align-items-center">
-                    <a ng-click="dvm.showDeleteConfirmationOverlay($event, record)" class="action d-inline-block text-muted"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
+                <div ng-if="record.userCanManage && showAccessControls" class="access-controls d-flex flex-column">
+                    <div class="d-flex align-items-center">
+                        <span class="record-action">View Record</span>
+                        <a class="users ml-auto"><i ng-click="dvm.showAccessOverlay(record, 'urn:read', $event)" class="fa fa-lg fa-fw fa-users"></i></a>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="record-action">Delete Record</span>
+                        <a class="users ml-auto"><i ng-click="dvm.showAccessOverlay(record, 'urn:delete', $event)" class="fa fa-lg fa-fw fa-users"></i></a>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="record-action">Manage Record</span>
+                        <a class="users ml-auto"><i ng-click="dvm.showAccessOverlay(record, 'urn:update', $event)" class="fa fa-lg fa-fw fa-users"></i></a>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="record-action">Modify Record</span>
+                        <a class="users ml-auto"><i ng-click="dvm.showAccessOverlay(record, 'urn:modify', $event)" class="fa fa-lg fa-fw fa-users"></i></a>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="record-action">Modify Master Branch</span>
+                        <a class="users ml-auto"><i ng-click="dvm.showAccessOverlay(record, 'urn:modifyMaster', $event)" class="fa fa-lg fa-fw fa-users"></i></a>
+                    </div>
                 </div>
             </div>
             <info-message ng-if="!dvm.filteredList.length && dvm.filterText">No ontologies match your filtered text.</info-message>

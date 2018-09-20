@@ -45,7 +45,7 @@
          * @requires prefixes.service:prefixes
          *
          * @description
-         * `annotationBlock` is a directive that creates a section that displays the SKOS relationships on the
+         * `relationshipsBlock` is a directive that creates a section that displays the SKOS relationships on the
          * {@link ontologyState.service:ontologyStateService selected concept or concept scheme} using
          * {@link propertyValues.directive:propertyValues}. If the selected entity is a concept, the section header
          * contains a button to {@link relationshipOverlay.directive:relationshipOverlay add a relationship}. If the

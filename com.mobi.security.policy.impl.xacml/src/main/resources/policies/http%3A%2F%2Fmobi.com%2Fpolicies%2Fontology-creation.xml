@@ -40,7 +40,7 @@
             </AllOf>
         </AnyOf>
     </Target>
-    <Rule Effect="Permit" RuleId="urn:rule1">
+    <Rule Effect="Permit" RuleId="urn:createOntologyRecord">
         <Target>
             <AnyOf>
                 <AllOf>

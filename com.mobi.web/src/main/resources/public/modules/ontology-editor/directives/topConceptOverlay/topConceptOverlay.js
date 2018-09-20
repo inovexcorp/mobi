@@ -45,7 +45,7 @@
          * @requires util.service:utilService
          *
          * @description
-         * `axiomOverlay` is a directive that creates content for a modal that adds skos:hasTopConcept(s) to the
+         * `topConceptOverlay` is a directive that creates content for a modal that adds skos:hasTopConcept(s) to the
          * {@link ontologyState.service:ontologyStateService selected concept scheme}. The form in the modal
          * contains a `ui-select` with all the concepts in the current
          * {@link ontologyState.service:ontologyStateService selected ontology}. Meant to be used in conjunction with

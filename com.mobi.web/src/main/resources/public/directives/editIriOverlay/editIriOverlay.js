@@ -45,7 +45,7 @@
          * contains fields for the namespace of the IRI, the local name, and the separator between the namespace and
          * the local name. The parts of the IRI are provided separately. A custom validation function and error message
          * can be provided as well. In addition to the Cancel and Submit buttons, there's also a button to revert the
-         * fields to their orignial state. Meant to be used in conjunction with the
+         * fields to their original state. Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.
          *
          * @param {Object} resolve Information provided to the modal

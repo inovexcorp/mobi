@@ -42,7 +42,7 @@
          * @requires ontologyState.service:ontologyStateService
          *
          * @description
-         * `openOntologyTab` is a directive that creates a page for uploading ontologies. The page includes a
+         * `uploadOntologyTab` is a directive that creates a page for uploading ontologies. The page includes a
          * {@link dragFile.directive:dragFile} area for dragging/dropping to upload and a display of the list of
          * ontologies actively being uploaded to the Mobi instance. There is also a button for navigating back to the
          * {@link openOntologyTab.directive:openOntologyTab}. The directive houses a method for
