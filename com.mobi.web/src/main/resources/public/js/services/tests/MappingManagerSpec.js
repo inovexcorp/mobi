@@ -661,6 +661,11 @@ describe('Mapping Manager service', function() {
         expect(result).toEqual(ontology);
 
         ontologyManagerSvc.getObjectProperties.and.returnValue([]);
+        ontologyManagerSvc.getAnnotations.and.returnValue([{'@id': 'prop'}]);
+        result = mappingManagerSvc.findSourceOntologyWithProp('prop', sourceOntologies);
+        expect(result).toEqual(ontology);
+
+        ontologyManagerSvc.getAnnotations.and.returnValue([]);
         result = mappingManagerSvc.findSourceOntologyWithProp('prop', sourceOntologies);
         expect(result).toBeUndefined();
     });

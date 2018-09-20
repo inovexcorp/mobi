@@ -579,7 +579,7 @@
              */
             self.findSourceOntologyWithProp = function(propertyIRI, ontologies) {
                 return _.find(ontologies, ontology => {
-                    var properties = _.concat(om.getDataTypeProperties([ontology.entities]), om.getObjectProperties([ontology.entities]));
+                    var properties = _.concat(om.getDataTypeProperties([ontology.entities]), om.getObjectProperties([ontology.entities]), om.getAnnotations([ontology.entities]));
                     return _.findIndex(properties, {'@id': propertyIRI}) !== -1;
                 });
             }
