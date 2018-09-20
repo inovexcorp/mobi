@@ -90,7 +90,7 @@ describe('Class Hierarchy Block directive', function() {
         });
     });
     describe('controller methods', function() {
-        it('should open a delete confirmaiton modal', function() {
+        it('should open a delete confirmation modal', function() {
             this.controller.showDeleteConfirmation();
             expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.any(String), ontologyUtilsManagerSvc.deleteClass);
         });
