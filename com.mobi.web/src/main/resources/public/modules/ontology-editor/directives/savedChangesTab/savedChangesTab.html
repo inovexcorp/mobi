@@ -55,7 +55,7 @@
                 <div ng-if="!dvm.os.listItem.inProgressCommit.additions.length && !dvm.os.listItem.inProgressCommit.deletions.length" class="text-center padding">
                     <info-message ng-if="dvm.os.listItem.upToDate && !dvm.os.listItem.userBranch">You don't have any uncommitted changes.</info-message>
                     <error-display ng-if="!dvm.os.listItem.upToDate && !dvm.os.listItem.userBranch">There have been other commits made on this Branch. Click <a ng-click="dvm.update()">here</a> to pull in the latest changes.</error-display>
-                    <error-display ng-if="dvm.os.listItem.userBranch && dvm.os.listItem.createdFromExists">There have been other commits made on this Branch. Click <a ng-click="dvm.os.listItem.merge.active = true">here</a> to pull in the latest changes.</error-display>
+                    <error-display ng-if="dvm.os.listItem.userBranch && dvm.os.listItem.createdFromExists">There have been other commits made on this Branch. Click <a ng-click="dvm.mergeUserBranch()">here</a> to pull in the latest changes.</error-display>
                     <error-display ng-if="dvm.os.listItem.userBranch && !dvm.os.listItem.createdFromExists">You have made diverging changes from a deleted branch. Click <a ng-click="dvm.restoreBranchWithUserBranch()">here</a> to recreate the branch with your changes.</error-display>
                 </div>
             </block-content>

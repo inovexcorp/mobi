@@ -24,41 +24,34 @@
     'use strict';
 
     angular
-        .module('mergeForm', [])
-        .directive('mergeForm', mergeForm);
+        .module('mergeBlock', [])
+        .directive('mergeBlock', mergeBlock);
 
-        mergeForm.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', 'prefixes', '$q'];
+        mergeBlock.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', '$q'];
 
-        function mergeForm(utilService, ontologyStateService, catalogManagerService, prefixes, $q) {
+        function mergeBlock(utilService, ontologyStateService, catalogManagerService, $q) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/mergeForm/mergeForm.html',
+                templateUrl: 'modules/ontology-editor/directives/mergeBlock/mergeBlock.html',
                 scope: {},
-                bindToController: {
-                    branch: '<',
-                    target: '=',
-                    removeBranch: '='
-                },
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: function() {
                     var dvm = this;
                     var cm = catalogManagerService;
-                    var catalogId = _.get(cm.localCatalog, '@id', '');
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
-                    dvm.prefixes = prefixes;
-                    dvm.tabs = {
-                        changes: true,
-                        commits: false
-                    };
-                    dvm.branches = _.reject(dvm.os.listItem.branches, {'@id': dvm.branch['@id']});
-                    dvm.branchTitle = dvm.util.getDctermsValue(dvm.branch, 'title');
+
+                    var catalogId = _.get(cm.localCatalog, '@id', '');
+                    dvm.error = '';
+                    dvm.branches = _.reject(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
+                    var branch = _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
+                    dvm.branchTitle = dvm.util.getDctermsValue(branch, 'title');
                     dvm.targetHeadCommitId = undefined;
 
                     dvm.changeTarget = function() {
-                        if (dvm.target) {
-                            cm.getBranchHeadCommit(dvm.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId)
+                        if (dvm.os.listItem.merge.target) {
+                            cm.getBranchHeadCommit(dvm.os.listItem.merge.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId)
                                 .then(target => {
                                     dvm.targetHeadCommitId = target.commit['@id'];
                                     return cm.getDifference(dvm.os.listItem.ontologyRecord.commitId, dvm.targetHeadCommitId);
@@ -73,9 +66,17 @@
                             dvm.os.listItem.merge.difference = undefined;
                         }
                     }
+                    dvm.submit = function() {
+                        dvm.os.attemptMerge()
+                            .then(() => {
+                                dvm.os.resetStateTabs();
+                                dvm.util.createSuccessToast('Your merge was successful.');
+                                dvm.os.cancelMerge();
+                            }, error => dvm.error = error);
+                    }
 
                     dvm.changeTarget();
-                }]
+                }
             }
         }
 })();

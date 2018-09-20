@@ -96,6 +96,7 @@
             'radioButton',
             'rdfVisualization',
             'recordKeywords',
+            'resolveConflictsForm',
             'sidebar',
             'spinner',
             'statementContainer',

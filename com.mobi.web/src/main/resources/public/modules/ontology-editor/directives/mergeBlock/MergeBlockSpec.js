@@ -20,36 +20,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Merge Form directive', function() {
+describe('Merge Block directive', function() {
     var $compile, scope, $q, ontologyStateSvc, util, catalogManagerSvc;
 
     beforeEach(function() {
         module('templates');
-        module('mergeForm');
+        module('mergeBlock');
         mockUtil();
-        mockPrefixes();
         mockOntologyState();
         mockCatalogManager();
-        injectTrustedFilter();
-        injectHighlightFilter();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _utilService_, _catalogManagerService_, _prefixes_) {
-            $q = _$q_;
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _utilService_, _catalogManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
             util = _utilService_;
             catalogManagerSvc = _catalogManagerService_;
-            prefixes = _prefixes_;
         });
 
-        scope.branch = {'@id': 'branchId'};
-        scope.removeBranch = false;
-        scope.target = undefined;
+        ontologyStateSvc.listItem.ontologyRecord.branchId = 'branchId';
+        ontologyStateSvc.listItem.branches = [{'@id': 'branchId'}];
+        ontologyStateSvc.listItem.merge.checkbox = false;
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
-        this.element = $compile(angular.element('<merge-form branch="branch" is-user-branch="dvm.os.listItem.userBranch" target="target" remove-branch="removeBranch"></merge-form>'))(scope);
+        this.element = $compile(angular.element('<merge-block></merge-block>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('mergeForm');
+        this.controller = this.element.controller('mergeBlock');
     });
 
     afterEach(function() {
@@ -61,35 +57,30 @@ describe('Merge Form directive', function() {
         this.element.remove();
     });
 
-    describe('controller bound variable', function() {
-        it('branch is one way bound', function() {
-            this.controller.branch = {'@id': 'test'};
-            scope.$digest();
-            expect(scope.branch).toEqual({'@id': 'branchId'});
-        });
-        it('target is two way bound', function() {
-            this.controller.target = {};
-            scope.$digest();
-            expect(scope.target).toEqual({});
-        });
-        it('removeBranch is two way bound', function() {
-            this.controller.removeBranch = true;
-            scope.$digest();
-            expect(scope.removeBranch).toEqual(true);
-        });
-    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('merge-form')).toBe(true);
+            expect(this.element.hasClass('merge-block')).toBe(true);
         });
-        _.forEach(['branch-select', 'checkbox'], function(item) {
-            it('for ' + item, function() {
+        _.forEach(['block', 'block-header', 'block-content', 'block-footer', 'branch-select', 'checkbox'], item => {
+            it('with a ' + item, function() {
                 expect(this.element.find(item).length).toBe(1);
             });
         });
         it('with a .merge-message', function() {
             expect(this.element.querySelectorAll('.merge-message').length).toBe(1);
+        });
+        it('with buttons to submit and cancel', function() {
+            var buttons = this.element.querySelectorAll('block-footer .btn');
+            expect(buttons.length).toEqual(2);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+        });
+        it('depending on whether there is an error', function() {
+            expect(this.element.find('error-display').length).toBe(0);
+            this.controller.error = 'Error';
+            scope.$digest();
+            expect(this.element.find('error-display').length).toBe(1);
         });
         it('depending on whether the branch is a UserBranch', function() {
             expect(this.element.find('checkbox').length).toEqual(1);
@@ -107,11 +98,14 @@ describe('Merge Form directive', function() {
             expect(this.element.find('checkbox').length).toEqual(0);
         });
         it('depending on whether a target has been selected', function() {
+            var button = angular.element(this.element.querySelectorAll('block-footer .btn-primary')[0]);
             expect(this.element.find('commit-difference-tabset').length).toBe(0);
+            expect(button.attr('disabled')).toBeTruthy();
 
-            this.controller.target = {};
+            ontologyStateSvc.listItem.merge.target = {};
             scope.$digest();
             expect(this.element.find('commit-difference-tabset').length).toBe(1);
+            expect(button.attr('disabled')).toBeFalsy();
         });
     });
     describe('controller methods', function() {
@@ -127,7 +121,7 @@ describe('Merge Form directive', function() {
             });
             describe('when target is not empty', function() {
                 beforeEach(function() {
-                    this.controller.target = {'@id': 'target'};
+                    ontologyStateSvc.listItem.merge.target = {'@id': 'target'};
                 });
                 it('unless an error occurs', function() {
                     catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({'commit': {'@id': 'targetHead'}}));
@@ -152,5 +146,37 @@ describe('Merge Form directive', function() {
                 });
             });
         });
+        describe('should submit the merge', function() {
+            it('unless attemptMerge rejects', function() {
+                ontologyStateSvc.attemptMerge.and.returnValue($q.reject('Error message'));
+                this.controller.submit();
+                scope.$apply();
+                expect(ontologyStateSvc.attemptMerge).toHaveBeenCalled();
+                expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
+                expect(util.createSuccessToast).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.cancelMerge).not.toHaveBeenCalled();
+                expect(this.controller.error).toEqual('Error message');
+            });
+            it('if attemptMerge resolves', function() {
+                this.controller.submit();
+                scope.$apply();
+                expect(ontologyStateSvc.attemptMerge).toHaveBeenCalled();
+                expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalled();
+                expect(util.createSuccessToast).toHaveBeenCalled();
+                expect(ontologyStateSvc.cancelMerge).toHaveBeenCalled();
+                expect(this.controller.error).toEqual('');
+            });
+        });
+    });
+    it('should call submit when the button is clicked', function() {
+        spyOn(this.controller, 'submit');
+        var button = angular.element(this.element.querySelectorAll('block-footer .btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.submit).toHaveBeenCalled();
+    });
+    it('should call the correct method when the button is clicked', function() {
+        var button = angular.element(this.element.querySelectorAll('block-footer .btn:not(.btn-primary)')[0]);
+        button.triggerHandler('click');
+        expect(ontologyStateSvc.cancelMerge).toHaveBeenCalled();
     });
 });
