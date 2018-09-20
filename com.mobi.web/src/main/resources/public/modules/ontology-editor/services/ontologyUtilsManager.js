@@ -44,7 +44,7 @@
          * @requires util.service:utilService
          *
          * @description
-         * `mergeRequestsStateService` is a service which contains various utility methods used throughout the Ontology
+         * `ontologyUtilsManagerService` is a service which contains various utility methods used throughout the Ontology
          * Editor for actions such as deleting specific types of entities and creating displays for the frontend.
          */
         .service('ontologyUtilsManagerService', ontologyUtilsManagerService);

@@ -47,6 +47,8 @@
          * @requires mapperState.service:mapperStateService
          * @requires catalogManager.service:catalogManagerService
          * @requires modal.service:modalService
+         * @requires policyEnforcement.service:policyEnforcementService
+         * @requires policyManager.service:policyManagerService
          *
          * @description
          * `openOntologyTab` is a directive that creates a page for opening ontologies. The page includes a search bar
@@ -57,9 +59,9 @@
          */
         .directive('openOntologyTab', openOntologyTab);
 
-        openOntologyTab.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService', 'modalService'];
+        openOntologyTab.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService', 'modalService', 'policyEnforcementService', 'policyManagerService'];
 
-        function openOntologyTab(httpService, ontologyManagerService, ontologyStateService, prefixes, stateManagerService, utilService, mapperStateService, catalogManagerService, modalService) {
+        function openOntologyTab(httpService, ontologyManagerService, ontologyStateService, prefixes, stateManagerService, utilService, mapperStateService, catalogManagerService, modalService, policyEnforcementService, policyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -70,6 +72,8 @@
                     var dvm = this;
                     var sm = stateManagerService;
                     var cm = catalogManagerService;
+                    var pe = policyEnforcementService;
+                    var pm = policyManagerService;
                     var ontologyRecords = [];
                     var openIndicator = '<span class="text-muted">(Open)</span> ';
 
@@ -121,7 +125,7 @@
                         modalService.openModal('newOntologyOverlay');
                         // dvm.os.showNewTab = true;
                     }
-                    dvm.showDeleteConfirmationOverlay = function(event, record) {
+                    dvm.showDeleteConfirmationOverlay = function(record, event) {
                         event.stopPropagation();
                         dvm.recordId = _.get(record, '@id', '');
 
@@ -135,6 +139,7 @@
                         dvm.om.deleteOntology(dvm.recordId)
                             .then(response => {
                                 _.remove(ontologyRecords, record => _.get(record, '@id', '') === dvm.recordId);
+                                dvm.os.closeOntology(dvm.recordId);
                                 var state = sm.getOntologyStateByRecordId(dvm.recordId);
                                 if (!_.isEmpty(state)) {
                                     sm.deleteState(_.get(state, 'id', ''));
@@ -159,6 +164,7 @@
                             if (response.headers() !== undefined) {
                                 dvm.totalSize = _.get(response.headers(), 'x-total-count');
                             }
+                            dvm.manageRecords();
                         });
                     }
                     dvm.search = function(event) {
@@ -167,6 +173,19 @@
                             dvm.currentPage = 1;
                             dvm.getPageOntologyRecords();
                         }
+                    }
+                    dvm.manageRecords = function() {
+                        _.forEach(dvm.filteredList, record => {
+                            var request = {
+                                resourceId: 'http://mobi.com/policies/record/' + encodeURIComponent(record['@id']),
+                                actionId: pm.actionUpdate
+                            }
+                            pe.evaluateRequest(request).then(decision => record.userCanManage = decision == pe.permit);
+                        })
+                    }
+                    dvm.showAccessOverlay = function(record, ruleId, event) {
+                        event.stopPropagation();
+                        modalService.openModal('recordAccessOverlay', {ruleId, resource: record['@id']});
                     }
 
                     $scope.$watch(() => dvm.os.list.length, () => {

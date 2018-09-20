@@ -52,6 +52,7 @@ import com.mobi.query.api.Binding;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.core.impl.sesame.SimpleIRI;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
@@ -72,7 +73,6 @@ import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.semanticweb.owlapi.model.OWLOntology;
 
 import java.io.InputStream;
 import java.util.Collections;
@@ -172,7 +172,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(SimpleOntologyValues.owlapiIRI(versionIRI)).thenReturn(owlVersionIRI);
         when(SimpleOntologyValues.mobiIRI(owlOntologyIRI)).thenReturn(ontologyIRI);
         when(SimpleOntologyValues.mobiIRI(owlVersionIRI)).thenReturn(versionIRI);
-        when(SimpleOntologyValues.mobiOntology(any(OWLOntology.class))).thenReturn(ontology);
 
         when(mockCache.containsKey(anyString())).thenReturn(false);
 
@@ -197,6 +196,8 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
         when(configProvider.getRepository()).thenReturn(repo);
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
+        when(sesameTransformer.sesameResource(any(Resource.class))).thenReturn(new SimpleIRI("http://test.com/ontology1"));
+
 
         manager = Mockito.spy(new SimpleOntologyManager());
         injectOrmFactoryReferencesIntoService(manager);

@@ -1324,7 +1324,7 @@ function mockPolicyManager() {
             this.stringEqual = 'stringEqual';
             this.getPolicies = jasmine.createSpy('getPolicies').and.returnValue($q.when([]));
             this.getPolicy = jasmine.createSpy('getPolicy').and.returnValue($q.when({}));
-            this.updatePolicy = jasmine.createSpy('getPolicy').and.returnValue($q.when());
+            this.updatePolicy = jasmine.createSpy('updatePolicy').and.returnValue($q.when());
         });
     });
 }
@@ -1342,6 +1342,15 @@ function mockModal() {
         $provide.service('modalService', function() {
             this.openModal = jasmine.createSpy('openModal');
             this.openConfirmModal = jasmine.createSpy('openConfirmModal');
+        });
+    });
+}
+
+function mockRecordPermissionsManager() {
+    module(function($provide) {
+        $provide.service('recordPermissionsManagerService', function($q) {
+            this.getRecordPolicy = jasmine.createSpy('getRecordPolicy').and.returnValue($q.when({}));
+            this.updateRecordPolicy = jasmine.createSpy('getRecordPolicy').and.returnValue($q.when());
         });
     });
 }

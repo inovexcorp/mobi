@@ -108,6 +108,7 @@
             'textArea',
             'textInput',
             'uniqueValue',
+            'userAccessControls',
             'valueDisplay',
 
             /* Custom Modules */
@@ -145,10 +146,12 @@
             'modal',
             'ontologyManager',
             'ontologyState',
+            'policyEnforcement',
             'policyManager',
             'prefixes',
             'propertyManager',
             'provManager',
+            'recordPermissionsManager',
             'settingsManager',
             'sparqlManager',
             'stateManager',

@@ -6,20 +6,23 @@
 
         .ontology {
             border-bottom: 1px solid var(--light);
-            cursor: pointer;
             padding: 10px 0 10px 10px;
 
             &:last-child {
                 border-bottom: none;
             }
-            &:hover {
-                background-color: var(--light);
-            }
-            .details {
-                .header {
-                    font-size: 1.25em;
-                    font-weight: normal;
-                    margin: 0 0 5px;
+            .ontology-info {
+                cursor: pointer;
+
+                &:hover {
+                    background-color: var(--light);
+                }
+                .details {
+                    .header {
+                        font-size: 1.25em;
+                        font-weight: normal;
+                        margin: 0 0 5px;
+                    }
                 }
             }
             .action-container {
@@ -28,6 +31,10 @@
 
                     &:hover {
                         color: var(--gray) !important;
+                    }
+
+                    .access-controls .record-action {
+                        padding: 5px 0 0 20px;
                     }
                 }
             }

@@ -1,0 +1,3 @@
+SYSTEM "http://www.w3.org/2001/XMLSchema" "XMLSchema.xsd"
+PUBLIC "http://www.w3.org/2001/XMLSchema" "XMLSchema.xsd"
+PUBLIC "http://www.w3.org/XML/1998/namespace" "xml.xsd"
