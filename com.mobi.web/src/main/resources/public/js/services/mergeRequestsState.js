@@ -336,7 +336,7 @@
             }
             /**
              * @ngdoc method
-             * @name setRequestDetails
+             * @name resolveRequestConflicts
              * @propertyOf mergeRequestsState.service:mergeRequestsStateService
              *
              * @description
