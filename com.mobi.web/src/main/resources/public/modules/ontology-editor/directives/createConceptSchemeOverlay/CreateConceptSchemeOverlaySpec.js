@@ -51,7 +51,10 @@ describe('Create Concept Scheme Overlay directive', function() {
         this.iri = 'iri#';
         ontologyStateSvc.getDefaultPrefix.and.returnValue(this.iri);
         ontologyManagerSvc.getConceptIRIs.and.returnValue(['concept1']);
-        this.element = $compile(angular.element('<create-concept-scheme-overlay></create-concept-scheme-overlay>'))(scope);
+
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<create-concept-scheme-overlay close="close()" dismiss="dismiss()"></create-concept-scheme-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('createConceptSchemeOverlay');
     });
@@ -76,12 +79,12 @@ describe('Create Concept Scheme Overlay directive', function() {
         expect(this.controller.conceptIRIs).toEqual(['concept1']);
         expect(ontologyManagerSvc.getConceptIRIs).toHaveBeenCalledWith(jasmine.any(Array), ontologyStateSvc.listItem.derivedConcepts);
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('create-concept-scheme-overlay')).toBe(true);
-            expect(this.element.hasClass('overlay')).toBe(true);
-            expect(this.element.querySelectorAll('.content').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('CREATE-CONCEPT-SCHEME-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
         });
         it('with a form', function() {
             expect(this.element.find('form').length).toBe(1);
@@ -91,9 +94,6 @@ describe('Create Concept Scheme Overlay directive', function() {
         });
         it('with a custom-label', function() {
             expect(this.element.find('custom-label').length).toBe(2);
-        });
-        it('with a .btn-container', function() {
-            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
         });
         it('with an advanced-language-select', function() {
             expect(this.element.find('advanced-language-select').length).toBe(1);
@@ -112,18 +112,18 @@ describe('Create Concept Scheme Overlay directive', function() {
             scope.$digest();
             expect(this.element.find('ui-select').length).toBe(0);
         });
-        it('with buttons to create and cancel', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+        it('with buttons to submit and cancel', function() {
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Create']).toContain(angular.element(buttons[0]).text().trim());
-            expect(['Cancel', 'Create']).toContain(angular.element(buttons[1]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
         it('depending on the form validity', function() {
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('depending on the form validity', function() {
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.form.$invalid = false;
@@ -132,12 +132,11 @@ describe('Create Concept Scheme Overlay directive', function() {
         });
         it('depending on whether the scheme IRI already exists in the ontology.', function() {
             ontoUtils.checkIri.and.returnValue(true);
-
             scope.$digest();
 
             var disabled = this.element.querySelectorAll('[disabled]');
             expect(disabled.length).toBe(1);
-            expect(angular.element(disabled[0]).text()).toBe('Create');
+            expect(angular.element(disabled[0]).text()).toBe('Submit');
         });
     });
     describe('controller methods', function() {
@@ -171,7 +170,7 @@ describe('Create Concept Scheme Overlay directive', function() {
 
             this.controller.create();
             expect(this.controller.scheme[prefixes.skos + 'hasTopConcept']).toEqual(this.controller.selectedConcepts);
-            _.forEach(this.controller.selectedConcepts, function(concept) {
+            _.forEach(this.controller.selectedConcepts, concept => {
                 expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, concept['@id'], ontologyStateSvc.listItem.conceptSchemes.index, 'scheme');
             });
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.scheme);
@@ -180,8 +179,8 @@ describe('Create Concept Scheme Overlay directive', function() {
             expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{prop: 'entity'}]);
             expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.scheme);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.scheme['@id']);
-            expect(ontologyStateSvc.showCreateConceptSchemeOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+            expect(scope.close).toHaveBeenCalled();
         });
         it('should set the list of concepts', function() {
             ontoUtils.getSelectList.and.returnValue(['concept']);
@@ -189,16 +188,21 @@ describe('Create Concept Scheme Overlay directive', function() {
             expect(this.controller.concepts).toEqual(['concept']);
             expect(ontoUtils.getSelectList).toHaveBeenCalledWith(this.controller.conceptIRIs, 'search');
         });
+        it('should cancel the overlay', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
     });
     it('should call create when the button is clicked', function() {
         spyOn(this.controller, 'create');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.create).toHaveBeenCalled();
     });
-    it('should set the correct state when the cancel button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
+    it('should call cancel when the button is clicked', function() {
+        spyOn(this.controller, 'cancel');
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
-        expect(ontologyStateSvc.showCreateConceptSchemeOverlay).toBe(false);
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
 });

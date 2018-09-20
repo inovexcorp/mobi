@@ -54,14 +54,12 @@
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
-                replace: true,
-                scope: {},
-                bindToController: {
-                    overlayFlag: '=',
-                    resource: '<',
-                    ruleId: '@'
+                scope: {
+                    resolve: '<',
+                    close: '&',
+                    dismiss: '&'
                 },
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var util = utilService;
                     var um = userManagerService;
@@ -91,7 +89,7 @@
                             }, util.createErrorToast);
                     }
                     function setInfo(item) {
-                        var ruleInfo = item.policy[dvm.ruleId];
+                        var ruleInfo = item.policy[$scope.resolve.ruleId];
                         if (ruleInfo.everyone) {
                             item.everyone = true;
                         } else {
@@ -108,17 +106,17 @@
                         item.groups = sortGroups(_.difference(um.groups, item.selectedGroups));
                     }
                     dvm.cancel = function() {
-                        dvm.overlayFlag = false;
+                        $scope.dismiss();
                     }
                     dvm.save = function(recordId) {
-                        dvm.policy.policy[dvm.ruleId] = {
+                        dvm.policy.policy[$scope.resolve.ruleId] = {
                             everyone: dvm.policy.everyone,
                             users: _.map(dvm.policy.selectedUsers, user => user.iri),
                             groups: _.map(dvm.policy.selectedGroups, user => user.iri),
                         }
                         rp.updateRecordPolicy(recordId, dvm.policy.policy)
                             .then(() => {
-                                dvm.overlayFlag = false;
+                                $scope.close();
                                 dvm.policy.changed = false;
                                 util.createSuccessToast('Permissions updated')
                             }, utilService.createErrorToast);
@@ -131,7 +129,7 @@
                         return _.sortBy(groups, 'title');
                     }
                     function getRuleTitle() {
-                        switch (dvm.ruleId) {
+                        switch ($scope.resolve.ruleId) {
                             case 'urn:read':
                                 dvm.ruleTitle = "View Record";
                                 break;
@@ -150,9 +148,9 @@
                         }
                     }
 
-                    dvm.getPolicy(dvm.resource);
+                    dvm.getPolicy($scope.resolve.resource);
                     getRuleTitle();
-                },
+                }],
                 templateUrl: 'modules/ontology-editor/directives/recordAccessOverlay/recordAccessOverlay.html'
             }
         }

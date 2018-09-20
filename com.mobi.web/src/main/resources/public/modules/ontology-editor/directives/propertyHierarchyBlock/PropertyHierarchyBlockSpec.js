@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Property Hierarchy Block directive', function() {
-    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, ontologyUtilsManagerSvc;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, ontologyUtilsManagerSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -29,14 +29,16 @@ describe('Property Hierarchy Block directive', function() {
         mockOntologyState();
         mockOntologyManager();
         mockOntologyUtilsManager();
+        mockModal();
         injectIndentConstant();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _ontologyUtilsManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
+            modalSvc = _modalService_;
         });
 
         this.element = $compile(angular.element('<property-hierarchy-block></property-hierarchy-block>'))(scope);
@@ -50,6 +52,7 @@ describe('Property Hierarchy Block directive', function() {
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
         ontologyUtilsManagerSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -77,13 +80,6 @@ describe('Property Hierarchy Block directive', function() {
             var button = this.element.querySelectorAll('block-footer button');
             expect(button.length).toBe(1);
             expect(angular.element(button[0]).text()).toContain('Delete Property');
-        });
-        it('depending on whether a delete should be confirmed', function() {
-            expect(this.element.find('confirmation-overlay').length).toBe(0);
-
-            this.controller.showDeleteConfirmation = true;
-            scope.$digest();
-            expect(this.element.find('confirmation-overlay').length).toBe(1);
         });
         it('based on whether something is selected', function() {
             var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
@@ -122,6 +118,10 @@ describe('Property Hierarchy Block directive', function() {
         });
     });
     describe('controller methods', function() {
+        it('showDeleteConfirmation opens a delete confirmation modal', function() {
+            this.controller.showDeleteConfirmation();
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.any(String), this.controller.deleteProperty);
+        });
         describe('should delete', function() {
             it('an object property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
@@ -130,7 +130,6 @@ describe('Property Hierarchy Block directive', function() {
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).not.toHaveBeenCalled();
-                expect(this.controller.showDeleteConfirmation).toBe(false);
             });
             it('a datatype property', function() {
                 ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
@@ -140,7 +139,6 @@ describe('Property Hierarchy Block directive', function() {
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).not.toHaveBeenCalled();
-                expect(this.controller.showDeleteConfirmation).toBe(false);
             });
             it('an annotation property', function() {
                 ontologyManagerSvc.isAnnotation.and.returnValue(true);
@@ -151,7 +149,6 @@ describe('Property Hierarchy Block directive', function() {
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).toHaveBeenCalled();
-                expect(this.controller.showDeleteConfirmation).toBe(false);
             });
         });
         describe('isShown returns', function() {
@@ -206,15 +203,22 @@ describe('Property Hierarchy Block directive', function() {
                 expect(copy).toContain({get: ontologyStateSvc.getAnnotationPropertiesOpened, prop: 'annotation'});
             });
         });
+        it('showCreatePropertyOverlay opens the createPropertyOverlay', function() {
+            this.controller.showCreatePropertyOverlay();
+            expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('createPropertyOverlay');
+        });
     });
-    it('should set the correct state when the create property link is clicked', function() {
+    it('should call showCreatePropertyOverlay when the create property link is clicked', function() {
+        spyOn(this.controller, 'showCreatePropertyOverlay');
         var link = angular.element(this.element.querySelectorAll('block-header a')[0]);
         link.triggerHandler('click');
-        expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(true);
+        expect(this.controller.showCreatePropertyOverlay).toHaveBeenCalled();
     });
-    it('should set the correct state when the delete property button is clicked', function() {
+    it('should call showDeleteConfirmation when the delete property button is clicked', function() {
+        spyOn(this.controller, 'showDeleteConfirmation');
         var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
         button.triggerHandler('click');
-        expect(this.controller.showDeleteConfirmation).toBe(true);
+        expect(this.controller.showDeleteConfirmation).toHaveBeenCalled();
     });
 });

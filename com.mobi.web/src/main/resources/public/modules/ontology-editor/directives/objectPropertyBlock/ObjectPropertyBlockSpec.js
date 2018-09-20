@@ -21,20 +21,22 @@
  * #L%
  */
 describe('Object Property Block directive', function() {
-    var $compile, scope, ontologyStateSvc, ontoUtils;
+    var $compile, scope, ontologyStateSvc, ontoUtils, modalSvc;
 
     beforeEach(function() {
         module('templates');
         module('objectPropertyBlock');
         mockOntologyState();
         mockOntologyUtilsManager();
+        mockModal();
         injectShowPropertiesFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             ontoUtils = _ontologyUtilsManagerService_;
+            modalSvc = _modalService_;
         });
 
         ontologyStateSvc.listItem.selected = {
@@ -81,11 +83,6 @@ describe('Object Property Block directive', function() {
             scope.$digest();
             expect(this.element.find('property-values').length).toBe(0);
         });
-        it('depending on whether an object property is being deleted', function() {
-            this.controller.showRemoveOverlay = true;
-            scope.$digest();
-            expect(this.element.find('remove-property-overlay').length).toBe(1);
-        });
     });
     describe('controller methods', function() {
         it('should set the correct manager values when opening the Add Object Property Overlay', function() {
@@ -94,13 +91,13 @@ describe('Object Property Block directive', function() {
             expect(ontologyStateSvc.propertySelect).toBeUndefined();
             expect(ontologyStateSvc.propertyValue).toBe('');
             expect(ontologyStateSvc.propertyIndex).toBe(0);
-            expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(true);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('objectPropertyOverlay');
         });
         it('should set the correct manager values when opening the Remove Object Property Overlay', function() {
             this.controller.showRemovePropertyOverlay('key', 1);
             expect(this.controller.key).toBe('key');
-            expect(this.controller.index).toBe(1);
-            expect(this.controller.showRemoveOverlay).toBe(true);
+            expect(ontoUtils.getRemovePropOverlayMessage).toHaveBeenCalledWith('key', 1);
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith('', jasmine.any(Function));
         });
         describe('should update vocabulary hierarchies on property removal', function() {
             beforeEach(function() {

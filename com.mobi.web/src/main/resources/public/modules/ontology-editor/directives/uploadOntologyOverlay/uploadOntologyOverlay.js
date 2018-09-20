@@ -30,7 +30,7 @@
          *
          * @description
          * The `uploadOntologyOverlay` module only provides the `uploadOntologyOverlay` directive which creates
-         * upload ontology overlay.
+         * content for a modal to upload ontologies.
          */
         .module('uploadOntologyOverlay', [])
         /**
@@ -42,11 +42,16 @@
          * @requires ontologyState.service:ontologyStateService
          *
          * @description
-         * HTML contents in the upload ontology overlay which provides an overlay to enter catalog record metadata
-         * about each of the uploaded files.
+         * `uploadOntologyOverlay` is a directive that creates content for a modal that provides a form for entering
+         * catalog record metadata about each of the {@link ontologyState.service:ontologyStateService uploaded files}.
+         * The form contains a {@link textInput.directive:textInput} for the record title, a
+         * {@link textArea.directive:textArea} for the record description, and a
+         * {@link keywordSelect.directive:keywordSelect} for each uploaded file. The title defaults to the file name.
+         * The modal contains buttons to Cancel, Submit the current ontology upload, and Submit all the subsequent
+         * ontology uploads with the default values.
          *
-         * @param {Function} closeOverlay the function to call to close the overlay
-         * @param {Object[]} files the list of files that need catalog metadata added
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
          */
         .directive('uploadOntologyOverlay', uploadOntologyOverlay);
 
@@ -55,21 +60,19 @@
         function uploadOntologyOverlay(ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/uploadOntologyOverlay/uploadOntologyOverlay.html',
-                scope: {},
-                bindToController: {
-                    closeOverlay: '&',
-                    files: '='
+                scope: {
+                    close: '&',
+                    dismiss: '&'
                 },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var om = ontologyManagerService;
                     var state = ontologyStateService;
                     var file = undefined;
                     var uploadOffset = state.uploadList.length;
-                    dvm.total = dvm.files.length;
+                    dvm.total = state.uploadFiles.length;
                     dvm.index = 0;
                     dvm.title = '';
                     dvm.description = '';
@@ -84,23 +87,21 @@
                             dvm.index++;
                             setFormValues();
                         } else {
-                            dvm.closeOverlay();
+                            $scope.close();
                         }
                     }
-
                     dvm.submitAll = function() {
                         for (var i = dvm.index; i < dvm.total; i++) {
                             dvm.submit();
                         }
                     }
-
                     dvm.cancel = function() {
-                        dvm.files.splice(0);
-                        dvm.closeOverlay();
+                        state.uploadFiles.splice(0);
+                        $scope.dismiss();
                     }
 
                     function setFormValues() {
-                        file = _.pullAt(dvm.files, 0)[0];
+                        file = _.pullAt(state.uploadFiles, 0)[0];
                         dvm.title = file.name;
                         dvm.description = '';
                         dvm.keywords = [];
@@ -109,7 +110,7 @@
                     if (dvm.total) {
                         setFormValues();
                     }
-                }
+                }]
             };
         }
 })();

@@ -205,6 +205,19 @@
 
             /**
              * @ngdoc property
+             * @name uploadFiles
+             * @propertyOf ontologyState.service:ontologyStateService
+             * @type {Object[]}
+             *
+             * @description
+             * `uploadFiles` holds an array of File objects for uploading ontologies. It is utilized in the
+             * {@link uploadOntologyTab.directive:uploadOntologyTab} and
+             * {@link uploadOntologyOverlay.directive:uploadOntologyOverlay}.
+             */
+            self.uploadFiles = [];
+
+            /**
+             * @ngdoc property
              * @name uploadList
              * @propertyOf ontologyState.service:ontologyStateService
              * @type {Object[]}

@@ -24,20 +24,48 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name createBranchOverlay
+         *
+         * @description
+         * The `createBranchOverlay` module only provides the `createBranchOverlay` directive which creates content
+         * for a modal to create a branch on an ontology.
+         */
         .module('createBranchOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name createBranchOverlay.directive:createBranchOverlay
+         * @scope
+         * @restrict E
+         * @requires catalogManager.service:catalogManagerService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires stateManager.service:stateManagerService
+         * @requires prefixes.service:prefixes
+         *
+         * @description
+         * `createBranchOverlay` is a directive that creates content for a modal that creates a branch in the current
+         * {@link ontologyState.service:ontologyStateService selected ontology}. The form in the modal contains a
+         * {@link textInput.directive:textInput} for the branch title and a {@link textArea.directive:textArea} for the
+         * branch description. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
+         */
         .directive('createBranchOverlay', createBranchOverlay);
 
-        createBranchOverlay.$inject = ['$q', 'catalogManagerService', 'ontologyStateService', 'stateManagerService',
-            'prefixes'];
+        createBranchOverlay.$inject = ['$q', 'catalogManagerService', 'ontologyStateService', 'stateManagerService', 'prefixes'];
 
         function createBranchOverlay($q, catalogManagerService, ontologyStateService, stateManagerService, prefixes) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/createBranchOverlay/createBranchOverlay.html',
-                scope: {},
+                scope: {
+                    dismiss: '&',
+                    close: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var cm = catalogManagerService;
                     var sm = stateManagerService;
@@ -65,16 +93,18 @@
                             return sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, commitId);
                         }, $q.reject)
                         .then(() => {
-                            dvm.os.showCreateBranchOverlay = false;
+                            $scope.close();
                             dvm.os.resetStateTabs();
                         }, onError);
-
+                    }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
                     }
 
                     function onError(errorMessage) {
                         dvm.error = errorMessage;
                     }
-                }
+                }]
             }
         }
 })();

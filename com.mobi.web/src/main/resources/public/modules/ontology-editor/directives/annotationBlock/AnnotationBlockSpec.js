@@ -21,19 +21,22 @@
  * #L%
  */
 describe('Annotation Block directive', function() {
-    var $compile, scope, ontologyStateSvc;
+    var $compile, scope, ontologyStateSvc, ontoUtils, modalSvc;
 
     beforeEach(function() {
         module('templates');
         module('annotationBlock');
         mockOntologyState();
         mockOntologyUtilsManager();
+        mockModal();
         injectShowPropertiesFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
+            ontoUtils = _ontologyUtilsManagerService_;
+            modalSvc = _modalService_;
         });
 
         ontologyStateSvc.listItem.selected = {
@@ -49,6 +52,8 @@ describe('Annotation Block directive', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
+        ontoUtils = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -67,11 +72,6 @@ describe('Annotation Block directive', function() {
             scope.$digest();
             expect(this.element.find('property-values').length).toBe(0);
         });
-        it('depending on whether an annotation is being deleted', function() {
-            this.controller.showRemoveOverlay = true;
-            scope.$digest();
-            expect(this.element.find('remove-property-overlay').length).toBe(1);
-        });
     });
     describe('controller methods', function() {
         it('should set the correct manager values when opening the Add Annotation Overlay', function() {
@@ -82,13 +82,12 @@ describe('Annotation Block directive', function() {
             expect(ontologyStateSvc.annotationType).toBeUndefined();
             expect(ontologyStateSvc.annotationIndex).toBe(0);
             expect(ontologyStateSvc.annotationLanguage).toBe('en');
-            expect(ontologyStateSvc.showAnnotationOverlay).toBe(true);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('annotationOverlay');
         });
         it('should set the correct manager values when opening the Remove Annotation Overlay', function() {
             this.controller.openRemoveOverlay('key', 1);
-            expect(this.controller.key).toBe('key');
-            expect(this.controller.index).toBe(1);
-            expect(this.controller.showRemoveOverlay).toBe(true);
+            expect(ontoUtils.getRemovePropOverlayMessage).toHaveBeenCalledWith('key', 1);
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith('', jasmine.any(Function));
         });
         it('should set the correct manager values when editing an annotation', function() {
             var annotationIRI = 'prop1';
@@ -102,7 +101,7 @@ describe('Annotation Block directive', function() {
             expect(ontologyStateSvc.annotationIndex).toBe(0);
             expect(ontologyStateSvc.annotationType).toBe('type');
             expect(ontologyStateSvc.annotationLanguage).toBe('language');
-            expect(ontologyStateSvc.showAnnotationOverlay).toBe(true);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('annotationOverlay');
         });
     });
 });

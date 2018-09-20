@@ -30,7 +30,7 @@
          *
          * @description
          * The `topConceptOverlay` module only provides the `topConceptOverlay` directive which creates
-         * the top concept overlay within the ontology editor.
+         * content for a modal to add a top concept to a concept scheme.
          */
         .module('topConceptOverlay', [])
         /**
@@ -45,11 +45,14 @@
          * @requires util.service:utilService
          *
          * @description
-         * HTML contents in the top concept overlay with provides the users with an overlay which can be used to add
-         * skos:hasTopConcept(s) to the selected skos:ConceptScheme.
+         * `topConceptOverlay` is a directive that creates content for a modal that adds skos:hasTopConcept(s) to the
+         * {@link ontologyState.service:ontologyStateService selected concept scheme}. The form in the modal
+         * contains a `ui-select` with all the concepts in the current
+         * {@link ontologyState.service:ontologyStateService selected ontology}. Meant to be used in conjunction with
+         * the {@link modalService.directive:modalService}.
          *
-         * @param {function} closeOverlay the function to be called to close the overlay
-         * @param {function} onSubmit the function to be called after a top concept is added
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
          */
         .directive('topConceptOverlay', topConceptOverlay);
 
@@ -58,15 +61,13 @@
         function topConceptOverlay(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes, utilService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/topConceptOverlay/topConceptOverlay.html',
-                scope: {},
-                bindToController: {
-                    closeOverlay: '&',
-                    onSubmit: '&'
+                scope: {
+                    close: '&',
+                    dismiss: '&'
                 },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var om = ontologyManagerService;
                     var os = ontologyStateService;
@@ -81,12 +82,14 @@
                     dvm.addTopConcept = function() {
                         os.listItem.selected[axiom] = _.union(_.get(os.listItem.selected, axiom, []), dvm.values);
                         os.addToAdditions(os.listItem.ontologyRecord.recordId, {'@id': os.listItem.selected['@id'], [axiom]: dvm.values});
-                        dvm.closeOverlay();
                         dvm.ontoUtils.saveCurrentChanges();
-                        dvm.onSubmit({relationship: prefixes.skos + 'hasTopConcept', values: dvm.values})
+                        $scope.close({$value: {relationship: prefixes.skos + 'hasTopConcept', values: dvm.values}});
                     }
                     dvm.getConcepts = function(searchText) {
                         dvm.filteredConcepts = dvm.ontoUtils.getSelectList(concepts, searchText);
+                    }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
                     }
 
                     function getConceptList() {
@@ -94,7 +97,7 @@
                         var set = _.map(_.get(os.listItem.selected, axiom), '@id');
                         return _.difference(all, set);
                     }
-                }
+                }]
             }
         }
 })();

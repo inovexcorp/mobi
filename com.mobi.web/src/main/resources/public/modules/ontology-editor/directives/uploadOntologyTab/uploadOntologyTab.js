@@ -30,7 +30,7 @@
          *
          * @description
          * The `uploadOntologyTab` module only provides the `uploadOntologyTab` directive which creates
-         * upload ontology tab.
+         * page for uploading ontologies.
          */
         .module('uploadOntologyTab', [])
         /**
@@ -42,14 +42,18 @@
          * @requires ontologyState.service:ontologyStateService
          *
          * @description
-         * HTML contents in the upload ontology tab which provides an area to drop or browse for files and
-         * displays a list of ontologies actively being uploaded to the system.
+         * `uploadOntologyTab` is a directive that creates a page for uploading ontologies. The page includes a
+         * {@link dragFile.directive:dragFile} area for dragging/dropping to upload and a display of the list of
+         * ontologies actively being uploaded to the Mobi instance. There is also a button for navigating back to the
+         * {@link openOntologyTab.directive:openOntologyTab}. The directive houses a method for
+         * {@link uploadOntologyOverlay.directive:uploadOntologyOverlay uploading ontologies}. The directive is replaced
+         * by the contents of its template.
          */
         .directive('uploadOntologyTab', uploadOntologyTab);
 
-        uploadOntologyTab.$inject = ['httpService', 'ontologyStateService'];
+        uploadOntologyTab.$inject = ['httpService', 'ontologyStateService', 'modalService'];
 
-        function uploadOntologyTab(httpService, ontologyStateService) {
+        function uploadOntologyTab(httpService, ontologyStateService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -59,18 +63,19 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = ontologyStateService;
-                    dvm.files = [];
                     dvm.showOntology = false;
 
+                    dvm.showUploadOntologyOverlay = function() {
+                        modalService.openModal('uploadOntologyOverlay');
+                    }
                     dvm.hasStatus = function(promise, value) {
                         return _.get(promise, '$$state.status') === value;
                     }
-
                     dvm.cancel = function() {
                         dvm.state.showUploadTab = false;
                         dvm.state.uploadList = [];
+                        dvm.state.uploadFiles = [];
                     }
-
                     dvm.hasPending = function() {
                         return _.some(dvm.state.uploadList, item => httpService.isPending(item.id));
                     }

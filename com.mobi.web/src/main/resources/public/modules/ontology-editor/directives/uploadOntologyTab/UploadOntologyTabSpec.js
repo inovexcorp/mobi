@@ -21,20 +21,22 @@
  * #L%
  */
 describe('Upload Ontology Tab directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, httpSvc;
+    var $compile, scope, $q, ontologyStateSvc, httpSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
         module('uploadOntologyTab');
         mockOntologyState();
         mockHttpService();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _httpService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _httpService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
             httpSvc = _httpService_;
+            modalSvc = _modalService_;
         });
 
         ontologyStateSvc.uploadList = [{
@@ -58,6 +60,7 @@ describe('Upload Ontology Tab directive', function() {
         $q = null;
         ontologyStateSvc = null;
         httpSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -76,14 +79,12 @@ describe('Upload Ontology Tab directive', function() {
                 expect(this.element.find(tag).length).toBe(1);
             });
         });
-        it('with a upload-ontology-overlay', function() {
-            expect(this.element.find('upload-ontology-overlay').length).toBe(0);
-            this.controller.showOverlay = true;
-            scope.$apply();
-            expect(this.element.find('upload-ontology-overlay').length).toBe(1);
-        });
     });
     describe('controller methods', function() {
+        it('showUploadOntologyOverlay opens the uploadOntologyOverlay', function() {
+            this.controller.showUploadOntologyOverlay();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('uploadOntologyOverlay');
+        });
         describe('hasStatus should return the correct boolean when value and status are', function() {
             beforeEach(function() {
                 this.promise = {

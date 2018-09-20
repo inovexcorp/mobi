@@ -21,17 +21,19 @@
  * #L%
  */
 describe('Ontology Button Stack directive', function() {
-    var $compile, scope, ontologyStateSvc;
+    var $compile, scope, ontologyStateSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
         module('ontologyButtonStack');
         mockOntologyState();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
+            modalSvc = _modalService_;
         });
 
         ontologyStateSvc.isCommittable.and.returnValue(false);
@@ -39,12 +41,14 @@ describe('Ontology Button Stack directive', function() {
         ontologyStateSvc.listItem.userBranch = false;
         this.element = $compile(angular.element('<ontology-button-stack></ontology-button-stack>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('ontologyButtonStack');
     });
 
     afterEach(function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -95,24 +99,41 @@ describe('Ontology Button Stack directive', function() {
             expect(mergeButton.attr('disabled')).toBeTruthy();
         });
     });
-    it('should set the correct state when the upload changes button is clicked', function() {
+    describe('controller methods', function() {
+        it('should open the createBranchOverlay', function() {
+            this.controller.showCreateBranchOverlay();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('createBranchOverlay');
+        });
+        it('should open the commitOverlay', function() {
+            this.controller.showCommitOverlay();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('commitOverlay');
+        });
+        it('should open the uploadChangesOverlay', function() {
+            this.controller.showUploadChangesOverlay();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('uploadChangesOverlay');
+        });
+    });
+    it('should call showUploadChangesOverlay when the upload changes button is clicked', function() {
+        spyOn(this.controller, 'showUploadChangesOverlay');
         var button = angular.element(this.element.querySelectorAll('circle-button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
-        expect(ontologyStateSvc.showUploadChangesOverlay).toEqual(true);
+        expect(this.controller.showUploadChangesOverlay).toHaveBeenCalled();
     });
-    it('should set the correct state when the create branch button is clicked', function() {
+    it('should call showCreateBranchOverlay when the create branch button is clicked', function() {
+        spyOn(this.controller, 'showCreateBranchOverlay');
         var button = angular.element(this.element.querySelectorAll('circle-button.btn-warning')[0]);
         button.triggerHandler('click');
-        expect(ontologyStateSvc.showCreateBranchOverlay).toEqual(true);
+        expect(this.controller.showCreateBranchOverlay).toHaveBeenCalled();
     });
     it('should set the correct state when the merge button is clicked', function() {
         var button = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
         button.triggerHandler('click');
         expect(ontologyStateSvc.listItem.merge.active).toEqual(true);
     });
-    it('should set the correct state when the commit button is clicked', function() {
+    it('should call showCommitOverlay when the commit button is clicked', function() {
+        spyOn(this.controller, 'showCommitOverlay');
         var button = angular.element(this.element.querySelectorAll('circle-button.btn-primary')[0]);
         button.triggerHandler('click');
-        expect(ontologyStateSvc.showCommitOverlay).toEqual(true);
+        expect(this.controller.showCommitOverlay).toHaveBeenCalled();
     });
 });

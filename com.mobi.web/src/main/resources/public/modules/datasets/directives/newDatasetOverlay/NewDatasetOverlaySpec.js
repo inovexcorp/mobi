@@ -103,8 +103,8 @@ describe('New Dataset Overlay directive', function() {
             it('with a step-progress-bar', function() {
                 expect(this.element.find('step-progress-bar').length).toBe(1);
             });
-            it('with a text-input', function() {
-                expect(this.element.find('text-input').length).toBe(1);
+            it('with text-inputs', function() {
+                expect(this.element.find('text-input').length).toBe(2);
             });
             it('with a text-area', function() {
                 expect(this.element.find('text-area').length).toBe(1);

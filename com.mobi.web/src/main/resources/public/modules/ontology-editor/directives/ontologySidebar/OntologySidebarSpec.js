@@ -21,19 +21,21 @@
  * #L%
  */
 describe('Ontology Sidebar directive', function() {
-    var $compile, scope, ontologyManagerSvc, ontologyStateSvc;
+    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
         module('ontologySidebar');
         mockOntologyManager();
         mockOntologyState();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
+            modalSvc = _modalService_;
         });
 
         this.listItemA = { ontologyId: 'A', ontologyRecord: { recordId: 'A', recordTitle: 'A'}, active: false};
@@ -49,6 +51,7 @@ describe('Ontology Sidebar directive', function() {
         scope = null;
         ontologyManagerSvc = null;
         ontologyStateSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -59,12 +62,11 @@ describe('Ontology Sidebar directive', function() {
         describe('should close a tab', function() {
             beforeEach(function() {
                 ontologyStateSvc.recordIdToClose = '';
-                ontologyStateSvc.showCloseOverlay = false;
             });
             it('if it has changes', function() {
                 this.controller.onClose({ ontologyRecord: { recordId: 'A' } });
                 expect(ontologyStateSvc.recordIdToClose).toBe('A');
-                expect(ontologyStateSvc.showCloseOverlay).toBe(true);
+                expect(modalSvc.openModal).toHaveBeenCalledWith('ontologyCloseOverlay');
                 expect(ontologyStateSvc.closeOntology).not.toHaveBeenCalled();
             });
             it('if it has no changes', function() {
@@ -72,7 +74,7 @@ describe('Ontology Sidebar directive', function() {
                 ontologyStateSvc.hasChanges.and.returnValue(false);
                 this.controller.onClose({ ontologyRecord: { recordId: 'B' } });
                 expect(ontologyStateSvc.recordIdToClose).toBe('');
-                expect(ontologyStateSvc.showCloseOverlay).toBe(false);
+                expect(modalSvc.openModal).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.closeOntology).toHaveBeenCalledWith('B');
             });
         });
