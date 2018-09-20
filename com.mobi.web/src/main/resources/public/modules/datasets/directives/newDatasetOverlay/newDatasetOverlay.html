@@ -25,10 +25,7 @@
         <h1>Create New Dataset</h1>
         <h2>Basic Info</h2>
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <div class="form-group">
-            <custom-label>Title</custom-label>
-            <input class="form-control" type="text" name="title" ng-model="dvm.recordConfig.title" required focus-me>
-        </div>
+        <text-input display-text="'Title'" input-name="'title'" ng-model="dvm.recordConfig.title" required="true" is-focus-me="true"></text-input>
         <text-input ng-model="dvm.recordConfig.datasetIRI" display-text="'Dataset IRI'" muted-text="'(Optional)'"></text-input>
         <small class="form-text">System will create a default IRI if not provided.</small>
         <text-area ng-model="dvm.recordConfig.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>

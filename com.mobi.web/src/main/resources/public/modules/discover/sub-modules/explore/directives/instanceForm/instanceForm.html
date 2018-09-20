@@ -26,9 +26,10 @@
         <div ng-repeat="missing in dvm.missingProperties track by $index">
             <error-display>{{missing}}</error-display>
         </div>
-        <static-iri iri="dvm.instance['@id']" on-edit="dvm.setIRI(iriBegin, iriThen, iriEnd)">
-            <info-message>Changing this IRI might break relationships within the dataset.</info-message>
-        </static-iri>
+        <div class="instance-iri">
+            <strong class="text-muted" click-to-copy="dvm.instance['@id']">{{dvm.instance['@id']}}</strong>
+            <a ng-click="dvm.showIriConfirm()"><i class="fa fa-pencil"></i></a>
+        </div>
         <form name="dvm.form" autocomplete="off">
             <div class="form-group" ng-repeat="(key, value) in dvm.instance track by $index" ng-if="key !== '@id' && key !== '@type'">
                 <custom-label ng-class="{'changed': dvm.isChanged(key)}">{{dvm.util.getBeautifulIRI(key)}} {{dvm.getRestrictionText(key)}}</custom-label>

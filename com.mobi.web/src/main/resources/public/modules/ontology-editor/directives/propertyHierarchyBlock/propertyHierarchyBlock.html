@@ -23,7 +23,7 @@
 <div class="property-hierarchy-block">
     <block>
         <block-header>
-            <span>Property Hierarchies</span><a ng-click="dvm.os.unSelectItem(); dvm.os.showCreatePropertyOverlay = true" class="float-right"><i class="fa fa-plus"></i><span>Create Property</span></a>
+            <span>Property Hierarchies</span><a ng-click="dvm.showCreatePropertyOverlay()" class="float-right"><i class="fa fa-plus"></i><span>Create Property</span></a>
         </block-header>
         <block-content>
             <div class="tree hierarchy-tree h-100">
@@ -44,11 +44,7 @@
             </div>
         </block-content>
         <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Property</span></button>
+            <button class="btn btn-link" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()"><i class="fa fa-trash-o"></i><span>Delete Property</span></button>
         </block-footer>
     </block>
-    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Property'" confirm-click="dvm.deleteProperty()"
-                          cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
-        <p>Are you sure that you want to delete <strong>{{dvm.os.listItem.selected['@id']}}</strong>?</p>
-    </confirmation-overlay>
 </div>

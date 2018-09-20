@@ -20,15 +20,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="record-access-overlay overlay">
+<div class="modal-header">
+    <h3>Record Access Controls</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
     <form class="content" name="dvm.form">
-        <h6>Record Access Controls</h6>
-        <div class="main d-flex flex-column">
-            <user-access-controls item="dvm.policy" rule-title="dvm.ruleTitle" rule-id="dvm.ruleId"></user-access-controls>
-        </div>
-        <div class="btn-container clearfix">
-            <button class="btn float-right" ng-click="dvm.cancel()">Cancel</button>
-            <button class="btn btn-primary float-right" ng-click="dvm.save(dvm.resource)">Save</button>
-        </div>
+        <user-access-controls item="dvm.policy" rule-title="dvm.ruleTitle" rule-id="resolve.ruleId"></user-access-controls>
     </form>
+</div>
+<div class="modal-footer">
+    <button class="btn float-right" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary float-right" ng-click="dvm.save(resolve.resource)">Submit</button>
 </div>

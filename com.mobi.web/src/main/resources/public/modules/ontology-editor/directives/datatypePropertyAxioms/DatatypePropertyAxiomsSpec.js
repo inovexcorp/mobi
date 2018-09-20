@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Datatype Property Axioms directive', function() {
-    var $compile, scope, ontologyStateSvc, propertyManagerSvc, prefixes, ontoUtils, ontologyManagerSvc;
+    var $compile, scope, ontologyStateSvc, propertyManagerSvc, prefixes, ontoUtils, ontologyManagerSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -31,9 +31,10 @@ describe('Datatype Property Axioms directive', function() {
         mockPrefixes();
         mockOntologyUtilsManager();
         mockOntologyManager();
+        mockModal();
         injectShowPropertiesFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _prefixes_, _ontologyUtilsManagerService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _prefixes_, _ontologyUtilsManagerService_, _ontologyManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
@@ -41,6 +42,7 @@ describe('Datatype Property Axioms directive', function() {
             prefixes = _prefixes_;
             ontoUtils = _ontologyUtilsManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
+            modalSvc = _modalService_;
         });
 
         ontologyStateSvc.listItem.selected = {
@@ -60,6 +62,7 @@ describe('Datatype Property Axioms directive', function() {
         prefixes = null;
         ontoUtils = null;
         ontologyManagerSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -74,20 +77,6 @@ describe('Datatype Property Axioms directive', function() {
             scope.$digest();
             expect(this.element.find('property-values').length).toBe(0);
         });
-        it('depending on whether an axiom is being removed', function() {
-            expect(this.element.find('remove-property-overlay').length).toBe(0);
-
-            this.controller.showRemoveOverlay = true;
-            scope.$digest();
-            expect(this.element.find('remove-property-overlay').length).toBe(1);
-        });
-        it('depending on whether an axiom is being shown', function() {
-            expect(this.element.find('axiom-overlay').length).toBe(0);
-
-            ontologyStateSvc.showAxiomOverlay = true;
-            scope.$digest();
-            expect(this.element.find('axiom-overlay').length).toBe(1);
-        });
     });
     describe('controller methods', function() {
         beforeEach(function() {
@@ -100,44 +89,8 @@ describe('Datatype Property Axioms directive', function() {
         it('should open the remove overlay', function() {
             this.controller.openRemoveOverlay('key', 0);
             expect(this.controller.key).toBe('key');
-            expect(this.controller.index).toBe(0);
-            expect(this.controller.showRemoveOverlay).toBe(true);
-        });
-        describe('should update the hierarchy', function() {
-            beforeEach(function() {
-                this.axiom = 'axiom';
-                this.values = ['value'];
-            });
-            it('unless the axiom is not subPropertyOf or domain or there are no values', function() {
-                this.controller.updateHierarchy(this.axiom, this.values);
-                expect(ontoUtils.setSuperProperties).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
-
-                this.axiom = prefixes.rdfs + 'subPropertyOf';
-                this.values = [];
-                this.controller.updateHierarchy(this.axiom, this.values);
-                expect(ontoUtils.setSuperProperties).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
-
-                this.axiom = prefixes.rdfs + 'domain';
-                this.controller.updateHierarchy(this.axiom, this.values);
-                expect(ontoUtils.setSuperProperties).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
-            });
-            it('if the axiom is subPropertyOf', function() {
-                this.axiom = prefixes.rdfs + 'subPropertyOf';
-                this.controller.updateHierarchy(this.axiom, this.values);
-                expect(ontoUtils.setSuperProperties).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.values, 'dataProperties');
-            });
-            it('if the axiom is domain', function() {
-                this.axiom = prefixes.rdfs + 'domain';
-                ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
-                ontologyStateSvc.getOntologiesArray.and.returnValue([]);
-                this.controller.updateHierarchy(this.axiom, this.values);
-                expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
-                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
-                expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
-            });
+            expect(ontoUtils.getRemovePropOverlayMessage).toHaveBeenCalledWith('key', 0);
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith('', jasmine.any(Function));
         });
         describe('should remove a property from the hierarchy', function() {
             beforeEach(function() {

@@ -32,7 +32,7 @@
                 </div>
             </div>
             <div class="selector-container">
-                <md-autocomplete hide-label md-no-cache="true" md-min-length="0" md-selected-item="item.selectedUser" md-search-text="dvm.item.userSearchText" md-selected-item-change="dvm.addUser(user)" md-items="user in dvm.filterUsers(dvm.item.users, dvm.item.userSearchText)" md-item-text="user.username" placeholder="Select a user..." md-floating-label="Test" ng-disabled="dvm.item.everyone">
+                <md-autocomplete hide-label md-no-cache="true" md-min-length="0" md-selected-item="dvm.item.selectedUser" md-search-text="dvm.item.userSearchText" md-selected-item-change="dvm.addUser(user)" md-items="user in dvm.filterUsers(dvm.item.users, dvm.item.userSearchText)" md-item-text="user.username" placeholder="Select a user..." md-floating-label="Test" ng-disabled="dvm.item.everyone">
                     <md-item-template>
                         <span md-highlight-text="dvm.item.userSearchText" md-highlight-flags="i">{{user.username}}</span>
                     </md-item-template>

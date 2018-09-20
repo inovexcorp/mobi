@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Class Axioms directive', function() {
-    var $compile, scope, ontologyStateSvc, propertyManagerSvc, prefixes, ontoUtils, ontologyManagerSvc;
+    var $compile, scope, ontologyStateSvc, propertyManagerSvc, prefixes, ontoUtils, ontologyManagerSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -31,9 +31,10 @@ describe('Class Axioms directive', function() {
         mockPrefixes();
         mockOntologyUtilsManager();
         mockOntologyManager();
+        mockModal();
         injectShowPropertiesFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _prefixes_, _ontologyUtilsManagerService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _prefixes_, _ontologyUtilsManagerService_, _ontologyManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
@@ -41,6 +42,7 @@ describe('Class Axioms directive', function() {
             prefixes = _prefixes_;
             ontoUtils = _ontologyUtilsManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
+            modalSvc = _modalService_;
         });
 
         ontologyStateSvc.listItem.selected = {
@@ -60,6 +62,7 @@ describe('Class Axioms directive', function() {
         prefixes = null;
         ontoUtils = null;
         ontologyManagerSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -73,20 +76,6 @@ describe('Class Axioms directive', function() {
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(this.element.find('property-values').length).toBe(0);
-        });
-        it('depending on whether an axiom is being removed', function() {
-            expect(this.element.find('remove-property-overlay').length).toBe(0);
-
-            this.controller.showRemoveOverlay = true;
-            scope.$digest();
-            expect(this.element.find('remove-property-overlay').length).toBe(1);
-        });
-        it('depending on whether an axiom is being shown', function() {
-            expect(this.element.find('axiom-overlay').length).toBe(0);
-
-            ontologyStateSvc.showAxiomOverlay = true;
-            scope.$digest();
-            expect(this.element.find('axiom-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {
@@ -105,41 +94,8 @@ describe('Class Axioms directive', function() {
         it('should open the remove overlay', function() {
             this.controller.openRemoveOverlay('key', 0);
             expect(this.controller.key).toBe('key');
-            expect(this.controller.index).toBe(0);
-            expect(this.controller.showRemoveOverlay).toBe(true);
-        });
-        describe('should update the hierarchy', function() {
-            beforeEach(function() {
-                this.values = ['iri'];
-                this.axiom = 'axiom';
-            });
-            it('unless the axiom is not subClassOf or there are no values', function() {
-                this.controller.updateHierarchy(this.axiom, this.values);
-                expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
-
-                this.axiom = prefixes.rdfs + 'subClassOf';
-                this.values = [];
-                expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.setVocabularyStuff).not.toHaveBeenCalled();
-            });
-            describe('if the axiom is subClassOf', function() {
-                beforeEach(function() {
-                    this.axiom = prefixes.rdfs + 'subClassOf';
-                });
-                it('and is present in the individual hierarchy', function () {
-                    ontologyStateSvc.listItem.individualsParentPath = [ontologyStateSvc.listItem.selected['@id']];
-                    this.controller.updateHierarchy(this.axiom, this.values);
-                    expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('classId', this.values);
-                    expect(ontoUtils.updateflatIndividualsHierarchy).toHaveBeenCalledWith(this.values);
-                    expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
-                });
-                it('and is not present in the individual hierarchy', function () {
-                    this.controller.updateHierarchy(this.axiom, this.values);
-                    expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('classId', this.values);
-                    expect(ontoUtils.updateflatIndividualsHierarchy).not.toHaveBeenCalled();
-                    expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
-                });
-            });
+            expect(ontoUtils.getRemovePropOverlayMessage).toHaveBeenCalledWith('key', 0);
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith('', jasmine.any(Function));
         });
         describe('should remove a class from the hierarchy', function() {
             beforeEach(function() {

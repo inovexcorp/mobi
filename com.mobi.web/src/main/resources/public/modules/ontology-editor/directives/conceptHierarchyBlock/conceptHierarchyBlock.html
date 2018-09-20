@@ -23,17 +23,13 @@
 <div class="concept-hierarchy-block">
     <block>
         <block-header>
-            <span>Concepts</span><a class="float-right" ng-click="dvm.os.unSelectItem(); dvm.os.showCreateConceptOverlay = true"><i class="fa fa-plus"></i><span>Concept</span></a>
+            <span>Concepts</span><a class="float-right" ng-click="dvm.showCreateConceptOverlay()"><i class="fa fa-plus"></i><span>Concept</span></a>
         </block-header>
         <block-content>
             <hierarchy-tree hierarchy="dvm.os.listItem.concepts.flat"></hierarchy-tree>
         </block-content>
         <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Concept</span></button>
+            <button class="btn btn-link" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()"><i class="fa fa-trash-o"></i><span>Delete Concept</span></button>
         </block-footer>
     </block>
-    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Concept'" confirm-click="dvm.deleteEntity()" cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
-        <p>Are you sure that you want to delete <strong>{{dvm.os.listItem.selected['@id']}}</strong>?</p>
-    </confirmation-overlay>
-    <create-concept-overlay ng-if="dvm.os.showCreateConceptOverlay"></create-concept-overlay>
 </div>

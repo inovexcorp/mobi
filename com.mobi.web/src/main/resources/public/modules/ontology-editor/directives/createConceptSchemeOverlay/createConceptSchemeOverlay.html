@@ -20,33 +20,35 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="create-concept-scheme-overlay overlay">
-    <div class="content">
-        <h6>Create Concept Scheme</h6>
-        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <static-iri iri="dvm.scheme['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
-        <form name="dvm.form" class="clearfix" novalidate autocomplete="off">
-            <div class="form-group">
-                <custom-label>Name</custom-label>
-                <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
-                       ng-model="dvm.scheme[dvm.prefixes.dcterms + 'title'][0]['@value']" focus-me>
-            </div>
-            <div ng-if="dvm.conceptIRIs.length" class="form-group">
-                <custom-label muted-text="'(Optional)'">Top Concept(s)</custom-label>
-                <ui-select multiple ng-model="dvm.selectedConcepts">
-                    <ui-select-match placeholder="Select Concept(s)">
-                        <span title="{{$item}}">{{dvm.ontoUtils.getLabelForIRI($item)}}</span>
-                    </ui-select-match>
-                    <ui-select-choices refresh="dvm.getConcepts($select.search)" refresh-delay="300" group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.concepts">
-                        <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getLabelForIRI(iri) | highlight: $select.search | trusted"></div>
-                    </ui-select-choices>
-                </ui-select>
-            </div>
-            <advanced-language-select ng-model="dvm.language"></advanced-language-select>
-            <div class="btn-container clearfix">
-                <button class="btn btn-primary float-right" ng-disabled="dvm.form.$invalid || dvm.ontoUtils.checkIri(dvm.scheme['@id'])" ng-click="dvm.create()">Create</button>
-                <button class="btn float-right" ng-click="dvm.os.showCreateConceptSchemeOverlay = false">Cancel</button>
-            </div>
-        </form>
-    </div>
+
+<div class="modal-header">
+    <h3>Create Concept Scheme</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+    <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+    <static-iri iri="dvm.scheme['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+    <form name="dvm.form" novalidate autocomplete="off">
+        <div class="form-group">
+            <custom-label>Name</custom-label>
+            <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
+                   ng-model="dvm.scheme[dvm.prefixes.dcterms + 'title'][0]['@value']" focus-me="true">
+        </div>
+        <div ng-if="dvm.conceptIRIs.length" class="form-group">
+            <custom-label muted-text="'(Optional)'">Top Concept(s)</custom-label>
+            <ui-select multiple ng-model="dvm.selectedConcepts">
+                <ui-select-match placeholder="Select Concept(s)">
+                    <span title="{{$item}}">{{dvm.ontoUtils.getLabelForIRI($item)}}</span>
+                </ui-select-match>
+                <ui-select-choices refresh="dvm.getConcepts($select.search)" refresh-delay="300" group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.concepts">
+                    <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getLabelForIRI(iri) | highlight: $select.search | trusted"></div>
+                </ui-select-choices>
+            </ui-select>
+        </div>
+        <advanced-language-select ng-model="dvm.language"></advanced-language-select>
+    </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-disabled="dvm.form.$invalid || dvm.ontoUtils.checkIri(dvm.scheme['@id'])" ng-click="dvm.create()">Submit</button>
 </div>

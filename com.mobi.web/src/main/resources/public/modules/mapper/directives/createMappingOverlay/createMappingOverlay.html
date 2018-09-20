@@ -24,13 +24,9 @@
     <form class="content" name="dvm.form">
         <h6>Create Mapping</h6>
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-        <div class="form-group">
-            <custom-label>Title</custom-label>
-            <input class="form-control" type="text" name="title" ng-model="dvm.newMapping.record.title" required focus-me>
-        </div>
+        <text-input display-text="'Title'" input-name="'title'" ng-model="dvm.newMapping.record.title" required="true" is-focus-me="true"></text-input>
         <text-area ng-model="dvm.newMapping.record.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <keyword-select ng-model="dvm.newMapping.record.keywords"></keyword-select>
-
         <div class="btn-container clearfix">
             <button ng-click="dvm.continue()" class="btn btn-primary float-right" ng-disabled="dvm.form.$invalid">Continue</button>
             <button ng-click="dvm.cancel()" class="btn float-right">Cancel</button>

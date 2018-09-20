@@ -24,12 +24,38 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name classHierarchyBlock
+         *
+         * @description
+         * The `classHierarchyBlock` module only provides the `classHierarchyBlock` directive which creates a
+         * {@link block.directive:block} for displaying the classes in an ontology.
+         */
         .module('classHierarchyBlock', [])
+        /**
+         * @ngdoc directive
+         * @name classHierarchyBlock.directive:classHierarchyBlock
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `classHierarchyBlock` is a directive that creates a {@link block.directive:block} that displays a
+         * {@link hierarchyTree.directive:hierarchyTree} of the clases in the current
+         * {@link ontologyState.service:ontologyStateService selected ontology} along with buttons to add and delete
+         * classes. The directive houses the methods for opening modals for
+         * {@link createClassOverlay.directive:createClassOverlay adding} and deleting classes. The directive is
+         * replaced by the contents of its template.
+         */
         .directive('classHierarchyBlock', classHierarchyBlock);
 
-        classHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
+        classHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'modalService'];
 
-        function classHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
+        function classHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,9 +68,12 @@
                     dvm.om = ontologyManagerService;
                     dvm.utils = ontologyUtilsManagerService;
 
-                    dvm.deleteClass = function() {
-                        dvm.utils.deleteClass();
-                        dvm.showDeleteConfirmation = false;
+                    dvm.showDeleteConfirmation = function() {
+                        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.utils.deleteClass);
+                    }
+                    dvm.showCreateClassOverlay = function() {
+                        dvm.os.unSelectItem();
+                        modalService.openModal('createClassOverlay');
                     }
                 }
             }
