@@ -62,7 +62,7 @@ describe('Merge Block directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('merge-block')).toBe(true);
         });
-        _.forEach(['block', 'block-header', 'block-content', 'block-footer', 'branch-select', 'checkbox'], item => {
+        _.forEach(['branch-select', 'checkbox'], item => {
             it('with a ' + item, function() {
                 expect(this.element.find(item).length).toBe(1);
             });
@@ -71,7 +71,7 @@ describe('Merge Block directive', function() {
             expect(this.element.querySelectorAll('.merge-message').length).toBe(1);
         });
         it('with buttons to submit and cancel', function() {
-            var buttons = this.element.querySelectorAll('block-footer .btn');
+            var buttons = this.element.querySelectorAll('.btn-container .btn');
             expect(buttons.length).toEqual(2);
             expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
             expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
@@ -98,7 +98,7 @@ describe('Merge Block directive', function() {
             expect(this.element.find('checkbox').length).toEqual(0);
         });
         it('depending on whether a target has been selected', function() {
-            var button = angular.element(this.element.querySelectorAll('block-footer .btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.btn-container .btn-primary')[0]);
             expect(this.element.find('commit-difference-tabset').length).toBe(0);
             expect(button.attr('disabled')).toBeTruthy();
 
@@ -170,12 +170,12 @@ describe('Merge Block directive', function() {
     });
     it('should call submit when the button is clicked', function() {
         spyOn(this.controller, 'submit');
-        var button = angular.element(this.element.querySelectorAll('block-footer .btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container .btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.submit).toHaveBeenCalled();
     });
     it('should call the correct method when the button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('block-footer .btn:not(.btn-primary)')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container .btn:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(ontologyStateSvc.cancelMerge).toHaveBeenCalled();
     });

@@ -69,12 +69,12 @@ describe('Upload Ontology Tab directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('upload-ontology-tab')).toBe(true);
         });
-        _.forEach(['row-container', 'md-list-item-text', 'col-6'], function(item) {
+        _.forEach(['md-list-item-text', 'col-6'], function(item) {
             it('with a .' + item, function() {
                 expect(this.element.querySelectorAll('.' + item).length).toBe(1);
             });
         });
-        _.forEach(['block', 'block-content', 'drag-file', 'md-list', 'md-list-item', 'h3', 'i', 'block-footer', 'button'], function(tag) {
+        _.forEach(['drag-file', 'md-list', 'md-list-item', 'h3', 'i', 'button'], function(tag) {
             it('with a ' + tag, function() {
                 expect(this.element.find(tag).length).toBe(1);
             });

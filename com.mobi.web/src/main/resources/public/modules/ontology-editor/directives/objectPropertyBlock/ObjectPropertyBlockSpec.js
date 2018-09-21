@@ -62,20 +62,18 @@ describe('Object Property Block directive', function() {
             expect(this.element.hasClass('object-property-block')).toBe(true);
             expect(this.element.hasClass('annotation-block')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
+        it('with a .section-header', function() {
+            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(1);
+        it('with a link to add an object property', function() {
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
         });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
-        });
-        it('depending on whether something is selected', function() {
-            expect(this.element.querySelectorAll('block-header a').length).toBe(1);
-            ontologyStateSvc.listItem.selected = undefined;
+        it('depending on whether the selected individual is imported', function() {
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+
+            ontologyStateSvc.listItem.selected.mobi = {imported: true};
             scope.$digest();
-            expect(this.element.querySelectorAll('block-header a').length).toBe(0);
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
         });
         it('depending on how many datatype properties there are', function() {
             expect(this.element.find('property-values').length).toBe(2);
@@ -126,7 +124,7 @@ describe('Object Property Block directive', function() {
     });
     it('should call openAddObjectPropOverlay when the link is clicked', function() {
         spyOn(this.controller, 'openAddObjectPropOverlay');
-        var link = angular.element(this.element.querySelectorAll('block-header a')[0]);
+        var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
         link.triggerHandler('click');
         expect(this.controller.openAddObjectPropOverlay).toHaveBeenCalled();
     });

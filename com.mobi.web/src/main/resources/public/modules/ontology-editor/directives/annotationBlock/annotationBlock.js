@@ -29,8 +29,8 @@
          * @name annotationBlock
          *
          * @description
-         * The `annotationBlock` module only provides the `annotationBlock` directive which creates a
-         * {@link block.directive:block} for displaying the annotations on an entity.
+         * The `annotationBlock` module only provides the `annotationBlock` directive which creates a section for
+         * displaying the annotations on an entity.
          */
         .module('annotationBlock', [])
         /**
@@ -43,13 +43,12 @@
          * @requires modal.service:modalService
          *
          * @description
-         * `annotationBlock` is a directive that creates a {@link block.directive:block} that
-         * displays the annotations on the
+         * `annotationBlock` is a directive that creates a section that displays the annotations on the
          * {@link ontologyState.service:ontologyStateService selected entity} using
-         * {@link propertyValues.directive:propertyValues}. The `block` contains a button for adding
-         * an annotation. The directive houses the methods for opening the modal for
-         * {@link annotationOverlay.directive:annotationOverlay editing, adding}, and removing
-         * annotations. The directive is replaced by the contents of its template.
+         * {@link propertyValues.directive:propertyValues}. The section header contains a button for adding an
+         * annotation. The directive houses the methods for opening the modal for
+         * {@link annotationOverlay.directive:annotationOverlay editing, adding}, and removing annotations. The
+         * directive is replaced by the contents of its template.
          */
         .directive('annotationBlock', annotationBlock);
 

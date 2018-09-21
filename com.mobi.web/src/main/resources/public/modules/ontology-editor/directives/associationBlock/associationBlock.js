@@ -29,8 +29,8 @@
          * @name associationBlock
          *
          * @description
-         * The `associationBlock` module only provides the `associationBlock` directive which creates a
-         * {@link block.directive:block} for displaying the classes and properties in an ontology.
+         * The `associationBlock` module only provides the `associationBlock` directive which creates a section for
+         * displaying the classes and properties in an ontology.
          */
         .module('associationBlock', [])
         /**
@@ -38,48 +38,21 @@
          * @name associationBlock.directive:associationBlock
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires modal.service:modalService
          *
          * @description
-         * `associationBlock` is a directive that creates a {@link block.directive:block} that displays the
+         * `associationBlock` is a directive that creates a section that displays the
          * {@link everythingTree.directive:everythingTree} for the current
-         * {@link ontologyState.service:ontologyStateService selected ontology} along with a button to delete an entity.
-         * The directive houses the methods for opening the modal for deleting an entity. The directive is replaced by
-         * the contents of its template.
+         * {@link ontologyState.service:ontologyStateService selected ontology}. The directive is replaced by the
+         * contents of its template.
          */
         .directive('associationBlock', associationBlock);
 
-        associationBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'modalService'];
-
-        function associationBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, modalService) {
+        function associationBlock() {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/associationBlock/associationBlock.html',
                 scope: {},
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    dvm.sm = ontologyStateService;
-                    dvm.om = ontologyManagerService;
-                    dvm.utils = ontologyUtilsManagerService;
-
-                    dvm.showDeleteConfirmation = function() {
-                        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.sm.listItem.selected['@id'] + '</strong>?</p>', dvm.deleteEntity);
-                    }
-                    dvm.deleteEntity = function() {
-                        if (dvm.om.isClass(dvm.sm.listItem.selected)) {
-                            dvm.utils.deleteClass();
-                        } else if (dvm.om.isObjectProperty(dvm.sm.listItem.selected)) {
-                            dvm.utils.deleteObjectProperty();
-                        } else if (dvm.om.isDataTypeProperty(dvm.sm.listItem.selected)) {
-                            dvm.utils.deleteDataTypeProperty();
-                        }
-                    }
-                }
+                templateUrl: 'modules/ontology-editor/directives/associationBlock/associationBlock.html'
             }
         }
 })();

@@ -30,7 +30,7 @@
          *
          * @description
          * The `conceptHierarchyBlock` module only provides the `conceptHierarchyBlock` directive which creates a
-         * {@link block.directive:block} for displaying the concepts in an ontology/vocabulary.
+         * section for displaying the concepts in an ontology/vocabulary.
          */
         .module('conceptHierarchyBlock', [])
         /**
@@ -39,22 +39,21 @@
          * @scope
          * @restrict E
          * @requires ontologyState.service:ontologyStateService
-         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          * @requires modal.service:modalService
          *
          * @description
-         * `conceptHierarchyBlock` is a directive that creates a {@link block.directive:block} that displays a
+         * `conceptHierarchyBlock` is a directive that creates a section that displays a
          * {@link hierarchyTree.directive:hierarchyTree} of the concepts in the current
-         * {@link ontologyState.service:ontologyStateService selected ontology/vocabulary} along with buttons to add
-         * and delete concepts. The directive houses the methods for opening modals for
-         * {@link createConceptOverlay.directive:createConceptOverlay adding} and deleting concepts. The directive is
+         * {@link ontologyState.service:ontologyStateService selected ontology/vocabulary} along with a button to add
+         * a concept. The directive houses the method for opening a modal for
+         * {@link createConceptOverlay.directive:createConceptOverlay adding} concepts. The directive is
          * replaced by the contents of its template.
          */
         .directive('conceptHierarchyBlock', conceptHierarchyBlock);
 
-        conceptHierarchyBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'modalService'];
+        conceptHierarchyBlock.$inject = ['ontologyStateService', 'modalService'];
 
-        function conceptHierarchyBlock(ontologyStateService, ontologyUtilsManagerService, modalService) {
+        function conceptHierarchyBlock(ontologyStateService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -64,11 +63,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.os = ontologyStateService;
-                    dvm.ontoUtils = ontologyUtilsManagerService;
 
-                    dvm.showDeleteConfirmation = function() {
-                        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.ontoUtils.deleteConcept);
-                    }
                     dvm.showCreateConceptOverlay = function() {
                         dvm.os.unSelectItem();
                         modalService.openModal('createConceptOverlay');

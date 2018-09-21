@@ -24,7 +24,31 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name characteristicsBlock
+         *
+         * @description
+         * The `characteristicsBlock` module only provides the `characteristicsBlock` directive which creates a
+         * section for displaying the characteristics on a property.
+         */
         .module('characteristicsBlock', [])
+        /**
+         * @ngdoc directive
+         * @name characteristicsBlock.directive:characteristicsBlock
+         * @scope
+         * @restrict E
+         * @requires prefixes.service:prefixes
+         * @requires ontologyState.service:ontologyStateService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         *
+         * @description
+         * `characteristicsBlock` is a directive that creates a section that displays the appropriate characteristics
+         * on the {@link ontologyState.service:ontologyStateService selected property} based on its type.
+         * Characteristics are displayed as {@link checkbox.directive:checkbox checkboxes}. The directive is replaced
+         * by the contents of its template.
+         */
         .directive('characteristicsBlock', characteristicsBlock);
 
         characteristicsBlock.$inject = ['prefixes', 'ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];

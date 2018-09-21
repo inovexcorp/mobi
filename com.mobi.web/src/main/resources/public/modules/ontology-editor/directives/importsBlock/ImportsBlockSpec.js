@@ -66,17 +66,11 @@ describe('Imports Block directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('imports-block')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
+        it('with a .section-header', function() {
+            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(1);
-        });
-        it('with a block-header a', function() {
-            expect(this.element.querySelectorAll('block-header a.float-right').length).toBe(2);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
+        it('with links for adding and refreshing', function() {
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(2);
         });
         it('with a p a.import-iri', function() {
             expect(this.element.querySelectorAll('p a.import-iri').length).toBe(1);

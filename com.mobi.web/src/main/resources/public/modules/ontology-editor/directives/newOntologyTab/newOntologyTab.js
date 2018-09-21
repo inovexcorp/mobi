@@ -24,7 +24,34 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name newOntologyTab
+         *
+         * @description
+         * The `newOntologyTab` module only provides the `newOntologyTab` directive which creates a page for creating
+         * a new ontology.
+         */
         .module('newOntologyTab', [])
+        /**
+         * @ngdoc directive
+         * @name newOntologyTab.directive:newOntologyTab
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires prefixes.service:prefixes
+         * @requires stateManager.service:stateManagerService
+         * @requires util.service:utilService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         *
+         * @description
+         * `newOntologyTab` is a directive that creates a page containing a form for a new ontology. The form contains
+         * a {@link textInput.directive:textInput} for the name, a field for the IRI, a
+         * {@link textArea.directive:textArea} for the description, an
+         * {@link advancedLanguageSelect.directive:advancedLanguageSelect}, a
+         * {@link keywordSelect.directive:keywordSelect}, a button to create the ontology, and a button to cancel the
+         * creation. The directive is replaced by the contents of its template.
+         */
         .directive('newOntologyTab', newOntologyTab);
 
         newOntologyTab.$inject = ['$q', '$filter', 'REGEX', 'ontologyStateService', 'prefixes', 'stateManagerService', 'utilService', 'ontologyUtilsManagerService'];

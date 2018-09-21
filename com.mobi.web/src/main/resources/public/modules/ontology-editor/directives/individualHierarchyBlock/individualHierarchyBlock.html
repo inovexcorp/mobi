@@ -20,16 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="individual-hierarchy-block">
-    <block>
-        <block-header>
-            <span>Individuals Hierarchy</span><a class="float-right" ng-click="dvm.showCreateIndividualOverlay()"><i class="fa fa-plus"></i><span>Create Individual</span></a>
-        </block-header>
-        <block-content>
-            <individual-tree></individual-tree>
-        </block-content>
-        <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.sm.listItem.selected || dvm.sm.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()"><i class="fa fa-trash-o"></i><span>Delete Individual</span></button>
-        </block-footer>
-    </block>
+<div class="individual-hierarchy-block d-flex flex-column">
+    <div class="section-header">
+        <h5>Individuals Hierarchy</h5><a class="float-right fa fa-plus" ng-click="dvm.showCreateIndividualOverlay()"></a>
+    </div>
+    <div class="flex-1 horizontal-scroll">
+        <individual-tree></individual-tree>
+    </div>
 </div>

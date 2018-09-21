@@ -30,7 +30,7 @@
          *
          * @description
          * The `propertyHierarchyBlock` module only provides the `propertyHierarchyBlock` directive which creates a
-         * {@link block.directive:block} for displaying the properties in an ontology.
+         * section for displaying the properties in an ontology.
          */
         .module('propertyHierarchyBlock', [])
         /**
@@ -40,22 +40,21 @@
          * @restrict E
          * @requires ontologyState.service:ontologyStateService
          * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          * @requires modal.service:modalService
          *
          * @description
-         * `propertyHierarchyBlock` is a directive that creates a {@link block.directive:block} that displays a
-         * manual hierarchy tree of the data, object, and annotation properties in the current
-         * {@link ontologyState.service:ontologyStateService selected ontology} within separate "folders". The `block`
-         * also contains buttons to add and delete properties. The directive houses the methods for opening modals for
-         * {@link createPropertyOverlay.directive:createPropertyOverlay adding} and deleting properties. The directive
-         * is replaced by the contents of its template.
+         * `propertyHierarchyBlock` is a directive that creates a section that displays a manual hierarchy tree of the
+         * data, object, and annotation properties in the current
+         * {@link ontologyState.service:ontologyStateService selected ontology} within separate "folders". The section
+         * header also contains a button to add properties. The directive houses the methods for opening a modal for
+         * {@link createPropertyOverlay.directive:createPropertyOverlay adding} properties. The directive is replaced
+         * by the contents of its template.
          */
         .directive('propertyHierarchyBlock', propertyHierarchyBlock);
 
-        propertyHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'modalService', 'INDENT'];
+        propertyHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'modalService', 'INDENT'];
 
-        function propertyHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, modalService, INDENT) {
+        function propertyHierarchyBlock(ontologyStateService, ontologyManagerService, modalService, INDENT) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -67,20 +66,7 @@
                     dvm.indent = INDENT;
                     dvm.os = ontologyStateService;
                     dvm.om = ontologyManagerService;
-                    dvm.utils = ontologyUtilsManagerService;
 
-                    dvm.showDeleteConfirmation = function() {
-                        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.deleteProperty);
-                    }
-                    dvm.deleteProperty = function() {
-                        if (dvm.om.isObjectProperty(dvm.os.listItem.selected)) {
-                            dvm.utils.deleteObjectProperty();
-                        } else if (dvm.om.isDataTypeProperty(dvm.os.listItem.selected)) {
-                            dvm.utils.deleteDataTypeProperty();
-                        } else if (dvm.om.isAnnotation(dvm.os.listItem.selected)) {
-                            dvm.utils.deleteAnnotationProperty();
-                        }
-                    }
                     dvm.isShown = function(node) {
                         return !_.has(node, 'entityIRI') || (dvm.os.areParentsOpen(node) && node.get(dvm.os.listItem.ontologyRecord.recordId));
                     }
