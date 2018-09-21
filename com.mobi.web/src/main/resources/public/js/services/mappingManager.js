@@ -579,7 +579,7 @@
              */
             self.findSourceOntologyWithProp = function(propertyIRI, ontologies) {
                 return _.find(ontologies, ontology => {
-                    var properties = _.concat(om.getDataTypeProperties([ontology.entities]), om.getObjectProperties([ontology.entities]));
+                    var properties = _.concat(om.getDataTypeProperties([ontology.entities]), om.getObjectProperties([ontology.entities]), om.getAnnotations([ontology.entities]));
                     return _.findIndex(properties, {'@id': propertyIRI}) !== -1;
                 });
             }
@@ -610,7 +610,7 @@
              * Finds the list of any Class, Data, or Object Mappings within the passed mapping that are no longer
              * compatible with the passed list of source ontologies. A Class, Data, or Object is incompatible if
              * its IRI doesn't exist in the ontologies or if it has been deprecated. A ObjectMapping is also
-             * incompatible if its range has changed or its range class is incompatiable. If a DataMapping uses a
+             * incompatible if its range has changed or its range class is incompatible. If a DataMapping uses a
              * supported annotation property, it will not be incompatible.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
@@ -635,8 +635,8 @@
                         incompatibleMappings.push(propMapping);
                     } else if (propOntology) {
                         var propObj = om.getEntity([propOntology.entities], propId);
-                        // Incompatible if data property is deprecated or is no longer a data property
-                        if (om.isDeprecated(propObj) || !om.isDataTypeProperty(propObj)) {
+                        // Incompatible if data property is deprecated or is no longer a data or annotation property
+                        if (om.isDeprecated(propObj) || (!om.isDataTypeProperty(propObj) && !om.isAnnotation(propObj))) {
                             incompatibleMappings.push(propMapping);
                         }
                     }

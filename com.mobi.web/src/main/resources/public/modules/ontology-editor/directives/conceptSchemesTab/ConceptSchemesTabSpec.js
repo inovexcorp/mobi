@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Concept Schemes Tab directive', function() {
-    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, propertyManagerSvc;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, ontologyUtilsManagerSvc, propertyManagerSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
