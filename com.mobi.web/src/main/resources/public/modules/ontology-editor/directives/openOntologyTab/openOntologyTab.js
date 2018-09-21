@@ -123,7 +123,6 @@
                         dvm.os.newKeywords = [];
                         dvm.os.newLanguage = undefined;
                         modalService.openModal('newOntologyOverlay');
-                        // dvm.os.showNewTab = true;
                     }
                     dvm.showDeleteConfirmationOverlay = function(record, event) {
                         event.stopPropagation();
