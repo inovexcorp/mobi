@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Mapping Manager service', function() {
+fdescribe('Mapping Manager service', function() {
     var mappingManagerSvc, $httpBackend, $httpParamSerializer, ontologyManagerSvc, utilSvc, uuidSvc, prefixes, splitIRI, camelCase, $q, scope;
 
     beforeEach(function() {
@@ -728,14 +728,9 @@ describe('Mapping Manager service', function() {
             mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
             expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.dataPropMapping]);
         });
-        it('data property is a standard annotation property', function() {
-            mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
-            mappingManagerSvc.annotationProperties = [this.dataPropObj.id];
-            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([]);
-        });
         it('data property is an annotation property', function() {
             mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
-            ontologyManagerSvc.getAnnotations.and.returnValue([this.dataPropObj.id]);
+            mappingManagerSvc.annotationProperties = [this.dataPropObj.id];
             expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([]);
         });
         it('data property is deprecated', function() {
@@ -744,11 +739,19 @@ describe('Mapping Manager service', function() {
             ontologyManagerSvc.isDeprecated.and.returnValue(true);
             expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.dataPropMapping]);
         });
-        it('data property is not a data property', function() {
+        it('data property is not a data property or annotation property', function() {
             mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
             mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+            ontologyManagerSvc.isAnnotation.and.returnValue(false);
             expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.dataPropMapping]);
+        });
+        it('data property is not a data property but is an annotation property', function() {
+            mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
+            mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
+            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+            ontologyManagerSvc.isAnnotation.and.returnValue(true);
+            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([]);
         });
         it('object property does not exist', function() {
             mappingManagerSvc.getAllObjectMappings.and.returnValue([this.objectPropMapping]);

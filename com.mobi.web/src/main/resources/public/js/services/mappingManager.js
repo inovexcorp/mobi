@@ -631,12 +631,12 @@
                     var propId = self.getPropIdByMapping(propMapping);
                     var propOntology = self.findSourceOntologyWithProp(propId, ontologies);
                     // Incompatible if data property no longer exists and is not a supported annotation
-                    if (!propOntology && !_.includes(self.annotationProperties, propId) && !_.includes(om.getAnnotations(), propId)) {
+                    if (!propOntology && !_.includes(self.annotationProperties, propId)) {
                         incompatibleMappings.push(propMapping);
                     } else if (propOntology) {
                         var propObj = om.getEntity([propOntology.entities], propId);
-                        // Incompatible if data property is deprecated or is no longer a data property
-                        if (om.isDeprecated(propObj) || !om.isDataTypeProperty(propObj)) {
+                        // Incompatible if data property is deprecated or is no longer a data or annotation property
+                        if (om.isDeprecated(propObj) || (!om.isDataTypeProperty(propObj) && !om.isAnnotation(propObj))) {
                             incompatibleMappings.push(propMapping);
                         }
                     }
