@@ -87,7 +87,7 @@
                     }
                     dvm.loadOntologyAndContinue = function() {
                         mm.getSourceOntologies(mm.getSourceOntologyInfo(dvm.state.mapping.jsonld)).then(ontologies => {
-                            if (mm.areCompatible(dvm.state.mapping, ontologies)) {
+                            if (mm.areCompatible(dvm.state.mapping.jsonld, ontologies)) {
                                 dvm.state.sourceOntologies = ontologies;
                                 dvm.state.availableClasses = dvm.state.getClasses(ontologies);
                                 dvm.state.mappingSearchString = '';

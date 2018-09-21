@@ -661,6 +661,11 @@ describe('Mapping Manager service', function() {
         expect(result).toEqual(ontology);
 
         ontologyManagerSvc.getObjectProperties.and.returnValue([]);
+        ontologyManagerSvc.getAnnotations.and.returnValue([{'@id': 'prop'}]);
+        result = mappingManagerSvc.findSourceOntologyWithProp('prop', sourceOntologies);
+        expect(result).toEqual(ontology);
+
+        ontologyManagerSvc.getAnnotations.and.returnValue([]);
         result = mappingManagerSvc.findSourceOntologyWithProp('prop', sourceOntologies);
         expect(result).toBeUndefined();
     });
@@ -734,11 +739,19 @@ describe('Mapping Manager service', function() {
             ontologyManagerSvc.isDeprecated.and.returnValue(true);
             expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.dataPropMapping]);
         });
-        it('data property is not a data property', function() {
+        it('data property is not a data property or annotation property', function() {
             mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
             mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+            ontologyManagerSvc.isAnnotation.and.returnValue(false);
             expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.dataPropMapping]);
+        });
+        it('data property is not a data property but is an annotation property', function() {
+            mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
+            mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
+            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+            ontologyManagerSvc.isAnnotation.and.returnValue(true);
+            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([]);
         });
         it('object property does not exist', function() {
             mappingManagerSvc.getAllObjectMappings.and.returnValue([this.objectPropMapping]);
