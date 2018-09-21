@@ -30,7 +30,7 @@
          *
          * @description
          * The `usagesBlock` module only provides the `usagesBlock` directive which creates a section for
-         * displaying the usages of an entity within an otnology.
+         * displaying the usages of an entity within an ontology.
          */
         .module('usagesBlock', [])
         /**

@@ -24,7 +24,7 @@
 <div class="relationships-block axiom-block">
     <div class="section-header">
         <h5>{{dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes) ? 'Top Concepts' : 'Relationships'}}</h5>
-        <button ng-if="!dvm.os.listItem.selected.mobi.imported" class="btn btn-link float-right fa fa-fw fa-plus" ng-disabled="dvm.isDisabled()" ng-click="dvm.clickPlus()"></button>
+        <button ng-if="!dvm.os.listItem.selected.mobi.imported" class="btn btn-link float-right p-0 remove-min-width fa fa-fw fa-plus" ng-disabled="dvm.isDisabled()" ng-click="dvm.clickPlus()"></button>
     </div>
     <property-values ng-repeat="relationship in dvm.os.listItem.selected | showProperties:dvm.relationshipList | orderBy:dvm.ontoUtils.getLabelForIRI" property="relationship" entity="dvm.os.listItem.selected" remove="dvm.openRemoveOverlay(iri, index)"></property-values>
 </div>
