@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Mapping Manager service', function() {
+describe('Mapping Manager service', function() {
     var mappingManagerSvc, $httpBackend, $httpParamSerializer, ontologyManagerSvc, utilSvc, uuidSvc, prefixes, splitIRI, camelCase, $q, scope;
 
     beforeEach(function() {
