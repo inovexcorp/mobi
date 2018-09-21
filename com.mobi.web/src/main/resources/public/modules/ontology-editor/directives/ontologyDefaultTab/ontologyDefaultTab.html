@@ -21,7 +21,6 @@
   #L%
   -->
 <div class="ontology-default-tab">
-    <open-ontology-tab ng-if="!dvm.sm.showNewTab && !dvm.sm.showUploadTab"></open-ontology-tab>
-    <new-ontology-tab ng-if="dvm.sm.showNewTab"></new-ontology-tab>
+    <open-ontology-tab ng-if="!dvm.sm.showUploadTab"></open-ontology-tab>
     <upload-ontology-tab ng-if="dvm.sm.showUploadTab"></upload-ontology-tab>
 </div>

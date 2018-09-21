@@ -179,12 +179,12 @@ describe('Open Ontology Tab directive', function() {
         });
         it('should set the correct state for creating a new ontology', function() {
             this.controller.newOntology();
-            expect(ontologyStateSvc.showNewTab).toEqual(true);
             expect(_.startsWith(ontologyStateSvc.newOntology['@id'], 'https://mobi.com/ontologies/')).toEqual(true);
             expect(ontologyStateSvc.newOntology[prefixes.dcterms + 'title']).toEqual([{'@value': ''}]);
             expect(ontologyStateSvc.newOntology[prefixes.dcterms + 'description']).toEqual([{'@value': ''}]);
             expect(ontologyStateSvc.newLanguage).toEqual(undefined);
             expect(ontologyStateSvc.newKeywords).toEqual([]);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('newOntologyOverlay');
         });
         describe('should show the delete confirmation overlay', function() {
             beforeEach(function() {
