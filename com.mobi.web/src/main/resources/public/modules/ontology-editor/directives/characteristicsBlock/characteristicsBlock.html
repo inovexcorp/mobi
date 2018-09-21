@@ -21,10 +21,10 @@
   #L%
   -->
 <div class="characteristics-block">
-    <block>
-        <block-header>Characteristics</block-header>
-        <block-content class="padding">
-            <checkbox ng-repeat="(key, obj) in dvm.characteristics | filter:dvm.filter" ng-if="dvm.os.listItem.selected" is-disabled="dvm.os.listItem.selected.mobi.imported" ng-model="obj.checked" display-text="obj.displayText" change-event="dvm.onChange(obj)"></checkbox>
-        </block-content>
-    </block>
+    <div class="section-header">
+        <h5>Characteristics</h5>
+    </div>
+    <div class="pt-2">
+        <checkbox ng-repeat="(key, obj) in dvm.characteristics | filter:dvm.filter" is-disabled="dvm.os.listItem.selected.mobi.imported" ng-model="obj.checked" display-text="obj.displayText" change-event="dvm.onChange(obj)"></checkbox>
+    </div>
 </div>

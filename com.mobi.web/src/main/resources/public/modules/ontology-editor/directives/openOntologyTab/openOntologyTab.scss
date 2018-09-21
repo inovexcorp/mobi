@@ -2,54 +2,35 @@
 @import "./src/main/resources/public/css/variables";
 
 .open-ontology-tab {
-    .actions {
-        height: 48px;
+    .ontologies {
 
-        .form-inline {
-            padding: 7px;
-        }
-    }
-    .list {
-        flex: 1;
-        min-height: 0;
-        padding: 15px 0;
+        .ontology {
+            border-bottom: 1px solid var(--light);
+            padding: 10px 0 10px 10px;
 
-        .open-ontology-content {
-            .ontologies {
-                min-height: 0;
-                padding: 15px;
+            &:last-child {
+                border-bottom: none;
+            }
+            .ontology-info {
+                cursor: pointer;
 
-                .ontology {
-                    border-bottom: 1px solid var(--light);
-                    padding: 10px;
-
-                    &:last-child {
-                        border-bottom: none;
+                &:hover {
+                    background-color: var(--light);
+                }
+                .details {
+                    .header {
+                        font-size: 1.25em;
+                        font-weight: normal;
+                        margin: 0 0 5px;
                     }
+                }
+            }
+            .action-container {
+                .action {
+                    text-decoration: none;
 
-                    .ontology-info {
-                        cursor: pointer;
-                        .details {
-                            .header {
-                                font-size: 1.25em;
-                                font-weight: normal;
-                                margin: 0 0 5px;
-                            }
-                        }
-
-                        &:hover {
-                            background-color: var(--light);
-                        }
-                    }
-
-                    .action-container {
-                        .action {
-                            text-decoration: none;
-
-                            &:hover {
-                                color: var(--gray) !important;
-                            }
-                        }
+                    &:hover {
+                        color: var(--gray) !important;
                     }
 
                     .access-controls .record-action {
@@ -58,20 +39,18 @@
                 }
             }
         }
-        .paging-container {
-            padding: 0 15px;
-
-            .paging-details {
-                p {
-                    line-height: 34px;
-                    margin: 0;
-                }
+    }
+    .paging-container {
+        .paging-details {
+            p {
+                line-height: 34px;
+                margin: 0;
             }
-            .page-nav {
-                .pagination {
-                    margin: 0;
-                    vertical-align: bottom;
-                }
+        }
+        .page-nav {
+            .pagination {
+                margin: 0;
+                vertical-align: bottom;
             }
         }
     }

@@ -2,6 +2,9 @@
 @import "./src/main/resources/public/css/variables";
 
 .preview-block {
+    .block {
+        border: 1px solid var(--light);
+    }
     .preview-content {
         display: flex;
         flex-direction: column;

@@ -61,16 +61,24 @@ describe('Annotation Block directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('annotation-block')).toBe(true);
-        });
-        it('based on annotation button', function() {
-            var icon = this.element.querySelectorAll('.fa-plus');
-            expect(icon.length).toBe(1);
+            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
         it('depending on how many annotations there are', function() {
             expect(this.element.find('property-values').length).toBe(2);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(this.element.find('property-values').length).toBe(0);
+        });
+        it('depending on whether something is selected', function() {
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+            ontologyStateSvc.listItem.selected = undefined;
+            scope.$digest();
+            expect(this.element.querySelectorAll('a.fa-plus').length).toBe(0);
+        });
+        it('depending on whether the selected entity is imported', function() {
+            ontologyStateSvc.listItem.selected.mobi = {imported: true};
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
         });
     });
     describe('controller methods', function() {

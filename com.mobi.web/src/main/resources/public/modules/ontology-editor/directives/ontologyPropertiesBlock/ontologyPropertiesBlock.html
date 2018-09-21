@@ -21,12 +21,8 @@
   #L%
   -->
 <div class="ontology-properties-block annotation-block">
-    <block>
-        <block-header>
-            <span>Properties</span><a class="float-right" ng-click="dvm.openAddOverlay()"><i class="fa fa-fw fa-plus"></i>Add Property</a>
-        </block-header>
-        <block-content>
-            <property-values ng-repeat="property in dvm.os.listItem.selected | showProperties:dvm.properties | orderBy:dvm.ontoUtils.getLabelForIRI" property="property" entity="dvm.os.listItem.selected" remove="dvm.openRemoveOverlay(iri, index)" edit="dvm.editClicked(property, index)"></property-values>
-        </block-content>
-    </block>
+    <div class="section-header">
+        <h5>Properties</h5><a class="float-right fa fa-fw fa-plus" ng-click="dvm.openAddOverlay()"></a>
+    </div>
+    <property-values ng-repeat="property in dvm.os.listItem.selected | showProperties:dvm.properties | orderBy:dvm.ontoUtils.getLabelForIRI" property="property" entity="dvm.os.listItem.selected" remove="dvm.openRemoveOverlay(iri, index)" edit="dvm.editClicked(property, index)"></property-values>
 </div>

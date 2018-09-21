@@ -20,22 +20,27 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="overview-tab row">
-    <association-block class="col-3"></association-block>
-    <div class="col-9 editor">
-        <selected-details></selected-details>
-        <div class="row">
-            <div class="col-7">
-                <div class="row vertical-half">
+<div class="overview-tab row p-3">
+    <association-block class="col-3 h-100"></association-block>
+    <div class="selected-entity col-9 h-100 d-flex flex-column" ng-if="dvm.os.listItem.selected">
+        <div class="selected-header d-flex">
+            <selected-details class="flex-1"></selected-details>
+            <div>
+                <button class="btn btn-danger" ng-disabled="dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()">Delete</button>
+            </div>
+        </div>
+        <div class="row flex-1">
+            <div class="col-7 vertical-scroll">
+                <div class="row py-2">
                     <annotation-block class="col"></annotation-block>
                 </div>
-                <div class="row vertical-half">
+                <div class="row py-2">
                     <axiom-block class="col"></axiom-block>
                 </div>
             </div>
-            <div class="col-5 characteristics-usages-wrapper">
+            <div class="col-5 characteristics-usages-wrapper vertical-scroll">
                 <characteristics-row></characteristics-row>
-                <div class="row">
+                <div class="row py-2">
                     <usages-block class="col"></usages-block>
                 </div>
             </div>

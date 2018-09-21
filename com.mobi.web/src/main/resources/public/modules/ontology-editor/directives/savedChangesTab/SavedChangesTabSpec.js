@@ -68,17 +68,11 @@ describe('Saved Changes Tab directive', function() {
             expect(this.element.hasClass('saved-changes-tab')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
-        });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(0);
+        it('with a .has-changes', function() {
+            expect(this.element.querySelectorAll('.has-changes').length).toBe(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
             scope.$digest();
-            expect(this.element.find('block-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.has-changes').length).toBe(1);
         });
         it('with a .btn-container', function() {
             expect(this.element.querySelectorAll('.btn-container').length).toBe(0);
@@ -107,38 +101,38 @@ describe('Saved Changes Tab directive', function() {
             expect(this.element.find('statement-display').length).toBe(2);
         });
         it('depending on whether the list item is up to date', function() {
-            expect(this.element.querySelectorAll('block-content .text-center info-message').length).toBe(1);
-            expect(this.element.querySelectorAll('block-content .text-center error-display').length).toBe(0);
+            expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(1);
+            expect(this.element.querySelectorAll('.changes .text-center error-display').length).toBe(0);
 
             ontologyStateSvc.listItem.upToDate = false;
             scope.$digest();
-            expect(this.element.querySelectorAll('block-content .text-center info-message').length).toBe(0);
-            expect(this.element.querySelectorAll('block-content .text-center error-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(0);
+            expect(this.element.querySelectorAll('.no-changes error-display').length).toBe(1);
 
             ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
             scope.$digest();
-            expect(this.element.querySelectorAll('block-header error-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.changes-info error-display').length).toBe(1);
 
             ontologyStateSvc.listItem.upToDate = true;
             scope.$digest();
-            expect(this.element.querySelectorAll('block-header error-display').length).toBe(0);
+            expect(this.element.querySelectorAll('.changes-info error-display').length).toBe(0);
         });
         it('depending on whether the branch is a user branch', function() {
-            expect(this.element.querySelectorAll('block-content .text-center info-message').length).toBe(1);
-            expect(this.element.querySelectorAll('block-content .text-center error-display').length).toBe(0);
+            expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(1);
+            expect(this.element.querySelectorAll('.no-changes error-display').length).toBe(0);
 
             ontologyStateSvc.listItem.userBranch = true;
             ontologyStateSvc.listItem.createdFromExists = true;
             scope.$digest();
 
-            expect(this.element.querySelectorAll('block-content .text-center info-message').length).toBe(0);
-            expect(this.element.querySelectorAll('block-content .text-center error-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(0);
+            expect(this.element.querySelectorAll('.no-changes error-display').length).toBe(1);
 
             ontologyStateSvc.listItem.createdFromExists = true;
             scope.$digest();
 
-            expect(this.element.querySelectorAll('block-content .text-center info-message').length).toBe(0);
-            expect(this.element.querySelectorAll('block-content .text-center error-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(0);
+            expect(this.element.querySelectorAll('.no-changes error-display').length).toBe(1);
         });
         it('depending on whether the list item is committable', function() {
             ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
@@ -415,7 +409,7 @@ describe('Saved Changes Tab directive', function() {
         ontologyStateSvc.listItem.upToDate = false;
         scope.$digest();
         spyOn(this.controller, 'update');
-        var link = angular.element(this.element.querySelectorAll('block-content .text-center error-display a')[0]);
+        var link = angular.element(this.element.querySelectorAll('.no-changes error-display a')[0]);
         link.triggerHandler('click');
         expect(this.controller.update).toHaveBeenCalled();
     });
@@ -424,7 +418,7 @@ describe('Saved Changes Tab directive', function() {
         ontologyStateSvc.listItem.createdFromExists = true;
         scope.$digest();
         spyOn(this.controller, 'mergeUserBranch');
-        var link = angular.element(this.element.querySelectorAll('block-content .text-center error-display a')[0]);
+        var link = angular.element(this.element.querySelectorAll('.no-changes error-display a')[0]);
         link.triggerHandler('click');
         expect(this.controller.mergeUserBranch).toHaveBeenCalled();
     });
@@ -433,7 +427,7 @@ describe('Saved Changes Tab directive', function() {
         ontologyStateSvc.listItem.createdFromExists = false;
         scope.$digest();
         spyOn(this.controller, 'restoreBranchWithUserBranch');
-        var link = angular.element(this.element.querySelectorAll('block-content .text-center error-display a')[0]);
+        var link = angular.element(this.element.querySelectorAll('.no-changes error-display a')[0]);
         link.triggerHandler('click');
         expect(this.controller.restoreBranchWithUserBranch).toHaveBeenCalled();
     });

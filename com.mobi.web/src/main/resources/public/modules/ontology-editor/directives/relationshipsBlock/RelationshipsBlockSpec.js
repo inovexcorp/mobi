@@ -81,11 +81,11 @@ describe('Relationships Block directive', function() {
             expect(this.element.hasClass('relationships-block')).toBe(true);
             expect(this.element.hasClass('axiom-block')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
+        it('with a .section-header', function() {
+            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(1);
+        it('with a button to add a relationship', function() {
+            expect(this.element.querySelectorAll('.section-header button').length).toBe(1);
         });
         it('depending on how many annotations there are', function() {
             expect(this.element.find('property-values').length).toBe(2);
@@ -93,59 +93,65 @@ describe('Relationships Block directive', function() {
             scope.$digest();
             expect(this.element.find('property-values').length).toBe(0);
         });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
-        });
-        it('with a .fa-plus', function() {
-            expect(this.element.querySelectorAll('.fa-plus').length).toBe(1);
-        });
         it('with property-values', function() {
             expect(this.element.find('property-values').length).toBe(2);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$apply();
             expect(this.element.find('property-values').length).toBe(0);
         });
-        it('with a block-header button', function() {
-            expect(this.element.querySelectorAll('block-header button').length).toBe(1);
-            ontologyStateSvc.listItem.selected = undefined;
-            scope.$digest();
-            expect(this.element.querySelectorAll('block-header button').length).toBe(0);
-        });
-        it('with a .relationship-header', function() {
-            expect(this.element.querySelectorAll('.relationship-header').length).toBe(1);
+        it('depending on whether a concept or concept scheme is selected', function() {
+            var header = angular.element(this.element.querySelectorAll('.section-header h5')[0]);
+            expect(header.text().trim()).toEqual('Relationships');
+
             ontologyManagerSvc.isConceptScheme.and.returnValue(true);
             scope.$digest();
-            expect(this.element.querySelectorAll('.relationship-header').length).toBe(0);
+            expect(header.text().trim()).toEqual('Top Concepts');
         });
-        it('with a .top-concept-header', function() {
-            expect(this.element.querySelectorAll('.top-concept-header').length).toBe(0);
-            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
+        it('depending on whether the button to add should be disabled', function() {
+            spyOn(this.controller, 'isDisabled').and.returnValue(false);
             scope.$digest();
-            expect(this.element.querySelectorAll('.top-concept-header').length).toBe(1);
-        });
-        it('depending on whether there is a top concept property', function() {
-            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
-            spyOn(this.controller, 'hasTopConceptProperty').and.returnValue(true);
-            scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('block-header button')[0]);
+            var button = angular.element(this.element.querySelectorAll('.section-header button')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
-            this.controller.hasTopConceptProperty.and.returnValue(false);
+            this.controller.isDisabled.and.returnValue(true);
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
-        it('depending on whether there are relationships', function() {
-            ontologyManagerSvc.isConceptScheme.and.returnValue(false);
-            scope.$digest();
-            var link = angular.element(this.element.querySelectorAll('block-header button')[0]);
-            expect(link.attr('disabled')).toBeTruthy();
-
-            this.controller.relationshipList = [{}];
-            scope.$digest();
-            expect(link.attr('disabled')).toBeFalsy();
-        });
     });
     describe('controller methods', function() {
+        describe('should handle a click on the plus button if', function() {
+            beforeEach(function() {
+                spyOn(this.controller, 'showRelationshipOverlay');
+                spyOn(this.controller, 'showTopConceptOverlay');
+            });
+            it('the selected item is a concept scheme', function() {
+                ontologyManagerSvc.isConceptScheme.and.returnValue(true);
+                this.controller.clickPlus();
+                expect(this.controller.showRelationshipOverlay).not.toHaveBeenCalled();
+                expect(this.controller.showTopConceptOverlay).toHaveBeenCalled();
+            });
+            it('the selected item is a concept', function() {
+                this.controller.clickPlus();
+                expect(this.controller.showRelationshipOverlay).toHaveBeenCalled();
+                expect(this.controller.showTopConceptOverlay).not.toHaveBeenCalled();
+            });
+        });
+        describe('should determine whether the button should be disabled if', function() {
+            beforeEach(function() {
+                spyOn(this.controller, 'hasTopConceptProperty').and.returnValue(true);
+            });
+            it('the selected item is a concept scheme', function() {
+                ontologyManagerSvc.isConceptScheme.and.returnValue(true);
+                expect(this.controller.isDisabled()).toEqual(false);
+                this.controller.hasTopConceptProperty.and.returnValue(false);
+                expect(this.controller.isDisabled()).toEqual(true);
+            });
+            it('the selected item is a concept', function() {
+                expect(this.controller.isDisabled()).toEqual(true);
+                this.controller.relationshipList = [{}];
+                expect(this.controller.isDisabled()).toEqual(false);
+            });
+        });
         it('showRelationshipOverlay opens the relationshipOverlay', function() {
             this.controller.showRelationshipOverlay();
             expect(modalSvc.openModal).toHaveBeenCalledWith('relationshipOverlay', {relationshipList: this.controller.relationshipList}, this.controller.updateHierarchy);
@@ -182,10 +188,10 @@ describe('Relationships Block directive', function() {
             expect(modalSvc.openModal).toHaveBeenCalledWith('topConceptOverlay', {}, this.controller.updateHierarchy);
         });
     });
-    it('should call showRelationshipOverlay when the add relationship button is clicked', function() {
-        spyOn(this.controller, 'showRelationshipOverlay');
-        var button = angular.element(this.element.querySelectorAll('block-header button')[0]);
+    it('should call clickPlus when the add button is clicked', function() {
+        spyOn(this.controller, 'clickPlus');
+        var button = angular.element(this.element.querySelectorAll('.section-header button')[0]);
         button.triggerHandler('click');
-        expect(this.controller.showRelationshipOverlay).toHaveBeenCalled();
+        expect(this.controller.clickPlus).toHaveBeenCalled();
     });
 });
