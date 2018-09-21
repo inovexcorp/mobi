@@ -610,7 +610,7 @@
              * Finds the list of any Class, Data, or Object Mappings within the passed mapping that are no longer
              * compatible with the passed list of source ontologies. A Class, Data, or Object is incompatible if
              * its IRI doesn't exist in the ontologies or if it has been deprecated. A ObjectMapping is also
-             * incompatible if its range has changed or its range class is incompatiable. If a DataMapping uses a
+             * incompatible if its range has changed or its range class is incompatible. If a DataMapping uses a
              * supported annotation property, it will not be incompatible.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
@@ -631,7 +631,7 @@
                     var propId = self.getPropIdByMapping(propMapping);
                     var propOntology = self.findSourceOntologyWithProp(propId, ontologies);
                     // Incompatible if data property no longer exists and is not a supported annotation
-                    if (!propOntology && !_.includes(self.annotationProperties, propId)) {
+                    if (!propOntology && !_.includes(self.annotationProperties, propId) && !_.includes(om.getAnnotations(), propId)) {
                         incompatibleMappings.push(propMapping);
                     } else if (propOntology) {
                         var propObj = om.getEntity([propOntology.entities], propId);

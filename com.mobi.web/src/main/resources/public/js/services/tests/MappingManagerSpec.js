@@ -728,9 +728,14 @@ describe('Mapping Manager service', function() {
             mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
             expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.dataPropMapping]);
         });
-        it('data property is an annotation property', function() {
+        it('data property is a standard annotation property', function() {
             mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
             mappingManagerSvc.annotationProperties = [this.dataPropObj.id];
+            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([]);
+        });
+        it('data property is an annotation property', function() {
+            mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
+            ontologyManagerSvc.getAnnotations.and.returnValue([this.dataPropObj.id]);
             expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([]);
         });
         it('data property is deprecated', function() {
