@@ -62,6 +62,7 @@ import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.query.GraphQueryResult;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.rdf.api.BNode;
@@ -957,6 +958,38 @@ public class OntologyRestImpl implements OntologyRest {
             return Response.ok(getUnloadableImportIRIs(ontology)).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    @ResourceId(type = ValueType.PATH, id = "recordId")
+    public Response queryOntology(ContainerRequestContext context, String recordIdStr, String queryString,
+                                  String branchIdStr, String commitIdStr) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
+        }
+
+        Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
+                ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+
+        // Determine query type:
+        String queryType = "select";  // TODO: switch it.
+
+        if (queryType == "select") {
+            TupleQueryResult queryResults = ontologyManager.getTupleQueryResults(ontology, queryString);
+            if (queryResults.hasNext()) {
+                try {
+                    JSONObject json = JSONQueryResults.getResponse(queryResults);
+                    return Response.ok().entity(json).build();
+                } catch (MobiException ex) {
+                    throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+                }
+            } else {
+                return Response.noContent().build();
+            }
+        }
+        else {
+            throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
     }
 

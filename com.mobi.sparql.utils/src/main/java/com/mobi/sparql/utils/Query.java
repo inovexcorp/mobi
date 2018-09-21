@@ -29,8 +29,12 @@ import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
+import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.query.parser.QueryPrologLexer;
 import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.sparql.utils.impl.CaseInsensitiveInputStream;
+
+import java.util.List;
 
 public class Query {
 
@@ -45,5 +49,18 @@ public class Query {
             }
         });
         return parser;
+    }
+
+    public static String getQueryType(String queryString) {
+        String queryType = "";
+        QueryPrologLexer lexer = new QueryPrologLexer();
+
+        List<QueryPrologLexer.Token> lexTokens = lexer.lex(queryString);
+        for(QueryPrologLexer.Token token: lexTokens) {
+            if (token.t == QueryPrologLexer.TokenType.REST_OF_QUERY) {
+                queryType = token.s.split(" ")[0].toLowerCase();
+            }
+        }
+        return queryType;
     }
 }

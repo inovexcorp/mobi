@@ -38,6 +38,7 @@ import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.query.GraphQueryResult;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.GraphQuery;
 import com.mobi.query.api.TupleQuery;
@@ -470,6 +471,16 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public TupleQueryResult getTupleQueryResults(Ontology ontology, String queryString) {
+        return runQueryOnOntology(ontology, queryString, null, "getTupleQueryResults(ontology, queryString)");
+    }
+
+    @Override
+    public GraphQueryResult getGraphQueryResults(Ontology ontology, String queryString) {
+        return runGraphQueryOnOntology(ontology, queryString, null, "getGraphQueryResults(ontology, queryString)");
+    }
+
+    @Override
     public Model getOntologyModel(Resource recordId) {
         return catalogManager.getCompiledResource(getHeadOfBranch(getMasterBranch(recordId)));
     }
@@ -552,6 +563,55 @@ public class SimpleOntologyManager implements OntologyManager {
                 query = addBinding.apply(query);
             }
             return query.evaluateAndReturn();
+        } finally {
+            logTrace(methodName, start);
+        }
+    }
+
+    /**
+     * Executes the provided Graph query on the provided RepositoryConnection.
+     *
+     * @param ontology    the ontology to query on.
+     * @param queryString the query string that you wish to run.
+     * @param addBinding  the binding to add to the query, if needed.
+     * @param methodName  the name of the method to provide more accurate logging messages.
+     * @return the results of the query.
+     */
+    private GraphQueryResult runGraphQueryOnOntology(Ontology ontology, String queryString,
+                                                     @Nullable Function<GraphQuery, GraphQuery> addBinding,
+                                                     String methodName) {
+        Repository repo = repositoryManager.createMemoryRepository();
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Ontology> importedOntologies = ontology.getImportsClosure();
+            conn.begin();
+            importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
+            conn.commit();
+            return runGraphQueryOnOntology(queryString, addBinding, methodName, conn);
+        } finally {
+            repo.shutDown();
+        }
+    }
+
+    /**
+     * Executes the provided Graph query on the provided RepositoryConnection.
+     *
+     * @param queryString the query string that you wish to run.
+     * @param addBinding  the binding to add to the query, if needed.
+     * @param methodName  the name of the method to provide more accurate logging messages.
+     * @param conn        the {@link RepositoryConnection} to run the query against.
+     * @return the results of the query.
+     */
+    private GraphQueryResult runGraphQueryOnOntology(String queryString,
+                                                     @Nullable Function<GraphQuery, GraphQuery> addBinding,
+                                                     String methodName, RepositoryConnection conn) {
+        long start = getStartTime();
+        try {
+            GraphQuery query = conn.prepareGraphQuery(queryString);
+            if (addBinding != null) {
+                query = addBinding.apply(query);
+            }
+            return query.evaluate();
         } finally {
             logTrace(methodName, start);
         }

@@ -24,6 +24,7 @@ package com.mobi.ontology.core.api;
  */
 
 import com.mobi.ontology.core.utils.MobiOntologyCreationException;
+import com.mobi.query.GraphQueryResult;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -363,6 +364,24 @@ public interface OntologyManager {
      * @return a Set with the query results.
      */
     TupleQueryResult getSearchResults(String searchText, RepositoryConnection conn);
+
+    /**
+     * Searches the provided ontology & its import closures using the provided Sparql query.
+     *
+     * @param ontology   the Ontology you wish to query.
+     * @param queryString the Sparql query string you want to execute.
+     * @return a Tuple Set with the query results.
+     */
+    TupleQueryResult getTupleQueryResults(Ontology ontology, String queryString);
+
+    /**
+     * Searches the provided ontology & its import closures using the provided Sparql query.
+     *
+     * @param ontology   the Ontology you wish to query.
+     * @param queryString the Sparql query string you want to execute.
+     * @return a Graph Set with the query results.
+     */
+    GraphQueryResult getGraphQueryResults(Ontology ontology, String queryString);
 
     /**
      * Gets the compiled resource of the head Commit on the master Branch for the OntologyRecord specified by the
