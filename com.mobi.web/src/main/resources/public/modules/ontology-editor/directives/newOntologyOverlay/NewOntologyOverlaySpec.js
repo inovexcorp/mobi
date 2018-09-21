@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('New Ontology Tab directive', function() {
+describe('New Ontology Overlay directive', function() {
     var $compile, scope, $q, ontologyStateSvc, utilSvc, stateManagerSvc, prefixes, ontoUtils, splitIRI;
 
     beforeEach(function() {
         module('templates');
-        module('newOntologyTab');
+        module('newOntologyOverlay');
         mockUtil();
         mockOntologyState();
         mockPrefixes();
@@ -47,12 +47,17 @@ describe('New Ontology Tab directive', function() {
             splitIRI = _splitIRIFilter_;
         });
 
-        ontologyStateSvc.newOntology = {'@id': 'ontology'};
-        ontologyStateSvc.newOntology[prefixes.dcterms + 'title'] = [{'@value' : 'title'}];
-        ontologyStateSvc.newOntology[prefixes.dcterms + 'description'] = [{'@value' : 'description'}];
-        this.element = $compile(angular.element('<new-ontology-tab></new-ontology-tab>'))(scope);
+        ontologyStateSvc.newOntology = {
+            '@id': 'ontology',
+            [prefixes.dcterms + 'title']: [{'@value' : 'title'}],
+            [prefixes.dcterms + 'description']: [{'@value' : 'description'}]
+        };
+
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<new-ontology-overlay close="close()" dismiss="dismiss()"></new-ontology-overlay>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('newOntologyTab');
+        this.controller = this.element.controller('newOntologyOverlay');
     });
 
     afterEach(function() {
@@ -68,28 +73,23 @@ describe('New Ontology Tab directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('new-ontology-tab')).toBe(true);
-            expect(this.element.querySelectorAll('.col-6').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('NEW-ONTOLOGY-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
         });
-        _.forEach(['form', 'custom-label', 'text-input', 'text-area', 'keyword-select'], function(item) {
+        _.forEach(['form', 'custom-label', 'text-input', 'text-area', 'keyword-select', 'advanced-language-select'], function(item) {
             it('with a ' + item, function() {
                 expect(this.element.find(item).length).toBe(1);
             });
         });
-        it('with a .btn-container', function() {
-            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
-        });
-        it('with an advanced-language-select', function() {
-            expect(this.element.find('advanced-language-select').length).toBe(1);
-        });
-        it('with custom buttons to create and cancel', function() {
-            var buttons = this.element.find('button');
+        it('with buttons to submit and cancel', function() {
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Create'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Cancel', 'Create'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
         });
         it('depending on whether there is an error', function() {
             expect(this.element.find('error-display').length).toBe(0);
@@ -112,7 +112,7 @@ describe('New Ontology Tab directive', function() {
             expect(iriInput.hasClass('is-invalid')).toBe(true);
         });
         it('depending on the form validity', function() {
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
             this.controller.form.$invalid = true;
@@ -152,9 +152,7 @@ describe('New Ontology Tab directive', function() {
                 ontologyStateSvc.createOntology.and.returnValue($q.when(this.response));
                 this.errorMessage = 'Error message';
                 this.description = 'description';
-                utilSvc.getPropertyValue.and.callFake(function(obj, prop) {
-                    return prop === prefixes.dcterms + 'title' ? 'title' : this.description;
-                }.bind(this));
+                utilSvc.getPropertyValue.and.callFake((obj, prop) => prop === prefixes.dcterms + 'title' ? 'title' : this.description);
             });
             it('unless an error occurs with creating the ontology', function() {
                 ontologyStateSvc.createOntology.and.returnValue($q.reject(this.errorMessage));
@@ -163,6 +161,7 @@ describe('New Ontology Tab directive', function() {
                 expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', 'description', ['one', 'two']);
                 expect(stateManagerSvc.createOntologyState).not.toHaveBeenCalled();
                 expect(this.controller.error).toBe(this.errorMessage);
+                expect(scope.close).not.toHaveBeenCalled();
             });
             it('unless an error occurs with creating ontology state', function() {
                 stateManagerSvc.createOntologyState.and.returnValue($q.reject(this.errorMessage));
@@ -170,6 +169,7 @@ describe('New Ontology Tab directive', function() {
                 scope.$apply();
                 expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', 'description', ['one', 'two']);
                 expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
+                expect(scope.close).not.toHaveBeenCalled();
                 expect(this.controller.error).toBe(this.errorMessage);
             });
             describe('successfully', function() {
@@ -180,7 +180,7 @@ describe('New Ontology Tab directive', function() {
                     expect(_.has(ontologyStateSvc.newOntology, prefixes.owl + 'imports')).toBe(false);
                     expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', 'description', ['one', 'two']);
                     expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
-                    expect(ontologyStateSvc.showNewTab).toBe(false);
+                    expect(scope.close).toHaveBeenCalled();
                 });
                 it('without description', function() {
                     this.description = '';
@@ -190,20 +190,21 @@ describe('New Ontology Tab directive', function() {
                     expect(_.has(ontologyStateSvc.newOntology, prefixes.owl + 'imports')).toBe(false);
                     expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', '', ['one', 'two']);
                     expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
-                    expect(ontologyStateSvc.showNewTab).toBe(false);
+                    expect(scope.close).toHaveBeenCalled();
                 });
             });
         });
     });
-    it('should call create when the button is clicked', function() {
+    it('should call create when the submit button is clicked', function() {
         spyOn(this.controller, 'create');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.create).toHaveBeenCalled();
     });
-    it('should set the correct state when the cancel button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
+    it('should call cancel when the button is clicked', function() {
+        spyOn(this.controller, 'cancel');
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
-        expect(ontologyStateSvc.showNewTab).toBe(false);
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
 });

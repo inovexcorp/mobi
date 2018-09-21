@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,16 +26,16 @@
     angular
         /**
          * @ngdoc overview
-         * @name newOntologyTab
+         * @name newOntologyOverlay
          *
          * @description
-         * The `newOntologyTab` module only provides the `newOntologyTab` directive which creates a page for creating
-         * a new ontology.
+         * The `newOntologyOverlay` module only provides the `newOntologyOverlay` directive which creates content for a
+         * modal to create a new ontology.
          */
-        .module('newOntologyTab', [])
+        .module('newOntologyOverlay', [])
         /**
          * @ngdoc directive
-         * @name newOntologyTab.directive:newOntologyTab
+         * @name newOntologyOverlay.directive:newOntologyOverlay
          * @scope
          * @restrict E
          * @requires ontologyState.service:ontologyStateService
@@ -45,25 +45,27 @@
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
-         * `newOntologyTab` is a directive that creates a page containing a form for a new ontology. The form contains
-         * a {@link textInput.directive:textInput} for the name, a field for the IRI, a
+         * `newOntologyOverlay` is a directive that creates content for a modal that creates a new ontology. The form
+         * in the modal contains a {@link textInput.directive:textInput} for the name, a field for the IRI, a
          * {@link textArea.directive:textArea} for the description, an
-         * {@link advancedLanguageSelect.directive:advancedLanguageSelect}, a
-         * {@link keywordSelect.directive:keywordSelect}, a button to create the ontology, and a button to cancel the
-         * creation. The directive is replaced by the contents of its template.
+         * {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a
+         * {@link keywordSelect.directive:keywordSelect}. The value of the name field will populate the IRI field
+         * unless the IRI value is manually changed.  Meant to be used in conjunction with the
+         * {@link modalService.directive:modalService}.
          */
-        .directive('newOntologyTab', newOntologyTab);
+        .directive('newOntologyOverlay', newOntologyOverlay);
 
-        newOntologyTab.$inject = ['$q', '$filter', 'REGEX', 'ontologyStateService', 'prefixes', 'stateManagerService', 'utilService', 'ontologyUtilsManagerService'];
+        newOntologyOverlay.$inject = ['$q', '$filter', 'REGEX', 'ontologyStateService', 'prefixes', 'stateManagerService', 'utilService', 'ontologyUtilsManagerService'];
 
-        function newOntologyTab($q, $filter, REGEX, ontologyStateService, prefixes, stateManagerService, utilService, ontologyUtilsManagerService) {
+        function newOntologyOverlay($q, $filter, REGEX, ontologyStateService, prefixes, stateManagerService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
-                replace: true,
-                templateUrl: 'modules/ontology-editor/directives/newOntologyTab/newOntologyTab.html',
-                scope: {},
+                scope: {
+                    close: '&',
+                    dismiss: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var sm = stateManagerService;
                     var util = utilService;
@@ -79,7 +81,6 @@
                             dvm.os.newOntology['@id'] = split.begin + split.then + $filter('camelCase')(util.getPropertyValue(dvm.os.newOntology, prefixes.dcterms + 'title'), 'class');
                         }
                     }
-
                     dvm.create = function() {
                         var title = util.getPropertyValue(dvm.os.newOntology, prefixes.dcterms + 'title');
                         var description = util.getPropertyValue(dvm.os.newOntology, prefixes.dcterms + 'description');
@@ -89,13 +90,17 @@
                         ontoUtils.addLanguageToNewEntity(dvm.os.newOntology, dvm.os.newLanguage);
                         dvm.os.createOntology(dvm.os.newOntology, title, description, _.map(dvm.os.newKeywords, _.trim))
                             .then(response => sm.createOntologyState(response.recordId, response.branchId, response.commitId), $q.reject)
-                            .then(() => dvm.os.showNewTab = false, onError);
+                            .then(() => $scope.close(), onError);
+                    }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
                     }
 
                     function onError(errorMessage) {
                         dvm.error = errorMessage;
                     }
-                }
+                }],
+                templateUrl: 'modules/ontology-editor/directives/newOntologyOverlay/newOntologyOverlay.html'
             }
         }
 })();

@@ -122,7 +122,7 @@
                         };
                         dvm.os.newKeywords = [];
                         dvm.os.newLanguage = undefined;
-                        dvm.os.showNewTab = true;
+                        modalService.openModal('newOntologyOverlay');
                     }
                     dvm.showDeleteConfirmationOverlay = function(record, event) {
                         event.stopPropagation();

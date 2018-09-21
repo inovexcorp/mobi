@@ -65,7 +65,7 @@
             'languageSelect',
             'mergeBlock',
             'mergeTab',
-            'newOntologyTab',
+            'newOntologyOverlay',
             'objectPropertyAxioms',
             'objectPropertyBlock',
             'objectPropertyOverlay',
