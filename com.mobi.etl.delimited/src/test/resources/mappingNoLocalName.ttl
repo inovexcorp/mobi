@@ -21,7 +21,9 @@
 
 :DataMapping1 a                       delim:DataMapping ;
               delim:columnIndex       "1" ;
-              delim:hasProperty       uhtc:formula .
+              delim:hasProperty       uhtc:formula ;
+              delim:datatypeSpec      xsd:double ;
+              delim:languageSpec      "fr" .
 
 :DataMapping2 a                       delim:DataMapping ;
               delim:columnIndex       "6" ;
