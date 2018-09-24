@@ -21,7 +21,7 @@
  * #L%
  */
 describe('IRI Select directive', function() {
-    var $compile, scope, ontologyStateSvc, ontoUtilsSvc;
+    var $compile, scope, ontoUtilsSvc;
 
     beforeEach(function() {
         module('templates');
@@ -34,7 +34,6 @@ describe('IRI Select directive', function() {
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyStateSvc = _ontologyStateService_;
             ontoUtilsSvc = _ontologyUtilsManagerService_;
         });
 
@@ -46,8 +45,9 @@ describe('IRI Select directive', function() {
         scope.multiSelect = false;
         scope.onChange = jasmine.createSpy('onChange');
         scope.bindModel = undefined;
+        scope.defaultOntologyIri = 'ontologyId';
 
-        this.element = $compile(angular.element('<iri-select multi-select="multiSelect" on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" multi-select="multiSelect"></iri-select>'))(scope);
+        this.element = $compile(angular.element('<iri-select multi-select="multiSelect" on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" multi-select="multiSelect" default-ontology-id="defaultOntologyId"></iri-select>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('iriSelect');
     });
@@ -55,7 +55,6 @@ describe('IRI Select directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        ontologyStateSvc = null;
         ontoUtilsSvc = null;
         this.element.remove();
     });
@@ -129,7 +128,7 @@ describe('IRI Select directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            ontologyStateSvc.listItem.ontologyId = 'ontologyId';
+            this.controller.defaultOntologyIri = 'ontologyId';
             this.controller.selectList = {iri: 'new'};
         });
         describe('getOntologyIri', function() {

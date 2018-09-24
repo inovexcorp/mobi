@@ -41,7 +41,7 @@
         <text-area ng-model="dvm.os.propertyValue" display-text="'Value'"></text-area>
 
         <!-- datatype -->
-        <iri-select ng-model="dvm.os.propertyType" display-text="'Type'" select-list="dvm.os.listItem.dataPropertyRange" multi-select="false"></iri-select>
+        <iri-select ng-model="dvm.os.propertyType" display-text="'Type'" select-list="dvm.os.listItem.dataPropertyRange" multi-select="false" default-ontology-iri="dvm.os.listItem.ontologyId"></iri-select>
 
         <!-- language -->
         <language-select ng-if="dvm.isLangString()" ng-model="dvm.os.propertyLanguage" required></language-select>

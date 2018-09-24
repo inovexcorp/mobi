@@ -27,13 +27,13 @@
         .module('iriSelect', [])
         .directive('iriSelect', iriSelect);
 
-        iriSelect.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
+        iriSelect.$inject = ['ontologyUtilsManagerService'];
 
-        function iriSelect(ontologyStateService, ontologyUtilsManagerService) {
+        function iriSelect(ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/iriSelect/iriSelect.html',
+                templateUrl: 'directives/iriSelect/iriSelect.html',
                 scope: {
                     displayText: '<',
                     mutedText: '<',
@@ -44,19 +44,19 @@
                 },
                 bindToController: {
                     bindModel: '=ngModel',
-                    selectList: '<'
+                    selectList: '<',
+                    defaultOntologyIri : '&'
                 },
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    var os = ontologyStateService;
                     $scope.multiSelect = angular.isDefined($scope.multiSelect) ? $scope.multiSelect : true;
 
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.values = [];
 
                     dvm.getOntologyIri = function(iri) {
-                        return _.get(dvm.selectList, "['" + iri + "']", os.listItem.ontologyId);
+                        return _.get(dvm.selectList, "['" + iri + "']", dvm.defaultOntologyIri);
                     }
                     dvm.getValues = function(searchText) {
                         dvm.values = dvm.ontoUtils.getSelectList(_.keys(dvm.selectList), searchText, dvm.ontoUtils.getDropDownText);

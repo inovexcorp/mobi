@@ -61,7 +61,6 @@
             'individualsTab',
             'individualHierarchyBlock',
             'individualTree',
-            'iriSelect',
             'languageSelect',
             'mergeBlock',
             'mergeTab',

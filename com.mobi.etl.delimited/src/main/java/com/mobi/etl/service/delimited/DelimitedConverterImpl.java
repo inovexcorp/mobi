@@ -300,7 +300,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 if (!StringUtils.isEmpty(nextLine[columnIndex])) {
                     // Determine the datatype for the data property range
                     if (datatypeIterator.hasNext()) {
-                        datatype[0] = (IRI) datatypeIterator.next();
+                        datatype[0] = valueFactory.createIRI(datatypeIterator.next().stringValue());
                     } else {
                         sourceOntologies.stream()
                                 .filter(ontology -> ontology.getDataProperty((IRI) prop).isPresent())
