@@ -290,7 +290,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         cm.getDataProperty().forEach(dataMapping -> {
             // Default datatype is xsd:string
             final IRI[] datatype = {valueFactory.createIRI(XSD.STRING)};
-            Iterator<Value> datatypeIterator = dataMapping.getDatatypeSpec().iterator();
+            Optional<Value> datatypeOpt = dataMapping.getDatatypeSpec();
             int columnIndex = dataMapping.getColumnIndex().iterator().next();
             com.mobi.rdf.api.Resource prop = dataMapping.getHasProperty_resource().iterator().next();
 
@@ -299,8 +299,8 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 // If the value is not empty
                 if (!StringUtils.isEmpty(nextLine[columnIndex])) {
                     // Determine the datatype for the data property range
-                    if (datatypeIterator.hasNext()) {
-                        datatype[0] = valueFactory.createIRI(datatypeIterator.next().stringValue());
+                    if (datatypeOpt.isPresent()) {
+                        datatype[0] = valueFactory.createIRI(datatypeOpt.get().stringValue());
                     } else {
                         sourceOntologies.stream()
                                 .filter(ontology -> ontology.getDataProperty((IRI) prop).isPresent())
