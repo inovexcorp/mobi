@@ -51,9 +51,10 @@
          * @requires policyManager.service:policyManagerService
          *
          * @description
-         * `openOntologyTab` is a directive that creates a page for opening ontologies. The page includes a search bar
-         * and a paginated list of ontologies in addition to buttons for
-         * {@link newOntologyTab.directive:newOntologyTab creating new ontologies} and
+         * `openOntologyTab` is a directive that creates a page for opening ontologies. The page includes a
+         * {@link searchBar.directive:searchBar} and a paginated list of ontologies with
+         * {@link actionMenu.directive:actionMenu action menus} to manage and delete. In addition, the page includes
+         * buttons for {@link newOntologyTab.directive:newOntologyTab creating new ontologies} and
          * {@link uploadOntologyTab.directive:uploadOntologyTab uploading ontologies}. The directive houses a method
          * for opening the modal deleting an ontology. The directive is replaced by the contents of its template.
          */
@@ -124,8 +125,7 @@
                         dvm.os.newLanguage = undefined;
                         modalService.openModal('newOntologyOverlay');
                     }
-                    dvm.showDeleteConfirmationOverlay = function(record, event) {
-                        event.stopPropagation();
+                    dvm.showDeleteConfirmationOverlay = function(record) {
                         dvm.recordId = _.get(record, '@id', '');
 
                         var msg = '';
@@ -167,11 +167,8 @@
                         });
                     }
                     dvm.search = function(event) {
-                        // keyCode 13 is the enter key
-                        if (event.keyCode === 13) {
-                            dvm.currentPage = 1;
-                            dvm.getPageOntologyRecords();
-                        }
+                        dvm.currentPage = 1;
+                        dvm.getPageOntologyRecords();
                     }
                     dvm.manageRecords = function() {
                         _.forEach(dvm.filteredList, record => {
@@ -179,11 +176,13 @@
                                 resourceId: 'http://mobi.com/policies/record/' + encodeURIComponent(record['@id']),
                                 actionId: pm.actionUpdate
                             }
-                            pe.evaluateRequest(request).then(decision => record.userCanManage = decision == pe.permit);
+                            pe.evaluateRequest(request).then(decision => {
+                                record.userCanManage = decision == pe.permit;
+                                record.showAccessControls = false;
+                            });
                         })
                     }
-                    dvm.showAccessOverlay = function(record, ruleId, event) {
-                        event.stopPropagation();
+                    dvm.showAccessOverlay = function(record, ruleId) {
                         modalService.openModal('recordAccessOverlay', {ruleId, resource: record['@id']});
                     }
 

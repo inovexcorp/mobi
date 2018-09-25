@@ -56,6 +56,8 @@
             'uniqueKey',
 
             /* Custom Directives */
+            'actionMenu',
+            'actionMenuItem',
             'aDisabled',
             'block',
             'blockContent',
@@ -91,12 +93,14 @@
             'materialTab',
             'materialTabset',
             'pagination',
+            'paging',
             'pagingDetails',
             'passwordConfirmInput',
             'radioButton',
             'rdfVisualization',
             'recordKeywords',
             'resolveConflictsForm',
+            'searchBar',
             'sidebar',
             'spinner',
             'statementContainer',

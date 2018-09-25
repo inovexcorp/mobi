@@ -2,56 +2,7 @@
 @import "./src/main/resources/public/css/variables";
 
 .open-ontology-tab {
-    .ontologies {
-
-        .ontology {
-            border-bottom: 1px solid var(--light);
-            padding: 10px 0 10px 10px;
-
-            &:last-child {
-                border-bottom: none;
-            }
-            .ontology-info {
-                cursor: pointer;
-
-                &:hover {
-                    background-color: var(--light);
-                }
-                .details {
-                    .header {
-                        font-size: 1.25em;
-                        font-weight: normal;
-                        margin: 0 0 5px;
-                    }
-                }
-            }
-            .action-container {
-                .action {
-                    text-decoration: none;
-
-                    &:hover {
-                        color: var(--gray) !important;
-                    }
-
-                    .access-controls .record-action {
-                        padding: 5px 0 0 20px;
-                    }
-                }
-            }
-        }
-    }
-    .paging-container {
-        .paging-details {
-            p {
-                line-height: 34px;
-                margin: 0;
-            }
-        }
-        .page-nav {
-            .pagination {
-                margin: 0;
-                vertical-align: bottom;
-            }
-        }
+    .ontology-info .details {
+        cursor: pointer;
     }
 }

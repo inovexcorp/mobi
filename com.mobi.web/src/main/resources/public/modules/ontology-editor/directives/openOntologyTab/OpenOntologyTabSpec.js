@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Open Ontology Tab directive', function() {
+fdescribe('Open Ontology Tab directive', function() {
     var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, prefixes, utilSvc, mapperStateSvc, catalogManagerSvc, policyManagerSvc, policyEnforcementSvc, httpSvc, modalSvc;
 
     beforeEach(function() {
@@ -104,15 +104,17 @@ describe('Open Ontology Tab directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('open-ontology-tab')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-8').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-10').length).toBe(1);
             expect(this.element.querySelectorAll('.actions').length).toBe(1);
             expect(this.element.querySelectorAll('.ontologies').length).toBe(1);
-            expect(this.element.querySelectorAll('.paging-container').length).toBe(1);
         });
-        _.forEach(['form', 'pagination'], item => {
+        _.forEach(['form', 'paging'], item => {
             it('with a ' + item, function() {
                 expect(this.element.find(item).length).toBe(1);
             });
+        });
+        it('with a .list-group', function() {
+            expect(this.element.querySelectorAll('.list-group').length).toBe(1);
         });
         it('with buttons to upload an ontology and make a new ontology', function() {
             var buttons = this.element.querySelectorAll('.actions button');
@@ -121,18 +123,18 @@ describe('Open Ontology Tab directive', function() {
             expect(['Upload Ontology', 'New Ontology'].indexOf(angular.element(buttons[1]).text().trim()) >= 0).toBe(true);
         });
         it('depending on how many ontologies there are', function() {
-            expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(10);
+            expect(this.element.querySelectorAll('.ontologies .list-group-item').length).toBe(10);
             expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(0);
             this.controller.filteredList = [];
             scope.$digest();
-            expect(this.element.querySelectorAll('.ontologies .ontology').length).toBe(0);
+            expect(this.element.querySelectorAll('.ontologies .list-group-item').length).toBe(0);
             expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(1);
         });
 
         it('depending if a user has access to manage a record', function() {
             this.controller.filteredList = [{userCanManage: true}];
             scope.$digest();
-            expect(this.element.querySelectorAll('.ontologies .ontology .ontology-info .action-container a').length).toBe(2);
+            expect(this.element.querySelectorAll('.ontologies .list-group-item action-menu action-menu-item').length).toBe(2);
         });
     });
     describe('controller methods', function() {
@@ -189,19 +191,15 @@ describe('Open Ontology Tab directive', function() {
         describe('should show the delete confirmation overlay', function() {
             beforeEach(function() {
                 utilSvc.getDctermsValue.and.returnValue('title');
-                this.event = scope.$emit('click');
-                spyOn(this.event, 'stopPropagation');
             });
             it('and ask the user for confirmation', function() {
-                this.controller.showDeleteConfirmationOverlay({'@id': 'record'}, this.event);
-                expect(this.event.stopPropagation).toHaveBeenCalled();
+                this.controller.showDeleteConfirmationOverlay({'@id': 'record'});
                 expect(this.controller.recordId).toBe('record');
                 expect(modalSvc.openConfirmModal).toHaveBeenCalledWith({asymmetricMatch: actual => !actual.includes('<error-display>')}, this.controller.deleteOntology);
             });
             it('and should warn the user if the ontology is open in the mapping tool', function() {
                 mapperStateSvc.sourceOntologies = [{'recordId':'record'}];
-                this.controller.showDeleteConfirmationOverlay({'@id': 'record'}, this.event);
-                expect(this.event.stopPropagation).toHaveBeenCalled();
+                this.controller.showDeleteConfirmationOverlay({'@id': 'record'});
                 expect(this.controller.recordId).toBe('record');
                 expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('<error-display>'), this.controller.deleteOntology);
             });
@@ -252,22 +250,14 @@ describe('Open Ontology Tab directive', function() {
             expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, paginatedConfig, this.controller.id);
             expect(this.controller.filteredList).toContain(jasmine.objectContaining({'@id': 'recordA'}));
         });
-        it('should perform a search if the key pressed was ENTER', function() {
+        it('should perform a search', function() {
             spyOn(this.controller, 'getPageOntologyRecords');
-            this.controller.currentPage = 10;
-            this.controller.search({});
-            expect(this.controller.currentPage).toEqual(10);
-            expect(this.controller.getPageOntologyRecords).not.toHaveBeenCalled();
-
-            this.controller.search({keyCode: 13});
+            this.controller.search();
             expect(this.controller.currentPage).toEqual(1);
             expect(this.controller.getPageOntologyRecords).toHaveBeenCalled();
         });
         it('should show a record access overlay', function() {
-            var event = scope.$emit('click');
-            spyOn(event, 'stopPropagation');
-            this.controller.showAccessOverlay({'@id': 'recordId'}, 'rule', event);
-            expect(event.stopPropagation).toHaveBeenCalled();
+            this.controller.showAccessOverlay({'@id': 'recordId'}, 'rule');
             expect(modalSvc.openModal).toHaveBeenCalledWith('recordAccessOverlay', {ruleId: 'rule', resource: 'recordId'});
         });
     });
@@ -290,8 +280,8 @@ describe('Open Ontology Tab directive', function() {
     });
     it('should call showDeleteConfirmationOverlay when a delete link is clicked', function() {
         spyOn(this.controller, 'showDeleteConfirmationOverlay');
-        var link = angular.element(this.element.querySelectorAll('.ontologies .ontology .ontology-info .action-container a')[1]);
+        var link = angular.element(this.element.querySelectorAll('.ontologies .list-group-item action-menu action-menu-item')[1]);
         link.triggerHandler('click');
-        expect(this.controller.showDeleteConfirmationOverlay).toHaveBeenCalledWith(this.controller.filteredList[0], jasmine.any(Object));
+        expect(this.controller.showDeleteConfirmationOverlay).toHaveBeenCalledWith(this.controller.filteredList[0]);
     });
 });
