@@ -21,20 +21,19 @@
  * #L%
  */
 describe('IRI Select directive', function() {
-    var $compile, scope, ontoUtilsSvc;
+    var $compile, scope, utilSvc;
 
     beforeEach(function() {
         module('templates');
         module('iriSelect');
-        mockOntologyState();
-        mockOntologyUtilsManager();
+        mockUtil();
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontoUtilsSvc = _ontologyUtilsManagerService_;
+            utilSvc = _utilService_;
         });
 
         scope.displayText = 'test';
@@ -55,7 +54,6 @@ describe('IRI Select directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        ontoUtilsSvc = null;
         this.element.remove();
     });
 
@@ -132,22 +130,15 @@ describe('IRI Select directive', function() {
             this.controller.selectList = {iri: 'new'};
         });
         describe('getOntologyIri', function() {
-            it('should return ontologyId if nothing is passed in', function() {
-                expect(this.controller.getOntologyIri()).toEqual('ontologyId');
-            });
             it('should return the set ontology IRI from the selectList if provided', function() {
                 expect(this.controller.getOntologyIri('iri')).toEqual('new');
-            });
-            it('should return ontologyId if iri is not set on selectList', function() {
-                expect(this.controller.getOntologyIri('test')).toEqual('ontologyId');
             });
         });
         it('getValues should set the correct value', function() {
             scope.selectList = {iri: 'new'};
-            ontoUtilsSvc.getSelectList.and.returnValue(['item']);
-            this.controller.getValues('text');
-            expect(ontoUtilsSvc.getSelectList).toHaveBeenCalledWith(['iri'], 'text', ontoUtilsSvc.getDropDownText);
-            expect(this.controller.values).toEqual(['item']);
+            utilSvc.getBeautifulIRI.and.returnValue('new');
+            this.controller.getValues('ne');
+            expect(this.controller.values).toEqual(['iri']);
         });
     });
 });

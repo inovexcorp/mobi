@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('IRI Select directive', function() {
+describe('IRI Select Ontology directive', function() {
     var $compile, scope, ontologyStateSvc, ontoUtilsSvc;
 
     beforeEach(function() {
@@ -55,8 +55,6 @@ describe('IRI Select directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        ontologyStateSvc = null;
-        ontoUtilsSvc = null;
         this.element.remove();
     });
 

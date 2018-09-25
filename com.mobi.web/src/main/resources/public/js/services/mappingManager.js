@@ -346,7 +346,7 @@
                     propMapping[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
                     propMapping[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
                     if (datatypeSpec) {
-                        propMapping[prefixes.delim + 'datatypeSpec'] = [{'@value': datatypeSpec}];
+                        propMapping[prefixes.delim + 'datatypeSpec'] = [{'@id': datatypeSpec}];
                     }
                     mapping.push(propMapping);
                 }
