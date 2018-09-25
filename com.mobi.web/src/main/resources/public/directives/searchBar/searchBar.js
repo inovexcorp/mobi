@@ -61,6 +61,7 @@
             controllerAs: 'dvm',
             controller: function() {
                 var dvm = this;
+
                 dvm.onKeyUp = function(event) {
                     if (event.keyCode === 13) {
                         dvm.submitEvent();
