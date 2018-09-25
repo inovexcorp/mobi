@@ -379,9 +379,9 @@ public interface OntologyManager {
      *
      * @param ontology   the Ontology you wish to query.
      * @param queryString the Sparql query string you want to execute.
-     * @return a Graph Set with the query results.
+     * @return a model with the query results.
      */
-    GraphQueryResult getGraphQueryResults(Ontology ontology, String queryString);
+    Model getGraphQueryResults(Ontology ontology, String queryString);
 
     /**
      * Gets the compiled resource of the head Commit on the master Branch for the OntologyRecord specified by the

@@ -65,7 +65,7 @@ public class RestUtils {
     private static final Logger LOG = LoggerFactory.getLogger(RestUtils.class);
 
     /**
-     * Returns the specified RDFFormat. Currently supports Turtle, RDF/XML, and JSON-LD.
+     * Returns the specified RDFFormat. Currently supports Turtle, TRiG, RDF/XML, and JSON-LD.
      *
      * @param format The abbreviated name of a RDFFormat.
      * @return A RDFFormat object with the requested format.
@@ -74,6 +74,8 @@ public class RestUtils {
         switch (format.toLowerCase()) {
             case "turtle":
                 return RDFFormat.TURTLE;
+            case "trig":
+                return RDFFormat.TRIG;
             case "rdf/xml":
                 return RDFFormat.RDFXML;
             case "jsonld":
@@ -267,6 +269,17 @@ public class RestUtils {
      */
     public static String modelToSkolemizedJsonld(Model model, SesameTransformer transformer, BNodeService service) {
         return modelToSkolemizedString(model, "jsonld", transformer, service);
+    }
+
+    /**
+     * Converts a {@link Model} into a JSON-LD string.
+     *
+     * @param model       A {@link Model} containing RDF.
+     * @param transformer The SesameTransformer for model conversions.
+     * @return A JSON-LD string containing the converted RDF from the Model.
+     */
+    public static String modelToTrig(Model model, SesameTransformer transformer) {
+        return modelToString(model, "trig", transformer);
     }
 
     /**

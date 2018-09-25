@@ -1252,7 +1252,6 @@ public interface OntologyRest {
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param queryString SPARQL Query to perform against ontology.
-     * @param queryType   Type of query to launch, i.e. SELECT or CONSTRUCT.
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                    master Branch.
@@ -1263,7 +1262,7 @@ public interface OntologyRest {
      * @return The SPARQL 1.1 results in JSON format.
      */
     @GET
-    @Path("{recordId}/sparql")
+    @Path("{recordId}/query")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
     @ApiOperation("Retrieves the SPARQL query results of an ontology, and its import closures in the requested format.")

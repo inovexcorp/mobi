@@ -30,6 +30,7 @@ import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
+import static com.mobi.rest.util.RestUtils.modelToTrig;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -62,7 +63,6 @@ import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.query.GraphQueryResult;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.rdf.api.BNode;
@@ -84,6 +84,7 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
+import com.mobi.sparql.utils.Query;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
@@ -966,30 +967,40 @@ public class OntologyRestImpl implements OntologyRest {
     public Response queryOntology(ContainerRequestContext context, String recordIdStr, String queryString,
                                   String branchIdStr, String commitIdStr) {
         if (queryString == null) {
-            throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
 
         Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                 ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
 
-        // Determine query type:
-        String queryType = "select";  // TODO: switch it.
-
-        if (queryType == "select") {
-            TupleQueryResult queryResults = ontologyManager.getTupleQueryResults(ontology, queryString);
-            if (queryResults.hasNext()) {
-                try {
-                    JSONObject json = JSONQueryResults.getResponse(queryResults);
-                    return Response.ok().entity(json).build();
-                } catch (MobiException ex) {
-                    throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        String queryType = Query.getQueryType(queryString);
+        switch (queryType) {
+            case "select":
+                TupleQueryResult tupResults = ontologyManager.getTupleQueryResults(ontology, queryString);
+                if (tupResults.hasNext()) {
+                    try {
+                        JSONObject json = JSONQueryResults.getResponse(tupResults);
+                        return Response.ok().entity(json).build();
+                    } catch (MobiException ex) {
+                        throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+                    }
+                } else {
+                    return Response.noContent().build();
                 }
-            } else {
-                return Response.noContent().build();
-            }
-        }
-        else {
-            throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
+            case "construct":
+                Model modelResult = ontologyManager.getGraphQueryResults(ontology, queryString);
+                if (modelResult.size() >= 1) {
+                    try {
+                        String trigStr = modelToTrig(modelResult, sesameTransformer);
+                        return Response.ok().entity(trigStr).build();
+                    } catch (MobiException ex) {
+                        throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+                    }
+                } else {
+                    return Response.noContent().build();
+                }
+            default:
+                throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
         }
     }
 
