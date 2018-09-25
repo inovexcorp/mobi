@@ -29,10 +29,7 @@ import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.query.parser.QueryPrologLexer;
-import com.mobi.query.exception.MalformedQueryException;
-import com.mobi.sparql.utils.impl.CaseInsensitiveInputStream;
 
 import java.util.List;
 
@@ -44,8 +41,9 @@ public class Query {
         Sparql11Parser parser = new Sparql11Parser(tokens);
         parser.addErrorListener(new BaseErrorListener() {
             @Override
-            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-                throw new MalformedQueryException("Failed to parse at line " + line + " due to " + msg, e);
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
+                                    int charPositionInLine, String msg, RecognitionException ex) {
+                throw new MalformedQueryException("Failed to parse at line " + line + " due to " + msg, ex);
             }
         });
         return parser;
@@ -53,10 +51,9 @@ public class Query {
 
     public static String getQueryType(String queryString) {
         String queryType = "";
-        QueryPrologLexer lexer = new QueryPrologLexer();
 
-        List<QueryPrologLexer.Token> lexTokens = lexer.lex(queryString);
-        for(QueryPrologLexer.Token token: lexTokens) {
+        List<QueryPrologLexer.Token> lexTokens = QueryPrologLexer.lex(queryString);
+        for (QueryPrologLexer.Token token: lexTokens) {
             if (token.t == QueryPrologLexer.TokenType.REST_OF_QUERY) {
                 queryType = token.s.split(" ")[0].toLowerCase();
             }

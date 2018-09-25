@@ -272,11 +272,11 @@ public class RestUtils {
     }
 
     /**
-     * Converts a {@link Model} into a JSON-LD string.
+     * Converts a {@link Model} into a TRiG string.
      *
      * @param model       A {@link Model} containing RDF.
      * @param transformer The SesameTransformer for model conversions.
-     * @return A JSON-LD string containing the converted RDF from the Model.
+     * @return A TRiG string containing the converted RDF from the Model.
      */
     public static String modelToTrig(Model model, SesameTransformer transformer) {
         return modelToString(model, "trig", transformer);
@@ -294,6 +294,8 @@ public class RestUtils {
                 return RDFFormat.TURTLE.getDefaultFileExtension();
             case "rdf/xml":
                 return RDFFormat.RDFXML.getDefaultFileExtension();
+            case "trig":
+                return RDFFormat.TRIG.getDefaultFileExtension();
             case "owl/xml":
                 return "owx";
             case "jsonld":
@@ -306,7 +308,7 @@ public class RestUtils {
      * Returns the MIME type for the specified RDFFormat. Currently supports Turtle, RDF/XML, OWL/XML, and JSON-LD.
      *
      * @param format The abbreviated name of a RDFFormat.
-     * @return THe default MIME type for the requested format.
+     * @return The default MIME type for the requested format.
      */
     public static String getRDFFormatMimeType(String format) {
         switch (format.toLowerCase()) {
@@ -314,6 +316,8 @@ public class RestUtils {
                 return RDFFormat.TURTLE.getDefaultMIMEType();
             case "rdf/xml":
                 return RDFFormat.RDFXML.getDefaultMIMEType();
+            case "trig":
+                return RDFFormat.TRIG.getDefaultMIMEType();
             case "owl/xml":
                 return "application/owl+xml";
             case "jsonld":

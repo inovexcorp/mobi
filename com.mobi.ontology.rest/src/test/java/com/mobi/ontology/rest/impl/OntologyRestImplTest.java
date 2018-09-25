@@ -33,6 +33,7 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -76,6 +77,7 @@ import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
@@ -400,6 +402,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(ontologyManager.retrieveOntology(eq(importedOntologyIRI), any(Resource.class))).thenReturn(Optional.of(importedOntology));
         when(ontologyManager.retrieveOntology(importedOntologyIRI)).thenReturn(Optional.of(importedOntology));
 
+        when(ontologyManager.getTupleQueryResults(eq(ontology), anyString())).thenAnswer(i -> new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+        when(ontologyManager.getGraphQueryResults(eq(ontology), anyString())).thenReturn(mf.createModel(Collections.singleton(vf.createStatement(vf.createIRI("urn:test"), vf.createIRI("urn:prop"), vf.createLiteral("test")))));
+
         List<String> basicBinding = Collections.singletonList("s");
         List<String> basicValue = Collections.singletonList("https://mobi.com/values#Value1");
         when(ontologyManager.getSubClassesFor(any(Ontology.class), any(IRI.class))).thenAnswer(i -> new TestQueryResult(basicBinding, basicValue, 1, vf));
@@ -653,6 +658,25 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private void assertFailedImports(JSONArray failedImports) {
         assertEquals(failedImports.size(), 1);
         assertEquals(failedImports.get(0), importedOntologyIRI.stringValue());
+    }
+
+    private void assertSelectQuery(JSONObject queryResults) {
+        JSONObject head = queryResults.optJSONObject("head");
+        assertNotNull(head);
+        JSONArray vars = head.optJSONArray("vars");
+        assertNotNull(vars);
+        assertEquals(vars.size(), 1);
+        JSONObject results = queryResults.optJSONObject("results");
+        assertNotNull(results);
+        JSONArray bindings = results.optJSONArray("bindings");
+        assertNotNull(bindings);
+        assertEquals(bindings.size(), 1);
+    }
+
+    private void assertConstructQuery(String queryResults) {
+        assertNotNull(queryResults);
+        System.out.println(queryResults);
+        assertEquals(queryResults, "\n{\n\t<urn:test> <urn:prop> \"test\" .\n}\n");
     }
 
     // Test upload file
@@ -3978,7 +4002,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     @Test
     public void testGetSearchResultsWithNoMatches() {
         // Setup:
-        when(ontologyManager.getSearchResults(eq(ontology), anyString())).thenAnswer(i -> new TestQueryResult(Collections.EMPTY_LIST, Collections.EMPTY_LIST, 0, vf));
+        when(ontologyManager.getSearchResults(eq(ontology), anyString())).thenAnswer(i -> new TestQueryResult(Collections.emptyList(), Collections.emptyList(), 0, vf));
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/search-results")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
@@ -4169,6 +4193,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
     }
 
+    // Test failed-imports
+
     @Test
     public void testGetFailedImports() {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/failed-imports")
@@ -4176,7 +4202,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .request().get();
 
         assertEquals(response.getStatus(), 200);
-        assertFailedImports(JSONArray.fromObject(response.readEntity(String.class)));
+        assertFailedImports(getResponseArray(response));
         assertGetOntology(true);
     }
 
@@ -4189,7 +4215,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .request().get();
 
         assertEquals(response.getStatus(), 200);
-        assertFailedImports(JSONArray.fromObject(response.readEntity(String.class)));
+        assertFailedImports(getResponseArray(response));
         assertGetOntology(false);
     }
 
@@ -4207,7 +4233,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
-        assertFailedImports(JSONArray.fromObject(response.readEntity(String.class)));
+        assertFailedImports(getResponseArray(response));
         assertGetOntology(true);
     }
 
@@ -4217,7 +4243,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .request().get();
 
         assertEquals(response.getStatus(), 200);
-        assertFailedImports(JSONArray.fromObject(response.readEntity(String.class)));
+        assertFailedImports(getResponseArray(response));
         assertGetOntology(true);
     }
 
@@ -4228,6 +4254,148 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/failed-imports")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    // Test query
+
+    @Test
+    public void testQueryOntologyWithSelect() {
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).getTupleQueryResults(ontology, query);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testQueryOntologyWithEmptySelect() {
+        // Setup:
+        String query = "select * { ?s ?p ?o }";
+        when(ontologyManager.getTupleQueryResults(ontology, query)).thenAnswer(i -> new TestQueryResult(Collections.emptyList(), Collections.emptyList(), 0, vf));
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().get();
+
+        assertEquals(response.getStatus(), 204);
+        verify(ontologyManager).getTupleQueryResults(ontology, query);
+    }
+
+    @Test
+    public void testQueryOntologyWithConstruct() {
+        String query = "construct where { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).getGraphQueryResults(ontology, query);
+        assertConstructQuery(response.readEntity(String.class));
+    }
+
+    @Test
+    public void testQueryOntologyWithEmptyConstruct() {
+        // Setup:
+        String query = "construct * { ?s ?p ?o }";
+        when(ontologyManager.getGraphQueryResults(ontology, query)).thenReturn(mf.createModel());
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().get();
+
+        assertEquals(response.getStatus(), 204);
+        verify(ontologyManager).getGraphQueryResults(ontology, query);
+    }
+
+    @Test
+    public void testQueryOntologyMissingQuery() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testQueryOntologyWithUnsupportedType() {
+        String query = "ask where { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testQueryOntologyWithMalformedQuery() {
+        // Setup:
+        String query = "select 0-2q3u { ?s ?p ?o }";
+        doThrow(new MalformedQueryException()).when(ontologyManager).getTupleQueryResults(ontology, query);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testQueryOntologyMissingBranchId() {
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
+                .request().get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testQueryOntologyMissingCommitId() {
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("query", encode(query))
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).getTupleQueryResults(ontology, query);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testQueryOntologyMissingBranchIdAndCommitId() {
+        String query = "select * { ?s ?p ?o }";
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("query", encode(query))
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).getTupleQueryResults(ontology, query);
+        assertSelectQuery(getResponse(response));
+    }
+
+    @Test
+    public void testQueryOntologyWhenRetrieveOntologyIsEmpty() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+        String query = "select * { ?s ?p ?o }";
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("query", encode(query))
                 .request().get();
 
         assertEquals(response.getStatus(), 400);
