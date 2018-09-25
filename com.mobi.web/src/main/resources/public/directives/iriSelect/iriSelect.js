@@ -42,7 +42,17 @@
          *
          * @description
          * `iriSelect` is a directive which provides options for a formatted ui-select that takes in a map of IRI to its
-         * parent IRI. iriSelect then will group and sort IRIs based on the parent IRI.
+         * parent IRI. iriSelect then will group and sort IRIs based on the parent IRI. The directive is
+         * replaced by the content of the template.
+         *
+         * @param {*} bindModel The variable to bind the value of the radio button to
+         * @param {Object} selectList A map of IRIs to their parent IRI
+         * @param {string} displayText The main text to display above the ui-select
+         * @param {string} mutedText Additional muted text to display after the displayText
+         * @param {boolean} isDisabledWhen A boolean to indicate when to disable the ui-select
+         * @param {boolean} isRequiredWhen A boolean to indicate when the ui-select is required
+         * @param {boolean} multiSelect A boolean to select whether to use a multiSelect (true) or a single select (false)
+         * @param {function} onChange A function to be called when a choice from the drop down is selected
          */
         .directive('iriSelect', iriSelect);
 
