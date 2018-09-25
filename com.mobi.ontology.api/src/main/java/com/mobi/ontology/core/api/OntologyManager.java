@@ -24,7 +24,6 @@ package com.mobi.ontology.core.api;
  */
 
 import com.mobi.ontology.core.utils.MobiOntologyCreationException;
-import com.mobi.query.GraphQueryResult;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
