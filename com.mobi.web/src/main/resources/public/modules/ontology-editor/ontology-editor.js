@@ -61,6 +61,7 @@
             'individualsTab',
             'individualHierarchyBlock',
             'individualTree',
+            'iriSelectOntology',
             'mergeBlock',
             'mergeTab',
             'newOntologyOverlay',

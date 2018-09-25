@@ -89,7 +89,7 @@
                         return _.get(dvm.dm.dataRows, '[' + firstRowIndex + '][' + dvm.getLinkedColumnIndex(propMapping) + ']', '(None)');
                     }
                     dvm.getDatatypePreview = function(propMapping) {
-                        return dvm.util.getPropertyValue(propMapping, prefixes.delim + 'datatypeSpec');
+                        return dvm.util.getBeautifulIRI(dvm.util.getPropertyId(propMapping, prefixes.delim + 'datatypeSpec'));
                     }
                     dvm.getLinkedClassId = function(propMapping) {
                         return dvm.util.getPropertyId(propMapping, prefixes.delim + 'classMapping');

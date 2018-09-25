@@ -20,20 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('IRI Select directive', function() {
-    var $compile, scope, utilSvc;
+describe('IRI Select Ontology directive', function() {
+    var $compile, scope, ontologyStateSvc, ontoUtilsSvc;
 
     beforeEach(function() {
         module('templates');
-        module('iriSelect');
-        mockUtil();
+        module('iriSelectOntology');
+        mockOntologyState();
+        mockOntologyUtilsManager();
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            utilSvc = _utilService_;
+            ontologyStateSvc = _ontologyStateService_;
+            ontoUtilsSvc = _ontologyUtilsManagerService_;
         });
 
         scope.displayText = 'test';
@@ -44,11 +46,10 @@ describe('IRI Select directive', function() {
         scope.multiSelect = false;
         scope.onChange = jasmine.createSpy('onChange');
         scope.bindModel = undefined;
-        scope.defaultOntologyIri = 'ontologyId';
 
-        this.element = $compile(angular.element('<iri-select multi-select="multiSelect" on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" multi-select="multiSelect" default-ontology-id="defaultOntologyId"></iri-select>'))(scope);
+        this.element = $compile(angular.element('<iri-select-ontology multi-select="multiSelect" on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" multi-select="multiSelect"></iri-select-ontology>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('iriSelect');
+        this.controller = this.element.controller('iriSelectOntology');
     });
 
     afterEach(function() {
@@ -106,7 +107,7 @@ describe('IRI Select directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('iri-select')).toBe(true);
+            expect(this.element.hasClass('iri-select-ontology')).toBe(true);
             expect(this.element.hasClass('form-group')).toBe(true);
         });
         it('with custom-labels', function() {
@@ -126,19 +127,26 @@ describe('IRI Select directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            this.controller.defaultOntologyIri = 'ontologyId';
+            ontologyStateSvc.listItem.ontologyId = 'ontologyId';
             this.controller.selectList = {iri: 'new'};
         });
         describe('getOntologyIri', function() {
+            it('should return ontologyId if nothing is passed in', function() {
+                expect(this.controller.getOntologyIri()).toEqual('ontologyId');
+            });
             it('should return the set ontology IRI from the selectList if provided', function() {
                 expect(this.controller.getOntologyIri('iri')).toEqual('new');
+            });
+            it('should return ontologyId if iri is not set on selectList', function() {
+                expect(this.controller.getOntologyIri('test')).toEqual('ontologyId');
             });
         });
         it('getValues should set the correct value', function() {
             scope.selectList = {iri: 'new'};
-            utilSvc.getBeautifulIRI.and.returnValue('new');
-            this.controller.getValues('ne');
-            expect(this.controller.values).toEqual(['iri']);
+            ontoUtilsSvc.getSelectList.and.returnValue(['item']);
+            this.controller.getValues('text');
+            expect(ontoUtilsSvc.getSelectList).toHaveBeenCalledWith(['iri'], 'text', ontoUtilsSvc.getDropDownText);
+            expect(this.controller.values).toEqual(['item']);
         });
     });
 });

@@ -133,11 +133,13 @@
 :datatypeSpec a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain :DataMapping ;
     rdfs:range rdf:datatype ;
+    rdfs:label "datatype specification"@en ;
     rdfs:comment "A datatype specification indicating what datatype to assign to a data property." .
 
 :languageSpec a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain :DataMapping ;
     rdfs:range xsd:language ;
+    rdfs:label "language specification"@en ;
     rdfs:comment "A language specification indicating what language to assign to a data property." .
 
 # Misc.
