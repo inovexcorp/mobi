@@ -37,7 +37,8 @@
         /**
          * @ngdoc directive
          * @name iriSelect.directive:iriSelect
-         * @restrict A
+         * @restrict E
+         * @requires util.service:utilService
          *
          * @description
          * `iriSelect` is a directive which provides options for a formatted ui-select that takes in a map of IRI to its
@@ -52,7 +53,10 @@
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'directives/iriSelect/iriSelect.html',
-                scope: {
+                scope: {},
+                bindToController: {
+                    bindModel: '=ngModel',
+                    selectList: '<',
                     displayText: '<',
                     mutedText: '<',
                     isDisabledWhen: '<',
@@ -60,15 +64,11 @@
                     multiSelect: '<?',
                     onChange: '&'
                 },
-                bindToController: {
-                    bindModel: '=ngModel',
-                    selectList: '<',
-                },
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.util = utilService;
-                    $scope.multiSelect = angular.isDefined($scope.multiSelect) ? $scope.multiSelect : true;
+                    dvm.multiSelect = angular.isDefined(dvm.multiSelect) ? dvm.multiSelect : true;
 
                     dvm.values = [];
 
