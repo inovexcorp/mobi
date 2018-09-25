@@ -55,6 +55,8 @@ describe('IRI Select Ontology directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        ontologyStateSvc = null;
+        ontoUtilsSvc = null;
         this.element.remove();
     });
 
