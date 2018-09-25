@@ -24,12 +24,30 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name iriSelect
+         *
+         * @description
+         * The `iriSelect` module provides the `iriSelect` directive which provides options for a formatted ui-select
+         * that takes in a map of IRI to its parent IRI. iriSelect then will group and sort IRIs based on the parent
+         * IRI.
+         */
         .module('iriSelect', [])
+        /**
+         * @ngdoc directive
+         * @name iriSelect.directive:iriSelect
+         * @restrict A
+         *
+         * @description
+         * `iriSelect` is a directive which provides options for a formatted ui-select that takes in a map of IRI to its
+         * parent IRI. iriSelect then will group and sort IRIs based on the parent IRI.
+         */
         .directive('iriSelect', iriSelect);
 
-        iriSelect.$inject = ['ontologyUtilsManagerService'];
+        iriSelect.$inject = ['utilService'];
 
-        function iriSelect(ontologyUtilsManagerService) {
+        function iriSelect(utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -45,22 +63,32 @@
                 bindToController: {
                     bindModel: '=ngModel',
                     selectList: '<',
-                    defaultOntologyIri : '&'
                 },
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
+                    dvm.util = utilService;
                     $scope.multiSelect = angular.isDefined($scope.multiSelect) ? $scope.multiSelect : true;
 
-                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.values = [];
 
                     dvm.getOntologyIri = function(iri) {
-                        return _.get(dvm.selectList, "['" + iri + "']", dvm.defaultOntologyIri);
+                        return _.get(dvm.selectList, "['" + iri + "']");
                     }
                     dvm.getValues = function(searchText) {
-                        dvm.values = dvm.ontoUtils.getSelectList(_.keys(dvm.selectList), searchText, dvm.ontoUtils.getDropDownText);
-                    }
+                        dvm.values = [];
+                        var mapped = _.map( _.keys(dvm.selectList), item => ({
+                            item,
+                            name: dvm.util.getBeautifulIRI(item)
+                        }));
+                        var sorted = _.sortBy(mapped, item => _.trim(item.name.toUpperCase()));
+                        _.forEach(sorted, item => {
+                            if (dvm.values.length == 100) {
+                                return;
+                            } else if (_.includes(item.name.toUpperCase(), searchText.toUpperCase())) {
+                                dvm.values.push(item.item);
+                            }
+                        });}
                 }]
             }
         }

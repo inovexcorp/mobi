@@ -132,10 +132,10 @@ describe('Create Property Overlay directive', function() {
             expect(this.element.find('text-area').length).toBe(1);
         });
         it('with a iri-select for domain', function() {
-            expect(this.element.querySelectorAll('iri-select[display-text="\'Domain\'"]').length).toBe(0);
+            expect(this.element.querySelectorAll('iri-select-ontology[display-text="\'Domain\'"]').length).toBe(0);
             ontologyManagerSvc.isObjectProperty.and.returnValue(true);
             scope.$apply();
-            expect(this.element.querySelectorAll('iri-select[display-text="\'Domain\'"]').length).toBe(1);
+            expect(this.element.querySelectorAll('iri-select-ontology[display-text="\'Domain\'"]').length).toBe(1);
         });
         it('with an advanced-language-select', function() {
             expect(this.element.find('advanced-language-select').length).toBe(1);
@@ -172,18 +172,18 @@ describe('Create Property Overlay directive', function() {
             expect(button.attr('disabled')).toBeFalsy();
         });
         it('depending on whether the property is a datatype property', function() {
-            expect(this.element.querySelectorAll('iri-select.range-datatype').length).toBe(0);
+            expect(this.element.querySelectorAll('iri-select-ontology.range-datatype').length).toBe(0);
 
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
             scope.$digest();
-            expect(this.element.querySelectorAll('iri-select.range-datatype').length).toBe(1);
+            expect(this.element.querySelectorAll('iri-select-ontology.range-datatype').length).toBe(1);
         });
         it('depending on whether the property is a object property', function() {
-            expect(this.element.querySelectorAll('iri-select.range-object').length).toBe(0);
+            expect(this.element.querySelectorAll('iri-select-ontology.range-object').length).toBe(0);
 
             ontologyManagerSvc.isObjectProperty.and.returnValue(true);
             scope.$digest();
-            expect(this.element.querySelectorAll('iri-select.range-object').length).toBe(1);
+            expect(this.element.querySelectorAll('iri-select-ontology.range-object').length).toBe(1);
         });
         it('depending on whether the property IRI already exists in the ontology.', function() {
             ontoUtils.checkIri.and.returnValue(true);

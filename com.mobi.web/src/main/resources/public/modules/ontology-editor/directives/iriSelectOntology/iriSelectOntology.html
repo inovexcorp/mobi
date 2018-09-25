@@ -20,24 +20,24 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="iri-select form-group">
+<div class="iri-select-ontology form-group">
     <custom-label muted-text="mutedText">{{displayText}}</custom-label>
     <!-- Multi Select -->
     <ui-select ng-if="multiSelect" multiple ng-model="dvm.bindModel" on-select="onChange()" on-remove="onChange()" ng-disabled="isDisabledWhen" ng-required="isRequiredWhen">
-        <ui-select-match placeholder="{{'Select ' + displayText}}">
-            <span title="{{$item}}">{{dvm.util.getBeautifulIRI($item)}}</span>
+        <ui-select-match placeholder="{{'Select ' + displayText}}" ui-lock-choice="dvm.ontoUtils.isBlankNodeString($item)">
+            <span title="{{$item}}">{{dvm.ontoUtils.getBlankNodeValue($item) || dvm.ontoUtils.getDropDownText($item)}}</span>
         </ui-select-match>
         <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.getOntologyIri" repeat="iri in dvm.values">
-            <div title="{{iri}}" ng-bind-html="dvm.util.getBeautifulIRI(iri) | highlight:$select.search | trusted"></div>
+            <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getDropDownText(iri) | highlight:$select.search | trusted"></div>
         </ui-select-choices>
     </ui-select>
     <!-- Single Select -->
     <ui-select ng-if="!multiSelect" ng-model="dvm.bindModel" on-select="onChange()" on-remove="onChange()" ng-disabled="isDisabledWhen" ng-required="isRequiredWhen">
-        <ui-select-match placeholder="{{'Select ' + displayText}}">
-            <span title="{{$select.selected}}">{{dvm.util.getBeautifulIRI($select.selected)}}</span>
+        <ui-select-match placeholder="{{'Select ' + displayText}}" ui-lock-choice="dvm.ontoUtils.isBlankNodeString($select.selected)">
+            <span title="{{$select.selected}}">{{dvm.ontoUtils.getBlankNodeValue($select.selected) || dvm.ontoUtils.getDropDownText($select.selected)}}</span>
         </ui-select-match>
         <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.getOntologyIri" repeat="iri in dvm.values">
-            <div title="{{iri}}" ng-bind-html="dvm.util.getBeautifulIRI(iri) | highlight:$select.search | trusted"></div>
+            <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getDropDownText(iri) | highlight:$select.search | trusted"></div>
         </ui-select-choices>
     </ui-select>
 </div>

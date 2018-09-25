@@ -114,6 +114,10 @@
                             dvm.showDatatypeSelect = false;
                         }
                     }
+                    dvm.clearDatatype = function() {
+                        dvm.showDatatypeSelect = false;
+                        dvm.datatype = undefined;
+                    }
                     dvm.set = function() {
                         if (dvm.state.newProp) {
                             var additionsObj = _.find(dvm.state.mapping.difference.additions, {'@id': dvm.state.selectedClassMappingId});
@@ -151,14 +155,13 @@
                                 dvm.selectedPropMapping[prefixes.delim + 'columnIndex'][0]['@value'] = dvm.selectedColumn;
                                 dvm.state.changeProp(dvm.selectedPropMapping['@id'], prefixes.delim + 'columnIndex', dvm.selectedColumn, originalIndex);
 
-                                var originalDatatype = dvm.util.getPropertyValue(dvm.selectedPropMapping, prefixes.delim + 'datatypeSpec');
-                                var datatypeVal = dvm.selectedPropMapping[prefixes.delim + 'datatypeSpec'];
-                                if (datatypeVal) {
-                                    datatypeVal[0]['@value'] = dvm.datatype;
+                                var originalDatatype = dvm.util.getPropertyId(dvm.selectedPropMapping, prefixes.delim + 'datatypeSpec');
+                                if (dvm.datatype) {
+                                    dvm.selectedPropMapping[prefixes.delim + 'datatypeSpec'] = [{'@id': dvm.datatype}];
+                                    dvm.state.changeProp(dvm.selectedPropMapping['@id'], prefixes.delim + 'datatypeSpec', dvm.datatype, originalDatatype);
                                 } else {
-                                    dvm.selectedPropMapping[prefixes.delim + 'datatypeSpec'] = [{'@value': dvm.datatype}];
+                                    dvm.util.removePropertyId(dvm.selectedPropMapping, prefixes.delim + 'datatypeSpec', originalDatatype);
                                 }
-                                dvm.state.changeProp(dvm.selectedPropMapping['@id'], prefixes.delim + 'datatypeSpec', dvm.datatype, originalDatatype);
                                 _.remove(dvm.state.invalidProps, {'@id': dvm.state.selectedPropMappingId})
                             } else {
                                 var classMappingId = getRangeClassMappingId();
@@ -201,7 +204,10 @@
                             dvm.setRangeClass();
                         } else {
                             dvm.selectedColumn = dvm.util.getPropertyValue(dvm.selectedPropMapping, prefixes.delim + 'columnIndex');
-                            dvm.datatype = dvm.util.getPropertyValue(dvm.selectedPropMapping, prefixes.delim + 'datatypeSpec');
+                            dvm.datatype = dvm.util.getPropertyId(dvm.selectedPropMapping, prefixes.delim + 'datatypeSpec');
+                            if (dvm.datatype) {
+                                dvm.showDatatypeSelect = true;
+                            }
                         }
                     }
                 },
