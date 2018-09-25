@@ -30,7 +30,7 @@
     <block>
         <block-content class="padding">
             <info-message ng-if="!dvm.state.requests.length">No requests found</info-message>
-            <div class="request padding" ng-repeat="request in dvm.state.requests track by request.request['@id']" ng-click="dvm.state.selected = request">
+            <div class="request padding" ng-repeat="request in dvm.state.requests track by request.jsonld['@id']" ng-click="dvm.state.selected = request">
                 <div class="details">
                     <h3>{{request.title}}</h3>
                     <div class="request-info"><small>Created on {{request.date}} by {{request.creator}}</small></div>

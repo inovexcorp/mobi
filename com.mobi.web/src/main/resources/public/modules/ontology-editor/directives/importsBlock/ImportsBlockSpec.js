@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Imports Block directive', function() {
-    var $compile, scope, ontologyStateSvc, prefixes, propertyManagerSvc, $q;
+    var $compile, scope, $q, ontologyStateSvc, prefixes, propertyManagerSvc, modalSvc, util;
 
     beforeEach(function() {
         module('templates');
@@ -30,14 +30,16 @@ describe('Imports Block directive', function() {
         mockPrefixes();
         mockUtil();
         mockPropertyManager();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _propertyManagerService_, _$q_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _prefixes_, _propertyManagerService_, _modalService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
             propertyManagerSvc = _propertyManagerService_;
-            $q = _$q_;
+            modalSvc = _modalService_;
             util = _utilService_;
         });
 
@@ -50,10 +52,12 @@ describe('Imports Block directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        $q = null;
         ontologyStateSvc = null;
         prefixes = null;
         propertyManagerSvc = null;
-        $q = null;
+        modalSvc = null;
+        util = null;
         this.element.remove();
     });
 
@@ -62,17 +66,11 @@ describe('Imports Block directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('imports-block')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
+        it('with a .section-header', function() {
+            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(1);
-        });
-        it('with a block-header a', function() {
-            expect(this.element.querySelectorAll('block-header a.float-right').length).toBe(2);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
+        it('with links for adding and refreshing', function() {
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(2);
         });
         it('with a p a.import-iri', function() {
             expect(this.element.querySelectorAll('p a.import-iri').length).toBe(1);
@@ -88,45 +86,6 @@ describe('Imports Block directive', function() {
         });
         it('with a p a.btn-link', function() {
             expect(this.element.querySelectorAll('p a.btn-link').length).toBe(1);
-        });
-        it('with a imports-overlay', function() {
-            expect(this.element.find('imports-overlay').length).toBe(0);
-            this.controller.showNewOverlay = true;
-            scope.$apply();
-            expect(this.element.find('imports-overlay').length).toBe(1);
-        });
-        it('with a confirmation-overlay', function() {
-            expect(this.element.find('confirmation-overlay').length).toBe(0);
-            this.controller.showRemoveOverlay = true;
-            scope.$apply();
-            expect(this.element.find('confirmation-overlay').length).toBe(1);
-        });
-        it('with a error-display', function() {
-            expect(this.element.find('error-display').length).toBe(0);
-            this.controller.showRemoveOverlay = true;
-            this.controller.error = 'error';
-            scope.$apply();
-            expect(this.element.find('error-display').length).toBe(1);
-        });
-        it('with a confirmation-overlay div', function() {
-            expect(this.element.querySelectorAll('confirmation-overlay div').length).toBe(0);
-            this.controller.showRemoveOverlay = true;
-            ontologyStateSvc.hasChanges.and.returnValue(true);
-            scope.$apply();
-            expect(this.element.querySelectorAll('confirmation-overlay div').length).toBe(1);
-        });
-        it('with a confirmation-overlay p', function() {
-            expect(this.element.querySelectorAll('confirmation-overlay p').length).toBe(0);
-            this.controller.showRemoveOverlay = true;
-            ontologyStateSvc.hasChanges.and.returnValue(false);
-            scope.$apply();
-            expect(this.element.querySelectorAll('confirmation-overlay p').length).toBe(1);
-        });
-        it('depending on whether confirmation is open', function() {
-            expect(this.element.find('confirmation-overlay').length).toBe(0);
-            this.controller.showRemoveOverlay = true;
-            scope.$apply();
-            expect(this.element.find('confirmation-overlay').length).toBe(1);
         });
         it('depending on the length of the selected ontology imports', function() {
             expect(this.element.find('info-message').length).toBe(0);
@@ -156,10 +115,19 @@ describe('Imports Block directive', function() {
         });
     });
     describe('controller methods', function() {
-        it('setupRemove should set the correct variables', function() {
-            this.controller.setupRemove('url');
-            expect(this.controller.url).toBe('url');
-            expect(this.controller.showRemoveOverlay).toBe(true);
+        describe('setupRemove should set the correct variables and open a remove confirmation modal if', function() {
+            it('the ontology has changes', function() {
+                ontologyStateSvc.hasChanges.and.returnValue(true);
+                this.controller.setupRemove('url');
+                expect(this.controller.url).toBe('url');
+                expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('NOTE:'), this.controller.remove);
+            });
+            it('the ontology does not have changes', function() {
+                ontologyStateSvc.hasChanges.and.returnValue(false);
+                this.controller.setupRemove('url');
+                expect(this.controller.url).toBe('url');
+                expect(modalSvc.openConfirmModal).toHaveBeenCalledWith({asymmetricMatch: actual => !actual.includes('NOTE:')}, this.controller.remove);
+            });
         });
         describe('remove calls the proper functions', function() {
             beforeEach(function() {
@@ -189,7 +157,6 @@ describe('Imports Block directive', function() {
                         expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                         expect(ontologyStateSvc.listItem.isSaved).toBe(true);
                         expect(this.controller.setIndirectImports).toHaveBeenCalled();
-                        expect(this.controller.showRemoveOverlay).toBe(false);
                     });
                     it('when update ontology rejects', function() {
                         ontologyStateSvc.updateOntology.and.returnValue($q.reject('error'));
@@ -201,7 +168,7 @@ describe('Imports Block directive', function() {
                         expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                         expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
-                        expect(this.controller.error).toBe('error');
+                        expect(util.createErrorToast).toHaveBeenCalledWith('error');
                     });
                 });
                 it('when after save rejects', function() {
@@ -213,7 +180,7 @@ describe('Imports Block directive', function() {
                     expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', 0);
                     expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                    expect(this.controller.error).toBe('error');
+                    expect(util.createErrorToast).toHaveBeenCalledWith('error');
                 });
             });
             it('when save changes rejects', function() {
@@ -224,7 +191,7 @@ describe('Imports Block directive', function() {
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                 expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', 0);
                 expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
-                expect(this.controller.error).toBe('error');
+                expect(util.createErrorToast).toHaveBeenCalledWith('error');
             });
         });
         it('get should return the correct variable', function() {
@@ -274,6 +241,10 @@ describe('Imports Block directive', function() {
             }];
             this.controller.setIndirectImports();
             expect(this.controller.indirectImports).toEqual(['indirect-a', 'indirect-b']);
+        });
+        it('should show the new import overlay', function() {
+            this.controller.showNewOverlay();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('importsOverlay', {}, this.controller.setIndirectImports);
         });
     });
 });

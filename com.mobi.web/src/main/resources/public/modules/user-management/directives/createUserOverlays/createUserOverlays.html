@@ -26,7 +26,7 @@
         <h2>User Info</h2>
         <div class="form-group username">
             <custom-label>Username</custom-label>
-            <input class="form-control" type="text" name="username" ng-model="dvm.newUser.username" unique-value="dvm.getUsernames()" ng-pattern="dvm.usernamePattern" ng-trim="false" ng-class="{'is-invalid': dvm.infoForm.username.$dirty && dvm.infoForm.username.$invalid}" required focus-me/>
+            <input class="form-control" type="text" name="username" ng-model="dvm.newUser.username" unique-value="dvm.getUsernames()" ng-pattern="dvm.usernamePattern" ng-trim="false" ng-class="{'is-invalid': dvm.infoForm.username.$dirty && dvm.infoForm.username.$invalid}" required focus-me="true"/>
             <p ng-messages="dvm.infoForm.username.$error" class="invalid-feedback">
                 <ng-message when="uniqueUsername">This username has already been taken</ng-message>
                 <ng-message when="pattern">Invalid username</ng-message>

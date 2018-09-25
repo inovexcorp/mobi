@@ -25,7 +25,8 @@
 
 :DataMapping2 a                       delim:DataMapping ;
               delim:columnIndex       "6" ;
-              delim:hasProperty       uhtc:density .
+              delim:hasProperty       uhtc:density ;
+              delim:datatypeSpec      xsd:double .
 
 :DataMapping3 a                       delim:DataMapping ;
               delim:columnIndex       "3" ;

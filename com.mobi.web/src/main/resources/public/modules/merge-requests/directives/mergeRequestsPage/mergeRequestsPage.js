@@ -76,7 +76,7 @@
                     dvm.errorMessage = '';
                 }
                 dvm.deleteRequest = function() {
-                    mm.deleteRequest(dvm.state.requestToDelete.request['@id'])
+                    mm.deleteRequest(dvm.state.requestToDelete.jsonld['@id'])
                         .then(() => {
                             var hasSelected = !!dvm.state.selected;
                             dvm.state.selected = undefined;
@@ -94,20 +94,20 @@
                 }
                 dvm.acceptRequest = function() {
                     var targetBranchId = dvm.state.requestToAccept.targetBranch['@id'];
-                    mm.acceptRequest(dvm.state.requestToAccept.request['@id'])
+                    mm.acceptRequest(dvm.state.requestToAccept.jsonld['@id'])
                         .then(() => {
                             util.createSuccessToast('Request successfully accepted');
-                            return mm.getRequest(dvm.state.selected.request['@id'])
+                            return mm.getRequest(dvm.state.selected.jsonld['@id'])
                         }, $q.reject)
-                        .then(request => {
-                            dvm.state.requestToAccept.request = request;
+                        .then(jsonld => {
+                            dvm.state.requestToAccept.jsonld = jsonld;
                             return dvm.state.setRequestDetails(dvm.state.requestToAccept);
                         }, $q.reject)
                         .then(() => {
                             dvm.state.selected = dvm.state.requestToAccept;
                             dvm.closeAccept();
-                            if (os.listItem) {
-                                if (os.listItem.ontologyRecord.branchId === targetBranchId) {
+                            if (!_.isEmpty(os.listItem)) {
+                                if (_.get(os.listItem, 'ontologyRecord.branchId') === targetBranchId) {
                                     os.listItem.upToDate = false;
                                     if (os.listItem.merge.active) {
                                         util.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form.', {timeOut: 5000});

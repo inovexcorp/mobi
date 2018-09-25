@@ -21,13 +21,8 @@
   #L%
   -->
 <div class="annotation-block">
-    <block>
-        <block-header>
-            <span>Annotations</span><a ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.mobi.imported" class="float-right" ng-click="dvm.openAddOverlay()"><i class="fa fa-fw fa-plus"></i>Add Annotation</a>
-        </block-header>
-        <block-content>
-            <property-values ng-repeat="annotation in dvm.os.listItem.selected | showProperties:dvm.annotations | orderBy:dvm.ontoUtils.getLabelForIRI" property="annotation" entity="dvm.os.listItem.selected" remove="dvm.openRemoveOverlay(iri, index)" edit="dvm.editClicked(property, index)"></property-values>
-        </block-content>
-    </block>
-    <remove-property-overlay overlay-flag="dvm.showRemoveOverlay" ng-if="dvm.showRemoveOverlay" index="dvm.index" key="dvm.key"></remove-property-overlay>
+    <div class="section-header">
+        <h5>Annotations</h5><a ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.mobi.imported" class="float-right fa fa-fw fa-plus" ng-click="dvm.openAddOverlay()"></a>
+    </div>
+    <property-values ng-repeat="annotation in dvm.os.listItem.selected | showProperties:dvm.annotations | orderBy:dvm.ontoUtils.getLabelForIRI" property="annotation" entity="dvm.os.listItem.selected" remove="dvm.openRemoveOverlay(iri, index)" edit="dvm.editClicked(property, index)"></property-values>
 </div>

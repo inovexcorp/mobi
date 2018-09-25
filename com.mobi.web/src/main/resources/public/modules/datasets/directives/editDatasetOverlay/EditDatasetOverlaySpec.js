@@ -44,7 +44,7 @@ describe('Edit Dataset Overlay directive', function() {
         });
 
         utilSvc.getSkolemizedIRI.and.returnValue('http://mobi.com/.well-known/genid/1234');
-        utilSvc.getPropertyId.and.callFake(function(entity, propertyIRI) {
+        utilSvc.getPropertyId.and.callFake((entity, propertyIRI) => {
             switch (propertyIRI) {
                 case prefixes.dataset + 'dataset':
                     return 'dataset';
@@ -60,7 +60,7 @@ describe('Edit Dataset Overlay directive', function() {
             }
         });
         utilSvc.getPropertyValue.and.returnValue('repository');
-        utilSvc.getDctermsValue.and.callFake(function(entity, property) {
+        utilSvc.getDctermsValue.and.callFake((entity, property) => {
             switch (property) {
                 case 'title':
                     return 'title';
@@ -73,12 +73,17 @@ describe('Edit Dataset Overlay directive', function() {
             }
         });
         catalogManagerSvc.localCatalog = {'@id': 'http://mobi.com/catalog-local'};
-        datasetStateSvc.selectedDataset = {identifiers: [], record: {'@id': 'record'}};
-        datasetStateSvc.selectedDataset[prefixes.catalog + 'keyword'] = [{'@value': 'keyword'}];
-        this.expectedRecord = {'@id': datasetStateSvc.selectedDataset.record['@id']};
-        this.expectedRecord[prefixes.dcterms + 'title'] = [];
-        this.expectedRecord[prefixes.dcterms + 'description'] = [];
-        this.expectedRecord[prefixes.catalog + 'keyword'] = [];
+        datasetStateSvc.selectedDataset = {
+            identifiers: [],
+            record: {'@id': 'record'},
+            [prefixes.catalog + 'keyword']: [{'@value': 'keyword'}]
+        };
+        this.expectedRecord = {
+            '@id': datasetStateSvc.selectedDataset.record['@id'],
+            [prefixes.dcterms + 'title']: [],
+            [prefixes.dcterms + 'description']: [],
+            [prefixes.catalog + 'keyword']: []
+        };
         scope.onClose = jasmine.createSpy('onClose');
         this.element = $compile(angular.element('<edit-dataset-overlay on-close="onClose()"></edit-dataset-overlay>'))(scope);
         scope.$digest();
@@ -175,9 +180,7 @@ describe('Edit Dataset Overlay directive', function() {
             expect(this.element.querySelectorAll('.content').length).toBe(1);
         });
         it('with a text-input', function() {
-            var inputs = this.element.querySelectorAll('input');
-            expect(inputs.length).toBe(1);
-            expect(angular.element(inputs[0]).attr('name').trim()).toEqual('title');
+            expect(this.element.find('text-input').length).toBe(1);
         });
         it('with a text-area', function() {
             expect(this.element.find('text-area').length).toBe(1);

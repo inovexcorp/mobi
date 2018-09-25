@@ -176,8 +176,8 @@ public class FullSimpleOntologyTest {
         assertEquals(2, iris.size());
         assertTrue(iris.contains(vf.createIRI("http://xmlns.com/foaf/0.1")));
     }
-    /*
-    @Test
+
+    /*@Test
     public void getImportsClosureFromStreamTest() throws Exception {
         // Setup:
         InputStream stream = this.getClass().getResourceAsStream("/test-imports.owl");
@@ -185,8 +185,8 @@ public class FullSimpleOntologyTest {
 
         Set<Ontology> ontologies = ont.getImportsClosure();
         assertEquals(5, ontologies.size());
-    }
-    */
+    }*/
+
     @Test
     public void getImportsClosureWithLocalImportsTest() throws Exception {
         Set<Ontology> ontologies = ont1.getImportsClosure();

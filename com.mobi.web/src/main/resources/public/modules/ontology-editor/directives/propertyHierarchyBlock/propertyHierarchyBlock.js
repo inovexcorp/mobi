@@ -24,12 +24,37 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name propertyHierarchyBlock
+         *
+         * @description
+         * The `propertyHierarchyBlock` module only provides the `propertyHierarchyBlock` directive which creates a
+         * section for displaying the properties in an ontology.
+         */
         .module('propertyHierarchyBlock', [])
+        /**
+         * @ngdoc directive
+         * @name propertyHierarchyBlock.directive:propertyHierarchyBlock
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `propertyHierarchyBlock` is a directive that creates a section that displays a manual hierarchy tree of the
+         * data, object, and annotation properties in the current
+         * {@link ontologyState.service:ontologyStateService selected ontology} within separate "folders". The section
+         * header also contains a button to add properties. The directive houses the methods for opening a modal for
+         * {@link createPropertyOverlay.directive:createPropertyOverlay adding} properties. The directive is replaced
+         * by the contents of its template.
+         */
         .directive('propertyHierarchyBlock', propertyHierarchyBlock);
 
-        propertyHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'INDENT'];
+        propertyHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'modalService', 'INDENT'];
 
-        function propertyHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, INDENT) {
+        function propertyHierarchyBlock(ontologyStateService, ontologyManagerService, modalService, INDENT) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,21 +66,15 @@
                     dvm.indent = INDENT;
                     dvm.os = ontologyStateService;
                     dvm.om = ontologyManagerService;
-                    dvm.utils = ontologyUtilsManagerService;
 
-                    dvm.deleteProperty = function() {
-                        if (dvm.om.isObjectProperty(dvm.os.listItem.selected)) {
-                            dvm.utils.deleteObjectProperty();
-                        } else if (dvm.om.isDataTypeProperty(dvm.os.listItem.selected)) {
-                            dvm.utils.deleteDataTypeProperty();
-                        } else if (dvm.om.isAnnotation(dvm.os.listItem.selected)) {
-                            dvm.utils.deleteAnnotationProperty();
-                        }
-                        dvm.showDeleteConfirmation = false;
-                    }
                     dvm.isShown = function(node) {
                         return !_.has(node, 'entityIRI') || (dvm.os.areParentsOpen(node) && node.get(dvm.os.listItem.ontologyRecord.recordId));
                     }
+                    dvm.showCreatePropertyOverlay = function() {
+                        dvm.os.unSelectItem();
+                        modalService.openModal('createPropertyOverlay');
+                    }
+
                     dvm.flatPropertyTree = constructFlatPropertyTree();
 
                     function addGetToArrayItems(array, get) {

@@ -20,20 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="class-hierarchy-block">
-    <block>
-        <block-header>
-            <span>Class Hierarchy</span><a class="float-right" ng-click="dvm.os.unSelectItem(); dvm.os.showCreateClassOverlay = true"><i class="fa fa-plus"></i><span>Create Class</span></a>
-        </block-header>
-        <block-content>
-            <hierarchy-tree hierarchy="dvm.os.listItem.classes.flat"></hierarchy-tree>
-        </block-content>
-        <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Class</span></button>
-        </block-footer>
-    </block>
-    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Class'" confirm-click="dvm.deleteClass()"
-                          cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
-        <p>Are you sure that you want to delete <strong>{{dvm.os.listItem.selected['@id']}}</strong>?</p>
-    </confirmation-overlay>
+<div class="class-hierarchy-block d-flex flex-column">
+    <div class="section-header">
+        <h5>Class Hierarchy</h5><a class="float-right fa fa-fw fa-plus" ng-click="dvm.showCreateClassOverlay()"></a>
+    </div>
+    <div class="flex-1 horizontal-scroll">
+        <hierarchy-tree hierarchy="dvm.os.listItem.classes.flat"></hierarchy-tree>
+    </div>
 </div>

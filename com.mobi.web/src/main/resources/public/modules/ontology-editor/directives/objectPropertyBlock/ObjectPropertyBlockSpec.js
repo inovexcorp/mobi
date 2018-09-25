@@ -21,20 +21,22 @@
  * #L%
  */
 describe('Object Property Block directive', function() {
-    var $compile, scope, ontologyStateSvc, ontoUtils;
+    var $compile, scope, ontologyStateSvc, ontoUtils, modalSvc;
 
     beforeEach(function() {
         module('templates');
         module('objectPropertyBlock');
         mockOntologyState();
         mockOntologyUtilsManager();
+        mockModal();
         injectShowPropertiesFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             ontoUtils = _ontologyUtilsManagerService_;
+            modalSvc = _modalService_;
         });
 
         ontologyStateSvc.listItem.selected = {
@@ -60,31 +62,24 @@ describe('Object Property Block directive', function() {
             expect(this.element.hasClass('object-property-block')).toBe(true);
             expect(this.element.hasClass('annotation-block')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
+        it('with a .section-header', function() {
+            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(1);
+        it('with a link to add an object property', function() {
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
         });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
-        });
-        it('depending on whether something is selected', function() {
-            expect(this.element.querySelectorAll('block-header a').length).toBe(1);
-            ontologyStateSvc.listItem.selected = undefined;
+        it('depending on whether the selected individual is imported', function() {
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+
+            ontologyStateSvc.listItem.selected.mobi = {imported: true};
             scope.$digest();
-            expect(this.element.querySelectorAll('block-header a').length).toBe(0);
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
         });
         it('depending on how many datatype properties there are', function() {
             expect(this.element.find('property-values').length).toBe(2);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(this.element.find('property-values').length).toBe(0);
-        });
-        it('depending on whether an object property is being deleted', function() {
-            this.controller.showRemoveOverlay = true;
-            scope.$digest();
-            expect(this.element.find('remove-property-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {
@@ -94,13 +89,13 @@ describe('Object Property Block directive', function() {
             expect(ontologyStateSvc.propertySelect).toBeUndefined();
             expect(ontologyStateSvc.propertyValue).toBe('');
             expect(ontologyStateSvc.propertyIndex).toBe(0);
-            expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(true);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('objectPropertyOverlay');
         });
         it('should set the correct manager values when opening the Remove Object Property Overlay', function() {
             this.controller.showRemovePropertyOverlay('key', 1);
             expect(this.controller.key).toBe('key');
-            expect(this.controller.index).toBe(1);
-            expect(this.controller.showRemoveOverlay).toBe(true);
+            expect(ontoUtils.getRemovePropOverlayMessage).toHaveBeenCalledWith('key', 1);
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith('', jasmine.any(Function));
         });
         describe('should update vocabulary hierarchies on property removal', function() {
             beforeEach(function() {
@@ -129,7 +124,7 @@ describe('Object Property Block directive', function() {
     });
     it('should call openAddObjectPropOverlay when the link is clicked', function() {
         spyOn(this.controller, 'openAddObjectPropOverlay');
-        var link = angular.element(this.element.querySelectorAll('block-header a')[0]);
+        var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
         link.triggerHandler('click');
         expect(this.controller.openAddObjectPropOverlay).toHaveBeenCalled();
     });

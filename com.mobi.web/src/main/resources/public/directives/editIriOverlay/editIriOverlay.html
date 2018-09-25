@@ -1,0 +1,61 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="modal-header">
+    <h3>Edit IRI</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+    <form name="dvm.iriForm" novalidate autocomplete="off">
+        <error-display ng-if="resolve.customValidation && resolve.customValidation.func(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">{{resolve.customValidation.msg}}</error-display>
+        <!-- Begins with -->
+        <div class="form-group begin-container">
+            <custom-label>Begins with</custom-label>
+            <input class="form-control" id="iriBegin" name="iriBegin" ng-model="dvm.iriBegin" ng-pattern="dvm.namespacePattern" ng-trim="false" ng-class="{'is-invalid': dvm.iriForm.iriBegin.$error.pattern}" required focus-me="true" />
+            <p ng-messages="dvm.iriForm.iriBegin.$error" class="invalid-feedback">
+                <ng-message when="pattern">Value is not a valid namespace.</ng-message>
+            </p>
+        </div>
+        <!-- Then -->
+        <div class="form-group then-container">
+            <custom-label>Then</custom-label>
+            <select class="form-control" id="iriThen" name="iriThen" ng-model="dvm.iriThen" required>
+                <option value="#">#</option>
+                <option value="/">/</option>
+                <option value=":">:</option>
+            </select>
+        </div>
+        <!-- Ends with -->
+        <div class="form-group ends-container">
+            <custom-label>Ends with</custom-label>
+            <input class="form-control" id="iriEnd" name="iriEnd" ng-model="dvm.iriEnd" ng-pattern="/^\S+$/" ng-trim="false" ng-class="{'is-invalid': dvm.iriForm.iriEnd.$error.pattern}" required />
+            <p ng-messages="dvm.iriForm.iriEnd.$error" class="invalid-feedback">
+                <ng-message when="pattern">Spaces are not allowed.</ng-message>
+            </p>
+        </div>
+    </form>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button type="button" class="btn btn-primary" ng-click="dvm.submit()" ng-disabled="dvm.iriForm.$invalid || (resolve.customValidation && resolve.customValidation.func(dvm.iriBegin + dvm.iriThen + dvm.iriEnd))">Submit</button>
+    <button type="button" class="btn btn-primary refresh-button float-left" ng-click="dvm.resetVariables()"><i class="fa fa-refresh"></i></button>
+</div>

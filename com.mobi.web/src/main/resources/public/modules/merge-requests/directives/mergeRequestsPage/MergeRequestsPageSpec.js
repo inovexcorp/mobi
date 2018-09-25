@@ -78,7 +78,7 @@ describe('Merge Requests Page directive', function() {
         });
         describe('should delete a merge request', function() {
             beforeEach(function() {
-                mergeRequestsStateSvc.requestToDelete = {request: {'@id': 'request'}};
+                mergeRequestsStateSvc.requestToDelete = {jsonld: {'@id': 'request'}};
                 mergeRequestsStateSvc.selected = mergeRequestsStateSvc.requestToDelete;
                 spyOn(this.controller, 'closeDelete');
             });
@@ -87,7 +87,7 @@ describe('Merge Requests Page directive', function() {
                 this.controller.deleteRequest();
                 scope.$apply();
                 expect(mergeRequestManagerSvc.deleteRequest).toHaveBeenCalledWith('request');
-                expect(mergeRequestsStateSvc.selected).toEqual({request: {'@id': 'request'}});
+                expect(mergeRequestsStateSvc.selected).toEqual({jsonld: {'@id': 'request'}});
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
                 expect(this.controller.closeDelete).not.toHaveBeenCalled();
                 expect(mergeRequestsStateSvc.setRequests).not.toHaveBeenCalled();
@@ -122,7 +122,7 @@ describe('Merge Requests Page directive', function() {
         });
         describe('should accept a merge request', function() {
             beforeEach(function() {
-                this.requestObj = {request: {'@id': 'request'}, targetBranch: {'@id': 'branchId'}};
+                this.requestObj = {jsonld: {'@id': 'request'}, targetBranch: {'@id': 'branchId'}};
                 mergeRequestsStateSvc.requestToAccept = angular.copy(this.requestObj);
                 mergeRequestsStateSvc.selected = angular.copy(this.requestObj);
                 spyOn(this.controller, 'closeAccept');
@@ -147,7 +147,7 @@ describe('Merge Requests Page directive', function() {
                             expect(mergeRequestManagerSvc.acceptRequest).toHaveBeenCalledWith('request');
                             expect(mergeRequestManagerSvc.getRequest).toHaveBeenCalledWith('request');
                             expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.requestToAccept);
-                            expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'request', this.newRequest));
+                            expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'jsonld', this.newRequest));
                             expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                             expect(this.controller.closeAccept).toHaveBeenCalled();
                             expect(ontologyStateSvc.listItem).toEqual(listItem);
@@ -164,7 +164,7 @@ describe('Merge Requests Page directive', function() {
                                 expect(mergeRequestManagerSvc.acceptRequest).toHaveBeenCalledWith('request');
                                 expect(mergeRequestManagerSvc.getRequest).toHaveBeenCalledWith('request');
                                 expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.requestToAccept);
-                                expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'request', this.newRequest));
+                                expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'jsonld', this.newRequest));
                                 expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                                 expect(this.controller.closeAccept).toHaveBeenCalled();
                                 expect(ontologyStateSvc.listItem.upToDate).toEqual(false);
@@ -178,7 +178,7 @@ describe('Merge Requests Page directive', function() {
                                 expect(mergeRequestManagerSvc.acceptRequest).toHaveBeenCalledWith('request');
                                 expect(mergeRequestManagerSvc.getRequest).toHaveBeenCalledWith('request');
                                 expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.requestToAccept);
-                                expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'request', this.newRequest));
+                                expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'jsonld', this.newRequest));
                                 expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                                 expect(this.controller.closeAccept).toHaveBeenCalled();
                                 expect(ontologyStateSvc.listItem.upToDate).toEqual(false);
@@ -195,7 +195,7 @@ describe('Merge Requests Page directive', function() {
                             expect(mergeRequestManagerSvc.acceptRequest).toHaveBeenCalledWith('request');
                             expect(mergeRequestManagerSvc.getRequest).toHaveBeenCalledWith('request');
                             expect(mergeRequestsStateSvc.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateSvc.requestToAccept);
-                            expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'request', this.newRequest));
+                            expect(mergeRequestsStateSvc.selected).toEqual(_.set(this.requestObj, 'jsonld', this.newRequest));
                             expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                             expect(this.controller.closeAccept).toHaveBeenCalled();
                             expect(ontologyStateSvc.listItem.upToDate).toEqual(upToDate);

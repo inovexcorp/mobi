@@ -67,26 +67,19 @@ describe('Usages Block directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('usages-block')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
-        });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(1);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
+        it('with a .section-header', function() {
+            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
         it('with a .text-center', function() {
             expect(this.element.querySelectorAll('.text-center').length).toBe(1);
         });
         it('depending on how many results there are', function() {
-            expect(this.element.querySelectorAll('block-content .property-values').length).toBe(0);
+            expect(this.element.querySelectorAll('.property-values').length).toBe(0);
 
             this.controller.results = {
                 'iri': {}
             };
             scope.$digest();
-            expect(this.element.querySelectorAll('block-content .property-values').length).toBe(1);
             expect(this.element.querySelectorAll('.property-values').length).toBe(_.keys(this.controller.results).length);
         });
         it('depending on how many values a result has', function() {

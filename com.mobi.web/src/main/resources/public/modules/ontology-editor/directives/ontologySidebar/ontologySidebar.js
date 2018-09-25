@@ -29,8 +29,8 @@
          * @name ontologySidebar
          *
          * @description
-         * The `ontologySidebar` module provides the `ontologySidebar` directive which creates a `div`
-         * with the sidebar of the Ontology Editor.
+         * The `ontologySidebar` module provides the `ontologySidebar` directive which creates a `div` with the sidebar
+         * of the Ontology Editor.
          */
         .module('ontologySidebar', [])
         /**
@@ -40,20 +40,22 @@
          * @restrict E
          * @requires ontologyManager.service:ontologyManagerService
          * @requires ontologyState.service:ontologyStateService
+         * @requires modal.service:modalService
          *
          * @description
          * `ontologySidebar` is a directive that creates a `div` containing a button to
          * {@link ontologyDefaultTab.directive:ontologyDefaultTab open ontologies} and a `nav` of the
          * {@link ontologyState.service:ontologyStateService opened ontologies}. The currently selected
          * {@link ontologyState.service:ontologyStateService listItem} will have a
-         * {@link ontologyBranchSelect.directive:ontologyBranchSelect} displayed underneath. The directive is
+         * {@link ontologyBranchSelect.directive:ontologyBranchSelect} displayed underneath and a link to
+         * {@link ontologyCloseOverlay.directive:ontologyCloseOverlay close the ontology}. The directive is
          * replaced by the contents of its template.
          */
         .directive('ontologySidebar', ontologySidebar);
 
-        ontologySidebar.$inject = ['ontologyManagerService', 'ontologyStateService'];
+        ontologySidebar.$inject = ['ontologyManagerService', 'ontologyStateService', 'modalService'];
 
-        function ontologySidebar(ontologyManagerService, ontologyStateService) {
+        function ontologySidebar(ontologyManagerService, ontologyStateService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -68,7 +70,7 @@
                     dvm.onClose = function(listItem) {
                         if (dvm.os.hasChanges(listItem)) {
                             dvm.os.recordIdToClose = listItem.ontologyRecord.recordId;
-                            dvm.os.showCloseOverlay = true;
+                            modalService.openModal('ontologyCloseOverlay');
                         } else {
                             dvm.os.closeOntology(listItem.ontologyRecord.recordId);
                         }

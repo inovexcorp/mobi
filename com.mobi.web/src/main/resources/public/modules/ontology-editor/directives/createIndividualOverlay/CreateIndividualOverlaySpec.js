@@ -43,7 +43,10 @@ describe('Create Individual Overlay directive', function() {
 
         this.iri = 'iri#'
         ontologyStateSvc.getDefaultPrefix.and.returnValue(this.iri);
-        this.element = $compile(angular.element('<create-individual-overlay></create-individual-overlay>'))(scope);
+
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<create-individual-overlay close="close()" dismiss="dismiss()"></create-individual-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('createIndividualOverlay');
     });
@@ -63,12 +66,12 @@ describe('Create Individual Overlay directive', function() {
         expect(this.controller.individual['@id']).toBe(this.controller.prefix);
         expect(this.controller.individual['@type']).toEqual([]);
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('create-individual-overlay')).toBe(true);
-            expect(this.element.hasClass('overlay')).toBe(true);
-            expect(this.element.querySelectorAll('.content').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('CREATE-INDIVIDUAL-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
         });
         it('with a form', function() {
             expect(this.element.find('form').length).toBe(1);
@@ -82,11 +85,11 @@ describe('Create Individual Overlay directive', function() {
         it('with an input for the individual name', function() {
             expect(this.element.querySelectorAll('input[name="name"]').length).toBe(1);
         });
-        it('with custom buttons to create and cancel', function() {
-            var buttons = this.element.find('button');
+        it('with buttons to submit and cancel', function() {
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Create'].indexOf(angular.element(buttons[0]).text().trim()) >= 0).toBe(true);
-            expect(['Cancel', 'Create'].indexOf(angular.element(buttons[1]).text().trim()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text().trim()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text().trim()) >= 0).toBe(true);
         });
         it('depending on whether there is an error', function() {
             expect(this.element.find('error-display').length).toBe(0);
@@ -97,7 +100,7 @@ describe('Create Individual Overlay directive', function() {
         it('depending on the form validity', function() {
             this.controller.individual['@type'] = ['ClassA'];
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.name = 'test';
@@ -107,7 +110,7 @@ describe('Create Individual Overlay directive', function() {
         it('depending on the length of the type array', function() {
             this.controller.name = 'test';
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.individual['@type'] = ['ClassA'];
@@ -120,7 +123,7 @@ describe('Create Individual Overlay directive', function() {
 
             var disabled = this.element.querySelectorAll('[disabled]');
             expect(disabled.length).toBe(1);
-            expect(angular.element(disabled[0]).text().trim()).toBe('Create');
+            expect(angular.element(disabled[0]).text().trim()).toBe('Submit');
         });
     });
     describe('controller methods', function() {
@@ -177,8 +180,8 @@ describe('Create Individual Overlay directive', function() {
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.individual['@id'], false);
                 expect(ontoUtils.addConcept).toHaveBeenCalledWith(this.controller.individual);
                 expect(ontoUtils.addConceptScheme).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                expect(scope.close).toHaveBeenCalled();
             });
             it('if it is a derived conceptScheme', function() {
                 ontoUtils.containsDerivedConceptScheme.and.returnValue(true);
@@ -190,8 +193,8 @@ describe('Create Individual Overlay directive', function() {
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.individual['@id'], false);
                 expect(ontoUtils.addConcept).not.toHaveBeenCalled();
                 expect(ontoUtils.addConceptScheme).toHaveBeenCalledWith(this.controller.individual);
-                expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                expect(scope.close).toHaveBeenCalled();
             });
             it('if it is not a derived concept or a concept', function() {
                 this.controller.create();
@@ -202,20 +205,25 @@ describe('Create Individual Overlay directive', function() {
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.individual['@id'], false);
                 expect(ontoUtils.addConcept).not.toHaveBeenCalled();
                 expect(ontoUtils.addConceptScheme).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                expect(scope.close).toHaveBeenCalled();
             });
+        });
+        it('should cancel the overlay', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
     it('should call create when the button is clicked', function() {
         spyOn(this.controller, 'create');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.create).toHaveBeenCalled();
     });
-    it('should set the correct state when the cancel button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
+    it('should call cancel when the button is clicked', function() {
+        spyOn(this.controller, 'cancel');
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
-        expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
 });

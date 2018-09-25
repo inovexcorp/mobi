@@ -24,26 +24,56 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name openOntologyTab
+         *
+         * @description
+         * The `openOntologyTab` module only provides the `openOntologyTab` directive which creates a
+         * page with a list of ontologies in the Mobi instance and buttons to add to the list.
+         */
         .module('openOntologyTab', [])
+        /**
+         * @ngdoc directive
+         * @name openOntologyTab.directive:openOntologyTab
+         * @scope
+         * @restrict E
+         * @requires httpService.service:httpService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires prefixes.service:prefixes
+         * @requires stateManager.service:stateManagerService
+         * @requires util.service:utilService
+         * @requires mapperState.service:mapperStateService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires modal.service:modalService
+         * @requires policyEnforcement.service:policyEnforcementService
+         * @requires policyManager.service:policyManagerService
+         *
+         * @description
+         * `openOntologyTab` is a directive that creates a page for opening ontologies. The page includes a search bar
+         * and a paginated list of ontologies in addition to buttons for
+         * {@link newOntologyTab.directive:newOntologyTab creating new ontologies} and
+         * {@link uploadOntologyTab.directive:uploadOntologyTab uploading ontologies}. The directive houses a method
+         * for opening the modal deleting an ontology. The directive is replaced by the contents of its template.
+         */
         .directive('openOntologyTab', openOntologyTab);
 
-        openOntologyTab.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
-            'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService'];
+        openOntologyTab.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService', 'modalService', 'policyEnforcementService', 'policyManagerService'];
 
-        function openOntologyTab(httpService, ontologyManagerService, ontologyStateService, prefixes,
-            stateManagerService, utilService, mapperStateService, catalogManagerService) {
+        function openOntologyTab(httpService, ontologyManagerService, ontologyStateService, prefixes, stateManagerService, utilService, mapperStateService, catalogManagerService, modalService, policyEnforcementService, policyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/openOntologyTab/openOntologyTab.html',
-                scope: {
-                    listItem: '='
-                },
+                scope: {},
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     var sm = stateManagerService;
                     var cm = catalogManagerService;
+                    var pe = policyEnforcementService;
+                    var pm = policyManagerService;
                     var ontologyRecords = [];
                     var openIndicator = '<span class="text-muted">(Open)</span> ';
 
@@ -92,20 +122,17 @@
                         };
                         dvm.os.newKeywords = [];
                         dvm.os.newLanguage = undefined;
-                        dvm.os.showNewTab = true;
+                        modalService.openModal('newOntologyOverlay');
                     }
-                    dvm.showDeleteConfirmationOverlay = function(record) {
+                    dvm.showDeleteConfirmationOverlay = function(record, event) {
+                        event.stopPropagation();
                         dvm.recordId = _.get(record, '@id', '');
-                        dvm.recordTitle = dvm.util.getDctermsValue(record, 'title');
-                        dvm.errorMessage = '';
 
+                        var msg = '';
                         if (_.find(dvm.ms.sourceOntologies, {recordId: dvm.recordId})) {
-                            dvm.mappingErrorMessage = "Warning: The ontology you're about to delete is currently open in the mapping tool.";
-                        } else {
-                            dvm.mappingErrorMessage = '';
+                            msg += '<error-display>Warning: The ontology you\'re about to delete is currently open in the mapping tool.</error-display>';
                         }
-
-                        dvm.showDeleteConfirmation = true;
+                        modalService.openConfirmModal(msg + '<p>Are you sure that you want to delete <strong>' + dvm.util.getDctermsValue(record, 'title') + '</strong>?</p>', dvm.deleteOntology);
                     }
                     dvm.deleteOntology = function() {
                         dvm.om.deleteOntology(dvm.recordId)
@@ -118,8 +145,7 @@
                                 }
                                 dvm.currentPage = 1;
                                 dvm.getPageOntologyRecords();
-                                dvm.showDeleteConfirmation = false;
-                            }, errorMessage => dvm.errorMessage = errorMessage);
+                            }, dvm.util.createErrorToast);
                     }
                     dvm.getPageOntologyRecords = function() {
                         var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
@@ -137,6 +163,7 @@
                             if (response.headers() !== undefined) {
                                 dvm.totalSize = _.get(response.headers(), 'x-total-count');
                             }
+                            dvm.manageRecords();
                         });
                     }
                     dvm.search = function(event) {
@@ -145,6 +172,19 @@
                             dvm.currentPage = 1;
                             dvm.getPageOntologyRecords();
                         }
+                    }
+                    dvm.manageRecords = function() {
+                        _.forEach(dvm.filteredList, record => {
+                            var request = {
+                                resourceId: 'http://mobi.com/policies/record/' + encodeURIComponent(record['@id']),
+                                actionId: pm.actionUpdate
+                            }
+                            pe.evaluateRequest(request).then(decision => record.userCanManage = decision == pe.permit);
+                        })
+                    }
+                    dvm.showAccessOverlay = function(record, ruleId, event) {
+                        event.stopPropagation();
+                        modalService.openModal('recordAccessOverlay', {ruleId, resource: record['@id']});
                     }
 
                     $scope.$watch(() => dvm.os.list.length, () => {

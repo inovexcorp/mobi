@@ -24,12 +24,36 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name individualHierarchyBlock
+         *
+         * @description
+         * The `individualHierarchyBlock` module only provides the `individualHierarchyBlock` directive which creates a
+         * section for displaying the individuals in an ontology.
+         */
         .module('individualHierarchyBlock', [])
+        /**
+         * @ngdoc directive
+         * @name individualHierarchyBlock.directive:individualHierarchyBlock
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `individualHierarchyBlock` is a directive that creates a section that displays a
+         * {@link hierarchyTree.directive:hierarchyTree} of the individuals in the current
+         * {@link ontologyState.service:ontologyStateService selected ontology} underneath their class types. The
+         * section header also has a button to add individuals. The directive houses the methods for opening a
+         * modal for {@link createIndividualOverlay.directive:createIndividualOverlay adding} individuals. The
+         * directive is replaced by the contents of its template.
+         */
         .directive('individualHierarchyBlock', individualHierarchyBlock);
 
-        individualHierarchyBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
+        individualHierarchyBlock.$inject = ['ontologyStateService', 'modalService'];
 
-        function individualHierarchyBlock(ontologyStateService, ontologyUtilsManagerService) {
+        function individualHierarchyBlock(ontologyStateService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,12 +62,11 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
-                    dvm.utils = ontologyUtilsManagerService;
+                    var os = ontologyStateService;
 
-                    dvm.deleteIndividual = function() {
-                        dvm.utils.deleteIndividual();
-                        dvm.showDeleteConfirmation = false;
+                    dvm.showCreateIndividualOverlay = function() {
+                        os.unSelectItem();
+                        modalService.openModal('createIndividualOverlay');
                     }
                 }
             }

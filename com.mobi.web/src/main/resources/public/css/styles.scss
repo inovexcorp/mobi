@@ -20,6 +20,21 @@
     text-transform: none;
 }
 
+.ui-select-match.btn-default-focus {
+    outline-offset: 0;
+    background-color: transparent;
+    color: initial;
+    outline: 0;
+    box-shadow: none;
+    border-color: transparent;
+
+    .ui-select-toggle.form-control {
+        border-color: var(--secondary);
+        box-shadow: inset 0 -2px 0 -1px var(--secondary);
+        outline: 0;
+    }
+}
+
 .ui-select-toggle.form-control {
     display: inline-block;
 }
@@ -506,6 +521,9 @@ body {
         padding-top: 15px;
     }
 }
+.modal-header h3 {
+    margin-bottom: 0;
+}
 
 /* Helper Classes */
 .padding {
@@ -516,4 +534,10 @@ body {
 }
 .vertical-scroll {
     overflow-y: auto;
+}
+.horizontal-scroll {
+    overflow-x: auto;
+}
+.flex-1 {
+    flex: 1;
 }

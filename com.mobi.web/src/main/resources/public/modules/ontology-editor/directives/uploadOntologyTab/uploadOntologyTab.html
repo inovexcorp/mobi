@@ -20,27 +20,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="upload-ontology-tab">
-    <div class="row row-container">
-        <div class="col-6 offset-3">
-            <block>
-                <block-content class="padding">
-                    <drag-file files="dvm.files" on-drop="dvm.showOverlay = true"></drag-file>
-                    <md-list>
-                        <md-list-item ng-repeat="item in dvm.state.uploadList | orderBy:'title'" class="md-2-line">
-                            <i ng-class="{'fa-spinner fa-spin': dvm.hasStatus(item.promise, 0), 'fa-check': dvm.hasStatus(item.promise, 1) && !item.error, 'fa-times': item.error}" class="fa fa-fw"></i>
-                            <div class="md-list-item-text">
-                                <h3>{{item.title}}</h3>
-                                <p ng-if="item.error"><small>{{item.error}}</small></p>
-                            </div>
-                        </md-list-item>
-                    </md-list>
-                </block-content>
-                <block-footer class="btn-container clearfix">
-                    <button class="btn btn-primary float-right" ng-click="dvm.cancel()" ng-disabled="dvm.hasPending()">Close</button>
-                </block-footer>
-            </block>
+<div class="upload-ontology-tab row h-100">
+    <div class="col-6 offset-3 d-flex flex-column p-2">
+        <drag-file files="dvm.state.uploadFiles" on-drop="dvm.showUploadOntologyOverlay()"></drag-file>
+        <div class="list-container flex-1 vertical-scroll py-2">
+            <md-list>
+                <md-list-item ng-repeat="item in dvm.state.uploadList | orderBy:'title'" class="md-2-line">
+                    <i ng-class="{'fa-spinner fa-spin': dvm.hasStatus(item.promise, 0), 'fa-check': dvm.hasStatus(item.promise, 1) && !item.error, 'fa-times': item.error}" class="fa fa-fw"></i>
+                    <div class="md-list-item-text">
+                        <h3>{{item.title}}</h3>
+                        <p ng-if="item.error"><small>{{item.error}}</small></p>
+                    </div>
+                </md-list-item>
+            </md-list>
+        </div>
+        <div class="btn-container">
+            <button class="btn btn-primary float-right" ng-click="dvm.cancel()" ng-disabled="dvm.hasPending()">Close</button>
         </div>
     </div>
-    <upload-ontology-overlay ng-if="dvm.showOverlay" close-overlay="dvm.showOverlay = false" files="dvm.files" list="dvm.uploadList"></upload-ontology-overlay>
 </div>

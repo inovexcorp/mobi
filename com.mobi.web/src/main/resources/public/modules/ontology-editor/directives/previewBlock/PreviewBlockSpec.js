@@ -21,26 +21,26 @@
  * #L%
  */
 describe('Preview Block directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc;
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
         module('previewBlock');
         mockOntologyState();
         mockOntologyManager();
+        mockModal();
 
         module(function($provide) {
-            $provide.value('jsonFilter', function() {
-                return 'json';
-            });
+            $provide.value('jsonFilter', () => 'json');
         });
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
+            modalSvc = _modalService_;
         });
 
         this.element = $compile(angular.element('<preview-block></preview-block>'))(scope);
@@ -54,6 +54,7 @@ describe('Preview Block directive', function() {
         $q = null;
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -123,11 +124,21 @@ describe('Preview Block directive', function() {
                 }.bind(this));
             });
         });
+        it('should open the ontologyDownloadOverlay', function() {
+            this.controller.showDownloadOverlay();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('ontologyDownloadOverlay');
+        });
     });
     it('should call getPreview when the button is clicked', function() {
         spyOn(this.controller, 'getPreview');
-        var button = this.element.find('button');
+        var button = angular.element(this.element.querySelectorAll('button.refresh-button')[0]);
         button.triggerHandler('click');
         expect(this.controller.getPreview).toHaveBeenCalled();
+    });
+    it('should call showDownloadOverlay when the download button is clicked', function() {
+        spyOn(this.controller, 'showDownloadOverlay');
+        var button = angular.element(this.element.querySelectorAll('button.download-button')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.showDownloadOverlay).toHaveBeenCalled();
     });
 });

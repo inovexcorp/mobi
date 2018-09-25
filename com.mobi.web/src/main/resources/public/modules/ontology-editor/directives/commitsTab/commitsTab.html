@@ -20,15 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="commits-tab row">
-    <div class="col-8 offset-2">
-        <block>
-            <block-header>
-                <h4>Commits</h4>
-            </block-header>
-            <block-content class="table-container">
-                <commit-history-table commit-id="dvm.os.listItem.ontologyRecord.commitId" branch-title="dvm.getBranchTitle()" graph></commit-history-table>
-            </block-content>
-        </block>
+<div class="commits-tab h-100 row p-3">
+    <div class="col-8 offset-2 d-flex flex-column">
+        <div class="section-header">
+            <h5>Commits</h5>
+        </div>
+        <div class="flex-1 vertical-scroll">
+            <commit-history-table commit-id="dvm.os.listItem.ontologyRecord.commitId" branch-title="dvm.getBranchTitle()" graph></commit-history-table>
+        </div>
     </div>
 </div>

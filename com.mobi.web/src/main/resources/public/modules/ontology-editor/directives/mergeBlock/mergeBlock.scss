@@ -1,0 +1,17 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.merge-block {
+    .merge-message {
+        display: inline-block;
+        line-height: 33px;
+        padding-right: 5px;
+        vertical-align: top;
+    }
+    .select-branch {
+        display: inline-block;
+        margin-right: 5px;
+        vertical-align: top;
+        width: 400px;
+    }
+}

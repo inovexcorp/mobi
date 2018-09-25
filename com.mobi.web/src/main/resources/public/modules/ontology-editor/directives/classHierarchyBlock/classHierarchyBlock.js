@@ -24,12 +24,36 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name classHierarchyBlock
+         *
+         * @description
+         * The `classHierarchyBlock` module only provides the `classHierarchyBlock` directive which creates a
+         * section for displaying the classes in an ontology.
+         */
         .module('classHierarchyBlock', [])
+        /**
+         * @ngdoc directive
+         * @name classHierarchyBlock.directive:classHierarchyBlock
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `classHierarchyBlock` is a directive that creates a section that displays a
+         * {@link hierarchyTree.directive:hierarchyTree} of the clases in the current
+         * {@link ontologyState.service:ontologyStateService selected ontology} along with a button to add a class.
+         * The directive houses the method for opening a modal for
+         * {@link createClassOverlay.directive:createClassOverlay adding} classes. The directive is replaced by the
+         * contents of its template.
+         */
         .directive('classHierarchyBlock', classHierarchyBlock);
 
-        classHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
+        classHierarchyBlock.$inject = ['ontologyStateService', 'modalService'];
 
-        function classHierarchyBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
+        function classHierarchyBlock(ontologyStateService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,12 +63,10 @@
                 controller: function() {
                     var dvm = this;
                     dvm.os = ontologyStateService;
-                    dvm.om = ontologyManagerService;
-                    dvm.utils = ontologyUtilsManagerService;
 
-                    dvm.deleteClass = function() {
-                        dvm.utils.deleteClass();
-                        dvm.showDeleteConfirmation = false;
+                    dvm.showCreateClassOverlay = function() {
+                        dvm.os.unSelectItem();
+                        modalService.openModal('createClassOverlay');
                     }
                 }
             }

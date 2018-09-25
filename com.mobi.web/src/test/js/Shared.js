@@ -733,13 +733,17 @@ function mockOntologyState() {
             this.addToClassIRIs = jasmine.createSpy('addToClassIRIs');
             this.removeFromClassIRIs = jasmine.createSpy('removeFromClassIRIs');
             this.addErrorToUploadItem = jasmine.createSpy('addErrorToUploadItem');
+            this.attemptMerge = jasmine.createSpy('attemptMerge').and.returnValue($q.when());
+            this.checkConflicts = jasmine.createSpy('checkConflicts').and.returnValue($q.when());
+            this.merge = jasmine.createSpy('merge').and.returnValue($q.when());
+            this.cancelMerge = jasmine.createSpy('cancelMerge');
         });
     });
 }
 
 function mockOntologyUtilsManager() {
     module(function($provide) {
-        $provide.service('ontologyUtilsManagerService', function() {
+        $provide.service('ontologyUtilsManagerService', function($q) {
             this.containsDerivedConcept = jasmine.createSpy('containsDerivedConcept');
             this.containsDerivedSemanticRelation = jasmine.createSpy('containsDerivedSemanticRelation');
             this.containsDerivedConceptScheme = jasmine.createSpy('containsDerivedConceptScheme');
@@ -769,6 +773,9 @@ function mockOntologyUtilsManager() {
             this.updateflatIndividualsHierarchy = jasmine.createSpy('updateflatIndividualsHierarchy');
             this.checkIri = jasmine.createSpy('checkIri');
             this.getSelectList = jasmine.createSpy('getSelectList');
+            this.getRemovePropOverlayMessage = jasmine.createSpy('getRemovePropOverlayMessage').and.returnValue('');
+            this.getPropValueDisplay = jasmine.createSpy('getPropValueDisplay').and.returnValue('');
+            this.removeProperty = jasmine.createSpy('removeProperty').and.returnValue($q.when({}));
         });
     });
 }
@@ -1280,7 +1287,7 @@ function mockMergeRequestManager() {
 
 function mockMergeRequestsState() {
     module(function($provide) {
-        $provide.service('mergeRequestsStateService', function() {
+        $provide.service('mergeRequestsStateService', function($q) {
             this.selected = undefined;
             this.acceptedFilter = false;
             this.requests = [];
@@ -1296,6 +1303,7 @@ function mockMergeRequestsState() {
             this.setRequests = jasmine.createSpy('setRequests');
             this.setRequestDetails = jasmine.createSpy('setRequestDetails');
             this.startCreate = jasmine.createSpy('startCreate');
+            this.resolveRequestConflicts = jasmine.createSpy('resolveRequestConflicts').and.returnValue($q.when());
         });
     });
 }
@@ -1316,7 +1324,7 @@ function mockPolicyManager() {
             this.stringEqual = 'stringEqual';
             this.getPolicies = jasmine.createSpy('getPolicies').and.returnValue($q.when([]));
             this.getPolicy = jasmine.createSpy('getPolicy').and.returnValue($q.when({}));
-            this.updatePolicy = jasmine.createSpy('getPolicy').and.returnValue($q.when());
+            this.updatePolicy = jasmine.createSpy('updatePolicy').and.returnValue($q.when());
         });
     });
 }
@@ -1325,6 +1333,24 @@ function mockPolicyEnforcement() {
     module(function($provide) {
         $provide.service('policyEnforcementService', function($q) {
             this.evaluateRequest = jasmine.createSpy('evaulateRequest').and.returnValue($q.when());
+        });
+    });
+}
+
+function mockModal() {
+    module(function($provide) {
+        $provide.service('modalService', function() {
+            this.openModal = jasmine.createSpy('openModal');
+            this.openConfirmModal = jasmine.createSpy('openConfirmModal');
+        });
+    });
+}
+
+function mockRecordPermissionsManager() {
+    module(function($provide) {
+        $provide.service('recordPermissionsManagerService', function($q) {
+            this.getRecordPolicy = jasmine.createSpy('getRecordPolicy').and.returnValue($q.when({}));
+            this.updateRecordPolicy = jasmine.createSpy('getRecordPolicy').and.returnValue($q.when());
         });
     });
 }

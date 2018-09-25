@@ -95,7 +95,8 @@ describe('Ontology State Service', function() {
         this.semanticRelationId = 'semanticRelationId';
 
         this.branch = {
-            '@id': this.branchId
+            '@id': this.branchId,
+            [prefixes.catalog + 'head']: [{'@id': this.commitId}]
         };
         this.differenceObj = {additions: '', deletions: ''};
 
@@ -160,11 +161,10 @@ describe('Ontology State Service', function() {
             'node3b': ['node2c', 'node1b'],
             'node3c': ['node2a']
         };
-        propertyManagerSvc.defaultDatatypes = _.concat(_.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], function(item) {
-            return prefixes.xsd + item;
-        }), _.map(['langString'], function(item) {
-            return prefixes.rdf + item;
-        }));
+        propertyManagerSvc.defaultDatatypes = _.concat(
+            _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => prefixes.xsd + item),
+            _.map(['langString'], item => prefixes.rdf + item)
+        );
         this.ontologyObj = {
             '@id': this.ontologyId,
             '@type': [prefixes.owl + 'Ontology'],
@@ -185,7 +185,6 @@ describe('Ontology State Service', function() {
             '@type': [prefixes.owl + 'NamedIndividual', this.classId]
         };
         this.ontology = [this.ontologyObj, this.classObj, this.dataPropertyObj];
-        this.branch[prefixes.catalog + 'head'] = [{'@id': this.commitId}];
         this.path = 'this.is.the.path';
         this.getResponse = {
             recordId: this.recordId,
@@ -276,16 +275,22 @@ describe('Ontology State Service', function() {
         });
         describe('if state exists', function() {
             beforeEach(function() {
-                var ontologyState = [{'@id': 'id', '@type': ['http://mobi.com/states/ontology-editor/state-record']}, {'@id': 'id-branch'}];
-                ontologyState[0][prefixes.ontologyState + 'record'] = [{'@id': this.recordId}];
-                ontologyState[0][prefixes.ontologyState + 'currentBranch'] = [{'@id': this.branchId}];
-                ontologyState[0][prefixes.ontologyState + 'branches'] = [{'@id': 'id-branch'}];
-                ontologyState[1][prefixes.ontologyState + 'branch'] = [{'@id': this.branchId}];
-                ontologyState[1][prefixes.ontologyState + 'commit'] = [{'@id': this.commitId}];
+                var ontologyState = [
+                    {
+                        '@id': 'id',
+                        '@type': ['http://mobi.com/states/ontology-editor/state-record'],
+                        [prefixes.ontologyState + 'record']: [{'@id': this.recordId}],
+                        [prefixes.ontologyState + 'currentBranch']: [{'@id': this.branchId}],
+                        [prefixes.ontologyState + 'branches']: [{'@id': 'id-branch'}]
+                    },
+                    {
+                        '@id': 'id-branch',
+                        [prefixes.ontologyState + 'branch']: [{'@id': this.branchId}],
+                        [prefixes.ontologyState + 'commit']: [{'@id': this.commitId}]
+                    }
+                ];
                 stateManagerSvc.getOntologyStateByRecordId.and.returnValue({model: ontologyState});
-                util.getPropertyId.and.callFake(function(entity, propertyIRI) {
-                    return _.get(entity, "[" + propertyIRI + "][0]['@id']", '');
-                })
+                util.getPropertyId.and.callFake((entity, propertyIRI) => _.get(entity, "[" + propertyIRI + "][0]['@id']", ''))
             });
             describe('and getRecordBranch is resolved', function() {
                 beforeEach(function() {
@@ -298,9 +303,9 @@ describe('Ontology State Service', function() {
                     it('and getOntology is resolved', function() {
                         ontologyManagerSvc.getOntology.and.returnValue($q.when(this.ontology));
                         ontologyStateSvc.getOntology(this.recordId, this.format)
-                            .then(function(response) {
+                            .then(response => {
                                 expect(response).toEqual(this.expected);
-                            }.bind(this), function() {
+                            }, () => {
                                 fail('Promise should have resolved');
                             });
                         scope.$apply();
@@ -321,9 +326,9 @@ describe('Ontology State Service', function() {
                             it('and getLatestOntology is resolved', function() {
                                 ontologyStateSvc.getLatestOntology.and.returnValue($q.when(this.expected2));
                                 ontologyStateSvc.getOntology(this.recordId, this.format)
-                                    .then(function(response) {
+                                    .then(response => {
                                         expect(response).toEqual(this.expected2);
-                                    }.bind(this), function() {
+                                    }, () => {
                                         fail('Promise should have resolved');
                                     });
                                 scope.$apply();
@@ -335,11 +340,11 @@ describe('Ontology State Service', function() {
                             });
                             it('and getLatestOntology is rejected', function() {
                                 ontologyStateSvc.getLatestOntology.and.returnValue($q.reject(this.error));
-                                ontologyStateSvc.getOntology(this.recordId, this.format).then(function() {
+                                ontologyStateSvc.getOntology(this.recordId, this.format).then(() => {
                                     fail('Promise should have rejected');
-                                }, function(response) {
+                                }, response => {
                                     expect(response).toEqual(this.error);
-                                }.bind(this));
+                                });
                                 scope.$apply();
                                 expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
                                 expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(this.recordId, this.catalogId);
@@ -350,11 +355,11 @@ describe('Ontology State Service', function() {
                         });
                         it('and deleteOntologyState is rejected', function() {
                             stateManagerSvc.deleteOntologyState.and.returnValue($q.reject(this.error));
-                            ontologyStateSvc.getOntology(this.recordId, this.format).then(function(response) {
+                            ontologyStateSvc.getOntology(this.recordId, this.format).then(() => {
                                 fail('Promise should have rejected');
-                            }, function(response) {
+                            }, response => {
                                 expect(response).toEqual(this.error);
-                            }.bind(this));
+                            });
                             scope.$apply();
                             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
                             expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(this.recordId, this.catalogId);
@@ -372,9 +377,9 @@ describe('Ontology State Service', function() {
                         it('and getOntology is resolved', function() {
                             ontologyManagerSvc.getOntology.and.returnValue($q.when(this.ontology));
                             ontologyStateSvc.getOntology(this.recordId, this.format)
-                                .then(function(response) {
+                                .then(response => {
                                     expect(response).toEqual(this.expected2);
-                                }.bind(this), function() {
+                                }, () => {
                                     fail('Promise should have resolved');
                                 });
                             scope.$apply();
@@ -395,9 +400,9 @@ describe('Ontology State Service', function() {
                                 it('and getLatestOntology is resolved', function() {
                                     ontologyStateSvc.getLatestOntology.and.returnValue($q.when(this.expected2));
                                     ontologyStateSvc.getOntology(this.recordId, this.format)
-                                        .then(function(response) {
+                                        .then(response => {
                                             expect(response).toEqual(this.expected2);
-                                        }.bind(this), function() {
+                                        }, () => {
                                             fail('Promise should have resolved');
                                         });
                                     scope.$apply();
@@ -409,11 +414,11 @@ describe('Ontology State Service', function() {
                                 });
                                 it('and getLatestOntology is rejected', function() {
                                     ontologyStateSvc.getLatestOntology.and.returnValue($q.reject(this.error));
-                                    ontologyStateSvc.getOntology(this.recordId, this.format).then(function() {
+                                    ontologyStateSvc.getOntology(this.recordId, this.format).then(() => {
                                         fail('Promise should have rejected');
-                                    }, function(response) {
+                                    }, response => {
                                         expect(response).toEqual(this.error);
-                                    }.bind(this));
+                                    });
                                     scope.$apply();
                                     expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
                                     expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(this.recordId, this.catalogId);
@@ -424,11 +429,11 @@ describe('Ontology State Service', function() {
                             });
                             it('and deleteOntologyState is rejected', function() {
                                 stateManagerSvc.deleteOntologyState.and.returnValue($q.reject(this.error));
-                                ontologyStateSvc.getOntology(this.recordId, this.format).then(function(response) {
+                                ontologyStateSvc.getOntology(this.recordId, this.format).then(() => {
                                     fail('Promise should have rejected');
-                                }, function(response) {
+                                }, response => {
                                     expect(response).toEqual(this.error);
-                                }.bind(this));
+                                });
                                 scope.$apply();
                                 expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
                                 expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(this.recordId, this.catalogId);
@@ -449,9 +454,9 @@ describe('Ontology State Service', function() {
                             it('and getLatestOntology is resolved', function() {
                                 ontologyStateSvc.getLatestOntology.and.returnValue($q.when(this.expected2));
                                 ontologyStateSvc.getOntology(this.recordId, this.format)
-                                    .then(function(response) {
+                                    .then(response => {
                                         expect(response).toEqual(this.expected2);
-                                    }.bind(this), function() {
+                                    }, () => {
                                         fail('Promise should have resolved');
                                     });
                                 scope.$apply();
@@ -463,11 +468,11 @@ describe('Ontology State Service', function() {
                             });
                             it('and getLatestOntology is rejected', function() {
                                 ontologyStateSvc.getLatestOntology.and.returnValue($q.reject(this.error));
-                                ontologyStateSvc.getOntology(this.recordId, this.format).then(function() {
+                                ontologyStateSvc.getOntology(this.recordId, this.format).then(() => {
                                     fail('Promise should have rejected');
-                                }, function(response) {
+                                }, response => {
                                     expect(response).toEqual(this.error);
-                                }.bind(this));
+                                });
                                 scope.$apply();
                                 expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
                                 expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(this.recordId, this.catalogId);
@@ -478,11 +483,11 @@ describe('Ontology State Service', function() {
                         });
                         it('and deleteOntologyState is rejected', function() {
                             stateManagerSvc.deleteOntologyState.and.returnValue($q.reject(this.error));
-                            ontologyStateSvc.getOntology(this.recordId, this.format).then(function(response) {
+                            ontologyStateSvc.getOntology(this.recordId, this.format).then(() => {
                                 fail('Promise should have rejected');
-                            }, function(response) {
+                            }, response => {
                                 expect(response).toEqual(this.error);
-                            }.bind(this));
+                            });
                             scope.$apply();
                             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
                             expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(this.recordId, this.catalogId);
@@ -504,9 +509,9 @@ describe('Ontology State Service', function() {
                     it('and getLatestOntology is resolved', function() {
                         ontologyStateSvc.getLatestOntology.and.returnValue($q.when(this.expected2));
                         ontologyStateSvc.getOntology(this.recordId, this.format)
-                            .then(function(response) {
+                            .then(response => {
                                 expect(response).toEqual(this.expected2);
-                            }.bind(this), function() {
+                            }, () => {
                                 fail('Promise should have resolved');
                             });
                         scope.$apply();
@@ -518,11 +523,11 @@ describe('Ontology State Service', function() {
                     });
                     it('and getLatestOntology is rejected', function() {
                         ontologyStateSvc.getLatestOntology.and.returnValue($q.reject(this.error));
-                        ontologyStateSvc.getOntology(this.recordId, this.format).then(function() {
+                        ontologyStateSvc.getOntology(this.recordId, this.format).then(() => {
                             fail('Promise should have rejected');
-                        }, function(response) {
+                        }, response => {
                             expect(response).toEqual(this.error);
-                        }.bind(this));
+                        });
                         scope.$apply();
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
                         expect(catalogManagerSvc.getInProgressCommit).not.toHaveBeenCalled();
@@ -533,11 +538,11 @@ describe('Ontology State Service', function() {
                 });
                 it('and deleteOntologyState is rejected', function() {
                     stateManagerSvc.deleteOntologyState.and.returnValue($q.reject(this.error));
-                    ontologyStateSvc.getOntology(this.recordId, this.format).then(function(response) {
+                    ontologyStateSvc.getOntology(this.recordId, this.format).then(() => {
                         fail('Promise should have rejected');
-                    }, function(response) {
+                    }, response => {
                         expect(response).toEqual(this.error);
-                    }.bind(this));
+                    });
                     scope.$apply();
                     expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
                     expect(catalogManagerSvc.getInProgressCommit).not.toHaveBeenCalled();
@@ -550,9 +555,9 @@ describe('Ontology State Service', function() {
             it('and getLatestOntology is resolved', function() {
                 ontologyStateSvc.getLatestOntology.and.returnValue($q.when(this.expected2));
                 ontologyStateSvc.getOntology(this.recordId, this.format)
-                    .then(function(response) {
+                    .then(response => {
                         expect(response).toEqual(this.expected2);
-                    }.bind(this), function() {
+                    }, () => {
                         fail('Promise should have resolved');
                     });
                 scope.$apply();
@@ -562,11 +567,11 @@ describe('Ontology State Service', function() {
             it('and getLatestOntology is rejected', function() {
                 ontologyStateSvc.getLatestOntology.and.returnValue($q.reject(this.error));
                 ontologyStateSvc.getOntology(this.recordId, this.format)
-                    .then(function(response) {
+                    .then(() => {
                         fail('Promise should have rejected');
-                    }, function(response) {
+                    }, response => {
                         expect(response).toEqual(this.error);
-                    }.bind(this));
+                    });
                 scope.$apply();
                 expect(catalogManagerSvc.getRecordBranch).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.getLatestOntology).toHaveBeenCalledWith(this.recordId, this.format);
@@ -593,9 +598,9 @@ describe('Ontology State Service', function() {
                     };
                     ontologyManagerSvc.getOntology.and.returnValue($q.when(this.ontology));
                     ontologyStateSvc.getLatestOntology(this.recordId, this.format)
-                        .then(function(response) {
+                        .then(response => {
                             expect(response).toEqual(expected);
-                        }, function() {
+                        }, () => {
                             fail('Promise should have resolved');
                         });
                     scope.$apply();
@@ -606,11 +611,11 @@ describe('Ontology State Service', function() {
                 it('and getOntology is rejected', function() {
                     ontologyManagerSvc.getOntology.and.returnValue($q.reject(this.error));
                     ontologyStateSvc.getLatestOntology(this.recordId, this.format)
-                        .then(function() {
+                        .then(() => {
                             fail('Promise should have rejected');
-                        }, function(response) {
+                        }, response => {
                             expect(response).toEqual(this.error);
-                        }.bind(this));
+                        });
                     scope.$apply();
                     expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.recordId, this.catalogId);
                     expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
@@ -620,11 +625,11 @@ describe('Ontology State Service', function() {
             it('and createOntologyState is rejected', function() {
                 stateManagerSvc.createOntologyState.and.returnValue($q.reject(this.error));
                 ontologyStateSvc.getLatestOntology(this.recordId, this.format)
-                    .then(function() {
+                    .then(() => {
                         fail('Promise should have rejected');
-                    }, function(response) {
+                    }, response => {
                         expect(response).toEqual(this.error);
-                    }.bind(this));
+                    });
                 scope.$apply();
                 expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.recordId, this.catalogId);
                 expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
@@ -634,11 +639,11 @@ describe('Ontology State Service', function() {
         it('if getRecordMasterBranch is rejected', function() {
             catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.reject(this.error));
             ontologyStateSvc.getLatestOntology(this.recordId, this.format)
-                .then(function() {
+                .then(() => {
                     fail('Promise should have rejected');
-                }, function(response) {
+                }, response => {
                     expect(response).toEqual(this.error);
-                }.bind(this));
+                });
             scope.$apply();
             expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.recordId, this.catalogId);
             expect(stateManagerSvc.createOntologyState).not.toHaveBeenCalled();
@@ -721,7 +726,7 @@ describe('Ontology State Service', function() {
                 it('and updateOntologyState resolves', function() {
                     stateManagerSvc.updateOntologyState.and.returnValue($q.when());
                     ontologyStateSvc.updateOntology(this.recordId, this.branchId, this.commitId, listItem.upToDate)
-                        .then(_.noop, function() {
+                        .then(_.noop, () => {
                             fail('Promise should have resolved');
                         });
                     scope.$apply();
@@ -732,11 +737,11 @@ describe('Ontology State Service', function() {
                 it('and updateOntologyState rejects', function() {
                     stateManagerSvc.updateOntologyState.and.returnValue($q.reject(this.error));
                     ontologyStateSvc.updateOntology(this.recordId, this.branchId, this.commitId, listItem.upToDate)
-                        .then(function() {
+                        .then(() => {
                             fail('Promise should have rejected');
-                        }, function(response) {
+                        }, response => {
                             expect(response).toEqual(this.error);
-                        }.bind(this));
+                        });
                     scope.$apply();
                     expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId, 'jsonld', false);
                     expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.emptyInProgressCommit, listItem.upToDate, listItem.ontologyRecord.title);
@@ -746,11 +751,11 @@ describe('Ontology State Service', function() {
             it('and createOntologyListItem rejects', function() {
                 spyOn(ontologyStateSvc, 'createOntologyListItem').and.returnValue($q.reject(this.error));
                 ontologyStateSvc.updateOntology(this.recordId, this.branchId, this.commitId, listItem.upToDate)
-                    .then(function() {
+                    .then(() => {
                         fail('Promise should have rejected');
-                    }, function(response) {
+                    }, response => {
                         expect(response).toEqual(this.error);
-                    }.bind(this));
+                    });
                 scope.$apply();
                 expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId, 'jsonld', false);
                 expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.emptyInProgressCommit, listItem.upToDate, listItem.ontologyRecord.title);
@@ -759,11 +764,11 @@ describe('Ontology State Service', function() {
         it('and getOntology rejects', function() {
             ontologyManagerSvc.getOntology.and.returnValue($q.reject(this.error));
             ontologyStateSvc.updateOntology(this.recordId, this.branchId, this.commitId)
-                .then(function() {
+                .then(() => {
                     fail('Promise should have rejected');
-                }, function(response) {
+                }, response => {
                     expect(response).toEqual(this.error);
-                }.bind(this));
+                });
             scope.$apply();
             expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId, 'jsonld', false);
         });
@@ -781,9 +786,9 @@ describe('Ontology State Service', function() {
             it('and addOntologyToList resolves', function() {
                 spyOn(ontologyStateSvc, 'addOntologyToList').and.returnValue($q.when(listItem));
                 ontologyStateSvc.openOntology(this.recordId, this.title)
-                    .then(function(response) {
+                    .then(response => {
                         expect(response).toEqual(this.ontologyId);
-                    }.bind(this), function() {
+                    }, () => {
                         fail('Promise should have resolved');
                     });
                 scope.$apply();
@@ -795,11 +800,11 @@ describe('Ontology State Service', function() {
             it('and addOntologyToList rejects', function() {
                 spyOn(ontologyStateSvc, 'addOntologyToList').and.returnValue($q.reject(this.error));
                 ontologyStateSvc.openOntology(this.recordId, this.title)
-                    .then(function() {
+                    .then(() => {
                         fail('Promise should have rejected');
-                    }, function(response) {
+                    }, response => {
                         expect(response).toEqual(this.error);
-                    }.bind(this));
+                    });
                 scope.$apply();
                 expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(this.ontology);
                 expect(ontologyStateSvc.addOntologyToList).toHaveBeenCalledWith(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.inProgressCommit, this.title, true);
@@ -808,11 +813,11 @@ describe('Ontology State Service', function() {
         it('and getOntology rejects', function() {
             spyOn(ontologyStateSvc, 'getOntology').and.returnValue($q.reject(this.error));
             ontologyStateSvc.openOntology(this.recordId)
-                .then(function() {
+                .then(() => {
                     fail('Promise should have rejected');
-                }, function(response) {
+                }, response => {
                     expect(response).toEqual(this.error);
-                }.bind(this));
+                });
             scope.$apply();
         });
     });
@@ -838,9 +843,9 @@ describe('Ontology State Service', function() {
                 var resolved = 'this';
                 catalogManagerSvc.updateInProgressCommit.and.returnValue($q.when(resolved));
                 ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                    .then(function(response) {
+                    .then(response => {
                         expect(response).toEqual(resolved);
-                    }, function() {
+                    }, () => {
                         fail('Promise should have resolved');
                     });
                 scope.$apply();
@@ -848,11 +853,11 @@ describe('Ontology State Service', function() {
             it('and updateInProgressCommit rejects', function() {
                 catalogManagerSvc.updateInProgressCommit.and.returnValue($q.reject(this.error));
                 ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                    .then(function() {
+                    .then(() => {
                         fail('Promise should have rejected');
-                    }, function(response) {
+                    }, response => {
                         expect(response).toEqual(this.error);
-                    }.bind(this));
+                    });
                 scope.$apply();
             });
         });
@@ -869,9 +874,9 @@ describe('Ontology State Service', function() {
                         var resolved = 'this';
                         catalogManagerSvc.updateInProgressCommit.and.returnValue($q.when(resolved));
                         ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                            .then(function(response) {
+                            .then(response => {
                                 expect(response).toEqual(resolved);
-                            }, function() {
+                            }, () => {
                                 fail('Promise should have resolved');
                             });
                         scope.$apply();
@@ -880,11 +885,11 @@ describe('Ontology State Service', function() {
                     it('and updateInProgressCommit rejects', function() {
                         catalogManagerSvc.updateInProgressCommit.and.returnValue($q.reject(this.error));
                         ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                            .then(function() {
+                            .then(() => {
                                 fail('Promise should have rejected');
-                            }, function(response) {
+                            }, response => {
                                 expect(response).toEqual(this.error);
-                            }.bind(this));
+                            });
                         scope.$apply();
                         expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(this.recordId, this.catalogId);
                     });
@@ -892,11 +897,11 @@ describe('Ontology State Service', function() {
                 it('and createInProgressCommit rejects', function() {
                     catalogManagerSvc.createInProgressCommit.and.returnValue($q.reject(this.error));
                     ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                        .then(function() {
+                        .then(() => {
                             fail('Promise should have rejected');
-                        }, function(response) {
+                        }, response => {
                             expect(response).toEqual(this.error);
-                        }.bind(this));
+                        });
                     scope.$apply();
                     expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(this.recordId, this.catalogId);
                 });
@@ -904,11 +909,11 @@ describe('Ontology State Service', function() {
             it('and the error message is not "InProgressCommit could not be found"', function() {
                 catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject(this.error));
                 ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                    .then(function() {
+                    .then(() => {
                         fail('Promise should have rejected');
-                    }, function(response) {
+                    }, response => {
                         expect(response).toEqual(this.error);
-                    }.bind(this));
+                    });
                 scope.$apply();
             });
         });
@@ -980,9 +985,9 @@ describe('Ontology State Service', function() {
             it('and getRecordBranch resolves', function() {
                 catalogManagerSvc.getRecordBranch.and.returnValue($q.when(this.branch));
                 ontologyStateSvc.createOntology(this.ontologyObj, this.title, this.description, this.keywords)
-                    .then(function(response) {
+                    .then(response => {
                         expect(response).toEqual({entityIRI: this.ontologyObj['@id'], recordId: this.recordId, branchId: this.branchId, commitId: this.commitId});
-                    }.bind(this), function() {
+                    }, () => {
                         fail('Promise should have resolved');
                     });
                 scope.$apply();
@@ -992,22 +997,22 @@ describe('Ontology State Service', function() {
             it('and getRecordBranch rejects', function() {
                 catalogManagerSvc.getRecordBranch.and.returnValue($q.reject(this.error));
                 ontologyStateSvc.createOntology(this.ontologyObj, this.title, this.description, this.keywords)
-                    .then(function() {
+                    .then(() => {
                         fail('Promise should have rejected');
-                    }, function(response) {
+                    }, response => {
                         expect(response).toEqual(this.error);
-                    }.bind(this));
+                    });
                 scope.$apply();
             });
         });
         it('when uploadJson rejects', function() {
             ontologyManagerSvc.uploadJson.and.returnValue($q.reject(this.error));
             ontologyStateSvc.createOntology(this.ontologyObj, this.title)
-                .then(function() {
+                .then(() => {
                     fail('Promise should have rejected');
-                }, function(response) {
+                }, response => {
                     expect(response).toEqual(this.error);
-                }.bind(this));
+                });
             scope.$apply();
         });
     });
@@ -1058,9 +1063,7 @@ describe('Ontology State Service', function() {
                 {'@id': 'classC'}
             ];
             listItem.iriList = ['classA'];
-            ontologyManagerSvc.isBlankNodeId.and.callFake(function(iri) {
-                return _.startsWith(iri, 'bnode');
-            });
+            ontologyManagerSvc.isBlankNodeId.and.callFake(iri => _.startsWith(iri, 'bnode'));
             expect(ontologyStateSvc.removeEntity(listItem, 'classA')).toEqual([
                 {'@id': 'classA', '@type': [], bnode0: [{'@value': 'A'}], propA: [{'@id': 'bnode2'}]},
                 {'@id': 'bnode0', propA: [{'@id': 'bnode1'}]},
@@ -1092,9 +1095,7 @@ describe('Ontology State Service', function() {
                     hierarchy: ['derivedConceptScheme']
                 }
             };
-            spyOn(ontologyStateSvc, 'flattenHierarchy').and.callFake(function(arr) {
-                return arr;
-            });
+            spyOn(ontologyStateSvc, 'flattenHierarchy').and.callFake(_.identity);
         });
         describe('the current listItem when getVocabularyStuff', function() {
             beforeEach(function() {
@@ -1458,13 +1459,13 @@ describe('Ontology State Service', function() {
                 failedImports: ['failedId']
             }));
             this.branches = [this.branch, this.userBranch];
-            catalogManagerSvc.isUserBranch.and.callFake(function(branch) {
+            catalogManagerSvc.isUserBranch.and.callFake(branch => {
                 if (branch['@id'] === this.branchId) {
                     return false;
                 } else if (branch['@id'] === this.userBranchId) {
                     return true;
                 }
-            }.bind(this));
+            });
             catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: this.branches}));
             util.getPropertyId.and.returnValue(this.branchId);
             spyOn(ontologyStateSvc, 'flattenHierarchy').and.returnValue([{prop: 'flatten'}]);
@@ -1475,7 +1476,7 @@ describe('Ontology State Service', function() {
         describe('when all promises resolve', function() {
             it('and it is not a userBranch', function() {
                 ontologyStateSvc.createOntologyListItem(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.inProgressCommit, false)
-                    .then(function(response) {
+                    .then(response => {
                         var expectedIriObj = {};
                         expectedIriObj[this.annotationId] = this.ontologyId;
                         expectedIriObj[this.annotationId2] = this.ontologyId;
@@ -1550,7 +1551,7 @@ describe('Ontology State Service', function() {
                         }]);
                         expect(_.get(response, 'userBranch')).toEqual(false);
                         expect(_.get(response, 'createdFromExists')).toEqual(true);
-                    }.bind(this), function() {
+                    }, () => {
                         fail('Promise should have resolved');
                     });
                 scope.$apply();
@@ -1559,7 +1560,7 @@ describe('Ontology State Service', function() {
             });
             it('and it is a userBranch', function() {
                 ontologyStateSvc.createOntologyListItem(this.ontologyId, this.recordId, this.userBranchId, this.commitId, this.ontology, this.inProgressCommit, false)
-                    .then(function(response) {
+                    .then(response => {
                         var expectedIriObj = {};
                         expectedIriObj[this.annotationId] = this.ontologyId;
                         expectedIriObj[this.annotationId2] = this.ontologyId;
@@ -1634,7 +1635,7 @@ describe('Ontology State Service', function() {
                         }]);
                         expect(_.get(response, 'userBranch')).toEqual(true);
                         expect(_.get(response, 'createdFromExists')).toEqual(true);
-                    }.bind(this), function() {
+                    }, () => {
                         fail('Promise should have resolved');
                     });
                 scope.$apply();
@@ -1644,7 +1645,7 @@ describe('Ontology State Service', function() {
             it('and it is a userBranch whose createdFrom branch has been deleted', function() {
                 util.getPropertyId.and.returnValue('deletedBranchId');
                 ontologyStateSvc.createOntologyListItem(this.ontologyId, this.recordId, this.userBranchId, this.commitId, this.ontology, this.inProgressCommit, false)
-                    .then(function(response) {
+                    .then(response => {
                         var expectedIriObj = {};
                         expectedIriObj[this.annotationId] = this.ontologyId;
                         expectedIriObj[this.annotationId2] = this.ontologyId;
@@ -1719,7 +1720,7 @@ describe('Ontology State Service', function() {
                         }]);
                         expect(_.get(response, 'userBranch')).toEqual(true);
                         expect(_.get(response, 'createdFromExists')).toEqual(false);
-                    }.bind(this), function() {
+                    }, () => {
                         fail('Promise should have resolved');
                     });
                 scope.$apply();
@@ -1730,22 +1731,22 @@ describe('Ontology State Service', function() {
         it('when one call fails', function() {
             catalogManagerSvc.getRecordBranches.and.returnValue($q.reject(this.error));
             ontologyStateSvc.createOntologyListItem(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.inProgressCommit, true)
-                .then(function() {
+                .then(() => {
                     fail('Promise should have rejected');
-                }, function(response) {
+                }, response => {
                     expect(response).toEqual(this.error);
-                }.bind(this));
+                });
             scope.$apply();
         });
         it('when more than one call fails', function() {
             ontologyManagerSvc.getOntologyStuff.and.returnValue($q.reject(this.error));
             catalogManagerSvc.getRecordBranches.and.returnValue($q.reject(this.error));
             ontologyStateSvc.createOntologyListItem(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.inProgressCommit, true)
-                .then(function() {
+                .then(() => {
                     fail('Promise should have rejected');
-                }, function(response) {
+                }, response => {
                     expect(response).toEqual(this.error);
-                }.bind(this));
+                });
             scope.$apply();
         });
     });
@@ -1770,7 +1771,7 @@ describe('Ontology State Service', function() {
         it('when createOntologyListItem resolves', function() {
             spyOn(ontologyStateSvc, 'createOntologyListItem').and.returnValue($q.when(listItem));
             ontologyStateSvc.addOntologyToList(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.inProgressCommit, this.recordId)
-                .then(_.noop, function() {
+                .then(_.noop, () => {
                     fail('Promise should have resolved');
                 });
             scope.$apply();
@@ -1780,11 +1781,11 @@ describe('Ontology State Service', function() {
         it('when createOntologyListItem rejects', function() {
             spyOn(ontologyStateSvc, 'createOntologyListItem').and.returnValue($q.reject(this.error));
             ontologyStateSvc.addOntologyToList(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.inProgressCommit, this.recordId)
-                .then(function() {
+                .then(() => {
                     fail('Promise should have rejected');
-                }, function(response) {
+                }, response => {
                     expect(response).toEqual(this.error);
-                }.bind(this));
+                });
             scope.$apply();
             expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.inProgressCommit, true, this.recordId);
         });
@@ -1793,7 +1794,6 @@ describe('Ontology State Service', function() {
         ontologyStateSvc.reset();
         expect(ontologyStateSvc.list).toEqual([]);
         expect(ontologyStateSvc.listItem).toEqual({});
-        expect(ontologyStateSvc.showNewTab).toEqual(false);
         expect(ontologyStateSvc.showUploadTab).toEqual(false);
         expect(ontologyStateSvc.uploadList).toEqual([]);
     });
@@ -2013,14 +2013,14 @@ describe('Ontology State Service', function() {
                 additions: ['addition'],
                 deletions: ['deletion']
             }
-        }
+        };
         ontologyStateSvc.clearInProgressCommit();
         expect(ontologyStateSvc.listItem.inProgressCommit.additions).toEqual([]);
         expect(ontologyStateSvc.listItem.inProgressCommit.deletions).toEqual([]);
     });
     it('setOpened sets the correct property on the state object', function() {
         spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
-        _.forEach([true, false], function(value) {
+        _.forEach([true, false], value => {
             ontologyStateSvc.setOpened(this.path, value);
             expect(_.get(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(this.path) + '.isOpened')).toBe(value);
         });
@@ -2031,7 +2031,7 @@ describe('Ontology State Service', function() {
         });
         it('when path is found', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
-            _.forEach([true, false], function(value) {
+            _.forEach([true, false], value => {
                 _.set(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(this.path) + '.isOpened', value);
                 expect(ontologyStateSvc.getOpened(this.path)).toBe(value);
             });
@@ -2039,7 +2039,7 @@ describe('Ontology State Service', function() {
     });
     it('setNoDomainsOpened sets the correct property on the state object', function() {
         spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
-        _.forEach([true, false], function(value) {
+        _.forEach([true, false], value => {
             ontologyStateSvc.setNoDomainsOpened(this.path, value);
             expect(_.get(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(this.path) + '.noDomainsOpened')).toBe(value);
         });
@@ -2050,7 +2050,7 @@ describe('Ontology State Service', function() {
         });
         it('when path is found', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
-            _.forEach([true, false], function(value) {
+            _.forEach([true, false], value => {
                 _.set(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(this.path) + '.noDomainsOpened', value);
                 expect(ontologyStateSvc.getNoDomainsOpened(this.path)).toBe(value);
             });
@@ -2058,7 +2058,7 @@ describe('Ontology State Service', function() {
     });
     it('setDataPropertiesOpened sets the correct property on the state object', function() {
         spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
-        _.forEach([true, false], function(value) {
+        _.forEach([true, false], value => {
             ontologyStateSvc.setDataPropertiesOpened(this.path, value);
             expect(_.get(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(this.path) + '.dataPropertiesOpened')).toBe(value);
         });
@@ -2069,7 +2069,7 @@ describe('Ontology State Service', function() {
         });
         it('when path is found', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
-            _.forEach([true, false], function(value) {
+            _.forEach([true, false], value => {
                 _.set(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(this.path) + '.dataPropertiesOpened', value);
                 expect(ontologyStateSvc.getDataPropertiesOpened(this.path)).toBe(value);
             });
@@ -2077,7 +2077,7 @@ describe('Ontology State Service', function() {
     });
     it('setObjectPropertiesOpened sets the correct property on the state object', function() {
         spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
-        _.forEach([true, false], function(value) {
+        _.forEach([true, false], value => {
             ontologyStateSvc.setObjectPropertiesOpened(this.path, value);
             expect(_.get(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(this.path) + '.objectPropertiesOpened')).toBe(value);
         });
@@ -2088,7 +2088,7 @@ describe('Ontology State Service', function() {
         });
         it('when path is found', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
-            _.forEach([true, false], function(value) {
+            _.forEach([true, false], value => {
                 _.set(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(this.path) + '.objectPropertiesOpened', value);
                 expect(ontologyStateSvc.getObjectPropertiesOpened(this.path)).toBe(value);
             });
@@ -2096,7 +2096,7 @@ describe('Ontology State Service', function() {
     });
     it('setAnnotationPropertiesOpened sets the correct property on the state object', function() {
         spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
-        _.forEach([true, false], function(value) {
+        _.forEach([true, false], value => {
             ontologyStateSvc.setAnnotationPropertiesOpened(this.path, value);
             expect(_.get(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(this.path) + '.annotationPropertiesOpened')).toBe(value);
         });
@@ -2107,7 +2107,7 @@ describe('Ontology State Service', function() {
         });
         it('when path is found', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
-            _.forEach([true, false], function(value) {
+            _.forEach([true, false], value => {
                 _.set(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(this.path) + '.annotationPropertiesOpened', value);
                 expect(ontologyStateSvc.getAnnotationPropertiesOpened(this.path)).toBe(value);
             });
@@ -2248,7 +2248,7 @@ describe('Ontology State Service', function() {
             ontologyStateSvc.listItem.editorTabStates = {
                 classes: {entityIRI: 'id', usages: []},
                 project: {entityIRI: 'id', preview: 'test'}
-            }
+            };
             ontologyManagerSvc.getOntologyIRI.and.returnValue(this.newOntologyIRI);
             spyOn(ontologyStateSvc, 'getEntityByRecordId').and.returnValue({'@id': this.newOntologyIRI});
             ontologyStateSvc.listItem.selected = {};
@@ -3102,9 +3102,7 @@ describe('Ontology State Service', function() {
     });
     describe('getDefaultPrefix returns the proper value for the prefix associated with ontology', function() {
         beforeEach(function() {
-            ontologyManagerSvc.isBlankNodeId.and.callFake(function(id) {
-                return _.isString(id) && (_.includes(id, '/.well-known/genid/') || _.includes(id, '_:genid') || _.includes(id, '_:b'));
-            });
+            ontologyManagerSvc.isBlankNodeId.and.callFake(id => _.isString(id) && (_.includes(id, '/.well-known/genid/') || _.includes(id, '_:genid') || _.includes(id, '_:b')));
             uuidSvc.v4.and.returnValue("test");
         });
         it('when there is no iriBegin or iriThen', function() {
@@ -3115,7 +3113,7 @@ describe('Ontology State Service', function() {
             ontologyStateSvc.listItem = {
                 iriBegin: 'begin#',
                 iriThen: 'then'
-            }
+            };
             expect(ontologyStateSvc.getDefaultPrefix()).toEqual('begin/then');
         });
         it('when the iri is a blank node and nothing is in the index', function() {
@@ -3149,26 +3147,24 @@ describe('Ontology State Service', function() {
                 ontologyManagerSvc.isProperty.and.returnValue(true);
             });
             it('with more than one range', function() {
-                _.set(this.entity, "['" + prefixes.rdfs + "range']", [{'@id': '1'}, {'@id': '2'}]);
+                this.entity[prefixes.rdfs + 'range'] = [{'@id': '1'}, {'@id': '2'}];
                 ontologyStateSvc.updatePropertyIcon(this.entity);
                 expect(_.get(this.entity, 'mobi.icon')).toBe('fa-cubes');
             });
             it('with a range of xsd:string or rdf:langString', function() {
-                var self = this;
-                self.tests = [prefixes.xsd + 'string', prefixes.rdf + 'langString'];
-                _.forEach(self.tests, function(test) {
-                    _.set(self.entity, "['" + prefixes.rdfs + "range'][0]['@id']", test);
-                    ontologyStateSvc.updatePropertyIcon(self.entity);
-                    expect(_.get(self.entity, 'mobi.icon')).toBe('fa-font');
+                this.tests = [prefixes.xsd + 'string', prefixes.rdf + 'langString'];
+                _.forEach(this.tests, test => {
+                    _.set(this.entity, "['" + prefixes.rdfs + "range'][0]['@id']", test);
+                    ontologyStateSvc.updatePropertyIcon(this.entity);
+                    expect(_.get(this.entity, 'mobi.icon')).toBe('fa-font');
                 });
             });
             it('with a range of xsd:decimal, xsd:double, xsd:float, xsd:int, xsd:integer, xsd:long, or xsd:nonNegativeInteger', function() {
-                var self = this;
                 var tests = [prefixes.xsd + 'decimal', prefixes.xsd + 'double', prefixes.xsd + 'float', prefixes.xsd + 'int', prefixes.xsd + 'integer', prefixes.xsd + 'long', prefixes.xsd + 'nonNegativeInteger'];
-                _.forEach(tests, function(test) {
-                    _.set(self.entity, "['" + prefixes.rdfs + "range'][0]['@id']", test);
-                    ontologyStateSvc.updatePropertyIcon(self.entity);
-                    expect(_.get(self.entity, 'mobi.icon')).toBe('fa-calculator');
+                _.forEach(tests, test => {
+                    _.set(this.entity, "['" + prefixes.rdfs + "range'][0]['@id']", test);
+                    ontologyStateSvc.updatePropertyIcon(this.entity);
+                    expect(_.get(this.entity, 'mobi.icon')).toBe('fa-calculator');
                 });
             });
             it('with a range of xsd:language', function() {
@@ -3187,12 +3183,11 @@ describe('Ontology State Service', function() {
                 expect(_.get(this.entity, 'mobi.icon')).toBe('fa-clock-o');
             });
             it('with a range of xsd:boolean or xsd:byte', function() {
-                var self = this;
                 var tests = [prefixes.xsd + 'boolean', prefixes.xsd + 'byte'];
-                _.forEach(tests, function(test) {
-                    _.set(self.entity, "['" + prefixes.rdfs + "range'][0]['@id']", test);
-                    ontologyStateSvc.updatePropertyIcon(self.entity);
-                    expect(_.get(self.entity, 'mobi.icon')).toBe('fa-signal');
+                _.forEach(tests, test => {
+                    _.set(this.entity, "['" + prefixes.rdfs + "range'][0]['@id']", test);
+                    ontologyStateSvc.updatePropertyIcon(this.entity);
+                    expect(_.get(this.entity, 'mobi.icon')).toBe('fa-signal');
                 });
             });
             it('with a range of rdfs:Literal', function() {
@@ -3306,14 +3301,13 @@ describe('Ontology State Service', function() {
     describe('should remove an IRI from classes.iris and update isVocabulary', function() {
         beforeEach(function() {
             this.iri = 'iri';
-            this.listItem = {ontologyId: 'ontology', isVocabulary: true, classes: {iris: {}}};
-            this.listItem.classes.iris[this.iri] = 'ontology';
+            this.listItem = {ontologyId: 'ontology', isVocabulary: true, classes: {iris: {[this.iri]: 'ontology'}}};
             this.expectedIriObj = {};
         });
         describe('if IRI is skos:Concept and classIRIs', function() {
             beforeEach(function() {
                 this.iri = prefixes.skos + 'Concept';
-                this.listItem.classes.iris = {};
+                this.listItem.classes.iris = {[this.iri]: 'ontology'};
                 this.listItem.classes.iris[this.iri] = 'ontology';
             });
             it('has skos:ConceptScheme', function() {
@@ -3332,8 +3326,7 @@ describe('Ontology State Service', function() {
         describe('if IRI is skos:ConceptScheme and classIRIs', function() {
             beforeEach(function() {
                 this.iri = prefixes.skos + 'ConceptScheme';
-                this.listItem.classes.iris = {};
-                this.listItem.classes.iris[this.iri] = 'ontology';
+                this.listItem.classes.iris = {[this.iri]: 'ontology'};
             });
             it('has skos:Concept', function() {
                 this.expectedIriObj[prefixes.skos + 'Concept'] = 'ontology';
@@ -3365,6 +3358,218 @@ describe('Ontology State Service', function() {
         it('not found', function() {
             ontologyStateSvc.addErrorToUploadItem('missing', 'error');
             expect(ontologyStateSvc.uploadList).toEqual([{id: 'id'}, {id: 'id2'}]);
+        });
+    });
+    describe('attemptMerge should return correctly if checkConflicts', function() {
+        beforeEach(function() {
+            spyOn(ontologyStateSvc, 'checkConflicts').and.returnValue($q.when());
+        });
+        describe('resolves and merge', function() {
+            beforeEach(function() {
+                spyOn(ontologyStateSvc, 'merge').and.returnValue($q.when());
+            });
+            it('resolves', function() {
+                ontologyStateSvc.attemptMerge()
+                    .then(_.noop, () => {
+                        fail('Promise should have resolved');
+                    });
+                scope.$apply();
+                expect(ontologyStateSvc.checkConflicts).toHaveBeenCalled();
+                expect(ontologyStateSvc.merge).toHaveBeenCalled();
+            });
+            it('rejects', function() {
+                ontologyStateSvc.merge.and.returnValue($q.reject('Error'));
+                ontologyStateSvc.attemptMerge()
+                    .then(() => {
+                        fail('Promise should have rejected');
+                    }, response => {
+                        expect(response).toEqual('Error');
+                    });
+                scope.$apply();
+                expect(ontologyStateSvc.checkConflicts).toHaveBeenCalled();
+                expect(ontologyStateSvc.merge).toHaveBeenCalled();
+            });
+        });
+        it('rejects', function() {
+            ontologyStateSvc.checkConflicts.and.returnValue($q.reject('Error'));
+            ontologyStateSvc.attemptMerge()
+                .then(() => {
+                    fail('Promise should have rejected');
+                }, response => {
+                    expect(response).toEqual('Error');
+                });
+            scope.$apply();
+            expect(ontologyStateSvc.checkConflicts).toHaveBeenCalled();
+        });
+    });
+    describe('checkConflicts correctly returns and set variables correctly if getBranchConflicts', function() {
+        beforeEach(function() {
+            ontologyStateSvc.listItem.merge = {
+                target: {'@id': this.branchId},
+                conflicts: []
+            };
+        });
+        describe('resolves with', function() {
+            it('an empty array', function() {
+                ontologyStateSvc.checkConflicts()
+                    .then(_.noop, () => {
+                        fail('Promise should have resolved');
+                    });
+                scope.$apply();
+                expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId);
+                expect(ontologyStateSvc.listItem.merge.conflicts).toEqual([]);
+            });
+            it('conflicts', function() {
+                catalogManagerSvc.getBranchConflicts.and.returnValue($q.when([{}]));
+                ontologyStateSvc.checkConflicts()
+                    .then(() => {
+                        fail('Promise should have rejected');
+                    }, response => {
+                        expect(response).toBeUndefined();
+                    });
+                scope.$apply();
+                expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId);
+                expect(ontologyStateSvc.listItem.merge.conflicts).toEqual([{resolved: false}]);
+            });
+        });
+        it('rejects', function() {
+            catalogManagerSvc.getBranchConflicts.and.returnValue($q.reject('Error'));
+            ontologyStateSvc.checkConflicts()
+                .then(() => {
+                    fail('Promise should have rejected');
+                }, response => {
+                    expect(response).toEqual('Error');
+                });
+            scope.$apply();
+            expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId);
+            expect(ontologyStateSvc.listItem.merge.conflicts).toEqual([]);
+        });
+    });
+    describe('merge should correctly return and call the correct methods if mergeBranches', function() {
+        beforeEach(function() {
+            catalogManagerSvc.mergeBranches.and.returnValue($q.when(this.commitId));
+            spyOn(ontologyStateSvc, 'updateOntology').and.returnValue($q.when());
+            spyOn(ontologyStateSvc, 'removeBranch').and.returnValue($q.when());
+            ontologyStateSvc.listItem.merge = {
+                target: {'@id': this.branchId},
+                checkbox: true,
+                resolutions: {
+                    additions: [],
+                    deletions: []
+                }
+            };
+        });
+        describe('resolves and updateOntology', function() {
+            describe('resolves and the merge checkbox is', function() {
+                describe('true and deleteOntologyBranch', function() {
+                    describe('resolves and removeBranch', function() {
+                        it('resolves', function() {
+                            ontologyStateSvc.merge()
+                                .then(_.noop, () => {
+                                    fail('Promise should have resolved');
+                                });
+                            scope.$apply();
+                            expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId, ontologyStateSvc.listItem.merge.resolutions);
+                            expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
+                            expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                            expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                        });
+                        it('rejects', function() {
+                            ontologyStateSvc.removeBranch.and.returnValue($q.reject('Error'));
+                            ontologyStateSvc.merge()
+                                .then(() => {
+                                    fail('Promise should have rejected');
+                                }, response => {
+                                    expect(response).toEqual('Error');
+                                });
+                            scope.$apply();
+                            expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId, ontologyStateSvc.listItem.merge.resolutions);
+                            expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
+                            expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                            expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                        });
+                    });
+                    it('rejects', function() {
+                        ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.reject('Error'));
+                        ontologyStateSvc.merge()
+                            .then(() => {
+                                fail('Promise should have rejected');
+                            }, response => {
+                                expect(response).toEqual('Error');
+                            });
+                        scope.$apply();
+                        expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId, ontologyStateSvc.listItem.merge.resolutions);
+                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
+                        expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                        expect(ontologyStateSvc.removeBranch).not.toHaveBeenCalled();
+                    });
+                });
+                it('false', function() {
+                    ontologyStateSvc.listItem.merge.checkbox = false;
+                    ontologyStateSvc.merge()
+                        .then(_.noop, () => {
+                            fail('Promise should have resolved');
+                        });
+                    scope.$apply();
+                    expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId, ontologyStateSvc.listItem.merge.resolutions);
+                    expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
+                    expect(ontologyManagerSvc.deleteOntologyBranch).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.removeBranch).not.toHaveBeenCalled();
+                });
+            });
+            it('rejects', function() {
+                ontologyStateSvc.updateOntology.and.returnValue($q.reject('Error'));
+                ontologyStateSvc.merge()
+                    .then(() => {
+                        fail('Promise should have rejected');
+                    }, response => {
+                        expect(response).toEqual('Error');
+                    });
+                scope.$apply();
+                expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId, ontologyStateSvc.listItem.merge.resolutions);
+                expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
+                expect(ontologyManagerSvc.deleteOntologyBranch).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.removeBranch).not.toHaveBeenCalled();
+            });
+        });
+        it('rejects', function() {
+            catalogManagerSvc.mergeBranches.and.returnValue($q.reject('Error'));
+            ontologyStateSvc.merge()
+                .then(() => {
+                    fail('Promise should have rejected');
+                }, response => {
+                    expect(response).toEqual('Error');
+                });
+            scope.$apply();
+            expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId, ontologyStateSvc.listItem.merge.resolutions);
+            expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
+            expect(ontologyManagerSvc.deleteOntologyBranch).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.removeBranch).not.toHaveBeenCalled();
+        });
+    });
+    it('cancelMerge should set the appropriate variables to reset a merge', function() {
+        ontologyStateSvc.listItem.merge = {
+            active: true,
+            target: {'@id': this.branchId},
+            checkbox: true,
+            difference: {},
+            conflicts: [{}],
+            resolutions: {
+                additions: [{}],
+                deletions: [{}]
+            }
+        }
+        ontologyStateSvc.cancelMerge();
+        expect(ontologyStateSvc.listItem.merge).toEqual({
+            active: false,
+            target: undefined,
+            checkbox: false,
+            difference: undefined,
+            conflicts: [],
+            resolutions: {
+                additions: [],
+                deletions: []
+            }
         });
     });
 });

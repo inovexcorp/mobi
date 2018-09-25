@@ -205,6 +205,19 @@
 
             /**
              * @ngdoc property
+             * @name uploadFiles
+             * @propertyOf ontologyState.service:ontologyStateService
+             * @type {Object[]}
+             *
+             * @description
+             * `uploadFiles` holds an array of File objects for uploading ontologies. It is utilized in the
+             * {@link uploadOntologyTab.directive:uploadOntologyTab} and
+             * {@link uploadOntologyOverlay.directive:uploadOntologyOverlay}.
+             */
+            self.uploadFiles = [];
+
+            /**
+             * @ngdoc property
              * @name uploadList
              * @propertyOf ontologyState.service:ontologyStateService
              * @type {Object[]}
@@ -258,7 +271,6 @@
             self.reset = function() {
                 self.list = [];
                 self.listItem = {};
-                self.showNewTab = false;
                 self.showUploadTab = false;
                 self.uploadList = [];
             }
@@ -1172,6 +1184,49 @@
                     listItem.isVocabulary = false;
                 }
                 delete listItem.classes.iris[iri];
+            }
+            self.attemptMerge = function() {
+                return self.checkConflicts()
+                    .then(() => self.merge(), $q.reject);
+            }
+            self.checkConflicts = function() {
+                return cm.getBranchConflicts(self.listItem.ontologyRecord.branchId, self.listItem.merge.target['@id'], self.listItem.ontologyRecord.recordId, catalogId)
+                    .then(conflicts => {
+                        if (_.isEmpty(conflicts)) {
+                            return $q.when();
+                        } else {
+                            _.forEach(conflicts, conflict => {
+                                conflict.resolved = false;
+                                self.listItem.merge.conflicts.push(conflict);
+                            });
+                            return $q.reject();
+                        }
+                    }, $q.reject);
+            }
+            self.merge = function() {
+                var sourceId = self.listItem.ontologyRecord.branchId;
+                var checkbox = self.listItem.merge.checkbox;
+                return cm.mergeBranches(sourceId, self.listItem.merge.target['@id'], self.listItem.ontologyRecord.recordId, catalogId, self.listItem.merge.resolutions)
+                    .then(commitId => self.updateOntology(self.listItem.ontologyRecord.recordId, self.listItem.merge.target['@id'], commitId), $q.reject)
+                    .then(() => {
+                        if (checkbox) {
+                            return om.deleteOntologyBranch(self.listItem.ontologyRecord.recordId, sourceId)
+                                .then(() => self.removeBranch(self.listItem.ontologyRecord.recordId, sourceId), $q.reject);
+                        } else {
+                            return $q.when();
+                        }
+                    }, $q.reject);
+            }
+            self.cancelMerge = function() {
+                self.listItem.merge.active = false;
+                self.listItem.merge.target = undefined;
+                self.listItem.merge.checkbox = false;
+                self.listItem.merge.difference = undefined;
+                self.listItem.merge.conflicts = [];
+                self.listItem.merge.resolutions = {
+                    additions: [],
+                    deletions: []
+                };
             }
 
             /* Private helper functions */
