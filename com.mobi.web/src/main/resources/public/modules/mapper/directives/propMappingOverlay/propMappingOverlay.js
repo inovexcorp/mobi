@@ -81,6 +81,7 @@
                     dvm.rangeClass = undefined;
                     dvm.showDatatypeSelect = false;
                     dvm.datatype = undefined;
+                    dvm.language = undefined;
                     dvm.datatypeMap = pm.getDatatypeMap();
 
                     var newClassMappingIdentifier = 'new';
@@ -111,8 +112,12 @@
                             dvm.rangeClassMappingId = '';
                             dvm.rangeClass = undefined;
                             dvm.datatype = undefined;
+                            dvm.language = undefined;
                             dvm.showDatatypeSelect = false;
                         }
+                    }
+                    dvm.isLangString = function() {
+                        return prefixes.rdf + 'langString' === dvm.datatype;
                     }
                     dvm.set = function() {
                         if (dvm.state.newProp) {

@@ -33,10 +33,11 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/languageSelect/languageSelect.html',
+                templateUrl: 'directives/languageSelect/languageSelect.html',
                 scope: {},
                 bindToController: {
-                    bindModel: '=ngModel'
+                    bindModel: '=ngModel',
+                    allowClear: '='
                 },
                 controllerAs: 'dvm',
                 controller: function() {
@@ -81,6 +82,10 @@
 
                     dvm.clear = function() {
                         dvm.bindModel = undefined;
+                    }
+
+                    if (!dvm.allowClear) {
+                        dvm.bindModel = dvm.languages[0];
                     }
                 },
                 link: function(scope, element, attrs) {

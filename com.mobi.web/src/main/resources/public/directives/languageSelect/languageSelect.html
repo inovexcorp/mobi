@@ -34,6 +34,6 @@
                 </ui-select-choices>
             </ui-select>
         </div>
-        <a ng-click="dvm.clear()" class="btn-clear"><i class="fa fa-fw fa-times"></i>Clear</a>
+        <a ng-if="dvm.allowClear" ng-click="dvm.clear()" class="btn-clear"><i class="fa fa-fw fa-times"></i>Clear</a>
     </div>
 </div>

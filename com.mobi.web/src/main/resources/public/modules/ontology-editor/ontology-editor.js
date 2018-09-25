@@ -61,7 +61,6 @@
             'individualsTab',
             'individualHierarchyBlock',
             'individualTree',
-            'languageSelect',
             'mergeBlock',
             'mergeTab',
             'newOntologyOverlay',
