@@ -31,8 +31,7 @@
 <http://mobi.com/data/uhtc/material/ghi> a <http://mobi.com/ontologies/uhtc/Material> ;
 	<http://mobi.com/ontologies/uhtc/formula> "TaB2"@fr ;
 	<http://mobi.com/ontologies/uhtc/density> "12.54"^^<http://www.w3.org/2001/XMLSchema#double> ;
-	<http://mobi.com/ontologies/uhtc/latticeParameter> "3.098" ;
-	<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Hexagonal> .
+	<http://mobi.com/ontologies/uhtc/latticeParameter> "3.098" .
 
 <http://mobi.com/data/uhtc/material/hij> a <http://mobi.com/ontologies/uhtc/Material> ;
 	<http://mobi.com/ontologies/uhtc/formula> "TaC"@fr ;
