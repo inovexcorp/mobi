@@ -45,7 +45,7 @@
          * parent IRI. iriSelect then will group and sort IRIs based on the parent IRI. The directive is
          * replaced by the content of the template.
          *
-         * @param {*} bindModel The variable to bind the value of the radio button to
+         * @param {*} bindModel The variable to bind the value of the select results to
          * @param {Object} selectList A map of IRIs to their parent IRI
          * @param {string} displayText The main text to display above the ui-select
          * @param {string} mutedText Additional muted text to display after the displayText
