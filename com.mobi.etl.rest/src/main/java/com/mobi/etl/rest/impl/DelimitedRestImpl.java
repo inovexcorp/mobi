@@ -23,28 +23,20 @@ package com.mobi.etl.rest.impl;
  * #L%
  */
 
-import static java.nio.file.FileVisitResult.CONTINUE;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
+import static java.nio.file.FileVisitResult.CONTINUE;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.etl.rest.DelimitedRest;
-import com.opencsv.CSVReader;
-import net.sf.json.JSONArray;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.FormulaEvaluator;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
@@ -53,7 +45,12 @@ import com.mobi.etl.api.config.delimited.SVConfig;
 import com.mobi.etl.api.delimited.DelimitedConverter;
 import com.mobi.etl.api.delimited.MappingManager;
 import com.mobi.etl.api.delimited.MappingWrapper;
+import com.mobi.etl.rest.DelimitedRest;
 import com.mobi.exception.MobiException;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -66,6 +63,17 @@ import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.exception.RepositoryException;
 import com.mobi.rest.util.CharsetUtils;
 import com.mobi.rest.util.ErrorUtils;
+import com.opencsv.CSVReader;
+import net.sf.json.JSONArray;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,6 +99,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
@@ -101,6 +110,11 @@ public class DelimitedRestImpl implements DelimitedRest {
     private ValueFactory vf;
     private DatasetManager datasetManager;
     private RepositoryManager repositoryManager;
+    private CatalogConfigProvider configProvider;
+    private CatalogManager catalogManager;
+    private OntologyRecordFactory ontologyRecordFactory;
+    private VersioningManager versioningManager;
+    private EngineManager engineManager;
 
     private final Logger logger = LoggerFactory.getLogger(DelimitedRestImpl.class);
     private SesameTransformer transformer;
@@ -137,6 +151,31 @@ public class DelimitedRestImpl implements DelimitedRest {
     @Reference
     protected void setRepositoryManager(RepositoryManager repositoryManager) {
         this.repositoryManager = repositoryManager;
+    }
+
+    @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
+    }
+
+    @Reference
+    void setCatalogManager(CatalogManager catalogManager) {
+        this.catalogManager = catalogManager;
+    }
+
+    @Reference
+    void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
+        this.ontologyRecordFactory = ontologyRecordFactory;
+    }
+
+    @Reference
+    void setVersioningManager(VersioningManager versioningManager) {
+        this.versioningManager = versioningManager;
+    }
+
+    @Reference
+    void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
     }
 
     @Activate
@@ -256,6 +295,34 @@ public class DelimitedRestImpl implements DelimitedRest {
         } catch (RepositoryException ex) {
             throw ErrorUtils.sendError("Error in repository connection", Response.Status.INTERNAL_SERVER_ERROR);
         }
+
+        // Remove temp file
+        removeTempFile(fileName);
+
+        return Response.ok().build();
+    }
+
+    @Override
+    public Response etlFileOntology(ContainerRequestContext context, String fileName, String mappingRecordIRI,
+                                    String ontologyRecordIRI, boolean containsHeaders, String separator) {
+        checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
+        checkStringParam(ontologyRecordIRI, "Must provide the IRI of an ontology record");
+
+        User user = getActiveUser(context, engineManager);
+
+        OntologyRecord record = catalogManager.getRecord(configProvider.getLocalCatalogIRI(),
+                vf.createIRI(ontologyRecordIRI), ontologyRecordFactory).orElseThrow(() ->
+                ErrorUtils.sendError("OntologyRecord " + ontologyRecordIRI + " does not exist",
+                        Response.Status.BAD_REQUEST));
+
+        // Convert the data
+        Model data = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
+                separator, false);
+
+        Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() -> ErrorUtils.sendError(
+                "OntologyRecord " + ontologyRecordIRI + " master branch cannot be found.", Response.Status.BAD_REQUEST));
+        versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), masterBranchId, user,
+                "Mapping data from " + fileName, data, null);
 
         // Remove temp file
         removeTempFile(fileName);

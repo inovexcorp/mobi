@@ -32,6 +32,9 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
@@ -41,6 +44,8 @@ import com.mobi.etl.api.delimited.DelimitedConverter;
 import com.mobi.etl.api.delimited.MappingId;
 import com.mobi.etl.api.delimited.MappingManager;
 import com.mobi.etl.api.delimited.MappingWrapper;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ModelFactory;
@@ -128,6 +133,21 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
     private RepositoryManager repositoryManager;
 
     @Mock
+    private CatalogConfigProvider configProvider;
+
+    @Mock
+    private CatalogManager catalogManager;
+
+    @Mock
+    private OntologyRecordFactory ontologyRecordFactory;
+
+    @Mock
+    private VersioningManager versioningManager;
+
+    @Mock
+    private EngineManager engineManager;
+
+    @Mock
     private DatasetRecord datasetRecord;
 
     @Mock
@@ -146,6 +166,11 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         rest.setMappingManager(mappingManager);
         rest.setDatasetManager(datasetManager);
         rest.setRepositoryManager(repositoryManager);
+        rest.setConfigProvider(configProvider);
+        rest.setCatalogManager(catalogManager);
+        rest.setOntologyRecordFactory(ontologyRecordFactory);
+        rest.setVersioningManager(versioningManager);
+        rest.setEngineManager(engineManager);
         rest.setVf(vf);
         rest.setTransformer(transformer);
         rest.start();
@@ -602,6 +627,138 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
 
     @Test
     public void mapExcelIntoDatasetTest() throws Exception {
+        // Setup:
+        Statement data = vf.createStatement(vf.createIRI("http://test.org/class"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
+        com.mobi.rdf.api.Model model = mf.createModel(Collections.singleton(data));
+        when(converter.convert(any(ExcelConfig.class))).thenReturn(model);
+        String fileName = UUID.randomUUID().toString() + ".xls";
+        copyResourceToTemp("test.xls", fileName);
+
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
+                .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 200);
+        RepositoryConnection conn = repo.getConnection();
+        assertTrue(conn.getStatements(data.getSubject(), data.getPredicate(), data.getObject(), vf.createIRI(NAMED_GRAPH_IRI)).hasNext());
+        conn.close();
+    }
+
+
+
+
+
+
+
+
+
+
+
+    @Test
+    public void mapIntoOntologyRecordWithoutMappingTest() {
+        Response response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", "")
+                .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 400);
+
+        response = target().path("delimited-files/test.csv/map").queryParam("datasetRecordIRI", DATASET_RECORD_IRI)
+                .request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void mapIntoOntologyRecordWithoutDatasetTest() {
+        Response response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
+                .queryParam("datasetRecordIRI", "").request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 400);
+
+        response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
+                .request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void mapIntoNonexistentOntologyRecordTest() {
+        Response response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
+                .queryParam("datasetRecordIRI", ERROR_IRI).request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void mapIntoOntologyRecordWithNonexistentMappingTest() throws Exception {
+        // Setup:
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
+
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", ERROR_IRI)
+                .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void mapIntoOntologyRecordThatIsNotSetTest() throws Exception {
+        // Setup:
+        when(datasetRecord.getDataset_resource()).thenReturn(Optional.empty());
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
+
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
+                .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void mapIntoOntologyRecordWithMissingRepositoryTest() throws Exception {
+        // Setup:
+        when(datasetRecord.getRepository()).thenReturn(Optional.empty());
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
+
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
+                .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void mapIntoOntologyRecordWithUnavailableRepositoryTest() throws Exception {
+        // Setup:
+        when(datasetRecord.getRepository()).thenReturn(Optional.of("error"));
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
+
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
+                .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void mapIntoOntologyRecordWithNoSystemNamedGraphTest() throws Exception {
+        // Setup:
+        when(datasetRecord.getDataset_resource()).thenReturn(Optional.of(vf.createIRI(ERROR_IRI)));
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
+
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
+                .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void mapCSVIntoOntologyRecordTest() throws Exception {
+        // Setup:
+        Statement data = vf.createStatement(vf.createIRI("http://test.org/class"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
+        com.mobi.rdf.api.Model model = mf.createModel(Collections.singleton(data));
+        when(converter.convert(any(SVConfig.class))).thenReturn(model);
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
+
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
+                .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 200);
+        RepositoryConnection conn = repo.getConnection();
+        assertTrue(conn.getStatements(data.getSubject(), data.getPredicate(), data.getObject(), vf.createIRI(NAMED_GRAPH_IRI)).hasNext());
+        conn.close();
+    }
+
+    @Test
+    public void mapExcelIntoOntologyRecordTest() throws Exception {
         // Setup:
         Statement data = vf.createStatement(vf.createIRI("http://test.org/class"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
         com.mobi.rdf.api.Model model = mf.createModel(Collections.singleton(data));
