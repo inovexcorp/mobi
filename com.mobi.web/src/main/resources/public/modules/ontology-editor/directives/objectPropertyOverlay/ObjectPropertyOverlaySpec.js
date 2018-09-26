@@ -73,7 +73,7 @@ describe('Object Property Overlay directive', function() {
             expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
         });
-        ['h3', 'ui-select', 'iri-select'].forEach(tag => {
+        ['h3', 'ui-select', 'iri-select-ontology'].forEach(tag => {
             it('with a ' + tag, function() {
                 expect(this.element.find(tag).length).toEqual(1);
             });

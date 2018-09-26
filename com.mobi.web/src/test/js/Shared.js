@@ -800,6 +800,7 @@ function mockPropertyManager() {
             this.editId = jasmine.createSpy('editId');
             this.createValueObj = jasmine.createSpy('createValueObj').and.returnValue({});
             this.create = jasmine.createSpy('create').and.returnValue($q.resolve({}));
+            this.getDatatypeMap = jasmine.createSpy('getDatatypeMap').and.returnValue({});
         });
     });
 }

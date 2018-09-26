@@ -86,6 +86,7 @@
             'errorDisplay',
             'fileInput',
             'focusMe',
+            'iriSelect',
             'infoMessage',
             'keywordSelect',
             'materialTab',

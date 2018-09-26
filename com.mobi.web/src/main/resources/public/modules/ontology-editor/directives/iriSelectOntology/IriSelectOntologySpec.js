@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('IRI Select directive', function() {
+describe('IRI Select Ontology directive', function() {
     var $compile, scope, ontologyStateSvc, ontoUtilsSvc;
 
     beforeEach(function() {
         module('templates');
-        module('iriSelect');
+        module('iriSelectOntology');
         mockOntologyState();
         mockOntologyUtilsManager();
         injectTrustedFilter();
@@ -47,9 +47,9 @@ describe('IRI Select directive', function() {
         scope.onChange = jasmine.createSpy('onChange');
         scope.bindModel = undefined;
 
-        this.element = $compile(angular.element('<iri-select multi-select="multiSelect" on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" multi-select="multiSelect"></iri-select>'))(scope);
+        this.element = $compile(angular.element('<iri-select-ontology multi-select="multiSelect" on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" multi-select="multiSelect"></iri-select-ontology>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('iriSelect');
+        this.controller = this.element.controller('iriSelectOntology');
     });
 
     afterEach(function() {
@@ -109,7 +109,7 @@ describe('IRI Select directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('iri-select')).toBe(true);
+            expect(this.element.hasClass('iri-select-ontology')).toBe(true);
             expect(this.element.hasClass('form-group')).toBe(true);
         });
         it('with custom-labels', function() {

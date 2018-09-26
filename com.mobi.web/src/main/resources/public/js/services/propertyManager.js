@@ -331,6 +331,22 @@
                 }
                 return annotation;
             }
+            /**
+             * @ngdoc method
+             * @name getDatatypeMap
+             * @methodOf propertyManager.service:propertyManagerService
+             *
+             * @description
+             * Creates a map of datatypes to their prefix
+             *
+             * @return {Object} A map of datatype to prefix
+             */
+            self.getDatatypeMap = function() {
+                var mapObj = {};
+                _.forEach(xsdDatatypes, item => mapObj[item] = prefixes.xsd);
+                _.forEach(rdfDatatypes, item => mapObj[item] = prefixes.rdf)
+                return mapObj;
+            }
 
             function contains(arr, valueObj) {
                 return _.some(arr, obj => {

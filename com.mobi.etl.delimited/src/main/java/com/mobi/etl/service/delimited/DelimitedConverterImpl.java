@@ -291,6 +291,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             // Default datatype is xsd:string
             final IRI[] datatype = {valueFactory.createIRI(XSD.STRING)};
             Optional<Value> datatypeOpt = dataMapping.getDatatypeSpec();
+            Optional<Value> languageOpt = dataMapping.getLanguageSpec();
             int columnIndex = dataMapping.getColumnIndex().iterator().next();
             com.mobi.rdf.api.Resource prop = dataMapping.getHasProperty_resource().iterator().next();
 
@@ -299,20 +300,26 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 // If the value is not empty
                 if (!StringUtils.isEmpty(nextLine[columnIndex])) {
                     // Determine the datatype for the data property range
-                    if (datatypeOpt.isPresent()) {
-                        datatype[0] = valueFactory.createIRI(datatypeOpt.get().stringValue());
+                    Literal literal;
+                    if (languageOpt.isPresent()) {
+                        datatype[0] = valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString");
+                        literal = valueFactory.createLiteral(nextLine[columnIndex], languageOpt.get().stringValue());
                     } else {
-                        sourceOntologies.stream()
-                                .filter(ontology -> ontology.getDataProperty((IRI) prop).isPresent())
-                                .findFirst()
-                                .ifPresent(ontology -> {
-                                    DataProperty dataProperty = ontology.getDataProperty((IRI) prop).get();
-                                    ontology.getDataPropertyRange(dataProperty).stream()
-                                            .findFirst()
-                                            .ifPresent(resource -> datatype[0] = (IRI) resource);
-                                });
+                        if (datatypeOpt.isPresent()) {
+                            datatype[0] = valueFactory.createIRI(datatypeOpt.get().stringValue());
+                        } else {
+                            sourceOntologies.stream()
+                                    .filter(ontology -> ontology.getDataProperty((IRI) prop).isPresent())
+                                    .findFirst()
+                                    .ifPresent(ontology -> {
+                                        DataProperty dataProperty = ontology.getDataProperty((IRI) prop).get();
+                                        ontology.getDataPropertyRange(dataProperty).stream()
+                                                .findFirst()
+                                                .ifPresent(resource -> datatype[0] = (IRI) resource);
+                                    });
+                        }
+                        literal = valueFactory.createLiteral(nextLine[columnIndex], datatype[0]);
                     }
-                    Literal literal = valueFactory.createLiteral(nextLine[columnIndex], datatype[0]);
                     // Only add literal if valid with the datatype
                     if (isValidValue(literal, datatype[0])) {
                         convertedRDF.add(classInstance, (IRI) prop, literal);
@@ -488,6 +495,9 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                     return true;
                 case XSD.ANYURI:
                     valueFactory.createIRI(literal.stringValue());
+                    return true;
+                case "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString":
+                    literal.getLanguage().get();
                     return true;
                 default:
                     return true;

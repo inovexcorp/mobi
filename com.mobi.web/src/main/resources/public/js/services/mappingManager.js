@@ -324,9 +324,10 @@
              * @param {string} propId The id of the data property in the ontology
              * @param {number} columnIndex The column index to set the data property mapping's `columnIndex`
              * property to
+             * @param {string} datatypeSpec The default datatype the DataMapping should use
              * @returns {Object} The new data property mapping object
              */
-            self.addDataProp = function(mapping, ontology, classMappingId, propId, columnIndex) {
+            self.addDataProp = function(mapping, ontology, classMappingId, propId, columnIndex, datatypeSpec) {
                 var propMapping;
                 // Check if class mapping exists and the property exists in the ontology or the property is one of the
                 // supported annotations
@@ -344,6 +345,9 @@
                     propMapping['@type'] = [prefixes.delim + 'DataMapping', prefixes.delim + 'PropertyMapping'];
                     propMapping[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
                     propMapping[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
+                    if (datatypeSpec) {
+                        propMapping[prefixes.delim + 'datatypeSpec'] = [{'@id': datatypeSpec}];
+                    }
                     mapping.push(propMapping);
                 }
 

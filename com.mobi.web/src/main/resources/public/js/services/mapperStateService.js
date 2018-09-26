@@ -744,10 +744,11 @@
              * @param {Object} propIdObj.propObj The JSON-LD of the data property
              * @param {string} classMappingId The ID of the ClassMapping the DataMapping should be added to
              * @param {string} columnIndex The column index the DataMapping should point to
+             * @param {string} datatypeSpec The default datatype the DataMapping should use
              * @return {Object} The DataMapping JSON-LD that was added
              */
-            self.addDataMapping = function(propIdObj, classMappingId, columnIndex) {
-                return addPropMapping(propIdObj, classMappingId, columnIndex, mm.addDataProp);
+            self.addDataMapping = function(propIdObj, classMappingId, columnIndex, datatypeSpec) {
+                return addPropMapping(propIdObj, classMappingId, mm.addDataProp, columnIndex, datatypeSpec);
             }
             /**
              * @ngdoc method
@@ -766,7 +767,7 @@
              * @return {Object} The ObjectMapping JSON-LD that was added
              */
             self.addObjectMapping = function(propIdObj, classMappingId, rangeClassMappingId) {
-                return addPropMapping(propIdObj, classMappingId, rangeClassMappingId, mm.addObjectProp);
+                return addPropMapping(propIdObj, classMappingId, mm.addObjectProp, rangeClassMappingId);
             }
             /**
              * @ngdoc method
@@ -904,9 +905,9 @@
                 }
                 util.setDctermsValue(classMapping, 'title', className + newIdx);
             }
-            function addPropMapping(propIdObj, classMappingId, valueStr, func) {
+            function addPropMapping(propIdObj, classMappingId, func, valueStr, valueStr2) {
                 var ontology = _.find(self.sourceOntologies, {id: propIdObj.ontologyId});
-                var propMapping = func(self.mapping.jsonld, _.get(ontology, 'entities', []), classMappingId, propIdObj.propObj['@id'], valueStr);
+                var propMapping = func(self.mapping.jsonld, _.get(ontology, 'entities', []), classMappingId, propIdObj.propObj['@id'], valueStr, valueStr2);
                 util.setDctermsValue(propMapping, 'title', om.getEntityName(propIdObj.propObj));
                 self.mapping.difference.additions.push(angular.copy(propMapping));
                 return propMapping;
