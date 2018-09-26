@@ -23,8 +23,10 @@ package com.mobi.etl.rest.impl;
  * #L%
  */
 
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -33,6 +35,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
@@ -45,6 +48,8 @@ import com.mobi.etl.api.delimited.MappingId;
 import com.mobi.etl.api.delimited.MappingManager;
 import com.mobi.etl.api.delimited.MappingWrapper;
 import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
@@ -55,11 +60,13 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.core.utils.Values;
+import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import com.mobi.rest.util.MobiRestTestNg;
+import com.mobi.rest.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -107,8 +114,14 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
     private Repository repo;
     private ValueFactory vf;
     private ModelFactory mf;
+    private User user;
+    private IRI catalogId;
+    private OntologyRecord ontologyRecord;
+    private Branch masterBranch;
     private static final String MAPPING_RECORD_IRI = "http://test.org/mapping-record";
     private static final String DATASET_RECORD_IRI = "http://test.org/dataset-record";
+    private static final String ONTOLOGY_RECORD_IRI = "http://test.org/ontology-record";
+    private static final String MASTER_BRANCH_IRI = "http://test.org/master-branch";
     private static final String DATASET_IRI = "http://test.org/dataset";
     private static final String NAMED_GRAPH_IRI = "http://test.org/named-graph";
     private static final String REPOSITORY_ID = "test";
@@ -160,6 +173,15 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
+        OrmFactory<Branch> branchOrmFactory = getRequiredOrmFactory(Branch.class);
+        masterBranch = branchOrmFactory.createNew(vf.createIRI(MASTER_BRANCH_IRI));
+        OrmFactory<OntologyRecord> ontologyRecordOrmFactory = getRequiredOrmFactory(OntologyRecord.class);
+        ontologyRecord = ontologyRecordOrmFactory.createNew(vf.createIRI(ONTOLOGY_RECORD_IRI));
+        ontologyRecord.setMasterBranch(master);
+        OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+        user = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + UsernameTestFilter.USERNAME));
+        catalogId = vf.createIRI("http://mobi.com/catalog");
+
         MockitoAnnotations.initMocks(this);
         rest = new DelimitedRestImpl();
         rest.setDelimitedConverter(converter);
@@ -208,6 +230,10 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
                 return vf.createIRI(i.getArguments()[0].toString());
             }
         });
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
+        when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
+        when(catalogManager.getRecord(eq(catalogId), eq(vf.createIRI(ONTOLOGY_RECORD_IRI)), eq(ontologyRecordFactory)))
+                .thenReturn()
 
         return new ResourceConfig()
             .register(rest)
@@ -654,19 +680,19 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
 
     @Test
     public void mapIntoOntologyRecordWithoutMappingTest() {
-        Response response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", "")
-                .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
+        Response response = target().path("delimited-files/test.csv/mapToOntology").queryParam("mappingRecordIRI", "")
+                .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
 
-        response = target().path("delimited-files/test.csv/map").queryParam("datasetRecordIRI", DATASET_RECORD_IRI)
+        response = target().path("delimited-files/test.csv/map").queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI)
                 .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void mapIntoOntologyRecordWithoutDatasetTest() {
+    public void mapIntoOntologyRecordWithoutOntologyTest() {
         Response response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
-                .queryParam("datasetRecordIRI", "").request().post(Entity.json(""));
+                .queryParam("ontologyRecordIRI", "").request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
 
         response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
@@ -677,7 +703,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
     @Test
     public void mapIntoNonexistentOntologyRecordTest() {
         Response response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
-                .queryParam("datasetRecordIRI", ERROR_IRI).request().post(Entity.json(""));
+                .queryParam("ontologyRecordIRI", ERROR_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -688,7 +714,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         copyResourceToTemp("test.csv", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", ERROR_IRI)
-                .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
+                .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
 
