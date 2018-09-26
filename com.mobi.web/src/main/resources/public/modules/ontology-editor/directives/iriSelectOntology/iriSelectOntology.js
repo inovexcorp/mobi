@@ -24,16 +24,16 @@
     'use strict';
 
     angular
-        .module('iriSelect', [])
-        .directive('iriSelect', iriSelect);
+        .module('iriSelectOntology', [])
+        .directive('iriSelectOntology', iriSelectOntology);
 
-        iriSelect.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
+        iriSelectOntology.$inject = ['ontologyStateService', 'ontologyUtilsManagerService'];
 
-        function iriSelect(ontologyStateService, ontologyUtilsManagerService) {
+        function iriSelectOntology(ontologyStateService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/iriSelect/iriSelect.html',
+                templateUrl: 'modules/ontology-editor/directives/iriSelectOntology/iriSelectOntology.html',
                 scope: {
                     displayText: '<',
                     mutedText: '<',

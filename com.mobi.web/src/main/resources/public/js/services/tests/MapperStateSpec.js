@@ -588,7 +588,7 @@ describe('Mapper State service', function() {
         mappingManagerSvc.addDataProp.and.returnValue(newPropMapping);
         ontologyManagerSvc.getEntityName.and.returnValue('Prop');
         expect(mapperStateSvc.addDataMapping(propIdObj, 'classMappingId', '0')).toEqual(newPropMapping);
-        expect(mappingManagerSvc.addDataProp).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, ontology.entities, 'classMappingId', propIdObj.propObj['@id'], '0');
+        expect(mappingManagerSvc.addDataProp).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, ontology.entities, 'classMappingId', propIdObj.propObj['@id'], '0', undefined);
         expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(propIdObj.propObj);
         expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(newPropMapping, 'title', 'Prop');
         expect(mapperStateSvc.mapping.difference.additions).toContain(newPropMapping);
@@ -601,7 +601,7 @@ describe('Mapper State service', function() {
         mappingManagerSvc.addObjectProp.and.returnValue(newPropMapping);
         ontologyManagerSvc.getEntityName.and.returnValue('Prop');
         expect(mapperStateSvc.addObjectMapping(propIdObj, 'classMappingId', 'rangeClassMappingId')).toEqual(newPropMapping);
-        expect(mappingManagerSvc.addObjectProp).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, ontology.entities, 'classMappingId', propIdObj.propObj['@id'], 'rangeClassMappingId');
+        expect(mappingManagerSvc.addObjectProp).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, ontology.entities, 'classMappingId', propIdObj.propObj['@id'], 'rangeClassMappingId', undefined);
         expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(propIdObj.propObj);
         expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(newPropMapping, 'title', 'Prop');
         expect(mapperStateSvc.mapping.difference.additions).toContain(newPropMapping);

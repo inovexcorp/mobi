@@ -94,8 +94,8 @@ describe('Datatype Property Overlay directive', function() {
         it('with a text-area', function() {
             expect(this.element.find('text-area').length).toBe(1);
         })
-        it('with an iri-select', function() {
-            expect(this.element.find('iri-select').length).toBe(1);
+        it('with an iri-select-ontology', function() {
+            expect(this.element.find('iri-select-ontology').length).toBe(1);
         });
         it('depending on whether the type is rdf:langString', function() {
             expect(this.element.find('language-select').length).toEqual(0);
