@@ -94,7 +94,7 @@
                     }
                     dvm.getLanguagePreview = function(propMapping) {
                         var languageTag = dvm.util.getPropertyValue(propMapping, prefixes.delim + 'languageSpec');
-                        var languageObj = _.find(pm.languageList, language => language.value === languageTag);
+                        var languageObj = _.find(pm.languageList, {value: languageTag});
                         return languageObj ? languageObj.label + ' @' + languageObj.value : undefined;
                     }
                     dvm.getLinkedClassId = function(propMapping) {

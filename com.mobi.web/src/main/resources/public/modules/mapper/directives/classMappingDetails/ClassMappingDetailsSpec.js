@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Class Mapping Details directive', function() {
-    var $compile, scope, prefixes, utilSvc, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, propertyManagerSvc;
+    var $compile, scope, prefixes, utilSvc, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -33,7 +33,7 @@ describe('Class Mapping Details directive', function() {
         mockPropertyManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _prefixes_, _utilService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _propertyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _prefixes_, _utilService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             prefixes = _prefixes_;
@@ -41,7 +41,6 @@ describe('Class Mapping Details directive', function() {
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
-            propertyManagerSvc = _propertyManagerService_;
         });
 
         mapperStateSvc.mapping = {jsonld: []};
@@ -59,7 +58,6 @@ describe('Class Mapping Details directive', function() {
         mappingManagerSvc = null;
         mapperStateSvc = null;
         delimitedManagerSvc = null;
-        propertyManagerSvc = null;
         this.element.remove();
     });
 
