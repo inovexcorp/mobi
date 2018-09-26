@@ -56,9 +56,9 @@
          */
         .directive('propMappingOverlay', propMappingOverlay);
 
-        propMappingOverlay.$inject = ['prefixes', 'utilService', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService'];
+        propMappingOverlay.$inject = ['prefixes', 'utilService', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService', 'propertyManagerService'];
 
-        function propMappingOverlay(prefixes, utilService, ontologyManagerService, mapperStateService, mappingManagerService) {
+        function propMappingOverlay(prefixes, utilService, ontologyManagerService, mapperStateService, mappingManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -67,6 +67,7 @@
                 controller: function() {
                     var dvm = this;
                     var mm = mappingManagerService;
+                    var pm = propertyManagerService;
                     dvm.util = utilService;
                     dvm.state = mapperStateService;
                     dvm.om = ontologyManagerService;
@@ -74,10 +75,13 @@
                     dvm.selectedPropMapping = undefined;
                     dvm.selectedProp = undefined;
                     dvm.selectedColumn = '';
-                    // First item in list will always be a repesentation of creating a new class mapping
+                    // First item in list will always be a representation of creating a new class mapping
                     dvm.classMappings = [];
                     dvm.rangeClassMappingId = '';
                     dvm.rangeClass = undefined;
+                    dvm.showDatatypeSelect = false;
+                    dvm.datatype = undefined;
+                    dvm.datatypeMap = pm.getDatatypeMap();
 
                     var newClassMappingIdentifier = 'new';
 
@@ -106,7 +110,13 @@
                             dvm.classMappings = [];
                             dvm.rangeClassMappingId = '';
                             dvm.rangeClass = undefined;
+                            dvm.datatype = undefined;
+                            dvm.showDatatypeSelect = false;
                         }
+                    }
+                    dvm.clearDatatype = function() {
+                        dvm.showDatatypeSelect = false;
+                        dvm.datatype = undefined;
                     }
                     dvm.set = function() {
                         if (dvm.state.newProp) {
@@ -123,7 +133,7 @@
                                 dvm.state.setAvailableProps(classMappingId);
                             } else {
                                 // Add the DataMapping pointing to the selectedColumn
-                                propMap = dvm.state.addDataMapping(dvm.selectedProp, dvm.state.selectedClassMappingId, dvm.selectedColumn);
+                                propMap = dvm.state.addDataMapping(dvm.selectedProp, dvm.state.selectedClassMappingId, dvm.selectedColumn, dvm.datatype);
                                 prop = prefixes.delim + 'dataProperty';
                             }
 
@@ -144,6 +154,14 @@
                                 var originalIndex = dvm.util.getPropertyValue(dvm.selectedPropMapping, prefixes.delim + 'columnIndex');
                                 dvm.selectedPropMapping[prefixes.delim + 'columnIndex'][0]['@value'] = dvm.selectedColumn;
                                 dvm.state.changeProp(dvm.selectedPropMapping['@id'], prefixes.delim + 'columnIndex', dvm.selectedColumn, originalIndex);
+
+                                var originalDatatype = dvm.util.getPropertyId(dvm.selectedPropMapping, prefixes.delim + 'datatypeSpec');
+                                if (dvm.datatype) {
+                                    dvm.selectedPropMapping[prefixes.delim + 'datatypeSpec'] = [{'@id': dvm.datatype}];
+                                    dvm.state.changeProp(dvm.selectedPropMapping['@id'], prefixes.delim + 'datatypeSpec', dvm.datatype, originalDatatype);
+                                } else {
+                                    dvm.util.removePropertyId(dvm.selectedPropMapping, prefixes.delim + 'datatypeSpec', originalDatatype);
+                                }
                                 _.remove(dvm.state.invalidProps, {'@id': dvm.state.selectedPropMappingId})
                             } else {
                                 var classMappingId = getRangeClassMappingId();
@@ -186,6 +204,10 @@
                             dvm.setRangeClass();
                         } else {
                             dvm.selectedColumn = dvm.util.getPropertyValue(dvm.selectedPropMapping, prefixes.delim + 'columnIndex');
+                            dvm.datatype = dvm.util.getPropertyId(dvm.selectedPropMapping, prefixes.delim + 'datatypeSpec');
+                            if (dvm.datatype) {
+                                dvm.showDatatypeSelect = true;
+                            }
                         }
                     }
                 },
