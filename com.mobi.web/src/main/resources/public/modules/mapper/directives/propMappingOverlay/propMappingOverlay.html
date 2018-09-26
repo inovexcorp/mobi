@@ -53,6 +53,9 @@
                 <iri-select ng-model="dvm.datatype" display-text="'Manual Datatype'" muted-text="'(Optional)'" select-list="dvm.datatypeMap" multi-select="false"></iri-select>
             </div>
         </div>
+        <div class="language-select-container" ng-if="dvm.isLangString() && dvm.showDatatypeSelect">
+            <language-select ng-model="dvm.language" disable-clear="true"></language-select>
+        </div>
         <div class="btn-container clearfix">
             <button class="btn btn-primary float-right" ng-click="dvm.set()" ng-disabled="dvm.disableSet()">Set</button>
             <button class="btn float-right" ng-click="dvm.cancel()">Cancel</button>

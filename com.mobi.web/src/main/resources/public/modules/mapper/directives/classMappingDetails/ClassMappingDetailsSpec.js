@@ -30,6 +30,7 @@ describe('Class Mapping Details directive', function() {
         mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
+        mockPropertyManager();
         mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _prefixes_, _utilService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
