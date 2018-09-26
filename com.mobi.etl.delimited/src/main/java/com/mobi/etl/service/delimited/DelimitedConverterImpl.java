@@ -400,7 +400,8 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             }
         }
         mat.appendTail(result);
-        return Optional.of(result.toString());
+        String resultStr = result.toString();
+        return resultStr.isEmpty() ? Optional.empty() : Optional.of(resultStr);
     }
 
     /**
