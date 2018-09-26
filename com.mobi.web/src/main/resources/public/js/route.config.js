@@ -56,17 +56,6 @@
                     authenticate: authenticate
                 }
             })
-            .state('root.activity-log', {
-                url: '/activity-log',
-                views: {
-                    'container@': {
-                        templateUrl: 'modules/activityLog/activityLog.html'
-                    }
-                },
-                data: {
-                    title: 'Activity Log'
-                }
-            })
             .state('root.home', {
                 url: '/home',
                 views: {
