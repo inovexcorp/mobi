@@ -93,9 +93,11 @@
                         return dvm.util.getBeautifulIRI(dvm.util.getPropertyId(propMapping, prefixes.delim + 'datatypeSpec'));
                     }
                     dvm.getLanguagePreview = function(propMapping) {
-                        var languageTag = dvm.util.getPropertyValue(propMapping, prefixes.delim + 'languageSpec');
-                        var languageObj = _.find(pm.languageList, {value: languageTag});
-                        return languageObj ? languageObj.label + ' @' + languageObj.value : undefined;
+                        var languageObj = _.find(pm.languageList, {value: dvm.getLanguageTag(propMapping)});
+                        return languageObj ? languageObj.label : undefined;
+                    }
+                    dvm.getLanguageTag = function(propMapping) {
+                        return dvm.util.getPropertyValue(propMapping, prefixes.delim + 'languageSpec');
                     }
                     dvm.getLinkedClassId = function(propMapping) {
                         return dvm.util.getPropertyId(propMapping, prefixes.delim + 'classMapping');
