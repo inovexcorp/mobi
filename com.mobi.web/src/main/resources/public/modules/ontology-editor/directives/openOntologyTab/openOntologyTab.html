@@ -33,7 +33,7 @@
         </div>
         <div class="ontologies flex-1 vertical-scroll" targeted-spinner="dvm.id">
             <div class="list-group list-group-flush">
-                <div class="list-group-item list-group-item-action" ng-repeat="record in dvm.filteredList">
+                <div class="list-group-item list-group-item-action" ng-repeat="record in dvm.filteredList" disable-animate>
                     <div class="ontology-info d-flex">
                         <div class="details flex-1 remove-min-width" ng-click="dvm.open(record)">
                             <div class="header align-items-center d-flex">

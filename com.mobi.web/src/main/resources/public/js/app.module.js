@@ -78,6 +78,7 @@
             'confirmationOverlay',
             'confirmModal',
             'customLabel',
+            'disableAnimate',
             'dragFile',
             'dragMe',
             'dropOnMe',
