@@ -122,6 +122,7 @@
                     dvm.clearDatatype = function() {
                         dvm.showDatatypeSelect = false;
                         dvm.datatype = undefined;
+                        dvm.language = undefined;
                     }
                     dvm.set = function() {
                         if (dvm.state.newProp) {
@@ -138,7 +139,7 @@
                                 dvm.state.setAvailableProps(classMappingId);
                             } else {
                                 // Add the DataMapping pointing to the selectedColumn
-                                propMap = dvm.state.addDataMapping(dvm.selectedProp, dvm.state.selectedClassMappingId, dvm.selectedColumn, dvm.datatype);
+                                propMap = dvm.state.addDataMapping(dvm.selectedProp, dvm.state.selectedClassMappingId, dvm.selectedColumn, dvm.datatype, dvm.language);
                                 prop = prefixes.delim + 'dataProperty';
                             }
 
@@ -166,6 +167,15 @@
                                     dvm.state.changeProp(dvm.selectedPropMapping['@id'], prefixes.delim + 'datatypeSpec', dvm.datatype, originalDatatype);
                                 } else {
                                     dvm.util.removePropertyId(dvm.selectedPropMapping, prefixes.delim + 'datatypeSpec', originalDatatype);
+                                }
+
+                                var originalLanguage = dvm.util.getPropertyValue(dvm.selectedPropMapping, prefixes.delim + 'languageSpec');
+                                if (dvm.language) {
+                                    dvm.selectedPropMapping[prefixes.delim + 'languageSpec'] = [{'@value': dvm.language}];
+                                    dvm.state.changeProp(dvm.selectedPropMapping['@id'], prefixes.delim + 'languageSpec', dvm.language, originalLanguage);
+                                }
+                                if (!dvm.isLangString()) {
+                                    dvm.util.removePropertyValue(dvm.selectedPropMapping, prefixes.delim + 'languageSpec', originalLanguage);
                                 }
                                 _.remove(dvm.state.invalidProps, {'@id': dvm.state.selectedPropMappingId})
                             } else {
@@ -212,6 +222,9 @@
                             dvm.datatype = dvm.util.getPropertyId(dvm.selectedPropMapping, prefixes.delim + 'datatypeSpec');
                             if (dvm.datatype) {
                                 dvm.showDatatypeSelect = true;
+                                if (dvm.isLangString()) {
+                                    dvm.language = dvm.util.getPropertyValue(dvm.selectedPropMapping, prefixes.delim + 'languageSpec');
+                                }
                             }
                         }
                     }

@@ -24,12 +24,35 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name languageSelect
+         *
+         * @description
+         * The `languageSelect` module provides the `languageSelect` directive which provides options for a formatted
+         * ui-select for picking language tags.
+         *
+         */
         .module('languageSelect', [])
+        /**
+         * @ngdoc directive
+         * @name languageSelect.directive:languageSelect
+         * @restrict E
+         * @requires propertyManager.service:propertyManagerService
+         *
+         * @description
+         * `languageSelect` is a directive which provides options for a formatted ui-select for picking language tags.
+         * The directive provides an option to have a clear selection button. If the button is not enabled, the choice
+         * defaults to English. The directive is replaced by the content of the template.
+         *
+         * @param {string} bindModel The variable to bind the value of the language to
+         * @param {boolean} disableClear A boolean that indicates if the clear button should be disabled
+         */
         .directive('languageSelect', languageSelect);
 
-        languageSelect.$inject = [];
+        languageSelect.$inject = ['propertyManagerService'];
 
-        function languageSelect() {
+        function languageSelect(propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -37,55 +60,20 @@
                 scope: {},
                 bindToController: {
                     bindModel: '=ngModel',
-                    allowClear: '='
+                    disableClear: '<'
                 },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.languages = [{
-                        label: 'English',
-                        value: 'en'
-                    }, {
-                        label: 'French',
-                        value: 'fr'
-                    }, {
-                        label: 'Spanish',
-                        value: 'es'
-                    }, {
-                        label: 'Arabic',
-                        value: 'ar'
-                    }, {
-                        label: 'Japanese',
-                        value: 'ja'
-                    }, {
-                        label: 'Italian',
-                        value: 'it'
-                    }, {
-                        label: 'German',
-                        value: 'de'
-                    }, {
-                        label: 'Chinese',
-                        value: 'zh'
-                    }, {
-                        label: 'Portuguese',
-                        value: 'pt'
-                    }, {
-                        label: 'Russian',
-                        value: 'ru'
-                    }, {
-                        label: 'Hindi',
-                        value: 'hi'
-                    }, {
-                        label: 'Vietnamese',
-                        value: 'vi'
-                    }];
+                    var pm = propertyManagerService;
+                    dvm.languages = pm.languageList;
 
                     dvm.clear = function() {
                         dvm.bindModel = undefined;
                     }
 
-                    if (!dvm.allowClear) {
-                        dvm.bindModel = dvm.languages[0];
+                    if (dvm.disableClear && typeof dvm.bindModel === 'undefined') {
+                        dvm.bindModel = 'en';
                     }
                 },
                 link: function(scope, element, attrs) {

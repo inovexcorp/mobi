@@ -21,17 +21,19 @@
  * #L%
  */
 describe('Language Select directive', function() {
-    var $compile, scope;
+    var $compile, scope, propertyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('languageSelect');
+        mockPropertyManager();
         injectHighlightFilter();
         injectTrustedFilter();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _propertyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            propertyManagerSvc = _propertyManagerService_;
         });
 
         scope.bindModel = 'test';
@@ -52,6 +54,7 @@ describe('Language Select directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        propertyManagerSvc = null;
         this.element.remove()
     });
 
