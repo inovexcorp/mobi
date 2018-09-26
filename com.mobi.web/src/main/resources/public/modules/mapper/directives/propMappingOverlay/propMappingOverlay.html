@@ -46,7 +46,7 @@
             <custom-label>Column</custom-label>
             <column-select selected-column="dvm.selectedColumn"></column-select>
         </div>
-        <div class="datatype-select-container form-group" ng-if="dvm.selectedProp && !dvm.om.isObjectProperty(dvm.selectedProp.propObj) && !dvm.om.isAnnotation(dvm.selectedProp.propObj)">
+        <div class="datatype-select-container form-group" ng-if="dvm.selectedProp && !dvm.om.isObjectProperty(dvm.selectedProp.propObj)">
             <a ng-if="!dvm.showDatatypeSelect" class="btn-link btn-show" ng-click="dvm.showDatatypeSelect = true"><i class="fa fa-fw fa-plus"></i>Show default datatype select</a>
             <div ng-if="dvm.showDatatypeSelect" class="btn-container clearfix">
                 <a class="btn-link btn-hide" ng-click="dvm.clearDatatype()"><i class="fa fa-fw fa-times"></i>Hide default datatype select</a>
