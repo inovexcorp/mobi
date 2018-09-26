@@ -387,10 +387,9 @@ describe('Prop Mapping Overlay directive', function() {
             beforeEach(function() {
                 this.controller.selectedProp = {propObj: {}};
             });
-            describe('a data property', function() {
+            describe('a data or annotation property', function() {
                 beforeEach(function() {
                     ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-                    ontologyManagerSvc.isAnnotation.and.returnValue(false);
                 });
                 it('not expanded', function() {
                     this.controller.showDatatypeSelect = false;
@@ -410,14 +409,6 @@ describe('Prop Mapping Overlay directive', function() {
                     expect(this.element.querySelectorAll('.datatype-select-container a').length).toBe(1);
                     expect(this.element.find('iri-select').length).toBe(1);
                 });
-            });
-            it('an annotation property', function() {
-                ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-                ontologyManagerSvc.isAnnotation.and.returnValue(true);
-                scope.$digest();
-                expect(this.element.querySelectorAll('.column-select-container').length).toBe(1);
-                expect(this.element.find('column-select').length).toBe(1);
-                expect(this.element.querySelectorAll('.datatype-select-container').length).toBe(0);
             });
             it('an object property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
