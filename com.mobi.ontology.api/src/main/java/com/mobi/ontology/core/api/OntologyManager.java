@@ -365,6 +365,24 @@ public interface OntologyManager {
     TupleQueryResult getSearchResults(String searchText, RepositoryConnection conn);
 
     /**
+     * Searches the provided ontology & its import closures using the provided Sparql query.
+     *
+     * @param ontology   the Ontology you wish to query.
+     * @param queryString the Sparql query string you want to execute.
+     * @return a Tuple Set with the query results.
+     */
+    TupleQueryResult getTupleQueryResults(Ontology ontology, String queryString);
+
+    /**
+     * Searches the provided ontology & its import closures using the provided Sparql query.
+     *
+     * @param ontology   the Ontology you wish to query.
+     * @param queryString the Sparql query string you want to execute.
+     * @return a model with the query results.
+     */
+    Model getGraphQueryResults(Ontology ontology, String queryString);
+
+    /**
      * Gets the compiled resource of the head Commit on the master Branch for the OntologyRecord specified by the
      * provided Resource.
      *

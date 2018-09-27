@@ -53,9 +53,9 @@
          */
         .directive('classMappingDetails', classMappingDetails);
 
-        classMappingDetails.$inject = ['utilService', 'prefixes', 'mappingManagerService', 'mapperStateService', 'delimitedManagerService'];
+        classMappingDetails.$inject = ['utilService', 'prefixes', 'mappingManagerService', 'mapperStateService', 'delimitedManagerService', 'propertyManagerService'];
 
-        function classMappingDetails(utilService, prefixes, mappingManagerService, mapperStateService, delimitedManagerService) {
+        function classMappingDetails(utilService, prefixes, mappingManagerService, mapperStateService, delimitedManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -67,6 +67,7 @@
                     dvm.mm = mappingManagerService;
                     dvm.dm = delimitedManagerService;
                     dvm.util = utilService;
+                    var pm = propertyManagerService;
 
                     dvm.isInvalid = function(propMapping) {
                         return !!_.find(dvm.state.invalidProps, {'@id': propMapping['@id']});
@@ -87,6 +88,16 @@
                     dvm.getDataValuePreview = function(propMapping) {
                         var firstRowIndex = dvm.dm.containsHeaders ? 1 : 0;
                         return _.get(dvm.dm.dataRows, '[' + firstRowIndex + '][' + dvm.getLinkedColumnIndex(propMapping) + ']', '(None)');
+                    }
+                    dvm.getDatatypePreview = function(propMapping) {
+                        return dvm.util.getBeautifulIRI(dvm.util.getPropertyId(propMapping, prefixes.delim + 'datatypeSpec'));
+                    }
+                    dvm.getLanguagePreview = function(propMapping) {
+                        var languageObj = _.find(pm.languageList, {value: dvm.getLanguageTag(propMapping)});
+                        return languageObj ? languageObj.label : undefined;
+                    }
+                    dvm.getLanguageTag = function(propMapping) {
+                        return dvm.util.getPropertyValue(propMapping, prefixes.delim + 'languageSpec');
                     }
                     dvm.getLinkedClassId = function(propMapping) {
                         return dvm.util.getPropertyId(propMapping, prefixes.delim + 'classMapping');

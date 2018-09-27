@@ -130,22 +130,28 @@
     rdfs:label "Data Mapping"@en ;
     rdfs:comment "An object used to relate a ClassMapping to a Datatype Property on the generated instance."@en .
 
-:datatypeSpec a owl:DatatypeProperty, owl:FunctionalProperty;
+:datatypeSpec a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain :DataMapping ;
     rdfs:range rdf:datatype ;
     rdfs:label "datatype specification"@en ;
     rdfs:comment "A datatype specification indicating what datatype to assign to a data property." .
 
+:languageSpec a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain :DataMapping ;
+    rdfs:range xsd:language ;
+    rdfs:label "language specification"@en ;
+    rdfs:comment "A language specification indicating what language to assign to a data property." .
+
 # Misc.
 
 :hasProperty a owl:ObjectProperty ;
-	rdfs:domain :DataMapping , :ObjectMapping , :PropertyMapping ;
+	rdfs:domain :DataMapping, :ObjectMapping , :PropertyMapping ;
 	rdfs:range rdf:Property ;
     rdfs:label "has property"@en ;
 	rdfs:comment "The Property defines the relationship for the PropertyMapping"@en .
 
 :columnIndex a owl:DatatypeProperty ;
-    rdfs:domain :Cell , :DataMapping , :ObjectMapping ;
+    rdfs:domain :Cell, :DataMapping, :ObjectMapping ;
     rdfs:range xsd:integer ;
     rdfs:label "column index"@en ;
     rdfs:comment "The cells column. Starting at 0."@en .
