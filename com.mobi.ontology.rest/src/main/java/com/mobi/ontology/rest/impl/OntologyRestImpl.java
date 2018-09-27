@@ -30,6 +30,7 @@ import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
+import static com.mobi.rest.util.RestUtils.modelToTrig;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -64,6 +65,7 @@ import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
+import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -83,6 +85,7 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
+import com.mobi.sparql.utils.Query;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
@@ -113,6 +116,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
@@ -955,6 +959,44 @@ public class OntologyRestImpl implements OntologyRest {
             return Response.ok(getUnloadableImportIRIs(ontology)).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response queryOntology(ContainerRequestContext context, String recordIdStr, String queryString,
+                                  String branchIdStr, String commitIdStr) {
+        checkStringParam(queryString, "Parameter 'query' must be set.");
+
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, false).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+
+            String queryType = Query.getQueryType(queryString);
+            switch (queryType) {
+                case "select":
+                    TupleQueryResult tupResults = ontologyManager.getTupleQueryResults(ontology, queryString);
+                    if (tupResults.hasNext()) {
+                        JSONObject json = JSONQueryResults.getResponse(tupResults);
+                        return Response.ok(json, MediaType.APPLICATION_JSON_TYPE).build();
+                    } else {
+                        return Response.noContent().build();
+                    }
+                case "construct":
+                    Model modelResult = ontologyManager.getGraphQueryResults(ontology, queryString);
+                    if (modelResult.size() >= 1) {
+                        String trigStr = modelToTrig(modelResult, sesameTransformer);
+                        return Response.ok(trigStr, MediaType.TEXT_PLAIN_TYPE).build();
+                    } else {
+                        return Response.noContent().build();
+                    }
+                default:
+                    throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
+            }
+        } catch (MalformedQueryException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 

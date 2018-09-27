@@ -32,6 +32,8 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.impl.ListBindingSet;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class TestQueryResult extends TupleQueryResult {
@@ -71,5 +73,13 @@ public class TestQueryResult extends TupleQueryResult {
     @Override
     public BindingSet next() {
         return new SesameBindingSet(new ListBindingSet(this.bindings, this.values));
+    }
+
+    @Override
+    public void forEach(Consumer<? super BindingSet> action) {
+        Objects.requireNonNull(action);
+        if (this.values.size() > 0) {
+            action.accept(new SesameBindingSet(new ListBindingSet(this.bindings, this.values)));
+        }
     }
 }
