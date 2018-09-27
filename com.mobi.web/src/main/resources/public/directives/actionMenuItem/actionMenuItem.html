@@ -4,7 +4,7 @@
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -20,8 +20,4 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="ontology-editor-page row flex-nowrap h-100">
-    <ontology-sidebar></ontology-sidebar>
-    <ontology-tab class="col p-0 remove-min-width" ng-if="!dvm.isDefaultTab()" ng-class="{'up-to-date': dvm.os.listItem.upToDate && !dvm.os.listItem.userBranch}"></ontology-tab>
-    <ontology-default-tab class="col p-0 remove-min-width" ng-if="dvm.isDefaultTab()"></ontology-default-tab>
-</div>
+<a class="action-menu-item dropdown-item"><i class="fa fa-fw {{icon}}"></i> {{displayText}}</a>
