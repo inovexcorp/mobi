@@ -419,6 +419,15 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
     }
 
     @Test
+    public void mapWithMalformedMappingIRITest() throws Exception {
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", "error")
+                .request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
     public void mapCsvWithDefaultsTest() throws Exception {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
@@ -596,6 +605,17 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
     }
 
     @Test
+    public void mapIntoDatasetWithMalformedMappingIRITest() throws Exception {
+        // Setup:
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
+
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", "error")
+                .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
     public void mapIntoDatasetThatIsNotSetTest() throws Exception {
         // Setup:
         when(datasetRecord.getDataset_resource()).thenReturn(Optional.empty());
@@ -713,6 +733,17 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         copyResourceToTemp("test.csv", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", ERROR_IRI)
+                .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void mapIntoOntologyRecordWithMalformedMappingIRITest() throws Exception {
+        // Setup:
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
+
+        Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", "error")
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
