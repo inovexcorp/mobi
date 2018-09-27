@@ -211,7 +211,6 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         conn.clear();
         conn.add(vf.createIRI(DATASET_IRI), vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), vf.createIRI(NAMED_GRAPH_IRI));
         conn.close();
-        reset(dataset, datasetRecord, converter);
 
         when(transformer.mobiModel(any(Model.class)))
                 .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, Model.class)));
