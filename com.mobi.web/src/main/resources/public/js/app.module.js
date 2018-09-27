@@ -120,7 +120,6 @@
 
             /* Custom Modules */
             'analytics',
-            'activityLog',
             'catalog',
             'datasets',
             'discover',
