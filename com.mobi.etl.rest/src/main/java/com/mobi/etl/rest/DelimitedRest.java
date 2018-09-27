@@ -176,10 +176,10 @@ public interface DelimitedRest {
      * @return a Response indicating the success of the request
      */
     @POST
-    @Path("{documentName}/mapToOntology")
+    @Path("{documentName}/map-to-ontology")
     @RolesAllowed("user")
     @ApiOperation("ETL an uploaded delimited document using an uploaded Mapping file and commit it to an"
-            + "OntologyRecord")
+            + " OntologyRecord")
     Response etlFileOntology(@Context ContainerRequestContext context,
                              @PathParam("documentName") String fileName,
                              @QueryParam("mappingRecordIRI") String mappingRecordIRI,
