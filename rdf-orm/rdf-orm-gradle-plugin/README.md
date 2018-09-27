@@ -13,7 +13,7 @@ buildscript {
   }
 }
 
-// A custom task of the ORM Gradl eplugin type
+// A custom task of the ORM Gradle plugin type
 task generateOntologies(type: OrmGenerationTask) {
   // The location you want to write your Java classes to
   outputLocation = file("$buildDir/generated-sources/java")
