@@ -61,11 +61,12 @@
         return {
             restrict: 'E',
             replace: true,
-            controllerAs: 'dvm',
-            scope: {
+            scope: {},
+            bindToController: {
                 activity: '<',
                 entities: '<'
             },
+            controllerAs: 'dvm',
             controller: ['$scope', function($scope) {
                 var dvm = this;
                 var um = userManagerService;
@@ -73,13 +74,13 @@
                 var pm = provManagerService;
                 dvm.username = '(None)';
                 dvm.word = 'affected';
-                dvm.entities = '(None)';
+                dvm.entitiesStr = '(None)';
 
-                setUsername(util.getPropertyId($scope.activity, prefixes.prov + 'wasAssociatedWith'));
-                setWord($scope.activity);
-                setEntities($scope.activity);
+                setUsername(util.getPropertyId(dvm.activity, prefixes.prov + 'wasAssociatedWith'));
+                setWord(dvm.activity);
+                setEntities(dvm.activity);
 
-                $scope.$watch('activity', newValue => {
+                $scope.$watch('dvm.activity', newValue => {
                     setUsername(util.getPropertyId(newValue, prefixes.prov + 'wasAssociatedWith'));
                     setWord(newValue);
                     setEntities(newValue);
@@ -95,10 +96,10 @@
                         }
                     });
                     var entityTitles = _.map(_.get(activity, "['" + pred + "']", []), idObj => {
-                        var entity = _.find($scope.entities, {'@id': idObj['@id']});
+                        var entity = _.find(dvm.entities, {'@id': idObj['@id']});
                         return util.getDctermsValue(entity, 'title');
                     });
-                    dvm.entities = _.join(entityTitles, ', ').replace(/,(?!.*,)/gmi, ' and') || '(None)';
+                    dvm.entitiesStr = _.join(entityTitles, ', ').replace(/,(?!.*,)/gmi, ' and') || '(None)';
                 }
                 function setUsername(iri) {
                     if (iri) {
@@ -117,7 +118,7 @@
                     });
                 }
             }],
-            templateUrl: 'modules/activityLog/directives/activityTitle/activityTitle.html'
+            templateUrl: 'modules/home/directives/activityTitle/activityTitle.html'
         };
     }
 })();

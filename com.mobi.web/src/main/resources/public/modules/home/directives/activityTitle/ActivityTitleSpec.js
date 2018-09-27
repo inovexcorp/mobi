@@ -65,18 +65,17 @@ describe('Activity Title directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
+    describe('controller bound variable', function() {
         beforeEach(function() {
             this.compile();
-            this.isolatedScope = this.element.isolateScope();
         });
         it('activity is one way bound', function() {
-            this.isolatedScope.activity = {};
+            this.controller.activity = {};
             scope.$digest();
             expect(scope.activity).toEqual({'@type': [], pred: [{'@id': 'entity'}, {'@id': 'entity1'}]});
         });
         it('entities is one way bound', function() {
-            this.isolatedScope.entities = [{}];
+            this.controller.entities = [{}];
             scope.$digest();
             expect(scope.entities).toEqual([{'@id': 'entity'}, {'@id': 'entity1'}]);
         });
@@ -121,23 +120,21 @@ describe('Activity Title directive', function() {
         });
         describe('entities if the activity is', function() {
             beforeEach(function() {
-                utilSvc.getDctermsValue.and.callFake(function(obj) {
-                    return obj['@id'];
-                });
+                utilSvc.getDctermsValue.and.callFake(obj => obj['@id']);
             });
             it('a supported type', function() {
                 scope.activity['@type'].push('type');
                 this.compile();
-                expect(this.controller.entities).toEqual('entity and entity1');
+                expect(this.controller.entitiesStr).toEqual('entity and entity1');
             });
             it('more than one supported type', function() {
                 scope.activity['@type'] = ['type', 'type1'];
                 this.compile();
-                expect(this.controller.entities).toEqual('entity and entity1');
+                expect(this.controller.entitiesStr).toEqual('entity and entity1');
             });
             it('unsupported type', function() {
                 this.compile();
-                expect(this.controller.entities).toEqual('(None)');
+                expect(this.controller.entitiesStr).toEqual('(None)');
             });
         });
     });
@@ -160,9 +157,9 @@ describe('Activity Title directive', function() {
             expect(this.element.html()).toContain(this.controller.username);
         });
         it('with the entities for the activity', function() {
-            this.controller.entities = '';
+            this.controller.entitiesStr = '';
             scope.$digest();
-            expect(this.element.html()).toContain(this.controller.entities);
+            expect(this.element.html()).toContain(this.controller.entitiesStr);
         });
     });
 });
