@@ -356,6 +356,20 @@ describe('Mapping Manager service', function() {
             expect(_.isArray(this.classMapping[prefixes.delim + 'dataProperty'])).toBe(true);
             expect(this.classMapping[prefixes.delim + 'dataProperty']).toContain({'@id': result['@id']});
         });
+        it('if the column index and datatype specification properties exist', function() {
+            ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
+            this.propObj = {'@id': 'propId'};
+            ontologyManagerSvc.getEntity.and.returnValue(this.propObj);
+            var result = mappingManagerSvc.addDataProp(this.mapping, [], this.classMapping['@id'], 'propId', 0, 'datatype');
+            expect(this.mapping).toContain(result);
+            expect(uuidSvc.v4).toHaveBeenCalled();
+            expect(result['@type']).toContain(prefixes.delim + 'DataMapping');
+            expect(result[prefixes.delim + 'columnIndex']).toEqual([{'@value': '0'}]);
+            expect(result[prefixes.delim + 'datatypeSpec']).toEqual([{'@id': 'datatype'}]);
+            expect(result[prefixes.delim + 'hasProperty']).toEqual([{'@id': 'propId'}]);
+            expect(_.isArray(this.classMapping[prefixes.delim + 'dataProperty'])).toBe(true);
+            expect(this.classMapping[prefixes.delim + 'dataProperty']).toContain({'@id': result['@id']});
+        });
     });
     describe('should add an object property mapping to a mapping', function() {
         beforeEach(function() {
