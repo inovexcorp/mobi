@@ -31,6 +31,8 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import java.io.InputStream;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -161,4 +163,27 @@ public interface DelimitedRest {
                      @QueryParam("datasetRecordIRI") String datasetRecordIRI,
                      @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
                      @DefaultValue(",") @QueryParam("separator") String separator);
+
+    /**
+     * Maps the data in an uploaded delimited document into RDF using a MappingRecord's Mapping and
+     * adds it as a commit onto the specified OntologyRecord. The file must be present in the data/tmp/ directory.
+     *
+     * @param fileName the name of the delimited document in the data/tmp/ directory
+     * @param mappingRecordIRI the id of the MappingRecord
+     * @param ontologyRecordIRI the id of the DatasetRecord
+     * @param containsHeaders whether the delimited file has headers
+     * @param separator the character the columns are separated by if it is a CSV
+     * @return a Response indicating the success of the request
+     */
+    @POST
+    @Path("{documentName}/map-to-ontology")
+    @RolesAllowed("user")
+    @ApiOperation("ETL an uploaded delimited document using an uploaded Mapping file and commit it to an"
+            + " OntologyRecord")
+    Response etlFileOntology(@Context ContainerRequestContext context,
+                             @PathParam("documentName") String fileName,
+                             @QueryParam("mappingRecordIRI") String mappingRecordIRI,
+                             @QueryParam("ontologyRecordIRI") String ontologyRecordIRI,
+                             @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
+                             @DefaultValue(",") @QueryParam("separator") String separator);
 }
