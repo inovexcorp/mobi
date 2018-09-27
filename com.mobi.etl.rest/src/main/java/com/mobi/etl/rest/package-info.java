@@ -1,4 +1,4 @@
-@Version("1.0.2.${build}")
+@Version("1.1.0.${build}")
 
 package com.mobi.etl.rest;
 
