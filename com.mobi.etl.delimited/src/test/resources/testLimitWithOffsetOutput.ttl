@@ -1,5 +1,5 @@
 <http://mobi.com/data/uhtc/material/abc> a <http://mobi.com/ontologies/uhtc/Material> ;
-	<http://mobi.com/ontologies/uhtc/formula> "HfC" ;
+	<http://mobi.com/ontologies/uhtc/formula> "HfC"@fr ;
 	<http://mobi.com/ontologies/uhtc/density> "12.76"^^<http://www.w3.org/2001/XMLSchema#double> ;
 	<http://mobi.com/ontologies/uhtc/latticeParameter> "4.638" ;
 	<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> .
@@ -7,7 +7,7 @@
 <http://mobi.com/data/uhtc/crystalstructure/FCC> a <http://mobi.com/ontologies/uhtc/CrystalStructure> .
 
 <http://mobi.com/data/uhtc/material/bcd> a <http://mobi.com/ontologies/uhtc/Material> ;
-	<http://mobi.com/ontologies/uhtc/formula> "HfN" ;
+	<http://mobi.com/ontologies/uhtc/formula> "HfN"@fr ;
 	<http://mobi.com/ontologies/uhtc/density> "13.9"^^<http://www.w3.org/2001/XMLSchema#double> ;
 	<http://mobi.com/ontologies/uhtc/latticeParameter> "4.525" ;
 	<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> .

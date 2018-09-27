@@ -26,6 +26,7 @@ describe('Language Select directive', function() {
     beforeEach(function() {
         module('templates');
         module('languageSelect');
+        mockPropertyManager();
         injectHighlightFilter();
         injectTrustedFilter();
 
