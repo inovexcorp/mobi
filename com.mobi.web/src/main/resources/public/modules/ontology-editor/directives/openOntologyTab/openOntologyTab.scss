@@ -4,5 +4,9 @@
 .open-ontology-tab {
     .ontology-info .details {
         cursor: pointer;
+
+        .header h3 {
+            max-width: 75%;
+        }
     }
 }
