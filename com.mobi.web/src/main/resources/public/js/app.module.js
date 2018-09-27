@@ -92,6 +92,7 @@
             'iriSelect',
             'infoMessage',
             'keywordSelect',
+            'languageSelect',
             'materialTab',
             'materialTabset',
             'pagination',

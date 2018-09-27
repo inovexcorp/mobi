@@ -206,6 +206,12 @@ describe('Prop Mapping Overlay directive', function() {
                 expect(this.controller.classMappings).toEqual([]);
             });
         });
+        it('should check if the datatype is a lang string', function() {
+            this.controller.datatype = 'notLangString';
+            expect(this.controller.isLangString()).toBe(false);
+            this.controller.datatype = prefixes.rdf + 'langString';
+            expect(this.controller.isLangString()).toBe(true);
+        });
         it('should clear the datatype', function() {
             this.controller.showDatatypeSelect = true;
             this.controller.datatype = 'datatype';
@@ -267,23 +273,39 @@ describe('Prop Mapping Overlay directive', function() {
                         this.controller.set();
                         expect(mapperStateSvc.addClassMapping).not.toHaveBeenCalled();
                         expect(mapperStateSvc.addObjectMapping).not.toHaveBeenCalled();
-                        expect(mapperStateSvc.addDataMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.controller.selectedColumn, undefined);
+                        expect(mapperStateSvc.addDataMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.controller.selectedColumn, undefined, undefined);
                         expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
                         expect(mapperStateSvc.newProp).toBe(false);
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
                     });
-                    it('with a manual datatype set', function() {
-                        this.controller.datatype = prefixes.xsd + 'double';
-                        this.controller.set();
-                        expect(mapperStateSvc.addClassMapping).not.toHaveBeenCalled();
-                        expect(mapperStateSvc.addObjectMapping).not.toHaveBeenCalled();
-                        expect(mapperStateSvc.addDataMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.controller.selectedColumn, 'xsd:double');
-                        expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
-                        expect(mapperStateSvc.newProp).toBe(false);
-                        expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                        expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                    describe('with a manual datatype set', function() {
+
+                        it('that is not a lang string', function() {
+                            this.controller.datatype = prefixes.xsd + 'double';
+                            this.controller.set();
+                            expect(mapperStateSvc.addClassMapping).not.toHaveBeenCalled();
+                            expect(mapperStateSvc.addObjectMapping).not.toHaveBeenCalled();
+                            expect(mapperStateSvc.addDataMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.controller.selectedColumn, 'xsd:double', undefined);
+                            expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
+                            expect(mapperStateSvc.newProp).toBe(false);
+                            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                            expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                        });
+                        it('that is a lang string', function() {
+                            this.controller.datatype = prefixes.rdf + 'langString';
+                            this.controller.language = 'en';
+                            this.controller.set();
+                            expect(mapperStateSvc.addClassMapping).not.toHaveBeenCalled();
+                            expect(mapperStateSvc.addObjectMapping).not.toHaveBeenCalled();
+                            expect(mapperStateSvc.addDataMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.controller.selectedColumn, 'rdf:langString', 'en');
+                            expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
+                            expect(mapperStateSvc.newProp).toBe(false);
+                            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                            expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                        });
                     });
+
                 });
             });
             describe('if a property mapping is being edited', function() {
@@ -400,14 +422,31 @@ describe('Prop Mapping Overlay directive', function() {
                     expect(this.element.querySelectorAll('.datatype-select-container a').length).toBe(1);
                     expect(this.element.find('iri-select').length).toBe(0);
                 });
-                it('expanded', function() {
-                    this.controller.showDatatypeSelect = true;
-                    scope.$digest();
-                    expect(this.element.querySelectorAll('.column-select-container').length).toBe(1);
-                    expect(this.element.find('column-select').length).toBe(1);
-                    expect(this.element.querySelectorAll('.datatype-select-container').length).toBe(1);
-                    expect(this.element.querySelectorAll('.datatype-select-container a').length).toBe(1);
-                    expect(this.element.find('iri-select').length).toBe(1);
+                describe('expanded', function() {
+                    beforeEach(function() {
+                        this.controller.showDatatypeSelect = true;
+                    });
+                    it('and is not a lang string', function () {
+                        scope.$digest();
+                        expect(this.element.querySelectorAll('.column-select-container').length).toBe(1);
+                        expect(this.element.find('column-select').length).toBe(1);
+                        expect(this.element.querySelectorAll('.datatype-select-container').length).toBe(1);
+                        expect(this.element.querySelectorAll('.datatype-select-container a').length).toBe(1);
+                        expect(this.element.find('iri-select').length).toBe(1);
+                        expect(this.element.querySelectorAll('.language-select-container').length).toBe(0);
+                        expect(this.element.find('language-select').length).toBe(0);
+                    });
+                    it('and is a lang string', function () {
+                        this.controller.datatype = prefixes.rdf + 'langString';
+                        scope.$digest();
+                        expect(this.element.querySelectorAll('.column-select-container').length).toBe(1);
+                        expect(this.element.find('column-select').length).toBe(1);
+                        expect(this.element.querySelectorAll('.datatype-select-container').length).toBe(1);
+                        expect(this.element.querySelectorAll('.datatype-select-container a').length).toBe(1);
+                        expect(this.element.find('iri-select').length).toBe(1);
+                        expect(this.element.querySelectorAll('.language-select-container').length).toBe(1);
+                        expect(this.element.find('language-select').length).toBe(1);
+                    });
                 });
             });
             it('an object property', function() {
