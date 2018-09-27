@@ -184,7 +184,7 @@ public class FullSimpleOntologyTest {
         Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
 
         Set<Ontology> ontologies = ont.getImportsClosure();
-        assertEquals(4, ontologies.size());
+        assertEquals(5, ontologies.size());
     }*/
 
     @Test

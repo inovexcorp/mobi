@@ -45,10 +45,12 @@ import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
+import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
+import com.mobi.query.api.BindingSet;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -77,6 +79,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -843,5 +846,17 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
             assertEquals("http://www.w3.org/2002/07/owl#Class", Bindings.requiredResource(b, "type").stringValue());
         });
         assertEquals(0, entities.size());
+    }
+
+    @Test
+    public void testGetTupleQueryResults() throws Exception {
+        List<BindingSet> result = QueryResults.asList(manager.getTupleQueryResults(ontology, "select distinct ?s where { ?s ?p ?o . }"));
+        assertEquals(result.size(), 18);
+    }
+
+    @Test
+    public void testGetGraphQueryResults() throws Exception {
+        Model result = manager.getGraphQueryResults(ontology, "construct {?s ?p ?o} where { ?s ?p ?o . }");
+        assertEquals(result.size(), ontology.asModel(MODEL_FACTORY).size());
     }
 }
