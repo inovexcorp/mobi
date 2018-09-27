@@ -322,7 +322,7 @@ public class DelimitedRestImpl implements DelimitedRest {
         Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() -> ErrorUtils.sendError(
                 "OntologyRecord " + ontologyRecordIRI + " master branch cannot be found.", Response.Status.BAD_REQUEST));
         versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), masterBranchId, user,
-                "Mapping data from " + fileName, data, null);
+                "Mapping data from " + mappingRecordIRI, data, null);
 
         // Remove temp file
         removeTempFile(fileName);
