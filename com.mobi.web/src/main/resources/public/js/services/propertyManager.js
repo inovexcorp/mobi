@@ -173,6 +173,30 @@
                 {iri: prefixes.owl + 'inverseOf', valuesKey: 'objectProperties'},
                 {iri: prefixes.owl + 'disjointWith', valuesKey: 'objectProperties'}
             ];
+            /**
+             * @ngdoc property
+             * @name languageList
+             * @propertyOf propertyManager.service:propertyManagerService
+             * @type {Object[]}
+             *
+             * @description
+             * `languageList` holds an array of objects representing supported language tags and their english
+             * representations
+             */
+            self.languageList = [
+                {label: 'English', value: 'en'},
+                {label: 'French', value: 'fr'},
+                {label: 'Spanish', value: 'es'},
+                {label: 'Arabic', value: 'ar'},
+                {label: 'Japanese', value: 'ja'},
+                {label: 'Italian', value: 'it'},
+                {label: 'German', value: 'de'},
+                {label: 'Chinese', value: 'zh'},
+                {label: 'Portuguese', value: 'pt'},
+                {label: 'Russian', value: 'ru'},
+                {label: 'Hindi', value: 'hi'},
+                {label: 'Vietnamese', value: 'vi'}
+            ];
 
             /**
              * @ngdoc method
