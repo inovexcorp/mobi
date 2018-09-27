@@ -567,10 +567,10 @@ public class DelimitedRestImpl implements DelimitedRest {
         try {
             mappingOpt = mappingManager.retrieveMapping(vf.createIRI(mappingRecordIRI));
         } catch (IllegalArgumentException e) {
-            ErrorUtils.sendError("Mapping " + mappingRecordIRI + " is not a valid IRI", Response.Status.BAD_REQUEST);
+            ErrorUtils.sendError("Mapping " + mappingRecordIRI + " does not exist", Response.Status.BAD_REQUEST);
         }
         MappingWrapper mapping = mappingOpt.orElseThrow(() ->
-                ErrorUtils.sendError("Mapping " + mappingRecordIRI + " does not exist", Response.Status.BAD_REQUEST));
+                ErrorUtils.sendError("Mapping " + mappingRecordIRI + " could not be retrieved", Response.Status.BAD_REQUEST));
         return mapping.getModel();
     }
 
