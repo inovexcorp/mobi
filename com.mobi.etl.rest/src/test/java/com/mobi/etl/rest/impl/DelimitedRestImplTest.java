@@ -88,6 +88,7 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -262,6 +263,11 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         when(ontologyRecord.getResource()).thenReturn(vf.createIRI(ONTOLOGY_RECORD_IRI));
         when(versioningManager.commit(eq(catalogId), eq(vf.createIRI(ONTOLOGY_RECORD_IRI)), eq(vf.createIRI(MASTER_BRANCH_IRI)),
                 eq(user), any(String.class), any(com.mobi.rdf.api.Model.class), eq(null))).thenReturn(null);
+    }
+
+    @AfterMethod
+    public void resetMocks() {
+        reset(catalogManager, versioningManager);
     }
 
     @Test
