@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Activity List directive', function() {
+describe('Activity Card directive', function() {
     var $compile, scope, $q, provManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
-        module('activityList');
+        module('activityCard');
         mockProvManager();
         mockUtil();
         mockPrefixes();
@@ -56,9 +56,9 @@ describe('Activity List directive', function() {
 
     beforeEach(function compile() {
         this.compile = function() {
-            this.element = $compile(angular.element('<activity-list></activity-list>'))(scope);
+            this.element = $compile(angular.element('<activity-card></activity-card>'))(scope);
             scope.$digest();
-            this.controller = this.element.controller('activityList');
+            this.controller = this.element.controller('activityCard');
         }
     });
 
@@ -76,22 +76,20 @@ describe('Activity List directive', function() {
         it('unless an error occurs', function() {
             provManagerSvc.getActivities.and.returnValue($q.reject('Error message'));
             this.compile();
-            expect(provManagerSvc.getActivities).toHaveBeenCalledWith({pageIndex: this.controller.currentPage - 1, limit: this.controller.limit}, this.controller.id);
+            expect(provManagerSvc.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: this.controller.limit}, this.controller.id);
             expect(this.controller.activities).toEqual([]);
             expect(this.controller.entities).toEqual([]);
             expect(this.controller.totalSize).toEqual(0);
-            expect(this.controller.currentPage).toEqual(1);
-            expect(this.controller.limit).toEqual(50);
+            expect(this.controller.limit).toEqual(10);
             expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
         });
         it('successfully', function() {
             this.compile();
-            expect(provManagerSvc.getActivities).toHaveBeenCalledWith({pageIndex: this.controller.currentPage - 1, limit: this.controller.limit}, this.controller.id);
+            expect(provManagerSvc.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: this.controller.limit}, this.controller.id);
             expect(this.controller.activities).toEqual(this.response.data.activities);
             expect(this.controller.entities).toEqual(this.response.data.entities);
             expect(this.controller.totalSize).toEqual(this.headers['x-total-count']);
-            expect(this.controller.currentPage).toEqual(1);
-            expect(this.controller.limit).toEqual(50);
+            expect(this.controller.limit).toEqual(10);
             expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
         });
     });
@@ -99,22 +97,29 @@ describe('Activity List directive', function() {
         beforeEach(function() {
             this.compile();
         });
-        describe('should get a page of Activities', function() {
+        describe('should set the page of Activities', function() {
             it('successfully', function() {
                 provManagerSvc.getActivities.and.returnValue($q.when(this.response));
-                this.controller.getPage();
+                this.controller.setPage();
                 scope.$apply();
-                expect(provManagerSvc.getActivities).toHaveBeenCalledWith({pageIndex: this.controller.currentPage - 1, limit: this.controller.limit}, this.controller.id);
+                expect(provManagerSvc.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: this.controller.limit}, this.controller.id);
                 expect(this.controller.activities).toEqual(this.response.data.activities);
                 expect(this.controller.entities).toEqual(this.response.data.entities);
                 expect(this.controller.totalSize).toEqual(this.headers['x-total-count']);
             });
             it('unless an error occurs', function() {
                 provManagerSvc.getActivities.and.returnValue($q.reject('Error message'));
-                this.controller.getPage();
+                this.controller.setPage();
                 scope.$apply();
-                expect(provManagerSvc.getActivities).toHaveBeenCalledWith({pageIndex: this.controller.currentPage - 1, limit: this.controller.limit}, this.controller.id);
+                expect(provManagerSvc.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: this.controller.limit}, this.controller.id);
             });
+        });
+        it('should load more activities', function() {
+            var limit = this.controller.limit;
+            spyOn(this.controller, 'setPage');
+            this.controller.loadMore();
+            expect(this.controller.limit).toEqual(limit + 10);
+            expect(this.controller.setPage).toHaveBeenCalled();
         });
         it('should get the time stamp of an Activity', function() {
             utilSvc.getPropertyValue.and.returnValue('2017-01-01T00:00:00');
@@ -129,27 +134,26 @@ describe('Activity List directive', function() {
             this.compile();
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('activity-list')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-8').length).toBe(1);
+            expect(this.element.hasClass('activity-card')).toBe(true);
+            expect(this.element.hasClass('card')).toBe(true);
+            expect(this.element.querySelectorAll('.card-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.card-body').length).toBe(1);
         });
-        it('with block', function() {
-            expect(this.element.find('block').length).toBe(1);
+        it('with a .card-header-tabs', function() {
+            expect(this.element.querySelectorAll('.card-header-tabs').length).toBe(1);
         });
-        it('with block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
-        });
-        it('with block-footer', function() {
-            expect(this.element.find('block-footer').length).toBe(1);
-        });
-        it('with a paging-details', function() {
-            expect(this.element.find('paging-details').length).toBe(1);
-        });
-        it('with a pagination', function() {
-            expect(this.element.find('pagination').length).toBe(1);
+        it('with a .nav-item', function() {
+            expect(this.element.querySelectorAll('.card-header-tabs .nav-item').length).toBe(1);
         });
         it('depending on how many activities there are', function() {
-            expect(this.element.querySelectorAll('block-content .activity').length).toBe(this.controller.activities.length);
+            scope.$apply();
+            expect(this.element.querySelectorAll('.activity').length).toBe(this.controller.activities.length);
+            expect(this.element.querySelectorAll('.btn').length).toBe(0);
+
+            this.controller.totalSize = 10;
+            scope.$digest();
+            expect(this.element.querySelectorAll('.activity').length).toBe(this.controller.activities.length);
+            expect(this.element.querySelectorAll('.btn').length).toBe(1);
         });
     });
 });

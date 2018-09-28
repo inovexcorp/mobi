@@ -4,7 +4,7 @@
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -20,6 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="activity-title">
-    <span class="username">{{dvm.username}}</span> <span class="word">{{dvm.word}}</span> <span class="entities">{{dvm.entities}}</span>
+<div class="paging d-flex justify-content-between align-items-center">
+    <div class="paging-details pl-2">
+        <p class="mb-0">Showing {{(dvm.total > 0 ? (((dvm.currentPage - 1) * dvm.limit) + 1) : 0) | number}} to {{Math.min(dvm.total, dvm.currentPage * dvm.limit) | number}} of {{dvm.total | number}}</p>
+    </div>
+    <ul class="justify-content-center bg-white mb-0" uib-pagination total-items="dvm.total" ng-model="dvm.currentPage" previous-text="&lsaquo;" next-text="&rsaquo;" max-size="1" items-per-page="dvm.limit" ng-change="dvm.onChange()"></ul>
 </div>
