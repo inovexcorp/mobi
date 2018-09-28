@@ -233,15 +233,40 @@
             self.displayDownloadMappingOverlay = false;
             /**
              * @ngdoc method
-             * @name displayRunMappingOverlay
+             * @name displayRunMappingDownloadOverlay
              * @propertyOf mapperState.service:mapperStateService
              * @type {Boolean}
              *
              * @description
-             * `displayRunMappingOverlay` holds a boolean indicating whether or not the
-             * {@link runMappingOverlay.directive:runMappingOverlay run mapping overlay} should be shown.
+             * `displayRunMappingDownloadOverlay` holds a boolean indicating whether or not the
+             * {@link runMappingDownloadOverlay.directive:runMappingDownloadOverlay run mapping download overlay} should be
+             * shown.
              */
-            self.displayRunMappingOverlay = false;
+            self.displayRunMappingDownloadOverlay = false;
+            /**
+             * @ngdoc method
+             * @name displayRunMappingDatasetOverlay
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {Boolean}
+             *
+             * @description
+             * `displayRunMappingDatasetOverlay` holds a boolean indicating whether or not the
+             * {@link runMappingDatasetOverlay.directive:runMappingDatasetOverlay run mapping dataset overlay} should be
+             * shown.
+             */
+            self.displayRunMappingDatasetOverlay = false;
+            /**
+             * @ngdoc method
+             * @name displayRunMappingOntologyOverlay
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {Boolean}
+             *
+             * @description
+             * `displayRunMappingOntologyOverlay` holds a boolean indicating whether or not the
+             * {@link runMappingOntologyOverlay.directive:runMappingOntologyOverlay run mapping ontology overlay} should be
+             * shown.
+             */
+            self.displayRunMappingOntologyOverlay = false;
             /**
              * @ngdoc property
              * @name displayMappingConfigOverlay

@@ -26,16 +26,16 @@
     angular
         /**
          * @ngdoc overview
-         * @name runMappingOverlay
+         * @name runMappingDatasetOverlay
          *
          * @description
-         * The `runMappingOverlay` module only provides the `runMappingOverlay` directive which creates
-         * an overlay with settings for the results of running a mapping.
+         * The `runMappingDatasetOverlay` module only provides the `runMappingDatasetOverlay` directive which creates
+         * an overlay with settings for uploading a mapping into a dataset.
          */
-        .module('runMappingOverlay', [])
+        .module('runMappingDatasetOverlay', [])
         /**
          * @ngdoc directive
-         * @name runMappingOverlay.directive:runMappingOverlay
+         * @name runMappingDatasetOverlay.directive:runMappingDatasetOverlay
          * @scope
          * @restrict E
          * @requires $filter
@@ -43,21 +43,19 @@
          * @requires delimitedManager.service:delimitedManagerService
          * @requires datasetManager.service:datasetManagerService
          * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
          *
          * @description
-         * `runMappingOverlay` is a directive that creates an overlay containing a configuration settings
+         * `runMappingDatasetOverlay` is a directive that creates an overlay containing a configuration settings
          * for the result of running the currently selected {mapperState.service:mapperStateService#mapping mapping}
          * against the uploaded {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}.
-         * This includes a {@link textInput.directive:textInput text input} for the file name of the downloaded
-         * mapped data and a {@link mapperSerializationSelect.directive:mapperSerializationSelect mapperSerializationSelect}
-         * for the RDF format of the mapped data. The directive is replaced by the contents of its template.
+         * This includes a ui-select to determine which dataset to upload the results of a mapping into. The directive
+         * is replaced by the contents of its template.
          */
-        .directive('runMappingOverlay', runMappingOverlay);
+        .directive('runMappingDatasetOverlay', runMappingDatasetOverlay);
 
-        runMappingOverlay.$inject = ['$filter', 'mapperStateService', 'delimitedManagerService', 'datasetManagerService', 'utilService', 'prefixes'];
+        runMappingDatasetOverlay.$inject = ['$filter', 'mapperStateService', 'delimitedManagerService', 'datasetManagerService', 'utilService'];
 
-        function runMappingOverlay($filter, mapperStateService, delimitedManagerService, datasetManagerService, utilService, prefixes) {
+        function runMappingDatasetOverlay($filter, mapperStateService, delimitedManagerService, datasetManagerService, utilService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -69,10 +67,8 @@
                     var state = mapperStateService;
                     var dm = delimitedManagerService;
                     dvm.util = utilService;
-                    dvm.fileName = $filter('camelCase')(state.mapping.record.title, 'class');
-                    dvm.format = 'turtle';
                     dvm.errorMessage = '';
-                    dvm.runMethod = 'download';
+                    dvm.datasetRecordIRI = '';
                     dvm.datasetRecords = [];
 
                     dam.getDatasetRecords().then(response => {
@@ -87,7 +83,7 @@
                         }
                     }
                     dvm.cancel = function() {
-                        state.displayRunMappingOverlay = false;
+                        state.displayRunMappingDatasetOverlay = false;
                     }
 
                     function onError(errorMessage) {
@@ -95,22 +91,17 @@
                     }
                     function runMapping(id) {
                         state.mapping.record.id = id;
-                        if (dvm.runMethod === 'download') {
-                            dm.mapAndDownload(id, dvm.format, dvm.fileName);
-                            reset();
-                        } else {
-                            dm.mapAndUpload(id, dvm.datasetRecordIRI).then(reset, onError);
-                        }
+                        dm.mapAndUpload(id, dvm.datasetRecordIRI).then(reset, onError);
                     }
                     function reset() {
                         state.step = state.selectMappingStep;
                         state.initialize();
                         state.resetEdit();
                         dm.reset();
-                        state.displayRunMappingOverlay = false;
+                        state.displayRunMappingDatasetOverlay = false;
                     }
                 },
-                templateUrl: 'modules/mapper/directives/runMappingOverlay/runMappingOverlay.html'
+                templateUrl: 'modules/mapper/directives/runMappingDatasetOverlay/runMappingDatasetOverlay.html'
             }
         }
 })();

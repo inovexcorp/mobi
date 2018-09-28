@@ -379,6 +379,7 @@ function mockDelimitedManager() {
             });
             this.mapAndDownload = jasmine.createSpy('mapAndDownload');
             this.mapAndUpload = jasmine.createSpy('mapAndUpload').and.returnValue($q.when());
+            this.mapAndCommit = jasmine.createSpy('mapAndUpload').and.returnValue($q.when());
             this.reset = jasmine.createSpy('reset');
             this.getHeader = jasmine.createSpy('getHeader').and.returnValue('');
         });

@@ -290,6 +290,33 @@
 
             /**
              * @ngdoc method
+             * @name mapAndCommit
+             * @methodOf delimitedManager.service:delimitedManagerService
+             *
+             * @description
+             * Calls the POST /mobirest/delimited-files/{fileName}/map-to-ontology to commit the data of an uploaded delimited file
+             * using a saved Mapping identified by the passed IRI on the Ontology associated with the OntologyRecord
+             * identified by the passed IRI. Returns a Promise indicating the success of the request.
+             *
+             * @param {string} mappingIRI the IRI of a saved Mapping
+             * @param {string} ontologyRecordIRI the IRI of a OntologyRecord
+             * @return {Promise} A Promise that resolves if the upload was successful; rejects with an error message otherwise
+             */
+            self.mapAndCommit = function(mappingRecordIRI, ontologyRecordIRI) {
+                var config = {
+                    params: {
+                        mappingRecordIRI,
+                        ontologyRecordIRI,
+                        containsHeaders: self.containsHeaders,
+                        separator: self.separator
+                    }
+                };
+                return $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map-to-ontology', null, config)
+                    .then(response => response.data, util.rejectError);
+            }
+
+            /**
+             * @ngdoc method
              * @name getHeader
              * @methodOf delimitedManager.service:delimitedManagerService
              *

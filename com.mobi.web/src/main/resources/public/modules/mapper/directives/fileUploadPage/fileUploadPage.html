@@ -42,7 +42,15 @@
             </block-content>
             <block-footer>
                 <button class="btn float-left" ng-click="dvm.cancel()">Cancel</button>
-                <button class="btn btn-primary float-right" ng-click="dvm.state.editMapping ? dvm.edit() : dvm.state.displayRunMappingOverlay = true" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)">{{dvm.state.editMapping ? 'Continue' : 'Run'}}</button>
+                <button ng-if="dvm.state.editMapping" class="btn btn-primary float-right continue-btn" ng-click="dvm.edit()" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)">Continue</button>
+                <div ng-if="!dvm.state.editMapping" class="btn-group dropup float-right">
+                    <button type="button" class="btn btn-primary dropdown-toggle run-btn" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Run Mapping</button>
+                    <div class="dropdown-menu">
+                        <button class="dropdown-item run-download" type="button" ng-click="dvm.state.displayRunMappingDownloadOverlay = true">Download</button>
+                        <button class="dropdown-item run-dataset" type="button" ng-click="dvm.state.displayRunMappingDatasetOverlay = true">Upload to Dataset</button>
+                        <button class="dropdown-item run-ontology" type="button" ng-click="dvm.state.displayRunMappingOntologyOverlay = true">Commit to Ontology</button>
+                    </div>
+                </div>
             </block-footer>
         </block>
     </div>
