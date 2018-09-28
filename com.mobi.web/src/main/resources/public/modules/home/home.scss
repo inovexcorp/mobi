@@ -2,86 +2,20 @@
 @import "./src/main/resources/public/css/variables";
 
 .home {
-    max-height: 100%;
-    overflow-x: hidden;
-    overflow-y: scroll;
-    text-align: center;
-    
-    .main-logo {
-        height: 200px;
-        padding: 25px;
+    .welcome-banner {
+        overflow: hidden;
     }
-
-    .lead {
-        margin: 0;
-        padding: .3em 8em 3em;
-        text-align: center;
+    .image-text {
+        z-index: 10;
     }
-
-    .description {
-        font-size: 1.125em;
-
-        p {
-            margin: 0;
-        }
+    .image-container, .image-overlay {
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: 0;
     }
-
-    @-webkit-keyframes webkitFadeIn {
-        0% {
-            opacity: 0;
-            -webkit-transform: scale(.1);
-        }
-        85% {
-            opacity:1;
-            -webkit-transform: scale(1.05);
-
-        }
-        100% {
-            -webkit-transform: scale(1);
-        }
-    }
-
-    @keyframes FadeIn {
-        0% {
-            opacity: 0;
-            transform: scale(.1);
-        }
-        85% {
-            opacity: 1;
-            transform: scale(1.05);
-        }
-        100% {
-            transform:scale(1);
-        }
-    }
-
-    .module-box-container {
-        border-spacing: 30px;
-        display: table;
-        margin: 0 -15px;
-
-        .module-box {
-            border: 1px solid var(--light-dark);
-            display: table-cell;
-            width: 25%;
-
-            -webkit-animation: webkitFadeIn .375s ease-in;
-                    animation:       FadeIn .375s ease-in;
-            -webkit-animation-fill-mode: both;
-                    animation-fill-mode: both;
-
-            &:nth-child(2) {
-                -webkit-animation-delay: .125s;
-                        animation-delay: .125s;
-            }
-            &:nth-child(3) {
-                -webkit-animation-delay: .25s;
-                        animation-delay: .25s;
-            }
-            &:nth-child(4) {
-                -webkit-animation-delay: .5s;
-                        animation-delay: .5s;
-            }
-        }
+    .image-overlay {
+        opacity: 0.6;
+        z-index: 9;
     }
 }

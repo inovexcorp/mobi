@@ -56,6 +56,8 @@
             'uniqueKey',
 
             /* Custom Directives */
+            'actionMenu',
+            'actionMenuItem',
             'aDisabled',
             'block',
             'blockContent',
@@ -76,6 +78,7 @@
             'confirmationOverlay',
             'confirmModal',
             'customLabel',
+            'disableAnimate',
             'dragFile',
             'dragMe',
             'dropOnMe',
@@ -93,12 +96,14 @@
             'materialTab',
             'materialTabset',
             'pagination',
+            'paging',
             'pagingDetails',
             'passwordConfirmInput',
             'radioButton',
             'rdfVisualization',
             'recordKeywords',
             'resolveConflictsForm',
+            'searchBar',
             'sidebar',
             'spinner',
             'statementContainer',
@@ -115,7 +120,6 @@
 
             /* Custom Modules */
             'analytics',
-            'activityLog',
             'catalog',
             'datasets',
             'discover',
