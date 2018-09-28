@@ -1376,8 +1376,8 @@
              *
              * @description
              * Gets the provided entity's name. This name is either the `rdfs:label`, `dcterms:title`, or `dc:title`.
-             * If none of those annotations exist, it returns the beautified `@id`. Returns a string for the entity
-             * name.
+             * If none of those annotations exist, it returns the beautified `@id`. Prioritizes english language tagged
+             * values over the others. Returns a string for the entity name.
              *
              * @param {Object} entity The entity you want the name of.
              * @returns {string} The beautified IRI string.
@@ -1388,11 +1388,6 @@
                     || getPrioritizedValue(entity, prefixes.dc + 'title')
                     || getPrioritizedValue(entity, prefixes.skos + 'prefLabel')
                     || getPrioritizedValue(entity, prefixes.skos + 'altLabel');
-                /*var result = utilService.getPropertyValue(entity, prefixes.rdfs + 'label')
-                    || utilService.getDctermsValue(entity, 'title')
-                    || utilService.getPropertyValue(entity, prefixes.dc + 'title')
-                    || utilService.getPropertyValue(entity, prefixes.skos + 'prefLabel')
-                    || utilService.getPropertyValue(entity, prefixes.skos + 'altLabel');*/
                 if (!result && _.has(entity, '@id')) {
                     result = utilService.getBeautifulIRI(entity['@id']);
                 }
