@@ -24,7 +24,7 @@
     <form class="content" name="dvm.form">
         <h6>Run Mapping to Ontology</h6>
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-        <span>Select an ontology whose MASTER branch to commit the data mapping.</span>
+        <span class="form-text text-muted">Select an ontology whose MASTER branch to commit the data mapping.</span>
         <div class="form-group">
             <custom-label>Ontology</custom-label>
             <ui-select ng-model="dvm.ontology">

@@ -45,7 +45,7 @@
          *
          * @description
          * `runMappingDownloadOverlay` is a directive that creates an overlay containing a configuration settings
-         * for the result of running the currently selected {mapperState.service:mapperStateService#mapping mapping}
+         * for the result of running the currently selected {@link mapperState.service:mapperStateService#mapping mapping}
          * against the uploaded {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}.
          * This includes a {@link textInput.directive:textInput text input} for the file name of the downloaded
          * mapped data and a {@link mapperSerializationSelect.directive:mapperSerializationSelect mapperSerializationSelect}

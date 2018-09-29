@@ -379,7 +379,7 @@ function mockDelimitedManager() {
             });
             this.mapAndDownload = jasmine.createSpy('mapAndDownload');
             this.mapAndUpload = jasmine.createSpy('mapAndUpload').and.returnValue($q.when());
-            this.mapAndCommit = jasmine.createSpy('mapAndUpload').and.returnValue($q.when());
+            this.mapAndCommit = jasmine.createSpy('mapAndCommit').and.returnValue($q.when());
             this.reset = jasmine.createSpy('reset');
             this.getHeader = jasmine.createSpy('getHeader').and.returnValue('');
         });
@@ -415,6 +415,9 @@ function mockMapperState() {
             this.displayDownloadMappingOverlay = false;
             this.displayMappingConfigOverlay = false;
             this.displayPropMappingOverlay = false;
+            this.displayRunMappingDatasetOverlay = false;
+            this.displayRunMappingDownloadOverlay = false;
+            this.displayRunMappingOntologyOverlay = false;
             this.editIriTemplate = false;
             this.selectedClassMappingId = '';
             this.selectedPropMappingId = '';
@@ -432,6 +435,7 @@ function mockMapperState() {
             this.setAvailableProps = jasmine.createSpy('setAvailableProps');
             this.hasAvailableProps = jasmine.createSpy('hasAvailableProps');
             this.removeAvailableProps = jasmine.createSpy('removeAvailableProps');
+            this.getAllProps = jasmine.createSpy('getAllProps').and.returnValue([]);
             this.getClassProps = jasmine.createSpy('getClassProps').and.returnValue([]);
             this.getClasses = jasmine.createSpy('getClasses').and.returnValue([]);
             this.getMappedColumns = jasmine.createSpy('getMappedColumns').and.returnValue([]);

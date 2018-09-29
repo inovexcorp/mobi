@@ -197,6 +197,17 @@
             self.availablePropsByClass = {};
             /**
              * @ngdoc property
+             * @name allPropsByClass
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {Object}
+             *
+             * @description
+             * `allPropsByClass` holds a object with keys for the class mappings in the currently selected
+             * {@link mapperState.service:mapperStateService#mapping mapping}.
+             */
+            self.allPropsByClass = {};
+            /**
+             * @ngdoc property
              * @name invalidOntology
              * @propertyOf mapperState.service:mapperStateService
              * @type {boolean}
@@ -434,6 +445,7 @@
                 };
                 self.invalidProps = [];
                 self.availablePropsByClass = {};
+                self.allPropsByClass = {};
                 self.availableClasses = [];
                 self.mapping = undefined;
                 self.sourceOntologies = [];
@@ -468,6 +480,7 @@
                 self.sourceOntologies = [];
                 self.resetEdit();
                 self.availablePropsByClass = {};
+                self.allPropsByClass = {};
                 return {
                     jsonld: [],
                     record: {},
@@ -611,6 +624,7 @@
                     return { ontologyId: '', propObj: {'@id': id} };
                 }));
                 _.set(self.availablePropsByClass, encodeURIComponent(classMappingId), _.filter(props, prop => mappedProps.indexOf(prop.propObj['@id']) < 0));
+                self.allPropsByClass = angular.copy(self.availablePropsByClass);
             }
             /**
              * @ngdoc method
@@ -627,6 +641,21 @@
              */
             self.getAvailableProps = function(classMappingId) {
                 return _.get(self.availablePropsByClass, encodeURIComponent(classMappingId), []);
+            }
+            /**
+             * @ngdoc method
+             * @name getAllProps
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Retrieves an array of property objects from the current {@link mapperState.service:mapperStateService#mapping mapping}
+             * representing the properties that the class mapping with the passed id.
+             *
+             * @param {string} classMappingId The id of the class mapping to retrieve available properties of
+             * @return {Object[]} An array of property objects for the properties.
+             */
+            self.getAllProps = function(classMappingId) {
+                return _.get(self.allPropsByClass, encodeURIComponent(classMappingId), []);
             }
             /**
              * @ngdoc method

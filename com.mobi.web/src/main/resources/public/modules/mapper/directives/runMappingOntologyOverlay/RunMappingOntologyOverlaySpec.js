@@ -21,12 +21,11 @@
  * #L%
  */
 describe('Run Mapping Ontology Overlay directive', function() {
-    var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, camelCase, catalogManagerSvc,  prefixes;
+    var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, catalogManagerSvc,  prefixes;
 
     beforeEach(function() {
         module('templates');
         module('runMappingOntologyOverlay');
-        injectCamelCaseFilter();
         injectHighlightFilter();
         injectTrustedFilter();
         mockMapperState();
@@ -36,19 +35,17 @@ describe('Run Mapping Ontology Overlay directive', function() {
         mockUtil();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _mapperStateService_, _delimitedManagerService_, _camelCaseFilter_, _catalogManagerService_,  _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _mapperStateService_, _delimitedManagerService_, _catalogManagerService_,  _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
             catalogManagerSvc = _catalogManagerService_;
-            camelCase = _camelCaseFilter_;
             prefixes = _prefixes_;
         });
 
 
-        camelCase.and.callFake(_.identity);
         mapperStateSvc.mapping = {record: {title: 'record'}, jsonld: []};
         this.element = $compile(angular.element('<run-mapping-ontology-overlay></run-mapping-ontology-overlay>'))(scope);
         scope.$digest();
@@ -61,7 +58,6 @@ describe('Run Mapping Ontology Overlay directive', function() {
         $q = null;
         mapperStateSvc = null;
         delimitedManagerSvc = null;
-        camelCase = null;
         prefixes = null;
     });
 

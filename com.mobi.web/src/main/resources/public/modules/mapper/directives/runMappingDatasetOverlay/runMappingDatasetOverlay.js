@@ -38,7 +38,6 @@
          * @name runMappingDatasetOverlay.directive:runMappingDatasetOverlay
          * @scope
          * @restrict E
-         * @requires $filter
          * @requires mapperState.service:mapperStateService
          * @requires delimitedManager.service:delimitedManagerService
          * @requires datasetManager.service:datasetManagerService
@@ -46,16 +45,16 @@
          *
          * @description
          * `runMappingDatasetOverlay` is a directive that creates an overlay containing a configuration settings
-         * for the result of running the currently selected {mapperState.service:mapperStateService#mapping mapping}
+         * for the result of running the currently selected {@link mapperState.service:mapperStateService#mapping mapping}
          * against the uploaded {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}.
          * This includes a ui-select to determine which dataset to upload the results of a mapping into. The directive
          * is replaced by the contents of its template.
          */
         .directive('runMappingDatasetOverlay', runMappingDatasetOverlay);
 
-        runMappingDatasetOverlay.$inject = ['$filter', 'mapperStateService', 'delimitedManagerService', 'datasetManagerService', 'utilService'];
+        runMappingDatasetOverlay.$inject = ['mapperStateService', 'delimitedManagerService', 'datasetManagerService', 'utilService'];
 
-        function runMappingDatasetOverlay($filter, mapperStateService, delimitedManagerService, datasetManagerService, utilService) {
+        function runMappingDatasetOverlay(mapperStateService, delimitedManagerService, datasetManagerService, utilService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',

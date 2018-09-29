@@ -38,7 +38,6 @@
          * @name runMappingOntologyOverlay.directive:runMappingOntologyOverlay
          * @scope
          * @restrict E
-         * @requires $filter
          * @requires mapperState.service:mapperStateService
          * @requires delimitedManager.service:delimitedManagerService
          * @requires util.service:utilService
@@ -47,16 +46,16 @@
          *
          * @description
          * `runMappingOntologyOverlay` is a directive that creates an overlay containing a configuration settings
-         * for the result of running the currently selected {mapperState.service:mapperStateService#mapping mapping}
+         * for the result of running the currently selected {@link mapperState.service:mapperStateService#mapping mapping}
          * against the uploaded {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}.
          * This includes a ui-select to determine which ontology's master branch to commit the mapping to. The directive
          * is replaced by the contents of its template.
          */
         .directive('runMappingOntologyOverlay', runMappingOntologyOverlay);
 
-        runMappingOntologyOverlay.$inject = ['$filter', 'mapperStateService', 'delimitedManagerService', 'utilService', 'catalogManagerService', 'prefixes'];
+        runMappingOntologyOverlay.$inject = ['mapperStateService', 'delimitedManagerService', 'utilService', 'catalogManagerService', 'prefixes'];
 
-        function runMappingOntologyOverlay($filter, mapperStateService, delimitedManagerService, utilService, catalogManagerService, prefixes) {
+        function runMappingOntologyOverlay(mapperStateService, delimitedManagerService, utilService, catalogManagerService, prefixes) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -78,6 +77,7 @@
                     dvm.getOntologies = function(searchText) {
                         var catalogId = _.get(cm.localCatalog, '@id', '');
                         var paginatedConfig = {
+                            limit: 50,
                             recordType: prefixes.ontologyEditor + 'OntologyRecord',
                             sortOption: _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
                             searchText

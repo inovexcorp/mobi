@@ -21,12 +21,11 @@
  * #L%
  */
 describe('Run Mapping Dataset Overlay directive', function() {
-    var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, datasetManagerSvc, camelCase, prefixes;
+    var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, datasetManagerSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('runMappingDatasetOverlay');
-        injectCamelCaseFilter();
         injectHighlightFilter();
         injectTrustedFilter();
         mockMapperState();
@@ -35,21 +34,19 @@ describe('Run Mapping Dataset Overlay directive', function() {
         mockUtil();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _mapperStateService_, _delimitedManagerService_, _datasetManagerService_, _camelCaseFilter_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _mapperStateService_, _delimitedManagerService_, _datasetManagerService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
             datasetManagerSvc = _datasetManagerService_;
-            camelCase = _camelCaseFilter_;
             prefixes = _prefixes_;
         });
 
         this.datasetRecord = {'@id': 'dataset'};
         datasetManagerSvc.getDatasetRecords.and.returnValue($q.when({data: [[this.datasetRecord]]}));
         datasetManagerSvc.getRecordFromArray.and.returnValue(this.datasetRecord);
-        camelCase.and.callFake(_.identity);
         mapperStateSvc.mapping = {record: {title: 'record'}, jsonld: []};
         this.element = $compile(angular.element('<run-mapping-dataset-overlay></run-mapping-dataset-overlay>'))(scope);
         scope.$digest();
@@ -63,7 +60,6 @@ describe('Run Mapping Dataset Overlay directive', function() {
         mapperStateSvc = null;
         delimitedManagerSvc = null;
         datasetManagerSvc = null;
-        camelCase = null;
         prefixes = null;
     });
 

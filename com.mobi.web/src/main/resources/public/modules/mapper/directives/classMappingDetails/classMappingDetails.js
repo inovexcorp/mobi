@@ -90,13 +90,11 @@
                         return _.get(dvm.dm.dataRows, '[' + firstRowIndex + '][' + dvm.getLinkedColumnIndex(propMapping) + ']', '(None)');
                     }
                     dvm.getDatatypePreview = function(propMapping) {
+                        var props = dvm.state.getAllProps(dvm.state.selectedClassMappingId);
                         var mapProp = dvm.util.getPropertyId(propMapping, prefixes.delim + 'hasProperty');
-                        var classId = dvm.mm.getClassIdByMappingId(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId);
-                        var props = _.concat(dvm.state.getClassProps(dvm.state.sourceOntologies, classId), _.map(dvm.mm.annotationProperties, id => {
-                            return { ontologyId: '', propObj: {'@id': id} };
-                        }));
                         var prop = _.find(props, property => property.propObj['@id'] === mapProp);
-                        var propIRI = dvm.util.getPropertyId(propMapping, prefixes.delim + 'datatypeSpec') || dvm.util.getPropertyId(prop.propObj, prefixes.rdfs + 'range') ||  prefixes.xsd + 'string';
+                        var range = prop ? dvm.util.getPropertyId(prop.propObj, prefixes.rdfs + 'range') : prefixes.xsd + 'string';
+                        var propIRI = dvm.util.getPropertyId(propMapping, prefixes.delim + 'datatypeSpec') || range;
                         return dvm.util.getBeautifulIRI(propIRI);
                     }
                     dvm.getLanguagePreview = function(propMapping) {

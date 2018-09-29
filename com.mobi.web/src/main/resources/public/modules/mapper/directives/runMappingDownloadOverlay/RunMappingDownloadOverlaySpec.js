@@ -79,7 +79,6 @@ describe('Run Mapping Download Overlay directive', function() {
                         scope.$apply();
                         expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
                         expect(delimitedManagerSvc.mapAndDownload).not.toHaveBeenCalled();
-                        expect(delimitedManagerSvc.mapAndUpload).not.toHaveBeenCalled();
                         expect(mapperStateSvc.step).toBe(this.step);
                         expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
                         expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
