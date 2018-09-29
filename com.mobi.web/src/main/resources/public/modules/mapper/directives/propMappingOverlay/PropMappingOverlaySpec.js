@@ -279,7 +279,7 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
                     });
-                    describe('with a manual datatype set', function() {
+                    describe('with a datatype override set', function() {
 
                         it('that is not a lang string', function() {
                             this.controller.datatype = prefixes.xsd + 'double';
@@ -374,7 +374,7 @@ describe('Prop Mapping Overlay directive', function() {
                         this.controller.set();
                         expect(utilSvc.getPropertyId).toHaveBeenCalledWith(this.controller.selectedPropMapping, prefixes.delim + 'datatypeSpec');
                         expect(this.controller.selectedPropMapping[prefixes.delim + 'datatypeSpec']).toEqual([{'@id': prefixes.xsd + 'double'}]);
-                        expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(mapperStateSvc.selectedPropMappingId, prefixes.delim + 'datatypeSpec', this.controller.datatype, 'string');
+                        expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(mapperStateSvc.selectedPropMappingId, prefixes.delim + 'datatypeSpec', this.controller.datatype, 'string', true);
                         expect(mapperStateSvc.invalidProps).not.toContain({'@id': this.controller.selectedProp.propObj['@id']});
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMappingId);
