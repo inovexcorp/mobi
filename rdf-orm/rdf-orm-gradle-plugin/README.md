@@ -4,8 +4,6 @@ This Gradle plugin is a more simple, convenient way to generate your Mobi RDF OR
 Example configuration in your build.gradle:
 
 ```groovy
-import com.mobi.rdf.orm.generate.gradle.plugin.OrmGenerationTask
-
 // Includes the ORM Gradle Plugin in the build classpath
 buildscript {
   dependencies {
@@ -13,8 +11,10 @@ buildscript {
   }
 }
 
+apply plugin: 'rdf-orm-gradle-plugin'
+
 // A custom task of the ORM Gradle plugin type
-task generateOntologies(type: OrmGenerationTask) {
+generateOntologies {
   // The location you want to write your Java classes to
   outputLocation = file("$buildDir/generated-sources/java")
 
@@ -44,6 +44,6 @@ sourceSets.main.java.srcDirs generateOntologies.outputLocation
 
 // Hooks the custom task in with the default compile task
 tasks.withType(JavaCompile) {
-  dependsOn tasks.withType(OrmGenerationTask)
+  dependsOn generateOntologies
 }
 ```
