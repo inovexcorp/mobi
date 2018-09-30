@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Run Mapping Ontology Overlay directive', function() {
-    var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, catalogManagerSvc,  prefixes;
+    var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, catalogManagerSvc, ontologyStateSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -32,16 +32,19 @@ describe('Run Mapping Ontology Overlay directive', function() {
         mockDelimitedManager();
         mockDatasetManager();
         mockCatalogManager();
+        mockOntologyState();
         mockUtil();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _mapperStateService_, _delimitedManagerService_, _catalogManagerService_,  _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _mapperStateService_, _delimitedManagerService_, _catalogManagerService_, _ontologyStateService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
             catalogManagerSvc = _catalogManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
+            utilSvc = _utilService_;
             prefixes = _prefixes_;
         });
 
@@ -58,6 +61,9 @@ describe('Run Mapping Ontology Overlay directive', function() {
         $q = null;
         mapperStateSvc = null;
         delimitedManagerSvc = null;
+        catalogManagerSvc = null;
+        ontologyStateSvc = null;
+        utilSvc = null;
         prefixes = null;
     });
 
@@ -65,7 +71,7 @@ describe('Run Mapping Ontology Overlay directive', function() {
         describe('should set the correct state for running mapping', function() {
             beforeEach(function() {
                 this.step = mapperStateSvc.step;
-                this.controller.ontology = {'@id': 'ontologyIRI'};
+                this.controller.ontology = {'@id': 'ontologyIRI', [prefixes.catalog + 'masterBranch']: [{'@id': 'branch'}]};
                 mapperStateSvc.displayRunMappingOntologyOverlay = true;
             });
             describe('if it is also being saved', function() {
@@ -92,14 +98,31 @@ describe('Run Mapping Ontology Overlay directive', function() {
                         beforeEach(function() {
                             this.newId = 'id';
                             mapperStateSvc.saveMapping.and.returnValue($q.when(this.newId));
+                            utilSvc.getPropertyId.and.returnValue('branch');
                         });
-                        it('committing the data', function() {
-                            this.controller.runMethod = 'upload';
+                        it('committing the data with no active merge', function() {
+                            ontologyStateSvc.list = [{ontologyRecord: {recordId: this.controller.ontology['@id'], branchId: 'branch'}, merge: {active: false}}];
                             this.controller.run();
                             scope.$apply();
                             expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
                             expect(mapperStateSvc.mapping.record.id).toEqual(this.newId);
                             expect(delimitedManagerSvc.mapAndCommit).toHaveBeenCalledWith(this.newId, this.controller.ontology['@id']);
+                            expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
+                            expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
+                            expect(mapperStateSvc.initialize).toHaveBeenCalled();
+                            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                            expect(delimitedManagerSvc.reset).toHaveBeenCalled();
+                            expect(mapperStateSvc.displayRunMappingOntologyOverlay).toBe(false);
+                            expect(this.controller.errorMessage).toEqual('');
+                        });
+                        it('committing the data with an active merge', function() {
+                            ontologyStateSvc.list = [{ontologyRecord: {recordId: this.controller.ontology['@id'], branchId: 'branch'}, merge: {active: true}}];
+                            this.controller.run();
+                            scope.$apply();
+                            expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
+                            expect(mapperStateSvc.mapping.record.id).toEqual(this.newId);
+                            expect(delimitedManagerSvc.mapAndCommit).toHaveBeenCalledWith(this.newId, this.controller.ontology['@id']);
+                            expect(utilSvc.createWarningToast).toHaveBeenCalled();
                             expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                             expect(mapperStateSvc.initialize).toHaveBeenCalled();
                             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -112,13 +135,28 @@ describe('Run Mapping Ontology Overlay directive', function() {
                 describe('and there are no changes', function() {
                     beforeEach(function() {
                         mapperStateSvc.isMappingChanged.and.returnValue(false);
+                        utilSvc.getPropertyId.and.returnValue('branch');
                     });
-                    it('and commits the data', function() {
-                        this.controller.runMethod = 'upload';
+                    it('and commits the data with no active merge', function() {
+                        ontologyStateSvc.list = [{ontologyRecord: {recordId: this.controller.ontology['@id'], branchId: 'branch'}, merge: {active: false}}];
                         this.controller.run();
                         scope.$apply();
                         expect(mapperStateSvc.saveMapping).not.toHaveBeenCalled();
                         expect(delimitedManagerSvc.mapAndCommit).toHaveBeenCalledWith(this.newId, this.controller.ontology['@id']);
+                        expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
+                        expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
+                        expect(mapperStateSvc.initialize).toHaveBeenCalled();
+                        expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                        expect(delimitedManagerSvc.reset).toHaveBeenCalled();
+                        expect(mapperStateSvc.displayRunMappingOntologyOverlay).toBe(false);
+                    });
+                    it('and commits the data with an active merge', function() {
+                        ontologyStateSvc.list = [{ontologyRecord: {recordId: this.controller.ontology['@id'], branchId: 'branch'}, merge: {active: true}}];
+                        this.controller.run();
+                        scope.$apply();
+                        expect(mapperStateSvc.saveMapping).not.toHaveBeenCalled();
+                        expect(delimitedManagerSvc.mapAndCommit).toHaveBeenCalledWith(this.newId, this.controller.ontology['@id']);
+                        expect(utilSvc.createWarningToast).toHaveBeenCalled();
                         expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                         expect(mapperStateSvc.initialize).toHaveBeenCalled();
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();

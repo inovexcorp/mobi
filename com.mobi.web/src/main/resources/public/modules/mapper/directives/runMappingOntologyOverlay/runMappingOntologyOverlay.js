@@ -42,6 +42,7 @@
          * @requires delimitedManager.service:delimitedManagerService
          * @requires util.service:utilService
          * @requires catalogManager.service:catalogManagerService
+         * @requires ontologyState.service:ontologyStateService
          * @requires prefixes.service:prefixes
          *
          * @description
@@ -53,9 +54,9 @@
          */
         .directive('runMappingOntologyOverlay', runMappingOntologyOverlay);
 
-        runMappingOntologyOverlay.$inject = ['mapperStateService', 'delimitedManagerService', 'utilService', 'catalogManagerService', 'prefixes'];
+        runMappingOntologyOverlay.$inject = ['mapperStateService', 'delimitedManagerService', 'utilService', 'catalogManagerService', 'ontologyStateService', 'prefixes'];
 
-        function runMappingOntologyOverlay(mapperStateService, delimitedManagerService, utilService, catalogManagerService, prefixes) {
+        function runMappingOntologyOverlay(mapperStateService, delimitedManagerService, utilService, catalogManagerService, ontologyStateService, prefixes) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -66,6 +67,7 @@
                     var state = mapperStateService;
                     var dm = delimitedManagerService;
                     var cm = catalogManagerService;
+                    var os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.errorMessage = '';
                     dvm.ontologies = [];
@@ -103,7 +105,10 @@
                     }
                     function runMapping(id) {
                         state.mapping.record.id = id;
-                        dm.mapAndCommit(id, dvm.ontology['@id']).then(reset, onError);
+                        dm.mapAndCommit(id, dvm.ontology['@id']).then(() => {
+                            testOntology(dvm.ontology)
+                            reset();
+                        }, onError);
                     }
                     function reset() {
                         state.step = state.selectMappingStep;
@@ -111,6 +116,21 @@
                         state.resetEdit();
                         dm.reset();
                         state.displayRunMappingOntologyOverlay = false;
+                    }
+                    function testOntology(ontologyRecord) {
+                        var item = _.find(os.list, {ontologyRecord: {recordId: ontologyRecord['@id']}});
+                        if (item) {
+                            var masterBranch = dvm.util.getPropertyId(ontologyRecord, prefixes.catalog + 'masterBranch');
+                            if (_.get(item, 'ontologyRecord.branchId') === masterBranch) {
+                                item.upToDate = false;
+                                if (item.merge.active) {
+                                    dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor for ' + dvm.util.getDctermsValue(ontologyRecord, 'title') + ' that is out of date. Please reopen the merge form.', {timeOut: 5000});
+                                }
+                            }
+                            if (item.merge.active && _.get(item.merge.target, '@id') === masterBranch) {
+                                dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor for ' + dvm.util.getDctermsValue(ontologyRecord, 'title') + ' that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
+                            }
+                        }
                     }
                 },
                 templateUrl: 'modules/mapper/directives/runMappingOntologyOverlay/runMappingOntologyOverlay.html'
