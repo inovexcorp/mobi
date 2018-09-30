@@ -117,7 +117,12 @@
                         }
                     }
                     dvm.isLangString = function() {
-                        return prefixes.rdf + 'langString' === dvm.datatype;
+                        if (prefixes.rdf + 'langString' === dvm.datatype) {
+                            return true;
+                        } else {
+                            dvm.language = undefined;
+                            return false;
+                        }
                     }
                     dvm.clearDatatype = function() {
                         dvm.showDatatypeSelect = false;

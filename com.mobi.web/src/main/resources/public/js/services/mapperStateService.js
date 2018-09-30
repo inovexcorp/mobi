@@ -203,7 +203,7 @@
              *
              * @description
              * `allPropsByClass` holds a object with keys for the class mappings in the currently selected
-             * {@link mapperState.service:mapperStateService#mapping mapping}.
+             * {@link mapperState.service:mapperStateService#mapping mapping} and values of all properties for the class
              */
             self.allPropsByClass = {};
             /**
