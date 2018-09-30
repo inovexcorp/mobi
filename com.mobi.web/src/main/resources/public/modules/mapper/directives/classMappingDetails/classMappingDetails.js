@@ -90,7 +90,11 @@
                         return _.get(dvm.dm.dataRows, '[' + firstRowIndex + '][' + dvm.getLinkedColumnIndex(propMapping) + ']', '(None)');
                     }
                     dvm.getDatatypePreview = function(propMapping) {
-                        return dvm.util.getBeautifulIRI(dvm.util.getPropertyId(propMapping, prefixes.delim + 'datatypeSpec'));
+                        var props = dvm.state.getAllProps(dvm.state.selectedClassMappingId);
+                        var mapProp = dvm.util.getPropertyId(propMapping, prefixes.delim + 'hasProperty');
+                        var prop = _.find(props, {propObj: {'@id': mapProp}});
+                        var propIRI = dvm.util.getPropertyId(propMapping, prefixes.delim + 'datatypeSpec') || dvm.util.getPropertyId(prop.propObj, prefixes.rdfs + 'range') || prefixes.xsd + 'string';
+                        return dvm.util.getBeautifulIRI(propIRI);
                     }
                     dvm.getLanguagePreview = function(propMapping) {
                         var languageObj = _.find(pm.languageList, {value: dvm.getLanguageTag(propMapping)});

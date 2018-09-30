@@ -60,6 +60,8 @@ var jsFiles = function(prefix) {
             prefix + 'angular/**/angular.min.js',
             prefix + 'popper.js/dist/umd/popper.min.js',
             prefix + 'jquery/**/jquery.min.js',
+            prefix + 'popper.js/' + (prefix.includes(dest) ? '**' : 'dist/umd') + '/popper.min.js',
+            prefix + 'bootstrap/' + (prefix.includes(dest) ? '**' : 'dist/js') + '/bootstrap.min.js',
             prefix + 'angular-mocks/**/angular-mocks.js',
             prefix + 'angular-animate/**/angular-animate.js',
             prefix + 'angular-ui-router/**/angular-ui-router.min.js',

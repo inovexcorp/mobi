@@ -117,7 +117,12 @@
                         }
                     }
                     dvm.isLangString = function() {
-                        return prefixes.rdf + 'langString' === dvm.datatype;
+                        if (prefixes.rdf + 'langString' === dvm.datatype) {
+                            return true;
+                        } else {
+                            dvm.language = undefined;
+                            return false;
+                        }
                     }
                     dvm.clearDatatype = function() {
                         dvm.showDatatypeSelect = false;
@@ -164,7 +169,7 @@
                                 var originalDatatype = dvm.util.getPropertyId(dvm.selectedPropMapping, prefixes.delim + 'datatypeSpec');
                                 if (dvm.datatype) {
                                     dvm.selectedPropMapping[prefixes.delim + 'datatypeSpec'] = [{'@id': dvm.datatype}];
-                                    dvm.state.changeProp(dvm.selectedPropMapping['@id'], prefixes.delim + 'datatypeSpec', dvm.datatype, originalDatatype);
+                                    dvm.state.changeProp(dvm.selectedPropMapping['@id'], prefixes.delim + 'datatypeSpec', dvm.datatype, originalDatatype, true);
                                 } else {
                                     dvm.util.removePropertyId(dvm.selectedPropMapping, prefixes.delim + 'datatypeSpec', originalDatatype);
                                 }

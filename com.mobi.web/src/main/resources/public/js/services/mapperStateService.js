@@ -197,6 +197,17 @@
             self.availablePropsByClass = {};
             /**
              * @ngdoc property
+             * @name allPropsByClass
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {Object}
+             *
+             * @description
+             * `allPropsByClass` holds a object with keys for the class mappings in the currently selected
+             * {@link mapperState.service:mapperStateService#mapping mapping} and values of all properties for the class
+             */
+            self.allPropsByClass = {};
+            /**
+             * @ngdoc property
              * @name invalidOntology
              * @propertyOf mapperState.service:mapperStateService
              * @type {boolean}
@@ -233,15 +244,40 @@
             self.displayDownloadMappingOverlay = false;
             /**
              * @ngdoc method
-             * @name displayRunMappingOverlay
+             * @name displayRunMappingDownloadOverlay
              * @propertyOf mapperState.service:mapperStateService
              * @type {Boolean}
              *
              * @description
-             * `displayRunMappingOverlay` holds a boolean indicating whether or not the
-             * {@link runMappingOverlay.directive:runMappingOverlay run mapping overlay} should be shown.
+             * `displayRunMappingDownloadOverlay` holds a boolean indicating whether or not the
+             * {@link runMappingDownloadOverlay.directive:runMappingDownloadOverlay run mapping download overlay} should be
+             * shown.
              */
-            self.displayRunMappingOverlay = false;
+            self.displayRunMappingDownloadOverlay = false;
+            /**
+             * @ngdoc method
+             * @name displayRunMappingDatasetOverlay
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {Boolean}
+             *
+             * @description
+             * `displayRunMappingDatasetOverlay` holds a boolean indicating whether or not the
+             * {@link runMappingDatasetOverlay.directive:runMappingDatasetOverlay run mapping dataset overlay} should be
+             * shown.
+             */
+            self.displayRunMappingDatasetOverlay = false;
+            /**
+             * @ngdoc method
+             * @name displayRunMappingOntologyOverlay
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {Boolean}
+             *
+             * @description
+             * `displayRunMappingOntologyOverlay` holds a boolean indicating whether or not the
+             * {@link runMappingOntologyOverlay.directive:runMappingOntologyOverlay run mapping ontology overlay} should be
+             * shown.
+             */
+            self.displayRunMappingOntologyOverlay = false;
             /**
              * @ngdoc property
              * @name displayMappingConfigOverlay
@@ -409,6 +445,7 @@
                 };
                 self.invalidProps = [];
                 self.availablePropsByClass = {};
+                self.allPropsByClass = {};
                 self.availableClasses = [];
                 self.mapping = undefined;
                 self.sourceOntologies = [];
@@ -443,6 +480,7 @@
                 self.sourceOntologies = [];
                 self.resetEdit();
                 self.availablePropsByClass = {};
+                self.allPropsByClass = {};
                 return {
                     jsonld: [],
                     record: {},
@@ -585,6 +623,7 @@
                 var props = _.concat(self.getClassProps(self.sourceOntologies, classId), _.map(mm.annotationProperties, id => {
                     return { ontologyId: '', propObj: {'@id': id} };
                 }));
+                _.set(self.allPropsByClass, encodeURIComponent(classMappingId), props);
                 _.set(self.availablePropsByClass, encodeURIComponent(classMappingId), _.filter(props, prop => mappedProps.indexOf(prop.propObj['@id']) < 0));
             }
             /**
@@ -602,6 +641,21 @@
              */
             self.getAvailableProps = function(classMappingId) {
                 return _.get(self.availablePropsByClass, encodeURIComponent(classMappingId), []);
+            }
+            /**
+             * @ngdoc method
+             * @name getAllProps
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Retrieves an array of property objects from the current {@link mapperState.service:mapperStateService#mapping mapping}
+             * representing the properties that the class mapping with the passed id.
+             *
+             * @param {string} classMappingId The id of the class mapping to retrieve available properties of
+             * @return {Object[]} An array of property objects for the properties.
+             */
+            self.getAllProps = function(classMappingId) {
+                return _.get(self.allPropsByClass, encodeURIComponent(classMappingId), []);
             }
             /**
              * @ngdoc method
