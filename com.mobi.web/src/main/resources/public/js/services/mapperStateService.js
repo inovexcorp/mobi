@@ -623,8 +623,8 @@
                 var props = _.concat(self.getClassProps(self.sourceOntologies, classId), _.map(mm.annotationProperties, id => {
                     return { ontologyId: '', propObj: {'@id': id} };
                 }));
+                _.set(self.allPropsByClass, encodeURIComponent(classMappingId), props);
                 _.set(self.availablePropsByClass, encodeURIComponent(classMappingId), _.filter(props, prop => mappedProps.indexOf(prop.propObj['@id']) < 0));
-                self.allPropsByClass = angular.copy(self.availablePropsByClass);
             }
             /**
              * @ngdoc method
