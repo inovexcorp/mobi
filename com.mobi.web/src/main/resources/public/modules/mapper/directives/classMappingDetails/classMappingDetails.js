@@ -92,9 +92,8 @@
                     dvm.getDatatypePreview = function(propMapping) {
                         var props = dvm.state.getAllProps(dvm.state.selectedClassMappingId);
                         var mapProp = dvm.util.getPropertyId(propMapping, prefixes.delim + 'hasProperty');
-                        var prop = _.find(props, property => property.propObj['@id'] === mapProp);
-                        var range = prop ? dvm.util.getPropertyId(prop.propObj, prefixes.rdfs + 'range') : prefixes.xsd + 'string';
-                        var propIRI = dvm.util.getPropertyId(propMapping, prefixes.delim + 'datatypeSpec') || range;
+                        var prop = _.find(props, {propObj: {'@id': mapProp}});
+                        var propIRI = dvm.util.getPropertyId(propMapping, prefixes.delim + 'datatypeSpec') || dvm.util.getPropertyId(prop.propObj, prefixes.rdfs + 'range') || prefixes.xsd + 'string';
                         return dvm.util.getBeautifulIRI(propIRI);
                     }
                     dvm.getLanguagePreview = function(propMapping) {
