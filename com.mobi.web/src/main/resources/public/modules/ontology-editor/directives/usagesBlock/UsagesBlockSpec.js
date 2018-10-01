@@ -92,7 +92,7 @@ describe('Usages Block directive', function() {
 
             this.controller.results.iri = {'test': {}};
             scope.$digest();
-            expect(result.querySelectorAll('.value-container').length).toBe(_.keys(this.controller.results.iri).length);
+            expect(result.querySelectorAll('.prop-value-container').length).toBe(_.keys(this.controller.results.iri).length);
         });
     });
     it('should update the results when the usages change', function() {
