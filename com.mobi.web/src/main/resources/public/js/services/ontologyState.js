@@ -42,13 +42,14 @@
          * @requires util.service:utilService
          * @requires catalogManager.service:catalogManagerService
          * @requires propertyManager.service:propertyManagerService
+         * @requires policyEnforcement.service:policyEnforcementService
          * @requires prefixes.service:prefixes
          */
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService', 'uuid'];
+        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'policyEnforcementService', 'policyManagerService', 'httpService', 'uuid'];
 
-        function ontologyStateService($timeout, $q, $filter, $document, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService, uuid) {
+        function ontologyStateService($timeout, $q, $filter, $document, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, policyEnforcementService, policyManagerService, httpService, uuid) {
             var self = this;
             var om = ontologyManagerService;
             var pm = propertyManagerService;
@@ -56,6 +57,8 @@
             var cm = catalogManagerService;
             var util = utilService;
             var mc = manchesterConverterService;
+            var pe = policyEnforcementService;
+            var polm = policyManagerService;
             var catalogId = '';
 
             var ontologyEditorTabStates = {
@@ -109,6 +112,9 @@
                 importedOntologyIds: [],
                 userBranch: false,
                 createdFromExists: true,
+                userCanModify: false,
+                userCanModifyMaster: false,
+                masterBranchIRI: '',
                 merge: {
                     active: false,
                     target: undefined,
@@ -453,10 +459,14 @@
             }
             self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                 upToDate = true, title) {
+                var modifyRequest = {
+                    resourceId: recordId,
+                    actionId: polm.actionModify
+                };
                 var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title);
                 return $q.all([
                     om.getOntologyStuff(recordId, branchId, commitId),
-                    cm.getRecordBranches(recordId, catalogId)
+                    cm.getRecordBranches(recordId, catalogId),
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     var responseIriList = _.get(response[0], 'iriList', {});
@@ -508,8 +518,18 @@
                     if (listItem.userBranch) {
                         listItem.createdFromExists = _.some(listItem.branches, {'@id': util.getPropertyId(branch, prefixes.catalog + 'createdFrom')});
                     }
+                    listItem.masterBranchIRI = _.find(listItem.branches, {[prefixes.dcterms + 'description']: [{'@value': 'The master branch.'}]})['@id'];
+                    return pe.evaluateRequest(modifyRequest);
+                },  $q.reject)
+                .then(decision => {
+                    listItem.userCanModify = decision == pe.permit;
+                    modifyRequest.actionAttrs = {[prefixes.catalog + 'branch']: listItem.masterBranchIRI};
+                    return pe.evaluateRequest(modifyRequest);
+                }, $q.reject)
+                .then(decision => {
+                    listItem.userCanModifyMaster = decision == pe.permit;
                     return listItem;
-                },  $q.reject);
+                }, $q.reject);
             }
 
             function addIri(iriObj, iri, ontologyId) {
@@ -1227,6 +1247,13 @@
                     additions: [],
                     deletions: []
                 };
+            }
+            self.canModify = function() {
+                if (self.listItem.masterBranchIRI === self.listItem.ontologyRecord.branchId) {
+                    return self.listItem.userCanModifyMaster;
+                } else {
+                    return self.listItem.userCanModify;
+                }
             }
 
             /* Private helper functions */

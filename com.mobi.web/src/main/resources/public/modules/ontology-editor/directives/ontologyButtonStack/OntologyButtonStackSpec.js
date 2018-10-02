@@ -38,7 +38,7 @@ describe('Ontology Button Stack directive', function() {
 
         ontologyStateSvc.isCommittable.and.returnValue(false);
         ontologyStateSvc.hasChanges.and.returnValue(false);
-        ontologyStateSvc.listItem.userBranch = false;
+        ontologyStateSvc.listItem.userBranch = false;g
         this.element = $compile(angular.element('<ontology-button-stack></ontology-button-stack>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('ontologyButtonStack');

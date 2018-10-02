@@ -57,11 +57,18 @@ describe('Individual Hierarchy directive', function() {
         it('with a .section-header', function() {
             expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        it('with a link to create an individual', function() {
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
-        });
         it('with a individual-tree', function() {
             expect(this.element.find('individual-tree').length).toBe(1);
+        });
+        it('with a link to create an individual when the user can modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+        });
+        it('with a link to create an individual when the user cannot modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
         });
     });
     describe('controller methods', function() {
@@ -72,6 +79,8 @@ describe('Individual Hierarchy directive', function() {
         });
     });
     it('should call showCreateIndividualOverlay when the create individual link is clicked', function() {
+        ontologyStateSvc.canModify.and.returnValue(true);
+        scope.$digest();
         spyOn(this.controller, 'showCreateIndividualOverlay');
         var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
         link.triggerHandler('click');

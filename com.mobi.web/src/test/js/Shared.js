@@ -583,6 +583,9 @@ function mockOntologyState() {
                 },
                 userBranch: false,
                 createdFromExists: true,
+                userCanModify: false,
+                userCanModifyMaster: false,
+                masterBranchIRI: '',
                 ontologyRecord: {
                     title: '',
                     recordId: '',
@@ -742,6 +745,7 @@ function mockOntologyState() {
             this.checkConflicts = jasmine.createSpy('checkConflicts').and.returnValue($q.when());
             this.merge = jasmine.createSpy('merge').and.returnValue($q.when());
             this.cancelMerge = jasmine.createSpy('cancelMerge');
+            this.canModify = jasmine.createSpy('canModify');
         });
     });
 }
@@ -1338,6 +1342,9 @@ function mockPolicyManager() {
 function mockPolicyEnforcement() {
     module(function($provide) {
         $provide.service('policyEnforcementService', function($q) {
+            this.permit = 'Permit';
+            this.deny = 'Deny';
+            this.indeterminate = 'Indeterminate';
             this.evaluateRequest = jasmine.createSpy('evaulateRequest').and.returnValue($q.when());
         });
     });

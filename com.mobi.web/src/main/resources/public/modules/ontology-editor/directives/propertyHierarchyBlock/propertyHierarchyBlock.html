@@ -22,7 +22,7 @@
   -->
 <div class="property-hierarchy-block d-flex flex-column">
     <div class="section-header">
-        <h5>Property Hierarchies</h5><a class="float-right fa fa-fw fa-plus" ng-click="dvm.showCreatePropertyOverlay()"></a>
+        <h5>Property Hierarchies</h5><a ng-if="dvm.os.canModify()" class="float-right fa fa-fw fa-plus" ng-click="dvm.showCreatePropertyOverlay()"></a>
     </div>
     <div class="flex-1 horizontal-scroll">
         <div class="tree hierarchy-tree h-100">

@@ -192,6 +192,8 @@ describe('Ontology Branch Select directive', function() {
             });
         });
         it('openEditOverlay calls the correct methods', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             var event = scope.$emit('click');
             spyOn(event, 'stopPropagation');
             this.controller.openEditOverlay(event, this.branch);
@@ -202,6 +204,8 @@ describe('Ontology Branch Select directive', function() {
             beforeEach(function() {
                 this.controller.branch = this.branch;
                 ontologyStateSvc.listItem.branches = [this.branch];
+                ontologyStateSvc.canModify.and.returnValue(true);
+                scope.$digest();
             });
             it('when resolved', function() {
                 ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.when());

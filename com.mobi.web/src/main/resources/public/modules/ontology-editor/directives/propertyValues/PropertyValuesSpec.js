@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Property Values directive', function() {
-    var $compile, scope, ontologyUtilsManagerSvc, ontologyManagerSvc;
+    var $compile, scope, ontologyUtilsManagerSvc, ontologyManagerSvc, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -30,11 +30,12 @@ describe('Property Values directive', function() {
         mockOntologyUtilsManager();
         mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyUtilsManagerService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyUtilsManagerService_, _ontologyManagerService_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
         });
 
         ontologyManagerSvc.isBlankNodeId.and.callFake(function(string) {
@@ -54,6 +55,7 @@ describe('Property Values directive', function() {
         scope = null;
         ontologyUtilsManagerSvc = null;
         ontologyManagerSvc = null;
+        ontologyStateSvc = null;
         this.element.remove();
     });
 
@@ -88,13 +90,25 @@ describe('Property Values directive', function() {
             var values = this.element.querySelectorAll('.value-container');
             expect(values.length).toBe(2);
         });
-        it('depending on whether a value is a blank node', function() {
+        it('depending on whether a value is a blank node and user can modify', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             var blankNodeValue = this.element.querySelectorAll('.value-container .value-display-wrapper blank-node-value-display');
             expect(blankNodeValue.length).toBe(1);
             var editButtons = this.element.querySelectorAll('.value-container [title=Edit]');
             expect(editButtons.length).toBe(1);
             var deleteButtons = this.element.querySelectorAll('.value-container [title=Delete]');
             expect(deleteButtons.length).toBe(2);
+        });
+        it('depending on whether a value is a blank node and user cannot modify', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            var blankNodeValue = this.element.querySelectorAll('.value-container .value-display-wrapper blank-node-value-display');
+            expect(blankNodeValue.length).toBe(1);
+            var editButtons = this.element.querySelectorAll('.value-container [title=Edit]');
+            expect(editButtons.length).toBe(0);
+            var deleteButtons = this.element.querySelectorAll('.value-container [title=Delete]');
+            expect(deleteButtons.length).toBe(0);
         });
         it('depending on whether the values are open or closed', function() {
             var icon = angular.element(this.element.querySelectorAll('.value-header i')[0]);
@@ -113,11 +127,15 @@ describe('Property Values directive', function() {
         });
     });
     it('should call edit when the appropriate button is clicked', function() {
+        ontologyStateSvc.canModify.and.returnValue(true);
+        scope.$digest();
         var editButton = angular.element(this.element.querySelectorAll('.value-container [title=Edit]')[0]);
         editButton.triggerHandler('click');
         expect(scope.edit).toHaveBeenCalledWith(scope.property, 0);
     });
     it('should call remove when the appropriate button is clicked', function() {
+        ontologyStateSvc.canModify.and.returnValue(true);
+        scope.$digest();
         var removeButton = angular.element(this.element.querySelectorAll('.value-container [title=Delete]')[0]);
         removeButton.triggerHandler('click');
         expect(scope.remove).toHaveBeenCalledWith(scope.property, 0);

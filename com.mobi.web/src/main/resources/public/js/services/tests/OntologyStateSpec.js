@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology State Service', function() {
-    var ontologyStateSvc, $q, scope, util, stateManagerSvc, propertyManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, httpSvc, uuidSvc, $document, splitIRI;
+    var ontologyStateSvc, $q, scope, util, stateManagerSvc, propertyManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, policyEnforcementSvc, httpSvc, uuidSvc, $document, splitIRI;
     var listItem;
 
     beforeEach(function() {
@@ -35,6 +35,8 @@ describe('Ontology State Service', function() {
         mockPrefixes();
         mockManchesterConverter();
         mockHttpService();
+        mockPolicyEnforcement();
+        mockPolicyManager();
         injectRemoveMobiFilter();
         injectSplitIRIFilter();
 
@@ -47,12 +49,13 @@ describe('Ontology State Service', function() {
             });
         });
 
-        inject(function(ontologyStateService, _updateRefsService_, _propertyManagerService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_, _uuid_, _$document_, _splitIRIFilter_) {
+        inject(function(ontologyStateService, _updateRefsService_, _propertyManagerService_, _ontologyManagerService_, _catalogManagerService_, _policyEnforcementService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_, _uuid_, _$document_, _splitIRIFilter_) {
             ontologyStateSvc = ontologyStateService;
             updateRefsSvc = _updateRefsService_;
             propertyManagerSvc = _propertyManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
             catalogManagerSvc = _catalogManagerService_;
+            policyEnforcementSvc = _policyEnforcementService_;
             $q = _$q_;
             scope = _$rootScope_;
             util = _utilService_;
@@ -96,7 +99,8 @@ describe('Ontology State Service', function() {
 
         this.branch = {
             '@id': this.branchId,
-            [prefixes.catalog + 'head']: [{'@id': this.commitId}]
+            [prefixes.catalog + 'head']: [{'@id': this.commitId}],
+            [prefixes.dcterms + 'description']: [{'@value': 'The master branch.'}]
         };
         this.differenceObj = {additions: '', deletions: ''};
 
@@ -247,6 +251,7 @@ describe('Ontology State Service', function() {
         updateRefsSvc = null;
         prefixes = null;
         catalogManagerSvc = null;
+        policyEnforcementSvc = null;
         httpSvc = null;
         $document = null;
         splitIRI = null;
@@ -1467,6 +1472,7 @@ describe('Ontology State Service', function() {
                 }
             });
             catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: this.branches}));
+            policyEnforcementSvc.evaluateRequest.and.returnValue($q.when('Permit'));
             util.getPropertyId.and.returnValue(this.branchId);
             spyOn(ontologyStateSvc, 'flattenHierarchy').and.returnValue([{prop: 'flatten'}]);
             spyOn(ontologyStateSvc, 'createFlatEverythingTree').and.returnValue([{prop: 'everything'}]);
@@ -1551,6 +1557,9 @@ describe('Ontology State Service', function() {
                         }]);
                         expect(_.get(response, 'userBranch')).toEqual(false);
                         expect(_.get(response, 'createdFromExists')).toEqual(true);
+                        expect(_.get(response, 'masterBranchIRI')).toEqual(this.branchId);
+                        expect(_.get(response, 'userCanModify')).toEqual(true);
+                        expect(_.get(response, 'userCanModifyMaster')).toEqual(true);
                     }, () => {
                         fail('Promise should have resolved');
                     });
@@ -1635,6 +1644,9 @@ describe('Ontology State Service', function() {
                         }]);
                         expect(_.get(response, 'userBranch')).toEqual(true);
                         expect(_.get(response, 'createdFromExists')).toEqual(true);
+                        expect(_.get(response, 'masterBranchIRI')).toEqual(this.branchId);
+                        expect(_.get(response, 'userCanModify')).toEqual(true);
+                        expect(_.get(response, 'userCanModifyMaster')).toEqual(true);
                     }, () => {
                         fail('Promise should have resolved');
                     });
@@ -1720,6 +1732,9 @@ describe('Ontology State Service', function() {
                         }]);
                         expect(_.get(response, 'userBranch')).toEqual(true);
                         expect(_.get(response, 'createdFromExists')).toEqual(false);
+                        expect(_.get(response, 'masterBranchIRI')).toEqual(this.branchId);
+                        expect(_.get(response, 'userCanModify')).toEqual(true);
+                        expect(_.get(response, 'userCanModifyMaster')).toEqual(true);
                     }, () => {
                         fail('Promise should have resolved');
                     });

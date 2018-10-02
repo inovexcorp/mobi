@@ -69,8 +69,15 @@ describe('Imports Block directive', function() {
         it('with a .section-header', function() {
             expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        it('with links for adding and refreshing', function() {
+        it('with links for adding and refreshing when the user can modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             expect(this.element.querySelectorAll('.section-header a').length).toBe(2);
+        });
+        it('with links for adding and refreshing when the user cannot modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
         });
         it('with a p a.import-iri', function() {
             expect(this.element.querySelectorAll('p a.import-iri').length).toBe(1);

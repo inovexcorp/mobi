@@ -32,7 +32,7 @@
             <blank-node-value-display ng-if="::dvm.om.isBlankNodeId(value['@id'])" node-id="value['@id']"></blank-node-value-display>
             <value-display ng-if="::!dvm.om.isBlankNodeId(value['@id'])" value="value"></value-display>
         </span>
-        <button ng-if="remove && !entity.mobi.imported" type="button" class="btn btn-link float-right remove-min-width" ng-click="remove({iri: property, index: $index})" title="Delete"><i class="fa fa-times fa-fw"></i></button>
-        <button ng-if="!dvm.om.isBlankNodeId(value['@id']) && edit && !entity.mobi.imported" type="button" class="btn btn-link float-right remove-min-width" ng-click="edit({property: property, index: $index});" title="Edit"><i class="fa fa-pencil fa-fw"></i></button>
+        <button ng-if="remove && !entity.mobi.imported && dvm.os.canModify()" type="button" class="btn btn-link float-right remove-min-width" ng-click="remove({iri: property, index: $index})" title="Delete"><i class="fa fa-times fa-fw"></i></button>
+        <button ng-if="!dvm.om.isBlankNodeId(value['@id']) && edit && !entity.mobi.imported && dvm.os.canModify()" type="button" class="btn btn-link float-right remove-min-width" ng-click="edit({property: property, index: $index});" title="Edit"><i class="fa fa-pencil fa-fw"></i></button>
     </div>
 </div>

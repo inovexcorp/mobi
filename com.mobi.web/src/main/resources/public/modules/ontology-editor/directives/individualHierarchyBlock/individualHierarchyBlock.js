@@ -62,10 +62,10 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var os = ontologyStateService;
+                    dvm.os = ontologyStateService;
 
                     dvm.showCreateIndividualOverlay = function() {
-                        os.unSelectItem();
+                        dvm.os.unSelectItem();
                         modalService.openModal('createIndividualOverlay');
                     }
                 }
