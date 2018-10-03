@@ -33,6 +33,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.platform.config.api.server.Mobi;
 import com.mobi.platform.config.api.server.MobiConfig;
 import com.mobi.platform.config.api.server.ServerUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -44,6 +45,11 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.UUID;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 @Component(immediate = true, name = MobiImpl.SERVICE_NAME)
 public class MobiImpl implements Mobi {
@@ -56,6 +62,19 @@ public class MobiImpl implements Mobi {
     private UUID serverId;
     private String hostName;
     private ServerUtils utils;
+
+    private static String PRODUCT_ID = "";
+
+    static {
+        try {
+            PRODUCT_ID = IOUtils.toString(
+                    MobiImpl.class.getResourceAsStream("/ga.txt"),
+                    "UTF-8"
+            );
+        } catch (IOException | NullPointerException e) {
+            LOGGER.debug("Product ID is not configured");
+        }
+    }
 
     @Reference
     void setServerUtils(ServerUtils utils) {
@@ -97,6 +116,20 @@ public class MobiImpl implements Mobi {
             this.hostName = "";
         }
 
+        if (!PRODUCT_ID.isEmpty()) {
+            LOGGER.debug("Product ID configured, tracking server start");
+            Client client = ClientBuilder.newClient();
+            Response response = client.target("http://www.google-analytics.com/collect")
+                    .queryParam("v", 1)
+                    .queryParam("tid", PRODUCT_ID)
+                    .queryParam("cid", serverId.toString())
+                    .queryParam("t", "event")
+                    .queryParam("ec", "Server")
+                    .queryParam("ea", "Start")
+                    .request()
+                    .post(Entity.entity("", MediaType.APPLICATION_JSON_TYPE));
+            LOGGER.debug("Response " + response.getStatus());
+        }
     }
 
     /**
