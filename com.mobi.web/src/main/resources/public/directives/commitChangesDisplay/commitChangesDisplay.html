@@ -21,12 +21,12 @@
   #L%
   -->
 <div class="commit-changes-display">
-    <div class="property-values mt-4" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
-        <div class="clearfix prop-header d-flex align-items-center mb-2">
+    <div class="property-values mt-3" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
+        <div class="clearfix prop-header d-flex align-items-center">
             <p class="text text-truncate m-0" title="{{key}}">{{dvm.ontoUtils.getLabelForIRI(key)}}</p>
-            <small class="text-muted ml-1 text-truncate">&lt;{{key}}&gt;</small>
+            <small class="text-muted ml-1 text-truncate flex-1">&lt;{{key}}&gt;</small>
         </div>
-        <div class="prop-value-container ml-1 p-1">
+        <div class="prop-value-container ml-3 mt-1 p-1">
             <statement-container ng-if="value.additions.length" additions class="m-0">
                 <statement-display
                         ng-repeat="addition in value.additions | orderBy:dvm.util.getPredicateLocalName"
