@@ -43,6 +43,7 @@ describe('Imports Block directive', function() {
             util = _utilService_;
         });
 
+        ontologyStateSvc.canModify.and.returnValue(true);
         ontologyStateSvc.listItem.selected[prefixes.owl + 'imports'] = [{}];
         this.element = $compile(angular.element('<imports-block></imports-block>'))(scope);
         scope.$digest();
@@ -91,8 +92,13 @@ describe('Imports Block directive', function() {
             scope.$apply();
             expect(this.element.querySelectorAll('.text-danger').length).toBe(1);
         });
-        it('with a p a.btn-link', function() {
+        it('with a p a.btn-link if the user can modify', function() {
             expect(this.element.querySelectorAll('p a.btn-link').length).toBe(1);
+        });
+        it('with no p a.btn-link if the user cannot modify', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            expect(this.element.querySelectorAll('p a.btn-link').length).toBe(0);
         });
         it('depending on the length of the selected ontology imports', function() {
             expect(this.element.find('info-message').length).toBe(0);

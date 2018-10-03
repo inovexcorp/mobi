@@ -29,9 +29,9 @@
             <div class="branch-display" ng-init="branchTitle = dvm.util.getDctermsValue(branch, 'title')" ng-class="{'master': branchTitle === 'MASTER', 'active': branch['@id'] === dvm.bindModel}">
                 <span ng-bind-html="branchTitle | highlight:$select.search | trusted" title="{{branchTitle}}"></span>
                 <a ng-if="dvm.cm.isUserBranch(branch)" class="fa fa-exclamation-triangle fa-fw-red"></a>
-                <a ng-if="branch['@id'] !== dvm.os.listItem.ontologyRecord.branchId && dvm.os.canModify()" class="fa fa-trash-o fa-fw text-muted" ng-click="dvm.openDeleteConfirmation($event, branch);"></a>
-                <a ng-if="dvm.os.canModify()" class="fa fa-pencil fa-fw text-muted" ng-click="dvm.openEditOverlay($event, branch);"></a>
-            </div><!-- DELETEE??? -->
+                <a ng-if="branch['@id'] !== dvm.os.listItem.ontologyRecord.branchId && dvm.os.listItem.userCanModify" class="fa fa-trash-o fa-fw text-muted" ng-click="dvm.openDeleteConfirmation($event, branch);"></a>
+                <a ng-if="dvm.os.listItem.userCanModify" class="fa fa-pencil fa-fw text-muted" ng-click="dvm.openEditOverlay($event, branch);"></a>
+            </div>
         </ui-select-choices>
     </ui-select>
 </div>
