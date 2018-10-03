@@ -29,7 +29,8 @@
          * @name uploadSnackbar
          *
          * @description
-         * The `uploadSnackbar` module only provides the `uploadSnackbar` directive which 
+         * The `uploadSnackbar` module only provides the `uploadSnackbar` directive which creates a Material Design
+         * `snackbar` with the list of ontologies being uploaded.
          */
         .module('uploadSnackbar', [])
         /**
@@ -41,7 +42,13 @@
          * @requires ontologyState.service:ontologyStateService
          *
          * @description
-         * `uploadSnackbar` is a directive that 
+         * `uploadSnackbar` is a directive that creates a custom Material Design `snackbar` on the right of the screen
+         * with a body containing the list of ontologies currently being uploaded. The list displays the ontology record
+         * title and an indicator of the status of the upload. The header of the snackbar contains an indicator of how
+         * many ontologies have been uploaded and buttons to minimize the body of the snackbar and close it. Whether the
+         * snackbar should be shown is handled by the provided boolean variable.
+         *
+         * @param {boolean} showSnackbar Whether the snackbar should have the `show` styles applied
          */
         .directive('uploadSnackbar', uploadSnackbar);
 
@@ -84,6 +91,18 @@
                     dvm.hasPending = function() {
                         return _.some(dvm.state.uploadList, dvm.isPending);
                     }
+                    dvm.getTitle = function() {
+                        if (dvm.hasPending()) {
+                            var num = dvm.getNumberPending();
+                            return 'Uploading ' + (num === 1 ? '1 item' : num + ' items');
+                        } else {
+                            return dvm.state.uploadList.length + ' uploads complete';
+                        }
+                    }
+                    dvm.getNumberPending = function() {
+                        return _.filter(dvm.state.uploadList, dvm.isPending).length;
+                    }
+
                     $scope.$on('$destroy', () => {
                         dvm.close();
                     });

@@ -22,7 +22,7 @@
   -->
 <div class="upload-snackbar snackbar snackbar-right flex-column p-0" ng-class="{'show': dvm.showSnackbar}">
     <div class="snackbar-header w-100 text-white">
-        <span>Upload in Progress</span>
+        <span>{{dvm.getTitle()}}</span>
         <button class="btn btn-outline-light material-icons remove-min-width float-right p-0" ng-click="dvm.attemptClose()">close</button>
         <button class="btn btn-outline-light material-icons remove-min-width float-right p-0 mr-2 collapse-button" ng-click="dvm.collapse = !dvm.collapse">{{dvm.collapse ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}}</button>
     </div>

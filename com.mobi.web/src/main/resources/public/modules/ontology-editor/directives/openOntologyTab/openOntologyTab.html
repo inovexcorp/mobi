@@ -29,7 +29,7 @@
             <div class="btn-container">
                 <button type="button" class="btn btn-primary ml-1" ng-click="dvm.newOntology()">New Ontology</button>
                 <button type="button" class="btn btn-primary ml-1" onclick="document.getElementById('open_ontology-file-input').click()">Upload Ontology</button>
-                <file-input id="open_ontology-file-input" class="hide" ng-model="dvm.os.uploadFiles" multiple on-change="dvm.showUploadOntologyOverlay()" accept=".ttl,.xml,.jsonld,.rdf,.trig,.json,.n3,.nq,.nt"></file-input>
+                <file-input id="open_ontology-file-input" class="hide" ng-model="dvm.os.uploadFiles" multiple on-change="dvm.showUploadOntologyOverlay()" accept=".ttl,.xml,.jsonld,.rdf,.trig,.json,.n3,.nq,.nt,.owl"></file-input>
             </div>
         </div>
         <div class="ontologies flex-1 vertical-scroll" targeted-spinner="dvm.id">

@@ -30,8 +30,13 @@
             &.last {
                 border-bottom: none;
             }
-            .item-details h3 {
-                font-size: 1rem;
+            .item-details {
+                p {
+                    word-break: break-word;
+                }
+                h3 {
+                    font-size: 1rem;
+                }
             }
         }
     }
