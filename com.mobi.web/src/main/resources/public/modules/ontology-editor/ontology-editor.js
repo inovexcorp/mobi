@@ -71,7 +71,6 @@
             'ontologyBranchSelect',
             'ontologyButtonStack',
             'ontologyCloseOverlay',
-            'ontologyDefaultTab',
             'ontologyDownloadOverlay',
             'ontologyTab',
             'ontologyEditorPage',
@@ -100,7 +99,7 @@
             'treeItem',
             'uploadChangesOverlay',
             'uploadOntologyOverlay',
-            'uploadOntologyTab',
+            'uploadSnackbar',
             'usagesBlock',
 
             /* Services */

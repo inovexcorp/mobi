@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,60 +26,68 @@
     angular
         /**
          * @ngdoc overview
-         * @name uploadOntologyTab
+         * @name uploadSnackbar
          *
          * @description
-         * The `uploadOntologyTab` module only provides the `uploadOntologyTab` directive which creates
-         * page for uploading ontologies.
+         * The `uploadSnackbar` module only provides the `uploadSnackbar` directive which 
          */
-        .module('uploadOntologyTab', [])
+        .module('uploadSnackbar', [])
         /**
          * @ngdoc directive
-         * @name uploadOntologyTab.directive:uploadOntologyTab
+         * @name uploadSnackbar.directive:uploadSnackbar
          * @scope
          * @restrict E
          * @requires httpService.service:httpService
          * @requires ontologyState.service:ontologyStateService
          *
          * @description
-         * `uploadOntologyTab` is a directive that creates a page for uploading ontologies. The page includes a
-         * {@link dragFile.directive:dragFile} area for dragging/dropping to upload and a display of the list of
-         * ontologies actively being uploaded to the Mobi instance. There is also a button for navigating back to the
-         * {@link openOntologyTab.directive:openOntologyTab}. The directive houses a method for
-         * {@link uploadOntologyOverlay.directive:uploadOntologyOverlay uploading ontologies}. The directive is replaced
-         * by the contents of its template.
+         * `uploadSnackbar` is a directive that 
          */
-        .directive('uploadOntologyTab', uploadOntologyTab);
+        .directive('uploadSnackbar', uploadSnackbar);
 
-        uploadOntologyTab.$inject = ['httpService', 'ontologyStateService', 'modalService'];
+        uploadSnackbar.$inject = ['httpService', 'ontologyStateService', 'modalService'];
 
-        function uploadOntologyTab(httpService, ontologyStateService, modalService) {
+        function uploadSnackbar(httpService, ontologyStateService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/uploadOntologyTab/uploadOntologyTab.html',
+                templateUrl: 'modules/ontology-editor/directives/uploadSnackbar/uploadSnackbar.html',
                 scope: {},
+                bindToController: {
+                    showSnackbar: '='
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.state = ontologyStateService;
                     dvm.showOntology = false;
 
-                    dvm.showUploadOntologyOverlay = function() {
-                        modalService.openModal('uploadOntologyOverlay');
-                    }
                     dvm.hasStatus = function(promise, value) {
                         return _.get(promise, '$$state.status') === value;
                     }
-                    dvm.cancel = function() {
-                        dvm.state.showUploadTab = false;
+                    dvm.isPending = function(item) {
+                        return httpService.isPending(item.id);
+                    }
+                    dvm.attemptClose = function() {
+                        if (dvm.hasPending()) {
+                            modalService.openConfirmModal('Close the snackbar will cancel all pending uploads. Are you sure you want to proceed?', dvm.close);
+                        } else {
+                            dvm.close();
+                        }
+                    }
+                    dvm.close = function() {
+                        dvm.showSnackbar = false;
+                        _.forEach(dvm.state.uploadList, item => httpService.cancel(item.id));
                         dvm.state.uploadList = [];
                         dvm.state.uploadFiles = [];
                     }
                     dvm.hasPending = function() {
-                        return _.some(dvm.state.uploadList, item => httpService.isPending(item.id));
+                        return _.some(dvm.state.uploadList, dvm.isPending);
                     }
-                }
+                    $scope.$on('$destroy', () => {
+                        dvm.close();
+                    });
+                }]
             }
         }
 })();
