@@ -91,7 +91,7 @@ describe('Static IRI directive', function() {
             scope.$digest();
             expect(this.element.find('a').length).toEqual(0);
         });
-        it('depending on whether the cannot modify', function() {
+        it('depending on whether the user cannot modify', function() {
             ontologyStateSvc.canModify.and.returnValue(false);
             scope.$digest();
             expect(this.element.find('a').length).toEqual(0);

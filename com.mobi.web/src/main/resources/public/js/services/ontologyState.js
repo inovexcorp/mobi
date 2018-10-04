@@ -466,7 +466,7 @@
                 var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title);
                 return $q.all([
                     om.getOntologyStuff(recordId, branchId, commitId),
-                    cm.getRecordBranches(recordId, catalogId),
+                    cm.getRecordBranches(recordId, catalogId)
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     var responseIriList = _.get(response[0], 'iriList', {});
@@ -518,7 +518,7 @@
                     if (listItem.userBranch) {
                         listItem.createdFromExists = _.some(listItem.branches, {'@id': util.getPropertyId(branch, prefixes.catalog + 'createdFrom')});
                     }
-                    listItem.masterBranchIRI = _.find(listItem.branches, {[prefixes.dcterms + 'description']: [{'@value': 'The master branch.'}]})['@id'];
+                    listItem.masterBranchIRI = _.find(listItem.branches, {[prefixes.dcterms + 'title']: [{'@value': 'MASTER'}]})['@id'];
                     return pe.evaluateRequest(modifyRequest);
                 },  $q.reject)
                 .then(decision => {

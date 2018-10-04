@@ -100,7 +100,7 @@ describe('Ontology State Service', function() {
         this.branch = {
             '@id': this.branchId,
             [prefixes.catalog + 'head']: [{'@id': this.commitId}],
-            [prefixes.dcterms + 'description']: [{'@value': 'The master branch.'}]
+            [prefixes.dcterms + 'title']: [{'@value': 'MASTER'}]
         };
         this.differenceObj = {additions: '', deletions: ''};
 
