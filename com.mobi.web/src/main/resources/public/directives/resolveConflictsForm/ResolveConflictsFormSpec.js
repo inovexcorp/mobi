@@ -122,8 +122,8 @@ describe('Resolve Conflicts Form directive', function() {
             this.controller.index = 0;
             this.controller.selected = {resolved: 'left'};
             scope.$digest();
-            var left = angular.element(this.element.querySelectorAll('.conflict.left')[0]);
-            var right = angular.element(this.element.querySelectorAll('.conflict.right')[0]);
+            var left = angular.element(this.element.querySelectorAll('.conflict.left .card')[0]);
+            var right = angular.element(this.element.querySelectorAll('.conflict.right .card')[0]);
             expect(left.hasClass('active')).toEqual(true);
             expect(left.hasClass('not-selected')).toEqual(false);
             expect(right.hasClass('active')).toEqual(false);
@@ -217,8 +217,8 @@ describe('Resolve Conflicts Form directive', function() {
         this.controller.index = 0;
         this.controller.selected = {resolved: ''};
         scope.$digest();
-        var left = angular.element(this.element.querySelectorAll('.conflict.left')[0]);
-        var right = angular.element(this.element.querySelectorAll('.conflict.right')[0]);
+        var left = angular.element(this.element.querySelectorAll('.conflict.left .card')[0]);
+        var right = angular.element(this.element.querySelectorAll('.conflict.right .card')[0]);
         left.triggerHandler('click');
         expect(this.controller.selected.resolved).toEqual('left');
         right.triggerHandler('click');
