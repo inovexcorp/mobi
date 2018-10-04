@@ -289,6 +289,14 @@ describe('Mapper State service', function() {
         result = mapperStateSvc.getAvailableProps('class1');
         expect(result).toEqual([]);
     });
+    it('should get the list of all properties for a class mapping', function() {
+        var availableProps = [{}];
+        mapperStateSvc.allPropsByClass = {'class': availableProps};
+        var result = mapperStateSvc.getAllProps('class');
+        expect(result).toEqual(availableProps);
+        result = mapperStateSvc.getAllProps('class1');
+        expect(result).toEqual([]);
+    });
     it('should get the list of properties usable with a class', function() {
         var ontologies = [{id: 'ontology1', entities: []}, {id: 'ontology2', entities: [{}]}];
         var classProps = [{'@id': 'prop1'}, {'@id': 'prop2'}];

@@ -54,6 +54,8 @@
             'propPreview',
             'propSelect',
             'rdfPreviewForm',
-            'runMappingOverlay'
+            'runMappingDatasetOverlay',
+            'runMappingDownloadOverlay',
+            'runMappingOntologyOverlay'
         ]);
 })();

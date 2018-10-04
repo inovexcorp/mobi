@@ -42,7 +42,7 @@
                     <div ng-if="dvm.mm.isDataMapping(propMapping)" class="data-prop-value">
                         <div><span class="field-name">Column: </span>{{dvm.getPropValue(propMapping)}}</div>
                         <div><span class="field-name">Preview: </span><span ng-class="{'text-muted': dvm.getDataValuePreview(propMapping) === '(None)'}">{{dvm.getDataValuePreview(propMapping)}}</span></div>
-                        <div ng-if="dvm.getDatatypePreview(propMapping)"><span class="field-name">Manual Datatype: </span>{{dvm.getDatatypePreview(propMapping)}}</div>
+                        <div><span class="field-name">Datatype: </span>{{dvm.getDatatypePreview(propMapping)}}</div>
                         <div ng-if="dvm.getLanguagePreview(propMapping)"><span class="field-name">Language: </span>{{dvm.getLanguagePreview(propMapping)}}<small class="ml-1 text-muted">&#64;{{dvm.getLanguageTag(propMapping)}}</small></div>
                     </div>
                     <div ng-if="dvm.mm.isObjectMapping(propMapping)" class="object-prop-value">
