@@ -84,59 +84,44 @@ describe('Property Values directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('property-values')).toBe(true);
-            expect(this.element.querySelectorAll('.value-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.prop-header').length).toBe(1);
         });
         it('based on the number of values', function() {
-            var values = this.element.querySelectorAll('.value-container');
+            var values = this.element.querySelectorAll('.prop-value-container');
             expect(values.length).toBe(2);
         });
         it('depending on whether a value is a blank node and user can modify', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
-            var blankNodeValue = this.element.querySelectorAll('.value-container .value-display-wrapper blank-node-value-display');
+            var blankNodeValue = this.element.querySelectorAll('.prop-value-container .value-display-wrapper blank-node-value-display');
             expect(blankNodeValue.length).toBe(1);
-            var editButtons = this.element.querySelectorAll('.value-container [title=Edit]');
+            var editButtons = this.element.querySelectorAll('.prop-value-container [title=Edit]');
             expect(editButtons.length).toBe(1);
-            var deleteButtons = this.element.querySelectorAll('.value-container [title=Delete]');
+            var deleteButtons = this.element.querySelectorAll('.prop-value-container [title=Delete]');
             expect(deleteButtons.length).toBe(2);
         });
         it('depending on whether a value is a blank node and user cannot modify', function() {
             ontologyStateSvc.canModify.and.returnValue(false);
             scope.$digest();
-            var blankNodeValue = this.element.querySelectorAll('.value-container .value-display-wrapper blank-node-value-display');
+            var blankNodeValue = this.element.querySelectorAll('.prop-value-container .value-display-wrapper blank-node-value-display');
             expect(blankNodeValue.length).toBe(1);
-            var editButtons = this.element.querySelectorAll('.value-container [title=Edit]');
+            var editButtons = this.element.querySelectorAll('.prop-value-container [title=Edit]');
             expect(editButtons.length).toBe(0);
-            var deleteButtons = this.element.querySelectorAll('.value-container [title=Delete]');
+            var deleteButtons = this.element.querySelectorAll('.prop-value-container [title=Delete]');
             expect(deleteButtons.length).toBe(0);
-        });
-        it('depending on whether the values are open or closed', function() {
-            var icon = angular.element(this.element.querySelectorAll('.value-header i')[0]);
-            var values = this.element.querySelectorAll('.value-container');
-            expect(icon.hasClass('fa-chevron-up')).toBe(true);
-            _.forEach(values, function(value) {
-                expect(angular.element(value).hasClass('ng-hide')).toBe(false);
-            });
-
-            this.isolatedScope.isClosed = true;
-            scope.$digest();
-            expect(icon.hasClass('fa-chevron-down')).toBe(true);
-            _.forEach(values, function(value) {
-                expect(angular.element(value).hasClass('ng-hide')).toBe(true);
-            });
         });
     });
     it('should call edit when the appropriate button is clicked', function() {
         ontologyStateSvc.canModify.and.returnValue(true);
         scope.$digest();
-        var editButton = angular.element(this.element.querySelectorAll('.value-container [title=Edit]')[0]);
+        var editButton = angular.element(this.element.querySelectorAll('.prop-value-container [title=Edit]')[0]);
         editButton.triggerHandler('click');
         expect(scope.edit).toHaveBeenCalledWith(scope.property, 0);
     });
     it('should call remove when the appropriate button is clicked', function() {
         ontologyStateSvc.canModify.and.returnValue(true);
         scope.$digest();
-        var removeButton = angular.element(this.element.querySelectorAll('.value-container [title=Delete]')[0]);
+        var removeButton = angular.element(this.element.querySelectorAll('.prop-value-container [title=Delete]')[0]);
         removeButton.triggerHandler('click');
         expect(scope.remove).toHaveBeenCalledWith(scope.property, 0);
     });
