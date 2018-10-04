@@ -59,7 +59,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.os = ontologyStateService;
-                }
+                },
                 templateUrl: 'modules/ontology-editor/directives/associationBlock/associationBlock.html'
             }
         }
