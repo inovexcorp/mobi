@@ -1,0 +1,38 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="modal-header">
+    <h3>Create Entity</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body text-center">
+    <button class="btn btn-primary w-100 mb-2" ng-click="dvm.createClass()">Class</button>
+    <button class="btn btn-primary w-100 mb-2" ng-click="dvm.createDataProperty()">Data Property</button>
+    <button class="btn btn-primary w-100 mb-2" ng-click="dvm.createObjectProperty()">Object Property</button>
+    <button class="btn btn-primary w-100 mb-2" ng-click="dvm.createAnnotationProperty()">Annotation Property</button>
+    <button class="btn btn-primary w-100 mb-2" ng-click="dvm.createIndividual()">Individual</button>
+    <button ng-if="dvm.os.listItem.isVocabulary" class="btn btn-primary w-100 mb-2" ng-click="dvm.createConcept()">Concept</button>
+    <button ng-if="dvm.os.listItem.isVocabulary" class="btn btn-primary w-100" ng-click="dvm.createConceptScheme()">Concept Scheme</button>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+</div>

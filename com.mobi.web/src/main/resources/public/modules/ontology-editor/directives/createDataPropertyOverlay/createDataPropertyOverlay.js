@@ -26,16 +26,16 @@
     angular
         /**
          * @ngdoc overview
-         * @name createPropertyOverlay
+         * @name createDataPropertyOverlay
          *
          * @description
-         * The `createPropertyOverlay` module only provides the `createPropertyOverlay` directive which creates
-         * content for a modal to add a data, object, or annotation property to an ontology.
+         * The `createDataPropertyOverlay` module only provides the `createDataPropertyOverlay` directive which creates
+         * content for a modal to add a data property to an ontology.
          */
-        .module('createPropertyOverlay', [])
+        .module('createDataPropertyOverlay', [])
         /**
          * @ngdoc directive
-         * @name createPropertyOverlay.directive:createPropertyOverlay
+         * @name createDataPropertyOverlay.directive:createDataPropertyOverlay
          * @scope
          * @restrict E
          * @requires ontologyManager.service:ontologyManagerService
@@ -44,7 +44,7 @@
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
-         * `createPropertyOverlay` is a directive that creates content for a modal that creates a data, object, or
+         * `createDataPropertyOverlay` is a directive that creates content for a modal that creates a data, object, or
          * annotation property in the current {@link ontologyState.service:ontologyStateService selected ontology}.
          * The form in the modal contains a text input for the property name (which populates the
          * {@link staticIri.directive:staticIri IRI}), a {@link textArea.directive:textArea} for the property
@@ -60,14 +60,14 @@
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal
          */
-        .directive('createPropertyOverlay', createPropertyOverlay);
+        .directive('createDataPropertyOverlay', createDataPropertyOverlay);
 
-        createPropertyOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
+        createDataPropertyOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createPropertyOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
+        function createDataPropertyOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/createPropertyOverlay/createPropertyOverlay.html',
+                templateUrl: 'modules/ontology-editor/directives/createDataPropertyOverlay/createDataPropertyOverlay.html',
                 scope: {
                     close: '&',
                     dismiss: '&'
@@ -81,13 +81,6 @@
                             checked: false,
                             typeIRI: prefixes.owl + 'FunctionalProperty',
                             displayText: 'Functional Property',
-                            objectOnly: false
-                        },
-                        {
-                            checked: false,
-                            typeIRI: prefixes.owl + 'AsymmetricProperty',
-                            displayText: 'Asymmetric Property',
-                            objectOnly: true
                         }
                     ];
                     dvm.prefixes = prefixes;
@@ -98,6 +91,7 @@
                     dvm.values = [];
                     dvm.property = {
                         '@id': dvm.prefix,
+                        '@type': [dvm.prefixes.owl + 'DatatypeProperty'],
                         [prefixes.dcterms + 'title']: [{
                             '@value': ''
                         }],
@@ -138,52 +132,20 @@
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.property);
                         // update relevant lists
-                        if (dvm.om.isObjectProperty(dvm.property)) {
-                            commonUpdate('objectProperties', dvm.os.setObjectPropertiesOpened);
-                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
-                        } else if (dvm.om.isDataTypeProperty(dvm.property)) {
-                            commonUpdate('dataProperties', dvm.os.setDataPropertiesOpened);
-                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
-                        } else if (dvm.om.isAnnotation(dvm.property)) {
-                            dvm.values = [];
-                            commonUpdate('annotations', dvm.os.setAnnotationPropertiesOpened);
-                        }
+                        commonUpdate('dataProperties');
+                        dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.property);
-                        // select the new property
-                        dvm.os.selectItem(_.get(dvm.property, '@id'));
+                        
                         // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
                         // hide the overlay
                         $scope.close();
                     }
-                    dvm.getKey = function() {
-                        if (dvm.om.isDataTypeProperty(dvm.property)) {
-                            return 'dataProperties'
-                        }
-                        return 'objectProperties';
-                    }
-                    dvm.typeChange = function() {
-                        dvm.values = [];
-                        if (dvm.om.isAnnotation(dvm.property)) {
-                            dvm.domains = [];
-                            _.forEach(dvm.characteristics, obj => {
-                                obj.checked = false;
-                            });
-                        } else if (dvm.om.isDataTypeProperty(dvm.property)) {
-                            _.forEach(_.filter(dvm.characteristics, 'objectOnly'), obj => {
-                                obj.checked = false;
-                            });
-                        }
-                        dvm.ranges = [];
-                    }
-                    dvm.characteristicsFilter = function(obj) {
-                        return !obj.objectOnly || dvm.om.isObjectProperty(dvm.property);
-                    }
                     dvm.cancel = function() {
                         $scope.dismiss();
                     }
 
-                    function commonUpdate(key, setThisOpened) {
+                    function commonUpdate(key) {
                         dvm.os.listItem[key].iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
                         if (dvm.values.length) {
                             dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
@@ -195,7 +157,6 @@
                             dvm.os.listItem[key].hierarchy.push({'entityIRI': dvm.property['@id']});
                             dvm.os.listItem[key].flat = dvm.os.flattenHierarchy(dvm.os.listItem[key].hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                         }
-                        setThisOpened(dvm.os.listItem.ontologyRecord.recordId, true);
                     }
                 }]
             }

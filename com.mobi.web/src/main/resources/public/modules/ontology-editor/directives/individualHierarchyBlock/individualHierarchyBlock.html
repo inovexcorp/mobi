@@ -20,11 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="individual-hierarchy-block d-flex flex-column">
-    <div class="section-header">
-        <h5>Individuals Hierarchy</h5><a class="float-right fa fa-plus" ng-click="dvm.showCreateIndividualOverlay()"></a>
-    </div>
-    <div class="flex-1 horizontal-scroll">
-        <individual-tree></individual-tree>
-    </div>
+<div class="individual-hierarchy-block horizontal-scroll">
+    <info-message ng-if="!dvm.os.listItem.individuals.flat.length">(No individuals defined)</info-message>
+    <individual-tree></individual-tree>
 </div>

@@ -116,8 +116,6 @@
                         dvm.ontoUtils.addConcept(dvm.concept);
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.concept);
                         dvm.ontoUtils.addIndividual(dvm.concept);
-                        // select the new class
-                        dvm.os.selectItem(_.get(dvm.concept, '@id'));
                         // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
                         // hide the overlay
