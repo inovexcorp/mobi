@@ -377,6 +377,9 @@
                     }, $q.reject)
                     .then(branch => {
                         listItem.branches = [branch];
+                        listItem.masterBranchIRI = listItem.ontologyRecord.branchId;
+                        listItem.userCanModify = true;
+                        listItem.userCanModifyMaster = true;
                         self.list.push(listItem);
                         self.listItem = listItem;
                         self.setSelected(self.getActiveEntityIRI(), false);
