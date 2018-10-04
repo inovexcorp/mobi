@@ -45,6 +45,9 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -68,9 +71,9 @@ public class MobiImpl implements Mobi {
     static {
         try {
             PRODUCT_ID = IOUtils.toString(
-                    MobiImpl.class.getResourceAsStream("/ga.txt"),
+                    MobiImpl.class.getResourceAsStream("/product/prod_id.txt"),
                     "UTF-8"
-            );
+            ).trim();
         } catch (IOException | NullPointerException e) {
             LOGGER.debug("Product ID is not configured");
         }
@@ -117,18 +120,33 @@ public class MobiImpl implements Mobi {
         }
 
         if (!PRODUCT_ID.isEmpty()) {
-            LOGGER.debug("Product ID configured, tracking server start");
-            Client client = ClientBuilder.newClient();
-            Response response = client.target("http://www.google-analytics.com/collect")
-                    .queryParam("v", 1)
-                    .queryParam("tid", PRODUCT_ID)
-                    .queryParam("cid", serverId.toString())
-                    .queryParam("t", "event")
-                    .queryParam("ec", "Server")
-                    .queryParam("ea", "Start")
-                    .request()
-                    .post(Entity.entity("", MediaType.APPLICATION_JSON_TYPE));
-            LOGGER.debug("Response " + response.getStatus());
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            executor.submit(() -> {
+                LOGGER.debug("Product ID configured, tracking server start");
+                Client client = ClientBuilder.newClient();
+                Response response = client.target("http://www.google-analytics.com/collect")
+                        .queryParam("v", 1)
+                        .queryParam("tid", PRODUCT_ID)
+                        .queryParam("cid", serverId.toString())
+                        .queryParam("t", "event")
+                        .queryParam("ec", "Server")
+                        .queryParam("ea", "Start")
+                        .request()
+                        .post(Entity.entity("", MediaType.APPLICATION_JSON_TYPE));
+                LOGGER.debug("Response " + response.getStatus());
+            });
+            try {
+                executor.shutdown();
+                executor.awaitTermination(60, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                LOGGER.debug("Shutdown tracking server start");
+            } finally {
+                if (!executor.isTerminated()) {
+                    LOGGER.debug("Tracking of server start not completed. Cancelling now");
+                }
+                executor.shutdownNow();
+                LOGGER.debug("Shutdown of server start completed");
+            }
         }
     }
 
