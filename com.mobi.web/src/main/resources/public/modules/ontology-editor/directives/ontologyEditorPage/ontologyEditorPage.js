@@ -38,7 +38,6 @@
          * @name ontologyEditorPage.directive:ontologyEditorPage
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
          * @requires ontologyState.service:ontologyStateService
          *
          * @description
@@ -46,7 +45,7 @@
          * Editor. These components are {@link ontologySidebar.directive:ontologySidebar},
          * {@link ontologyTab.directive:ontologyTab} with the
          * {@link ontologyState.service:ontologyStateService currently selected open ontology}, and
-         * {@link ontologyDefaultTab.directive:ontologyDefaultTab}. The directive is replaced by the contents of
+         * {@link openOntologyTab.directive:openOntologyTab}. The directive is replaced by the contents of
          * its template.
          */
         .directive('ontologyEditorPage', ontologyEditorPage);
@@ -64,7 +63,7 @@
                     var dvm = this;
                     dvm.os = ontologyStateService;
 
-                    dvm.isDefaultTab = function() {
+                    dvm.isOpenTab = function() {
                         return _.isEmpty(dvm.os.listItem);
                     }
                 }]
