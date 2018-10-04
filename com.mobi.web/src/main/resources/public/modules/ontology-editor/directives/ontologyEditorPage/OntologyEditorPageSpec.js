@@ -55,22 +55,22 @@ describe('Ontology Editor Page directive', function() {
             expect(this.element.find('ontology-sidebar').length).toEqual(1);
         });
         it('depending on whether an ontology is selected', function() {
-            spyOn(this.controller, 'isDefaultTab').and.returnValue(true);
+            spyOn(this.controller, 'isOpenTab').and.returnValue(true);
             scope.$digest();
-            expect(this.element.find('ontology-default-tab').length).toEqual(1);
+            expect(this.element.find('open-ontology-tab').length).toEqual(1);
             expect(this.element.find('ontology-tab').length).toEqual(0);
 
-            this.controller.isDefaultTab.and.returnValue(false);
+            this.controller.isOpenTab.and.returnValue(false);
             scope.$digest();
-            expect(this.element.find('ontology-default-tab').length).toEqual(0);
+            expect(this.element.find('open-ontology-tab').length).toEqual(0);
             expect(this.element.find('ontology-tab').length).toEqual(1);
         });
     });
     describe('controller methods', function() {
-        it('should test whether the default ontology tab shoudl be shown', function() {
-            expect(this.controller.isDefaultTab()).toEqual(false);
+        it('should test whether the open ontology tab should be shown', function() {
+            expect(this.controller.isOpenTab()).toEqual(false);
             ontologyStateSvc.listItem = {};
-            expect(this.controller.isDefaultTab()).toEqual(true);
+            expect(this.controller.isOpenTab()).toEqual(true);
         });
     });
 });

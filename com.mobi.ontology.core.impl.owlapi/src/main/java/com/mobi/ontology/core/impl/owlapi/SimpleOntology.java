@@ -63,6 +63,7 @@ import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.eclipse.rdf4j.rio.WriterConfig;
+import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
@@ -618,9 +619,11 @@ public class SimpleOntology implements Ontology {
     @Override
     public OutputStream asTurtle() throws MobiOntologyException {
         OutputStream outputStream = new ByteArrayOutputStream();
+
         try {
+            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.TURTLE, outputStream));
             org.eclipse.rdf4j.model.Model sesameModel = asSesameModel();
-            Rio.write(sesameModel, outputStream, RDFFormat.TURTLE);
+            Rio.write(sesameModel, rdfWriter);
         } catch (RDFHandlerException e) {
             throw new MobiOntologyException("Error while writing Ontology.");
         }
@@ -631,8 +634,9 @@ public class SimpleOntology implements Ontology {
     public OutputStream asRdfXml() throws MobiOntologyException {
         OutputStream outputStream = new ByteArrayOutputStream();
         try {
+            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.RDFXML, outputStream));
             org.eclipse.rdf4j.model.Model sesameModel = asSesameModel();
-            Rio.write(sesameModel, outputStream, RDFFormat.RDFXML);
+            Rio.write(sesameModel, rdfWriter);
         } catch (RDFHandlerException e) {
             throw new MobiOntologyException("Error while writing Ontology.");
         }

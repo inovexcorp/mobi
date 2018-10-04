@@ -15,25 +15,21 @@
         .conflict {
             cursor: pointer;
 
-            .value-header .text {
-                max-width: none;
+            .card {
+                &:hover,
+                &.active {
+                    box-shadow: 0 0 20px 10px var(--light-dark);
+                    opacity: 1;
+                }
+                &.not-selected {
+                    opacity: .5;
+                }
             }
-            h5 {
-                padding: 8px;
-            }
-            .value-container:hover {
+            .prop-value-container:hover {
                 background-color: initial;
             }
             .statement-display {
                 background-color: initial;
-            }
-            &:hover,
-            &.active {
-                box-shadow: 0 0 20px 10px var(--light-dark);
-                opacity: 1;
-            }
-            &.not-selected {
-                opacity: .5;
             }
         }
     }
