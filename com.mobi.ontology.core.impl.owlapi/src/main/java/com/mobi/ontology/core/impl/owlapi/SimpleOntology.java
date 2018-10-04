@@ -818,7 +818,7 @@ public class SimpleOntology implements Ontology {
      *
      * @param inputStream the InputStream to parse
      * @throws IOException If there is an error reading the InputStream
-     * @throws MobiOntologyException if
+     * @throws MobiOntologyException If the stream is invalid for all formats
      */
     private org.eclipse.rdf4j.model.Model createSesameModel(InputStream inputStream) throws IOException,
             MobiOntologyException {
