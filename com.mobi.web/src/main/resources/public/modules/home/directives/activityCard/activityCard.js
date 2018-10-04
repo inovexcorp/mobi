@@ -29,6 +29,8 @@
          * @name activityCard
          *
          * @description
+         * The `activityCard` module only provides the `activityCard` directive which creates a Bootstrap `.card` with
+         * a list of the recent activity in the application.
          */
         .module('activityCard', [])
         /**
@@ -36,8 +38,16 @@
          * @name activityCard.directive:activityCard
          * @scope
          * @restrict E
+         * @requires provManager.service:provManagerService
+         * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
+         * @requires http.service:httpService
          *
          * @description
+         * `activityCard` is a directive which creates a Bootstrap `.card` containing a infinite scrolled list of the
+         * most recent activities in the application. The activities are loaded 10 at a time and are displayed using
+         * {@link activityTitle.directive:activityTitle activityTitles}. The directive is replaced by the
+         * contents of its template.
          */
         .directive('activityCard', activityCard);
 

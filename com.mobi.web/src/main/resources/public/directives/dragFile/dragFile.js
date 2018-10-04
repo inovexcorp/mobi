@@ -48,56 +48,48 @@
          */
         .directive('dragFile', dragFile);
 
-    dragFile.$inject = ['$window'];
+    dragFile.$inject = ['$window', '$parse', '$compile'];
 
-    function dragFile($window) {
+    function dragFile($window, $parse, $compile) {
         return {
-            restrict: 'E',
-            replace: true,
-            templateUrl: 'directives/dragFile/dragFile.html',
-            scope: {
-                onDrop: '&?'
-            },
-            bindToController: {
-                files: '='
-            },
-            controllerAs: 'dvm',
-            controller: ['$scope', function($scope) {
-                var dvm = this;
-                dvm.inputFiles = [];
+            restrict: 'A',
+            link: function(scope, elem, attrs) {
+                scope.showDragFileOverlay = false;
 
-                if (!_.isArray(dvm.files)) {
-                    dvm.files = [];
-                }
+                elem.addClass('drag-file-container');
+                elem.append($compile('<div ng-show="showDragFileOverlay" class="drag-file position-absolute h-100 w-100"><div class="drag-file-info position-absolute text-center text-white"><span class="fa fa-cloud-upload"></span><div class="p-2 bg-primary">Drop files to upload</div></div></div>')(scope));
 
-                $scope.$watch('dvm.inputFiles', (newValue, oldValue) => {
-                    if (_.isArray(newValue) && newValue.length) {
-                        dvm.files.push(...newValue);
-                        if ($scope.onDrop) {
-                            $scope.onDrop();
-                        }
-                    }
-                });
-            }],
-            link: function(scope, elem, attrs, controller) {
+                var modelSet = $parse(attrs.dragFile).assign;
+                var onDrop = $parse(attrs.onDrop);
+
                 elem.on('dragenter', event => event.preventDefault());
                 elem.on('dragover', event => {
                     if (_.get(event.dataTransfer, 'items', []).length) {
                         elem.addClass('hover');
+                        scope.$apply(function() {
+                            scope.showDragFileOverlay = true;
+                        });
                     } else {
                         event.preventDefault();
                     }
                 });
                 elem.on('drop', event => {
                     event.preventDefault();
-                    controller.files.push(...event.dataTransfer.files);
                     elem.removeClass('hover');
-                    if (scope.onDrop) {
-                        scope.onDrop();
-                    }
-                    scope.$apply();
+                    scope.$apply(function() {
+                        modelSet(scope, [...event.dataTransfer.files])
+                        scope.showDragFileOverlay = false;
+                        if (onDrop) {
+                            onDrop(scope);
+                        }
+                    });
                 });
-                elem.on('dragleave', event => elem.removeClass('hover'));
+                elem.on('dragleave', event => {
+                    elem.removeClass('hover');
+                    scope.$apply(function() {
+                        scope.showDragFileOverlay = false;
+                    });
+                });
 
                 var windowElem = angular.element($window);
                 windowElem.on('dragenter', event => event.preventDefault());
@@ -112,5 +104,5 @@
                 });
             }
         }
-    };
+    }
 })();

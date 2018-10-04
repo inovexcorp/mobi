@@ -89,6 +89,9 @@
                     dvm.filteredList = [];
                     dvm.id = "openOntologyTabTargetedSpinner";
 
+                    dvm.showUploadOntologyOverlay = function() {
+                        modalService.openModal('uploadOntologyOverlay');
+                    }
                     dvm.getRecordTitle = function(record) {
                         var title = '';
                         if (dvm.isOpened(record)) {
@@ -188,6 +191,12 @@
 
                     $scope.$watch(() => dvm.os.list.length, () => {
                         dvm.getPageOntologyRecords();
+                    });
+                    $scope.$watch(() => dvm.os.uploadList.length, (newValue, oldValue) => {
+                        dvm.showSnackbar = newValue > 0;
+                        if (newValue === 0) {
+                            dvm.search();
+                        }
                     });
                 }]
             }

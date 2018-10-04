@@ -26,6 +26,7 @@
     angular
         .module('home', [
             'activityCard',
-            'activityTitle'
+            'activityTitle',
+            'quickActionGrid'
         ]);
 })();
