@@ -58,8 +58,15 @@ describe('Concept Hierarchy Block directive', function() {
         it('with a .section-header', function() {
             expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        it('with a link to add a concept', function() {
+        it('with a link to add a concept if the user can modify', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+        });
+        it('with no link to add a concept if the user cannot modify', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
         });
         it('with a hierarchy-tree', function() {
             expect(this.element.find('hierarchy-tree').length).toBe(1);
@@ -73,6 +80,8 @@ describe('Concept Hierarchy Block directive', function() {
         });
     });
     it('should call showCreateConceptOverlay when the create concept link is clicked', function() {
+        ontologyStateSvc.canModify.and.returnValue(true);
+        scope.$digest();
         spyOn(this.controller, 'showCreateConceptOverlay');
         var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
         link.triggerHandler('click');

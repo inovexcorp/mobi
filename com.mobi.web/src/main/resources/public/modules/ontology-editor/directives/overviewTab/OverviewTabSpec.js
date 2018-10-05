@@ -79,10 +79,18 @@ describe('Overview Tab directive', function() {
         it('with a usages-block', function() {
             expect(this.element.find('usages-block').length).toBe(1);
         });
-        it('with a button to delete an entity', function() {
+        it('with a button to delete an entity if the user can modify', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             var button = this.element.querySelectorAll('button');
             expect(button.length).toBe(1);
             expect(angular.element(button[0]).text()).toContain('Delete');
+        });
+        it('with no button to delete an entity if the user cannot modify', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            var button = this.element.querySelectorAll('button');
+            expect(button.length).toBe(0);
         });
         it('based on whether something is selected', function() {
             expect(this.element.querySelectorAll('.selected-entity').length).toEqual(1);
@@ -92,6 +100,8 @@ describe('Overview Tab directive', function() {
             expect(this.element.querySelectorAll('.selected-entity').length).toEqual(0);
         });
         it('depending on whether the selected entity is imported', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             var button = angular.element(this.element.querySelectorAll('button')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
@@ -133,6 +143,8 @@ describe('Overview Tab directive', function() {
         });
     });
     it('should call showDeleteConfirmation when the delete entity button is clicked', function() {
+        ontologyStateSvc.canModify.and.returnValue(true);
+        scope.$digest();
         spyOn(this.controller, 'showDeleteConfirmation');
         var button = angular.element(this.element.querySelectorAll('button')[0]);
         button.triggerHandler('click');

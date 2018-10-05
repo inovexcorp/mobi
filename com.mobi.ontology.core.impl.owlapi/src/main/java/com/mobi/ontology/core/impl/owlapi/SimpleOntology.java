@@ -200,7 +200,8 @@ public class SimpleOntology implements Ontology {
 
     }
 
-    private void initialize(OntologyManager ontologyManager, SesameTransformer transformer, BNodeService bNodeService, boolean resolveImports) {
+    private void initialize(OntologyManager ontologyManager, SesameTransformer transformer, BNodeService bNodeService,
+                            boolean resolveImports) {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
@@ -801,7 +802,10 @@ public class SimpleOntology implements Ontology {
             }
         } catch (IOException e) {
             LOG.error("Unable to read ontology file.", e);
-            throw new MobiOntologyException(e);
+            throw new MobiOntologyException("Unable to read ontology file.", e);
+        } catch (NegativeArraySizeException e) {
+            LOG.error("InputStream is empty.", e);
+            throw new MobiOntologyException("InputStream is empty.", e);
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
@@ -813,10 +817,12 @@ public class SimpleOntology implements Ontology {
      * {@link InputStream}.
      *
      * @param inputStream the InputStream to parse
-     * @throws IOException
+     * @throws IOException If there is an error reading the InputStream
+     * @throws MobiOntologyException If the stream is invalid for all formats
      */
-    private org.eclipse.rdf4j.model.Model createSesameModel(InputStream inputStream) throws IOException {
-        org.eclipse.rdf4j.model.Model model = new LinkedHashModel();
+    private org.eclipse.rdf4j.model.Model createSesameModel(InputStream inputStream) throws IOException,
+            MobiOntologyException {
+        org.eclipse.rdf4j.model.Model model = null;
 
         Set<RDFFormat> formats = new HashSet<>(asList(RDFFormat.JSONLD, RDFFormat.TRIG, RDFFormat.TURTLE,
                 RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS));
@@ -844,6 +850,10 @@ public class SimpleOntology implements Ontology {
             } else {
                 IOUtils.closeQuietly(inputStream);
             }
+        }
+
+        if (model == null) {
+            throw new MobiOntologyException("Ontology was invalid for all formats.");
         }
 
         return model;

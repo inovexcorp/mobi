@@ -69,10 +69,19 @@ describe('Datatype Property Block directive', function() {
         it('with a .section-header', function() {
             expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        it('with a link to add a datatype property', function() {
+        it('with a link to add a datatype property if the user can modify', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
         });
+        it('with no link to add a datatype property if the user cannot modify', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
+        });
         it('depending on whether the selected individual is imported', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
 
             ontologyStateSvc.listItem.selected.mobi = {imported: true};
@@ -133,6 +142,8 @@ describe('Datatype Property Block directive', function() {
         });
     });
     it('should call openAddDataPropOverlay when the link is clicked', function() {
+        ontologyStateSvc.canModify.and.returnValue(true);
+        scope.$digest();
         spyOn(this.controller, 'openAddDataPropOverlay');
         var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
         link.triggerHandler('click');
