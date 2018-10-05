@@ -30,16 +30,16 @@ import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.Bindings;
-import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.base.RepositoryResult;
 import com.mobi.security.policy.api.Policy;
 import com.mobi.security.policy.api.cache.PolicyCache;
 import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
@@ -55,6 +55,7 @@ import com.mobi.security.policy.api.xacml.jaxb.TargetType;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.api.VirtualFilesystemException;
+import com.mobi.vfs.ontologies.documents.BinaryFile;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.osgi.framework.Bundle;
@@ -71,6 +72,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -99,27 +101,6 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     private IRI typeIRI;
     private IRI policyFileTypeIRI;
 
-    private static final String BINDING_VALUES = "%BINDINGVALUES";
-    private static final String FILTERS = "%FILTERS";
-    private static final String RESOURCES_BINDING = "resources";
-    private static final String RESOURCES_PROP = "relatedResource";
-    private static final String SUBJECTS_BINDING = "subjects";
-    private static final String SUBJECTS_PROP = "relatedSubject";
-    private static final String ACTIONS_BINDING = "actions";
-    private static final String ACTIONS_PROP = "relatedAction";
-    private static final String POLICY_ID_BINDING = "policyId";
-    private static String policyQuery;
-
-    static {
-        try {
-            policyQuery = IOUtils.toString(
-                    BalanaPolicyManager.class.getResourceAsStream("/find-policies.rq"),
-                    "UTF-8"
-            );
-        } catch (IOException e) {
-            throw new MobiException(e);
-        }
-    }
 
     @Reference
     void setVf(ValueFactory vf) {
@@ -205,7 +186,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
 
     @Override
     public List<XACMLPolicy> getPolicies(PolicyQueryParams params) {
-        List<Resource> policyIds = findPolicies(params);
+        List<Resource> policyIds = PolicyUtils.findPolicies(params, repository);
         Optional<Cache<String, Policy>> cache = policyCache.getPolicyCache();
         // If there is a policy cache
         if (cache.isPresent()) {
@@ -232,6 +213,16 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 Policy policy = cache.get().get(policyId.stringValue());
                 if (policy instanceof XACMLPolicy) {
                     return Optional.of(getBalanaPolicy((XACMLPolicy) policy));
+                }
+            } else {
+                try (RepositoryConnection conn = repository.getConnection()) {
+                    RepositoryResult<Statement> statements = conn.getStatements(policyId,
+                            vf.createIRI(BinaryFile.retrievalURL_IRI), null);
+                    Iterator<Statement> iterator = statements.iterator();
+                    if (iterator.hasNext()) {
+                        BalanaPolicy policy = getPolicyFromFile(iterator.next().getObject().stringValue());
+                        cache.get().put(policyId.stringValue(), policy);
+                    }
                 }
             }
         }
@@ -481,38 +472,6 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         policyCache.getPolicyCache().ifPresent(cache ->
                 cache.put(policyFile.getResource().stringValue(), balanaPolicy));
         return policyFile;
-    }
-
-    private List<Resource> findPolicies(PolicyQueryParams params) {
-        StringBuilder values = new StringBuilder(" ");
-        StringBuilder filters = new StringBuilder(" ");
-        setBindings(params.getResourceIRIs(), RESOURCES_BINDING, RESOURCES_PROP, values, filters);
-        setBindings(params.getSubjectIRIs(), SUBJECTS_BINDING, SUBJECTS_PROP, values, filters);
-        setBindings(params.getActionIRIs(), ACTIONS_BINDING, ACTIONS_PROP, values, filters);
-
-        try (RepositoryConnection conn = repository.getConnection()) {
-            String queryStr = policyQuery.replace(BINDING_VALUES, values.toString())
-                    .replace(FILTERS, filters.toString());
-            return QueryResults.asList(conn.prepareTupleQuery(queryStr).evaluate()).stream()
-                    .map(bindings -> Bindings.requiredResource(bindings, POLICY_ID_BINDING))
-                    .collect(Collectors.toList());
-        }
-    }
-
-    private void setBindings(Set<IRI> iris, String variableName, String propertyName, StringBuilder values,
-                             StringBuilder filters) {
-        if (iris.size() > 0) {
-            filters.append("?").append(POLICY_ID_BINDING).append(" :").append(propertyName).append(" ?")
-                    .append(variableName).append(". ");
-            if (iris.size() > 1) {
-                String iriStr = String.join(" ", iris.stream().map(iri -> "<" + iri + ">")
-                        .collect(Collectors.toList()));
-                values.append("VALUES ?").append(variableName).append(" {").append(iriStr).append("} ");
-            } else if (iris.size() == 1) {
-                values.append("BIND (<").append(iris.iterator().next()).append("> as ?").append(variableName)
-                        .append(") ");
-            }
-        }
     }
 
     private String getChecksum(BalanaPolicy policy) {

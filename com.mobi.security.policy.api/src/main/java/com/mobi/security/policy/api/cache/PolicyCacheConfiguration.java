@@ -64,7 +64,7 @@ public class PolicyCacheConfiguration implements CacheConfiguration {
         if (props.containsKey("numEntries")) {
             this.numEntries = config.numEntries();
         } else {
-            this.numEntries = 250;
+            this.numEntries = 100;
         }
     }
 

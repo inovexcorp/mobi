@@ -107,6 +107,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         prp = new BalanaPRP();
         prp.setVf(VALUE_FACTORY);
         prp.setPolicyCache(policyCache);
+        prp.setRepository(repo);
         pdp = new BalanaPDP();
         pdp.addPIP(pip);
         pdp.setBalanaPRP(prp);
