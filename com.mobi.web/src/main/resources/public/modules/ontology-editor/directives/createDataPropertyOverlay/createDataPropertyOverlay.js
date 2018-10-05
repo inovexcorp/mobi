@@ -44,17 +44,14 @@
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
-         * `createDataPropertyOverlay` is a directive that creates content for a modal that creates a data, object, or
-         * annotation property in the current {@link ontologyState.service:ontologyStateService selected ontology}.
-         * The form in the modal contains a text input for the property name (which populates the
-         * {@link staticIri.directive:staticIri IRI}), a {@link textArea.directive:textArea} for the property
-         * description, {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and
-         * {@link radioButton.directive:radioButton radioButtons} to select the type of the property. The form will
-         * contain other fields depending on the property type selected. If the property type is data or object
-         * property, the fields shown are {@link checkbox.directive:checkbox checkboxes} for the property
-         * characteristics, an {@link iriSelect.directive:iriSelect} for the domain, an
-         * {@link iriSelect.directive:iriSelect} for the range, and a
-         * {@link superPropertySelect.directive:superPropertySelect}. Meant to be used in conjunction with the
+         * `createDataPropertyOverlay` is a directive that creates content for a modal that creates a data property in
+         * the current {@link ontologyState.service:ontologyStateService selected ontology}. The form in the modal
+         * contains a text input for the property name (which populates the {@link staticIri.directive:staticIri IRI}),
+         * a {@link textArea.directive:textArea} for the property description, an
+         * {@link advancedLanguageSelect.directive:advancedLanguageSelect},
+         * {@link checkbox.directive:checkbox checkboxes} for the property characteristics, an
+         * {@link iriSelect.directive:iriSelect} for the domain, an {@link iriSelect.directive:iriSelect} for the range,
+         * and a {@link superPropertySelect.directive:superPropertySelect}. Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.
          *
          * @param {Function} close A function that closes the modal
@@ -131,11 +128,11 @@
                         dvm.os.updatePropertyIcon(dvm.property);
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.property);
-                        // update relevant lists
-                        commonUpdate('dataProperties');
+                        // update lists
+                        updateLists();
                         dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
+                        // Update InProgressCommit
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.property);
-                        
                         // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
                         // hide the overlay
@@ -145,17 +142,14 @@
                         $scope.dismiss();
                     }
 
-                    function commonUpdate(key) {
-                        dvm.os.listItem[key].iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
+                    function updateLists() {
+                        dvm.os.listItem.dataProperties.iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
                         if (dvm.values.length) {
                             dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
-                            dvm.ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), key);
-                            if (dvm.ontoUtils.containsDerivedSemanticRelation(_.map(dvm.values, '@id'))) {
-                                dvm.os.listItem.derivedSemanticRelations.push(dvm.property['@id']);
-                            }
+                            dvm.ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), 'dataProperties');
                         } else {
-                            dvm.os.listItem[key].hierarchy.push({'entityIRI': dvm.property['@id']});
-                            dvm.os.listItem[key].flat = dvm.os.flattenHierarchy(dvm.os.listItem[key].hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                            dvm.os.listItem.dataProperties.hierarchy.push({'entityIRI': dvm.property['@id']});
+                            dvm.os.listItem.dataProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.dataProperties.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                         }
                     }
                 }]
