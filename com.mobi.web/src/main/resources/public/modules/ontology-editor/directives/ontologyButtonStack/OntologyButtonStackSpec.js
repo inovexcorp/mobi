@@ -39,6 +39,8 @@ describe('Ontology Button Stack directive', function() {
         ontologyStateSvc.isCommittable.and.returnValue(false);
         ontologyStateSvc.hasChanges.and.returnValue(false);
         ontologyStateSvc.listItem.userBranch = false;
+        ontologyStateSvc.listItem.userCanModify = true;
+        ontologyStateSvc.canModify.and.returnValue(true);
         this.element = $compile(angular.element('<ontology-button-stack></ontology-button-stack>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('ontologyButtonStack');
@@ -96,6 +98,22 @@ describe('Ontology Button Stack directive', function() {
 
             ontologyStateSvc.listItem.upToDate = false;
             scope.$digest();
+            expect(mergeButton.attr('disabled')).toBeTruthy();
+        });
+        it('depending on if the user cannot modify record', function() {
+            var uploadButton = angular.element(this.element.querySelectorAll('circle-button.upload-btn')[0]);
+            var branchButton = angular.element(this.element.querySelectorAll('circle-button.btn-warning')[0]);
+            var commitButton = angular.element(this.element.querySelectorAll('circle-button.btn-info')[0]);
+            var createEntityButton = angular.element(this.element.querySelectorAll('circle-button.btn-primary')[0]);
+            var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
+
+            ontologyStateSvc.listItem.userCanModify = false;
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            expect(uploadButton.attr('disabled')).toBeTruthy();
+            expect(branchButton.attr('disabled')).toBeTruthy()
+            expect(commitButton.attr('disabled')).toBeTruthy();
+            expect(createEntityButton.attr('disabled')).toBeTruthy();
             expect(mergeButton.attr('disabled')).toBeTruthy();
         });
     });

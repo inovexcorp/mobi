@@ -39,6 +39,7 @@ import com.mobi.ontology.core.api.axiom.Axiom;
 import com.mobi.ontology.core.api.classexpression.OClass;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
+import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
@@ -63,6 +64,7 @@ import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -129,6 +131,19 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
         assertEquals(ontologyIRI, ontology.getOntologyId().getOntologyIRI().get());
         assertEquals(versionIRI, ontology.getOntologyId().getVersionIRI().get());
+    }
+
+    @Test (expected = MobiOntologyException.class)
+    public void testStreamConstructorEmpty() throws Exception {
+        InputStream stream =  new ByteArrayInputStream(new byte[0]);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
+    }
+
+    @Test (expected = MobiOntologyException.class)
+    public void testStreamConstructorNoFormatMatch() throws Exception {
+        String noMatch = "This is not a valid ontology file.";
+        InputStream stream =  new ByteArrayInputStream(noMatch.getBytes());
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
     }
 
     @Test

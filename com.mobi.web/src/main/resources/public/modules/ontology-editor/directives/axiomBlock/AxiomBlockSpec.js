@@ -204,14 +204,24 @@ describe('Axiom Block directive', function() {
         it('with a .section-header', function() {
             expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        it('based on whether something is selected', function() {
+        it('based on whether something is selected and the user can modify the branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
 
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
         });
+        it('when the user cannot modify the branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
+            ontologyStateSvc.listItem.selected = undefined;
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
+        });
         it('based on whether the selected entity is imported', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
 
             ontologyStateSvc.listItem.selected.mobi = {imported: true};
@@ -247,6 +257,8 @@ describe('Axiom Block directive', function() {
         });
     });
     it('should call showAxiomOverlay when the add axiom link is clicked', function() {
+        ontologyStateSvc.canModify.and.returnValue(true);
+        scope.$digest();
         spyOn(this.controller, 'showAxiomOverlay');
         var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
         link.triggerHandler('click');

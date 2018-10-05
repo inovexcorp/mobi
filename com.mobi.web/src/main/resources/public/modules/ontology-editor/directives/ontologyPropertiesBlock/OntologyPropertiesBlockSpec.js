@@ -75,6 +75,16 @@ describe('Ontology Properties Block directive', function() {
             scope.$digest();
             expect(this.element.find('property-values').length).toBe(0);
         });
+        it('with a link to add an ontology property when the user can modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+        });
+        it('with no link to add an ontology property when the user cannot modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
+        });
     });
     describe('controller methods', function() {
         it('should set the correct manager values when opening the Add Overlay', function() {
@@ -110,6 +120,8 @@ describe('Ontology Properties Block directive', function() {
         });
     });
     it('should call openAddOverlay when the link is clicked', function() {
+        ontologyStateSvc.canModify.and.returnValue(true);
+        scope.$digest();
         spyOn(this.controller, 'openAddOverlay');
         var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
         link.triggerHandler('click');

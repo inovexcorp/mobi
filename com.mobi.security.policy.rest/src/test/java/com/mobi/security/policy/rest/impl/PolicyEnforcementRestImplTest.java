@@ -114,6 +114,7 @@ public class PolicyEnforcementRestImplTest extends MobiRestTestNg {
     @Test
     public void evaluateRequestTest() {
         Response response = target().path("pep").request().post(Entity.json(json));
+        assertEquals(response.readEntity(String.class), Decision.PERMIT.toString());
         assertEquals(response.getStatus(), 200);
     }
 
@@ -141,6 +142,7 @@ public class PolicyEnforcementRestImplTest extends MobiRestTestNg {
     public void evaluateEmptySubjectAttrsTest() {
         json.remove("subjectAttrs");
         Response response = target().path("pep").request().post(Entity.json(json));
+        assertEquals(response.readEntity(String.class), Decision.PERMIT.toString());
         assertEquals(response.getStatus(), 200);
     }
 
@@ -148,6 +150,7 @@ public class PolicyEnforcementRestImplTest extends MobiRestTestNg {
     public void evaluateEmptyActionAttrsTest() {
         json.remove("actionAttrs");
         Response response = target().path("pep").request().post(Entity.json(json));
+        assertEquals(response.readEntity(String.class), Decision.PERMIT.toString());
         assertEquals(response.getStatus(), 200);
     }
 
@@ -155,6 +158,7 @@ public class PolicyEnforcementRestImplTest extends MobiRestTestNg {
     public void evaluateEmptyResourceAttrsTest() {
         json.remove("resourceAttrs");
         Response response = target().path("pep").request().post(Entity.json(json));
+        assertEquals(response.readEntity(String.class), Decision.PERMIT.toString());
         assertEquals(response.getStatus(), 200);
     }
 
@@ -163,6 +167,7 @@ public class PolicyEnforcementRestImplTest extends MobiRestTestNg {
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
         when(user.getResource()).thenReturn(vf.createIRI(AuthenticationProps.ANON_USER));
         Response response = target().path("pep").request().post(Entity.json(json));
+        assertEquals(response.readEntity(String.class), Decision.PERMIT.toString());
         assertEquals(response.getStatus(), 200);
     }
 
@@ -170,20 +175,23 @@ public class PolicyEnforcementRestImplTest extends MobiRestTestNg {
     public void evaluateRequestDenyDecisionTest() {
         when(response.getDecision()).thenReturn(Decision.DENY);
         Response response = target().path("pep").request().post(Entity.json(json));
-        assertEquals(response.getStatus(), 401);
+        assertEquals(response.readEntity(String.class), Decision.DENY.toString());
+        assertEquals(response.getStatus(), 200);
     }
 
     @Test
     public void evaluateRequestIndeterminateDecisionTest() {
         when(response.getDecision()).thenReturn(Decision.INDETERMINATE);
         Response response = target().path("pep").request().post(Entity.json(json));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(response.readEntity(String.class), Decision.INDETERMINATE.toString());
+        assertEquals(response.getStatus(), 200);
     }
 
     @Test
     public void evaluateRequestNADecisionTest() {
         when(response.getDecision()).thenReturn(Decision.NOT_APPLICABLE);
         Response response = target().path("pep").request().post(Entity.json(json));
+        assertEquals(response.readEntity(String.class), Decision.NOT_APPLICABLE.toString());
         assertEquals(response.getStatus(), 200);
     }
 }

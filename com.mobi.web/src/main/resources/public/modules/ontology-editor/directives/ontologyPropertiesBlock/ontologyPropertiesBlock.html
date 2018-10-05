@@ -22,7 +22,7 @@
   -->
 <div class="ontology-properties-block annotation-block">
     <div class="section-header">
-        <h5>Properties</h5><a class="float-right fa fa-fw fa-plus" ng-click="dvm.openAddOverlay()"></a>
+        <h5>Properties</h5><a ng-if="dvm.os.canModify()" class="float-right fa fa-fw fa-plus" ng-click="dvm.openAddOverlay()"></a>
     </div>
     <property-values ng-repeat="property in dvm.os.listItem.selected | showProperties:dvm.properties | orderBy:dvm.ontoUtils.getLabelForIRI" property="property" entity="dvm.os.listItem.selected" remove="dvm.openRemoveOverlay(iri, index)" edit="dvm.editClicked(property, index)"></property-values>
 </div>
