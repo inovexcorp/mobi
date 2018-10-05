@@ -53,6 +53,7 @@ describe('Ontology Branch Select directive', function() {
         this.branchId = 'branchId';
         this.branch = {'@id': this.branchId};
         this.commitId = 'commitId';
+        ontologyStateSvc.listItem.userCanModify = true;
 
         scope.bindModel = {};
         this.element = $compile(angular.element('<ontology-branch-select ng-model="bindModel"></ontology-branch-select>'))(scope);
@@ -112,6 +113,18 @@ describe('Ontology Branch Select directive', function() {
             expect(this.element.querySelectorAll('.fa.fa-exclamation-triangle.fa-fw-red').length).toBe(0);
             scope.$digest();
             expect(this.element.querySelectorAll('.fa.fa-exclamation-triangle.fa-fw-red').length).toBe(1);
+        });
+        it('depending on whether the user can modify record', function() {
+            ontologyStateSvc.listItem.userCanModify = true;
+            scope.$digest();
+            expect(this.element.querySelectorAll('.fa-trash-o').length).toBe(1);
+            expect(this.element.querySelectorAll('.fa-pencil').length).toBe(1);
+        });
+        it('depending on whether the the user cannot modify record', function() {
+            ontologyStateSvc.listItem.userCanModify = false;
+            scope.$digest();
+            expect(this.element.querySelectorAll('.fa-trash-o').length).toBe(0);
+            expect(this.element.querySelectorAll('.fa-pencil').length).toBe(0);
         });
     });
     describe('controller methods', function() {
@@ -202,6 +215,7 @@ describe('Ontology Branch Select directive', function() {
             beforeEach(function() {
                 this.controller.branch = this.branch;
                 ontologyStateSvc.listItem.branches = [this.branch];
+                scope.$digest();
             });
             it('when resolved', function() {
                 ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.when());

@@ -84,8 +84,15 @@ describe('Relationships Block directive', function() {
         it('with a .section-header', function() {
             expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        it('with a button to add a relationship', function() {
+        it('with a button to add a relationship if the user can modify', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             expect(this.element.querySelectorAll('.section-header button').length).toBe(1);
+        });
+        it('with no button to add a relationship if the user cannot modify', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header button').length).toBe(0);
         });
         it('depending on how many annotations there are', function() {
             expect(this.element.find('property-values').length).toBe(2);
@@ -108,6 +115,8 @@ describe('Relationships Block directive', function() {
             expect(header.text().trim()).toEqual('Top Concepts');
         });
         it('depending on whether the button to add should be disabled', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             spyOn(this.controller, 'isDisabled').and.returnValue(false);
             scope.$digest();
             var button = angular.element(this.element.querySelectorAll('.section-header button')[0]);
@@ -189,6 +198,8 @@ describe('Relationships Block directive', function() {
         });
     });
     it('should call clickPlus when the add button is clicked', function() {
+        ontologyStateSvc.canModify.and.returnValue(true);
+        scope.$digest();
         spyOn(this.controller, 'clickPlus');
         var button = angular.element(this.element.querySelectorAll('.section-header button')[0]);
         button.triggerHandler('click');

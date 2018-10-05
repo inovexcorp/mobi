@@ -64,9 +64,6 @@ describe('Property Hierarchy Block directive', function() {
         it('with a .section-header', function() {
             expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        it('with a link to add a property', function() {
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
-        });
         it('depending on whether there is a flat data property hierarchy', function() {
             expect(this.element.querySelectorAll('.tree-item').length).toBe(0);
             expect(this.element.find('tree-item').length).toBe(0);
@@ -93,6 +90,16 @@ describe('Property Hierarchy Block directive', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('.tree-item').length).toBe(1);
             expect(this.element.find('tree-item').length).toBe(1);
+        });
+        it('with a link to add a property when the user can modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+        });
+        it('with a link to add a property when the user cannot modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
         });
     });
     describe('controller methods', function() {
@@ -155,6 +162,8 @@ describe('Property Hierarchy Block directive', function() {
         });
     });
     it('should call showCreatePropertyOverlay when the create property link is clicked', function() {
+        ontologyStateSvc.canModify.and.returnValue(true);
+        scope.$digest();
         spyOn(this.controller, 'showCreatePropertyOverlay');
         var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
         link.triggerHandler('click');

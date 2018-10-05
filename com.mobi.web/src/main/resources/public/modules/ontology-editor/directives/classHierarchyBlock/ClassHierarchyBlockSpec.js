@@ -60,8 +60,15 @@ describe('Class Hierarchy Block directive', function() {
         it('with a hierarchy-tree', function() {
             expect(this.element.find('hierarchy-tree').length).toBe(1);
         });
-        it('with a link to create a class', function() {
+        it('with a link to create a class when the user can modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             expect(this.element.querySelectorAll('.section-header a').length).toEqual(1);
+        });
+        it('with no link to create a class when the user cannot modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toEqual(0);
         });
     });
     describe('controller methods', function() {
@@ -72,6 +79,8 @@ describe('Class Hierarchy Block directive', function() {
         });
     });
     it('should call showCreateClassOverlay when the create class link is clicked', function() {
+        ontologyStateSvc.canModify.and.returnValue(true);
+        scope.$digest();
         spyOn(this.controller, 'showCreateClassOverlay');
         var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
         link.triggerHandler('click');

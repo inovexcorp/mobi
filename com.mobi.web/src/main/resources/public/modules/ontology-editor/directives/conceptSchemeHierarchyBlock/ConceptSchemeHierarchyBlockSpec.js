@@ -57,11 +57,18 @@ describe('Concept Scheme Hierarchy Block directive', function() {
         it('with a .section-header', function() {
             expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        it('with a link to add a concept scheme', function() {
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
-        });
         it('with a hierarchy-tree', function() {
             expect(this.element.find('hierarchy-tree').length).toBe(1);
+        });
+        it('with a link to add a concept scheme when the user can modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+        });
+        it('with no link to add a concept scheme when the user cannot modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
         });
     });
     describe('controller methods', function() {
@@ -72,6 +79,8 @@ describe('Concept Scheme Hierarchy Block directive', function() {
         });
     });
     it('should call showCreateConceptSchemeOverlay when the create concept scheme link is clicked', function() {
+        ontologyStateSvc.canModify.and.returnValue(true);
+        scope.$digest();
         spyOn(this.controller, 'showCreateConceptSchemeOverlay');
         var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
         link.triggerHandler('click');

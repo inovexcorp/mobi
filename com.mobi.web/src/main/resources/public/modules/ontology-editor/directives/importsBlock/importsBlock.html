@@ -22,12 +22,12 @@
   -->
 <div class="imports-block">
     <div class="section-header">
-        <h5>Imports</h5><a class="float-right fa fa-fw fa-plus" ng-click="dvm.showNewOverlay()"></a><a class="float-right fa fa-fw fa-refresh" ng-click="dvm.refresh()"></a>
+        <h5>Imports</h5><a ng-if="dvm.os.canModify()" class="float-right fa fa-fw fa-plus" ng-click="dvm.showNewOverlay()"></a><a class="float-right fa fa-fw fa-refresh" ng-click="dvm.refresh()"></a>
     </div>
     <p ng-if="dvm.os.listItem.selected[dvm.prefixes.owl + 'imports'].length" ng-repeat="imported in dvm.os.listItem.selected[dvm.prefixes.owl + 'imports'] | orderBy:dvm.get track by imported['@id']" class="import">
         <a ng-if="!dvm.failed(imported['@id'])" href="{{imported['@id']}}" target="_blank" class="import-iri">{{imported['@id']}}</a>
         <span ng-if="dvm.failed(imported['@id'])" class="text-danger">{{imported['@id']}} <strong>(failed)</strong></span>
-        <a class="btn-link" ng-click="dvm.setupRemove(imported['@id'])" title="Delete"><i class="fa fa-times fa-fw"></i></a>
+        <a ng-if="dvm.os.canModify()" class="btn-link" ng-click="dvm.setupRemove(imported['@id'])" title="Delete"><i class="fa fa-times fa-fw"></i></a>
     </p>
     <div ng-if="dvm.indirectImports.length" class="indirect-import-container">
         <span class="indirect-header">Indirect Imports</span>

@@ -69,19 +69,30 @@ describe('Annotation Block directive', function() {
             scope.$digest();
             expect(this.element.find('property-values').length).toBe(0);
         });
-        it('depending on whether something is selected', function() {
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
-            ontologyStateSvc.listItem.selected = undefined;
-            scope.$digest();
-            expect(this.element.querySelectorAll('a.fa-plus').length).toBe(0);
-        });
         it('depending on whether the selected entity is imported', function() {
             ontologyStateSvc.listItem.selected.mobi = {imported: true};
             scope.$digest();
             expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
         });
+        it('depending on whether something is selected when the user can modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+            ontologyStateSvc.listItem.selected = undefined;
+            scope.$digest();
+            expect(this.element.querySelectorAll('a.fa-plus').length).toBe(0);
+        });
+        it('if the user cannot modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
+        });
     });
     describe('controller methods', function() {
+        beforeEach(function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
+        });
         it('should set the correct manager values when opening the Add Annotation Overlay', function() {
             this.controller.openAddOverlay();
             expect(ontologyStateSvc.editingAnnotation).toBe(false);

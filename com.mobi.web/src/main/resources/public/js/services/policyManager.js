@@ -60,6 +60,7 @@
             self.actionRead = prefixes.policy + 'Read';
             self.actionUpdate = prefixes.policy + 'Update';
             self.actionDelete = prefixes.policy + 'Delete';
+            self.actionModify = prefixes.catalog + 'Modify';
             self.subjectId = 'urn:oasis:names:tc:xacml:1.0:subject:subject-id';
             self.resourceId = 'urn:oasis:names:tc:xacml:1.0:resource:resource-id';
             self.actionId = 'urn:oasis:names:tc:xacml:1.0:action:action-id';

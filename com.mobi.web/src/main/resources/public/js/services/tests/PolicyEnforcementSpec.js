@@ -42,7 +42,7 @@ describe('Policy Enforcement service', function() {
         this.jsonRequest = {
             'resourceId':'urn:test',
             'actionId':'urn:test',
-            'actionAtrs': {
+            'actionAttrs': {
                 'urn:test':'urn:test'
             },
             'resourceAttrs': {

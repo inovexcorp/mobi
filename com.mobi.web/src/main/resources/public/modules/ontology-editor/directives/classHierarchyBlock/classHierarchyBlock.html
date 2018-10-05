@@ -22,7 +22,7 @@
   -->
 <div class="class-hierarchy-block d-flex flex-column">
     <div class="section-header">
-        <h5>Class Hierarchy</h5><a class="float-right fa fa-fw fa-plus" ng-click="dvm.showCreateClassOverlay()"></a>
+        <h5>Class Hierarchy</h5><a ng-if="dvm.os.canModify()" class="float-right fa fa-fw fa-plus" ng-click="dvm.showCreateClassOverlay()"></a>
     </div>
     <div class="flex-1 horizontal-scroll">
         <hierarchy-tree hierarchy="dvm.os.listItem.classes.flat"></hierarchy-tree>
