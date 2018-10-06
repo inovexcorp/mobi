@@ -21,20 +21,17 @@
  * #L%
  */
 describe('Concept Hierarchy Block directive', function() {
-    var $compile, scope, ontologyStateSvc, modalSvc;
+    var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('conceptHierarchyBlock');
         mockOntologyState();
-        mockOntologyUtilsManager();
-        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            modalSvc = _modalService_;
         });
 
         this.element = $compile(angular.element('<concept-hierarchy-block></concept-hierarchy-block>'))(scope);
@@ -46,7 +43,6 @@ describe('Concept Hierarchy Block directive', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        modalSvc = null;
         this.element.remove();
     });
 
@@ -55,13 +51,12 @@ describe('Concept Hierarchy Block directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('concept-hierarchy-block')).toBe(true);
         });
-        it('with a .section-header', function() {
-            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
-        });
-        it('with a link to add a concept if the user can modify', function() {
-            ontologyStateSvc.canModify.and.returnValue(true);
+        it('depending on whether the tree is empty', function() {
+            expect(this.element.find('info-message').length).toEqual(1);
+
+            ontologyStateSvc.listItem.concepts.flat = [{}];
             scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+            expect(this.element.find('info-message').length).toEqual(0);
         });
         it('with no link to add a concept if the user cannot modify', function() {
             ontologyStateSvc.canModify.and.returnValue(false);
@@ -71,20 +66,5 @@ describe('Concept Hierarchy Block directive', function() {
         it('with a hierarchy-tree', function() {
             expect(this.element.find('hierarchy-tree').length).toBe(1);
         });
-    });
-    describe('controller methods', function() {
-        it('should open the createConceptOverlay', function() {
-            this.controller.showCreateConceptOverlay();
-            expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
-            expect(modalSvc.openModal).toHaveBeenCalledWith('createConceptOverlay');
-        });
-    });
-    it('should call showCreateConceptOverlay when the create concept link is clicked', function() {
-        ontologyStateSvc.canModify.and.returnValue(true);
-        scope.$digest();
-        spyOn(this.controller, 'showCreateConceptOverlay');
-        var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
-        link.triggerHandler('click');
-        expect(this.controller.showCreateConceptOverlay).toHaveBeenCalled();
     });
 });
