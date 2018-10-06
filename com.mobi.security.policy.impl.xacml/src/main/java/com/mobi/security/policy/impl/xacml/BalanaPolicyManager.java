@@ -35,11 +35,9 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
 import com.mobi.security.policy.api.Policy;
 import com.mobi.security.policy.api.cache.PolicyCache;
 import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
@@ -55,7 +53,6 @@ import com.mobi.security.policy.api.xacml.jaxb.TargetType;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.api.VirtualFilesystemException;
-import com.mobi.vfs.ontologies.documents.BinaryFile;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.osgi.framework.Bundle;
@@ -72,13 +69,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import javax.cache.Cache;
 
 @Component(
@@ -190,13 +185,20 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         Optional<Cache<String, Policy>> cache = policyCache.getPolicyCache();
         // If there is a policy cache
         if (cache.isPresent()) {
-            List<String> policyIdStrs = policyIds.stream().map(Resource::stringValue).collect(Collectors.toList());
-            return StreamSupport.stream(cache.get().spliterator(), false)
-                    .filter(entry -> policyIdStrs.contains(entry.getKey()))
-                    .map(Cache.Entry::getValue)
-                    .filter(policy -> policy instanceof XACMLPolicy)
-                    .map(policy -> getBalanaPolicy((XACMLPolicy) policy))
-                    .collect(Collectors.toList());
+            try (RepositoryConnection conn = repository.getConnection()) {
+                Cache<String, Policy> cacheMap = cache.get();
+                return policyIds.stream()
+                        .map(id -> {
+                            if (cacheMap.containsKey(id.stringValue())) {
+                                return cacheMap.get(id.stringValue());
+                            } else {
+                                return getPolicyFromFile(id, conn);
+                            }
+                        })
+                        .filter(policy -> policy instanceof XACMLPolicy)
+                        .map(policy -> getBalanaPolicy((XACMLPolicy) policy))
+                        .collect(Collectors.toList());
+            }
         }
         try (RepositoryConnection conn = repository.getConnection()) {
             return policyIds.stream()
@@ -213,16 +215,6 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 Policy policy = cache.get().get(policyId.stringValue());
                 if (policy instanceof XACMLPolicy) {
                     return Optional.of(getBalanaPolicy((XACMLPolicy) policy));
-                }
-            } else {
-                try (RepositoryConnection conn = repository.getConnection()) {
-                    RepositoryResult<Statement> statements = conn.getStatements(policyId,
-                            vf.createIRI(BinaryFile.retrievalURL_IRI), null);
-                    Iterator<Statement> iterator = statements.iterator();
-                    if (iterator.hasNext()) {
-                        BalanaPolicy policy = getPolicyFromFile(iterator.next().getObject().stringValue());
-                        cache.get().put(policyId.stringValue(), policy);
-                    }
                 }
             }
         }

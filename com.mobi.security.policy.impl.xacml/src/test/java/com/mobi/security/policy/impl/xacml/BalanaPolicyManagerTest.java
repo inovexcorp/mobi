@@ -381,7 +381,6 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
 
         List<XACMLPolicy> policies = manager.getPolicies(new PolicyQueryParams.Builder().build());
         verify(policyCache, atLeastOnce()).getPolicyCache();
-        verify(cache, atLeastOnce()).spliterator();
         assertTrue(policies.size() > 0);
         Optional<XACMLPolicy> optPolicy = policies.stream()
                 .filter(policy -> policy.getId().equals(policyId))
@@ -398,7 +397,6 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
 
         List<XACMLPolicy> policies = manager.getPolicies(new PolicyQueryParams.Builder().build());
         verify(policyCache, atLeastOnce()).getPolicyCache();
-        verify(cache, times(0)).spliterator();
         assertTrue(policies.size() > 0);
         Optional<XACMLPolicy> optPolicy = policies.stream()
                 .filter(policy -> policy.getId().equals(policyId))

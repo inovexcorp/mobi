@@ -92,7 +92,7 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
         this.policyCache = policyCache;
     }
 
-    @Reference(name = "repository")
+    @Reference(target = "(id=system)")
     void setRepository(Repository repository) {
         this.repository = repository;
     }
@@ -172,6 +172,7 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
             } catch (URISyntaxException e) {
                 throw new MobiException("Invalid URIs in policy.", e);
             }
+            // TODO: Add same for ACTION_ID and SUBJECT_ID
             BagAttribute relatedResourceBag = (BagAttribute) relatedResourceResult.getAttributeValue();
             String relatedResource = ((StringAttribute) relatedResourceBag.iterator().next()).getValue();
 
