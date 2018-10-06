@@ -21,17 +21,16 @@
   #L%
   -->
 <div class="preview-block">
-    <block>
-        <block-header>Preview</block-header>
-        <block-content class="preview-content">
-            <div class="form-inline">
+    <div class="card h-100">
+        <div class="card-header">
+            <form class="form-inline justify-content-end" name="dvm.form">
                 <serialization-select ng-model="dvm.activePage.serialization"></serialization-select>
-                <button type="button" class="btn btn-primary refresh-button" ng-click="dvm.getPreview()" ng-disabled="!dvm.activePage.serialization">Refresh</button>
-                <button type="button" class="btn btn-primary download-button float-right remove-min-width" ng-click="dvm.showDownloadOverlay()"><i class="fa fa-fw fa-download"></i></button>
-            </div>
-            <div class="textarea-wrapper">
-                <ui-codemirror ng-if="dvm.activePage.preview" ng-model="dvm.activePage.preview" ui-codemirror-opts="dvm.options"></ui-codemirror>
-            </div>
-        </block-content>
+                <button type="button" class="btn btn-primary refresh-button ml-2" ng-click="dvm.getPreview()" ng-disabled="!dvm.activePage.serialization">Refresh</button>
+                <button type="button" class="btn btn-primary download-button remove-min-width ml-2" ng-click="dvm.showDownloadOverlay()"><i class="fa fa-fw fa-download"></i></button>
+            </form>
+        </div>
+        <div class="card-body position-relative">
+            <ui-codemirror ng-if="dvm.activePage.preview" ng-model="dvm.activePage.preview" ui-codemirror-opts="dvm.options"></ui-codemirror>
+        </div>
     </block>
 </div>

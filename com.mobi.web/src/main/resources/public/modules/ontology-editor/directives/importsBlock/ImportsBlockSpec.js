@@ -120,12 +120,6 @@ describe('Imports Block directive', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('.indirect.import').length).toBe(1);
         });
-        it('with an .indirect-header', function() {
-            expect(this.element.querySelectorAll('.indirect-header').length).toBe(0);
-            this.controller.indirectImports = ['iri'];
-            scope.$digest();
-            expect(this.element.querySelectorAll('.indirect-header').length).toBe(1);
-        });
     });
     describe('controller methods', function() {
         describe('setupRemove should set the correct variables and open a remove confirmation modal if', function() {
