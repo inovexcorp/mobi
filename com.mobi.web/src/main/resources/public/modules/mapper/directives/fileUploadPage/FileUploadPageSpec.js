@@ -76,7 +76,7 @@ describe('File Upload Page directive', function() {
                 mapperStateSvc.newMapping = true;
                 this.controller.edit();
                 expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
-                expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
+                expect(mapperStateSvc.setProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
                 expect(mapperStateSvc.displayMappingConfigOverlay).toBe(true);
             });
@@ -84,7 +84,7 @@ describe('File Upload Page directive', function() {
                 mapperStateSvc.newMapping = false;
                 this.controller.edit();
                 expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
-                expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
+                expect(mapperStateSvc.setProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
                 expect(mapperStateSvc.displayMappingConfigOverlay).not.toBe(true);
             });

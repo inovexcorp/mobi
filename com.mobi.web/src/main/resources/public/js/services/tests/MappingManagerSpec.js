@@ -798,19 +798,6 @@ describe('Mapping Manager service', function() {
             expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.classMapping, this.objectPropMapping]);
         });
     });
-    describe('should get a data mapping from a class mapping', function() {
-        it('unless it does not exist', function() {
-            var classMapping = {'@id': 'classId'};
-            var result = mappingManagerSvc.getDataMappingFromClass([classMapping], 'classId', 'propId');
-            expect(result).toBe(undefined);
-        });
-        it('if it exists', function() {
-            var dataMapping = {'@id': 'dataMapping', '@type': ['DataMapping'], 'hasProperty': [{'@id': 'propId'}]};
-            var classMapping = {'@id': 'classId', 'dataProperty': [{'@id': dataMapping['@id']}]};
-            var result = mappingManagerSvc.getDataMappingFromClass([classMapping, dataMapping], 'classId', 'propId');
-            expect(result).toEqual(dataMapping);
-        });
-    });
     it('should get all class mappings in a mapping', function() {
         var result = mappingManagerSvc.getAllClassMappings([{'@type': ['ClassMapping']}]);
         expect(result.length).toBe(1);

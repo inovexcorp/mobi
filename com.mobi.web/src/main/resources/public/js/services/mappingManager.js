@@ -742,28 +742,6 @@
             }
             /**
              * @ngdoc method
-             * @name getDataMappingFromClass
-             * @methodOf mappingManager.service:mappingManagerService
-             *
-             * @description
-             * Retrieves the data mapping which maps the specified property from the specified class
-             * mapping in the passed mapping.
-             *
-             * @param {Object[]} mapping The mapping JSON-LD array
-             * @param {string} classMappingId The id of the class mapping with the requested data property
-             * @param {string} propId The id of the requested data property
-             * @returns {Object} The data property mapping which maps the specified data property
-             */
-            self.getDataMappingFromClass = function(mapping, classMappingId, propId) {
-                var dataProperties = _.map(getDataProperties(getEntityById(mapping, classMappingId)), '@id');
-                var dataMappings = self.getPropMappingsByPropId(mapping, propId);
-                if (dataProperties.length && dataMappings.length) {
-                    return _.find(dataMappings, mapping => dataProperties.indexOf(mapping['@id']) >= 0);
-                }
-                return undefined;
-            }
-            /**
-             * @ngdoc method
              * @name getAllClassMappings
              * @methodOf mappingManager.service:mappingManagerService
              *
