@@ -177,7 +177,6 @@ describe('Create Individual Overlay directive', function() {
                 expect(this.controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
                 expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.individual);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.individual);
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.individual['@id'], false);
                 expect(ontoUtils.addConcept).toHaveBeenCalledWith(this.controller.individual);
                 expect(ontoUtils.addConceptScheme).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
@@ -190,7 +189,6 @@ describe('Create Individual Overlay directive', function() {
                 expect(this.controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
                 expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.individual);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.individual);
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.individual['@id'], false);
                 expect(ontoUtils.addConcept).not.toHaveBeenCalled();
                 expect(ontoUtils.addConceptScheme).toHaveBeenCalledWith(this.controller.individual);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
@@ -202,7 +200,6 @@ describe('Create Individual Overlay directive', function() {
                 expect(this.controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
                 expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.individual);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.individual);
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.individual['@id'], false);
                 expect(ontoUtils.addConcept).not.toHaveBeenCalled();
                 expect(ontoUtils.addConceptScheme).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

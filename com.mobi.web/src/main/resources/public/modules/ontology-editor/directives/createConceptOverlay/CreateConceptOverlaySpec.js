@@ -181,7 +181,6 @@ describe('Create Concept Overlay directive', function() {
             expect(ontoUtils.addConcept).toHaveBeenCalledWith(this.controller.concept);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.concept);
             expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.concept);
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.concept['@id']);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             expect(scope.close).toHaveBeenCalled();
         });

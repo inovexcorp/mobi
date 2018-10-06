@@ -20,11 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="association-block d-flex flex-column">
-    <div class="section-header">
-        <h5>Class-Property Associations</h5>
-    </div>
-    <div class="flex-1 horizontal-scroll">
-        <everything-tree></everything-tree>
-    </div>
+<div class="association-block horizontal-scroll">
+    <info-message ng-if="!dvm.os.listItem.flatEverythingTree.length">(No entities defined)</info-message>
+    <everything-tree class="py-1"></everything-tree>
 </div>

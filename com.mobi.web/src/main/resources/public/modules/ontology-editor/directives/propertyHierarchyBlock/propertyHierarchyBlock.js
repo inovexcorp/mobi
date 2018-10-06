@@ -40,21 +40,18 @@
          * @restrict E
          * @requires ontologyState.service:ontologyStateService
          * @requires ontologyManager.service:ontologyManagerService
-         * @requires modal.service:modalService
          *
          * @description
          * `propertyHierarchyBlock` is a directive that creates a section that displays a manual hierarchy tree of the
          * data, object, and annotation properties in the current
-         * {@link ontologyState.service:ontologyStateService selected ontology} within separate "folders". The section
-         * header also contains a button to add properties. The directive houses the methods for opening a modal for
-         * {@link createPropertyOverlay.directive:createPropertyOverlay adding} properties. The directive is replaced
-         * by the contents of its template.
+         * {@link ontologyState.service:ontologyStateService selected ontology} within separate "folders".The directive
+         * is replaced by the contents of its template.
          */
         .directive('propertyHierarchyBlock', propertyHierarchyBlock);
 
-        propertyHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'modalService', 'INDENT'];
+        propertyHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'INDENT'];
 
-        function propertyHierarchyBlock(ontologyStateService, ontologyManagerService, modalService, INDENT) {
+        function propertyHierarchyBlock(ontologyStateService, ontologyManagerService, INDENT) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -69,10 +66,6 @@
 
                     dvm.isShown = function(node) {
                         return !_.has(node, 'entityIRI') || (dvm.os.areParentsOpen(node) && node.get(dvm.os.listItem.ontologyRecord.recordId));
-                    }
-                    dvm.showCreatePropertyOverlay = function() {
-                        dvm.os.unSelectItem();
-                        modalService.openModal('createPropertyOverlay');
                     }
 
                     dvm.flatPropertyTree = constructFlatPropertyTree();
