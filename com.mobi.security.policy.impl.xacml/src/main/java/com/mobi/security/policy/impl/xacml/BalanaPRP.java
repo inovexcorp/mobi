@@ -44,6 +44,7 @@ import com.mobi.security.policy.api.exception.ProcessingException;
 import com.mobi.security.policy.api.xacml.PolicyQueryParams;
 import com.mobi.security.policy.api.xacml.XACML;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
+import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.ontologies.documents.BinaryFile;
@@ -85,6 +86,7 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
     private PolicyCache policyCache;
     private Repository repository;
     private VirtualFilesystem vfs;
+    private XACMLPolicyManager policyManager;
     private ValueFactory vf;
 
     @Reference
@@ -92,14 +94,15 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
         this.policyCache = policyCache;
     }
 
-    @Reference(target = "(id=system)")
-    void setRepository(Repository repository) {
-        this.repository = repository;
-    }
-
     @Reference
     void setVfs(VirtualFilesystem vfs) {
         this.vfs = vfs;
+    }
+
+    @Reference
+    void setPolicyManager(XACMLPolicyManager policyManager) {
+        this.policyManager = policyManager;
+        this.repository = this.policyManager.getRepository();
     }
 
     @Reference

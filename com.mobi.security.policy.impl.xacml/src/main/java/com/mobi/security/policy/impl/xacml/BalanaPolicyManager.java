@@ -272,6 +272,11 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         }
     }
 
+    @Override
+    public Repository getRepository() {
+        return this.repository;
+    }
+
     private BalanaPolicy getBalanaPolicy(XACMLPolicy policy) {
         if (policy instanceof BalanaPolicy) {
             return (BalanaPolicy) policy;
