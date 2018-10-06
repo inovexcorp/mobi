@@ -39,21 +39,18 @@
          * @scope
          * @restrict E
          * @requires ontologyState.service:ontologyStateService
-         * @requires modal.service:modalService
          *
          * @description
          * `individualHierarchyBlock` is a directive that creates a section that displays a
          * {@link hierarchyTree.directive:hierarchyTree} of the individuals in the current
          * {@link ontologyState.service:ontologyStateService selected ontology} underneath their class types. The
-         * section header also has a button to add individuals. The directive houses the methods for opening a
-         * modal for {@link createIndividualOverlay.directive:createIndividualOverlay adding} individuals. The
          * directive is replaced by the contents of its template.
          */
         .directive('individualHierarchyBlock', individualHierarchyBlock);
 
-        individualHierarchyBlock.$inject = ['ontologyStateService', 'modalService'];
+        individualHierarchyBlock.$inject = ['ontologyStateService'];
 
-        function individualHierarchyBlock(ontologyStateService, modalService) {
+        function individualHierarchyBlock(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -63,11 +60,6 @@
                 controller: function() {
                     var dvm = this;
                     dvm.os = ontologyStateService;
-
-                    dvm.showCreateIndividualOverlay = function() {
-                        dvm.os.unSelectItem();
-                        modalService.openModal('createIndividualOverlay');
-                    }
                 }
             }
         }

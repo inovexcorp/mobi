@@ -38,6 +38,7 @@
          * @name associationBlock.directive:associationBlock
          * @scope
          * @restrict E
+         * @requires ontologyState.service:ontologyStateService
          *
          * @description
          * `associationBlock` is a directive that creates a section that displays the
@@ -47,11 +48,18 @@
          */
         .directive('associationBlock', associationBlock);
 
-        function associationBlock() {
+        associationBlock.$inject = ['ontologyStateService'];
+
+        function associationBlock(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
                 scope: {},
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+                    dvm.os = ontologyStateService;
+                },
                 templateUrl: 'modules/ontology-editor/directives/associationBlock/associationBlock.html'
             }
         }

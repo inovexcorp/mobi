@@ -22,9 +22,10 @@
   -->
 <div class="ontology-button-stack">
     <circle-button-stack>
-        <circle-button ng-click="dvm.showUploadChangesOverlay()" class="upload-btn" btn-icon="'fa-upload'" display-text="'Upload Changes'" btn-small="true" ng-disabled="!dvm.os.canModify()"></circle-button>
+        <circle-button class="upload-circle-button" ng-click="dvm.showUploadChangesOverlay()" btn-icon="'fa-upload'" display-text="'Upload Changes'" btn-small="true" ng-disabled="!dvm.os.canModify()"></circle-button>
         <circle-button class="btn-warning text-white" ng-click="dvm.showCreateBranchOverlay()" btn-icon="'fa-code-fork'" display-text="'Create Branch'" btn-small="true" ng-disabled="!dvm.os.listItem.userCanModify"></circle-button>
         <circle-button class="btn-success" ng-click="dvm.os.listItem.merge.active = true" btn-icon="'fa-random'" display-text="'Merge Branches'" btn-small="true" ng-disabled="dvm.os.isCommittable(dvm.os.listItem) || dvm.os.hasChanges(dvm.os.listItem) || dvm.os.listItem.userBranch || !dvm.os.listItem.upToDate || !dvm.os.canModify()"></circle-button>
-        <circle-button class="btn-primary" ng-click="dvm.showCommitOverlay()" btn-icon="'fa-git'" display-text="'Commit Changes'" ng-disabled="!dvm.os.isCommittable(dvm.os.listItem) || !dvm.os.listItem.userCanModify"></circle-button>
+        <circle-button class="btn-info" ng-click="dvm.showCommitOverlay()" btn-icon="'fa-git'" display-text="'Commit Changes'" btn-small="true" ng-disabled="!dvm.os.isCommittable(dvm.os.listItem) || !dvm.os.listItem.userCanModify"></circle-button>
+        <circle-button class="btn-primary" ng-click="dvm.showCreateEntityOverlay()" btn-icon="'fa-plus'" display-text="'Create Entity'" ng-disabled="!dvm.os.canModify()"></circle-button>
     </circle-button-stack>
 </div>
