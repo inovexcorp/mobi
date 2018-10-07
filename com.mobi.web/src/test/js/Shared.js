@@ -348,7 +348,6 @@ function mockMappingManager() {
             this.getPropIdByMappingId = jasmine.createSpy('getPropIdByMappingId').and.returnValue('');
             this.getAllClassMappings = jasmine.createSpy('getAllClassMappings').and.returnValue([]);
             this.getAllDataMappings = jasmine.createSpy('getAllDataMappings').and.returnValue([]);
-            this.getDataMappingFromClass = jasmine.createSpy('getDataMappingFromClass').and.returnValue({});
             this.getPropsLinkingToClass = jasmine.createSpy('getPropsLinkingToClass').and.returnValue([]);
             this.getPropMappingTitle = jasmine.createSpy('getPropMappingTitle').and.returnValue('');
             this.getBaseClass = jasmine.createSpy('getBaseClass').and.returnValue({});
@@ -370,7 +369,7 @@ function mockDelimitedManager() {
             this.previewFile = jasmine.createSpy('previewFile').and.callFake(function(rowCount) {
                 return rowCount ? $q.when() : $q.reject('Something went wrong');
             });
-            this.previewMap = jasmine.createSpy('previewMap').and.callFake(function(jsonld, format) {
+            this.previewMap = jasmine.createSpy('previewMap').and.callFake((jsonld, format) => {
                 if (jsonld) {
                     return format === 'jsonld' ? $q.when([]) : $q.when('');
                 } else {
@@ -395,7 +394,7 @@ function mockMapperState() {
             this.mapping = undefined;
             this.sourceOntologies = [];
             this.mappingSearchString = '';
-            this.availablePropsByClass = {};
+            this.propsByClass = {};
             this.editMapping = false;
             this.newMapping = false;
             this.step = 0;
@@ -431,11 +430,16 @@ function mockMapperState() {
             this.saveMapping = jasmine.createSpy("saveMapping").and.returnValue($q.when());
             this.setMasterBranch = jasmine.createSpy("setMasterBranch");
             this.setInvalidProps = jasmine.createSpy('setInvalidProps');
-            this.getAvailableProps = jasmine.createSpy('getAvailableProps').and.returnValue([]);
-            this.setAvailableProps = jasmine.createSpy('setAvailableProps');
-            this.hasAvailableProps = jasmine.createSpy('hasAvailableProps');
-            this.removeAvailableProps = jasmine.createSpy('removeAvailableProps');
-            this.getAllProps = jasmine.createSpy('getAllProps').and.returnValue([]);
+            this.getProps = jasmine.createSpy('getProps').and.returnValue([]);
+            this.getPropsByClassMappingId = jasmine.createSpy('getPropsByClassMappingId').and.returnValue([]);
+            this.setProps = jasmine.createSpy('setProps');
+            this.setPropsByClassMappingId = jasmine.createSpy('setPropsByClassMappingId');
+            this.hasProps = jasmine.createSpy('hasProps');
+            this.hasPropsByClassMappingId = jasmine.createSpy('hasPropsByClassMappingId');
+            this.hasPropsSet = jasmine.createSpy('hasPropsSet');
+            this.hasPropsSetByClassMappingId = jasmine.createSpy('hasPropsSetByClassMappingId');
+            this.removeProps = jasmine.createSpy('removeProps');
+            this.removePropsByClassMappingId = jasmine.createSpy('removePropsByClassMappingId');
             this.getClassProps = jasmine.createSpy('getClassProps').and.returnValue([]);
             this.getClasses = jasmine.createSpy('getClasses').and.returnValue([]);
             this.getMappedColumns = jasmine.createSpy('getMappedColumns').and.returnValue([]);

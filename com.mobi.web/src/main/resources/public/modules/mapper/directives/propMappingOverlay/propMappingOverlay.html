@@ -25,7 +25,7 @@
         <h6>{{dvm.state.newProp ? 'Add' : 'Edit'}} Property</h6>
         <div class="form-group">
             <custom-label>Property</custom-label>
-            <prop-select props="dvm.state.getAvailableProps(dvm.state.selectedClassMappingId)"
+            <prop-select props="dvm.state.getPropsByClassMappingId(dvm.state.selectedClassMappingId)"
                          selected-prop="dvm.selectedProp"
                          is-disabled-when="!dvm.state.newProp"
                          on-change="dvm.updateRange()"></prop-select>

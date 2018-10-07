@@ -66,7 +66,9 @@
 
                     dvm.addClass = function() {
                         var classMapping = dvm.state.addClassMapping(dvm.selectedClass);
-                        dvm.state.setAvailableProps(classMapping['@id']);
+                        if (!dvm.state.hasPropsSet(dvm.selectedClass.classObj['@id'])) {
+                            dvm.state.setProps(dvm.selectedClass.classObj['@id']);
+                        }
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = classMapping['@id'];
                         dvm.state.displayClassMappingOverlay = false;
