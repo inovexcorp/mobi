@@ -178,7 +178,6 @@ describe('Create Concept Scheme Overlay directive', function() {
             expect(ontologyStateSvc.listItem.conceptSchemes.hierarchy).toEqual([{entityIRI: this.controller.scheme['@id']}]);
             expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{prop: 'entity'}]);
             expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.scheme);
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.scheme['@id']);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             expect(scope.close).toHaveBeenCalled();
         });

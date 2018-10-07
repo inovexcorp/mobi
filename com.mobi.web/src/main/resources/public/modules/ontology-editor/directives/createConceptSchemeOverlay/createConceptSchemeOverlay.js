@@ -118,8 +118,6 @@
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.scheme);
                         // Update individual hierarchy
                         dvm.ontoUtils.addIndividual(dvm.scheme);
-                        // select the new concept
-                        dvm.os.selectItem(_.get(dvm.scheme, '@id'));
                         // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
                         // hide the overlay

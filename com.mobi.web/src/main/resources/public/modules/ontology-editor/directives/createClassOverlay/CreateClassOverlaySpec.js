@@ -170,7 +170,6 @@ describe('Create Class Overlay directive', function() {
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.classes.flat).toEqual([{prop: 'entity'}]);
                 expect(ontologyStateSvc.listItem.classes.hierarchy).toContain({'entityIRI': 'class-iri'});
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.clazz['@id']);
                 expect(scope.close).toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontoUtils.setSuperClasses).not.toHaveBeenCalled();
@@ -190,7 +189,6 @@ describe('Create Class Overlay directive', function() {
                     expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz['@id']);
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.clazz);
                     expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
-                    expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.clazz['@id']);
                     expect(scope.close).toHaveBeenCalled();
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(ontologyStateSvc.listItem.classes.hierarchy).toEqual([]);
@@ -208,7 +206,6 @@ describe('Create Class Overlay directive', function() {
                     expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz['@id']);
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.clazz);
                     expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
-                    expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.clazz['@id']);
                     expect(scope.close).toHaveBeenCalled();
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(ontologyStateSvc.listItem.classes.hierarchy).toEqual([]);
