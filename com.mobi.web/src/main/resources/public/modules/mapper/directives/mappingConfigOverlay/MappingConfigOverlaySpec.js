@@ -384,7 +384,7 @@ describe('Mapping Config Overlay directive', function() {
                 expect(mappingManagerSvc.findIncompatibleMappings).not.toHaveBeenCalled();
                 expect(mappingManagerSvc.setSourceOntologyInfo).not.toHaveBeenCalled();
                 expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
-                expect(mapperStateSvc.setAvailableProps).not.toHaveBeenCalled();
+                expect(mapperStateSvc.setProps).not.toHaveBeenCalled();
                 expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
             });
             describe('if it changed', function() {
@@ -399,6 +399,7 @@ describe('Mapping Config Overlay directive', function() {
                     mappingManagerSvc.getAllClassMappings.and.returnValue([this.classMapping]);
                     this.controller.classes = [{classObj: {'@id': 'class1'}}, {classObj: {'@id': 'class2'}}];
                     mappingManagerSvc.getMappingEntity.and.returnValue({'@id': 'mapping'});
+                    mappingManagerSvc.getClassIdByMapping.and.returnValue('class');
                 });
                 it('setting appropriate state', function() {
                     this.controller.set();
@@ -409,7 +410,7 @@ describe('Mapping Config Overlay directive', function() {
                     expect(mapperStateSvc.changeProp).toHaveBeenCalledWith('mapping', prefixes.delim + 'sourceBranch', this.ontologyInfo.branchId, this.oldOntologyInfo.branchId, true);
                     expect(mapperStateSvc.changeProp).toHaveBeenCalledWith('mapping', prefixes.delim + 'sourceCommit', this.ontologyInfo.commitId, this.oldOntologyInfo.commitId, true);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
+                    expect(mapperStateSvc.setProps).toHaveBeenCalledWith('class');
                     expect(mapperStateSvc.availableClasses).toEqual(this.controller.classes);
                     expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
                 });

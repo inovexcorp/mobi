@@ -84,7 +84,7 @@
                     dvm.edit = function() {
                         var classMappings = dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld);
                         dvm.state.selectedClassMappingId = _.get(_.head(classMappings), '@id', '');
-                        _.forEach(classMappings, classMapping => dvm.state.setAvailableProps(classMapping['@id']));
+                        _.forEach(_.uniq(_.map(classMappings, dvm.mm.getClassIdByMapping)), dvm.state.setProps);
                         dvm.state.step = dvm.state.editMappingStep;
                         if (dvm.state.newMapping) {
                             dvm.state.displayMappingConfigOverlay = true;

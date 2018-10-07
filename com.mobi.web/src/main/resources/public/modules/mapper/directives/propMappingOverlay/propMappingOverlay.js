@@ -141,7 +141,6 @@
                                 // Add ObjectMapping pointing to new range class mapping
                                 propMap = dvm.state.addObjectMapping(dvm.selectedProp, dvm.state.selectedClassMappingId, classMappingId);
                                 prop = prefixes.delim + 'objectProperty';
-                                dvm.state.setAvailableProps(classMappingId);
                             } else {
                                 // Add the DataMapping pointing to the selectedColumn
                                 propMap = dvm.state.addDataMapping(dvm.selectedProp, dvm.state.selectedClassMappingId, dvm.selectedColumn, dvm.datatype, dvm.language);
@@ -158,7 +157,6 @@
                                 // If the additionsObj for the parent ClassMapping does not exist, add it with the triple for the new PropertyMapping
                                 dvm.state.mapping.difference.additions.push({'@id': dvm.state.selectedClassMappingId, [prop]: [{'@id': propMap['@id']}]});
                             }
-                            dvm.state.setAvailableProps(dvm.state.selectedClassMappingId);
                             dvm.state.newProp = false;
                         } else {
                             if (mm.isDataMapping(dvm.selectedPropMapping)) {
@@ -206,6 +204,9 @@
                         if (dvm.rangeClassMappingId === newClassMappingIdentifier) {
                             // Add a new ClassMapping for the range if that is what was selected
                             classMappingId = dvm.state.addClassMapping(dvm.rangeClass)['@id'];
+                            if (!dvm.state.hasPropsSet(dvm.rangeClass.classObj['@id'])) {
+                                dvm.state.setProps(dvm.rangeClass.classObj['@id']);
+                            }
                         }
                         return classMappingId;
                     }

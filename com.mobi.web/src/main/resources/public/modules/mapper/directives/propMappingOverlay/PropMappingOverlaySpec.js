@@ -244,8 +244,7 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.addClassMapping).not.toHaveBeenCalled();
                         expect(mapperStateSvc.addObjectMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.classMapping['@id']);
                         expect(mapperStateSvc.addDataMapping).not.toHaveBeenCalled();
-                        expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
-                        expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
+                        expect(mapperStateSvc.setProps).not.toHaveBeenCalled();
                         expect(mapperStateSvc.newProp).toBe(false);
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
@@ -257,8 +256,7 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.addClassMapping).toHaveBeenCalledWith(this.controller.rangeClass);
                         expect(mapperStateSvc.addObjectMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.classMapping['@id']);
                         expect(mapperStateSvc.addDataMapping).not.toHaveBeenCalled();
-                        expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
-                        expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
+                        expect(mapperStateSvc.setProps).toHaveBeenCalledWith('range');
                         expect(mapperStateSvc.newProp).toBe(false);
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
@@ -274,7 +272,6 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.addClassMapping).not.toHaveBeenCalled();
                         expect(mapperStateSvc.addObjectMapping).not.toHaveBeenCalled();
                         expect(mapperStateSvc.addDataMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.controller.selectedColumn, undefined, undefined);
-                        expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
                         expect(mapperStateSvc.newProp).toBe(false);
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
@@ -287,7 +284,6 @@ describe('Prop Mapping Overlay directive', function() {
                             expect(mapperStateSvc.addClassMapping).not.toHaveBeenCalled();
                             expect(mapperStateSvc.addObjectMapping).not.toHaveBeenCalled();
                             expect(mapperStateSvc.addDataMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.controller.selectedColumn, 'xsd:double', undefined);
-                            expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
                             expect(mapperStateSvc.newProp).toBe(false);
                             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                             expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
@@ -299,7 +295,6 @@ describe('Prop Mapping Overlay directive', function() {
                             expect(mapperStateSvc.addClassMapping).not.toHaveBeenCalled();
                             expect(mapperStateSvc.addObjectMapping).not.toHaveBeenCalled();
                             expect(mapperStateSvc.addDataMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.controller.selectedColumn, 'rdf:langString', 'en');
-                            expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
                             expect(mapperStateSvc.newProp).toBe(false);
                             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                             expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);

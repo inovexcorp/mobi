@@ -29,10 +29,10 @@
     <div class="class-mapping-props">
         <div class="properties-field-name">
             <span class="field-name">Properties</span>
-            <button class="btn btn-link no-padding float-right add-prop-mapping-button" ng-disabled="!dvm.state.hasAvailableProps(dvm.state.selectedClassMappingId)" ng-click="dvm.addProp()"><i class="fa fa-plus"></i> Add Property</button>
+            <button class="btn btn-link no-padding float-right add-prop-mapping-button" ng-disabled="!dvm.state.hasPropsByClassMappingId(dvm.state.selectedClassMappingId)" ng-click="dvm.addProp()"><i class="fa fa-plus"></i> Add Property</button>
         </div>
         <div class="prop-list list-group">
-            <div ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId)" class="list-group-item" ng-class="{'active': dvm.state.selectedPropMappingId === propMapping['@id'], 'invalid': dvm.isInvalid(propMapping)}" ng-click="dvm.state.selectedPropMappingId = propMapping['@id']; dvm.state.highlightIndexes = [dvm.getLinkedColumnIndex(propMapping)]" ng-dblclick="dvm.switchClass(propMapping)">
+            <div ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId)" class="list-group-item" ng-class="{'active': dvm.state.selectedPropMappingId === propMapping['@id'], 'invalid': dvm.isInvalid(propMapping)}" ng-click="dvm.state.selectedPropMappingId = propMapping['@id']; dvm.state.highlightIndexes = [dvm.getLinkedColumnIndex(propMapping)]" ng-dblclick="dvm.switchClass(propMapping)" disable-animate>
                 <div class="prop-actions float-right">
                     <a class="edit-prop" ng-click="dvm.editProp(propMapping)"><i class="fa fa-pencil"></i></a>
                     <a class="delete-prop" ng-click="dvm.deleteProp(propMapping)"><i class="fa fa-trash"></i></a>
