@@ -61,15 +61,5 @@ describe('Concept Scheme Hierarchy Block directive', function() {
         it('with a hierarchy-tree', function() {
             expect(this.element.find('hierarchy-tree').length).toBe(1);
         });
-        it('with a link to add a concept scheme when the user can modify branch', function() {
-            ontologyStateSvc.canModify.and.returnValue(true);
-            scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
-        });
-        it('with no link to add a concept scheme when the user cannot modify branch', function() {
-            ontologyStateSvc.canModify.and.returnValue(false);
-            scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
-        });
     });
 });

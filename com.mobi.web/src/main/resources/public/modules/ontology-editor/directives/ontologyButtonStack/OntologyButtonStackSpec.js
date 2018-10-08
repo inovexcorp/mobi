@@ -101,7 +101,7 @@ describe('Ontology Button Stack directive', function() {
             expect(mergeButton.attr('disabled')).toBeTruthy();
         });
         it('depending on if the user cannot modify record', function() {
-            var uploadButton = angular.element(this.element.querySelectorAll('circle-button.upload-btn')[0]);
+            var uploadButton = angular.element(this.element.querySelectorAll('circle-button.upload-circle-button')[0]);
             var branchButton = angular.element(this.element.querySelectorAll('circle-button.btn-warning')[0]);
             var commitButton = angular.element(this.element.querySelectorAll('circle-button.btn-info')[0]);
             var createEntityButton = angular.element(this.element.querySelectorAll('circle-button.btn-primary')[0]);

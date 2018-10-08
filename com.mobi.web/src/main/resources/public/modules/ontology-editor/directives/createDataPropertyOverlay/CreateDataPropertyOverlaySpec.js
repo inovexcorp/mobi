@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Create Data Property Overlay directive', function() {
+describe('Create Data Property Overlay directive', function() {
     var $compile, scope, ontologyManagerSvc, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
