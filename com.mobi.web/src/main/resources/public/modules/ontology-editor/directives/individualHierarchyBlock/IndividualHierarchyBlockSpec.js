@@ -61,15 +61,5 @@ describe('Individual Hierarchy directive', function() {
         it('with a individual-tree', function() {
             expect(this.element.find('individual-tree').length).toBe(1);
         });
-        it('with a link to create an individual when the user can modify branch', function() {
-            ontologyStateSvc.canModify.and.returnValue(true);
-            scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
-        });
-        it('with a link to create an individual when the user cannot modify branch', function() {
-            ontologyStateSvc.canModify.and.returnValue(false);
-            scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
-        });
     });
 });

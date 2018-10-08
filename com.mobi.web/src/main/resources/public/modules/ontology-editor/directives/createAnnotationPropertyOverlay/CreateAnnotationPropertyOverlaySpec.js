@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Create Annotation Overlay directive', function() {
+describe('Create Annotation Overlay directive', function() {
     var $compile, scope, ontologyManagerSvc, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
