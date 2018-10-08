@@ -92,16 +92,6 @@ describe('Property Hierarchy Block directive', function() {
             expect(this.element.querySelectorAll('.tree-item').length).toBe(1);
             expect(this.element.find('tree-item').length).toBe(1);
         });
-        it('with a link to add a property when the user can modify branch', function() {
-            ontologyStateSvc.canModify.and.returnValue(true);
-            scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
-        });
-        it('with a link to add a property when the user cannot modify branch', function() {
-            ontologyStateSvc.canModify.and.returnValue(false);
-            scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
-        });
     });
     describe('controller methods', function() {
         describe('isShown returns', function() {
