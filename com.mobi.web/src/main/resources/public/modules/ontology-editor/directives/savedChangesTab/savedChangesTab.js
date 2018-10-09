@@ -82,7 +82,7 @@
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.list = [];
-                    dvm.shownList = getList();
+                    dvm.showList = getList();
                     dvm.checkedStatements = {
                         additions: [],
                         deletions: []
@@ -201,11 +201,8 @@
                         return !!_.intersection(_.map(_.filter(array, {p: typeIRI}), 'o'), types).length;
                     }
                     function getList() {
-                        var list = dvm.showList || [];
                         dvm.chunks = _.chunk(dvm.list, dvm.size);
-                        var currChunk = _.get(dvm.chunks, dvm.index, []);
-                        list = _.concat(list, currChunk);
-                        return list;
+                        return _.get(dvm.chunks, dvm.index, []);
                     }
                 }]
             }
