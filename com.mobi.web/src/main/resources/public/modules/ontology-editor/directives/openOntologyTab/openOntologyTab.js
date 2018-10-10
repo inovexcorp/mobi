@@ -76,7 +76,6 @@
                     var pe = policyEnforcementService;
                     var pm = policyManagerService;
                     var ontologyRecords = [];
-                    var openIndicator = '<span class="text-muted">(Open)</span> ';
 
                     dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
@@ -91,13 +90,6 @@
 
                     dvm.showUploadOntologyOverlay = function() {
                         modalService.openModal('uploadOntologyOverlay');
-                    }
-                    dvm.getRecordTitle = function(record) {
-                        var title = '';
-                        if (dvm.isOpened(record)) {
-                            title = openIndicator;
-                        }
-                        return title + dvm.util.getDctermsValue(record, 'title');
                     }
                     dvm.isOpened = function(record) {
                         return _.some(dvm.os.list, {ontologyRecord: {recordId: record['@id']}});
