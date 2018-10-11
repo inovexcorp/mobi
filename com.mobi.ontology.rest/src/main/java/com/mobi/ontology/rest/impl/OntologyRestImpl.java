@@ -975,7 +975,7 @@ public class OntologyRestImpl implements OntologyRest {
             String queryType = Query.getQueryType(queryString);
             switch (queryType) {
                 case "select":
-                    TupleQueryResult tupResults = ontologyManager.getTupleQueryResults(ontology, queryString);
+                    TupleQueryResult tupResults = ontologyManager.getTupleQueryResults(ontology, queryString, includeImports);
                     if (tupResults.hasNext()) {
                         JSONObject json = JSONQueryResults.getResponse(tupResults);
                         return Response.ok(json, MediaType.APPLICATION_JSON_TYPE).build();

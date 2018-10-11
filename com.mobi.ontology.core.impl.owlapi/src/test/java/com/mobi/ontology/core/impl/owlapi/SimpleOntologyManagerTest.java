@@ -850,7 +850,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetTupleQueryResults() throws Exception {
-        List<BindingSet> result = QueryResults.asList(manager.getTupleQueryResults(ontology, "select distinct ?s where { ?s ?p ?o . }"));
+        List<BindingSet> result = QueryResults.asList(manager.getTupleQueryResults(ontology, "select distinct ?s where { ?s ?p ?o . }", true));
         assertEquals(result.size(), 18);
     }
 

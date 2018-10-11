@@ -367,9 +367,10 @@ public interface OntologyManager {
      *
      * @param ontology   the Ontology you wish to query.
      * @param queryString the Sparql query string you want to execute.
+     * @param includeImports include data from ontology imports when querying
      * @return a Tuple Set with the query results.
      */
-    TupleQueryResult getTupleQueryResults(Ontology ontology, String queryString);
+    TupleQueryResult getTupleQueryResults(Ontology ontology, String queryString, boolean includeImports);
 
     /**
      * Searches the provided ontology & its import closures using the provided Sparql query.
