@@ -464,6 +464,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         policyFile.setChecksum(getChecksum(balanaPolicy));
         setRelatedProperties(policyFile, balanaPolicy);
         try (RepositoryConnection conn = repository.getConnection()) {
+            conn.clear(policyFile.getResource());
             conn.add(policyFile.getModel(), policyFile.getResource());
         }
         policyCache.getPolicyCache().ifPresent(cache ->
