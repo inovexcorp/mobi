@@ -475,8 +475,9 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public Model getGraphQueryResults(Ontology ontology, String queryString) {
-        return runGraphQueryOnOntology(ontology, queryString, null, "getGraphQueryResults(ontology, queryString)");
+    public Model getGraphQueryResults(Ontology ontology, String queryString, boolean includeImports) {
+        return runGraphQueryOnOntology(ontology, queryString, null,
+                "getGraphQueryResults(ontology, queryString)", includeImports);
     }
 
     @Override
@@ -578,14 +579,18 @@ public class SimpleOntologyManager implements OntologyManager {
      */
     private Model runGraphQueryOnOntology(Ontology ontology, String queryString,
                                           @Nullable Function<GraphQuery, GraphQuery> addBinding,
-                                          String methodName) {
+                                          String methodName, boolean includeImports) {
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
-            Set<Ontology> importedOntologies = ontology.getImportsClosure();
-            conn.begin();
-            importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
-            conn.commit();
+            if (includeImports) {
+                Set<Ontology> importedOntologies = ontology.getImportsClosure();
+                conn.begin();
+                importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
+                conn.commit();
+            } else {
+                conn.add(ontology.asModel(modelFactory));
+            }
             return runGraphQueryOnOntology(queryString, addBinding, methodName, conn);
         } finally {
             repo.shutDown();

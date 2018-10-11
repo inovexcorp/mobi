@@ -1272,5 +1272,6 @@ public interface OntologyRest {
                            @PathParam("recordId") String recordIdStr,
                            @QueryParam("query") String queryString,
                            @QueryParam("branchId") String branchIdStr,
-                           @QueryParam("commitId") String commitIdStr);
+                           @QueryParam("commitId") String commitIdStr,
+                           @DefaultValue("true") @QueryParam("includeImports") boolean includeImports);
 }

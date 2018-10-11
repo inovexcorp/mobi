@@ -403,7 +403,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(ontologyManager.retrieveOntology(importedOntologyIRI)).thenReturn(Optional.of(importedOntology));
 
         when(ontologyManager.getTupleQueryResults(eq(ontology), anyString())).thenAnswer(i -> new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
-        when(ontologyManager.getGraphQueryResults(eq(ontology), anyString())).thenReturn(mf.createModel(Collections.singleton(vf.createStatement(vf.createIRI("urn:test"), vf.createIRI("urn:prop"), vf.createLiteral("test")))));
+        when(ontologyManager.getGraphQueryResults(eq(ontology), anyString(), anyBoolean())).thenReturn(mf.createModel(Collections.singleton(vf.createStatement(vf.createIRI("urn:test"), vf.createIRI("urn:prop"), vf.createLiteral("test")))));
 
         List<String> basicBinding = Collections.singletonList("s");
         List<String> basicValue = Collections.singletonList("https://mobi.com/values#Value1");
@@ -4298,7 +4298,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .request().get();
 
         assertEquals(response.getStatus(), 200);
-        verify(ontologyManager).getGraphQueryResults(ontology, query);
+        verify(ontologyManager).getGraphQueryResults(ontology, query, true);
         assertConstructQuery(response.readEntity(String.class));
     }
 
@@ -4306,7 +4306,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     public void testQueryOntologyWithEmptyConstruct() {
         // Setup:
         String query = "construct * { ?s ?p ?o }";
-        when(ontologyManager.getGraphQueryResults(ontology, query)).thenReturn(mf.createModel());
+        when(ontologyManager.getGraphQueryResults(ontology, query, true)).thenReturn(mf.createModel());
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
@@ -4314,7 +4314,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .request().get();
 
         assertEquals(response.getStatus(), 204);
-        verify(ontologyManager).getGraphQueryResults(ontology, query);
+        verify(ontologyManager).getGraphQueryResults(ontology, query, true);
     }
 
     @Test

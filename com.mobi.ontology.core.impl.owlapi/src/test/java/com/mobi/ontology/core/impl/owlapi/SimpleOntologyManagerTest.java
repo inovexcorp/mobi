@@ -856,7 +856,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetGraphQueryResults() throws Exception {
-        Model result = manager.getGraphQueryResults(ontology, "construct {?s ?p ?o} where { ?s ?p ?o . }");
+        Model result = manager.getGraphQueryResults(ontology, "construct {?s ?p ?o} where { ?s ?p ?o . }", true);
         assertEquals(result.size(), ontology.asModel(MODEL_FACTORY).size());
     }
 }
