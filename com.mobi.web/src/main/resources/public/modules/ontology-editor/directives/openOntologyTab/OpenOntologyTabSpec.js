@@ -130,6 +130,16 @@ describe('Open Ontology Tab directive', function() {
             expect(this.element.querySelectorAll('.ontologies .list-group-item').length).toBe(0);
             expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(1);
         });
+        it('depending on whether an ontology is open', function() {
+            spyOn(this.controller, 'isOpened').and.returnValue(false);
+            scope.$digest();
+            var ontology = angular.element(this.element.querySelectorAll('.ontologies .list-group-item h3')[0]);
+            expect(ontology.querySelectorAll('.text-muted').length).toEqual(0);
+
+            this.controller.isOpened.and.returnValue(true);
+            scope.$digest();
+            expect(ontology.querySelectorAll('.text-muted').length).toEqual(1);
+        });
         it('depending if a user has access to manage a record', function() {
             this.controller.filteredList = [{userCanManage: true}];
             scope.$digest();
@@ -140,11 +150,6 @@ describe('Open Ontology Tab directive', function() {
         });
     });
     describe('controller methods', function() {
-        it('should return the correct title depending on whether the ontology is open', function() {
-            expect(this.controller.getRecordTitle({'@id': 'id'})).toEqual('A');
-            ontologyStateSvc.list = [{ontologyRecord: {recordId: 'id'}}];
-            expect(this.controller.getRecordTitle({'@id': 'id'})).toEqual('<span class="text-muted">(Open)</span> A');
-        });
         it('should determine whether an ontology is open', function() {
             expect(this.controller.isOpened({'@id': 'id'})).toEqual(false);
             ontologyStateSvc.list = [{ontologyRecord: {recordId: 'id'}}];
