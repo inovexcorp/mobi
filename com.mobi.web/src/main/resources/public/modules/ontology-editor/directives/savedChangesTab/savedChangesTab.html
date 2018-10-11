@@ -47,7 +47,7 @@
                     </div>
                 </div>
                 <div class="text-center">
-                    <a ng-if="dvm.showList.length !== dvm.list.length" ng-click="dvm.getMoreResults()"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a>
+                    <button ng-if="dvm.showList.length !== dvm.list.length" ng-click="dvm.getMoreResults()" class="btn btn-outline-primary"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a>
                 </div>
             </div>
         </div>

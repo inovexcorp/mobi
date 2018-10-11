@@ -38,7 +38,7 @@
                     <div class="ontology-info d-flex">
                         <div class="details flex-1 remove-min-width" ng-click="dvm.open(record)">
                             <div class="header align-items-center d-flex">
-                                <h3 class="text-truncate" ng-bind-html="dvm.getRecordTitle(record) | highlight:dvm.filterText | trusted"></h3>
+                                <h3 class="text-truncate"><span ng-if="dvm.isOpened(record)" class="text-muted">(Open)</span> <span ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></span></h3>
                                 <small class="pl-2 ontology-iri text-muted flex-1 text-truncate">{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small>
                             </div>
                             <p class="description m-0" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
