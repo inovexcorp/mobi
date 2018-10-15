@@ -83,9 +83,16 @@ describe('Static IRI directive', function() {
             expect(this.element.hasClass('static-iri')).toBe(true);
         });
         it('depending on whether the IRI is imported', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             expect(this.element.find('a').length).toEqual(1);
 
             ontologyStateSvc.listItem.selected.mobi = {imported: true};
+            scope.$digest();
+            expect(this.element.find('a').length).toEqual(0);
+        });
+        it('depending on whether the user cannot modify', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
             scope.$digest();
             expect(this.element.find('a').length).toEqual(0);
         });

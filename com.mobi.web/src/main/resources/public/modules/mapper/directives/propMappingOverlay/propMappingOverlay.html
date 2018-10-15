@@ -25,7 +25,7 @@
         <h6>{{dvm.state.newProp ? 'Add' : 'Edit'}} Property</h6>
         <div class="form-group">
             <custom-label>Property</custom-label>
-            <prop-select props="dvm.state.getAvailableProps(dvm.state.selectedClassMappingId)"
+            <prop-select props="dvm.state.getPropsByClassMappingId(dvm.state.selectedClassMappingId)"
                          selected-prop="dvm.selectedProp"
                          is-disabled-when="!dvm.state.newProp"
                          on-change="dvm.updateRange()"></prop-select>
@@ -47,10 +47,10 @@
             <column-select selected-column="dvm.selectedColumn"></column-select>
         </div>
         <div class="datatype-select-container form-group" ng-if="dvm.selectedProp && !dvm.om.isObjectProperty(dvm.selectedProp.propObj)">
-            <a ng-if="!dvm.showDatatypeSelect" class="btn-link btn-show" ng-click="dvm.showDatatypeSelect = true"><i class="fa fa-fw fa-plus"></i>Add Manual Datatype</a>
+            <a ng-if="!dvm.showDatatypeSelect" class="btn-link btn-show" ng-click="dvm.showDatatypeSelect = true"><i class="fa fa-fw fa-plus"></i>Override Datatype</a>
             <div ng-if="dvm.showDatatypeSelect" class="btn-container clearfix">
-                <a class="btn-link btn-hide" ng-click="dvm.clearDatatype()"><i class="fa fa-fw fa-times"></i>Remove Manual Datatype</a>
-                <iri-select ng-model="dvm.datatype" display-text="'Manual Datatype'" muted-text="'(Optional)'" select-list="dvm.datatypeMap" multi-select="false"></iri-select>
+                <a class="btn-link btn-hide" ng-click="dvm.clearDatatype()"><i class="fa fa-fw fa-times"></i>Remove Datatype Override</a>
+                <iri-select ng-model="dvm.datatype" display-text="'Override Datatype'" muted-text="'(Optional)'" select-list="dvm.datatypeMap" multi-select="false"></iri-select>
             </div>
         </div>
         <div class="language-select-container" ng-if="dvm.isLangString() && dvm.showDatatypeSelect">

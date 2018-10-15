@@ -29,10 +29,10 @@
     <div class="class-mapping-props">
         <div class="properties-field-name">
             <span class="field-name">Properties</span>
-            <button class="btn btn-link no-padding float-right add-prop-mapping-button" ng-disabled="!dvm.state.hasAvailableProps(dvm.state.selectedClassMappingId)" ng-click="dvm.addProp()"><i class="fa fa-plus"></i> Add Property</button>
+            <button class="btn btn-link no-padding float-right add-prop-mapping-button" ng-disabled="!dvm.state.hasPropsByClassMappingId(dvm.state.selectedClassMappingId)" ng-click="dvm.addProp()"><i class="fa fa-plus"></i> Add Property</button>
         </div>
         <div class="prop-list list-group">
-            <div ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId)" class="list-group-item" ng-class="{'active': dvm.state.selectedPropMappingId === propMapping['@id'], 'invalid': dvm.isInvalid(propMapping)}" ng-click="dvm.state.selectedPropMappingId = propMapping['@id']; dvm.state.highlightIndexes = [dvm.getLinkedColumnIndex(propMapping)]" ng-dblclick="dvm.switchClass(propMapping)">
+            <div ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId)" class="list-group-item" ng-class="{'active': dvm.state.selectedPropMappingId === propMapping['@id'], 'invalid': dvm.isInvalid(propMapping)}" ng-click="dvm.state.selectedPropMappingId = propMapping['@id']; dvm.state.highlightIndexes = [dvm.getLinkedColumnIndex(propMapping)]" ng-dblclick="dvm.switchClass(propMapping)" disable-animate>
                 <div class="prop-actions float-right">
                     <a class="edit-prop" ng-click="dvm.editProp(propMapping)"><i class="fa fa-pencil"></i></a>
                     <a class="delete-prop" ng-click="dvm.deleteProp(propMapping)"><i class="fa fa-trash"></i></a>
@@ -42,7 +42,7 @@
                     <div ng-if="dvm.mm.isDataMapping(propMapping)" class="data-prop-value">
                         <div><span class="field-name">Column: </span>{{dvm.getPropValue(propMapping)}}</div>
                         <div><span class="field-name">Preview: </span><span ng-class="{'text-muted': dvm.getDataValuePreview(propMapping) === '(None)'}">{{dvm.getDataValuePreview(propMapping)}}</span></div>
-                        <div ng-if="dvm.getDatatypePreview(propMapping)"><span class="field-name">Manual Datatype: </span>{{dvm.getDatatypePreview(propMapping)}}</div>
+                        <div><span class="field-name">Datatype: </span>{{dvm.getDatatypePreview(propMapping)}}</div>
                         <div ng-if="dvm.getLanguagePreview(propMapping)"><span class="field-name">Language: </span>{{dvm.getLanguagePreview(propMapping)}}<small class="ml-1 text-muted">&#64;{{dvm.getLanguageTag(propMapping)}}</small></div>
                     </div>
                     <div ng-if="dvm.mm.isObjectMapping(propMapping)" class="object-prop-value">

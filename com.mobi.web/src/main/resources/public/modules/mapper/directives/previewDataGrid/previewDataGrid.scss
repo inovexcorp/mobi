@@ -15,4 +15,13 @@
 	.highlight-col {
 		background-color: var(--primary-light);
 	}
+	.ht_clone_top {
+		z-index: 77;
+	}
+	.ht_clone_left {
+		z-index: 78;
+	}
+	.ht_clone_top_left_corner {
+		z-index: 79;
+	}
 }

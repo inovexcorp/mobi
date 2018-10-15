@@ -21,19 +21,18 @@
   #L%
   -->
 <div class="commit-changes-display">
-    <div class="property-values" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
-        <div ng-click="isClosed = !isClosed" class="clearfix value-header d-flex align-items-center">
-            <p class="text" title="{{key}}">{{dvm.ontoUtils.getLabelForIRI(key)}}</p>
-            <small class="text-muted ml-1">&lt;{{key}}&gt;</small>
-            <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+    <div class="property-values mt-3" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
+        <div class="clearfix prop-header d-flex align-items-center">
+            <p class="text text-truncate m-0" title="{{key}}">{{dvm.ontoUtils.getLabelForIRI(key)}}</p>
+            <small class="text-muted ml-1 text-truncate flex-1">&lt;{{key}}&gt;</small>
         </div>
-        <div class="value-container" ng-hide="isClosed">
-            <statement-container ng-if="value.additions.length" additions>
+        <div class="prop-value-container ml-3 mt-1 p-1">
+            <statement-container ng-if="value.additions.length" additions class="m-0">
                 <statement-display
                         ng-repeat="addition in value.additions | orderBy:dvm.util.getPredicateLocalName"
                         predicate="addition.p" object="addition.o" addition></statement-display>
             </statement-container>
-            <statement-container ng-if="value.deletions.length" deletions>
+            <statement-container ng-if="value.deletions.length" deletions class="m-0">
                 <statement-display
                         ng-repeat="deletion in value.deletions | orderBy:dvm.util.getPredicateLocalName"
                         predicate="deletion.p" object="deletion.o" deletion></statement-display>

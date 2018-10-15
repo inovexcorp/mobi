@@ -26,7 +26,7 @@
         <div class="selected-header d-flex">
             <selected-details class="flex-1"></selected-details>
             <div>
-                <button class="btn btn-danger" ng-disabled="dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()"><span>Delete</span></button>
+                <button ng-if="dvm.os.canModify()" class="btn btn-danger" ng-disabled="dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()"><span>Delete</span></button>
             </div>
         </div>
         <div class="row flex-1">
@@ -38,7 +38,7 @@
                     <object-property-block class="col"></object-property-block>
                 </div>
             </div>
-            <annotation-block class="col-5 vertical-scroll"></annotation-block>
+            <annotation-block class="col-5 pt-2 vertical-scroll"></annotation-block>
         </div>
     </div>
 </div>

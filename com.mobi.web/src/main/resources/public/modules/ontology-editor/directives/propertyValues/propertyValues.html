@@ -20,19 +20,20 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="property-values">
-    <div ng-click="isClosed = !isClosed" class="value-header d-flex align-items-center clearfix">
-        <p class="text" title="{{property}}">{{dvm.os.getEntityNameByIndex(property, dvm.os.listItem)}}</p>
-        <small class="ml-1 text-muted ">&lt;{{property}}&gt;</small>
-        <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+<div class="property-values mt-3">
+    <div class="prop-header d-flex align-items-baseline clearfix">
+        <p class="text text-truncate m-0" title="{{property}}">{{dvm.os.getEntityNameByIndex(property, dvm.os.listItem)}}</p>
+        <small class="ml-1 text-muted text-truncate flex-1">&lt;{{property}}&gt;</small>
     </div>
-    <div class="value-container" ng-repeat="value in entity[property]" ng-hide="isClosed">
-        <span ng-if="::dvm.ontoUtils.isLinkable(value['@id'])" class="value-display-wrapper">{{dvm.ontoUtils.getLabelForIRI(value['@id'])}} <small><<a ng-click="dvm.os.goTo(value['@id'])">{{value['@id']}}</a>></small></span>
-        <span ng-if="::!dvm.ontoUtils.isLinkable(value['@id'])" class="value-display-wrapper">
+    <div class="prop-value-container d-flex p-1 ml-3 mt-1" ng-repeat="value in entity[property]" disable-animate>
+        <span ng-if="::dvm.ontoUtils.isLinkable(value['@id'])" class="value-display-wrapper flex-1  remove-min-width">{{dvm.ontoUtils.getLabelForIRI(value['@id'])}} <small><<a ng-click="dvm.os.goTo(value['@id'])">{{value['@id']}}</a>></small></span>
+        <span ng-if="::!dvm.ontoUtils.isLinkable(value['@id'])" class="value-display-wrapper flex-1 remove-min-width">
             <blank-node-value-display ng-if="::dvm.om.isBlankNodeId(value['@id'])" node-id="value['@id']"></blank-node-value-display>
             <value-display ng-if="::!dvm.om.isBlankNodeId(value['@id'])" value="value"></value-display>
         </span>
-        <button ng-if="remove && !entity.mobi.imported" type="button" class="btn btn-link float-right remove-min-width" ng-click="remove({iri: property, index: $index})" title="Delete"><i class="fa fa-times fa-fw"></i></button>
-        <button ng-if="!dvm.om.isBlankNodeId(value['@id']) && edit && !entity.mobi.imported" type="button" class="btn btn-link float-right remove-min-width" ng-click="edit({property: property, index: $index});" title="Edit"><i class="fa fa-pencil fa-fw"></i></button>
+        <div class="button-container">
+            <button ng-if="remove && !entity.mobi.imported  && dvm.os.canModify()" type="button" class="btn btn-link remove-min-width p-0 fa fa-times fa-fw" ng-click="remove({iri: property, index: $index})" title="Delete"></button>
+            <button ng-if="!dvm.om.isBlankNodeId(value['@id']) && edit && !entity.mobi.imported  && dvm.os.canModify()" type="button" class="btn btn-link remove-min-width p-0 fa fa-pencil fa-fw" ng-click="edit({property: property, index: $index});" title="Edit"></button>
+        </div>
     </div>
 </div>

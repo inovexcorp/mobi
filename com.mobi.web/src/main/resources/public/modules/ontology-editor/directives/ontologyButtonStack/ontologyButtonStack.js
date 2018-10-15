@@ -47,9 +47,10 @@
          * {@link ontologyState.service:ontologyStateService selected ontology}. These actions are uploading a file of
          * changes, creating a branch, merging branches, and commiting changes. The directive houses the methods for
          * opening modals for {@link uploadChangesOverlay.directive:uploadChangesOverlay uploading changes},
-         * {@link createBranchOverlay.directive:createBranchOverlay creating branches}, and
-         * {@link commitOverlay.directive:commitOverlay commiting}. The directive is replaced by the contents of its
-         * template.
+         * {@link createBranchOverlay.directive:createBranchOverlay creating branches},
+         * {@link commitOverlay.directive:commitOverlay commiting}, and
+         * {@link createEntityModal.directive:createEntityModal creating entities}. The directive is replaced by the
+         * contents of its template.
          */
         .directive('ontologyButtonStack', ontologyButtonStack);
 
@@ -74,6 +75,12 @@
                     }
                     dvm.showUploadChangesOverlay = function() {
                         modalService.openModal('uploadChangesOverlay');
+                    }
+                    dvm.showCreateEntityOverlay = function() {
+                        if (dvm.os.getActiveKey() !== 'project') {
+                            dvm.os.unSelectItem();
+                        }
+                        modalService.openModal('createEntityModal', undefined, undefined, 'sm');
                     }
                 }
             }

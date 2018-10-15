@@ -21,19 +21,17 @@
  * #L%
  */
 describe('Class Hierarchy Block directive', function() {
-    var $compile, scope, ontologyStateSvc, modalSvc;
+    var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('classHierarchyBlock');
         mockOntologyState();
-        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            modalSvc = _modalService_;
         });
 
         this.element = $compile(angular.element('<class-hierarchy-block></class-hierarchy-block>'))(scope);
@@ -45,7 +43,6 @@ describe('Class Hierarchy Block directive', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        modalSvc = null;
         this.element.remove();
     });
 
@@ -54,27 +51,15 @@ describe('Class Hierarchy Block directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('class-hierarchy-block')).toBe(true);
         });
-        it('with a .section-header', function() {
-            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
+        it('depending on whether the tree is empty', function() {
+            expect(this.element.find('info-message').length).toEqual(1);
+
+            ontologyStateSvc.listItem.classes.flat = [{}];
+            scope.$digest();
+            expect(this.element.find('info-message').length).toEqual(0);
         });
         it('with a hierarchy-tree', function() {
             expect(this.element.find('hierarchy-tree').length).toBe(1);
         });
-        it('with a link to create a class', function() {
-            expect(this.element.querySelectorAll('.section-header a').length).toEqual(1);
-        });
-    });
-    describe('controller methods', function() {
-        it('should open the createClassOverlay', function() {
-            this.controller.showCreateClassOverlay();
-            expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
-            expect(modalSvc.openModal).toHaveBeenCalledWith('createClassOverlay');
-        });
-    });
-    it('should call showCreateClassOverlay when the create class link is clicked', function() {
-        spyOn(this.controller, 'showCreateClassOverlay');
-        var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
-        link.triggerHandler('click');
-        expect(this.controller.showCreateClassOverlay).toHaveBeenCalled();
     });
 });

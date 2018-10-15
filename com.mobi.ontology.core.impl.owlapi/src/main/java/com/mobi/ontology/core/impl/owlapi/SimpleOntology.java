@@ -60,9 +60,11 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
+import org.eclipse.rdf4j.rio.RDFParserRegistry;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.eclipse.rdf4j.rio.WriterConfig;
+import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
@@ -102,6 +104,7 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLOntologyWriterConfiguration;
 import org.semanticweb.owlapi.model.OWLPropertyDomainAxiom;
+import org.semanticweb.owlapi.model.OWLRuntimeException;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.model.parameters.Navigation;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
@@ -110,7 +113,12 @@ import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
+import org.semanticweb.owlapi.rio.OWLAPIRDFFormat;
+import org.semanticweb.owlapi.rio.RioAbstractParserFactory;
+import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
+import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
+import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.semanticweb.owlapi.rio.RioRenderer;
 import org.semanticweb.owlapi.util.OWLOntologyWalker;
@@ -128,6 +136,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -199,7 +208,8 @@ public class SimpleOntology implements Ontology {
 
     }
 
-    private void initialize(OntologyManager ontologyManager, SesameTransformer transformer, BNodeService bNodeService, boolean resolveImports) {
+    private void initialize(OntologyManager ontologyManager, SesameTransformer transformer, BNodeService bNodeService,
+                            boolean resolveImports) {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
@@ -224,6 +234,11 @@ public class SimpleOntology implements Ontology {
         } else {
             owlManager.setIRIMappers(Collections.singleton(new NoImportLoader()));
         }
+
+        RDFParserRegistry parserRegistry = RDFParserRegistry.getInstance();
+        Set<RioAbstractParserFactory> owlParsers = new HashSet<>(Arrays.asList(new RioOWLXMLParserFactory(),
+                new RioManchesterSyntaxParserFactory(), new RioFunctionalSyntaxParserFactory()));
+        owlParsers.forEach(parser -> parserRegistry.add(parser));
     }
 
     /**
@@ -617,9 +632,11 @@ public class SimpleOntology implements Ontology {
     @Override
     public OutputStream asTurtle() throws MobiOntologyException {
         OutputStream outputStream = new ByteArrayOutputStream();
+
         try {
+            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.TURTLE, outputStream));
             org.eclipse.rdf4j.model.Model sesameModel = asSesameModel();
-            Rio.write(sesameModel, outputStream, RDFFormat.TURTLE);
+            Rio.write(sesameModel, rdfWriter);
         } catch (RDFHandlerException e) {
             throw new MobiOntologyException("Error while writing Ontology.");
         }
@@ -630,8 +647,9 @@ public class SimpleOntology implements Ontology {
     public OutputStream asRdfXml() throws MobiOntologyException {
         OutputStream outputStream = new ByteArrayOutputStream();
         try {
+            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.RDFXML, outputStream));
             org.eclipse.rdf4j.model.Model sesameModel = asSesameModel();
-            Rio.write(sesameModel, outputStream, RDFFormat.RDFXML);
+            Rio.write(sesameModel, rdfWriter);
         } catch (RDFHandlerException e) {
             throw new MobiOntologyException("Error while writing Ontology.");
         }
@@ -797,7 +815,10 @@ public class SimpleOntology implements Ontology {
             }
         } catch (IOException e) {
             LOG.error("Unable to read ontology file.", e);
-            throw new MobiOntologyException(e);
+            throw new MobiOntologyException("Unable to read ontology file.", e);
+        } catch (NegativeArraySizeException e) {
+            LOG.error("InputStream is empty.", e);
+            throw new MobiOntologyException("InputStream is empty.", e);
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
@@ -809,13 +830,16 @@ public class SimpleOntology implements Ontology {
      * {@link InputStream}.
      *
      * @param inputStream the InputStream to parse
-     * @throws IOException
+     * @throws IOException If there is an error reading the InputStream
+     * @throws MobiOntologyException If the stream is invalid for all formats
      */
-    private org.eclipse.rdf4j.model.Model createSesameModel(InputStream inputStream) throws IOException {
-        org.eclipse.rdf4j.model.Model model = new LinkedHashModel();
+    private org.eclipse.rdf4j.model.Model createSesameModel(InputStream inputStream) throws IOException,
+            MobiOntologyException {
+        org.eclipse.rdf4j.model.Model model = null;
 
         Set<RDFFormat> formats = new HashSet<>(asList(RDFFormat.JSONLD, RDFFormat.TRIG, RDFFormat.TURTLE,
-                RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS));
+                RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS, OWLAPIRDFFormat.OWL_XML,
+                OWLAPIRDFFormat.MANCHESTER_OWL, OWLAPIRDFFormat.OWL_FUNCTIONAL));
 
         Iterator<RDFFormat> rdfFormatIterator = formats.iterator();
         InputStream markSupported = inputStream.markSupported() ? inputStream : new BufferedInputStream(inputStream);
@@ -829,7 +853,7 @@ public class SimpleOntology implements Ontology {
                     model = Rio.parse(markSupported, "", format);
                     LOG.debug("File is {} formatted.", format.getName());
                     break;
-                } catch (RDFParseException | UnsupportedRDFormatException e) {
+                } catch (RDFParseException | UnsupportedRDFormatException | OWLRuntimeException e) {
                     markSupported.reset();
                     LOG.info("File is not {} formatted.", format.getName());
                 }
@@ -840,6 +864,10 @@ public class SimpleOntology implements Ontology {
             } else {
                 IOUtils.closeQuietly(inputStream);
             }
+        }
+
+        if (model == null) {
+            throw new MobiOntologyException("Ontology was invalid for all formats.");
         }
 
         return model;

@@ -39,21 +39,18 @@
          * @scope
          * @restrict E
          * @requires ontologyState.service:ontologyStateService
-         * @requires modal.service:modalService
          *
          * @description
          * `conceptSchemeHierarchyBlock` is a directive that creates a section that displays a
          * {@link hierarchyTree.directive:hierarchyTree} of the concept schemes and concepts in the current
-         * {@link ontologyState.service:ontologyStateService selected ontology/vocabulary} along with a button to add
-         * concept schemes. The directive houses the method for opening a modal for
-         * {@link createConceptSchemeOverlay.directive:createConceptSchemeOverlay adding concept schemes}. The
-         * directive is replaced by the contents of its template.
+         * {@link ontologyState.service:ontologyStateService selected ontology/vocabulary}. The directive is replaced
+         * by the contents of its template.
          */
         .directive('conceptSchemeHierarchyBlock', conceptSchemeHierarchyBlock);
 
-        conceptSchemeHierarchyBlock.$inject = ['ontologyStateService', 'modalService'];
+        conceptSchemeHierarchyBlock.$inject = ['ontologyStateService'];
 
-        function conceptSchemeHierarchyBlock(ontologyStateService, modalService) {
+        function conceptSchemeHierarchyBlock(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -63,11 +60,6 @@
                 controller: function() {
                     var dvm = this;
                     dvm.os = ontologyStateService;
-
-                    dvm.showCreateConceptSchemeOverlay = function() {
-                        dvm.os.unSelectItem();
-                        modalService.openModal('createConceptSchemeOverlay');
-                    }
                 }
             }
         }

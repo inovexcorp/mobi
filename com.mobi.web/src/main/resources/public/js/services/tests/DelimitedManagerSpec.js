@@ -38,6 +38,7 @@ describe('Delimited Manager service', function() {
 
         this.mappingRecordIRI = 'http://test.org/mapping';
         this.datasetRecordIRI = 'http://test.org/record';
+        this.ontologyRecordIRI = 'http://test.org/ontology'
 
         delimitedManagerSvc.fileName = 'test';
         delimitedManagerSvc.separator = ',';
@@ -247,6 +248,40 @@ describe('Delimited Manager service', function() {
         it('successfully', function() {
             $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map?' + this.params).respond(200, '');
             delimitedManagerSvc.mapAndUpload(this.mappingRecordIRI, this.datasetRecordIRI)
+                .then(function(response) {
+                    expect(response).toBe('');
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
+    describe('should upload mapped data from an uploaded delimited file into an ontology', function() {
+        beforeEach(function() {
+            this.params = $httpParamSerializer({
+                ontologyRecordIRI: this.ontologyRecordIRI,
+                mappingRecordIRI: this.mappingRecordIRI,
+                containsHeaders: delimitedManagerSvc.containsHeaders,
+                separator: delimitedManagerSvc.separator
+            });
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map-to-ontology?' + this.params).respond(400, null, null, 'Error Message');
+            delimitedManagerSvc.mapAndCommit(this.mappingRecordIRI, this.ontologyRecordIRI)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
+        });
+        it('successfully', function() {
+            $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map-to-ontology?' + this.params).respond(200, '');
+            delimitedManagerSvc.mapAndCommit(this.mappingRecordIRI, this.ontologyRecordIRI)
                 .then(function(response) {
                     expect(response).toBe('');
                 }, function(response) {

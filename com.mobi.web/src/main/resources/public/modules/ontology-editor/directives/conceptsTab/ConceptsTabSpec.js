@@ -82,10 +82,18 @@ describe('Concepts Tab directive', function() {
         it('with a usages-block', function() {
             expect(this.element.find('usages-block').length).toBe(1);
         });
-        it('with a button to delete a concept', function() {
+        it('with a button to delete a concept if the user can modify', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             var button = this.element.querySelectorAll('button');
             expect(button.length).toBe(1);
             expect(angular.element(button[0]).text()).toContain('Delete');
+        });
+        it('with no button to delete a concept if the user cannot modify', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            var button = this.element.querySelectorAll('button');
+            expect(button.length).toBe(0);
         });
         it('depending on whether something is selected', function() {
             expect(this.element.querySelectorAll('.selected-concept').length).toEqual(1);
@@ -95,6 +103,8 @@ describe('Concepts Tab directive', function() {
             expect(this.element.querySelectorAll('.selected-concept').length).toEqual(0);
         });
         it('depending on whether the selected concept is imported', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
+            scope.$digest();
             var button = angular.element(this.element.querySelectorAll('button')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
@@ -110,6 +120,8 @@ describe('Concepts Tab directive', function() {
         });
     });
     it('should call showDeleteConfirmation when the delete concept button is clicked', function() {
+        ontologyStateSvc.canModify.and.returnValue(true);
+        scope.$digest();
         spyOn(this.controller, 'showDeleteConfirmation');
         var button = angular.element(this.element.querySelectorAll('button')[0]);
         button.triggerHandler('click');

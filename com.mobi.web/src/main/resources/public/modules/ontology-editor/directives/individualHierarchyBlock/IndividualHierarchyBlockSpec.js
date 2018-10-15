@@ -21,19 +21,17 @@
  * #L%
  */
 describe('Individual Hierarchy directive', function() {
-    var $compile, scope, ontologyStateSvc, modalSvc;
+    var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('individualHierarchyBlock');
         mockOntologyState();
-        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            modalSvc = _modalService_;
         });
 
         this.element = $compile(angular.element('<individual-hierarchy-block></individual-hierarchy-block>'))(scope);
@@ -45,7 +43,6 @@ describe('Individual Hierarchy directive', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        modalSvc = null;
         this.element.remove();
     });
 
@@ -54,27 +51,15 @@ describe('Individual Hierarchy directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('individual-hierarchy-block')).toBe(true);
         });
-        it('with a .section-header', function() {
-            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
-        });
-        it('with a link to create an individual', function() {
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+        it('depending on whether the tree is empty', function() {
+            expect(this.element.find('info-message').length).toEqual(1);
+
+            ontologyStateSvc.listItem.individuals.flat = [{}];
+            scope.$digest();
+            expect(this.element.find('info-message').length).toEqual(0);
         });
         it('with a individual-tree', function() {
             expect(this.element.find('individual-tree').length).toBe(1);
         });
-    });
-    describe('controller methods', function() {
-        it('should open the createIndividualOverlay', function() {
-            this.controller.showCreateIndividualOverlay();
-            expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
-            expect(modalSvc.openModal).toHaveBeenCalledWith('createIndividualOverlay');
-        });
-    });
-    it('should call showCreateIndividualOverlay when the create individual link is clicked', function() {
-        spyOn(this.controller, 'showCreateIndividualOverlay');
-        var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
-        link.triggerHandler('click');
-        expect(this.controller.showCreateIndividualOverlay).toHaveBeenCalled();
     });
 });

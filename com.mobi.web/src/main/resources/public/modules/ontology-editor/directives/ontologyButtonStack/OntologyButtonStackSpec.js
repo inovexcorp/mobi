@@ -39,6 +39,8 @@ describe('Ontology Button Stack directive', function() {
         ontologyStateSvc.isCommittable.and.returnValue(false);
         ontologyStateSvc.hasChanges.and.returnValue(false);
         ontologyStateSvc.listItem.userBranch = false;
+        ontologyStateSvc.listItem.userCanModify = true;
+        ontologyStateSvc.canModify.and.returnValue(true);
         this.element = $compile(angular.element('<ontology-button-stack></ontology-button-stack>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('ontologyButtonStack');
@@ -61,10 +63,10 @@ describe('Ontology Button Stack directive', function() {
             expect(this.element.find('circle-button-stack').length).toBe(1);
         });
         it('with circle-buttons', function() {
-            expect(this.element.find('circle-button').length).toBe(4);
+            expect(this.element.find('circle-button').length).toBe(5);
         });
         it('depending on whether the ontology is committable', function() {
-            var commitButton = angular.element(this.element.querySelectorAll('circle-button.btn-primary')[0]);
+            var commitButton = angular.element(this.element.querySelectorAll('circle-button.btn-info')[0]);
             var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
             expect(commitButton.attr('disabled')).toBeTruthy();
             expect(mergeButton.attr('disabled')).toBeFalsy();
@@ -98,6 +100,22 @@ describe('Ontology Button Stack directive', function() {
             scope.$digest();
             expect(mergeButton.attr('disabled')).toBeTruthy();
         });
+        it('depending on if the user cannot modify record', function() {
+            var uploadButton = angular.element(this.element.querySelectorAll('circle-button.upload-circle-button')[0]);
+            var branchButton = angular.element(this.element.querySelectorAll('circle-button.btn-warning')[0]);
+            var commitButton = angular.element(this.element.querySelectorAll('circle-button.btn-info')[0]);
+            var createEntityButton = angular.element(this.element.querySelectorAll('circle-button.btn-primary')[0]);
+            var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
+
+            ontologyStateSvc.listItem.userCanModify = false;
+            ontologyStateSvc.canModify.and.returnValue(false);
+            scope.$digest();
+            expect(uploadButton.attr('disabled')).toBeTruthy();
+            expect(branchButton.attr('disabled')).toBeTruthy()
+            expect(commitButton.attr('disabled')).toBeTruthy();
+            expect(createEntityButton.attr('disabled')).toBeTruthy();
+            expect(mergeButton.attr('disabled')).toBeTruthy();
+        });
     });
     describe('controller methods', function() {
         it('should open the createBranchOverlay', function() {
@@ -112,10 +130,24 @@ describe('Ontology Button Stack directive', function() {
             this.controller.showUploadChangesOverlay();
             expect(modalSvc.openModal).toHaveBeenCalledWith('uploadChangesOverlay');
         });
+        describe('should open the createEntityModal', function() {
+            it('if the current page is the project tab', function() {
+                ontologyStateSvc.getActiveKey.and.returnValue('project');
+                this.controller.showCreateEntityOverlay()
+                expect(ontologyStateSvc.unSelectItem).not.toHaveBeenCalled();
+                expect(modalSvc.openModal).toHaveBeenCalledWith('createEntityModal', undefined, undefined, 'sm');
+            });
+            it('if the current page is not the project tab', function() {
+                ontologyStateSvc.getActiveKey.and.returnValue('classes');
+                this.controller.showCreateEntityOverlay()
+                expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
+                expect(modalSvc.openModal).toHaveBeenCalledWith('createEntityModal', undefined, undefined, 'sm');
+            });
+        });
     });
     it('should call showUploadChangesOverlay when the upload changes button is clicked', function() {
         spyOn(this.controller, 'showUploadChangesOverlay');
-        var button = angular.element(this.element.querySelectorAll('circle-button:not(.btn-primary)')[0]);
+        var button = angular.element(this.element.querySelectorAll('circle-button.upload-circle-button')[0]);
         button.triggerHandler('click');
         expect(this.controller.showUploadChangesOverlay).toHaveBeenCalled();
     });
@@ -132,8 +164,14 @@ describe('Ontology Button Stack directive', function() {
     });
     it('should call showCommitOverlay when the commit button is clicked', function() {
         spyOn(this.controller, 'showCommitOverlay');
-        var button = angular.element(this.element.querySelectorAll('circle-button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('circle-button.btn-info')[0]);
         button.triggerHandler('click');
         expect(this.controller.showCommitOverlay).toHaveBeenCalled();
+    });
+    it('should call showCreateEntityOverlay when the create entity button is clicked', function() {
+        spyOn(this.controller, 'showCreateEntityOverlay');
+        var button = angular.element(this.element.querySelectorAll('circle-button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.showCreateEntityOverlay).toHaveBeenCalled();
     });
 });

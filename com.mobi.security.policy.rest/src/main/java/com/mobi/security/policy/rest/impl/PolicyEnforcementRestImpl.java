@@ -35,7 +35,6 @@ import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
-import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.rest.PolicyEnforcementRest;
@@ -108,22 +107,9 @@ public class PolicyEnforcementRestImpl implements PolicyEnforcementRest {
             log.debug(request.toString());
             com.mobi.security.policy.api.Response response = pdp.evaluate(request);
             log.debug(response.toString());
+            log.debug(String.format("Request Evaluated. %dms", System.currentTimeMillis() - start));
 
-            Decision decision = response.getDecision();
-            if (decision != Decision.PERMIT) {
-                if (decision == Decision.DENY) {
-                    String statusMessage = getMessageOrDefault(response,
-                            "You do not have permission to perform this action");
-                    throw ErrorUtils.sendError(statusMessage, Response.Status.UNAUTHORIZED);
-                }
-                if (decision == Decision.INDETERMINATE) {
-                    String statusMessage = getMessageOrDefault(response, "Request indeterminate");
-                    throw ErrorUtils.sendError(statusMessage, Response.Status.INTERNAL_SERVER_ERROR);
-                }
-            }
-            log.debug(String.format("Request permitted. %dms", System.currentTimeMillis() - start));
-
-            return Response.ok(decision.toString()).build();
+            return Response.ok(response.getDecision().toString()).build();
         } catch (IllegalArgumentException | MobiException ex) {
             throw ErrorUtils.sendError("Request could not be evaluated", Response.Status.INTERNAL_SERVER_ERROR);
         }

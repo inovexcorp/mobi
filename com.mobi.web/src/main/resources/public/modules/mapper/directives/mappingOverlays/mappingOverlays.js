@@ -52,7 +52,9 @@
          * {@link mappingConfigOverlay.directive:mappingConfigOverlay mappingConfigOverlay},
          * {@link classMappingOverlay.directive:classMappingOverlay classMappingOverlay},
          * {@link propMappingOverlay.directive:propMappingOverlay propMappingOverlay},
-         * {@link runMappingOverlay.directive:runMappingOverlay runMappingOverlay},
+         * {@link runMappingDatasetOverlay.directive:runMappingDatasetOverlay runMappingDatasetOverlay},
+         * {@link runMappingDownloadOverlay.directive:runMappingDownloadOverlay runMappingDownloadOverlay},
+         * {@link runMappingOntologyOverlay.directive:runMappingOntologyOverlay runMappingOntologyOverlay},
          * and several {@link confirmationOverlay.directive:confirmationOverlay confirmationOverlays}.
          */
         .directive('mappingOverlays', mappingOverlays);

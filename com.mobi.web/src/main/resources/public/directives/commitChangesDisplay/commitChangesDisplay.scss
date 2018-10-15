@@ -3,17 +3,8 @@
 
 .commit-changes-display {
     .property-values {
-        margin: 0;
-        margin-bottom: 15px;
-
-        &:last-child {
-            margin-bottom: 0;
-        }
-
-        .value-container {
-            &:hover {
-                background-color: #fff;
-            }
+        .prop-value-container:hover {
+            background-color: inherit;
         }
     }
 }
