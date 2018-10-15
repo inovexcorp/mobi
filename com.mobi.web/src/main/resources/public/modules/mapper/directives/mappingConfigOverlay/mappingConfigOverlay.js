@@ -237,7 +237,9 @@
                             dvm.state.mapping.ontology = dvm.selectedRecord;
                             dvm.state.resetEdit();
                             var classMappings = mm.getAllClassMappings(dvm.state.mapping.jsonld);
-                            _.forEach(classMappings, classMapping => dvm.state.setAvailableProps(classMapping['@id']));
+                            _.forEach(_.uniq(_.map(classMappings, mm.getClassIdByMapping)), id => {
+                                dvm.state.setProps(id);
+                            });
                             dvm.state.availableClasses = dvm.classes;
                         }
 

@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.13.59-SNAPSHOT</version>
+        <version>1.14.4-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -128,6 +128,35 @@
                 </configuration>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/prod_id.txt</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/prod_id.txt</exclude>
+                </excludes>
+            </resource>
+        </resources>
     </build>
 
+    <profiles>
+        <profile>
+            <id>default-product-id</id>
+            <activation>
+                <property>
+                    <name>!productId</name>
+                </property>
+            </activation>
+            <properties>
+                <productId></productId>
+            </properties>
+        </profile>
+    </profiles>
 </project>

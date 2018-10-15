@@ -63,20 +63,15 @@ describe('Preview Block directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('preview-block')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
+        _.forEach(['card', 'card-header', 'card-body'], item => {
+            it('with a .' + item, function() {
+                expect(this.element.querySelectorAll('.' + item).length).toBe(1);
+            });
         });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(1);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
-        });
-        it('with a .preview-content', function() {
-            expect(this.element.querySelectorAll('.preview-content').length).toBe(1);
-        });
-        it('with a serialization-select', function() {
-            expect(this.element.find('serialization-select').length).toBe(1);
+        _.forEach(['form', 'serialization-select'], item => {
+            it('with a ' + item, function() {
+                expect(this.element.find(item).length).toBe(1);
+            });
         });
         it('depending on whether a preview is generated', function() {
             expect(this.element.find('ui-codemirror').length).toBe(0);
@@ -85,8 +80,8 @@ describe('Preview Block directive', function() {
             scope.$digest();
             expect(this.element.find('ui-codemirror').length).toBe(1);
         });
-        it('depending on whether a serialization whas selected', function() {
-            var button = this.element.find('button');
+        it('depending on whether a serialization was selected', function() {
+            var button = angular.element(this.element.querySelectorAll('.refresh-button')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.activePage = {serialization: 'test'};

@@ -30,8 +30,6 @@ import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.Bindings;
-import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -76,7 +74,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import javax.cache.Cache;
 
 @Component(
@@ -99,27 +96,6 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     private IRI typeIRI;
     private IRI policyFileTypeIRI;
 
-    private static final String BINDING_VALUES = "%BINDINGVALUES";
-    private static final String FILTERS = "%FILTERS";
-    private static final String RESOURCES_BINDING = "resources";
-    private static final String RESOURCES_PROP = "relatedResource";
-    private static final String SUBJECTS_BINDING = "subjects";
-    private static final String SUBJECTS_PROP = "relatedSubject";
-    private static final String ACTIONS_BINDING = "actions";
-    private static final String ACTIONS_PROP = "relatedAction";
-    private static final String POLICY_ID_BINDING = "policyId";
-    private static String policyQuery;
-
-    static {
-        try {
-            policyQuery = IOUtils.toString(
-                    BalanaPolicyManager.class.getResourceAsStream("/find-policies.rq"),
-                    "UTF-8"
-            );
-        } catch (IOException e) {
-            throw new MobiException(e);
-        }
-    }
 
     @Reference
     void setVf(ValueFactory vf) {
@@ -205,17 +181,24 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
 
     @Override
     public List<XACMLPolicy> getPolicies(PolicyQueryParams params) {
-        List<Resource> policyIds = findPolicies(params);
+        List<Resource> policyIds = PolicyUtils.findPolicies(params, repository);
         Optional<Cache<String, Policy>> cache = policyCache.getPolicyCache();
         // If there is a policy cache
         if (cache.isPresent()) {
-            List<String> policyIdStrs = policyIds.stream().map(Resource::stringValue).collect(Collectors.toList());
-            return StreamSupport.stream(cache.get().spliterator(), false)
-                    .filter(entry -> policyIdStrs.contains(entry.getKey()))
-                    .map(Cache.Entry::getValue)
-                    .filter(policy -> policy instanceof XACMLPolicy)
-                    .map(policy -> getBalanaPolicy((XACMLPolicy) policy))
-                    .collect(Collectors.toList());
+            try (RepositoryConnection conn = repository.getConnection()) {
+                Cache<String, Policy> cacheMap = cache.get();
+                return policyIds.stream()
+                        .map(id -> {
+                            if (cacheMap.containsKey(id.stringValue())) {
+                                return cacheMap.get(id.stringValue());
+                            } else {
+                                return getPolicyFromFile(id, conn);
+                            }
+                        })
+                        .filter(policy -> policy instanceof XACMLPolicy)
+                        .map(policy -> getBalanaPolicy((XACMLPolicy) policy))
+                        .collect(Collectors.toList());
+            }
         }
         try (RepositoryConnection conn = repository.getConnection()) {
             return policyIds.stream()
@@ -287,6 +270,11 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         } catch (VirtualFilesystemException e) {
             throw new IllegalStateException("Could not remove XACML Policy on disk due to: ", e);
         }
+    }
+
+    @Override
+    public Repository getRepository() {
+        return this.repository;
     }
 
     private BalanaPolicy getBalanaPolicy(XACMLPolicy policy) {
@@ -476,43 +464,12 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         policyFile.setChecksum(getChecksum(balanaPolicy));
         setRelatedProperties(policyFile, balanaPolicy);
         try (RepositoryConnection conn = repository.getConnection()) {
+            conn.clear(policyFile.getResource());
             conn.add(policyFile.getModel(), policyFile.getResource());
         }
         policyCache.getPolicyCache().ifPresent(cache ->
                 cache.put(policyFile.getResource().stringValue(), balanaPolicy));
         return policyFile;
-    }
-
-    private List<Resource> findPolicies(PolicyQueryParams params) {
-        StringBuilder values = new StringBuilder(" ");
-        StringBuilder filters = new StringBuilder(" ");
-        setBindings(params.getResourceIRIs(), RESOURCES_BINDING, RESOURCES_PROP, values, filters);
-        setBindings(params.getSubjectIRIs(), SUBJECTS_BINDING, SUBJECTS_PROP, values, filters);
-        setBindings(params.getActionIRIs(), ACTIONS_BINDING, ACTIONS_PROP, values, filters);
-
-        try (RepositoryConnection conn = repository.getConnection()) {
-            String queryStr = policyQuery.replace(BINDING_VALUES, values.toString())
-                    .replace(FILTERS, filters.toString());
-            return QueryResults.asList(conn.prepareTupleQuery(queryStr).evaluate()).stream()
-                    .map(bindings -> Bindings.requiredResource(bindings, POLICY_ID_BINDING))
-                    .collect(Collectors.toList());
-        }
-    }
-
-    private void setBindings(Set<IRI> iris, String variableName, String propertyName, StringBuilder values,
-                             StringBuilder filters) {
-        if (iris.size() > 0) {
-            filters.append("?").append(POLICY_ID_BINDING).append(" :").append(propertyName).append(" ?")
-                    .append(variableName).append(". ");
-            if (iris.size() > 1) {
-                String iriStr = String.join(" ", iris.stream().map(iri -> "<" + iri + ">")
-                        .collect(Collectors.toList()));
-                values.append("VALUES ?").append(variableName).append(" {").append(iriStr).append("} ");
-            } else if (iris.size() == 1) {
-                values.append("BIND (<").append(iris.iterator().next()).append("> as ?").append(variableName)
-                        .append(") ");
-            }
-        }
     }
 
     private String getChecksum(BalanaPolicy policy) {

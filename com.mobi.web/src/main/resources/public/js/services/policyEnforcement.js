@@ -78,7 +78,7 @@
              * an error message
              */
             self.evaluateRequest = function(jsonRequest) {
-                var filteredRequest = _.pick(jsonRequest, ['resourceId', 'actionId', 'actionAtrs', 'resourceAttrs', 'subjectAttrs']);
+                var filteredRequest = _.pick(jsonRequest, ['resourceId', 'actionId', 'actionAttrs', 'resourceAttrs', 'subjectAttrs']);
                 return $http.post(prefix, filteredRequest)
                     .then(response => response.data, util.rejectError);
             }

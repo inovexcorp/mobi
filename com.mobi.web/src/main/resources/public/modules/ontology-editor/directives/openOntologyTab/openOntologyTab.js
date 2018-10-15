@@ -76,7 +76,6 @@
                     var pe = policyEnforcementService;
                     var pm = policyManagerService;
                     var ontologyRecords = [];
-                    var openIndicator = '<span class="text-muted">(Open)</span> ';
 
                     dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
@@ -89,12 +88,8 @@
                     dvm.filteredList = [];
                     dvm.id = "openOntologyTabTargetedSpinner";
 
-                    dvm.getRecordTitle = function(record) {
-                        var title = '';
-                        if (dvm.isOpened(record)) {
-                            title = openIndicator;
-                        }
-                        return title + dvm.util.getDctermsValue(record, 'title');
+                    dvm.showUploadOntologyOverlay = function() {
+                        modalService.openModal('uploadOntologyOverlay');
                     }
                     dvm.isOpened = function(record) {
                         return _.some(dvm.os.list, {ontologyRecord: {recordId: record['@id']}});
@@ -188,6 +183,12 @@
 
                     $scope.$watch(() => dvm.os.list.length, () => {
                         dvm.getPageOntologyRecords();
+                    });
+                    $scope.$watch(() => dvm.os.uploadList.length, (newValue, oldValue) => {
+                        dvm.showSnackbar = newValue > 0;
+                        if (newValue === 0) {
+                            dvm.search();
+                        }
                     });
                 }]
             }

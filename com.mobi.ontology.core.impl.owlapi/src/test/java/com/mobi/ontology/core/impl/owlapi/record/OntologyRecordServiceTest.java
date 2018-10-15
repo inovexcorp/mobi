@@ -47,6 +47,7 @@ import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
@@ -60,7 +61,6 @@ import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.core.utils.Values;
@@ -117,7 +117,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     private IRI importedOntologyIRI;
     private Model ontologyModel;
     private OutputStream ontologyJsonLd;
-    private ModelFactory modelFactory;
 
     private OrmFactory<OntologyRecord> recordFactory = getRequiredOrmFactory(OntologyRecord.class);
     private OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
@@ -169,7 +168,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
-        modelFactory = getModelFactory();
 
         recordService = new SimpleOntologyRecordService();
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
@@ -177,7 +175,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
         importedOntologyIRI = VALUE_FACTORY.createIRI("http://test.org/ontology/IRI");
         InputStream testOntology = getClass().getResourceAsStream("/test-ontology.ttl");
-        ontologyModel = modelFactory.createModel(Values.mobiModel(Rio.parse(testOntology, "", RDFFormat.TURTLE)));
+        ontologyModel = MODEL_FACTORY.createModel(Values.mobiModel(Rio.parse(testOntology, "", RDFFormat.TURTLE)));
         ontologyJsonLd = new ByteArrayOutputStream();
         Rio.write(Values.sesameModel(ontologyModel), ontologyJsonLd, RDFFormat.JSONLD, config);
 
@@ -187,12 +185,12 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         branch.setHead(headCommit);
         branch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
 
-        Model deletions = modelFactory.createModel();
+        Model deletions = MODEL_FACTORY.createModel();
         deletions.add(VALUE_FACTORY.createIRI("http://test.com#sub"), VALUE_FACTORY.createIRI(_Thing.description_IRI),
                 VALUE_FACTORY.createLiteral("Description"));
 
         difference = new Difference.Builder()
-                .additions(modelFactory.createModel())
+                .additions(MODEL_FACTORY.createModel())
                 .deletions(deletions)
                 .build();
 
@@ -212,7 +210,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
 
         MockitoAnnotations.initMocks(this);
-        when(ontology.asModel(modelFactory)).thenReturn(ontologyModel);
+        when(ontology.asModel(MODEL_FACTORY)).thenReturn(ontologyModel);
         when(ontology.getOntologyId()).thenReturn(ontologyId);
         when(ontologyId.getOntologyIdentifier()).thenReturn(importedOntologyIRI);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
@@ -241,7 +239,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         recordService.setOntologyManager(ontologyManager);
         recordService.setUtilsService(utilsService);
         recordService.setVf(VALUE_FACTORY);
-        recordService.setModelFactory(modelFactory);
+        recordService.setModelFactory(MODEL_FACTORY);
         recordService.setProvUtils(provUtils);
         recordService.setOntologyCache(ontologyCache);
         recordService.setVersioningManager(versioningManager);
@@ -268,7 +266,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
         recordService.create(user, config, connection);
 
-        verify(ontology).asModel(eq(modelFactory));
+        verify(ontology).asModel(eq(MODEL_FACTORY));
         verify(ontology).getOntologyId();
         verify(ontologyId).getOntologyIdentifier();
         verify(ontologyManager).createOntology(any(InputStream.class), any(Boolean.class));
@@ -291,10 +289,11 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, MODEL_FACTORY.createModel());
 
         recordService.create(user, config, connection);
 
-        verify(ontology).asModel(eq(modelFactory));
+        verify(ontology).asModel(eq(MODEL_FACTORY));
         verify(ontology).getOntologyId();
         verify(ontologyId).getOntologyIdentifier();
         verify(ontologyManager).createOntology(any(Model.class));
@@ -305,6 +304,23 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void createWithoutInputFileOrModelTest() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+
+        recordService.create(user, config, connection);
     }
 
     @Test (expected = IllegalArgumentException.class)

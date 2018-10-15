@@ -348,7 +348,6 @@ function mockMappingManager() {
             this.getPropIdByMappingId = jasmine.createSpy('getPropIdByMappingId').and.returnValue('');
             this.getAllClassMappings = jasmine.createSpy('getAllClassMappings').and.returnValue([]);
             this.getAllDataMappings = jasmine.createSpy('getAllDataMappings').and.returnValue([]);
-            this.getDataMappingFromClass = jasmine.createSpy('getDataMappingFromClass').and.returnValue({});
             this.getPropsLinkingToClass = jasmine.createSpy('getPropsLinkingToClass').and.returnValue([]);
             this.getPropMappingTitle = jasmine.createSpy('getPropMappingTitle').and.returnValue('');
             this.getBaseClass = jasmine.createSpy('getBaseClass').and.returnValue({});
@@ -370,7 +369,7 @@ function mockDelimitedManager() {
             this.previewFile = jasmine.createSpy('previewFile').and.callFake(function(rowCount) {
                 return rowCount ? $q.when() : $q.reject('Something went wrong');
             });
-            this.previewMap = jasmine.createSpy('previewMap').and.callFake(function(jsonld, format) {
+            this.previewMap = jasmine.createSpy('previewMap').and.callFake((jsonld, format) => {
                 if (jsonld) {
                     return format === 'jsonld' ? $q.when([]) : $q.when('');
                 } else {
@@ -379,6 +378,7 @@ function mockDelimitedManager() {
             });
             this.mapAndDownload = jasmine.createSpy('mapAndDownload');
             this.mapAndUpload = jasmine.createSpy('mapAndUpload').and.returnValue($q.when());
+            this.mapAndCommit = jasmine.createSpy('mapAndCommit').and.returnValue($q.when());
             this.reset = jasmine.createSpy('reset');
             this.getHeader = jasmine.createSpy('getHeader').and.returnValue('');
         });
@@ -394,7 +394,7 @@ function mockMapperState() {
             this.mapping = undefined;
             this.sourceOntologies = [];
             this.mappingSearchString = '';
-            this.availablePropsByClass = {};
+            this.propsByClass = {};
             this.editMapping = false;
             this.newMapping = false;
             this.step = 0;
@@ -414,6 +414,9 @@ function mockMapperState() {
             this.displayDownloadMappingOverlay = false;
             this.displayMappingConfigOverlay = false;
             this.displayPropMappingOverlay = false;
+            this.displayRunMappingDatasetOverlay = false;
+            this.displayRunMappingDownloadOverlay = false;
+            this.displayRunMappingOntologyOverlay = false;
             this.editIriTemplate = false;
             this.selectedClassMappingId = '';
             this.selectedPropMappingId = '';
@@ -427,10 +430,16 @@ function mockMapperState() {
             this.saveMapping = jasmine.createSpy("saveMapping").and.returnValue($q.when());
             this.setMasterBranch = jasmine.createSpy("setMasterBranch");
             this.setInvalidProps = jasmine.createSpy('setInvalidProps');
-            this.getAvailableProps = jasmine.createSpy('getAvailableProps').and.returnValue([]);
-            this.setAvailableProps = jasmine.createSpy('setAvailableProps');
-            this.hasAvailableProps = jasmine.createSpy('hasAvailableProps');
-            this.removeAvailableProps = jasmine.createSpy('removeAvailableProps');
+            this.getProps = jasmine.createSpy('getProps').and.returnValue([]);
+            this.getPropsByClassMappingId = jasmine.createSpy('getPropsByClassMappingId').and.returnValue([]);
+            this.setProps = jasmine.createSpy('setProps');
+            this.setPropsByClassMappingId = jasmine.createSpy('setPropsByClassMappingId');
+            this.hasProps = jasmine.createSpy('hasProps');
+            this.hasPropsByClassMappingId = jasmine.createSpy('hasPropsByClassMappingId');
+            this.hasPropsSet = jasmine.createSpy('hasPropsSet');
+            this.hasPropsSetByClassMappingId = jasmine.createSpy('hasPropsSetByClassMappingId');
+            this.removeProps = jasmine.createSpy('removeProps');
+            this.removePropsByClassMappingId = jasmine.createSpy('removePropsByClassMappingId');
             this.getClassProps = jasmine.createSpy('getClassProps').and.returnValue([]);
             this.getClasses = jasmine.createSpy('getClasses').and.returnValue([]);
             this.getMappedColumns = jasmine.createSpy('getMappedColumns').and.returnValue([]);
@@ -578,6 +587,9 @@ function mockOntologyState() {
                 },
                 userBranch: false,
                 createdFromExists: true,
+                userCanModify: false,
+                userCanModifyMaster: false,
+                masterBranchIRI: '',
                 ontologyRecord: {
                     title: '',
                     recordId: '',
@@ -737,6 +749,7 @@ function mockOntologyState() {
             this.checkConflicts = jasmine.createSpy('checkConflicts').and.returnValue($q.when());
             this.merge = jasmine.createSpy('merge').and.returnValue($q.when());
             this.cancelMerge = jasmine.createSpy('cancelMerge');
+            this.canModify = jasmine.createSpy('canModify');
         });
     });
 }
@@ -1333,6 +1346,9 @@ function mockPolicyManager() {
 function mockPolicyEnforcement() {
     module(function($provide) {
         $provide.service('policyEnforcementService', function($q) {
+            this.permit = 'Permit';
+            this.deny = 'Deny';
+            this.indeterminate = 'Indeterminate';
             this.evaluateRequest = jasmine.createSpy('evaulateRequest').and.returnValue($q.when());
         });
     });

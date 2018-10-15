@@ -21,22 +21,20 @@
  * #L%
  */
 describe('Property Hierarchy Block directive', function() {
-    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, modalSvc;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('propertyHierarchyBlock');
         mockOntologyState();
         mockOntologyManager();
-        mockModal();
         injectIndentConstant();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
-            modalSvc = _modalService_;
         });
 
         this.element = $compile(angular.element('<property-hierarchy-block></property-hierarchy-block>'))(scope);
@@ -49,7 +47,6 @@ describe('Property Hierarchy Block directive', function() {
         scope = null;
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
-        modalSvc = null;
         this.element.remove();
     });
 
@@ -61,11 +58,12 @@ describe('Property Hierarchy Block directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('property-hierarchy-block')).toBe(true);
         });
-        it('with a .section-header', function() {
-            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
-        });
-        it('with a link to add a property', function() {
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+        it('depending on whether the flat property tree is empty', function() {
+            expect(this.element.find('info-message').length).toEqual(1);
+
+            this.controller.flatPropertyTree = [{}];
+            scope.$digest();
+            expect(this.element.find('info-message').length).toEqual(0);
         });
         it('depending on whether there is a flat data property hierarchy', function() {
             expect(this.element.querySelectorAll('.tree-item').length).toBe(0);
@@ -148,16 +146,5 @@ describe('Property Hierarchy Block directive', function() {
                 expect(copy).toContain({get: ontologyStateSvc.getAnnotationPropertiesOpened, prop: 'annotation'});
             });
         });
-        it('showCreatePropertyOverlay opens the createPropertyOverlay', function() {
-            this.controller.showCreatePropertyOverlay();
-            expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
-            expect(modalSvc.openModal).toHaveBeenCalledWith('createPropertyOverlay');
-        });
-    });
-    it('should call showCreatePropertyOverlay when the create property link is clicked', function() {
-        spyOn(this.controller, 'showCreatePropertyOverlay');
-        var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
-        link.triggerHandler('click');
-        expect(this.controller.showCreatePropertyOverlay).toHaveBeenCalled();
     });
 });

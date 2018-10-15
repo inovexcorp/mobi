@@ -108,7 +108,7 @@ describe('Open Ontology Tab directive', function() {
             expect(this.element.querySelectorAll('.actions').length).toBe(1);
             expect(this.element.querySelectorAll('.ontologies').length).toBe(1);
         });
-        _.forEach(['form', 'paging'], item => {
+        _.forEach(['form', 'paging', 'upload-snackbar'], item => {
             it('with a ' + item, function() {
                 expect(this.element.find(item).length).toBe(1);
             });
@@ -130,19 +130,26 @@ describe('Open Ontology Tab directive', function() {
             expect(this.element.querySelectorAll('.ontologies .list-group-item').length).toBe(0);
             expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(1);
         });
+        it('depending on whether an ontology is open', function() {
+            spyOn(this.controller, 'isOpened').and.returnValue(false);
+            scope.$digest();
+            var ontology = angular.element(this.element.querySelectorAll('.ontologies .list-group-item h3')[0]);
+            expect(ontology.querySelectorAll('.text-muted').length).toEqual(0);
 
+            this.controller.isOpened.and.returnValue(true);
+            scope.$digest();
+            expect(ontology.querySelectorAll('.text-muted').length).toEqual(1);
+        });
         it('depending if a user has access to manage a record', function() {
             this.controller.filteredList = [{userCanManage: true}];
             scope.$digest();
             expect(this.element.querySelectorAll('.ontologies .list-group-item action-menu action-menu-item').length).toBe(2);
         });
+        it('with a hidden file-input', function() {
+            expect(this.element.querySelectorAll('file-input.hide').length).toEqual(1);
+        });
     });
     describe('controller methods', function() {
-        it('should return the correct title depending on whether the ontology is open', function() {
-            expect(this.controller.getRecordTitle({'@id': 'id'})).toEqual('A');
-            ontologyStateSvc.list = [{ontologyRecord: {recordId: 'id'}}];
-            expect(this.controller.getRecordTitle({'@id': 'id'})).toEqual('<span class="text-muted">(Open)</span> A');
-        });
         it('should determine whether an ontology is open', function() {
             expect(this.controller.isOpened({'@id': 'id'})).toEqual(false);
             ontologyStateSvc.list = [{ontologyRecord: {recordId: 'id'}}];
@@ -272,11 +279,6 @@ describe('Open Ontology Tab directive', function() {
         var button = angular.element(this.element.querySelectorAll('.actions button')[0]);
         button.triggerHandler('click');
         expect(this.controller.newOntology).toHaveBeenCalled();
-    });
-    it('should set the correct state when the upload ontology button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.actions button')[1]);
-        button.triggerHandler('click');
-        expect(ontologyStateSvc.showUploadTab).toBe(true);
     });
     it('should call showDeleteConfirmationOverlay when a delete link is clicked', function() {
         spyOn(this.controller, 'showDeleteConfirmationOverlay');

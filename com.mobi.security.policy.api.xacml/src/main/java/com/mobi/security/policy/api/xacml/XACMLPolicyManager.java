@@ -24,12 +24,20 @@ package com.mobi.security.policy.api.xacml;
  */
 
 import com.mobi.rdf.api.Resource;
+import com.mobi.repository.api.Repository;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface XACMLPolicyManager {
+
+    /**
+     * Returns the Repository which should store all policy data.
+     *
+     * @return The policy Repository
+     */
+    Repository getRepository();
 
     /**
      * Creates an {@link XACMLPolicy} object using the provided {@link PolicyType} JAXB object.

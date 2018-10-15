@@ -185,16 +185,16 @@
             self.availableClasses = [];
             /**
              * @ngdoc property
-             * @name availablePropsByClass
+             * @name propsByClass
              * @propertyOf mapperState.service:mapperStateService
              * @type {Object}
              *
              * @description
-             * `availablePropsByClass` holds a object with keys for the class mappings in the currently selected
-             * {@link mapperState.service:mapperStateService#mapping mapping} and values indicating whether
-             * the class mapping still has properties available to map.
+             * `propsByClass` holds a object with keys for classes in the imports closure of the currently selected
+             * {@link mapperState.service:mapperStateService mapping} and values of all properties that can be
+             * set for the class.
              */
-            self.availablePropsByClass = {};
+            self.propsByClass = {};
             /**
              * @ngdoc property
              * @name invalidOntology
@@ -203,8 +203,7 @@
              *
              * @description
              * `invalidOntology` holds a boolean indicating whether or not the source ontology for the
-             * currently selected {@link mapperState.service:mapperStateService#mapping mapping} is
-             * incompatible.
+             * currently selected {@link mapperState.service:mapperStateService mapping} is incompatible.
              */
             self.invalidOntology = false;
             /**
@@ -233,15 +232,40 @@
             self.displayDownloadMappingOverlay = false;
             /**
              * @ngdoc method
-             * @name displayRunMappingOverlay
+             * @name displayRunMappingDownloadOverlay
              * @propertyOf mapperState.service:mapperStateService
              * @type {Boolean}
              *
              * @description
-             * `displayRunMappingOverlay` holds a boolean indicating whether or not the
-             * {@link runMappingOverlay.directive:runMappingOverlay run mapping overlay} should be shown.
+             * `displayRunMappingDownloadOverlay` holds a boolean indicating whether or not the
+             * {@link runMappingDownloadOverlay.directive:runMappingDownloadOverlay run mapping download overlay} should be
+             * shown.
              */
-            self.displayRunMappingOverlay = false;
+            self.displayRunMappingDownloadOverlay = false;
+            /**
+             * @ngdoc method
+             * @name displayRunMappingDatasetOverlay
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {Boolean}
+             *
+             * @description
+             * `displayRunMappingDatasetOverlay` holds a boolean indicating whether or not the
+             * {@link runMappingDatasetOverlay.directive:runMappingDatasetOverlay run mapping dataset overlay} should be
+             * shown.
+             */
+            self.displayRunMappingDatasetOverlay = false;
+            /**
+             * @ngdoc method
+             * @name displayRunMappingOntologyOverlay
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {Boolean}
+             *
+             * @description
+             * `displayRunMappingOntologyOverlay` holds a boolean indicating whether or not the
+             * {@link runMappingOntologyOverlay.directive:runMappingOntologyOverlay run mapping ontology overlay} should be
+             * shown.
+             */
+            self.displayRunMappingOntologyOverlay = false;
             /**
              * @ngdoc property
              * @name displayMappingConfigOverlay
@@ -396,8 +420,8 @@
              *
              * @description
              * Sets the main state variables back to their default values and resets the values of
-             * {@link mapperState.service:mapperStateService#mapping mapping} and
-             * {@link mapperState.service:mapperStateService#sourceOntologies sourceOntologies}.
+             * {@link mapperState.service:mapperStateService mapping} and
+             * {@link mapperState.service:mapperStateService sourceOntologies}.
              */
             self.initialize = function() {
                 self.editMapping = false;
@@ -408,7 +432,7 @@
                     commits: false
                 };
                 self.invalidProps = [];
-                self.availablePropsByClass = {};
+                self.propsByClass = {};
                 self.availableClasses = [];
                 self.mapping = undefined;
                 self.sourceOntologies = [];
@@ -434,15 +458,15 @@
              *
              * @description
              * Sets the state variables and
-             * {@link mapperState.service:mapperStateService#sourceOntologies sourceOntologies} to indicate creating
-             * a new mapping. Returns a new mapping object.
+             * {@link mapperState.service:mapperStateService sourceOntologies} to indicate creating a new mapping.
+             * Returns a new mapping object.
              */
             self.createMapping = function() {
                 self.editMapping = true;
                 self.newMapping = true;
                 self.sourceOntologies = [];
                 self.resetEdit();
-                self.availablePropsByClass = {};
+                self.propsByClass = {};
                 return {
                     jsonld: [],
                     record: {},
@@ -510,10 +534,10 @@
              * @methodOf mapperState.service:mapperStateService
              *
              * @description
-             * Validates the current {@link mapperState.service:mapperStateService#mapping mapping} against
-             * the currently loaded {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}
-             * and sets {@link mapperState.service:mapperStateService#invalidProps} to the list of data properties in
-             * the mapping that link to columns that don't exist in the delimited data.
+             * Validates the current {@link mapperState.service:mapperStateService mapping} against the currently loaded
+             * {@link delimitedManager.service:delimitedManagerService delimited data} and sets
+             * {@link mapperState.service:mapperStateService} to the list of data properties in the mapping that link to
+             * columns that don't exist in the delimited data.
              */
             self.setInvalidProps = function() {
                 self.invalidProps = _.chain(mm.getAllDataMappings(self.mapping.jsonld))
@@ -530,7 +554,7 @@
              *
              * @description
              * Finds all of the column indexes that have been mapped to data mappings in the currently selected
-             * {@link mapperState.service:mapperStateService#mapping mapping}.
+             * {@link mapperState.service:mapperStateService mapping}.
              *
              * @return {string[]} an array of strings of column indexes that have been mapped
              */
@@ -539,69 +563,145 @@
             }
             /**
              * @ngdoc method
-             * @name hasAvailableProps
+             * @name hasProps
              * @methodOf mapperState.service:mapperStateService
              *
              * @description
-             * Returns the boolean indicating whether a class mapping has available properties to map.
+             * Returns the boolean indicating whether a class has properties to map.
+             *
+             * @param {string} classId The id of the class to check
+             * @return {boolean} True if there are properties to map for the class; false otherwise.
+             */
+            self.hasProps = function(classId) {
+                return _.get(self.propsByClass, encodeURIComponent(classId), []).length > 0;
+            }
+            /**
+             * @ngdoc method
+             * @name hasPropsByClassMappingId
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Returns the boolean indicating whether the class of a class mapping has properties to map.
              *
              * @param {string} classMappingId The id of the class mapping to check
-             * @return {boolean} True if there are available properties to map for the class mapping;
-             * false otherwise.
+             * @return {boolean} True if there are properties to map for the class mapping's class; false otherwise.
              */
-            self.hasAvailableProps = function(classMappingId) {
-                return _.get(self.availablePropsByClass, encodeURIComponent(classMappingId), []).length > 0;
+            self.hasPropsByClassMappingId = function(classMappingId) {
+                return self.hasProps(mm.getClassIdByMappingId(self.mapping.jsonld, classMappingId));
             }
             /**
              * @ngdoc method
-             * @name removeAvailableProps
+             * @name hasPropsSet
              * @methodOf mapperState.service:mapperStateService
              *
              * @description
-             * Removes a key-value pair from {@link mapperState.service:mapperStateService#availablePropsByClass availablePropsByClass}
-             * using the passed class mapping id.
+             * Returns the boolean indicating whether the properties for a class have been retrieved.
              *
-             * @param {string} classMappingId The id of a class mapping to remove from the available
-             * props list.
+             * @param {string} classId The id of the class to check
+             * @return {boolean} True if properties have been retrieved for the class; false otherwise.
              */
-            self.removeAvailableProps = function(classMappingId) {
-                _.unset(self.availablePropsByClass, encodeURIComponent(classMappingId));
+            self.hasPropsSet = function(classId) {
+                return _.has(self.propsByClass, encodeURIComponent(classId));
             }
             /**
              * @ngdoc method
-             * @name setAvailableProps
+             * @name hasPropsSetByClassMappingId
              * @methodOf mapperState.service:mapperStateService
              *
              * @description
-             * Sets the value for a class mapping in {@link mapperState.service:mapperStateService#availablePropsByClass availablePropsByClass}
-             * to an array of objects representing properties that haven't been mapped for the class mapping
-             * with the passed id
+             * Returns the boolean indicating whether the properties for a class mapping's class have been retrieved.
+             *
+             * @param {string} classId The id of the class mapping to check
+             * @return {boolean} True if properties have been retrieved for the class of a class mapping; false
+             * otherwise.
+             */
+            self.hasPropsSetByClassMappingId = function() {
+                return self.hasPropsSet(mm.getClassIdByMappingId(self.mapping.jsonld, classMappingId));
+            }
+            /**
+             * @ngdoc method
+             * @name removeProps
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Removes a key-value pair from `propsByClass` using the passed class id.
+             *
+             * @param {string} classId The id of a class to remove from the props list.
+             */
+            self.removeProps = function(classId) {
+                _.unset(self.propsByClass, encodeURIComponent(classId));
+            }
+            /**
+             * @ngdoc method
+             * @name removePropsByClassMappingId
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Removes a key-value pair from `propsByClass` using the passed class mapping id.
+             *
+             * @param {string} classId The id of a class mapping whose class will be removed from the props list.
+             */
+            self.removePropsByClassMappingId = function(classMappingId) {
+                self.removeProps(mm.getClassIdByMappingId(self.mapping.jsonld, classMappingId));
+            }
+            /**
+             * @ngdoc method
+             * @name setProps
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Sets the value for a class in `propsByClass` to an array of objects representing properties that can be
+             * set for that class.
+             *
+             * @param {string} classId The id of the class to set the array of property objects for
+             */
+            self.setProps = function(classId) {
+                var props = _.concat(self.getClassProps(self.sourceOntologies, classId), _.map(mm.annotationProperties, id => ({ ontologyId: '', propObj: {'@id': id}})));
+                _.set(self.propsByClass, encodeURIComponent(classId), props);
+            }
+            /**
+             * @ngdoc method
+             * @name setPropsByClassMappingId
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Sets the value for the class of a class mapping in `propsByClass` to an array of objects representing
+             * properties that can be set for that class.
              *
              * @param {string} classMappingId The id of the class mapping to set the array of property objects for
              */
-            self.setAvailableProps = function(classMappingId) {
-                var mappedProps = _.map(mm.getPropMappingsByClass(self.mapping.jsonld, classMappingId), propMapping => util.getPropertyId(propMapping, prefixes.delim + 'hasProperty'));
-                var classId = mm.getClassIdByMappingId(self.mapping.jsonld, classMappingId);
-                var props = _.concat(self.getClassProps(self.sourceOntologies, classId), _.map(mm.annotationProperties, id => {
-                    return { ontologyId: '', propObj: {'@id': id} };
-                }));
-                _.set(self.availablePropsByClass, encodeURIComponent(classMappingId), _.filter(props, prop => mappedProps.indexOf(prop.propObj['@id']) < 0));
+            self.setPropsByClassMappingId = function(classMappingId) {
+                self.setProps(mm.getClassIdByMappingId(self.mapping.jsonld, classMappingId));
             }
             /**
              * @ngdoc method
-             * @name getAvailableProps
+             * @name getProps
              * @methodOf mapperState.service:mapperStateService
              *
              * @description
-             * Retrieves an array of property objects from the current {@link mapperState.service:mapperStateService#mapping mapping}
-             * representing the properties that the class mapping with the passed id hasn't used yet.
+             * Retrieves an array of property objects representing the properties that can be set for the class with
+             * the passed id.
+             *
+             * @param {string} classId The id of the class to retrieve available properties of
+             * @return {Object[]} An array of property objects that can be set on the class
+             */
+            self.getProps = function(classId) {
+                return _.get(self.propsByClass, encodeURIComponent(classId), []);
+            }
+            /**
+             * @ngdoc method
+             * @name getPropsByClassMappingId
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Retrieves an array of property objects representing the properties that can be set for the class mapping
+             * with the passed id.
              *
              * @param {string} classMappingId The id of the class mapping to retrieve available properties of
-             * @return {Object[]} An array of property objects for the properties that haven't been mapped yet
-             * for the class mapping.
+             * @return {Object[]} An array of property objects that can be set on the class
              */
-            self.getAvailableProps = function(classMappingId) {
-                return _.get(self.availablePropsByClass, encodeURIComponent(classMappingId), []);
+            self.getPropsByClassMappingId = function(classMappingId) {
+                return self.getProps(mm.getClassIdByMappingId(self.mapping.jsonld, classMappingId));
             }
             /**
              * @ngdoc method
@@ -621,9 +721,7 @@
                 var props = [];
                 _.forEach(ontologies, ontology => {
                     var classProps = _.filter(_.union(om.getClassProperties([ontology.entities], classId), om.getNoDomainProperties([ontology.entities]), om.getAnnotations([ontology.entities])), prop => !(om.isObjectProperty(prop) && om.isDataTypeProperty(prop)));
-                    props = _.union(props, _.map(classProps, prop => {
-                        return {ontologyId: ontology.id, propObj: prop};
-                    }));
+                    props = _.union(props, _.map(classProps, prop => ({ontologyId: ontology.id, propObj: prop})));
                 });
                 return props;
             }
@@ -642,9 +740,7 @@
             self.getClasses = function(ontologies) {
                 var classes = [];
                 _.forEach(ontologies, ontology => {
-                    classes = _.concat(classes, _.map(om.getClasses([ontology.entities]), classObj => {
-                        return {ontologyId: ontology.id, classObj};
-                    }));
+                    classes = _.concat(classes, _.map(om.getClasses([ontology.entities]), classObj => ({ontologyId: ontology.id, classObj})));
                 });
                 return classes;
             }
@@ -806,12 +902,10 @@
              * @param {string} classMappingId The id of the ClassMapping to delete.
              */
             self.deleteClass = function(classMappingId) {
-                var propsLinkingToClass = _.map(mm.getPropsLinkingToClass(self.mapping.jsonld, classMappingId), propMapping => {
-                    return {
+                var propsLinkingToClass = _.map(mm.getPropsLinkingToClass(self.mapping.jsonld, classMappingId), propMapping => ({
                         propMapping,
                         classMappingId: mm.findClassWithObjectMapping(self.mapping.jsonld, propMapping['@id'])['@id']
-                    };
-                });
+                    }));
                 var classMappingProps = mm.getPropMappingsByClass(self.mapping.jsonld, classMappingId);
                 var deletedClass = mm.removeClass(self.mapping.jsonld, classMappingId);
                 self.deleteEntity(deletedClass);
@@ -820,9 +914,11 @@
                     self.deleteEntity(propMapping);
                 });
                 _.forEach(propsLinkingToClass, obj => cleanUpDeletedProp(obj.propMapping, obj.classMappingId));
-                self.removeAvailableProps(classMappingId);
-                var classMappings = mm.getClassMappingsByClassId(self.mapping.jsonld, mm.getClassIdByMapping(deletedClass));
-                if (classMappings.length === 1) {
+                var classId = mm.getClassIdByMapping(deletedClass);
+                var classMappings = mm.getClassMappingsByClassId(self.mapping.jsonld, classId);
+                if (classMappings.length === 0) {
+                    self.removeProps(classId);
+                } else if (classMappings.length === 1) {
                     var lastClassMapping = classMappings[0];
                     var originalTitle = util.getDctermsValue(lastClassMapping, 'title');
                     var newTitle = originalTitle.replace(/ \((\d+)\)$/, '');
@@ -849,16 +945,6 @@
 
             function cleanUpDeletedProp(propMapping, parentClassMappingId) {
                 self.deleteEntity(propMapping);
-                var propId = mm.getPropIdByMapping(propMapping);
-                if (_.includes(mm.annotationProperties, propId)) {
-                    self.getAvailableProps(parentClassMappingId).push({ontologyId: '', propObj: {'@id': propId}});
-                } else {
-                    var ontology = mm.findSourceOntologyWithProp(propId, self.sourceOntologies);
-                    if (ontology) {
-                        var propObj = om.getEntity([ontology.entities], propId);
-                        self.getAvailableProps(parentClassMappingId).push({ontologyId: ontology.id, propObj});
-                    }
-                }
                 var additionsObj = _.find(self.mapping.difference.additions, {'@id': parentClassMappingId});
                 var prop = prefixes.delim + (mm.isDataMapping(propMapping) ? 'dataProperty' : 'objectProperty');
                 if (util.hasPropertyId(additionsObj, prop, propMapping['@id'])) {

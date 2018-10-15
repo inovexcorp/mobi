@@ -119,8 +119,6 @@
                             dvm.os.listItem.classes.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                         }
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.clazz);
-                        // select the new class
-                        dvm.os.selectItem(_.get(dvm.clazz, '@id'));
                         // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
                         // hide the overlay

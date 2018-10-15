@@ -112,7 +112,7 @@ describe('Search Tab directive', function() {
             expect(this.element.querySelectorAll('.property-values').length).toBe(1);
         });
         it('with .value-containers', function() {
-            expect(this.element.querySelectorAll('.value-container').length).toBe(2);
+            expect(this.element.querySelectorAll('.prop-value-container').length).toBe(2);
         });
         it('with .value-displays', function() {
             expect(this.element.querySelectorAll('.value-display').length).toBe(2);
