@@ -29,16 +29,23 @@
                     <h2>{{dvm.state.selected.title}}</h2>
                     <small>Created on {{dvm.state.selected.date}} by {{dvm.state.selected.creator}}</small>
                 </div>
-                <div class="description">
-                    {{dvm.util.getDctermsValue(dvm.state.selected.jsonld, 'description') || 'No description'}}
-                </div>
-                <div class="request-summary"><strong>{{dvm.state.selected.sourceTitle}}</strong> into <strong>{{dvm.state.selected.targetTitle ? dvm.state.selected.targetTitle : 'NO TARGET'}}</strong> in <strong>{{dvm.state.selected.recordTitle}}</strong></div>
-                <div class="assignees">
-                    <span class="field-name">Assignee(s): </span>
-                    <ul class="assignees">
-                        <li ng-if="dvm.state.selected.assignees.length === 0" class="last">(None specified)</li>
-                        <li ng-repeat="assignee in dvm.state.selected.assignees" ng-class="{'last': $last}">{{assignee}}</li>
-                    </ul>
+                <div class="details row" ng-mouseover="dvm.showEditButton=true" ng-mouseleave="dvm.showEditButton=false">
+                    <div class="details col">
+                    <div class="description">
+                        {{dvm.util.getDctermsValue(dvm.state.selected.jsonld, 'description') || 'No description'}}
+                    </div>
+                    <div class="request-summary"><strong>{{dvm.state.selected.sourceTitle}}</strong> into <strong>{{dvm.state.selected.targetTitle ? dvm.state.selected.targetTitle : 'NO TARGET'}}</strong> in <strong>{{dvm.state.selected.recordTitle}}</strong></div>
+                    <div class="assignees">
+                        <span class="field-name">Assignee(s): </span>
+                        <ul class="assignees">
+                            <li ng-if="dvm.state.selected.assignees.length === 0" class="last">(None specified)</li>
+                            <li ng-repeat="assignee in dvm.state.selected.assignees" ng-class="{'last': $last}">{{assignee}}</li>
+                        </ul>
+                    </div>
+                    </div>
+                    <div class="edit col" ng-show="dvm.showEditButton">
+                        <button type="button" class="btn btn-link remove-min-width p-0 fa fa-pencil fa-fw" ng-click="dvm.editRequest()"></button>
+                    </div>
                 </div>
             </div>
             <div class="view" ng-if="!dvm.resolveConflicts">

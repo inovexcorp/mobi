@@ -32,6 +32,7 @@
             'mergeRequestView',
             'requestBranchSelect',
             'requestDetailsForm',
-            'requestRecordSelect'
+            'requestRecordSelect',
+            'editRequestOverlay'
         ]);
 })();

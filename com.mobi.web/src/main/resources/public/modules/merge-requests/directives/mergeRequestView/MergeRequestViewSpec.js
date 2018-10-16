@@ -21,21 +21,23 @@
  * #L%
  */
 describe('Merge Request View directive', function() {
-    var $compile, scope, $q, mergeRequestsStateSvc, mergeRequestManagerSvc, utilSvc;
+    var $compile, scope, $q, mergeRequestsStateSvc, mergeRequestManagerSvc, modalSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
         module('mergeRequestView');
         mockMergeRequestsState();
         mockMergeRequestManager();
+        mockModal();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _mergeRequestsStateService_, _mergeRequestManagerService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _mergeRequestsStateService_, _mergeRequestManagerService_, _modalService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             mergeRequestsStateSvc = _mergeRequestsStateService_;
             mergeRequestManagerSvc = _mergeRequestManagerService_;
+            modalSvc = _modalService_;
             utilSvc = _utilService_;
         });
 
@@ -53,6 +55,7 @@ describe('Merge Request View directive', function() {
         $q = null;
         mergeRequestsStateSvc = null;
         mergeRequestManagerSvc = null;
+        modalSvc = null;
         utilSvc = null;
         this.element.remove();
     });

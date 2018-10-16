@@ -36,4 +36,13 @@
     .resolve-conflicts {
         border-top: 1px solid var(--light-dark);
     }
+    .details.row {
+        margin: 0px 0px 0px 0px;
+        align-items: center;
+        justify-items: center;
+        
+        .edit.col {
+            flex-grow: unset;
+        }
+    }
 }

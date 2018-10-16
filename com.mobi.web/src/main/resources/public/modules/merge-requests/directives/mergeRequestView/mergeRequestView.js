@@ -40,6 +40,7 @@
          * @restrict E
          * @requires mergeRequestManager.service:mergeRequestManagerService
          * @requires mergeRequestState.service:mergeRequestStateService
+         * @requires modal.service:modalService
          * @requires util.service:utilService
          *
          * @description
@@ -54,9 +55,9 @@
          */
         .directive('mergeRequestView', mergeRequestView);
 
-        mergeRequestView.$inject = ['mergeRequestManagerService', 'mergeRequestsStateService', 'utilService'];
+        mergeRequestView.$inject = ['mergeRequestManagerService', 'mergeRequestsStateService', 'modalService', 'utilService'];
 
-        function mergeRequestView(mergeRequestManagerService, mergeRequestsStateService, utilService) {
+        function mergeRequestView(mergeRequestManagerService, mergeRequestsStateService, modalService, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/merge-requests/directives/mergeRequestView/mergeRequestView.html',
@@ -71,6 +72,7 @@
                     dvm.resolveConflicts = false;
                     dvm.copiedConflicts = [];
                     dvm.resolveError = false;
+                    dvm.showEditButton = false;
 
                     dvm.mm.getRequest(dvm.state.selected.jsonld['@id'])
                         .then(jsonld => {
@@ -119,6 +121,9 @@
                     }
                     dvm.allResolved = function() {
                         return !_.some(dvm.copiedConflicts, {resolved: false});
+                    }
+                    dvm.editRequest = function() {
+                        modalService.openModal('editRequestOverlay');
                     }
 
                     function createResolutions() {
