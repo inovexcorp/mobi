@@ -43,6 +43,7 @@
          * @requires catalogState.service:cataStateService
          * @requires catalogManager.service:catalogManagerService
          * @requires utilService.service:utilService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * `recordBlock` is a directive which creates a div with a {@link block.directive:block block}
@@ -61,9 +62,9 @@
          */
         .directive('recordBlock', recordBlock);
 
-    recordBlock.$inject = ['catalogStateService', 'catalogManagerService', 'utilService'];
+    recordBlock.$inject = ['catalogStateService', 'catalogManagerService', 'utilService', 'prefixes'];
 
-    function recordBlock(catalogStateService, catalogManagerService, utilService) {
+    function recordBlock(catalogStateService, catalogManagerService, utilService, prefixes) {
         return {
             restrict: 'E',
             replace: true,
@@ -74,6 +75,7 @@
                 dvm.state = catalogStateService;
                 dvm.cm = catalogManagerService;
                 dvm.util = utilService;
+                dvm.prefixes = prefixes;
                 var currentCatalog = dvm.state.getCurrentCatalog();
 
                 dvm.record = {};
@@ -98,10 +100,14 @@
                     var paginatedConfig = {
                         pageIndex: dvm.state.currentPage - 1,
                         limit: currentCatalog.branches.limit,
-                        sortOption: currentCatalog.branches.sortOption,
+                        sortOption: _.find(dvm.cm.sortOptions, {field:'http://purl.org/dc/terms/modified', asc: false})
                     };
                     dvm.cm.getRecordBranches(dvm.record['@id'], currentCatalog.catalog['@id'], paginatedConfig)
                         .then(dvm.state.setPagination, dvm.util.createErrorToast);
+                }
+                dvm.showPanel = function(branch) {
+                    _.forEach(dvm.state.results, result => result.show = false);
+                    branch.show = true;
                 }
 
                 function tryToGetBranches() {
