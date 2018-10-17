@@ -596,7 +596,7 @@ function mockOntologyState() {
                     branchId: '',
                     commitId: ''
                 },
-                merge: {
+                mockMergeRequestManager: {
                     active: false,
                     target: undefined,
                     checkbox: false,
@@ -1294,6 +1294,7 @@ function mockMergeRequestManager() {
             this.getRequest = jasmine.createSpy('getRequest').and.returnValue($q.when({}));
             this.deleteRequest = jasmine.createSpy('deleteRequest').and.returnValue($q.when());
             this.acceptRequest = jasmine.createSpy('acceptRequest').and.returnValue($q.when());
+            this.updateRequest = jasmine.createSpy('updateRequest').and.returnValue($q.when());
             this.isAccepted = jasmine.createSpy('isAccepted').and.returnValue(false);
         });
     });

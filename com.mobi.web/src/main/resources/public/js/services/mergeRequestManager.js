@@ -111,11 +111,6 @@
                 return $http.post(prefix, fd, config)
                     .then(response => response.data, util.rejectError);
             }
-
-            self.updateRequest = function(requestId, jsonld) {
-                return $http.put(prefix + '/' + encodeURIComponent(requestId), jsonld)
-                    .then(response => response.data, util.rejectError);
-            }
             /**
              * @ngdoc method
              * @name getRequest
@@ -170,6 +165,25 @@
                     .then(_.noop, util.rejectError);
             }
 
+            /**
+             * @ngdoc method
+             * @name updateRequest
+             * @methodOf mergeRequestManager.service:mergeRequestManagerService
+             *
+             * @description
+             * Calls the PUT /mobirest/merge-requests/{requestId} endpoint to update a Merge Request
+             * with a matching IRI.
+             * 
+             * @param {type} requestId
+             * @param {type} jsonld
+             * @return {Promise} A promise that resolves to the IRI of the updated MergeRequest or is rejected with
+             * an error message
+             */
+            self.updateRequest = function(requestId, jsonld) {
+                return $http.put(prefix + '/' + encodeURIComponent(requestId), jsonld)
+                    .then(response => response.data, util.rejectError);
+            }
+            
             /**
              * @ngdoc method
              * @name isAccepted

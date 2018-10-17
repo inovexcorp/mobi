@@ -78,7 +78,7 @@
                     dvm.branches = [];
 
                     dvm.submit = function() {
-                        var jsonld = dvm.getMergeRequestJson();
+                        var jsonld = getMergeRequestJson();
                                                 
                         dvm.mm.updateRequest(jsonld['@id'], jsonld)
                             .then(iri => {
@@ -91,7 +91,8 @@
                     dvm.cancel = function() {
                         $scope.dismiss();
                     }
-                    dvm.initRequestConfig = function() {
+
+                    function initRequestConfig() {
                         dvm.state.requestConfig.recordId = dvm.state.selected.recordIri;
                         dvm.state.requestConfig.title = dvm.state.selected.title;
                         dvm.state.requestConfig.description = dvm.util.getDctermsValue(dvm.state.selected.jsonld, 'description');
@@ -106,7 +107,7 @@
                             dvm.state.requestConfig.assignees.push(user['@id']);
                         })
                     }
-                    dvm.getMergeRequestJson = function() {
+                    function getMergeRequestJson() {
                         var jsonld = angular.copy(dvm.state.selected.jsonld)
                         
                         jsonld[prefixes.dcterms + "title"][0]['@value'] = dvm.state.requestConfig.title;
@@ -120,18 +121,8 @@
                         
                         return jsonld;
                     }
-                    dvm.updateDifference = function() {
-                        cm.getDifference(dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head'), dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head'))
-                            .then(diff => {
-                                dvm.state.requestConfig.difference = diff;
-                                dvm.state.selected.difference = angular.copy(diff);
-                            }, errorMessage => {
-                                dvm.util.createErrorToast(errorMessage);
-                                dvm.state.requestConfig.difference = undefined;
-                            });
-                    }
-
-                    dvm.initRequestConfig();
+                    
+                    initRequestConfig();
                     
                     cm.getRecordBranches(dvm.state.requestConfig.recordId, catalogId)
                         .then(response => dvm.branches = response.data, error => {
