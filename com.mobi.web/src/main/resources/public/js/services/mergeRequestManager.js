@@ -112,6 +112,10 @@
                     .then(response => response.data, util.rejectError);
             }
 
+            self.updateRequest = function(requestId, jsonld) {
+                return $http.put(prefix + '/' + encodeURIComponent(requestId), jsonld)
+                    .then(response => response.data, util.rejectError);
+            }
             /**
              * @ngdoc method
              * @name getRequest

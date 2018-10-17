@@ -54,9 +54,9 @@
          */
         .directive('editRequestOverlay', editRequestOverlay);
 
-        editRequestOverlay.$inject = ['mergeRequestsStateSvc', 'mergeRequestManagerSvc', 'utilService', 'prefixes'];
+        editRequestOverlay.$inject = ['mergeRequestsStateService', 'mergeRequestManagerService', 'catalogManagerService', 'userManagerService', 'utilService', 'prefixes'];
 
-        function editRequestOverlay(mergeRequestsStateSvc, mergeRequestManagerSvc, utilService, prefixes) {
+        function editRequestOverlay(mergeRequestsStateService, mergeRequestManagerService, catalogManagerService, userManagerService, utilService, prefixes) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/merge-requests/directives/editRequestOverlay/editRequestOverlay.html',
@@ -66,19 +66,77 @@
                 },
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
+                    var cm = catalogManagerService;
+                    var catalogId = _.get(cm.localCatalog, '@id');
+    
                     var dvm = this;
                     dvm.mm = mergeRequestManagerService;
                     dvm.state = mergeRequestsStateService;
+                    dvm.um = userManagerService;
                     dvm.util = utilService;
                     dvm.prefixes = prefixes;
+                    dvm.branches = [];
 
                     dvm.submit = function() {
-                    }
-                    dvm.isDisabled = function() {
+                        var jsonld = dvm.getMergeRequestJson();
+                                                
+                        dvm.mm.updateRequest(jsonld['@id'], jsonld)
+                            .then(iri => {
+                                dvm.util.createSuccessToast('Successfully updated request: ' + iri);
+                                dvm.state.selected = dvm.state.setRequestDetails(dvm.state.getRequestObj(jsonld));
+                                dvm.cancel();
+                            }, dvm.util.createErrorToast);
                     }
                     dvm.cancel = function() {
                         $scope.dismiss();
                     }
+                    dvm.initRequestConfig = function() {
+                        dvm.state.requestConfig.recordId = dvm.state.selected.recordIri;
+                        dvm.state.requestConfig.title = dvm.state.selected.title;
+                        dvm.state.requestConfig.description = dvm.util.getDctermsValue(dvm.state.selected.jsonld, 'description');
+                        dvm.state.requestConfig.sourceBranchId = dvm.state.selected.sourceBranch['@id'];
+                        dvm.state.requestConfig.targetBranchId = dvm.state.selected.targetBranch['@id'];
+                        dvm.state.requestConfig.sourceBranch = angular.copy(dvm.state.selected.sourceBranch);
+                        dvm.state.requestConfig.targetBranch = angular.copy(dvm.state.selected.targetBranch);
+                        dvm.state.requestConfig.difference = angular.copy(dvm.state.selected.difference);
+                        dvm.state.requestConfig.assignees = [];
+
+                        _.forEach(dvm.state.selected.jsonld[prefixes.mergereq + 'assignee'], function(user) {
+                            dvm.state.requestConfig.assignees.push(user['@id']);
+                        })
+                    }
+                    dvm.getMergeRequestJson = function() {
+                        var jsonld = angular.copy(dvm.state.selected.jsonld)
+                        
+                        jsonld[prefixes.dcterms + "title"][0]['@value'] = dvm.state.requestConfig.title;
+                        jsonld[prefixes.dcterms + "description"][0]['@value'] = dvm.state.requestConfig.description;
+                        jsonld[prefixes.mergereq + "targetBranch"] = [{'@id': dvm.state.requestConfig.targetBranch['@id']}];
+                        jsonld[prefixes.mergereq + "assignee"] = [];
+                        
+                        _.forEach(dvm.state.requestConfig.assignees, function(user) {
+                            jsonld[prefixes.mergereq + "assignee"].push({'@id': user });
+                        })
+                        
+                        return jsonld;
+                    }
+                    dvm.updateDifference = function() {
+                        cm.getDifference(dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head'), dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head'))
+                            .then(diff => {
+                                dvm.state.requestConfig.difference = diff;
+                                dvm.state.selected.difference = angular.copy(diff);
+                            }, errorMessage => {
+                                dvm.util.createErrorToast(errorMessage);
+                                dvm.state.requestConfig.difference = undefined;
+                            });
+                    }
+
+                    dvm.initRequestConfig();
+                    
+                    cm.getRecordBranches(dvm.state.requestConfig.recordId, catalogId)
+                        .then(response => dvm.branches = response.data, error => {
+                            dvm.util.createErrorToast(error);
+                            dvm.branches = [];
+                        });
                 }]
             }
         }

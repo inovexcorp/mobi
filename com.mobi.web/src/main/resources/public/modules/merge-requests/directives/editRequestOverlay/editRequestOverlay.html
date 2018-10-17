@@ -27,16 +27,32 @@
 <div class="modal-body">
     <form name="dvm.editMergeRequestForm" novalidate autocomplete="off">
         <div class="form-group">
-            <label class="control-label">Title</label>
-            <value-display value="dvm.util.getDctermsValue(dvm.state.selected.jsonld, 'title')"></value-display>
+                <text-input ng-model="dvm.state.requestConfig.title" display-text="'Title'" required="true">{{dvm.state.requestConfig.title}}</text-input>
         </div>
         <div class="form-group">
-            <label class="control-label">Description</label>
-            <value-display value="dvm.util.getDctermsValue(dvm.state.selected.jsonld, 'description') || 'No description'"></value-display>
+                <text-area ng-model="dvm.state.requestConfig.description" display-text="'Description'" muted-text="'(Optional)'">{{dvm.state.requestConfig.description}}</text-area>
+        </div>
+        <div class="edit-target-branch">
+            <div class="form-group">
+                <span class="form-control-static">Merge <strong>Branch: {{dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')}}</strong> into</span>
+            </div>
+            <branch-select class="select-branch" ng-model="dvm.state.requestConfig.targetBranch" required="true" change-event="dvm.changeTarget()" branches="dvm.branches"></branch-select>
+            <div class="form-group">
+                <span class="form-control-static">in <strong>{{dvm.state.selected.recordTitle}}</strong></span>
+            </div>
+        </div>
+        <div class="form-group">
+            <custom-label muted-text="'(Optional)'">Assignee(s)</custom-label>
+            <ui-select multiple ng-model="dvm.state.requestConfig.assignees">
+                <ui-select-match placeholder="Select Assignee(s)">
+                    <span title="{{$item.iri}}">{{$item.username}}</span>
+                </ui-select-match>
+                <ui-select-choices repeat="user.iri as user in dvm.um.users | filter:$select.search">
+                    <div title="{{user.iri}}" ng-bind-html="user.username | highlight: $select.search | trusted"></div>
+                </ui-select-choices>
+            </ui-select>
         </div>
     </form>
-    <request-branch-select></request-branch-select>
-    <request-details-form></request-details-form>
 </div>
 <div class="modal-footer">
     <button class="btn" ng-click="dvm.cancel()">Cancel</button>
