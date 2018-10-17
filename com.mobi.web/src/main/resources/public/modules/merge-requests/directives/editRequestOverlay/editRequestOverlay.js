@@ -83,7 +83,8 @@
                         dvm.mm.updateRequest(jsonld['@id'], jsonld)
                             .then(iri => {
                                 dvm.util.createSuccessToast('Successfully updated request: ' + iri);
-                                dvm.state.selected = dvm.state.setRequestDetails(dvm.state.getRequestObj(jsonld));
+                                dvm.state.selected = dvm.state.getRequestObj(jsonld);
+                                dvm.state.setRequestDetails(dvm.state.selected);
                                 dvm.cancel();
                             }, dvm.util.createErrorToast);
                     }
