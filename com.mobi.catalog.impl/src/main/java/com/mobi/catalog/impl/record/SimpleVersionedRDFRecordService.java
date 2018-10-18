@@ -23,6 +23,7 @@ package com.mobi.catalog.impl.record;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogProvUtils;
@@ -36,6 +37,8 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 
@@ -93,6 +96,21 @@ public class SimpleVersionedRDFRecordService extends AbstractVersionedRDFRecordS
     @Reference
     void setVersioningManager(VersioningManager versioningManager) {
         this.versioningManager = versioningManager;
+    }
+
+    @Reference
+    void setCatalogConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
+    }
+
+    @Reference
+    void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
+    }
+
+    @Activate
+    public void activate() {
+        checkForMissingPolicies();
     }
 
     @Override
