@@ -1,4 +1,4 @@
-a/*-
+/*-
  * #%L
  * com.mobi.web
  * $Id:$

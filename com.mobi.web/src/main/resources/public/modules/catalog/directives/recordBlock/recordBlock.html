@@ -49,17 +49,15 @@
                             </div>
                         </div>
                         <div aria-labelledby="heading_{{$id}}" class="collapse" data-parent="#branches_list_{{$parent.$id}}" id="branch_collapse_{{$id}}">
-                            <div ng-if="branch.show" class="expansion-panel-body">
+                            <div class="expansion-panel-body">
                                 <span>{{dvm.util.getDctermsValue(branch, 'description')}}</span>
-                                <commit-history-table branch-title="dvm.util.getDctermsValue(branch, 'title')" commit-id="dvm.util.getPropertyId(branch, dvm.prefixes.catalog + 'head')" graph></commit-history-table>
+                                <commit-history-table ng-if="branch.show" branch-title="dvm.util.getDctermsValue(branch, 'title')" commit-id="dvm.util.getPropertyId(branch, dvm.prefixes.catalog + 'head')" graph></commit-history-table>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            <button class="btn" ng-if="dvm.totalSize > dvm.state.results.length" ng-click="dvm.loadMore()">Load More</button>
         </block-content>
-        <block-footer ng-if="dvm.cm.isVersionedRDFRecord(dvm.record)">
-            <catalog-pagination list-key="'branches'" get-page="dvm.getBranches()"></catalog-pagination>
-        </block-footer>
     </block>
 </div>
