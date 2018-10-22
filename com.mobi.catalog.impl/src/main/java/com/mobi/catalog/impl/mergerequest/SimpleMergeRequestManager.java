@@ -129,6 +129,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     private static final String TARGET_BRANCH_BINDING = "targetBranch";
     private static final String SOURCE_COMMIT_BINDING = "sourceCommit";
     private static final String TARGET_COMMIT_BINDING = "targetCommit";
+    private static final String REMOVE_SOURCE_BINDING = "removeSource";
     private static final String SORT_PRED_BINDING = "sortPred";
 
     static {
@@ -173,6 +174,8 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                     .append(" = <").append(sourceCommit).append("> && "));
             params.getTargetCommit().ifPresent(targetCommit -> filters.append("?").append(TARGET_COMMIT_BINDING)
                     .append(" = <").append(targetCommit).append("> && "));
+            params.getRemoveSource().ifPresent(removeSource -> filters.append("?").append(REMOVE_SOURCE_BINDING)
+                    .append(" = ").append(removeSource).append(" && "));
             filters.delete(filters.lastIndexOf(" && "), filters.length());
             filters.append(")");
         }
@@ -213,6 +216,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         request.setSourceBranch(branchFactory.createNew(config.getSourceBranchId()));
         request.setTargetBranch(branchFactory.createNew(config.getTargetBranchId()));
         request.setProperty(vf.createLiteral(config.getTitle()), vf.createIRI(_Thing.title_IRI));
+        request.setRemoveSource(config.getRemoveSource());
         config.getDescription().ifPresent(description ->
                 request.setProperty(vf.createLiteral(description), vf.createIRI(_Thing.description_IRI)));
         request.setProperty(config.getCreator().getResource(), vf.createIRI(_Thing.creator_IRI));
