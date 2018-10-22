@@ -83,12 +83,14 @@
                             dvm.state.requestConfig.title = '';
                             dvm.state.requestConfig.description = '';
                             dvm.state.requestConfig.assignees = [];
+                            dvm.state.requestConfig.removeSource = false;
                         } else if (dvm.state.createRequestStep === 0) {
                             dvm.state.requestConfig.sourceBranchId = '';
                             dvm.state.requestConfig.targetBranchId = '';
                             delete dvm.state.requestConfig.sourceBranch;
                             delete dvm.state.requestConfig.targetBranch;
                             delete dvm.state.requestConfig.difference;
+                            delete dvm.state.requestConfig.removeSource;
                         }
                      } else {
                         dvm.state.createRequest = false;

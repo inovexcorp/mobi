@@ -75,5 +75,8 @@ describe('Request Details Form directive', function() {
         it('with a ui-select', function() {
             expect(this.element.find('ui-select').length).toEqual(1);
         });
+        it('with a checkbox', function() {
+            expect(this.element.find('checkbox').length).toEqual(1);
+        });
     });
 });

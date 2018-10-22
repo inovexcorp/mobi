@@ -163,6 +163,7 @@
              *     targetBranchId: '', // The IRI of the target Branch for the Merge Request
              *     title: '', // The title for the Merge Request
              *     description: '' // The description for the Merge Request
+             *     removeSource: false // A boolean indicating whether the source branch should be removed upon acceptance
              * }
              * ```
              */
@@ -172,7 +173,8 @@
                 targetBranchId: '',
                 title: '',
                 description: '',
-                assignees: []
+                assignees: [],
+                removeSource: false
             };
             /**
              * @ngdoc property
@@ -296,6 +298,7 @@
                 request.targetBranch = '';
                 request.sourceCommit = '';
                 request.targetCommit = '';
+                request.removeSource = '';
                 request.difference = '';
                 if (mm.isAccepted(request.jsonld)) {
                     request.sourceTitle = util.getPropertyValue(request.jsonld, prefixes.mergereq + 'sourceBranchTitle');
@@ -314,6 +317,7 @@
                             request.sourceBranch = branch;
                             request.sourceCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
                             request.sourceTitle = util.getDctermsValue(branch, 'title');
+                            request.removeSource = (util.getPropertyValue(request.jsonld, prefixes.mergereq + 'removeSource') == 'true');
                         }, $q.reject);
 
                     if (targetIri) {
