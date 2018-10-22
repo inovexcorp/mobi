@@ -7,6 +7,8 @@ version "${version}"
 
 apply plugin: 'java'
 apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
 
 sourceCompatibility = 1.8
 
@@ -21,4 +23,23 @@ repositories {
 dependencies {
     compile "com.mobi:rdf.orm.generate:${version}"
     compile group: 'org.eclipse.rdf4j', name: 'rdf4j-runtime-osgi', version: '2.2.4'
+}
+
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            def releasesRepoUrl = "http://nexus.inovexcorp.com/nexus/content/repositories/matonto-releases/"
+            def snapshotsRepoUrl = "http://nexus.inovexcorp.com/nexus/content/repositories/matonto-snapshots/"
+            // Testing purposes
+            // def releasesRepoUrl = "$buildDir/repos/releases"
+            // def snapshotsRepoUrl = "$buildDir/repos/snapshots"
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+        }
+    }
 }
