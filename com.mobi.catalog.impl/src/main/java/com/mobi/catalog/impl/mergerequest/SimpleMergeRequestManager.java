@@ -45,6 +45,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.query.api.TupleQuery;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
@@ -320,6 +321,9 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                 request.getModel());
         acceptedRequest.removeProperty(targetId, vf.createIRI(MergeRequest.targetBranch_IRI));
         acceptedRequest.removeProperty(sourceId, vf.createIRI(MergeRequest.sourceBranch_IRI));
+        IRI removeSourceIRI = vf.createIRI(MergeRequest.removeSource_IRI);
+        request.getProperty(removeSourceIRI).ifPresent(removeSource -> acceptedRequest.removeProperty(removeSource,
+                removeSourceIRI));
         acceptedRequest.setTargetBranchTitle(targetTitle);
         acceptedRequest.setSourceBranchTitle(sourceTitle);
         acceptedRequest.setTargetCommit(commitFactory.createNew(targetCommitId));

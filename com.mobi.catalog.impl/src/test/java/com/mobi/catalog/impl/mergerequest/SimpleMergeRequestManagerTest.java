@@ -597,11 +597,12 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
             boolean hasResource = r.getResource().equals(request1.getResource());
             boolean hasNoSourceBranch = !r.getSourceBranch_resource().isPresent();
             boolean hasNoTargetBranch = !r.getTargetBranch_resource().isPresent();
+            boolean hasNoRemoveSource = !r.getRemoveSource().isPresent();
             boolean hasSourceTitle = r.getSourceBranchTitle().isPresent() && r.getSourceBranchTitle().get().equals(SOURCE_BRANCH_TITLE);
             boolean hasTargetTitle = r.getTargetBranchTitle().isPresent() && r.getTargetBranchTitle().get().equals(TARGET_BRANCH_TITLE);
             boolean hasSourceCommit = r.getSourceCommit_resource().isPresent() && r.getSourceCommit_resource().get().equals(sourceCommit1.getResource());
             boolean hasTargetCommit = r.getTargetCommit_resource().isPresent() && r.getTargetCommit_resource().get().equals(targetCommit1.getResource());
-            return hasResource && hasNoSourceBranch && hasNoTargetBranch && hasSourceTitle && hasTargetTitle && hasSourceCommit && hasTargetCommit;
+            return hasResource && hasNoSourceBranch && hasNoTargetBranch && hasNoRemoveSource && hasSourceTitle && hasTargetTitle && hasSourceCommit && hasTargetCommit ;
         })), any(RepositoryConnection.class));
     }
 
