@@ -39,9 +39,8 @@
                     <div class="expansion-panel" ng-repeat="branch in dvm.state.results">
                         <div ng-click="dvm.showPanel(branch)" aria-controls="branch_collapse_{{$id}}" aria-expanded="false" class="expansion-panel-toggler collapsed" data-target="#branch_collapse_{{$id}}" data-toggle="collapse" id="heading_{{$id}}" role="button">
                             <div>
-                                <span>{{dvm.util.getDctermsValue(branch, 'title')}}</span>
-                                <entity-publisher class="details text-muted" entity="branch"></entity-publisher>
-                                <span class="details text-muted">Updated {{dvm.util.getDate(dvm.util.getDctermsValue(branch, 'modified'), 'short')}}</span>
+                                <div>{{dvm.util.getDctermsValue(branch, 'title')}}</div>
+                                <div class="details text-muted"><entity-publisher class="details font-weight-normal text-muted" entity="branch"></entity-publisher> &#8226; Updated {{dvm.util.getDate(dvm.util.getDctermsValue(branch, 'modified'), 'short')}}</div>
                             </div>
                             <div class="expansion-panel-icon ml-3 text-black-secondary">
                                 <i class="collapsed-show material-icons">keyboard_arrow_down</i>
