@@ -49,6 +49,8 @@ import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontology.core.api.Ontology;
@@ -59,6 +61,10 @@ import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
+import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.Binding;
+import com.mobi.query.api.BindingSet;
+import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -66,6 +72,7 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
+import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.exception.RepositoryException;
@@ -134,6 +141,9 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     private CatalogUtilsService utilsService;
 
     @Mock
+    private Repository repository;
+
+    @Mock
     private RepositoryConnection connection;
 
     @Mock
@@ -141,6 +151,18 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private Statement statement;
+
+    @Mock
+    private TupleQuery tupleQuery;
+
+    @Mock
+    private TupleQueryResult tupleQueryResult;
+
+    @Mock
+    private BindingSet bindingSet;
+
+    @Mock
+    private Binding binding;
 
     @Mock
     private CatalogProvUtils provUtils;
@@ -165,6 +187,13 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private XACMLPolicyManager xacmlPolicyManager;
+
+    @Mock
+    private CatalogConfigProvider configProvider;
+
+    @Mock
+    private EngineManager engineManager;
+
 
     @Before
     public void setUp() throws Exception {
@@ -233,6 +262,15 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         when(results.hasNext()).thenReturn(true);
         when(results.next()).thenReturn(statement);
         when(statement.getSubject()).thenReturn(recordPolicyIRI);
+        when(configProvider.getRepository()).thenReturn(repository);
+        when(repository.getConnection()).thenReturn(connection);
+        when(connection.prepareTupleQuery(anyString())).thenReturn(tupleQuery);
+        when(tupleQuery.evaluate()).thenReturn(tupleQueryResult);
+        when(tupleQueryResult.hasNext()).thenReturn(true, false);
+        when(tupleQueryResult.next()).thenReturn(bindingSet);
+        when(bindingSet.getBinding(anyString())).thenReturn(Optional.of(binding));
+        when(binding.getValue()).thenReturn(VALUE_FACTORY.createLiteral("urn:record"),
+                VALUE_FACTORY.createLiteral("urn:master"), VALUE_FACTORY.createLiteral("urn:user"));
 
 
         injectOrmFactoryReferencesIntoService(recordService);
@@ -245,6 +283,30 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         recordService.setVersioningManager(versioningManager);
         recordService.setMergeRequestManager(mergeRequestManager);
         recordService.setPolicyManager(xacmlPolicyManager);
+        recordService.setEngineManager(engineManager);
+        recordService.setCatalogConfigProvider(configProvider);
+    }
+
+    /* activate() */
+
+    @Test
+    public void activateUserPresentTest() throws Exception {
+        User user = userFactory.createNew(VALUE_FACTORY.createIRI("urn:user"));
+        when(engineManager.getUsername(any(IRI.class))).thenReturn(Optional.of("user"));
+        when(engineManager.retrieveUser(eq("user"))).thenReturn(Optional.of(user));
+
+        recordService.activate();
+        verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
+    }
+
+    @Test
+    public void activateUserNotPresentTest() throws Exception {
+        User user = userFactory.createNew(VALUE_FACTORY.createIRI("urn:admin"));
+        when(engineManager.getUsername(any(IRI.class))).thenReturn(Optional.empty());
+        when(engineManager.retrieveUser(eq("admin"))).thenReturn(Optional.of(user));
+
+        recordService.activate();
+        verify(xacmlPolicyManager, times(2)).addPolicy(any(XACMLPolicy.class));
     }
 
     /* create() */
