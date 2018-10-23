@@ -22,11 +22,8 @@
   -->
 <div class="search-tab row p-3">
     <div class="col-4 d-flex flex-column">
-        <div class="section-header">
-            <h5>Search</h5>
-        </div>
         <div class="search">
-            <i class="fa fa-search"></i>
+            <i class="fa fa-search" style="color:darkgray;"></i>
             <input ng-model="dvm.os.listItem.editorTabStates.search.searchText" ng-keyup="dvm.onKeyup($event)" type="text" placeholder="Search" />
             <a class="fa fa-times-circle text-muted" ng-click="dvm.onClear()"></a>
         </div>
@@ -34,7 +31,7 @@
             <error-display ng-if="dvm.os.listItem.editorTabStates.search.errorMessage">{{dvm.os.listItem.editorTabStates.search.errorMessage}}</error-display>
             <info-message ng-if="dvm.os.listItem.editorTabStates.search.infoMessage">{{dvm.os.listItem.editorTabStates.search.infoMessage}}</info-message>
             <div class="result" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.results track by key">
-                <div class="result-header text-muted d-flex" ng-click="isClosed = !isClosed"><strong class="d-inline-block text-truncate flex-1" title="{{key}}">{{key | prefixation}}</strong><i class="fa fa-fw float-right" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i></div>
+                <div class="result-header text-muted d-flex" ng-click="isClosed = !isClosed"><strong class="d-inline-block text-truncate flex-1" title="{{key}}">{{key | prefixation}}</strong><i class="fa fa-fw float-right" ng-class="{'fa-chevron-up': isClosed, 'fa-chevron-down': !isClosed}"></i></div>
                 <ul class="tree" ng-if="!isClosed">
                     <tree-item ng-repeat="item in value track by item"
                                current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, item)"
@@ -45,11 +42,16 @@
             </div>
         </div>
     </div>
-    <div class="col-8 d-flex flex-column">
-        <div class="section-header">
-            <h5>Properties</h5>
-        </div>
+    <div class="col-6 d-flex flex-column">
         <div class="flex-1 vertical-scroll">
+            <div class="prop-header d-flex align-items-center clearfix">
+                <p class="text text-truncate m-0***how do you bold and increase size?"><span ng-bind-html="vm.os.listItem.editorTabStates.search.recordID***How to get selected 'item' | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span></p>
+                <small class="text-muted text-truncate flex-1 bold"***How do you bold this?><span ng-bind-html="dvm.os.listItem.editorTabStates.search.entityIRI | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span></small>
+            </div>
+            <div class="prop-header d-flex align-items-center clearfix">
+                <p class="text text-truncate m-0">Type(s):</p> ***how do you hide this until selected result?
+                <small class="text-muted text-truncate flex-1"><span ng-bind-html="dvm.os.listItem.editorTabStates.search.***should be a result key? | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span></small>
+            </div>
             <div class="property-values mt-3" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.selected track by key">
                 <div class="prop-header d-flex align-items-center clearfix">
                     <p class="text text-truncate m-0" title="{{key}}"><span ng-bind-html="dvm.os.getEntityNameByIndex(key, dvm.os.listItem) | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span></p>
@@ -66,5 +68,8 @@
                 </div>
             </div>
         </div>
+    </div>
+    <div class="col-1.5 d-flex flex-column">
+        <button class="btn btn-primary" ng-click="dvm.os.goTo(dvm.os.listItem.editorTabStates.search.entityIRI)">Go To</button>
     </div>
 </div>
