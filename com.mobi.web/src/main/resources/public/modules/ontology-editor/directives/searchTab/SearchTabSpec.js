@@ -105,25 +105,9 @@ describe('Search Tab directive', function() {
         it('with a tree-item', function() {
             expect(this.element.find('tree-item').length).toBe(1);
         });
-        it('with .value-containers', function() {
-            expect(this.element.querySelectorAll('.prop-value-container').length).toBe(2);
-        });
-        it('with .value-displays', function() {
-            expect(this.element.querySelectorAll('.value-display').length).toBe(2);
-        });
-        it('with a link in .value-display', function() {
-            expect(this.element.querySelectorAll('.value-display a').length).toBe(1);
-        });
     });
     describe('controller methods', function() {
         describe('onKeyup', function() {
-            it('when keyCode is not 13, does not call methods', function() {
-                [12, 14].forEach(function(item) {
-                    this.controller.onKeyup({keyCode: item});
-                    expect(ontologyStateSvc.unSelectItem).not.toHaveBeenCalled();
-                    expect(ontologyManagerSvc.getSearchResults).not.toHaveBeenCalled();
-                }, this);
-            });
             describe('when keyCode is 13,', function() {
                 it('calls the correct manager function', function() {
                     ontologyManagerSvc.getSearchResults.and.returnValue($q.when());

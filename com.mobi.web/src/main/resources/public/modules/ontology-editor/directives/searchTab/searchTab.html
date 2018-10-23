@@ -23,9 +23,10 @@
 <div class="search-tab row p-3">
     <div class="col-4 d-flex flex-column">
         <div class="search">
-            <i class="fa fa-search" style="color:darkgray;"></i>
-            <input ng-model="dvm.os.listItem.editorTabStates.search.searchText" ng-keyup="dvm.onKeyup($event)" type="text" placeholder="Search" />
-            <a class="fa fa-times-circle text-muted" ng-click="dvm.onClear()"></a>
+            <search-bar ng-model="dvm.os.listItem.editorTabStates.search.searchText" submit-event="dvm.onKeyup()"></search-bar>
+            <!--<i class="fa fa-search" style="color:darkgray;"></i>
+            <input ng-model="dvm.os.listItem.editorTabStates.search.searchText" ng-keyup="dvm.onKeyup($event)" type="text" placeholder="Search" />-->
+            <!--<a class="fa fa-times-circle text-muted" ng-click="dvm.onClear()"></a>-->
         </div>
         <div class="flex-1 vertical-scroll" targeted-spinner="dvm.id">
             <error-display ng-if="dvm.os.listItem.editorTabStates.search.errorMessage">{{dvm.os.listItem.editorTabStates.search.errorMessage}}</error-display>
@@ -42,15 +43,13 @@
             </div>
         </div>
     </div>
-    <div class="col-6 d-flex flex-column">
+    <div class="col-8 d-flex flex-column" ng-if="dvm.os.listItem.editorTabStates.search.entityIRI">
         <div class="flex-1 vertical-scroll">
-            <div class="prop-header d-flex align-items-center clearfix">
-                <p class="text text-truncate m-0***how do you bold and increase size?"><span ng-bind-html="vm.os.listItem.editorTabStates.search.recordID***How to get selected 'item' | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span></p>
-                <small class="text-muted text-truncate flex-1 bold"***How do you bold this?><span ng-bind-html="dvm.os.listItem.editorTabStates.search.entityIRI | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span></small>
-            </div>
-            <div class="prop-header d-flex align-items-center clearfix">
-                <p class="text text-truncate m-0">Type(s):</p> ***how do you hide this until selected result?
-                <small class="text-muted text-truncate flex-1"><span ng-bind-html="dvm.os.listItem.editorTabStates.search.***should be a result key? | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span></small>
+            <div class="d-flex">
+                <selected-details class="flex-1 remove-min-width" read-only="true"></selected-details>
+                <div>
+                    <button class="btn btn-primary" ng-click="dvm.os.goTo(dvm.os.listItem.editorTabStates.search.entityIRI)">Go To</button>
+                </div>
             </div>
             <div class="property-values mt-3" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.selected track by key">
                 <div class="prop-header d-flex align-items-center clearfix">
@@ -68,8 +67,5 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div class="col-1.5 d-flex flex-column">
-        <button class="btn btn-primary" ng-click="dvm.os.goTo(dvm.os.listItem.editorTabStates.search.entityIRI)">Go To</button>
     </div>
 </div>

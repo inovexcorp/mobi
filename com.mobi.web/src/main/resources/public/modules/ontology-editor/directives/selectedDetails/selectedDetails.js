@@ -35,6 +35,9 @@
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/selectedDetails/selectedDetails.html',
                 scope: {},
+                bindToController: {
+                    readOnly: '<'
+                },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
