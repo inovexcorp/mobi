@@ -90,9 +90,6 @@ describe('Search Tab directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('search-tab')).toBe(true);
         });
-        it('with .section-headers', function() {
-            expect(this.element.querySelectorAll('.section-header').length).toBe(2);
-        });
         it('with a .search', function() {
             expect(this.element.querySelectorAll('.search').length).toBe(1);
         });
@@ -107,9 +104,6 @@ describe('Search Tab directive', function() {
         });
         it('with a tree-item', function() {
             expect(this.element.find('tree-item').length).toBe(1);
-        });
-        it('with a .property-values', function() {
-            expect(this.element.querySelectorAll('.property-values').length).toBe(1);
         });
         it('with .value-containers', function() {
             expect(this.element.querySelectorAll('.prop-value-container').length).toBe(2);
