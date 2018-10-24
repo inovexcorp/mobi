@@ -66,8 +66,6 @@
                     dvm.id = 'search-' + dvm.os.listItem.ontologyRecord.recordId;
 
                     dvm.onKeyup = function() {
-//                    dvm.onKeyup = function($event) {
-//                        if ($event.keyCode === 13) {
                             if (dvm.os.listItem.editorTabStates.search.searchText) {
                             httpService.cancel(dvm.id);
                             dvm.os.unSelectItem();
@@ -82,10 +80,9 @@
                                     state.search.errorMessage = errorMessage;
                                     state.search.infoMessage = '';
                                 });
-                                } else {
-                                    dvm.onClear();
-                                }
-//                        }
+                            } else {
+                                dvm.onClear();
+                            }
                     }
 
                     dvm.onClear = function() {
