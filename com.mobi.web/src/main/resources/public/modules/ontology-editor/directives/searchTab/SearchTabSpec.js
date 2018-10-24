@@ -56,6 +56,7 @@ describe('Search Tab directive', function() {
         }
         ontologyStateSvc.listItem.editorTabStates.search = {
             errorMessage: 'error',
+            entityIRI: 'entityIRI',
             highlightText: 'highlight',
             infoMessage: 'info',
             results: {
@@ -104,6 +105,21 @@ describe('Search Tab directive', function() {
         });
         it('with a tree-item', function() {
             expect(this.element.find('tree-item').length).toBe(1);
+        });
+        it('with a .property-values', function() {
+            expect(this.element.querySelectorAll('.property-values').length).toBe(1);
+        });
+        it('with a .entity-IRI', function() {
+            expect(this.element.querySelectorAll('.entity-IRI').length).toBe(1);
+        });
+        it('with .value-containers', function() {
+            expect(this.element.querySelectorAll('.prop-value-container').length).toBe(2);
+        });
+        it('with .value-displays', function() {
+            expect(this.element.querySelectorAll('.value-display').length).toBe(2);
+        });
+        it('with a link in .value-display', function() {
+            expect(this.element.querySelectorAll('.value-display a').length).toBe(1);
         });
     });
     describe('controller methods', function() {

@@ -66,23 +66,23 @@
                     dvm.id = 'search-' + dvm.os.listItem.ontologyRecord.recordId;
 
                     dvm.onKeyup = function() {
-                            if (dvm.os.listItem.editorTabStates.search.searchText) {
-                            httpService.cancel(dvm.id);
-                            dvm.os.unSelectItem();
-                            var state = dvm.os.listItem.editorTabStates;
-                            dvm.om.getSearchResults(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.editorTabStates.search.searchText, dvm.id)
-                                .then(results => {
-                                    state.search.errorMessage = '';
-                                    state.search.results = results;
-                                    state.search.infoMessage = !_.isEmpty(results) ? '' : 'There were no results for your search text.';
-                                    state.search.highlightText = state.search.searchText;
-                                }, errorMessage => {
-                                    state.search.errorMessage = errorMessage;
-                                    state.search.infoMessage = '';
-                                });
-                            } else {
-                                dvm.onClear();
-                            }
+                        if (dvm.os.listItem.editorTabStates.search.searchText) {
+                        httpService.cancel(dvm.id);
+                        dvm.os.unSelectItem();
+                        var state = dvm.os.listItem.editorTabStates;
+                        dvm.om.getSearchResults(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.editorTabStates.search.searchText, dvm.id)
+                            .then(results => {
+                                state.search.errorMessage = '';
+                                state.search.results = results;
+                                state.search.infoMessage = !_.isEmpty(results) ? '' : 'There were no results for your search text.';
+                                state.search.highlightText = state.search.searchText;
+                            }, errorMessage => {
+                                state.search.errorMessage = errorMessage;
+                                state.search.infoMessage = '';
+                            });
+                        } else {
+                            dvm.onClear();
+                        }
                     }
 
                     dvm.onClear = function() {
