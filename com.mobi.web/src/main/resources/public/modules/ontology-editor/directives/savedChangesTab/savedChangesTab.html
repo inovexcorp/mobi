@@ -35,7 +35,7 @@
                 <div class="property-values mt-3 card d-flex" ng-repeat="item in dvm.showList">
                     <div class="prop-header flex-1 align-items-center clearfix">
                         <p class="text remove-min-width m-0 px-1" title="{{item.id}}">{{dvm.util.getBeautifulIRI(item.id)}}</p>
-                        <small class="ml-1 text-muted remove-min-width"><a ng-click="dvm.go($event, item.id)">{{item.id}}</a></small>
+                        <small class="ml-1 remove-min-width"><a ng-click="dvm.go($event, item.id)">{{item.id}}</a></small>
                     </div>
                     <div class="prop-value-container p-1 ml-3 mt-1">
                         <statement-container ng-if="item.additions.length" additions class="m-0">
