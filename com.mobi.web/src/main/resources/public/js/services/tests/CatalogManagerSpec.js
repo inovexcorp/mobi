@@ -1393,38 +1393,109 @@ describe('Catalog Manager service', function() {
     describe('should retrieve Commit history', function() {
         beforeEach(function() {
             this.url = '/mobirest/commits/' + encodeURIComponent(this.commitId) + '/history';
+            this.promiseId = 'id';
         });
-        it('unless an error occurs', function() {
-            $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getCommitHistory(this.commitId)
-                .then(function(response) {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toBe('Error Message');
+        describe('unless an error occurs', function() {
+            describe('with no targetId set', function() {
+                it('with no promise id set', function() {
+                    $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
+                    catalogManagerSvc.getCommitHistory(this.commitId)
+                        .then(function(response) {
+                            fail('Promise should have rejected');
+                        }, function(response) {
+                            expect(response).toBe('Error Message');
+                        });
+                    flushAndVerify($httpBackend);
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 });
-            flushAndVerify($httpBackend);
-            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                it('with a promise id set', function() {
+                    httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
+                    catalogManagerSvc.getCommitHistory(this.commitId, '', this.promiseId)
+                        .then(function(response) {
+                            fail('Promise should have rejected');
+                        }, function(response) {
+                            expect(response).toBe('Error Message');
+                        });
+                    scope.$apply();
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.any(Object));
+                });
+            });
+            describe('with a targetId set', function() {
+                it('with no promise id set', function() {
+                    var params = $httpParamSerializer({targetId: this.commitId});
+                    $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+                    catalogManagerSvc.getCommitHistory(this.commitId, this.commitId)
+                        .then(function(response) {
+                            fail('Promise should have rejected');
+                        }, function(response) {
+                            expect(response).toBe('Error Message');
+                        });
+                    flushAndVerify($httpBackend);
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                });
+                it('with a promise id set', function() {
+                    httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
+                    catalogManagerSvc.getCommitHistory(this.commitId, this.commitId, this.promiseId)
+                        .then(function(response) {
+                            fail('Promise should have rejected');
+                        }, function(response) {
+                            expect(response).toBe('Error Message');
+                        });
+                    scope.$apply();
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.any(Object));
+                });
+            });
         });
-        it('successfully', function() {
-            $httpBackend.whenGET(this.url).respond(200, []);
-            catalogManagerSvc.getCommitHistory(this.commitId)
-                .then(function(response) {
-                    expect(response).toEqual([]);
-                }, function(response) {
-                    fail('Promise should have resolved');
+        describe('successfully', function() {
+            describe('with no targetId set', function() {
+                it('with no promise id set', function() {
+                    $httpBackend.whenGET(this.url).respond(200, []);
+                    catalogManagerSvc.getCommitHistory(this.commitId)
+                        .then(function(response) {
+                            expect(response).toEqual([]);
+                        }, function(response) {
+                            fail('Promise should have resolved');
+                        });
+                    flushAndVerify($httpBackend);
                 });
-            flushAndVerify($httpBackend);
-        });
-        it('successfully with target ID', function() {
-            var params = $httpParamSerializer({targetId: this.commitId})
-            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
-            catalogManagerSvc.getCommitHistory(this.commitId, this.commitId)
-                .then(function(response) {
-                    expect(response).toEqual([]);
-                }, function(response) {
-                    fail('Promise should have resolved');
+                it('with a promise id set', function() {
+                    httpSvc.get.and.returnValue($q.when({data: []}));
+                    catalogManagerSvc.getCommitHistory(this.commitId, '', this.promiseId)
+                        .then(function(response) {
+                            expect(response).toEqual([]);
+                        }, function(response) {
+                            fail('Promise should have resolved');
+                        });
+                    scope.$apply();
+                    expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params:{targetId: ''}}, this.promiseId);
                 });
-            flushAndVerify($httpBackend);
+            });
+            describe('with a targetId set', function() {
+                it('with no promise id set', function() {
+                    var params = $httpParamSerializer({targetId: this.commitId});
+                    $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+                    catalogManagerSvc.getCommitHistory(this.commitId, this.commitId)
+                        .then(function(response) {
+                            expect(response).toEqual([]);
+                        }, function(response) {
+                            fail('Promise should have resolved');
+                        });
+                    flushAndVerify($httpBackend);
+                });
+                it('with a promise id set', function() {
+                    httpSvc.get.and.returnValue($q.when({data: []}));
+                    catalogManagerSvc.getCommitHistory(this.commitId, this.commitId, this.promiseId)
+                        .then(function(response) {
+                            expect(response).toEqual([]);
+                        }, function(response) {
+                            fail('Promise should have resolved');
+                        });
+                    scope.$apply();
+                    expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params:{targetId: this.commitId}}, this.promiseId);
+                });
+            });
         });
     });
     describe('should create a new commit on a Branch', function() {

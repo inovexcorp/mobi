@@ -99,6 +99,7 @@
                     dvm.columnSpacing = 25;
                     dvm.deltaX = 5 + dvm.circleRadius;
                     dvm.deltaY = 56;
+                    dvm.id = 'commit-history-table';
 
                     $scope.$watchGroup(['dvm.branchTitle', 'dvm.commitId', 'dvm.targetId'], () => dvm.getCommits());
 
@@ -114,7 +115,7 @@
                     }
                     dvm.getCommits = function() {
                         if (dvm.commitId) {
-                            var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId);
+                            var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId, dvm.id);
                             promise.then(commits => {
                                 dvm.commits = commits;
                                 dvm.error = '';
