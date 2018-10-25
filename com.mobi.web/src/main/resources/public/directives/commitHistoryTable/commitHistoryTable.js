@@ -57,9 +57,9 @@
          */
         .directive('commitHistoryTable', commitHistoryTable);
 
-        commitHistoryTable.$inject = ['catalogManagerService', 'utilService', 'userManagerService', 'modalService', 'Snap', 'chroma'];
+        commitHistoryTable.$inject = ['httpService', 'catalogManagerService', 'utilService', 'userManagerService', 'modalService', 'Snap', 'chroma'];
 
-        function commitHistoryTable(catalogManagerService, utilService, userManagerService, modalService, Snap, chroma) {
+        function commitHistoryTable(httpService, catalogManagerService, utilService, userManagerService, modalService, Snap, chroma) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -115,6 +115,9 @@
                     }
                     dvm.getCommits = function() {
                         if (dvm.commitId) {
+                            scope.$on('$destroy', function() {
+                                httpService.cancel(dvm.id);
+                            });
                             var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId, dvm.id);
                             promise.then(commits => {
                                 dvm.commits = commits;

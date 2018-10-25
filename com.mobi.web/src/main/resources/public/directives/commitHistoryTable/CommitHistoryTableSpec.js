@@ -32,6 +32,7 @@ describe('Commit History Table directive', function() {
         mockUserManager();
         mockUtil();
         mockModal();
+        mockHttpService();
 
         module(function($provide) {
             $provide.constant('Snap', jasmine.createSpy('Snap').and.returnValue({
