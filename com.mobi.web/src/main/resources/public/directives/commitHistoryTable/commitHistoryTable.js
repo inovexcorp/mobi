@@ -115,7 +115,7 @@
                     }
                     dvm.getCommits = function() {
                         if (dvm.commitId) {
-                            scope.$on('$destroy', function() {
+                            $scope.$on('$destroy', function() {
                                 httpService.cancel(dvm.id);
                             });
                             var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId, dvm.id);
