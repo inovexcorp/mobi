@@ -24,11 +24,13 @@
     <div class="col-8 offset-2">
         <div class="has-changes h-100 d-flex flex-column" ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length">
             <div class="changes-info">
-                <error-display ng-if="!dvm.os.listItem.upToDate">There have been other commits made on this Branch.
-                    <span ng-if="!dvm.os.listItem.userBranch"> Please either commit your changes or remove them to resync your working branch with the HEAD.</span>
-                </error-display>
-                <div class="btn-container clearfix">
-                    <button class="btn btn-danger pull-left" ng-click="dvm.removeChanges()" ng-disabled="!dvm.os.isCommittable(dvm.os.listItem)">Remove All Changes</button>
+                <div class="error-text col-8 pull-right">
+                    <error-display ng-if="!dvm.os.listItem.upToDate">There have been other commits made on this Branch.
+                        <span ng-if="!dvm.os.listItem.userBranch"> Please either commit your changes or remove them to resync your working branch with the HEAD.</span>
+                    </error-display>
+                </div>
+                <div class="btn-container clearfix col-7">
+                    <button class="btn btn-danger pull-left m-2" ng-click="dvm.removeChanges()" ng-disabled="!dvm.os.isCommittable(dvm.os.listItem)">Remove All Changes</button>
                 </div>
             </div>
             <div class="changes flex-1 px-1 vertical-scroll">
