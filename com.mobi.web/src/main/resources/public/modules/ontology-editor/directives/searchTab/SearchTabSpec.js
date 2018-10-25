@@ -56,6 +56,7 @@ describe('Search Tab directive', function() {
         }
         ontologyStateSvc.listItem.editorTabStates.search = {
             errorMessage: 'error',
+            entityIRI: 'entityIRI',
             highlightText: 'highlight',
             infoMessage: 'info',
             results: {
@@ -90,9 +91,6 @@ describe('Search Tab directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('search-tab')).toBe(true);
         });
-        it('with .section-headers', function() {
-            expect(this.element.querySelectorAll('.section-header').length).toBe(2);
-        });
         it('with a .search', function() {
             expect(this.element.querySelectorAll('.search').length).toBe(1);
         });
@@ -111,6 +109,9 @@ describe('Search Tab directive', function() {
         it('with a .property-values', function() {
             expect(this.element.querySelectorAll('.property-values').length).toBe(1);
         });
+        it('with a .entity-IRI', function() {
+            expect(this.element.querySelectorAll('.entity-IRI').length).toBe(1);
+        });
         it('with .value-containers', function() {
             expect(this.element.querySelectorAll('.prop-value-container').length).toBe(2);
         });
@@ -123,13 +124,6 @@ describe('Search Tab directive', function() {
     });
     describe('controller methods', function() {
         describe('onKeyup', function() {
-            it('when keyCode is not 13, does not call methods', function() {
-                [12, 14].forEach(function(item) {
-                    this.controller.onKeyup({keyCode: item});
-                    expect(ontologyStateSvc.unSelectItem).not.toHaveBeenCalled();
-                    expect(ontologyManagerSvc.getSearchResults).not.toHaveBeenCalled();
-                }, this);
-            });
             describe('when keyCode is 13,', function() {
                 it('calls the correct manager function', function() {
                     ontologyManagerSvc.getSearchResults.and.returnValue($q.when());

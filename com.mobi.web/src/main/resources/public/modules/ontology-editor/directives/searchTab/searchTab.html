@@ -22,19 +22,14 @@
   -->
 <div class="search-tab row p-3">
     <div class="col-4 d-flex flex-column">
-        <div class="section-header">
-            <h5>Search</h5>
-        </div>
         <div class="search">
-            <i class="fa fa-search"></i>
-            <input ng-model="dvm.os.listItem.editorTabStates.search.searchText" ng-keyup="dvm.onKeyup($event)" type="text" placeholder="Search" />
-            <a class="fa fa-times-circle text-muted" ng-click="dvm.onClear()"></a>
+            <search-bar ng-model="dvm.os.listItem.editorTabStates.search.searchText" submit-event="dvm.onKeyup()"></search-bar>
         </div>
         <div class="flex-1 vertical-scroll" targeted-spinner="dvm.id">
             <error-display ng-if="dvm.os.listItem.editorTabStates.search.errorMessage">{{dvm.os.listItem.editorTabStates.search.errorMessage}}</error-display>
             <info-message ng-if="dvm.os.listItem.editorTabStates.search.infoMessage">{{dvm.os.listItem.editorTabStates.search.infoMessage}}</info-message>
             <div class="result" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.results track by key">
-                <div class="result-header text-muted d-flex" ng-click="isClosed = !isClosed"><strong class="d-inline-block text-truncate flex-1" title="{{key}}">{{key | prefixation}}</strong><i class="fa fa-fw float-right" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i></div>
+                <div class="result-header text-muted d-flex" ng-click="isClosed = !isClosed"><strong class="d-inline-block text-truncate flex-1" title="{{key}}">{{key | prefixation}}</strong><i class="fa fa-fw float-right" ng-class="{'fa-chevron-up': isClosed, 'fa-chevron-down': !isClosed}"></i></div>
                 <ul class="tree" ng-if="!isClosed">
                     <tree-item ng-repeat="item in value track by item"
                                current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, item)"
@@ -45,11 +40,14 @@
             </div>
         </div>
     </div>
-    <div class="col-8 d-flex flex-column">
-        <div class="section-header">
-            <h5>Properties</h5>
-        </div>
+    <div class="entity-IRI col-8 d-flex flex-column" ng-if="dvm.os.listItem.editorTabStates.search.entityIRI">
         <div class="flex-1 vertical-scroll">
+            <div class="d-flex">
+                <selected-details class="flex-1 remove-min-width" read-only="true"></selected-details>
+                <div>
+                    <button class="btn btn-primary" ng-click="dvm.os.goTo(dvm.os.listItem.editorTabStates.search.entityIRI)">Go To</button>
+                </div>
+            </div>
             <div class="property-values mt-3" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.selected track by key">
                 <div class="prop-header d-flex align-items-center clearfix">
                     <p class="text text-truncate m-0" title="{{key}}"><span ng-bind-html="dvm.os.getEntityNameByIndex(key, dvm.os.listItem) | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span></p>
