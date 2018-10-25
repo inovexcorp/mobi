@@ -86,11 +86,11 @@ describe('Saved Changes Tab directive', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('.btn-container .btn').length).toBe(1);
         });
-        it('with .property-values', function() {
-            expect(this.element.querySelectorAll('.property-values').length).toBe(0);
+        it('with .list-group', function() {
+            expect(this.element.querySelectorAll('.list-group').length).toBe(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': 'id'}];
             scope.$apply();
-            expect(this.element.querySelectorAll('.property-values').length).toBe(1);
+            expect(this.element.querySelectorAll('.list-group').length).toBe(1);
         });
         it('with statement-display dependent on how many additions/deletions there are', function() {
             expect(this.element.find('statement-display').length).toBe(0);
