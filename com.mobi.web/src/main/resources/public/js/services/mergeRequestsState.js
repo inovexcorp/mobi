@@ -317,7 +317,7 @@
                             request.sourceBranch = branch;
                             request.sourceCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
                             request.sourceTitle = util.getDctermsValue(branch, 'title');
-                            request.removeSource = (util.getPropertyValue(request.jsonld, prefixes.mergereq + 'removeSource') == 'true');
+                            request.removeSource = self.removeSource(request.jsonld);
                         }, $q.reject);
 
                     if (targetIri) {
@@ -345,7 +345,7 @@
              *
              * @description
              * Resolves the conflicts for the provided Merge Request by making a merge from the request's target into
-             * the source with the provided resolution statments. Will also reset the details on the provided request
+             * the source with the provided resolution statements. Will also reset the details on the provided request
              * after a successful merge.
              *
              * @param {Object} request An item from the `requests` array that represents the request to resolve
@@ -359,6 +359,20 @@
                     .then(() => {
                         self.setRequestDetails(request);
                     }, $q.reject);
+            }
+            /**
+             * @ngdoc method
+             * @name removeSource
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             *
+             * @description
+             * Checks if the jsonld for a Merge Request has the removeSource property set to true. Returns boolean result.
+             *
+             * @param jsonld The jsonld of a Merge Request
+             * @returns {boolean} True if the removeSource property is true, otherwise false
+             */
+            self.removeSource = function(jsonld) {
+                return util.getPropertyValue(jsonld, prefixes.mergereq + 'removeSource') === 'true';
             }
 
             function getDate(jsonld) {

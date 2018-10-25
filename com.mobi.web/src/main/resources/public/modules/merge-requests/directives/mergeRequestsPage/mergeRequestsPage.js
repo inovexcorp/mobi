@@ -42,6 +42,7 @@
          * @requires mergeRequestManager.service:mergeRequestManagerService
          * @requires util.service:utilService
          * @requires ontologyState.service:ontologyStateService
+         * @requires ontologyManager.service:ontologyManagerService
          *
          * @description
          * `mergeRequestsPage` is a directive which creates a div containing the main parts of the Merge Requests
@@ -53,9 +54,9 @@
          */
         .directive('mergeRequestsPage', mergeRequestsPage);
 
-    mergeRequestsPage.$inject = ['$q', 'mergeRequestsStateService', 'mergeRequestManagerService', 'utilService', 'ontologyStateService'];
+    mergeRequestsPage.$inject = ['$q', 'mergeRequestsStateService', 'mergeRequestManagerService', 'utilService', 'ontologyStateService', 'ontologyManagerService'];
 
-    function mergeRequestsPage($q, mergeRequestsStateService, mergeRequestManagerService, utilService, ontologyStateService) {
+    function mergeRequestsPage($q, mergeRequestsStateService, mergeRequestManagerService, utilService, ontologyStateService, ontologyManagerService) {
         return {
             restrict: 'E',
             templateUrl: 'modules/merge-requests/directives/mergeRequestsPage/mergeRequestsPage.html',
@@ -67,6 +68,7 @@
                 var mm = mergeRequestManagerService;
                 var util = utilService;
                 var os = ontologyStateService;
+                var om = ontologyManagerService;
                 dvm.state = mergeRequestsStateService;
                 dvm.errorMessage = '';
 
@@ -94,6 +96,8 @@
                 }
                 dvm.acceptRequest = function() {
                     var targetBranchId = dvm.state.requestToAccept.targetBranch['@id'];
+                    var sourceBranchId = dvm.state.requestToAccept.sourceBranch['@id'];
+                    var removeSource = dvm.state.removeSource(dvm.state.requestToAccept.jsonld);
                     mm.acceptRequest(dvm.state.requestToAccept.jsonld['@id'])
                         .then(() => {
                             util.createSuccessToast('Request successfully accepted');
@@ -102,6 +106,15 @@
                         .then(jsonld => {
                             dvm.state.requestToAccept.jsonld = jsonld;
                             return dvm.state.setRequestDetails(dvm.state.requestToAccept);
+                        }, $q.reject)
+                        .then(() => {
+                            if (removeSource) {
+                                return om.deleteOntologyBranch(dvm.state.requestToAccept.recordIri, sourceBranchId)
+                                    .then(() => {
+                                        os.removeBranch(dvm.state.requestToAccept.recordIri, sourceBranchId);
+                                    }, $q.reject);
+                            }
+                            return $q.when();
                         }, $q.reject)
                         .then(() => {
                             dvm.state.selected = dvm.state.requestToAccept;
