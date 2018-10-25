@@ -9,7 +9,6 @@
         padding-top: 10px;
     }
     .result-header {
-        border-bottom: 1px solid var(--light-dark);
         cursor: pointer;
         padding: 5px 0;
     }
@@ -34,15 +33,6 @@
             &:hover {
                 color: var(--body) !important;
             }
-        }
-
-        input {
-            border: 0;
-            border-bottom: 1px solid var(--light-dark);
-            display: inline-block;
-            padding: 10px 35px;
-            outline: 0;
-            width: 100%;
         }
     }
 }
