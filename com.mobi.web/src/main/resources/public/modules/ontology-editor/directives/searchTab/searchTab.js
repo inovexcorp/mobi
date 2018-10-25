@@ -65,8 +65,8 @@
                     dvm.om = ontologyManagerService;
                     dvm.id = 'search-' + dvm.os.listItem.ontologyRecord.recordId;
 
-                    dvm.onKeyup = function($event) {
-                        if ($event.keyCode === 13) {
+                    dvm.onKeyup = function() {
+                        if (dvm.os.listItem.editorTabStates.search.searchText) {
                             httpService.cancel(dvm.id);
                             dvm.os.unSelectItem();
                             var state = dvm.os.listItem.editorTabStates;
@@ -80,6 +80,8 @@
                                     state.search.errorMessage = errorMessage;
                                     state.search.infoMessage = '';
                                 });
+                        } else {
+                            dvm.onClear();
                         }
                     }
 
@@ -91,6 +93,7 @@
                         dvm.os.listItem.editorTabStates.search.results = {};
                         dvm.os.listItem.editorTabStates.search.searchText = '';
                         dvm.os.listItem.editorTabStates.search.selected = {};
+                        dvm.os.listItem.editorTabStates.search.entityIRI = '';
                     }
 
                     $scope.$watch('dvm.os.listItem.selected', (newValue, oldValue) => {

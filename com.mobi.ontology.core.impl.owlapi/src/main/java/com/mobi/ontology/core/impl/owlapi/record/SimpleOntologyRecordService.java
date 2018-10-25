@@ -23,6 +23,7 @@ package com.mobi.ontology.core.impl.owlapi.record;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogProvUtils;
@@ -33,6 +34,8 @@ import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.record.AbstractOntologyRecordService;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
@@ -118,6 +121,21 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
     @Reference
     void setModelFactory(ModelFactory modelFactory) {
         this.modelFactory = modelFactory;
+    }
+
+    @Reference
+    void setCatalogConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
+    }
+
+    @Reference
+    void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
+    }
+
+    @Activate
+    public void activate() {
+        checkForMissingPolicies();
     }
 
     @Override
