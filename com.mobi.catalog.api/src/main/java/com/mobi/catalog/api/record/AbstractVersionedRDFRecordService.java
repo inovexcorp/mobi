@@ -37,11 +37,17 @@ import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordExportSettings;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
+import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.ResourceUtils;
+import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.Binding;
+import com.mobi.query.api.BindingSet;
+import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -62,6 +68,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -83,12 +90,26 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     private static final String POLICY_IRI_BINDING = "%POLICYIRI%";
     private static final String ENCODED_POLICY_IRI_BINDING = "%POLICYIRIENCODED%";
     private static final String MASTER_BRANCH_IRI_BINDING = "%MASTER%";
+    private static final String RECORD_NO_POLICY_QUERY;
+
+    static {
+        try {
+            RECORD_NO_POLICY_QUERY = IOUtils.toString(
+                    AbstractVersionedRDFRecordService.class.getResourceAsStream("/record-no-policy.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
 
     protected CommitFactory commitFactory;
     protected BranchFactory branchFactory;
     protected MergeRequestManager mergeRequestManager;
     protected VersioningManager versioningManager;
     protected XACMLPolicyManager xacmlPolicyManager;
+    protected CatalogConfigProvider configProvider;
+    protected EngineManager engineManager;
 
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
@@ -122,20 +143,32 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * Creates two policy files for the Record based on default templates. One policy to control who can view and modify
      * the Record. The other for who can modify the aforementioned policy.
      *
-     * @param user The user who created the Record and associated Policy files
-     * @param record The record the Policy files control
+     * @param user The User who created the Record and associated Policy files
+     * @param record The Record the Policy files control
      */
     protected void writePolicies(User user, T record) {
+        writePolicies(user.getResource(), record.getResource(), record.getMasterBranch_resource().get());
+    }
+
+    /**
+     * Creates two policy files for the Record based on default templates. One policy to control who can view and modify
+     * the Record. The other for who can modify the aforementioned policy.
+     *
+     * @param user The Resource of the user who created the Record and associated Policy files
+     * @param recordId The Resource of the Record to write out
+     * @param masterBranchId The Resource of the Master Branch associated with the recordId
+     */
+    protected void writePolicies(Resource user, Resource recordId, Resource masterBranchId) {
         try {
             // Record Policy
             InputStream recordPolicyStream = AbstractVersionedRDFRecordService.class
                     .getResourceAsStream("/recordPolicy.xml");
-            String encodedRecordIRI = ResourceUtils.encode(record.getResource());
+            String encodedRecordIRI = ResourceUtils.encode(recordId);
 
             String[] search = {USER_IRI_BINDING, RECORD_IRI_BINDING, ENCODED_RECORD_IRI_BINDING,
                     MASTER_BRANCH_IRI_BINDING};
-            String[] replace = {user.getResource().stringValue(), record.getResource().stringValue(), encodedRecordIRI,
-                    record.getMasterBranch_resource().get().stringValue()};
+            String[] replace = {user.stringValue(), recordId.stringValue(), encodedRecordIRI,
+                    masterBranchId.stringValue()};
             String recordPolicy = StringUtils.replaceEach(IOUtils.toString(recordPolicyStream, "UTF-8"),
                     search, replace);
 
@@ -303,5 +336,28 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                 }
             }
         });
+    }
+
+    protected void checkForMissingPolicies() {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(RECORD_NO_POLICY_QUERY);
+            TupleQueryResult result = query.evaluate();
+
+            while (result.hasNext()) {
+                BindingSet bindings = result.next();
+                Optional<Binding> recordBinding = bindings.getBinding("record");
+                Optional<Binding> masterBinding = bindings.getBinding("master");
+                Optional<Binding> publisherBinding = bindings.getBinding("publisher");
+                if (recordBinding.isPresent() && masterBinding.isPresent() && publisherBinding.isPresent()) {
+                    IRI recordIRI = valueFactory.createIRI(recordBinding.get().getValue().stringValue());
+                    IRI masterIRI = valueFactory.createIRI(masterBinding.get().getValue().stringValue());
+                    IRI userIRI = valueFactory.createIRI(publisherBinding.get().getValue().stringValue());
+
+                    String username = engineManager.getUsername(userIRI).orElse("admin");
+                    engineManager.retrieveUser(username).ifPresent(user -> writePolicies(user.getResource(), recordIRI,
+                            masterIRI));
+                }
+            }
+        }
     }
 }
