@@ -40,6 +40,7 @@
                         <li ng-repeat="assignee in dvm.state.selected.assignees" ng-class="{'last': $last}">{{assignee}}</li>
                     </ul>
                 </div>
+                <checkbox ng-if="dvm.util.getDctermsValue(dvm.state.selected.sourceBranch, 'title') !== 'MASTER' && !dvm.mm.isAccepted(dvm.state.selected.jsonld)" ng-model="dvm.state.selected.removeSource" display-text="'Remove ' + dvm.util.getDctermsValue(dvm.state.selected.sourceBranch, 'title') + ' after merge.'" is-disabled="true"></checkbox>
             </div>
             <div class="view" ng-if="!dvm.resolveConflicts">
                 <div class="alert alert-warning d-flex align-items-center" role="alert" ng-if="dvm.state.selected.conflicts.length">
