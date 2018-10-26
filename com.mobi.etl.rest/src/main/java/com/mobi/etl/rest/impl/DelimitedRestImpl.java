@@ -49,6 +49,7 @@ import com.mobi.etl.rest.DelimitedRest;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.persistence.utils.api.SesameTransformer;
@@ -113,6 +114,7 @@ public class DelimitedRestImpl implements DelimitedRest {
     private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
     private OntologyRecordFactory ontologyRecordFactory;
+    private OntologyManager ontologyManager;
     private VersioningManager versioningManager;
     private EngineManager engineManager;
 
@@ -166,6 +168,11 @@ public class DelimitedRestImpl implements DelimitedRest {
     @Reference
     void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
         this.ontologyRecordFactory = ontologyRecordFactory;
+    }
+
+    @Reference
+    void setOntologyManager(OntologyManager ontologyManager) {
+        this.ontologyManager = ontologyManager;
     }
 
     @Reference
@@ -316,13 +323,23 @@ public class DelimitedRestImpl implements DelimitedRest {
                         Response.Status.BAD_REQUEST));
 
         // Convert the data
-        Model data = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
+        Model mappingData = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
                 separator, false);
 
         Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() -> ErrorUtils.sendError(
                 "OntologyRecord " + ontologyRecordIRI + " master branch cannot be found.", Response.Status.BAD_REQUEST));
+
+        Model ontologyData =  ontologyManager.getOntologyModel(record.getResource());
+
+        mappingData.forEach(statement -> {
+            if (ontologyData.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())) {
+                mappingData.remove(statement.getSubject(), statement.getPredicate(), statement.getObject());
+            }
+        });
+
+
         versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), masterBranchId, user,
-                "Mapping data from " + mappingRecordIRI, data, null);
+                "Mapping data from " + mappingRecordIRI, mappingData, null);
 
         // Remove temp file
         removeTempFile(fileName);
