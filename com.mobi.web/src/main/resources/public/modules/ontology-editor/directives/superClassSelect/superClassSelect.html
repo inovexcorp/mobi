@@ -24,16 +24,6 @@
     <a ng-if="!dvm.isShown" class="btn-link btn-show" ng-click="dvm.show()"><i class="fa fa-fw fa-plus"></i>Show Sub Class Of</a>
     <div ng-if="dvm.isShown">
         <a class="btn-link btn-hide" ng-click="dvm.hide()"><i class="fa fa-fw fa-times"></i>Hide Sub Class Of</a>
-        <div class="form-group">
-            <custom-label>Classes</custom-label>
-            <ui-select multiple ng-model="dvm.values">
-                <ui-select-match placeholder="Select classes">
-                    <span title="{{$item}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
-                </ui-select-match>
-                <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.array">
-                    <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getDropDownText(iri) | highlight: $select.search | trusted"></div>
-                </ui-select-choices>
-            </ui-select>
-        </div>
+        <ontology-class-select values="dvm.iris"></ontology-class-select>
     </div>
 </div>
