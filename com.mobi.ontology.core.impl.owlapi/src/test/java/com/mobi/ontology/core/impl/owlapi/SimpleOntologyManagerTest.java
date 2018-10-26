@@ -45,13 +45,16 @@ import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
+import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
+import com.mobi.query.api.BindingSet;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.core.impl.sesame.SimpleIRI;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
@@ -72,11 +75,11 @@ import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.semanticweb.owlapi.model.OWLOntology;
 
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -172,7 +175,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(SimpleOntologyValues.owlapiIRI(versionIRI)).thenReturn(owlVersionIRI);
         when(SimpleOntologyValues.mobiIRI(owlOntologyIRI)).thenReturn(ontologyIRI);
         when(SimpleOntologyValues.mobiIRI(owlVersionIRI)).thenReturn(versionIRI);
-        when(SimpleOntologyValues.mobiOntology(any(OWLOntology.class))).thenReturn(ontology);
 
         when(mockCache.containsKey(anyString())).thenReturn(false);
 
@@ -197,6 +199,8 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
         when(configProvider.getRepository()).thenReturn(repo);
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
+        when(sesameTransformer.sesameResource(any(Resource.class))).thenReturn(new SimpleIRI("http://test.com/ontology1"));
+
 
         manager = Mockito.spy(new SimpleOntologyManager());
         injectOrmFactoryReferencesIntoService(manager);
@@ -842,5 +846,17 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
             assertEquals("http://www.w3.org/2002/07/owl#Class", Bindings.requiredResource(b, "type").stringValue());
         });
         assertEquals(0, entities.size());
+    }
+
+    @Test
+    public void testGetTupleQueryResults() throws Exception {
+        List<BindingSet> result = QueryResults.asList(manager.getTupleQueryResults(ontology, "select distinct ?s where { ?s ?p ?o . }"));
+        assertEquals(result.size(), 18);
+    }
+
+    @Test
+    public void testGetGraphQueryResults() throws Exception {
+        Model result = manager.getGraphQueryResults(ontology, "construct {?s ?p ?o} where { ?s ?p ?o . }");
+        assertEquals(result.size(), ontology.asModel(MODEL_FACTORY).size());
     }
 }

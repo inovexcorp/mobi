@@ -25,7 +25,7 @@
     <div class="input-group ontologies-search-bar">
         <input type="text" class="form-control" name="ontologies-search" ng-model="dvm.ontologySearchConfig.searchText" placeholder="Search for...">
         <span class="input-group-btn">
-            <button class="btn btn-primary" type="submit" ng-click="dvm.getOntologies()">Search</button>
+            <button class="btn btn-primary" type="submit" ng-click="dvm.setInitialOntologies()">Search</button>
         </span>
     </div>
     <div class="ontology-records-list list-group">
@@ -35,7 +35,7 @@
     </div>
     <div class="paging-wrapper">
         <paging-details total-size="dvm.totalSize" page-index="dvm.ontologySearchConfig.pageIndex" limit="dvm.ontologySearchConfig.limit"></paging-details>
-        <pagination links="dvm.links" current-page="dvm.ontologySearchConfig.pageIndex" get-page="dvm.getRecordPage(direction)"></pagination>
+        <pagination total="dvm.totalSize" limit="dvm.ontologySearchConfig.limit" current-page="dvm.currentPage" get-page="dvm.setOntologies()"></pagination>
     </div>
     <div class="selected-ontologies">
         <span class="field-name">Selected: </span>

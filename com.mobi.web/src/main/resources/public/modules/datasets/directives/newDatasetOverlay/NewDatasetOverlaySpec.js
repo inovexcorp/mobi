@@ -103,8 +103,8 @@ describe('New Dataset Overlay directive', function() {
             it('with a step-progress-bar', function() {
                 expect(this.element.find('step-progress-bar').length).toBe(1);
             });
-            it('with a text-input', function() {
-                expect(this.element.find('text-input').length).toBe(1);
+            it('with text-inputs', function() {
+                expect(this.element.find('text-input').length).toBe(2);
             });
             it('with a text-area', function() {
                 expect(this.element.find('text-area').length).toBe(1);
@@ -176,14 +176,14 @@ describe('New Dataset Overlay directive', function() {
         expect(this.controller.step).toBe(1);
     });
     it('should call onClose when the button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(scope.onClose).toHaveBeenCalled();
     });
     it('should go the previous step when the back button is clicked', function() {
         this.controller.step = 1;
         scope.$digest();
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(this.controller.step).toBe(0);
     });

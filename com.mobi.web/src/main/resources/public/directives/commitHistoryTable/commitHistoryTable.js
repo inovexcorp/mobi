@@ -41,6 +41,7 @@
          * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
          * @requires userManager.service:userManagerService
+         * @requires modal.service:modalService
          *
          * @description
          * `commitHistoryTable` is a directive that creates a table containing the commit chain of the head commit of
@@ -51,14 +52,14 @@
          *
          * @param {string} commitId The IRI string of a commit in the local catalog
          * @param {string} branchTitle The title of the branch the user is currently on.
-         * @param {string} [targetId=''] targetId limits the commits displayed to only go as far back as this specified 
+         * @param {string} [targetId=''] targetId limits the commits displayed to only go as far back as this specified
          *      commit.
          */
         .directive('commitHistoryTable', commitHistoryTable);
 
-        commitHistoryTable.$inject = ['catalogManagerService', 'utilService', 'userManagerService', 'Snap', 'chroma'];
+        commitHistoryTable.$inject = ['catalogManagerService', 'utilService', 'userManagerService', 'modalService', 'Snap', 'chroma'];
 
-        function commitHistoryTable(catalogManagerService, utilService, userManagerService, Snap, chroma) {
+        function commitHistoryTable(catalogManagerService, utilService, userManagerService, modalService, Snap, chroma) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -88,27 +89,27 @@
 
                     dvm.util = utilService;
                     dvm.um = userManagerService;
-                    dvm.showOverlay = false;
                     dvm.error = '';
                     dvm.commit = undefined;
                     dvm.additions = [];
                     dvm.deletions = [];
                     dvm.commits = [];
                     dvm.circleRadius = 5;
-                    dvm.circleSpacing = 50;
+                    dvm.circleSpacing = 48;
                     dvm.columnSpacing = 25;
                     dvm.deltaX = 5 + dvm.circleRadius;
-                    dvm.deltaY = 37;
+                    dvm.deltaY = 56;
 
                     $scope.$watchGroup(['dvm.branchTitle', 'dvm.commitId', 'dvm.targetId'], () => dvm.getCommits());
 
                     dvm.openCommitOverlay = function(commitId) {
                         cm.getCommit(commitId)
                             .then(response => {
-                                dvm.commit = _.find(dvm.commits, {id: commitId});
-                                dvm.additions = response.additions;
-                                dvm.deletions = response.deletions;
-                                dvm.showOverlay = true;
+                                modalService.openModal('commitInfoOverlay', {
+                                    commit: _.find(dvm.commits, {id: commitId}),
+                                    additions: response.additions,
+                                    deletions: response.deletions
+                                }, undefined, 'lg');
                             }, errorMessage => dvm.error = errorMessage);
                     }
                     dvm.getCommits = function() {

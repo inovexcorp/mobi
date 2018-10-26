@@ -59,15 +59,14 @@ describe('Axiom Overlay directive', function() {
         };
         var invertedMap = _.invert(this.localNameMap);
         ontologyStateSvc.listItem.iriList = _.values(this.localNameMap);
-        splitIRI.and.callFake(function(iri) {
-            return {end: invertedMap[iri]};
-        });
-        scope.axiomList = [];
-        scope.onSubmit = jasmine.createSpy('onSubmit');
-        this.element = $compile(angular.element('<axiom-overlay axiom-list="axiomList" on-submit="onSubmit(axiom, values)"></axiom-overlay>'))(scope);
+        splitIRI.and.callFake(iri => ({end: invertedMap[iri]}));
+
+        scope.resolve = {axiomList: []};
+        scope.dismiss = jasmine.createSpy('dismiss');
+        scope.close = jasmine.createSpy('close');
+        this.element = $compile(angular.element('<axiom-overlay resolve="resolve" dismiss="dismiss()" close="close($value)"></axiom-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('axiomOverlay');
-        this.isolatedScope = this.element.isolateScope();
     });
 
     afterEach(function() {
@@ -87,23 +86,12 @@ describe('Axiom Overlay directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
-        it('axiomList is one way bound', function() {
-            this.isolatedScope.axiomList = [{}];
-            scope.$digest();
-            expect(scope.axiomList).toEqual([]);
-        });
-    });
-    describe('controller bound variable', function() {
-        it('onSubmit is called in the parent scope', function() {
-            this.controller.onSubmit();
-            expect(scope.onSubmit).toHaveBeenCalled();
-        });
-    });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('axiom-overlay')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('AXIOM-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
         });
         it('with a form', function() {
             expect(this.element.find('form').length).toBe(1);
@@ -126,20 +114,17 @@ describe('Axiom Overlay directive', function() {
         it('with a ui-codemirror', function() {
             expect(this.element.find('ui-codemirror').length).toBe(1);
         });
-        it('with a .btn-container', function() {
-            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
-        });
-        it('with buttons to add and cancel', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+        it('with buttons to submit and cancel', function() {
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Add']).toContain(angular.element(buttons[0]).text().trim());
-            expect(['Cancel', 'Add']).toContain(angular.element(buttons[1]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
         it('depending on whether the form is invalid', function() {
             this.controller.axiom = {};
             this.controller.values = [{}];
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('.btn-container .btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer .btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
             this.controller.form.$setValidity('test', false);
@@ -149,7 +134,7 @@ describe('Axiom Overlay directive', function() {
         it('depending on whether an axiom is selected', function() {
             this.controller.values = [{}];
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('.btn-container .btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer .btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.axiom = {};
@@ -159,7 +144,7 @@ describe('Axiom Overlay directive', function() {
         it('depending on whether values have been selected', function() {
             this.controller.axiom = {};
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('.btn-container .btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer .btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.values = [{}];
@@ -171,7 +156,7 @@ describe('Axiom Overlay directive', function() {
             this.controller.tabs.list = false;
             this.controller.tabs.editor = true;
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('.btn-container .btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer .btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.expression = 'test';
@@ -225,9 +210,8 @@ describe('Axiom Overlay directive', function() {
                         expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                         expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
-                        expect(scope.onSubmit).not.toHaveBeenCalled();
+                        expect(scope.close).not.toHaveBeenCalled();
                         expect(util.createWarningToast).toHaveBeenCalled();
-                        expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
                     });
                     it('and at least one value was added', function() {
                         this.controller.addAxiom();
@@ -237,9 +221,8 @@ describe('Axiom Overlay directive', function() {
                         expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                        expect(scope.onSubmit).toHaveBeenCalledWith(this.controller.axiom.iri, this.controller.values);
+                        expect(scope.close).toHaveBeenCalledWith({axiom: this.controller.axiom.iri, values: this.controller.values});
                         expect(util.createWarningToast).not.toHaveBeenCalled();
-                        expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
                     });
                 });
                 describe('and the axiom is not rdfs:range', function() {
@@ -252,9 +235,8 @@ describe('Axiom Overlay directive', function() {
                         expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                         expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
-                        expect(scope.onSubmit).not.toHaveBeenCalled();
+                        expect(scope.close).not.toHaveBeenCalled();
                         expect(util.createWarningToast).toHaveBeenCalled();
-                        expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
                     });
                     it('and at least one value was added', function() {
                         this.controller.addAxiom();
@@ -264,9 +246,8 @@ describe('Axiom Overlay directive', function() {
                         expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                        expect(scope.onSubmit).toHaveBeenCalledWith(this.controller.axiom.iri, this.controller.values);
+                        expect(scope.close).toHaveBeenCalledWith({axiom: this.controller.axiom.iri, values: this.controller.values});
                         expect(util.createWarningToast).not.toHaveBeenCalled();
-                        expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
                     });
                 });
             });
@@ -288,10 +269,9 @@ describe('Axiom Overlay directive', function() {
                     expect(propertyManagerSvc.addId).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
-                    expect(ontologyStateSvc.showAxiomOverlay).toBe(true);
                     expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
                     expect(this.controller.errorMessage).toEqual('This is an error');
-                    expect(scope.onSubmit).not.toHaveBeenCalled();
+                    expect(scope.close).not.toHaveBeenCalled();
                 });
                 it('unless no blank nodes could be created', function() {
                     this.controller.addAxiom();
@@ -299,10 +279,9 @@ describe('Axiom Overlay directive', function() {
                     expect(propertyManagerSvc.addId).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
-                    expect(ontologyStateSvc.showAxiomOverlay).toBe(true);
                     expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
                     expect(this.controller.errorMessage).toBeTruthy();
-                    expect(scope.onSubmit).not.toHaveBeenCalled();
+                    expect(scope.close).not.toHaveBeenCalled();
                 });
                 describe('and blank nodes were created', function() {
                     beforeEach(function() {
@@ -315,13 +294,12 @@ describe('Axiom Overlay directive', function() {
                         scope.$apply();
                         expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(this.controller.expression, this.localNameMap, false);
                         expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, this.blankNodes[0]['@id']);
-                        _.forEach(this.blankNodes, function(node) {
+                        _.forEach(this.blankNodes, node => {
                             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': node['@id']});
                         });
                         expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
-                        expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                        expect(scope.onSubmit).toHaveBeenCalledWith(this.controller.axiom.iri, []);
+                        expect(scope.close).toHaveBeenCalledWith({axiom: this.controller.axiom.iri, values: []});
                     });
                     it('and the axiom is not rdfs:range', function() {
                         this.controller.addAxiom();
@@ -332,9 +310,8 @@ describe('Axiom Overlay directive', function() {
                             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': node['@id']});
                         });
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
-                        expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                        expect(scope.onSubmit).toHaveBeenCalledWith(this.controller.axiom.iri, []);
+                        expect(scope.close).toHaveBeenCalledWith({axiom: this.controller.axiom.iri, values: []});
                     });
                 });
             });
@@ -369,6 +346,10 @@ describe('Axiom Overlay directive', function() {
                 expect(this.controller.array).toEqual([]);
             });
         });
+        it('should cancel the overlay', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
     });
     it('should call the correct methods when the Add button is clicked', function() {
         this.controller.axiom = {};
@@ -376,13 +357,14 @@ describe('Axiom Overlay directive', function() {
         spyOn(this.controller, 'addAxiom');
         scope.$digest();
 
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.addAxiom).toHaveBeenCalled();
     });
-    it('should set the correct state when the Cancel button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+    it('should call cancel when the button is clicked', function() {
+        spyOn(this.controller, 'cancel');
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
-        expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
 });

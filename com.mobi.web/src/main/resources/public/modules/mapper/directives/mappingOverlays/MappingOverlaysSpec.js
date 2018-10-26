@@ -162,14 +162,32 @@ describe('Mapping Overlays directive', function() {
             scope.$digest();
             expect(this.element.find('invalid-ontology-overlay').length).toBe(0);
         });
-        it('depending on whether a mapping is about to be run', function() {
-            mapperStateSvc.displayRunMappingOverlay = true;
+        it('depending on whether a mapping download is about to be run', function() {
+            mapperStateSvc.displayRunMappingDownloadOverlay = true;
             scope.$digest();
-            expect(this.element.find('run-mapping-overlay').length).toBe(1);
+            expect(this.element.find('run-mapping-download-overlay').length).toBe(1);
 
-            mapperStateSvc.displayRunMappingOverlay = false;
+            mapperStateSvc.displayRunMappingDownloadOverlay = false;
             scope.$digest();
-            expect(this.element.find('run-mapping-overlay').length).toBe(0);
+            expect(this.element.find('run-mapping-download-overlay').length).toBe(0);
+        });
+        it('depending on whether a mapping to a dataset is about to be run', function() {
+            mapperStateSvc.displayRunMappingDatasetOverlay = true;
+            scope.$digest();
+            expect(this.element.find('run-mapping-dataset-overlay').length).toBe(1);
+
+            mapperStateSvc.displayRunMappingDatasetOverlay = false;
+            scope.$digest();
+            expect(this.element.find('run-mapping-dataset-overlay').length).toBe(0);
+        });
+        it('depending on whether a mapping to an ontology is about to be run', function() {
+            mapperStateSvc.displayRunMappingOntologyOverlay = true;
+            scope.$digest();
+            expect(this.element.find('run-mapping-ontology-overlay').length).toBe(1);
+
+            mapperStateSvc.displayRunMappingOntologyOverlay = false;
+            scope.$digest();
+            expect(this.element.find('run-mapping-ontology-overlay').length).toBe(0);
         });
         it('depending on whether a cancel should be confirmed', function() {
             mapperStateSvc.displayCancelConfirm = true;

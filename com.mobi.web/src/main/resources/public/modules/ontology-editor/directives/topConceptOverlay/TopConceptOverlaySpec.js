@@ -45,9 +45,9 @@ describe('Top Concept Overlay directive', function() {
 
         ontologyManagerSvc.getConceptIRIs.and.returnValue(['concept1', 'concept2']);
         ontologyStateSvc.listItem.selected[prefixes.skos + 'hasTopConcept'] = [{'@id': 'concept2'}];
-        scope.onSubmit = jasmine.createSpy('onSubmit');
-        scope.closeOverlay = jasmine.createSpy('closeOverlay');
-        this.element = $compile(angular.element('<top-concept-overlay on-submit="onSubmit(relationship, values)" close-overlay="closeOverlay()"></top-concept-overlay>'))(scope);
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<top-concept-overlay close="close($value)" dismiss="dismiss()"></top-concept-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('topConceptOverlay');
     });
@@ -66,27 +66,18 @@ describe('Top Concept Overlay directive', function() {
         expect(this.controller.filteredConcepts).toEqual(['concept1']);
         expect(ontologyManagerSvc.getConceptIRIs).toHaveBeenCalledWith(jasmine.any(Array), ontologyStateSvc.listItem.derivedConcepts);
     });
-    describe('controller bound variables', function() {
-        it('onSubmit to be called in parent scope', function() {
-            this.controller.onSubmit();
-            expect(scope.onSubmit).toHaveBeenCalled();
-        });
-        it('closeOverlay to be called in parent scope', function() {
-            this.controller.closeOverlay();
-            expect(scope.closeOverlay).toHaveBeenCalled();
-        });
-    });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('top-concept-overlay')).toBe(true);
-            expect(this.element.hasClass('overlay')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('TOP-CONCEPT-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with a form', function() {
             expect(this.element.find('form').length).toBe(1);
         });
-        it('with a h6', function() {
-            expect(this.element.find('h6').length).toBe(1);
+        it('with a h3', function() {
+            expect(this.element.find('h3').length).toBe(1);
         });
         it('with .form-group', function() {
             expect(this.element.querySelectorAll('.form-group').length).toBe(1);
@@ -97,18 +88,15 @@ describe('Top Concept Overlay directive', function() {
         it('with ui-select', function() {
             expect(this.element.find('ui-select').length).toBe(1);
         });
-        it('with a .btn-container', function() {
-            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
-        });
-        it('with buttons to add and cancel', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+        it('with buttons to submit and cancel', function() {
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Add']).toContain(angular.element(buttons[0]).text().trim());
-            expect(['Cancel', 'Add']).toContain(angular.element(buttons[1]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
         it('depending on whether values are selected', function() {
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.values = [{}];
@@ -122,9 +110,8 @@ describe('Top Concept Overlay directive', function() {
             this.controller.addTopConcept();
             expect(ontologyStateSvc.listItem.selected[prefixes.skos + 'hasTopConcept']).toEqual([{'@id': 'concept2'}, {}]);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-            expect(scope.closeOverlay).toHaveBeenCalled();
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-            expect(scope.onSubmit).toHaveBeenCalledWith(prefixes.skos + 'hasTopConcept', this.controller.values);
+            expect(scope.close).toHaveBeenCalledWith({relationship: prefixes.skos + 'hasTopConcept', values: this.controller.values});
         });
         it('should get filtered concepts', function() {
             ontoUtils.getSelectList.and.returnValue(['list']);
@@ -137,6 +124,10 @@ describe('Top Concept Overlay directive', function() {
             this.controller.getConcepts('search');
             expect(this.controller.filteredConcepts).toEqual(['concept']);
             expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['concept1'], 'search');
+        });
+        it('should cancel the overlay', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
 });

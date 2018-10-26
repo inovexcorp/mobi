@@ -37,7 +37,9 @@ describe('Upload Changes Overlay directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
-        this.element = $compile(angular.element('<upload-changes-overlay></upload-changes-overlay>'))(scope);
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<upload-changes-overlay close="close()" dismiss="dismiss()"></upload-changes-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('uploadChangesOverlay');
     });
@@ -51,11 +53,12 @@ describe('Upload Changes Overlay directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('overlay')).toBe(true);
-            expect(this.element.querySelectorAll('.content').length).toBe(1);
-            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('UPLOAD-CHANGES-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         _.forEach(['form', 'file-input'], function(tag) {
             it('with a ' + tag, function() {
@@ -63,13 +66,13 @@ describe('Upload Changes Overlay directive', function() {
             });
         });
         it('with buttons for canceling and uploading', function() {
-            var buttons = this.element.find('button');
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Upload', 'Cancel'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Upload', 'Cancel'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(['Submit', 'Cancel'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
+            expect(['Submit', 'Cancel'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
         });
         it('depending on whether the form is invalid', function() {
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.form.$invalid = false;
@@ -101,29 +104,28 @@ describe('Upload Changes Overlay directive', function() {
                     ontology: []
                 };
                 this.controller.file = {};
-                ontologyStateSvc.showUploadChangesOverlay = true;
             });
             it('unless an error occurs', function() {
                 ontologyStateSvc.uploadChanges.and.returnValue($q.reject('Error message'));
                 this.controller.upload();
                 scope.$apply();
-                expect(ontologyStateSvc.uploadChanges).toHaveBeenCalledWith(this.controller.file,
-                        this.controller.os.listItem.ontologyRecord.recordId, this.controller.os.listItem.ontologyRecord.branchId,
-                        this.controller.os.listItem.ontologyRecord.commitId);
-                expect(ontologyStateSvc.showUploadChangesOverlay).toBe(true);
+                expect(ontologyStateSvc.uploadChanges).toHaveBeenCalledWith(this.controller.file, this.controller.os.listItem.ontologyRecord.recordId, this.controller.os.listItem.ontologyRecord.branchId, this.controller.os.listItem.ontologyRecord.commitId);
                 expect(ontologyStateSvc.listItem.editorTabStates.savedChanges.active).toBe(false);
                 expect(this.controller.error).toBe('Error message');
+                expect(scope.close).not.toHaveBeenCalled();
             });
             it('succesfully', function() {
                 this.controller.upload();
                 scope.$apply();
-                expect(ontologyStateSvc.uploadChanges).toHaveBeenCalledWith(this.controller.file,
-                        this.controller.os.listItem.ontologyRecord.recordId, this.controller.os.listItem.ontologyRecord.branchId,
-                        this.controller.os.listItem.ontologyRecord.commitId);
-                expect(ontologyStateSvc.showUploadChangesOverlay).toBe(false);
+                expect(ontologyStateSvc.uploadChanges).toHaveBeenCalledWith(this.controller.file, this.controller.os.listItem.ontologyRecord.recordId, this.controller.os.listItem.ontologyRecord.branchId, this.controller.os.listItem.ontologyRecord.commitId);
                 expect(ontologyStateSvc.listItem.editorTabStates.savedChanges.active).toBe(true);
                 expect(this.controller.error).toBeFalsy();
+                expect(scope.close).toHaveBeenCalled();
             });
+        });
+        it('should cancel the overlay', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
 });

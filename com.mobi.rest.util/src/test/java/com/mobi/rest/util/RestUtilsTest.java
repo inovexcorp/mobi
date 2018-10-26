@@ -86,6 +86,7 @@ public class RestUtilsTest {
     private String expectedGroupedTurtle;
     private String expectedGroupedRdfxml;
     private String expectedRdfxml;
+    private String expectedTrig;
     private Model model = mf.createModel();
     private Model typedModel = mf.createModel();
 
@@ -120,6 +121,7 @@ public class RestUtilsTest {
         expectedGroupedTurtle = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.ttl"));
         expectedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/test.xml"));
         expectedGroupedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.xml"));
+        expectedTrig= IOUtils.toString(getClass().getResourceAsStream("/test.trig"));
 
         MockitoAnnotations.initMocks(this);
         when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn("tester");
@@ -135,23 +137,13 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void encodeTest() throws Exception {
-        String test = ":/#?=& +;\"{[}]@$%^\t";
-        assertEquals("%3A%2F%23%3F%3D%26%20%2B%3B%22%7B%5B%7D%5D%40%24%25%5E%09", RestUtils.encode(test));
-    }
-
-    @Test
-    public void decodeTest() throws Exception {
-        String test = "%3A%2F%23%3F%3D%26%20%2B%3B%22%7B%5B%7D%5D%40%24%25%5E%09";
-        assertEquals(":/#?=& +;\"{[}]@$%^\t", RestUtils.decode(test));
-    }
-
-    @Test
     public void getRDFFormatTest() throws Exception {
         assertEquals(RestUtils.getRDFFormat("jsonld"), RDFFormat.JSONLD);
         assertEquals(RestUtils.getRDFFormat("JSONLD"), RDFFormat.JSONLD);
         assertEquals(RestUtils.getRDFFormat("turtle"), RDFFormat.TURTLE);
         assertEquals(RestUtils.getRDFFormat("TURTLE"), RDFFormat.TURTLE);
+        assertEquals(RestUtils.getRDFFormat("trig"), RDFFormat.TRIG);
+        assertEquals(RestUtils.getRDFFormat("TRiG"), RDFFormat.TRIG);
         assertEquals(RestUtils.getRDFFormat("rdf/xml"), RDFFormat.RDFXML);
         assertEquals(RestUtils.getRDFFormat("RDF/XML"), RDFFormat.RDFXML);
         assertEquals(RestUtils.getRDFFormat("something else"), RDFFormat.JSONLD);
@@ -163,6 +155,8 @@ public class RestUtilsTest {
         assertEquals(RestUtils.getRDFFormatFileExtension("JSONLD"), "jsonld");
         assertEquals(RestUtils.getRDFFormatFileExtension("turtle"), "ttl");
         assertEquals(RestUtils.getRDFFormatFileExtension("TURTLE"), "ttl");
+        assertEquals(RestUtils.getRDFFormatFileExtension("trig"), "trig");
+        assertEquals(RestUtils.getRDFFormatFileExtension("TRiG"), "trig");
         assertEquals(RestUtils.getRDFFormatFileExtension("rdf/xml"), "rdf");
         assertEquals(RestUtils.getRDFFormatFileExtension("RDF/XML"), "rdf");
         assertEquals(RestUtils.getRDFFormatFileExtension("owl/xml"), "owx");
@@ -176,6 +170,8 @@ public class RestUtilsTest {
         assertEquals(RestUtils.getRDFFormatMimeType("JSONLD"), "application/ld+json");
         assertEquals(RestUtils.getRDFFormatMimeType("turtle"), "text/turtle");
         assertEquals(RestUtils.getRDFFormatMimeType("TURTLE"), "text/turtle");
+        assertEquals(RestUtils.getRDFFormatMimeType("trig"), "application/trig");
+        assertEquals(RestUtils.getRDFFormatMimeType("TRiG"), "application/trig");
         assertEquals(RestUtils.getRDFFormatMimeType("rdf/xml"), "application/rdf+xml");
         assertEquals(RestUtils.getRDFFormatMimeType("RDF/XML"), "application/rdf+xml");
         assertEquals(RestUtils.getRDFFormatMimeType("owl/xml"), "application/owl+xml");
@@ -269,6 +265,12 @@ public class RestUtilsTest {
     public void modelToJsonldTest() throws Exception {
         String result = RestUtils.modelToJsonld(model, transformer);
         assertEquals(expectedJsonld, result);
+    }
+
+    @Test
+    public void modelToTrigTest() throws Exception {
+        String result = RestUtils.modelToTrig(model, transformer);
+        assertEquals(expectedTrig, result);
     }
 
     @Test

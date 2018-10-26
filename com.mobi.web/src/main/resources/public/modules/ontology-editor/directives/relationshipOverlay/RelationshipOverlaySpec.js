@@ -45,9 +45,10 @@ describe('Relationship Overlay directive', function() {
             propertyManagerSvc = _propertyManagerService_;
         });
 
-        scope.relationshipList = [];
-        scope.onSubmit = jasmine.createSpy('onSubmit');
-        this.element = $compile(angular.element('<relationship-overlay relationship-list="relationshipList" on-submit="onSubmit(relationship, values)"></relationship-overlay>'))(scope);
+        scope.resolve = {relationshipList: []};
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<relationship-overlay resolve="resolve" close="close($value)" dismiss="dismiss()"></relationship-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('relationshipOverlay');
     });
@@ -64,31 +65,18 @@ describe('Relationship Overlay directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
-        beforeEach(function() {
-            this.isolatedScope = this.element.isolateScope();
-        });
-        it('relationshipList should be one way bound', function() {
-            this.isolatedScope.relationshipList = [{}];
-            scope.$digest();
-            expect(scope.relationshipList).toEqual([]);
-        });
-    });
-    describe('controller bound variable', function() {
-        it('onSubmit should be called in parent scope', function() {
-            this.controller.onSubmit({relationship: '', values: []});
-            expect(scope.onSubmit).toHaveBeenCalledWith('', []);
-        });
-    });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('relationship-overlay')).toBe(true);
-            expect(this.element.find('form').length).toBe(1);
-            expect(this.element.querySelectorAll('.content').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('RELATIONSHIP-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
         });
-        it('with a h6', function() {
-            expect(this.element.find('h6').length).toBe(1);
+        it('with a form', function() {
+            expect(this.element.find('form').length).toBe(1);
+        });
+        it('with a h3', function() {
+            expect(this.element.find('h3').length).toBe(1);
         });
         it('with .form-groups', function() {
             expect(this.element.querySelectorAll('.form-group').length).toBe(2);
@@ -99,19 +87,16 @@ describe('Relationship Overlay directive', function() {
         it('with ui-selects', function() {
             expect(this.element.find('ui-select').length).toBe(2);
         });
-        it('with a .btn-container', function() {
-            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
-        });
         it('with buttons to add and cancel', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Add']).toContain(angular.element(buttons[0]).text().trim());
-            expect(['Cancel', 'Add']).toContain(angular.element(buttons[1]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
         it('depending on whether a relationship is selected', function() {
             this.controller.values = [{}];
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.relationship = 'relationship';
@@ -121,7 +106,7 @@ describe('Relationship Overlay directive', function() {
         it('depending on whether values are selected', function() {
             this.controller.relationship = 'relationship';
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.values = [{}];
@@ -146,9 +131,8 @@ describe('Relationship Overlay directive', function() {
                 expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.relationship, 'iri');
                 expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
-                expect(scope.onSubmit).not.toHaveBeenCalled();
                 expect(util.createWarningToast).toHaveBeenCalled();
-                expect(ontologyStateSvc.showRelationshipOverlay).toBe(false);
+                expect(scope.close).toHaveBeenCalled();
             });
             it('if there is at least one new value', function() {
                 this.controller.addRelationship();
@@ -156,9 +140,8 @@ describe('Relationship Overlay directive', function() {
                 expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.relationship, 'iri');
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.expected);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                expect(scope.onSubmit).toHaveBeenCalledWith(this.controller.relationship, this.expected[this.controller.relationship]);
                 expect(util.createWarningToast).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.showRelationshipOverlay).toBe(false);
+                expect(scope.close).toHaveBeenCalledWith({relationship: this.controller.relationship, values: this.expected[this.controller.relationship]});
             });
         });
         describe('getValues should return the correct values when controller.relationship', function() {
@@ -188,16 +171,21 @@ describe('Relationship Overlay directive', function() {
                 expect(this.controller.array).toEqual([]);
             });
         });
+        it('should cancel the overlay', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
     });
     it('should call addRelationship when the button is clicked', function() {
         spyOn(this.controller, 'addRelationship');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.addRelationship).toHaveBeenCalled();
     });
     it('should set the correct state when the Cancel button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        spyOn(this.controller, 'cancel');
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
-        expect(ontologyStateSvc.showRelationshipOverlay).toBe(false);
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
 });

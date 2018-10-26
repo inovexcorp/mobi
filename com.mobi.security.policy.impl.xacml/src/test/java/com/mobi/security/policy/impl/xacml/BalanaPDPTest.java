@@ -44,6 +44,7 @@ import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.Response;
 import com.mobi.security.policy.api.Status;
 import com.mobi.security.policy.api.cache.PolicyCache;
+import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.Before;
@@ -85,6 +86,9 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
     private PolicyCache policyCache;
 
     @Mock
+    private XACMLPolicyManager policyManager;
+
+    @Mock
     private Cache<String, Policy> cache;
 
     private List<Cache.Entry<String, Policy>> entries;
@@ -100,6 +104,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         }
         MockitoAnnotations.initMocks(this);
         when(pip.findAttribute(any(AttributeDesignator.class), any(Request.class))).thenReturn(Collections.emptyList());
+        when(policyManager.getRepository()).thenReturn(repo);
 
         entries = new ArrayList<>();
         when(policyCache.getPolicyCache()).thenReturn(Optional.of(cache));
@@ -107,6 +112,7 @@ public class BalanaPDPTest extends OrmEnabledTestCase {
         prp = new BalanaPRP();
         prp.setVf(VALUE_FACTORY);
         prp.setPolicyCache(policyCache);
+        prp.setPolicyManager(policyManager);
         pdp = new BalanaPDP();
         pdp.addPIP(pip);
         pdp.setBalanaPRP(prp);

@@ -37,18 +37,38 @@ import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordExportSettings;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.exception.MobiException;
+import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
+import com.mobi.persistence.utils.ResourceUtils;
+import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.Binding;
+import com.mobi.query.api.BindingSet;
+import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.base.RepositoryResult;
+import com.mobi.security.policy.api.ontologies.policy.Policy;
+import com.mobi.security.policy.api.xacml.XACMLPolicy;
+import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -63,10 +83,33 @@ import javax.annotation.Nonnull;
 public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRecord>
         extends AbstractRecordService<T> implements RecordService<T> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractVersionedRDFRecordService.class);
+    private static final String USER_IRI_BINDING = "%USERIRI%";
+    private static final String RECORD_IRI_BINDING = "%RECORDIRI%";
+    private static final String ENCODED_RECORD_IRI_BINDING = "%RECORDIRIENCODED%";
+    private static final String POLICY_IRI_BINDING = "%POLICYIRI%";
+    private static final String ENCODED_POLICY_IRI_BINDING = "%POLICYIRIENCODED%";
+    private static final String MASTER_BRANCH_IRI_BINDING = "%MASTER%";
+    private static final String RECORD_NO_POLICY_QUERY;
+
+    static {
+        try {
+            RECORD_NO_POLICY_QUERY = IOUtils.toString(
+                    AbstractVersionedRDFRecordService.class.getResourceAsStream("/record-no-policy.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
+
     protected CommitFactory commitFactory;
     protected BranchFactory branchFactory;
     protected MergeRequestManager mergeRequestManager;
     protected VersioningManager versioningManager;
+    protected XACMLPolicyManager xacmlPolicyManager;
+    protected CatalogConfigProvider configProvider;
+    protected EngineManager engineManager;
 
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
@@ -92,7 +135,94 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         conn.commit();
         versioningManager.commit(catalogIdIRI, record.getResource(),
                 masterBranchId, user, "The initial commit.", model, null);
+        writePolicies(user, record);
         return record;
+    }
+
+    /**
+     * Creates two policy files for the Record based on default templates. One policy to control who can view and modify
+     * the Record. The other for who can modify the aforementioned policy.
+     *
+     * @param user The User who created the Record and associated Policy files
+     * @param record The Record the Policy files control
+     */
+    protected void writePolicies(User user, T record) {
+        writePolicies(user.getResource(), record.getResource(), record.getMasterBranch_resource().get());
+    }
+
+    /**
+     * Creates two policy files for the Record based on default templates. One policy to control who can view and modify
+     * the Record. The other for who can modify the aforementioned policy.
+     *
+     * @param user The Resource of the user who created the Record and associated Policy files
+     * @param recordId The Resource of the Record to write out
+     * @param masterBranchId The Resource of the Master Branch associated with the recordId
+     */
+    protected void writePolicies(Resource user, Resource recordId, Resource masterBranchId) {
+        try {
+            // Record Policy
+            InputStream recordPolicyStream = AbstractVersionedRDFRecordService.class
+                    .getResourceAsStream("/recordPolicy.xml");
+            String encodedRecordIRI = ResourceUtils.encode(recordId);
+
+            String[] search = {USER_IRI_BINDING, RECORD_IRI_BINDING, ENCODED_RECORD_IRI_BINDING,
+                    MASTER_BRANCH_IRI_BINDING};
+            String[] replace = {user.stringValue(), recordId.stringValue(), encodedRecordIRI,
+                    masterBranchId.stringValue()};
+            String recordPolicy = StringUtils.replaceEach(IOUtils.toString(recordPolicyStream, "UTF-8"),
+                    search, replace);
+
+            Resource recordPolicyResource = addPolicy(recordPolicy);
+
+            // Policy for the Record Policy
+            search[1] = POLICY_IRI_BINDING;
+            search[2] = ENCODED_POLICY_IRI_BINDING;
+            replace[1] = recordPolicyResource.stringValue();
+            InputStream policyPolicyStream = AbstractVersionedRDFRecordService.class
+                    .getResourceAsStream("/policyPolicy.xml");
+            String policyPolicy = StringUtils.replaceEach(IOUtils.toString(policyPolicyStream, "UTF-8"),
+                    search, replace);
+            addPolicy(policyPolicy);
+
+        } catch (IOException e) {
+            throw new MobiException("Error writing record policy.", e);
+        }
+    }
+
+    /**
+     * Uses the {@link XACMLPolicyManager} to add the Policy file to the repository and virtual filesystem.
+     *
+     * @param policyString A string representation of a policy
+     * @return The {@link Resource} of the new Policy
+     */
+    protected Resource addPolicy(String policyString) {
+        XACMLPolicy policy = new XACMLPolicy(policyString, valueFactory);
+        return xacmlPolicyManager.addPolicy(policy);
+    }
+
+    /**
+     * Deletes the two Policy files associated with the provided Record.
+     *
+     * @param record The Record whose policies to delete
+     * @param conn A RepositoryConnection to use for lookup
+     */
+    protected void deletePolicies(T record, RepositoryConnection conn) {
+        RepositoryResult<Statement> results = conn.getStatements(null,
+                valueFactory.createIRI(Policy.relatedResource_IRI), record.getResource());
+        if (!results.hasNext()) {
+            LOGGER.info("Could not find policy for record: " + record.getResource()
+                    + ". Continuing with record deletion.");
+        }
+        Resource recordPolicyId = results.next().getSubject();
+
+        results = conn.getStatements(null, valueFactory.createIRI(Policy.relatedResource_IRI), recordPolicyId);
+        if (!results.hasNext()) {
+            LOGGER.info("Could not find policy policy for record: " + record.getResource()
+                    + " with a policyId of: " + recordPolicyId + ". Continuing with record deletion.");
+        }
+        Resource policyPolicyId = results.next().getSubject();
+        xacmlPolicyManager.deletePolicy(recordPolicyId);
+        xacmlPolicyManager.deletePolicy(policyPolicyId);
     }
 
     /**
@@ -145,6 +275,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     @Override
     protected void deleteRecord(T record, RepositoryConnection conn) {
         deleteRecordObject(record, conn);
+        deletePolicies(record, conn);
         deleteVersionedRDFData(record, conn);
     }
 
@@ -205,5 +336,28 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                 }
             }
         });
+    }
+
+    protected void checkForMissingPolicies() {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(RECORD_NO_POLICY_QUERY);
+            TupleQueryResult result = query.evaluate();
+
+            while (result.hasNext()) {
+                BindingSet bindings = result.next();
+                Optional<Binding> recordBinding = bindings.getBinding("record");
+                Optional<Binding> masterBinding = bindings.getBinding("master");
+                Optional<Binding> publisherBinding = bindings.getBinding("publisher");
+                if (recordBinding.isPresent() && masterBinding.isPresent() && publisherBinding.isPresent()) {
+                    IRI recordIRI = valueFactory.createIRI(recordBinding.get().getValue().stringValue());
+                    IRI masterIRI = valueFactory.createIRI(masterBinding.get().getValue().stringValue());
+                    IRI userIRI = valueFactory.createIRI(publisherBinding.get().getValue().stringValue());
+
+                    String username = engineManager.getUsername(userIRI).orElse("admin");
+                    engineManager.retrieveUser(username).ifPresent(user -> writePolicies(user.getResource(), recordIRI,
+                            masterIRI));
+                }
+            }
+        }
     }
 }

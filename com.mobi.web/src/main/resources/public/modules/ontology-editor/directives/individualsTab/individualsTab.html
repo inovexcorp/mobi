@@ -20,20 +20,25 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="individuals-tab row">
-    <individual-hierarchy-block class="col-xs-3"></individual-hierarchy-block>
-    <div class="col-xs-9 editor">
-        <selected-details></selected-details>
-        <div class="row">
-            <div class="col-xs-7">
-                <div class="row vertical-half">
-                    <datatype-property-block class="col-xs-12"></datatype-property-block>
+<div class="individuals-tab row p-3">
+    <individual-hierarchy-block class="col-3 h-100"></individual-hierarchy-block>
+    <div class="selected-individual col-9 h-100 d-flex flex-column" ng-if="dvm.os.listItem.selected">
+        <div class="selected-header d-flex">
+            <selected-details class="flex-1"></selected-details>
+            <div>
+                <button ng-if="dvm.os.canModify()" class="btn btn-danger" ng-disabled="dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()"><span>Delete</span></button>
+            </div>
+        </div>
+        <div class="row flex-1">
+            <div class="col-7 vertical-scroll">
+                <div class="row py-2">
+                    <datatype-property-block class="col"></datatype-property-block>
                 </div>
-                <div class="row vertical-half">
-                    <object-property-block class="col-xs-12"></object-property-block>
+                <div class="row py-2">
+                    <object-property-block class="col"></object-property-block>
                 </div>
             </div>
-            <annotation-block class="col-xs-5"></annotation-block>
+            <annotation-block class="col-5 pt-2 vertical-scroll"></annotation-block>
         </div>
     </div>
 </div>

@@ -2,37 +2,16 @@
 @import "./src/main/resources/public/css/variables";
 
 .imports-block {
-    .block-header .pull-right {
+    .block-header .float-right {
         margin-left: 10px;
     }
-
     .import {
         margin: 0;
         padding: 10px;
         display: flex;
-        
+
         &:hover {
-            background: $gray-lighter;
-        }
-
-        .import-iri {
-            @include textOverflow;
-            flex: 1;
-        }
-        
-        .error-display {
-            font-weight: normal;
-        }
-    }
-
-    .indirect-import-container {
-        border-top: 1px solid $gray-custom;
-
-        .indirect-header {
-            border-bottom: 1px solid $gray-custom;
-            display: inline-block;
-            padding: 10px;
-            width: 100%;
+            background: var(--light);
         }
     }
 }

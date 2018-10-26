@@ -2,5 +2,5 @@
 @import "./src/main/resources/public/css/variables";
 
 .drop-hover {
-    background-color: $gray-lighter;
+    background-color: var(--light);
 }

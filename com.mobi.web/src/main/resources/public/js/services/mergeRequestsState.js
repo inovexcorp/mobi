@@ -62,24 +62,25 @@
 
             /**
              * @ngdoc property
-             * @name open
+             * @name selected
              * @propertyOf mergeRequestsState.service:mergeRequestsStateService
              * @type {Object}
              *
              * @description
-             * `open` contains an object with the state of the {@link openTab.directive:openTab open tab}. The structure
-             * looks like the following:
-             * ```
-             * {
-             *     active: true // Whether the tab is displayed
-             *     selected: {...} // An object representing the currently selected request
-             * }
-             * ```
+             * `selected` contains an object representing the currently selected request.
              */
-            self.open = {
-                active: true,
-                selected: undefined
-            };
+            self.selected = undefined;
+            /**
+             * @ngdoc property
+             * @name acceptedFilter
+             * @propertyOf mergeRequestsState.service.mergeRequestsStateService
+             * @type {boolean}
+             *
+             * @description
+             * `acceptedFilter` determines whether accepted or open Merge Requests should be shown in the
+             * {@link mergeRequestList.directive:mergeRequestList}.
+             */
+            self.acceptedFilter = false
             /**
              * @ngdoc property
              * @name showDelete
@@ -93,6 +94,17 @@
             self.showDelete = false;
             /**
              * @ngdoc property
+             * @name showAccept
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             * @type {boolean}
+             *
+             * @description
+             * `showAccept` determines whether the Accept Merge Request {@link confirmationOverlay.directive:confirmationOverlay}
+             * should be shown.
+             */
+            self.showAccept = false;
+            /**
+             * @ngdoc property
              * @name requestToDelete
              * @propertyOf mergeRequestsState.service:mergeRequestsStateService
              * @type {Object}
@@ -102,6 +114,17 @@
              * Delete Merge Request {@link confirmationOverlay.directive:confirmationOverlay}.
              */
             self.requestToDelete = undefined;
+            /**
+             * @ngdoc property
+             * @name requestToAccept
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             * @type {Object}
+             *
+             * @description
+             * `requestToAccept` contains an object representing the request that will be accepted in the
+             * Accept Merge Request {@link confirmationOverlay.directive:confirmationOverlay}.
+             */
+            self.requestToAccept = undefined;
             /**
              * @ngdoc property
              * @name createRequest
@@ -148,7 +171,8 @@
                 sourceBranchId: '',
                 targetBranchId: '',
                 title: '',
-                description: ''
+                description: '',
+                assignees: []
             };
             /**
              * @ngdoc property
@@ -161,7 +185,7 @@
              * The structure of the objects looks like the following:
              * ```
              * {
-             *     request: {...}, // The JSON-LD object of the Merge Request
+             *     jsonld: {...}, // The JSON-LD object of the Merge Request
              *     title: '', // The title of the Merge Request
              *     date: '', // A string representation of the date the Merge Request was created
              *     creator: {...}, // The object representing the user that created the Merge Request
@@ -188,7 +212,8 @@
                     sourceBranchId: '',
                     targetBranchId: '',
                     title: '',
-                    description: ''
+                    description: '',
+                    assignees: []
                 };
             }
             /**
@@ -217,14 +242,12 @@
                     sourceBranchId: '',
                     targetBranchId: '',
                     title: '',
-                    description: ''
+                    description: '',
+                    assignees: []
                 };
                 self.createRequest = false;
                 self.createRequestStep = 0;
-                self.open = {
-                    active: true,
-                    selected: undefined
-                };
+                self.selected = undefined;
             }
             /**
              * @ngdoc method
@@ -238,15 +261,9 @@
              * @param {boolean} [accepted=false] Whether the list should be accepted Merge Requests or just open ones.
              */
             self.setRequests = function(accepted = false) {
-                mm.getRequests()
+                mm.getRequests({accepted})
                     .then(data => {
-                        self.requests = _.map(data, request => ({
-                            request,
-                            title: util.getDctermsValue(request, 'title'),
-                            date: getDate(request),
-                            creator: getCreator(request),
-                            recordIri: util.getPropertyId(request, prefixes.mergereq + 'onRecord')
-                        }));
+                        self.requests = _.map(data, getRequestObj);
                         var recordsToRetrieve = _.uniq(_.map(self.requests, 'recordIri'));
                         return $q.all(_.map(recordsToRetrieve, iri => cm.getRecord(iri, catalogId)));
                     }, $q.reject)
@@ -280,18 +297,18 @@
                 request.sourceCommit = '';
                 request.targetCommit = '';
                 request.difference = '';
-                if (mm.isAccepted(request.request)) {
-                    request.sourceTitle = util.getPropertyValue(request.request, prefixes.mergereq + 'sourceBranchTitle');
-                    request.targetTitle = util.getPropertyValue(request.request, prefixes.mergereq + 'targetBranchTitle');
-                    request.sourceCommit = util.getPropertyId(request.request, prefixes.mergereq + 'sourceCommit')
-                    request.targetCommit = util.getPropertyId(request.request, prefixes.mergereq + 'targetCommit')
+                if (mm.isAccepted(request.jsonld)) {
+                    request.sourceTitle = util.getPropertyValue(request.jsonld, prefixes.mergereq + 'sourceBranchTitle');
+                    request.targetTitle = util.getPropertyValue(request.jsonld, prefixes.mergereq + 'targetBranchTitle');
+                    request.sourceCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceCommit')
+                    request.targetCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetCommit')
                     cm.getDifference(request.sourceCommit, request.targetCommit)
                         .then(diff => {
                             request.difference = diff;
                         }, util.createErrorToast)
                 } else {
-                    var sourceIri = util.getPropertyId(request.request, prefixes.mergereq + 'sourceBranch');
-                    var targetIri = util.getPropertyId(request.request, prefixes.mergereq + 'targetBranch');
+                    var sourceIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceBranch');
+                    var targetIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetBranch');
                     var promise = cm.getRecordBranch(sourceIri, request.recordIri, catalogId)
                         .then(branch => {
                             request.sourceBranch = branch;
@@ -311,7 +328,7 @@
                                 request.difference = diff;
                                 return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
                             }, $q.reject)
-                            .then(conflicts => request.hasConflicts = !_.isEmpty(conflicts), util.createErrorToast);
+                            .then(conflicts => request.conflicts = conflicts, util.createErrorToast);
                     } else {
                         promise.then(_.noop, util.createErrorToast);
                     }
@@ -319,25 +336,44 @@
             }
             /**
              * @ngdoc method
-             * @name getCurrentTab
+             * @name resolveRequestConflicts
              * @propertyOf mergeRequestsState.service:mergeRequestsStateService
              *
              * @description
-             * Retrieves the current tab of the Merge Requests module, either `open` or `accepted`.
+             * Resolves the conflicts for the provided Merge Request by making a merge from the request's target into
+             * the source with the provided resolution statments. Will also reset the details on the provided request
+             * after a successful merge.
              *
-             * @return {Object} Either the `open` object or the `accepted` object
+             * @param {Object} request An item from the `requests` array that represents the request to resolve
+             * conflicts for
+             * @param {Object} resolutions An object with keys for the `additions` and `deletions` JSON-LD objects for
+             * the merge commit
+             * @return {Promise} A Promise indicating the success of the resolution
              */
-            self.getCurrentTab = function() {
-                return _.find([self.open], 'active');
+            self.resolveRequestConflicts = function(request, resolutions) {
+                return cm.mergeBranches(request.targetBranch['@id'], request.sourceBranch['@id'], request.recordIri, catalogId, resolutions)
+                    .then(() => {
+                        self.setRequestDetails(request);
+                    }, $q.reject);
             }
 
-            function getDate(request) {
-                var dateStr = util.getDctermsValue(request, 'issued');
+            function getDate(jsonld) {
+                var dateStr = util.getDctermsValue(jsonld, 'issued');
                 return util.getDate(dateStr, 'shortDate');
             }
-            function getCreator(request) {
-                var iri = util.getDctermsId(request, 'creator');
+            function getCreator(jsonld) {
+                var iri = util.getDctermsId(jsonld, 'creator');
                 return _.get(_.find(um.users, {iri}), 'username');
+            }
+            function getRequestObj(jsonld) {
+                return {
+                    jsonld,
+                    title: util.getDctermsValue(jsonld, 'title'),
+                    date: getDate(jsonld),
+                    creator: getCreator(jsonld),
+                    recordIri: util.getPropertyId(jsonld, prefixes.mergereq + 'onRecord'),
+                    assignees: _.map(_.get(jsonld, "['" + prefixes.mergereq + "assignee']"), obj => _.get(_.find(um.users, {iri: obj['@id']}), 'username'))
+                };
             }
         }
 })();

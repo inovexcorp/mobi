@@ -130,8 +130,8 @@ describe('Edit Mapping Page directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('edit-mapping-page')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-5').length).toBe(1);
-            expect(this.element.querySelectorAll('.col-xs-7').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-5').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-7').length).toBe(1);
             expect(this.element.querySelectorAll('.edit-tabs').length).toBe(1);
         });
         it('with a mapping title', function() {
@@ -154,53 +154,53 @@ describe('Edit Mapping Page directive', function() {
         });
         it('with buttons for canceling, saving, and saving and running', function() {
             var footers = this.element.querySelectorAll('tab block-footer');
-            _.forEach(footers, function(footer) {
+            _.forEach(footers, footer => {
                 var buttons = angular.element(footer).find('button');
-                expect(buttons.length).toBe(3);
-                expect(['Cancel', 'Save', 'Save & Run']).toContain(angular.element(buttons[0]).text().trim());
-                expect(['Cancel', 'Save', 'Save & Run']).toContain(angular.element(buttons[1]).text().trim());
-                expect(['Cancel', 'Save', 'Save & Run']).toContain(angular.element(buttons[2]).text().trim());
+                expect(buttons.length).toBe(6);
+                expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[0]).text().trim());
+                expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[1]).text().trim());
+                expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[2]).text().trim());
+                expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[3]).text().trim());
+                expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[4]).text().trim());
+                expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[5]).text().trim());
+
             });
         });
         it('with disabled buttons if the mapping is not saveable', function() {
             spyOn(this.controller, 'isSaveable');
             scope.$digest();
             var buttons = _.toArray(this.element.querySelectorAll('tab block-footer button.btn-primary'));
-            _.forEach(buttons, function(button) {
-                expect(angular.element(button).attr('disabled')).toBeTruthy();
-            });
+            _.forEach(buttons, button => expect(angular.element(button).attr('disabled')).toBeTruthy());
 
             this.controller.isSaveable.and.returnValue(true);
             scope.$digest();
-            _.forEach(buttons, function(button) {
-                expect(angular.element(button).attr('disabled')).toBeFalsy();
-            });
+            _.forEach(buttons, button => expect(angular.element(button).attr('disabled')).toBeFalsy());
         });
     });
     it('should call cancel when a cancel button is clicked', function() {
         spyOn(this.controller, 'cancel');
-        var cancelButtons = this.element.querySelectorAll('tab block-footer button.btn-default');
-        _.toArray(cancelButtons).forEach(function(button) {
+        var cancelButtons = this.element.querySelectorAll('.cancel-mapping');
+        _.toArray(cancelButtons).forEach(button => {
             this.controller.cancel.calls.reset();
             angular.element(button).triggerHandler('click');
             expect(this.controller.cancel).toHaveBeenCalled();
-        }, this);
+        });
     });
     it('should call save when a save button is clicked', function() {
         spyOn(this.controller, 'save');
-        var saveButtons = this.element.querySelectorAll('tab block-footer button.btn-primary.save-btn');
-        _.toArray(saveButtons).forEach(function(button) {
+        var saveButtons = this.element.querySelectorAll('.save-btn');
+        _.toArray(saveButtons).forEach(button => {
             this.controller.save.calls.reset();
             angular.element(button).triggerHandler('click');
             expect(this.controller.save).toHaveBeenCalled();
-        }, this);
+        });
     });
-    it('should set the correct state when a save and run button is clicked', function() {
-        var saveRunButtons = this.element.querySelectorAll('tab block-footer button.btn-primary.save-run-btn');
-        _.toArray(saveRunButtons).forEach(function(button) {
-            mapperStateSvc.displayRunMappingOverlay = false;
+    it('should set the correct state when a run download button is clicked', function() {
+        var runDownloadButtons = this.element.querySelectorAll('.run-download');
+        _.toArray(runDownloadButtons).forEach(button => {
+            mapperStateSvc.displayRunMappingDownloadOverlay = false;
             angular.element(button).triggerHandler('click');
-            expect(mapperStateSvc.displayRunMappingOverlay).toBe(true);
-        }, this);
+            expect(mapperStateSvc.displayRunMappingDownloadOverlay).toBe(true);
+        });
     });
 });

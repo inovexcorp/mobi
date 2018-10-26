@@ -20,20 +20,25 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="concepts-tab row" targeted-spinner="dvm.os.vocabularySpinnerId">
-    <concept-hierarchy-block class="col-xs-3"></concept-hierarchy-block>
-    <div class="col-xs-9 editor">
-        <selected-details></selected-details>
-        <div class="row">
-            <div class="col-xs-7">
-                <div class="row vertical-half">
-                    <annotation-block class="col-xs-12"></annotation-block>
+<div class="concepts-tab row p-3" targeted-spinner="dvm.os.vocabularySpinnerId">
+    <concept-hierarchy-block class="col-3 h-100"></concept-hierarchy-block>
+    <div class="selected-concept col-9 d-flex flex-column" ng-if="dvm.os.listItem.selected">
+        <div class="selected-header d-flex">
+            <selected-details class="flex-1"></selected-details>
+            <div>
+                <button ng-if="dvm.os.canModify()" class="btn btn-danger" ng-disabled="dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()">Delete</button>
+            </div>
+        </div>
+        <div class="row flex-1">
+            <div class="col-7 vertical-scroll">
+                <div class="row py-2">
+                    <annotation-block class="col"></annotation-block>
                 </div>
-                <div class="row vertical-half">
-                    <relationships-block class="col-xs-12" relationship-list="dvm.relationshipList"></relationships-block>
+                <div class="row py-2">
+                    <relationships-block class="col" relationship-list="dvm.relationshipList"></relationships-block>
                 </div>
             </div>
-            <usages-block class="col-xs-5"></usages-block>
+            <usages-block class="col-5 vertical-scroll"></usages-block>
         </div>
     </div>
 </div>

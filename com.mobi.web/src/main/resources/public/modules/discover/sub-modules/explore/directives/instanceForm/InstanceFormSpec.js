@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Instance Form directive', function() {
-    var $compile, scope, discoverStateSvc, prefixes, exploreSvc, $q, util, allProperties, regex, exploreUtilsSvc;
+    var $compile, scope, $q, discoverStateSvc, prefixes, exploreSvc, util, allProperties, regex, exploreUtilsSvc, modalSvc, splitIri;
 
     beforeEach(function() {
         module('templates');
@@ -30,10 +30,12 @@ describe('Instance Form directive', function() {
         mockUtil();
         mockExplore();
         mockPrefixes();
-        injectRegexConstant();
         mockExploreUtils();
+        mockModal();
+        injectRegexConstant();
+        injectSplitIRIFilter();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _discoverStateService_, _prefixes_, _exploreService_, _utilService_, _REGEX_, _exploreUtilsService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _discoverStateService_, _prefixes_, _exploreService_, _utilService_, _REGEX_, _exploreUtilsService_, _modalService_, _splitIRIFilter_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -43,6 +45,8 @@ describe('Instance Form directive', function() {
             util = _utilService_;
             regex = _REGEX_;
             exploreUtilsSvc = _exploreUtilsService_;
+            modalSvc = _modalService_;
+            splitIri = _splitIRIFilter_;
         });
 
         discoverStateSvc.getInstance.and.returnValue({
@@ -111,14 +115,16 @@ describe('Instance Form directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        $q = null;
         discoverStateSvc = null;
         prefixes = null;
         exploreSvc = null;
-        $q = null;
         util = null;
         allProperties = null;
         regex = null;
         exploreUtilsSvc = null;
+        modalSvc = null;
+        splitIri = null;
         this.element.remove();
     });
 
@@ -142,14 +148,14 @@ describe('Instance Form directive', function() {
             expect(this.element.hasClass('instance-form')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
         });
-        it('with a .col-xs-8.col-xs-offset-2', function() {
-            expect(this.element.querySelectorAll('.col-xs-8.col-xs-offset-2').length).toBe(1);
+        it('with a .col-8.offset-2', function() {
+            expect(this.element.querySelectorAll('.col-8.offset-2').length).toBe(1);
         });
         it('with a h2', function() {
             expect(this.element.find('h2').length).toBe(1);
         });
-        it('with a static-iri', function() {
-            expect(this.element.find('static-iri').length).toBe(1);
+        it('with a .instance-iri', function() {
+            expect(this.element.querySelectorAll('.instance-iri').length).toBe(1);
         });
         it('with a .form-group', function() {
             expect(this.element.querySelectorAll('.form-group').length).toBe(2);
@@ -208,6 +214,15 @@ describe('Instance Form directive', function() {
         });
     });
     describe('controller methods', function() {
+        it('showIriConfirm should open a confirm modal for editing the IRI', function() {
+            this.controller.showIriConfirm();
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.any(String), this.controller.showIriOverlay);
+        });
+        it('showIriOverlay should open the editIriOverlay', function() {
+            this.controller.showIriOverlay();
+            expect(splitIri).toHaveBeenCalledWith(this.controller.instance['@id']);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('editIriOverlay', {iriBegin: '', iriThen: '', iriEnd: ''}, this.controller.setIRI);
+        });
         describe('getOptions should result in the correct list when the propertyIRI', function() {
             describe('has a range and getClassInstanceDetails is', function() {
                 beforeEach(function() {
@@ -301,7 +316,7 @@ describe('Instance Form directive', function() {
             expect(this.controller.isChanged('new')).toBe(false);
         });
         it('setIRI should set the proper value', function() {
-            this.controller.setIRI('begin', '#', 'end');
+            this.controller.setIRI({iriBegin: 'begin', iriThen: '#', iriEnd: 'end'});
             expect(this.controller.instance['@id']).toBe('begin#end');
         });
         it('addNewProperty should set variables correctly', function() {
@@ -438,5 +453,11 @@ describe('Instance Form directive', function() {
             expect(discoverStateSvc.explore.instance.objectMap).toEqual({iri: 'title'});
             expect(exploreUtilsSvc.createIdObj).toHaveBeenCalledWith('iri');
         });
+    });
+    it('should call showIriConfirm when the IRI edit link is clicked', function() {
+        spyOn(this.controller, 'showIriConfirm');
+        var link = angular.element(this.element.querySelectorAll('.instance-iri a')[0]);
+        link.triggerHandler('click');
+        expect(this.controller.showIriConfirm).toHaveBeenCalled();
     });
 });

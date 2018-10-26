@@ -24,7 +24,29 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name searchTab
+         *
+         * @description
+         * The `searchTab` module only provides the `searchTab` directive which creates a page for searching through
+         * an ontology.
+         */
         .module('searchTab', [])
+        /**
+         * @ngdoc directive
+         * @name searchTab.directive:searchTab
+         * @scope
+         * @restrict E
+         *
+         * @description
+         * `searchTab` is a directive that creates a page containing a form for searching for entities in the current
+         * {@link ontologyState.service:ontologyStateService selected ontology}. The display includes a search input,
+         * a manual 'tree' of the results grouped by entity type, and a display of the matching properties on the
+         * selected search result. The search input performs a case-insensitive search among the property values on
+         * entities in the ontology. A search result item can be doubled clicked to open it in its appropriate tab
+         * in the {@link ontologyTab.directive:ontologyTab}. The directive is replaced by the contents of its template.
+         */
         .directive('searchTab', searchTab);
 
         searchTab.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'ontologyManagerService', 'httpService'];
@@ -43,8 +65,8 @@
                     dvm.om = ontologyManagerService;
                     dvm.id = 'search-' + dvm.os.listItem.ontologyRecord.recordId;
 
-                    dvm.onKeyup = function($event) {
-                        if ($event.keyCode === 13) {
+                    dvm.onKeyup = function() {
+                        if (dvm.os.listItem.editorTabStates.search.searchText) {
                             httpService.cancel(dvm.id);
                             dvm.os.unSelectItem();
                             var state = dvm.os.listItem.editorTabStates;
@@ -58,6 +80,8 @@
                                     state.search.errorMessage = errorMessage;
                                     state.search.infoMessage = '';
                                 });
+                        } else {
+                            dvm.onClear();
                         }
                     }
 
@@ -69,6 +93,7 @@
                         dvm.os.listItem.editorTabStates.search.results = {};
                         dvm.os.listItem.editorTabStates.search.searchText = '';
                         dvm.os.listItem.editorTabStates.search.selected = {};
+                        dvm.os.listItem.editorTabStates.search.entityIRI = '';
                     }
 
                     $scope.$watch('dvm.os.listItem.selected', (newValue, oldValue) => {

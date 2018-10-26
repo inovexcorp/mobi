@@ -84,13 +84,14 @@
             return {
                 restrict: 'E',
                 replace: true,
-                scope: {
+                scope: {},
+                bindToController: {
                     bindModel: '=ngModel',
-                    value: '<',
                     changeEvent: '&',
                     displayText: '<',
-                    isDisabledWhen: '<',
-                    inline: '<?'
+                    inline: '<?',
+                    isDisabled: '<',
+                    value: '<'
                 },
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
@@ -98,7 +99,7 @@
 
                     dvm.onChange = function() {
                         $timeout(function() {
-                            $scope.changeEvent();                            
+                            dvm.changeEvent();
                         });
                     }
                 }],

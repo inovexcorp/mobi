@@ -329,7 +329,7 @@ describe('Mapping Manager service', function() {
             expect(_.isArray(this.classMapping[prefixes.delim + 'dataProperty'])).toBe(true);
             expect(this.classMapping[prefixes.delim + 'dataProperty']).toContain({'@id': result['@id']});
         });
-        it('if the property is a supported annotation', function() {
+        it('if the property is a supported default annotation', function() {
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
             mappingManagerSvc.annotationProperties = ['propId'];
             ontologyManagerSvc.getEntity.and.returnValue(undefined);
@@ -338,6 +338,34 @@ describe('Mapping Manager service', function() {
             expect(uuidSvc.v4).toHaveBeenCalled();
             expect(result['@type']).toContain(prefixes.delim + 'DataMapping');
             expect(result[prefixes.delim + 'columnIndex']).toEqual([{'@value': '0'}]);
+            expect(result[prefixes.delim + 'hasProperty']).toEqual([{'@id': 'propId'}]);
+            expect(_.isArray(this.classMapping[prefixes.delim + 'dataProperty'])).toBe(true);
+            expect(this.classMapping[prefixes.delim + 'dataProperty']).toContain({'@id': result['@id']});
+        });
+        it('if the property is a supported annotation from the ontology', function() {
+            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+            ontologyManagerSvc.isAnnotation.and.returnValue(true);
+            mappingManagerSvc.annotationProperties = [];
+            ontologyManagerSvc.getEntity.and.returnValue(undefined);
+            var result = mappingManagerSvc.addDataProp(this.mapping, [], this.classMapping['@id'], 'propId', 0);
+            expect(this.mapping).toContain(result);
+            expect(uuidSvc.v4).toHaveBeenCalled();
+            expect(result['@type']).toContain(prefixes.delim + 'DataMapping');
+            expect(result[prefixes.delim + 'columnIndex']).toEqual([{'@value': '0'}]);
+            expect(result[prefixes.delim + 'hasProperty']).toEqual([{'@id': 'propId'}]);
+            expect(_.isArray(this.classMapping[prefixes.delim + 'dataProperty'])).toBe(true);
+            expect(this.classMapping[prefixes.delim + 'dataProperty']).toContain({'@id': result['@id']});
+        });
+        it('if the column index and datatype specification properties exist', function() {
+            ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
+            this.propObj = {'@id': 'propId'};
+            ontologyManagerSvc.getEntity.and.returnValue(this.propObj);
+            var result = mappingManagerSvc.addDataProp(this.mapping, [], this.classMapping['@id'], 'propId', 0, 'datatype');
+            expect(this.mapping).toContain(result);
+            expect(uuidSvc.v4).toHaveBeenCalled();
+            expect(result['@type']).toContain(prefixes.delim + 'DataMapping');
+            expect(result[prefixes.delim + 'columnIndex']).toEqual([{'@value': '0'}]);
+            expect(result[prefixes.delim + 'datatypeSpec']).toEqual([{'@id': 'datatype'}]);
             expect(result[prefixes.delim + 'hasProperty']).toEqual([{'@id': 'propId'}]);
             expect(_.isArray(this.classMapping[prefixes.delim + 'dataProperty'])).toBe(true);
             expect(this.classMapping[prefixes.delim + 'dataProperty']).toContain({'@id': result['@id']});
@@ -647,6 +675,11 @@ describe('Mapping Manager service', function() {
         expect(result).toEqual(ontology);
 
         ontologyManagerSvc.getObjectProperties.and.returnValue([]);
+        ontologyManagerSvc.getAnnotations.and.returnValue([{'@id': 'prop'}]);
+        result = mappingManagerSvc.findSourceOntologyWithProp('prop', sourceOntologies);
+        expect(result).toEqual(ontology);
+
+        ontologyManagerSvc.getAnnotations.and.returnValue([]);
         result = mappingManagerSvc.findSourceOntologyWithProp('prop', sourceOntologies);
         expect(result).toBeUndefined();
     });
@@ -720,11 +753,19 @@ describe('Mapping Manager service', function() {
             ontologyManagerSvc.isDeprecated.and.returnValue(true);
             expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.dataPropMapping]);
         });
-        it('data property is not a data property', function() {
+        it('data property is not a data property or annotation property', function() {
             mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
             mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+            ontologyManagerSvc.isAnnotation.and.returnValue(false);
             expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.dataPropMapping]);
+        });
+        it('data property is not a data property but is an annotation property', function() {
+            mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
+            mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
+            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+            ontologyManagerSvc.isAnnotation.and.returnValue(true);
+            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([]);
         });
         it('object property does not exist', function() {
             mappingManagerSvc.getAllObjectMappings.and.returnValue([this.objectPropMapping]);
@@ -755,19 +796,6 @@ describe('Mapping Manager service', function() {
             ontologyManagerSvc.isObjectProperty.and.returnValue(true);
             utilSvc.getPropertyId.and.returnValue(this.classObj.id);
             expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.classMapping, this.objectPropMapping]);
-        });
-    });
-    describe('should get a data mapping from a class mapping', function() {
-        it('unless it does not exist', function() {
-            var classMapping = {'@id': 'classId'};
-            var result = mappingManagerSvc.getDataMappingFromClass([classMapping], 'classId', 'propId');
-            expect(result).toBe(undefined);
-        });
-        it('if it exists', function() {
-            var dataMapping = {'@id': 'dataMapping', '@type': ['DataMapping'], 'hasProperty': [{'@id': 'propId'}]};
-            var classMapping = {'@id': 'classId', 'dataProperty': [{'@id': dataMapping['@id']}]};
-            var result = mappingManagerSvc.getDataMappingFromClass([classMapping, dataMapping], 'classId', 'propId');
-            expect(result).toEqual(dataMapping);
         });
     });
     it('should get all class mappings in a mapping', function() {

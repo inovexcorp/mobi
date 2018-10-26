@@ -116,18 +116,10 @@ describe('Datasets List directive', function() {
                 });
             });
         });
-        describe('should get a page of dataset records', function() {
-            beforeEach(function() {
-                this.index = datasetStateSvc.paginationConfig.pageIndex;
-            });
-            it('if the direction is previous', function() {
-                this.controller.getPage('prev');
-                expect(datasetStateSvc.paginationConfig.pageIndex).toBe(this.index - 1);
-            });
-            it('if the direction is next', function() {
-                this.controller.getPage('next');
-                expect(datasetStateSvc.paginationConfig.pageIndex).toBe(this.index + 1);
-            });
+        it('should get a page of dataset records', function() {
+            this.controller.getPage();
+            expect(datasetStateSvc.paginationConfig.pageIndex).toBe(this.controller.currentPage - 1);
+            expect(datasetStateSvc.setResults).toHaveBeenCalled();
         });
         describe('should delete a dataset', function() {
             var dataset = {record: {'@id': 'dataset'}};
@@ -235,7 +227,7 @@ describe('Datasets List directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('datasets-list')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-8').length).toBe(1);
         });
         it('with block', function() {
             expect(this.element.find('block').length).toBe(1);

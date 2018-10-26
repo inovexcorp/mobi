@@ -56,22 +56,24 @@
             return {
                 restrict: 'E',
                 replace: true,
-                scope: {
+                scope: {},
+                bindToController: {
                     bindModel: '=ngModel',
                     changeEvent: '&',
-                    displayText: '=',
-                    isDisabledWhen: '='
+                    displayText: '<',
+                    inline: '<?',
+                    isDisabled: '<'
                 },
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: function() {
                     var dvm = this;
 
                     dvm.onChange = function() {
                         $timeout(function() {
-                            $scope.changeEvent();
+                            dvm.changeEvent();
                         });
                     }
-                }],
+                },
                 templateUrl: 'directives/checkbox/checkbox.html'
             }
         }

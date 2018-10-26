@@ -2,11 +2,11 @@
 @import "./src/main/resources/public/css/variables";
 
 .usages-block {
+    .usages-container {
+        min-height: 200px;
+    }
     .predicate {
         color: #08B36E;
-    }
-    .selected {
-        font-weight: bold;
     }
     .text-center {
         padding-bottom: 10px;

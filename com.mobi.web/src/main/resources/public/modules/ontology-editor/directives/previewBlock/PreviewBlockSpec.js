@@ -21,26 +21,26 @@
  * #L%
  */
 describe('Preview Block directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc;
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
         module('previewBlock');
         mockOntologyState();
         mockOntologyManager();
+        mockModal();
 
         module(function($provide) {
-            $provide.value('jsonFilter', function() {
-                return 'json';
-            });
+            $provide.value('jsonFilter', () => 'json');
         });
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
+            modalSvc = _modalService_;
         });
 
         this.element = $compile(angular.element('<preview-block></preview-block>'))(scope);
@@ -54,6 +54,7 @@ describe('Preview Block directive', function() {
         $q = null;
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -62,20 +63,15 @@ describe('Preview Block directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('preview-block')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
+        _.forEach(['card', 'card-header', 'card-body'], item => {
+            it('with a .' + item, function() {
+                expect(this.element.querySelectorAll('.' + item).length).toBe(1);
+            });
         });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(1);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
-        });
-        it('with a .preview-content', function() {
-            expect(this.element.querySelectorAll('.preview-content').length).toBe(1);
-        });
-        it('with a serialization-select', function() {
-            expect(this.element.find('serialization-select').length).toBe(1);
+        _.forEach(['form', 'serialization-select'], item => {
+            it('with a ' + item, function() {
+                expect(this.element.find(item).length).toBe(1);
+            });
         });
         it('depending on whether a preview is generated', function() {
             expect(this.element.find('ui-codemirror').length).toBe(0);
@@ -84,8 +80,8 @@ describe('Preview Block directive', function() {
             scope.$digest();
             expect(this.element.find('ui-codemirror').length).toBe(1);
         });
-        it('depending on whether a serialization whas selected', function() {
-            var button = this.element.find('button');
+        it('depending on whether a serialization was selected', function() {
+            var button = angular.element(this.element.querySelectorAll('.refresh-button')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.activePage = {serialization: 'test'};
@@ -123,11 +119,21 @@ describe('Preview Block directive', function() {
                 }.bind(this));
             });
         });
+        it('should open the ontologyDownloadOverlay', function() {
+            this.controller.showDownloadOverlay();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('ontologyDownloadOverlay');
+        });
     });
     it('should call getPreview when the button is clicked', function() {
         spyOn(this.controller, 'getPreview');
-        var button = this.element.find('button');
+        var button = angular.element(this.element.querySelectorAll('button.refresh-button')[0]);
         button.triggerHandler('click');
         expect(this.controller.getPreview).toHaveBeenCalled();
+    });
+    it('should call showDownloadOverlay when the download button is clicked', function() {
+        spyOn(this.controller, 'showDownloadOverlay');
+        var button = angular.element(this.element.querySelectorAll('button.download-button')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.showDownloadOverlay).toHaveBeenCalled();
     });
 });

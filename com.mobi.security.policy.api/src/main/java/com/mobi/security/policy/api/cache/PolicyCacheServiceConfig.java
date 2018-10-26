@@ -34,5 +34,6 @@ public interface PolicyCacheServiceConfig extends CacheServiceConfig {
      *
      * @return The maximum heap size
      */
+    @Meta.AD(deflt = "100")
     int maxHeapSize();
 }

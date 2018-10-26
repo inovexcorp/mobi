@@ -133,23 +133,19 @@ public interface OntologyRest {
                          @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit);
 
     /**
-     * Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is
-     * specified. In which case the branch specified by the branchId query parameter will be removed and nothing else.
+     * Deletes the ontology associated with the requested record ID in the requested format.
      *
+     * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
-     *                    master Branch.
      * @return OK.
      */
     @DELETE
     @Path("{recordId}")
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the ontology in the requested format.")
+    @ApiOperation("Deletes the OntologyRecord with the requested recordId.")
     Response deleteOntology(@Context ContainerRequestContext context,
-                            @PathParam("recordId") String recordIdStr,
-                            @QueryParam("branchId") String branchIdStr);
+                            @PathParam("recordId") String recordIdStr);
 
     /**
      * Streams the ontology associated with the requested record ID to an OutputStream.
@@ -240,6 +236,25 @@ public interface OntologyRest {
                                    @QueryParam("branchId") String branchIdStr,
                                    @QueryParam("commitId") String commitIdStr,
                                    @FormDataParam("file") InputStream fileInputStream);
+
+    /**
+     Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is
+     * specified. In which case the branch specified by the branchId query parameter will be removed and nothing else.
+     *
+     * @param context     the context of the request.
+     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @return OK.
+     */
+    @DELETE
+    @Path("{recordId}/branches/{branchId}")
+    @RolesAllowed("user")
+    @ApiOperation("Deletes the Branch with the requested BranchId from the OntologyRecord with the provided recordId.")
+    Response deleteOntologyBranch(@Context ContainerRequestContext context,
+                            @PathParam("recordId") String recordIdStr,
+                            @PathParam("branchId") String branchIdStr);
 
     /**
      * Returns a JSON object with keys for the list of IRIs of derived skos:Concepts, the list of IRIs of derived
@@ -1229,4 +1244,33 @@ public interface OntologyRest {
                               @QueryParam("searchText") String searchText,
                               @QueryParam("branchId") String branchIdStr,
                               @QueryParam("commitId") String commitIdStr);
+
+    /**
+     * Retrieves the results of the provided SPARQL query, which targets a specific ontology, and its import closures.
+     * Accepts SELECT and CONSTRUCT queries.
+     *
+     * @param context     the context of the request.
+     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param queryString SPARQL Query to perform against ontology.
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the TRiG serialization of the results
+     *      if the query is a CONSTRUCT
+     */
+    @GET
+    @Path("{recordId}/query")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves the SPARQL query results of an ontology, and its import closures in the requested format.")
+    Response queryOntology(@Context ContainerRequestContext context,
+                           @PathParam("recordId") String recordIdStr,
+                           @QueryParam("query") String queryString,
+                           @QueryParam("branchId") String branchIdStr,
+                           @QueryParam("commitId") String commitIdStr);
 }

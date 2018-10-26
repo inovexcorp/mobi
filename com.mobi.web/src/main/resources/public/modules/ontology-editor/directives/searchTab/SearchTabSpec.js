@@ -56,6 +56,7 @@ describe('Search Tab directive', function() {
         }
         ontologyStateSvc.listItem.editorTabStates.search = {
             errorMessage: 'error',
+            entityIRI: 'entityIRI',
             highlightText: 'highlight',
             infoMessage: 'info',
             results: {
@@ -68,9 +69,7 @@ describe('Search Tab directive', function() {
             searchText: 'searchText',
             selected: ontologyStateSvc.listItem.selected
         }
-        ontoUtils.isLinkable.and.callFake(function(id) {
-            return !!id;
-        });
+        ontoUtils.isLinkable.and.callFake(id => !!id);
         this.element = $compile(angular.element('<search-tab></search-tab>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('searchTab');
@@ -92,14 +91,8 @@ describe('Search Tab directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('search-tab')).toBe(true);
         });
-        it('with blocks', function() {
-            expect(this.element.find('block').length).toBe(2);
-        });
-        it('with block-headers', function() {
-            expect(this.element.find('block-header').length).toBe(2);
-        });
-        it('with block-contents', function() {
-            expect(this.element.find('block-content').length).toBe(2);
+        it('with a .search', function() {
+            expect(this.element.querySelectorAll('.search').length).toBe(1);
         });
         it('with an error-display', function() {
             expect(this.element.find('error-display').length).toBe(1);
@@ -116,8 +109,11 @@ describe('Search Tab directive', function() {
         it('with a .property-values', function() {
             expect(this.element.querySelectorAll('.property-values').length).toBe(1);
         });
+        it('with a .entity-IRI', function() {
+            expect(this.element.querySelectorAll('.entity-IRI').length).toBe(1);
+        });
         it('with .value-containers', function() {
-            expect(this.element.querySelectorAll('.value-container').length).toBe(2);
+            expect(this.element.querySelectorAll('.prop-value-container').length).toBe(2);
         });
         it('with .value-displays', function() {
             expect(this.element.querySelectorAll('.value-display').length).toBe(2);
@@ -128,13 +124,6 @@ describe('Search Tab directive', function() {
     });
     describe('controller methods', function() {
         describe('onKeyup', function() {
-            it('when keyCode is not 13, does not call methods', function() {
-                [12, 14].forEach(function(item) {
-                    this.controller.onKeyup({keyCode: item});
-                    expect(ontologyStateSvc.unSelectItem).not.toHaveBeenCalled();
-                    expect(ontologyManagerSvc.getSearchResults).not.toHaveBeenCalled();
-                }, this);
-            });
             describe('when keyCode is 13,', function() {
                 it('calls the correct manager function', function() {
                     ontologyManagerSvc.getSearchResults.and.returnValue($q.when());

@@ -54,25 +54,6 @@
                 abstract: true,
                 resolve: {
                     authenticate: authenticate
-                },
-                views: {
-                    nav: {
-                        templateUrl: 'modules/nav/nav.html'
-                    },
-                    footer: {
-                        templateUrl: 'modules/footer/footer.html'
-                    }
-                }
-            })
-            .state('root.activity-log', {
-                url: '/activity-log',
-                views: {
-                    'container@': {
-                        templateUrl: 'modules/activityLog/activityLog.html'
-                    }
-                },
-                data: {
-                    title: 'Activity Log'
                 }
             })
             .state('root.home', {

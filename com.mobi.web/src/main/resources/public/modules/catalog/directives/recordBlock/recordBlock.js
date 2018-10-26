@@ -94,17 +94,20 @@
                     dvm.state.resetPagination();
                     currentCatalog.openedPath.push(branch);
                 }
+                dvm.getBranches = function() {
+                    var paginatedConfig = {
+                        pageIndex: dvm.state.currentPage - 1,
+                        limit: currentCatalog.branches.limit,
+                        sortOption: currentCatalog.branches.sortOption,
+                    };
+                    dvm.cm.getRecordBranches(dvm.record['@id'], currentCatalog.catalog['@id'], paginatedConfig)
+                        .then(dvm.state.setPagination, dvm.util.createErrorToast);
+                }
 
                 function tryToGetBranches() {
                     if (dvm.cm.isVersionedRDFRecord(dvm.record)) {
-                        dvm.state.currentPage = 0;
-                        var paginatedConfig = {
-                            pageIndex: dvm.state.currentPage,
-                            limit: currentCatalog.branches.limit,
-                            sortOption: currentCatalog.branches.sortOption,
-                        }
-                        dvm.cm.getRecordBranches(dvm.record['@id'], currentCatalog.catalog['@id'], paginatedConfig)
-                            .then(dvm.state.setPagination, dvm.util.createErrorToast);
+                        dvm.state.currentPage = 1;
+                        dvm.getBranches();
                     }
                 }
             },

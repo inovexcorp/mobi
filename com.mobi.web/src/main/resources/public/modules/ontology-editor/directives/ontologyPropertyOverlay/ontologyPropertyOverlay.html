@@ -20,9 +20,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="ontology-property-overlay overlay">
-    <form name="dvm.propertyForm" class="content clearfix" novalidate autocomplete="off">
-        <h6>{{dvm.os.editingOntologyProperty ? 'Edit Property' : 'Add Property'}}</h6>
+<div class="modal-header">
+    <h3>{{dvm.os.editingOntologyProperty ? 'Edit Property' : 'Add Property'}}</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+    <form name="dvm.propertyForm" novalidate autocomplete="off">
         <div class="form-group">
             <custom-label>Property</custom-label>
             <ui-select ng-model="dvm.os.ontologyProperty" ng-disabled="dvm.os.editingOntologyProperty" autofocus on-select="dvm.selectProp()">
@@ -32,10 +35,10 @@
                 </ui-select-choices>
             </ui-select>
         </div>
-        <div ng-if="dvm.isOntologyProperty()" class="form-group" ng-class="{'has-error': dvm.propertyForm.iri.$invalid}">
+        <div ng-if="dvm.isOntologyProperty()" class="form-group">
             <custom-label>Ontology IRI</custom-label>
-            <input class="form-control" ng-model="dvm.os.ontologyPropertyIRI" ng-pattern="dvm.iriPattern" name="iri" ng-required="dvm.isOntologyProperty()" />
-            <p ng-messages="dvm.propertyForm.iri.$error" class="error-display">
+            <input class="form-control" ng-model="dvm.os.ontologyPropertyIRI" ng-pattern="dvm.iriPattern" name="iri" ng-required="dvm.isOntologyProperty()" ng-class="{'is-invalid': dvm.propertyForm.iri.$invalid}" />
+            <p ng-messages="dvm.propertyForm.iri.$error" class="invalid-feedback">
                 <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
                 <ng-message when="required">This field cannot be left empty.</ng-message>
             </p>
@@ -50,10 +53,9 @@
                 <radio-button display-text="'False'" value="'false'" ng-model="dvm.os.ontologyPropertyValue"></radio-button>
             </div>
         </div>
-        <div class="btn-container clearfix">
-            <button ng-if="!dvm.os.editingOntologyProperty" class="btn btn-primary pull-right" ng-click="dvm.addProperty()" ng-disabled="dvm.propertyForm.$invalid">Add</button>
-            <button ng-if="dvm.os.editingOntologyProperty" class="btn btn-primary pull-right" ng-click="dvm.editProperty()" ng-disabled="dvm.cannotEdit()">Edit</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.os.showOntologyPropertyOverlay = false">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-click="dvm.submit()" ng-disabled="dvm.propertyForm.$invalid">Submit</button>
 </div>

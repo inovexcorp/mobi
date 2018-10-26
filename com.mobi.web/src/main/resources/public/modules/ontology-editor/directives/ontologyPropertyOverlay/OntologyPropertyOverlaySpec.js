@@ -47,7 +47,10 @@ describe('Ontology Property Overlay directive', function() {
 
         propertyManagerSvc.ontologyProperties = ['ontologyProperty'];
         ontologyStateSvc.listItem.annotations.iris = {annotation: 'ontologyId'};
-        this.element = $compile(angular.element('<ontology-property-overlay></ontology-property-overlay>'))(scope);
+
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<ontology-property-overlay close="close()" dismiss="dismiss()"></ontology-property-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('ontologyPropertyOverlay');
     });
@@ -68,36 +71,35 @@ describe('Ontology Property Overlay directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('ontology-property-overlay')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('ONTOLOGY-PROPERTY-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
+        });
+        it('with a form', function() {
             expect(this.element.find('form').length).toBe(1);
         });
-        it('with a h6', function() {
-            expect(this.element.find('h6').length).toBe(1);
+        it('with a h3', function() {
+            expect(this.element.find('h3').length).toBe(1);
         });
         it('depending on whether a property is being edited', function() {
             [
                 {
                     value: true,
                     heading: 'Edit Property',
-                    button: 'Edit'
                 },
                 {
                     value: false,
                     heading: 'Add Property',
-                    button: 'Add'
                 }
-            ].forEach(function(test) {
+            ].forEach(test => {
                 ontologyStateSvc.editingOntologyProperty = test.value;
                 scope.$digest();
 
-                var header = this.element.find('h6');
+                var header = this.element.find('h3');
                 expect(header.length).toBe(1);
                 expect(header[0].innerHTML).toBe(test.heading);
-                var buttons = this.element.querySelectorAll('button.btn-primary');
-                expect(buttons.length).toBe(1);
-                expect(buttons[0].innerHTML).toBe(test.button);
-            }, this);
+            });
         });
         it('depending on whether it is owl:deprecated', function() {
             spyOn(this.controller, 'isAnnotationProperty').and.returnValue(true);
@@ -125,11 +127,25 @@ describe('Ontology Property Overlay directive', function() {
             expect(this.element.find('p').length).toBe(1);
             expect(this.element.find('ng-message').length).toBe(2);
         });
-        it('with a .btn-container', function() {
-            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
-        });
     });
     describe('controller methods', function() {
+        describe('should submit the modal if the property is being', function() {
+            beforeEach(function() {
+                spyOn(this.controller, 'addProperty');
+                spyOn(this.controller, 'editProperty');
+            });
+            it('added', function() {
+                this.controller.submit();
+                expect(this.controller.addProperty).toHaveBeenCalled();
+                expect(this.controller.editProperty).not.toHaveBeenCalled();
+            });
+            it('edited', function() {
+                ontologyStateSvc.editingOntologyProperty = true;
+                this.controller.submit();
+                expect(this.controller.addProperty).not.toHaveBeenCalled();
+                expect(this.controller.editProperty).toHaveBeenCalled();
+            });
+        });
         describe('isOntologyProperty should return the proper value', function() {
             it('when ontologyStateService.ontologyProperty is falsy', function() {
                 ontologyStateSvc.ontologyProperty = '';
@@ -217,7 +233,7 @@ describe('Ontology Property Overlay directive', function() {
                     expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                     expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
                     expect(util.createWarningToast).toHaveBeenCalled();
-                    expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
+                    expect(scope.close).toHaveBeenCalled();
                 });
                 it('successfully', function() {
                     this.controller.addProperty();
@@ -226,7 +242,7 @@ describe('Ontology Property Overlay directive', function() {
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
-                    expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
+                    expect(scope.close).toHaveBeenCalled();
                 });
             });
             describe('when isAnnotationProperty is true', function() {
@@ -241,7 +257,7 @@ describe('Ontology Property Overlay directive', function() {
                     expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                     expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
                     expect(util.createWarningToast).toHaveBeenCalled();
-                    expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
+                    expect(scope.close).toHaveBeenCalled();
                 });
                 it('successfully', function() {
                     this.controller.addProperty();
@@ -250,7 +266,7 @@ describe('Ontology Property Overlay directive', function() {
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
-                    expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
+                    expect(scope.close).toHaveBeenCalled();
                 });
             });
         });
@@ -275,7 +291,7 @@ describe('Ontology Property Overlay directive', function() {
                     expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                     expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
                     expect(util.createWarningToast).toHaveBeenCalled();
-                    expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
+                    expect(scope.close).toHaveBeenCalled();
                 });
                 it('successfully', function() {
                     this.controller.editProperty();
@@ -285,7 +301,7 @@ describe('Ontology Property Overlay directive', function() {
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
-                    expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
+                    expect(scope.close).toHaveBeenCalled();
                 });
             });
             describe('when isAnnotationProperty is true', function() {
@@ -301,7 +317,7 @@ describe('Ontology Property Overlay directive', function() {
                     expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                     expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
                     expect(util.createWarningToast).toHaveBeenCalled();
-                    expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
+                    expect(scope.close).toHaveBeenCalled();
                 });
                 it('successfully', function() {
                     this.controller.editProperty();
@@ -311,28 +327,25 @@ describe('Ontology Property Overlay directive', function() {
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
-                    expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
+                    expect(scope.close).toHaveBeenCalled();
                 });
             });
         });
+        it('should cancel the overlay', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
     });
-    it('should call addProperty with the button is clicked', function() {
-        spyOn(this.controller, 'addProperty');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+    it('should call submit when the button is clicked', function() {
+        spyOn(this.controller, 'submit');
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');
-        expect(this.controller.addProperty).toHaveBeenCalled();
+        expect(this.controller.submit).toHaveBeenCalled();
     });
-    it('should call editProperty with the button is clicked', function() {
-        ontologyStateSvc.editingOntologyProperty = true;
-        scope.$digest();
-        spyOn(this.controller, 'editProperty');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+    it('should call cancel when the button is clicked', function() {
+        spyOn(this.controller, 'cancel');
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
-        expect(this.controller.editProperty).toHaveBeenCalled();
-    });
-    it('should set the correct state when the cancel button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
-        button.triggerHandler('click');
-        expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(false);
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
 });

@@ -1,12 +1,12 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.axiom-overlay {
+axiom-overlay {
     .tab {
         padding-top: 10px;
     }
     .codemirror-wrapper.readOnly .CodeMirror {
-        background-color: #eee;
+        background-color: var(--light-dark);
         opacity: .65;
     }
     .CodeMirror {

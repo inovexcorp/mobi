@@ -75,7 +75,7 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.step).toBe(0);
         expect(mapperStateSvc.editTabs).toEqual({edit: true, commits: false});
         expect(mapperStateSvc.invalidProps).toEqual([]);
-        expect(mapperStateSvc.availablePropsByClass).toEqual({});
+        expect(mapperStateSvc.propsByClass).toEqual({});
         expect(mapperStateSvc.mapping).toBeUndefined();
         expect(mapperStateSvc.sourceOntologies).toEqual([]);
     });
@@ -112,22 +112,14 @@ describe('Mapper State service', function() {
             it('unless an error occurs', function() {
                 mappingManagerSvc.upload.and.returnValue($q.reject('Error message'));
                 mapperStateSvc.saveMapping()
-                    .then(function(response) {
-                        fail('Promise should have rejected');
-                    }, function(response) {
-                        expect(response).toEqual('Error message');
-                    });
+                    .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error message'));
                 scope.$apply();
                 expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.record.title, mapperStateSvc.mapping.record.description, mapperStateSvc.mapping.record.keywords);
                 expect(catalogManagerSvc.createInProgressCommit).not.toHaveBeenCalled();
             });
             it('successfully', function() {
                 mappingManagerSvc.upload.and.returnValue($q.when('id'));
-                mapperStateSvc.saveMapping().then(function(response) {
-                    expect(response).toEqual('id');
-                }, function(response) {
-                    fail('Promise should have resolved');
-                });
+                mapperStateSvc.saveMapping().then(response => expect(response).toEqual('id'), () => fail('Promise should have resolved'));
                 scope.$apply();
                 expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.record.title, mapperStateSvc.mapping.record.description, mapperStateSvc.mapping.record.keywords);
                 expect(catalogManagerSvc.createInProgressCommit).not.toHaveBeenCalled();
@@ -146,9 +138,7 @@ describe('Mapper State service', function() {
                         catalogManagerSvc.updateInProgressCommit.and.returnValue($q.when());
                     });
                     it('and createBranchCommit resolves', function() {
-                        utilSvc.getDctermsValue.and.callFake(function(obj) {
-                            return obj.title;
-                        });
+                        utilSvc.getDctermsValue.and.callFake(obj => obj.title);
                         catalogManagerSvc.createBranchCommit.and.returnValue($q.when(''));
                         var add1 = {'@id': 'add1', title: 'Class'};
                         var add2 = {'@id': 'add2', title: 'Prop 1'};
@@ -157,19 +147,11 @@ describe('Mapper State service', function() {
                         mapperStateSvc.mapping.difference.additions = [add1, add2, add3];
                         mapperStateSvc.mapping.difference.deletions = [del1, add2];
                         mapperStateSvc.mapping.jsonld = [add1, add2, add3];
-                        mappingManagerSvc.isClassMapping.and.callFake(function(obj) {
-                            return _.isEqual(obj, add1);
-                        });
-                        mappingManagerSvc.isPropertyMapping.and.callFake(function(obj) {
-                            return _.isEqual(obj, add2) || _.isEqual(obj, del1);
-                        });
+                        mappingManagerSvc.isClassMapping.and.callFake(obj => _.isEqual(obj, add1));
+                        mappingManagerSvc.isPropertyMapping.and.callFake(obj =>_.isEqual(obj, add2) || _.isEqual(obj, del1));
                         utilSvc.getBeautifulIRI.and.returnValue('iri');
                         mapperStateSvc.saveMapping()
-                            .then(function(response) {
-                                expect(response).toEqual(mapperStateSvc.mapping.record.id);
-                            }, function(response) {
-                                fail('Promise should have resolved');
-                            });
+                            .then(response => expect(response).toEqual(mapperStateSvc.mapping.record.id), () => fail('Promise should have resolved'));
                         scope.$apply();
                         expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId);
                         expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
@@ -184,11 +166,7 @@ describe('Mapper State service', function() {
                     it('and createBranchCommit rejects', function() {
                         catalogManagerSvc.createBranchCommit.and.returnValue($q.reject('Error message'));
                         mapperStateSvc.saveMapping()
-                            .then(function(response) {
-                                fail('Promise should have rejected');
-                            }, function(response) {
-                                expect(response).toEqual('Error message');
-                            });
+                            .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error message'));
                         scope.$apply();
                         expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId);
                         expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
@@ -199,11 +177,7 @@ describe('Mapper State service', function() {
                 it('and updateInProgressCommit rejects', function() {
                     catalogManagerSvc.updateInProgressCommit.and.returnValue($q.reject('Error message'));
                     mapperStateSvc.saveMapping()
-                        .then(function(response) {
-                            fail('Promise should have rejected');
-                        }, function(response) {
-                            expect(response).toEqual('Error message');
-                        });
+                        .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error message'));
                     scope.$apply();
                     expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId);
                     expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
@@ -214,11 +188,7 @@ describe('Mapper State service', function() {
             it('and createInProgressCommit rejects', function() {
                 catalogManagerSvc.createInProgressCommit.and.returnValue($q.reject('Error message'));
                 mapperStateSvc.saveMapping()
-                    .then(function(response) {
-                        fail('Promise should have rejected');
-                    }, function(response) {
-                        expect(response).toEqual('Error message');
-                    });
+                    .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error message'));
                 scope.$apply();
                 expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId);
                 expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
@@ -249,9 +219,7 @@ describe('Mapper State service', function() {
         invalidProp[prefixes.delim + 'columnIndex'] = '1';
         var validProp = {'@id': 'valid'};
         validProp[prefixes.delim + 'columnIndex'] = '0';
-        utilSvc.getPropertyValue.and.callFake(function(obj, prop) {
-            return obj[prop];
-        });
+        utilSvc.getPropertyValue.and.callFake((obj, prop) =>obj[prop]);
         mappingManagerSvc.getAllDataMappings.and.returnValue([invalidProp, validProp]);
         mapperStateSvc.setInvalidProps();
         expect(mapperStateSvc.invalidProps).toContain(jasmine.objectContaining({'@id': invalidProp['@id'], index: 1}));
@@ -263,87 +231,100 @@ describe('Mapper State service', function() {
         var results = mapperStateSvc.getMappedColumns();
         expect(_.isArray(results)).toBe(true);
         expect(results.length).toBe(dataMappings.length);
-        _.forEach(results, function(result, idx) {
+        _.forEach(results, (result, idx) => {
             expect(utilSvc.getPropertyValue).toHaveBeenCalledWith(dataMappings[idx], prefixes.delim + 'columnIndex');
             expect(result).toBe('0');
         });
     });
-    it('should check whether a class mapping has available properties', function() {
-        mapperStateSvc.availablePropsByClass = {'class': [{}]};
-        var result = mapperStateSvc.hasAvailableProps('class');
+    it('should check whether a class has properties', function() {
+        mapperStateSvc.propsByClass = {'class': [{}]};
+        var result = mapperStateSvc.hasProps('class');
         expect(result).toBe(true);
-        result = mapperStateSvc.hasAvailableProps('class1');
+        result = mapperStateSvc.hasProps('class1');
         expect(result).toBe(false);
     });
-    it('should remove the list of available properties for a class', function() {
-        mapperStateSvc.availablePropsByClass = {'class': []};
-        mapperStateSvc.removeAvailableProps('class');
-        expect(mapperStateSvc.availablePropsByClass.class).toBeUndefined();
+    it('should check whether a class mapping has properties', function() {
+        spyOn(mapperStateSvc, 'hasProps').and.returnValue(true);
+        mappingManagerSvc.getClassIdByMappingId.and.returnValue('class');
+        expect(mapperStateSvc.hasPropsByClassMappingId('classMapping')).toEqual(true);
+        expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, 'classMapping');
+        expect(mapperStateSvc.hasProps).toHaveBeenCalledWith('class');
     });
-    it('should set the list of available properties for a class mapping', function() {
+    it('should remove the list of properties for a class', function() {
+        mapperStateSvc.propsByClass = {'clazz': []};
+        mapperStateSvc.removeProps('clazz');
+        expect(mapperStateSvc.propsByClass.clazz).toBeUndefined();
+    });
+    it('should remove the list of properties for a class mapping', function() {
+        spyOn(mapperStateSvc, 'removeProps');
+        mappingManagerSvc.getClassIdByMappingId.and.returnValue('class');
+        mapperStateSvc.removePropsByClassMappingId('classMapping');
+        expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, 'classMapping');
+        expect(mapperStateSvc.removeProps).toHaveBeenCalledWith('class');
+    });
+    it('should set the list of properties for a class', function() {
         mapperStateSvc.sourceOntologies = [{}];
-        var classMapId = 'classMap';
         var classId = 'class';
-        var classProps = [{propObj: {'@id': 'prop1'}}, {propObj: {'@id': 'prop2'}}];
-        var noDomainProps = [{propObj: {'@id': 'prop3'}}, {propObj: {'@id': 'prop4'}}];
-        var propMappings = [{}, {}];
-        propMappings[0][prefixes.delim + 'hasProperty'] = classProps[0].propObj['@id'];
-        propMappings[1][prefixes.delim + 'hasProperty'] = noDomainProps[0].propObj['@id'];
-        mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
-        utilSvc.getPropertyId.and.callFake(function(obj, prop) {
-            return obj[prop];
-        });
-        mappingManagerSvc.getClassIdByMappingId.and.returnValue(classId);
+        var classProps = [{propObj: {'@id': 'prop1'}}];
+        var noDomainProps = [{propObj: {'@id': 'prop2'}}];
+        var annotationProps = [{propObj: {'@id': 'prop3'}}];
+
         mappingManagerSvc.annotationProperties = ['test'];
-        spyOn(mapperStateSvc, 'getClassProps').and.returnValue(_.union(classProps, noDomainProps));
-        mapperStateSvc.setAvailableProps(classMapId);
-        _.forEach(propMappings, function(propMapping) {
-            expect(utilSvc.getPropertyId).toHaveBeenCalledWith(propMapping, prefixes.delim + 'hasProperty');
-        });
-        expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, classMapId);
-        expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, classMapId);
+        spyOn(mapperStateSvc, 'getClassProps').and.returnValue(_.union(classProps, noDomainProps, annotationProps));
+
+        mapperStateSvc.setProps(classId);
         expect(mapperStateSvc.getClassProps).toHaveBeenCalledWith(mapperStateSvc.sourceOntologies, classId);
-        expect(mapperStateSvc.availablePropsByClass[classMapId]).not.toContain(classProps[0]);
-        expect(mapperStateSvc.availablePropsByClass[classMapId]).toContain(classProps[1]);
-        expect(mapperStateSvc.availablePropsByClass[classMapId] ).not.toContain(noDomainProps[0]);
-        expect(mapperStateSvc.availablePropsByClass[classMapId]).toContain(noDomainProps[1]);
-        _.forEach(mappingManagerSvc.annotationProperties, function(prop) {
-            expect(mapperStateSvc.availablePropsByClass[classMapId]).toContain({ontologyId: '', propObj: {'@id': prop}});
-        });
+        expect(mapperStateSvc.propsByClass[classId]).toContain(classProps[0]);
+        expect(mapperStateSvc.propsByClass[classId]).toContain(noDomainProps[0]);
+        expect(mapperStateSvc.propsByClass[classId] ).toContain(annotationProps[0]);
+        _.forEach(mappingManagerSvc.annotationProperties, prop => expect(mapperStateSvc.propsByClass[classId]).toContain({ontologyId: '', propObj: {'@id': prop}}));
     });
-    it('should get the list of available properties for a class mapping', function() {
-        var availableProps = [{}];
-        mapperStateSvc.availablePropsByClass = {'class': availableProps};
-        var result = mapperStateSvc.getAvailableProps('class');
-        expect(result).toEqual(availableProps);
-        result = mapperStateSvc.getAvailableProps('class1');
+    it('should set the list of properties for a class mapping', function() {
+        spyOn(mapperStateSvc, 'setProps');
+        mappingManagerSvc.getClassIdByMappingId.and.returnValue('class');
+        mapperStateSvc.setPropsByClassMappingId('classMapping');
+        expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, 'classMapping');
+        expect(mapperStateSvc.setProps).toHaveBeenCalledWith('class');
+    });
+    it('should get the list of properties for a class', function() {
+        var props = [{}];
+        mapperStateSvc.propsByClass = {'class': props};
+        var result = mapperStateSvc.getProps('class');
+        expect(result).toEqual(props);
+        result = mapperStateSvc.getProps('class1');
         expect(result).toEqual([]);
+    });
+    it('should get the list of properties for a class mapping', function() {
+        spyOn(mapperStateSvc, 'getProps').and.returnValue([{}]);
+        mappingManagerSvc.getClassIdByMappingId.and.returnValue('class');
+        expect(mapperStateSvc.getPropsByClassMappingId('classMapping')).toEqual([{}]);
+        expect(mappingManagerSvc.getClassIdByMappingId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, 'classMapping');
+        expect(mapperStateSvc.getProps).toHaveBeenCalledWith('class');
     });
     it('should get the list of properties usable with a class', function() {
         var ontologies = [{id: 'ontology1', entities: []}, {id: 'ontology2', entities: [{}]}];
         var classProps = [{'@id': 'prop1'}, {'@id': 'prop2'}];
         var noDomainProps = [{'@id': 'prop3'}, {'@id': 'prop4'}];
-        ontologyManagerSvc.getClassProperties.and.callFake(function(entities, classId) {
-            return _.isEqual(entities, [ontologies[0].entities]) ? [classProps[0]] : [classProps[1]];
-        });
-        ontologyManagerSvc.getNoDomainProperties.and.callFake(function(entities) {
-            return _.isEqual(entities, [ontologies[0].entities]) ? noDomainProps : [];
-        });
+        var annotationProps = [{'@id': 'prop5'}, {'@id': 'prop6'}];
+        ontologyManagerSvc.getClassProperties.and.callFake(entities => _.isEqual(entities, [ontologies[0].entities]) ? [classProps[0]] : [classProps[1]]);
+        ontologyManagerSvc.getNoDomainProperties.and.callFake(entities => _.isEqual(entities, [ontologies[0].entities]) ? noDomainProps : []);
+        ontologyManagerSvc.getAnnotations.and.callFake(entities => _.isEqual(entities, [ontologies[0].entities]) ? annotationProps : [])
         var result = mapperStateSvc.getClassProps(ontologies, 'class');
         expect(ontologyManagerSvc.getClassProperties.calls.count()).toBe(ontologies.length);
         expect(ontologyManagerSvc.getNoDomainProperties.calls.count()).toBe(ontologies.length);
+        expect(ontologyManagerSvc.getAnnotations.calls.count()).toBe(ontologies.length);
         expect(result).toContain({ontologyId: ontologies[0].id, propObj: classProps[0]});
         expect(result).toContain({ontologyId: ontologies[1].id, propObj: classProps[1]});
         expect(result).toContain({ontologyId: ontologies[0].id, propObj: noDomainProps[0]});
         expect(result).toContain({ontologyId: ontologies[0].id, propObj: noDomainProps[1]});
+        expect(result).toContain({ontologyId: ontologies[0].id, propObj: annotationProps[0]});
+        expect(result).toContain({ontologyId: ontologies[0].id, propObj: annotationProps[1]});
     });
     it('should get the list of classes from a list of ontologies', function() {
         var ontologies = [{id: 'ontology1', entities: []}, {id: 'ontology2', entities: [{}]}];
         var classes1 = [{'@id': 'class1'}];
         var classes2 = [{'@id': 'class2'}];
-        ontologyManagerSvc.getClasses.and.callFake(function(entities) {
-            return _.isEqual(entities, [ontologies[0].entities]) ? classes1 : classes2;
-        });
+        ontologyManagerSvc.getClasses.and.callFake(entities =>_.isEqual(entities, [ontologies[0].entities]) ? classes1 : classes2);
         var result = mapperStateSvc.getClasses(ontologies);
         expect(result).toContain({ontologyId: ontologies[0].id, classObj: classes1[0]});
         expect(result).toContain({ontologyId: ontologies[1].id, classObj: classes2[0]});
@@ -355,12 +336,8 @@ describe('Mapper State service', function() {
             this.newValue = 'new';
             this.originalValue = 'original';
             this.otherValue = 'other';
-            utilSvc.getPropertyValue.and.callFake(function(obj, propId) {
-                return _.get(obj, "['" + propId + "'][0]['@value']", '');
-            });
-            utilSvc.getPropertyId.and.callFake(function(obj, propId) {
-                return _.get(obj, "['" + propId + "'][0]['@id']", '');
-            });
+            utilSvc.getPropertyValue.and.callFake((obj, propId) => _.get(obj, "['" + propId + "'][0]['@value']", ''));
+            utilSvc.getPropertyId.and.callFake((obj, propId) => _.get(obj, "['" + propId + "'][0]['@id']", ''));
         });
         it('unless the new value is the same as the original', function() {
             var additions = angular.copy(mapperStateSvc.mapping.difference.additions);
@@ -571,9 +548,7 @@ describe('Mapper State service', function() {
         });
         describe('the class has already been mapped', function() {
             beforeEach(function() {
-                utilSvc.getDctermsValue.and.callFake(function(obj) {
-                    return obj[prefixes.dcterms + 'title'][0]['@value'];
-                });
+                utilSvc.getDctermsValue.and.callFake(obj => obj[prefixes.dcterms + 'title'][0]['@value']);
             });
             it('and it does not have an index', function() {
                 var originalClassMapping = {'@id': 'original'};
@@ -625,7 +600,7 @@ describe('Mapper State service', function() {
         mappingManagerSvc.addDataProp.and.returnValue(newPropMapping);
         ontologyManagerSvc.getEntityName.and.returnValue('Prop');
         expect(mapperStateSvc.addDataMapping(propIdObj, 'classMappingId', '0')).toEqual(newPropMapping);
-        expect(mappingManagerSvc.addDataProp).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, ontology.entities, 'classMappingId', propIdObj.propObj['@id'], '0');
+        expect(mappingManagerSvc.addDataProp).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, ontology.entities, 'classMappingId', propIdObj.propObj['@id'], '0', undefined, undefined);
         expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(propIdObj.propObj);
         expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(newPropMapping, 'title', 'Prop');
         expect(mapperStateSvc.mapping.difference.additions).toContain(newPropMapping);
@@ -638,7 +613,7 @@ describe('Mapper State service', function() {
         mappingManagerSvc.addObjectProp.and.returnValue(newPropMapping);
         ontologyManagerSvc.getEntityName.and.returnValue('Prop');
         expect(mapperStateSvc.addObjectMapping(propIdObj, 'classMappingId', 'rangeClassMappingId')).toEqual(newPropMapping);
-        expect(mappingManagerSvc.addObjectProp).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, ontology.entities, 'classMappingId', propIdObj.propObj['@id'], 'rangeClassMappingId');
+        expect(mappingManagerSvc.addObjectProp).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, ontology.entities, 'classMappingId', propIdObj.propObj['@id'], 'rangeClassMappingId', undefined, undefined);
         expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(propIdObj.propObj);
         expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(newPropMapping, 'title', 'Prop');
         expect(mapperStateSvc.mapping.difference.additions).toContain(newPropMapping);
@@ -681,7 +656,7 @@ describe('Mapper State service', function() {
             mappingManagerSvc.getPropMappingsByClass.and.returnValue([this.propMapping]);
             mappingManagerSvc.removeClass.and.returnValue(this.classMapping);
             spyOn(mapperStateSvc, 'deleteEntity');
-            spyOn(mapperStateSvc, 'removeAvailableProps');
+            spyOn(mapperStateSvc, 'removeProps');
             spyOn(mapperStateSvc, 'changeProp');
             mappingManagerSvc.getClassIdByMapping.and.returnValue('classId');
             utilSvc.getDctermsValue.and.returnValue('original (1)');
@@ -696,7 +671,7 @@ describe('Mapper State service', function() {
             expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.classMapping['@id']);
             expect(mapperStateSvc.deleteEntity).toHaveBeenCalledWith(this.classMapping);
             expect(mapperStateSvc.deleteEntity).toHaveBeenCalledWith(this.propMapping);
-            expect(mapperStateSvc.removeAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
+            expect(mapperStateSvc.removeProps).not.toHaveBeenCalled();
             expect(mapperStateSvc.invalidProps.length).toEqual(0);
             expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalledWith(this.classMapping);
             expect(mappingManagerSvc.getClassMappingsByClassId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, 'classId');
@@ -704,13 +679,28 @@ describe('Mapper State service', function() {
             expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(lastClassMapping['@id'], prefixes.dcterms + 'title', 'original', 'original (1)');
         });
         it('if it is not the second to last of the specific class', function() {
+            mappingManagerSvc.getClassMappingsByClassId.and.returnValue([{}, {}]);
             mapperStateSvc.deleteClass(this.classMapping['@id']);
             expect(mappingManagerSvc.getPropsLinkingToClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.classMapping['@id']);
             expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.classMapping['@id']);
             expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.classMapping['@id']);
             expect(mapperStateSvc.deleteEntity).toHaveBeenCalledWith(this.classMapping);
             expect(mapperStateSvc.deleteEntity).toHaveBeenCalledWith(this.propMapping);
-            expect(mapperStateSvc.removeAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
+            expect(mapperStateSvc.removeProps).not.toHaveBeenCalled();
+            expect(mapperStateSvc.invalidProps.length).toEqual(0);
+            expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalledWith(this.classMapping);
+            expect(mappingManagerSvc.getClassMappingsByClassId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, 'classId');
+            expect(utilSvc.getDctermsValue).not.toHaveBeenCalled();
+            expect(mapperStateSvc.changeProp).not.toHaveBeenCalled();
+        });
+        it('if it is the last of the specific class', function() {
+            mapperStateSvc.deleteClass(this.classMapping['@id']);
+            expect(mappingManagerSvc.getPropsLinkingToClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.classMapping['@id']);
+            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.classMapping['@id']);
+            expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.classMapping['@id']);
+            expect(mapperStateSvc.deleteEntity).toHaveBeenCalledWith(this.classMapping);
+            expect(mapperStateSvc.deleteEntity).toHaveBeenCalledWith(this.propMapping);
+            expect(mapperStateSvc.removeProps).toHaveBeenCalledWith('classId');
             expect(mapperStateSvc.invalidProps.length).toEqual(0);
             expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalledWith(this.classMapping);
             expect(mappingManagerSvc.getClassMappingsByClassId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, 'classId');
@@ -726,43 +716,7 @@ describe('Mapper State service', function() {
             this.availableProps = [];
             mapperStateSvc.invalidProps = [{'@id': this.propMapping['@id']}];
             mappingManagerSvc.removeProp.and.returnValue(this.propMapping);
-            mappingManagerSvc.getPropIdByMapping.and.returnValue(this.propObj['@id']);
-            spyOn(mapperStateSvc, 'getAvailableProps').and.returnValue(this.availableProps);
             spyOn(mapperStateSvc, 'deleteEntity');
-        });
-        it('if it is an annotation property', function() {
-            mappingManagerSvc.annotationProperties = [this.propObj['@id']];
-            mappingManagerSvc.isDataMapping.and.returnValue(true);
-            mapperStateSvc.deleteProp(this.propMapping['@id'], this.classMappingId);
-            expect(mapperStateSvc.deleteEntity).toHaveBeenCalledWith(this.propMapping);
-            expect(mappingManagerSvc.getPropIdByMapping).toHaveBeenCalledWith(this.propMapping);
-            expect(mappingManagerSvc.findSourceOntologyWithProp).not.toHaveBeenCalled();
-            expect(mapperStateSvc.getAvailableProps).toHaveBeenCalledWith(this.classMappingId);
-            expect(this.availableProps).toContain({ontologyId: '', propObj: {'@id': this.propObj['@id']}});
-        });
-        describe('if it is not an annotation property', function() {
-            it('and exists in an ontology', function() {
-                var ontology = {id: 'ontology', entities: []};
-                mappingManagerSvc.findSourceOntologyWithProp.and.returnValue(ontology);
-                ontologyManagerSvc.getEntity.and.returnValue(this.propObj);
-                mapperStateSvc.deleteProp(this.propMapping['@id'], this.classMappingId);
-                expect(mapperStateSvc.deleteEntity).toHaveBeenCalledWith(this.propMapping);
-                expect(mappingManagerSvc.getPropIdByMapping).toHaveBeenCalledWith(this.propMapping);
-                expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalledWith(this.propObj['@id'], mapperStateSvc.sourceOntologies);
-                expect(ontologyManagerSvc.getEntity).toHaveBeenCalledWith([ontology.entities], this.propObj['@id']);
-                expect(mapperStateSvc.getAvailableProps).toHaveBeenCalledWith(this.classMappingId);
-                expect(this.availableProps).toContain({ontologyId: ontology.id, propObj: this.propObj});
-            });
-            it('and does not exist in an ontology', function() {
-                mappingManagerSvc.findSourceOntologyWithProp.and.returnValue(undefined);
-                mapperStateSvc.deleteProp(this.propMapping['@id'], this.classMappingId);
-                expect(mapperStateSvc.deleteEntity).toHaveBeenCalledWith(this.propMapping);
-                expect(mappingManagerSvc.getPropIdByMapping).toHaveBeenCalledWith(this.propMapping);
-                expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalledWith(this.propObj['@id'], mapperStateSvc.sourceOntologies);
-                expect(ontologyManagerSvc.getEntity).not.toHaveBeenCalled();
-                expect(mapperStateSvc.getAvailableProps).not.toHaveBeenCalled();
-                expect(this.availableProps.length).toEqual(0);
-            });
         });
         it('if it was added originally', function () {
             utilSvc.hasPropertyId.and.returnValue(true);

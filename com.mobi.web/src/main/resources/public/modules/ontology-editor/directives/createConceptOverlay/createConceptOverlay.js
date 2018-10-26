@@ -24,7 +24,37 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name createConceptOverlay
+         *
+         * @description
+         * The `createConceptOverlay` module only provides the `createConceptOverlay` directive which creates content
+         * for a modal to add a concept to an ontology/vocabulary.
+         */
         .module('createConceptOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name createConceptOverlay.directive:createConceptOverlay
+         * @scope
+         * @restrict E
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires prefixes.service:prefixes
+         * @requires util.service:utilService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires propertyManager.service:propertyManagerService
+         *
+         * @description
+         * `createConceptOverlay` is a directive that creates content for a modal that creates a concept in the current
+         * {@link ontologyState.service:ontologyStateService selected ontology/vocabulary}. The form in the modal
+         * contains a text input for the concept name (which populates the {@link staticIri.directive:staticIri IRI}),
+         * an {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a `ui-select` for the concept scheme
+         * the concept is "top" of. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
+         */
         .directive('createConceptOverlay', createConceptOverlay);
 
         createConceptOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'ontologyUtilsManagerService', 'propertyManagerService'];
@@ -32,11 +62,13 @@
         function createConceptOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, utilService, ontologyUtilsManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/createConceptOverlay/createConceptOverlay.html',
-                scope: {},
+                scope: {
+                    close: '&',
+                    dismiss: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var pm = propertyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
@@ -84,16 +116,18 @@
                         dvm.ontoUtils.addConcept(dvm.concept);
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.concept);
                         dvm.ontoUtils.addIndividual(dvm.concept);
-                        // select the new class
-                        dvm.os.selectItem(_.get(dvm.concept, '@id'));
-                        // hide the overlay
-                        dvm.os.showCreateConceptOverlay = false;
+                        // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
+                        // hide the overlay
+                        $scope.close();
                     }
                     dvm.getSchemes = function(searchText) {
                         dvm.schemes = dvm.ontoUtils.getSelectList(dvm.schemeIRIs, searchText);
                     }
-                }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
+                    }
+                }]
             }
         }
 })();

@@ -49,13 +49,13 @@ describe('Ontology Tab directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('ontology-tab')).toBe(true);
         });
-        it('with a tabset', function() {
-            expect(this.element.find('tabset').length).toBe(1);
+        it('with a material-tabset', function() {
+            expect(this.element.find('material-tabset').length).toBe(1);
         });
-        it('with tabs', function() {
-            expect(this.element.find('tab').length).toBe(10);
+        it('with mateiral-tabs', function() {
+            expect(this.element.find('material-tab').length).toBe(10);
         });
-        ['ontology-branch-select', 'ontology-button-stack', 'project-tab', 'overview-tab', 'classes-tab', 'properties-tab', 'individuals-tab', 'concepts-tab', 'concept-schemes-tab', 'search-tab', 'saved-changes-tab', 'commits-tab'].forEach(function(tag) {
+        ['ontology-button-stack', 'project-tab', 'overview-tab', 'classes-tab', 'properties-tab', 'individuals-tab', 'concepts-tab', 'concept-schemes-tab', 'search-tab', 'saved-changes-tab', 'commits-tab'].forEach(function(tag) {
             it('with a ' + tag, function() {
                 expect(this.element.find(tag).length).toBe(1);
             });
@@ -65,8 +65,7 @@ describe('Ontology Tab directive', function() {
 
             ontologyStateSvc.listItem.merge.active = true;
             scope.$digest();
-            expect(this.element.find('tabset').length).toBe(0);
-            expect(this.element.find('ontology-branch-select').length).toBe(0);
+            expect(this.element.find('material-tabset').length).toBe(0);
             expect(this.element.find('ontology-button-stack').length).toBe(0);
             expect(this.element.find('merge-tab').length).toBe(1);
         });

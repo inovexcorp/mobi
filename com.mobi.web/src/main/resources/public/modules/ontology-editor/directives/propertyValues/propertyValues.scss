@@ -2,66 +2,36 @@
 @import "./src/main/resources/public/css/variables";
 
 .property-values {
-    border: 1px solid #ccc;
-    cursor: default;
-    font-size: 0;
-    margin: 10px;
-    position: relative;
-
-    /* Spacing for the property header */
-    h5 {
-        border-bottom: 1px solid $gray-lighter;
-        cursor: pointer;
-        margin: 0;
-        padding: 8px 34px 8px 8px;
+    .prop-header {
+        font-size: 0.95rem;
 
         .text {
-            margin: 0;
-            @include textOverflow;
-
-            small {
-                font-size: .875em;
-            }
-        }
-        i.fa {
-            position: absolute;
-            right: 8px;
-            top: 8px;
+            max-width: 75%;
+            font-weight: 600;
         }
     }
+    .prop-value-container {
+        -webkit-transition: background-color ease-in-out 0.1s;
+                transition: background-color ease-in-out 0.1s;
 
-    /* Contains the value of the property */
-    .value-container {
-        position: relative;
-
-        /* Highlights the value you are hovering over */
-        &:hover {
-            background-color: $gray-lighter;
-        }
-
-        /* Removes paragraph margin from the property value */
         .value-display-wrapper {
-            display: inline-block;
-            font-size: 14px;
-            margin: 0;
-            padding: 8px;
-            vertical-align: top;
-            width: -webkit-calc(100% - 62px);
-            width:    -moz-calc(100% - 62px);
-            width:         calc(100% - 62px);
             word-wrap: break-word;
         }
+        .button-container {
+            -webkit-transition: opacity ease-in-out 0.1s;
+                    transition: opacity ease-in-out 0.1s;
+            opacity: 0;
 
-        /* Places the button in the top right corner */
-        .btn {
-            border: 0;
-            padding: 8px 5px;
-            outline: 0;
+            button:hover {
+                text-decoration: none;
+                color: inherit;
+            }
+        }
+        &:hover {
+            background-color: var(--light);
 
-            /* Removes default padding from this button */
-            .fa {
-                font-size: 16px;
-                margin: 0;
+            .button-container {
+                opacity: 1;
             }
         }
     }

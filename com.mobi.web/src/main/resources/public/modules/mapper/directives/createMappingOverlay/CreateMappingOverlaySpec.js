@@ -190,8 +190,8 @@ describe('Create Mapping Overlay directive', function() {
             expect(this.element.hasClass('create-mapping-overlay')).toBe(true);
             expect(this.element.querySelectorAll('form.content').length).toBe(1);
         });
-        it('with a title field', function() {
-            expect(this.element.querySelectorAll('input[name="title"]').length).toBe(1);
+        it('with a text-input', function() {
+            expect(this.element.find('text-input').length).toBe(1);
         });
         it('with a text-area', function() {
             expect(this.element.find('text-area').length).toBe(1);
@@ -229,7 +229,7 @@ describe('Create Mapping Overlay directive', function() {
     });
     it('should call cancel when the button is clicked', function() {
         spyOn(this.controller, 'cancel');
-        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         continueButton.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });

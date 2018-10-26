@@ -22,11 +22,14 @@
 
 :DataMapping1 a                       delim:DataMapping ;
               delim:columnIndex       "1" ;
-              delim:hasProperty       uhtc:formula .
+              delim:hasProperty       uhtc:formula ;
+              delim:datatypeSpec      xsd:double ;
+              delim:languageSpec      "fr" .
 
 :DataMapping2 a                       delim:DataMapping ;
               delim:columnIndex       "6" ;
-              delim:hasProperty       uhtc:density .
+              delim:hasProperty       uhtc:density ;
+              delim:datatypeSpec      xsd:double .
 
 :DataMapping3 a                       delim:DataMapping ;
               delim:columnIndex       "3" ;

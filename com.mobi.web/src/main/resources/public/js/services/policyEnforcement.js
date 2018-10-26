@@ -46,12 +46,16 @@
          */
         .service('policyEnforcementService', policyEnforcementService);
 
-        policyEnforcementService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'prefixes'];
+        policyEnforcementService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService'];
 
-        function policyEnforcementService($http, $q, REST_PREFIX, utilService, prefixes) {
+        function policyEnforcementService($http, $q, REST_PREFIX, utilService) {
             var self = this;
             var prefix = REST_PREFIX + 'pep';
             var util = utilService;
+
+            self.permit = 'Permit';
+            self.deny = 'Deny';
+            self.indeterminate = 'Indeterminate';
 
             /**
              * @ngdoc method
@@ -74,7 +78,7 @@
              * an error message
              */
             self.evaluateRequest = function(jsonRequest) {
-                var filteredRequest = _.pick(jsonRequest, ['resourceId', 'actionId', 'actionAtrs', 'resourceAttrs', 'subjectAttrs']);
+                var filteredRequest = _.pick(jsonRequest, ['resourceId', 'actionId', 'actionAttrs', 'resourceAttrs', 'subjectAttrs']);
                 return $http.post(prefix, filteredRequest)
                     .then(response => response.data, util.rejectError);
             }

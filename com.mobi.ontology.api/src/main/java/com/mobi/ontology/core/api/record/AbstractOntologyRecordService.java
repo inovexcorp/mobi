@@ -75,6 +75,7 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
             Model model = ontology.asModel(modelFactory);
             versioningManager.commit(catalogIdIRI, record.getResource(),
                     masterBranchId, user, "The initial commit.", model, null);
+            writePolicies(user, record);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
@@ -93,9 +94,11 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         Ontology ontology;
         if (config.get(OntologyRecordCreateSettings.INPUT_STREAM) != null) {
             ontology = ontologyManager.createOntology(config.get(OntologyRecordCreateSettings.INPUT_STREAM), false);
-        } else {
+        } else if (config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA) != null) {
             ontology = ontologyManager.createOntology(config.get(VersionedRDFRecordCreateSettings
                     .INITIAL_COMMIT_DATA));
+        } else {
+            throw new IllegalArgumentException("Ontology config does not have initial data.");
         }
         return ontology;
     }

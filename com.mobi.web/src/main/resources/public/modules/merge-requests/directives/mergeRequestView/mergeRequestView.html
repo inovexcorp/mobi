@@ -24,26 +24,52 @@
     <block>
         <block-content class="padding">
             <div class="main-details">
-                <span class="open-indicator label pull-right" ng-class="dvm.mm.isAccepted(dvm.selected.request) ? 'label-success' : 'label-primary'">{{dvm.mm.isAccepted(dvm.selected.request) ? 'Accepted' : 'Open'}}</span>
+                <span class="open-indicator badge badge-pill float-right" ng-class="dvm.mm.isAccepted(dvm.state.selected.jsonld) ? 'badge-success' : 'badge-primary'">{{dvm.mm.isAccepted(dvm.state.selected.jsonld) ? 'Accepted' : 'Open'}}</span>
                 <div class="title">
-                    <h2>{{dvm.selected.title}}</h2>
-                    <small>Created on {{dvm.selected.date}} by {{dvm.selected.creator}}</small>
+                    <h2>{{dvm.state.selected.title}}</h2>
+                    <small>Created on {{dvm.state.selected.date}} by {{dvm.state.selected.creator}}</small>
                 </div>
                 <div class="description">
-                    {{dvm.util.getDctermsValue(dvm.selected.request, 'description') || 'No description'}}
+                    {{dvm.util.getDctermsValue(dvm.state.selected.jsonld, 'description') || 'No description'}}
                 </div>
-                <div class="request-summary"><strong>{{dvm.selected.sourceTitle}}</strong> into <strong>{{dvm.selected.targetTitle ? dvm.selected.targetTitle : 'NO TARGET'}}</strong> in <strong>{{dvm.selected.recordTitle}}</strong></div>
-                <div class="alert alert-warning" role="alert" ng-if="dvm.selected.hasConflicts || !dvm.selected.targetTitle">
-                    <span class="fa fa-exclamation-triangle" />
-                    <span ng-if="dvm.selected.hasConflicts">This request has conflicts. You can resolve them during the merge process.</span>
-                    <span ng-if="!dvm.selected.targetTitle">The target branch for this merge request has been deleted.</span>
+                <div class="request-summary"><strong>{{dvm.state.selected.sourceTitle}}</strong> into <strong>{{dvm.state.selected.targetTitle ? dvm.state.selected.targetTitle : 'NO TARGET'}}</strong> in <strong>{{dvm.state.selected.recordTitle}}</strong></div>
+                <div class="assignees">
+                    <span class="field-name">Assignee(s): </span>
+                    <ul class="assignees">
+                        <li ng-if="dvm.state.selected.assignees.length === 0" class="last">(None specified)</li>
+                        <li ng-repeat="assignee in dvm.state.selected.assignees" ng-class="{'last': $last}">{{assignee}}</li>
+                    </ul>
                 </div>
             </div>
-            <commit-difference-tabset ng-if="!dvm.mm.isAccepted(dvm.selected.request)" difference="dvm.selected.difference" branch-title="dvm.selected.sourceBranchTitle" commit-id="dvm.selected.sourceCommit" target-id="dvm.selected.targetCommit"></commit-difference-tabset>
+            <div class="view" ng-if="!dvm.resolveConflicts">
+                <div class="alert alert-warning d-flex align-items-center" role="alert" ng-if="dvm.state.selected.conflicts.length">
+                    <div class="flex-grow-1">
+                        <span class="fa fa-exclamation-triangle" />
+                        <span>This request has conflicts. You can resolve them right now or during the merge process.</span>
+                    </div>
+                    <button class="btn btn-outline-primary" ng-click="dvm.showResolutionForm()">Resolve</button>
+                </div>
+                <div class="alert alert-warning" role="alert" ng-if="!dvm.state.selected.targetTitle">
+                    <span class="fa fa-exclamation-triangle" />
+                    <span>The target branch for this merge request has been deleted.</span>
+                </div>
+                <commit-difference-tabset difference="dvm.state.selected.difference" branch-title="dvm.state.selected.sourceTitle" commit-id="dvm.state.selected.sourceCommit" target-id="dvm.state.selected.targetCommit"></commit-difference-tabset>
+            </div>
+            <div class="resolve-conflicts mt-2 pt-2" ng-if="dvm.resolveConflicts">
+                <error-display ng-if="dvm.resolveError">Conflict resolution failed</error-display>
+                <resolve-conflicts-form source-title="dvm.state.selected.sourceTitle" target-title="dvm.state.selected.targetTitle" conflicts="dvm.copiedConflicts" resolutions="dvm.resolutions"></resolve-conflicts-form>
+            </div>
         </block-content>
         <block-footer>
-            <button class="btn btn-danger pull-right" ng-click="dvm.showDelete()">Delete</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.back()">Back</button>
+            <div class="view-buttons" ng-if="!dvm.resolveConflicts">
+                <button class="btn btn-primary float-right" ng-if="!dvm.mm.isAccepted(dvm.state.selected.jsonld)" ng-disabled="dvm.state.selected.conflicts.length || !dvm.state.selected.targetTitle" ng-click="dvm.showAccept()">Accept</button>
+                <button class="btn btn-danger float-right" ng-click="dvm.showDelete()">Delete</button>
+                <button class="btn float-right" ng-click="dvm.back()">Back</button>
+            </div>
+            <div class="conflicts-buttons" ng-if="dvm.resolveConflicts">
+                <button class="btn btn-primary float-right" ng-disabled="!dvm.allResolved()" ng-click="dvm.resolve()">Resolve</button>
+                <button class="btn float-right" ng-click="dvm.cancelResolve()">Cancel</button>
+            </div>
         </block-footer>
     </block>
 </div>

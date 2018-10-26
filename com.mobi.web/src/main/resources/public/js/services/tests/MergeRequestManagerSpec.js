@@ -208,6 +208,33 @@ describe('Merge Request Manager service', function() {
           flushAndVerify($httpBackend);
         });
     });
+    describe('should accept a merge request', function() {
+        beforeEach(function() {
+            this.requestId = 'request';
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectPOST('/mobirest/merge-requests/' + this.requestId).respond(400, null, null, 'Error Message');
+            mergeRequestManagerSvc.acceptRequest(this.requestId)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
+        });
+        it('successfully', function() {
+          $httpBackend.expectPOST('/mobirest/merge-requests/' + this.requestId).respond(200, '');
+          mergeRequestManagerSvc.acceptRequest(this.requestId)
+              .then(_.noop, function(response) {
+                  fail('Promise should have resolved');
+              });
+          flushAndVerify($httpBackend);
+        });
+    });
     it('should determine whether a request is accepted', function() {
         expect(mergeRequestManagerSvc.isAccepted({'@type': []})).toEqual(false);
         expect(mergeRequestManagerSvc.isAccepted({'@type': [prefixes.mergereq + 'AcceptedMergeRequest']})).toEqual(true);

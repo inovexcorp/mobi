@@ -2,6 +2,17 @@
 @import "./src/main/resources/public/css/variables";
 
 .ontology-editor {
-    background-color: $gray-lighter;
-    height: 100%;
+    .section-header {
+        border-bottom: 1px solid var(--light-dark);
+        padding-bottom: 0.5rem;
+
+        h5 {
+            font-weight: bold;
+            display: inline-block;
+            margin: 0;
+        }
+        a {
+            line-height: 1.5;
+        }
+    }
 }

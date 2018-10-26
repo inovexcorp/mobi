@@ -411,18 +411,7 @@ describe('Ontology Manager service', function() {
         });
     });
     describe('deleteOntology hits the proper endpoint', function() {
-        beforeEach(function() {
-            this.params = paramSerializer({ branchId: this.branchId });
-        });
-        it('with a branchId', function() {
-            $httpBackend.expectDELETE('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?' + this.params).respond(200);
-            ontologyManagerSvc.deleteOntology(this.recordId, this.branchId)
-                .then(_.noop, function() {
-                    fail('Promise should have resolved');
-                });
-            flushAndVerify($httpBackend);
-        });
-        it('without a branchId', function() {
+        it('successfully', function() {
             $httpBackend.expectDELETE('/mobirest/ontologies/' + encodeURIComponent(this.recordId)).respond(200);
             ontologyManagerSvc.deleteOntology(this.recordId)
                 .then(_.noop, function() {
@@ -431,8 +420,8 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectDELETE('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '?' + this.params).respond(400, null, null, this.error);
-            ontologyManagerSvc.deleteOntology(this.recordId, this.branchId)
+            $httpBackend.expectDELETE('/mobirest/ontologies/' + encodeURIComponent(this.recordId)).respond(400, null, null, this.error);
+            ontologyManagerSvc.deleteOntology(this.recordId)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
@@ -512,6 +501,30 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have resolved');
                 });
             flushAndVerify($httpBackend);
+        });
+    });
+    describe('deleteOntologyBranch hits the proper endpoint', function() {
+        it('successfully', function() {
+            $httpBackend.expectDELETE('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId)).respond(200);
+            ontologyManagerSvc.deleteOntologyBranch(this.recordId, this.branchId)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectDELETE('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId)).respond(400, null, null, this.error);
+            ontologyManagerSvc.deleteOntologyBranch(this.recordId, this.branchId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual(this.error);
+                }.bind(this));
+            flushAndVerify($httpBackend);
+            expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: this.error
+            }));
         });
     });
     describe('getVocabularyStuff retrieves information about skos:Concepts and skos:ConceptSchemes in an ontology', function() {
@@ -1716,71 +1729,125 @@ describe('Ontology Manager service', function() {
     describe('getEntityName should return', function() {
         beforeEach(function () {
             this.entity = {};
+            this.presentProp = '';
+            util.getPropertyValue.and.callFake((entity, property) => (property === this.presentProp) ? this.title : '');
         });
-        it('returns the rdfs:label if present', function() {
-            util.getPropertyValue.and.returnValue(this.title);
-            expect(ontologyManagerSvc.getEntityName(this.entity)).toEqual(this.title);
-            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).not.toHaveBeenCalledWith(this.entity, 'title');
-            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
-            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
-            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
-        });
-        it('returns the dcterms:title if present and no rdfs:label', function() {
-            util.getPropertyValue.and.returnValue('');
-            util.getDctermsValue.and.returnValue(this.title);
-            expect(ontologyManagerSvc.getEntityName(this.entity)).toEqual(this.title);
-            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(this.entity, 'title');
-            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
-            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
-            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
-        });
-        it('returns the dc:title if present and no rdfs:label or dcterms:title', function() {
-            util.getPropertyValue.and.callFake(function(entity, property) {
-                return (property === prefixes.dc + 'title') ? this.title : '';
-            }.bind(this));
-            util.getDctermsValue.and.returnValue('');
-            expect(ontologyManagerSvc.getEntityName(this.entity)).toEqual(this.title);
-            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(this.entity, 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
-            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
-            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
-        });
-        it('returns skos:prefLabel if present and no rdfs:label, dcterms:title, or dc:title', function() {
-            util.getPropertyValue.and.callFake(function(entity, property) {
-                return (property === prefixes.skos + 'prefLabel') ? this.title : '';
-            }.bind(this));
-            util.getDctermsValue.and.returnValue('');
-            ontologyManagerSvc.getEntityName(this.entity);
-            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(this.entity, 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
-            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
-        });
-        it('returns skos:altLabel if present and no rdfs:label, dcterms:title, or dc:title, or skos:prefLabel', function() {
-            util.getPropertyValue.and.callFake(function(entity, property) {
-                return (property === prefixes.skos + 'altLabel') ? this.title : '';
+        describe('returns the rdfs:label if present', function() {
+            it('and in english', function() {
+                this.entity[prefixes.rdfs + 'label'] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
+                expect(ontologyManagerSvc.getEntityName(this.entity)).toEqual('hello');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.dcterms + 'title');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
+                expect(util.getBeautifulIRI).not.toHaveBeenCalled();
             });
-            util.getDctermsValue.and.returnValue('');
-            ontologyManagerSvc.getEntityName(this.entity);
-            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(this.entity, 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
-            expect(util.getBeautifulIRI).not.toHaveBeenCalled();
+            it('and there is no english version', function() {
+                this.presentProp = prefixes.rdfs + 'label';
+                expect(ontologyManagerSvc.getEntityName(this.entity)).toEqual(this.title);
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.dcterms + 'title');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
+                expect(util.getBeautifulIRI).not.toHaveBeenCalled();
+            });
+        });
+        describe('returns the dcterms:title if present and no rdfs:label', function() {
+            it('and in english', function() {
+                this.entity[prefixes.dcterms + 'title'] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
+                expect(ontologyManagerSvc.getEntityName(this.entity)).toEqual('hello');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.dcterms + 'title');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
+                expect(util.getBeautifulIRI).not.toHaveBeenCalled();
+            });
+            it('and there is no english version', function() {
+                this.presentProp = prefixes.dcterms + 'title';
+                expect(ontologyManagerSvc.getEntityName(this.entity)).toEqual(this.title);
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dcterms + 'title');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
+                expect(util.getBeautifulIRI).not.toHaveBeenCalled();
+            });
+        });
+        describe('returns the dc:title if present and no rdfs:label or dcterms:title', function() {
+            it('and in english', function() {
+                this.entity[prefixes.dc + 'title'] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
+                expect(ontologyManagerSvc.getEntityName(this.entity)).toEqual('hello');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dcterms +'title');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
+                expect(util.getBeautifulIRI).not.toHaveBeenCalled();
+            });
+            it('and there is no english version', function() {
+                this.presentProp = prefixes.dc + 'title';
+                expect(ontologyManagerSvc.getEntityName(this.entity)).toEqual(this.title);
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dcterms +'title');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
+                expect(util.getBeautifulIRI).not.toHaveBeenCalled();
+            });
+        });
+        describe('returns skos:prefLabel if present and no rdfs:label, dcterms:title, or dc:title', function() {
+            it('and in english', function() {
+                this.entity[prefixes.skos + 'prefLabel'] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
+                ontologyManagerSvc.getEntityName(this.entity);
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dcterms + 'title');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
+                expect(util.getBeautifulIRI).not.toHaveBeenCalled();
+            });
+            it('and there is no english version', function() {
+                this.presentProp = prefixes.skos + 'prefLabel';
+                ontologyManagerSvc.getEntityName(this.entity);
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dcterms + 'title');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
+                expect(util.getBeautifulIRI).not.toHaveBeenCalled();
+            });
+        });
+        describe('returns skos:altLabel if present and no rdfs:label, dcterms:title, or dc:title, or skos:prefLabel', function() {
+            it('and in english', function() {
+                this.entity[prefixes.skos + 'altLabel'] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
+                ontologyManagerSvc.getEntityName(this.entity);
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dcterms + 'title');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
+                expect(util.getBeautifulIRI).not.toHaveBeenCalled();
+            });
+            it('and there is no english version', function() {
+                this.presentProp = prefixes.skos + 'altLabel';
+                ontologyManagerSvc.getEntityName(this.entity);
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dcterms + 'title');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
+                expect(util.getBeautifulIRI).not.toHaveBeenCalled();
+            });
         });
         it('returns the @id if present and nothing else', function() {
-            util.getPropertyValue.and.returnValue('');
-            util.getDctermsValue.and.returnValue('');
             util.getBeautifulIRI.and.returnValue(this.ontologyId);
             this.entity['@id'] = this.ontologyId;
             expect(ontologyManagerSvc.getEntityName(this.entity)).toEqual(this.ontologyId);
             expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(this.entity, 'title');
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dcterms + 'title');
             expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
             expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
             expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');

@@ -21,32 +21,29 @@
   #L%
   -->
 <div class="usages-block">
-    <block>
-        <block-header>Usages</block-header>
-        <block-content targeted-spinner="dvm.id">
-            <div class="property-values" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
-                <h5 ng-click="isClosed = !isClosed" class="clearfix">
-                    <p class="text">{{dvm.ontoUtils.getLabelForIRI(key)}}
-                        <small>&lt;{{key}}&gt;</small>
-                    </p>
-                    <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
-                </h5>
-                <div class="value-container" ng-repeat="statement in value" ng-hide="isClosed">
-                    <span class="value-display-wrapper">
-                        <span ng-repeat="(key, value) in statement" class="{{key}}">
-                            <span ng-if="value === dvm.os.listItem.selected['@id']" class="selected">{{dvm.ontoUtils.getLabelForIRI(value)}}</span>
-                            <span ng-if="value !== dvm.os.listItem.selected['@id']">
-                                <span ng-if="!dvm.ontoUtils.isLinkable(value)">{{(key === 'predicate') ? (value | splitIRI).end : value}}</span>
-                                <a ng-if="dvm.ontoUtils.isLinkable(value)" ng-click="dvm.os.goTo(value)">{{dvm.ontoUtils.getLabelForIRI(value)}}</a>
-                            </span>
+    <div class="section-header">
+        <h5>Usages</h5>
+    </div>
+    <div class="usages-container" targeted-spinner="dvm.id">
+        <div class="property-values mt-3" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
+            <div class="prop-header d-flex align-items-center clearfix">
+                <p class="text text-truncate m-0">{{dvm.ontoUtils.getLabelForIRI(key)}}</p>
+                <small class="ml-1 text-muted text-truncate flex-1">&lt;{{key}}&gt;</small>
+            </div>
+            <div class="prop-value-container p-1 ml-3 mt-1" ng-repeat="statement in value">
+                <span class="value-display-wrapper">
+                    <span ng-repeat="(key, value) in statement" class="{{key}}">
+                        <span ng-if="value === dvm.os.listItem.selected['@id']" class="selected font-weight-bold">{{dvm.ontoUtils.getLabelForIRI(value)}}</span>
+                        <span ng-if="value !== dvm.os.listItem.selected['@id']">
+                            <span ng-if="!dvm.ontoUtils.isLinkable(value)">{{(key === 'predicate') ? (value | splitIRI).end : value}}</span>
+                            <a ng-if="dvm.ontoUtils.isLinkable(value)" ng-click="dvm.os.goTo(value)">{{dvm.ontoUtils.getLabelForIRI(value)}}</a>
                         </span>
                     </span>
-                </div>
+                </span>
             </div>
-            <div class="text-center">
-                <a ng-if="dvm.chunks !== dvm.index" ng-click="dvm.getMoreResults()"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a>
-            </div>
-        </block-content>
-        <block-footer class="centered">Showing {{dvm.shown | number}} of {{dvm.total | number}}</block-footer>
-    </block>
+        </div>
+        <div class="text-center">
+            <a ng-if="dvm.chunks !== dvm.index" ng-click="dvm.getMoreResults()"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a>
+        </div>
+    </div>
 </div>

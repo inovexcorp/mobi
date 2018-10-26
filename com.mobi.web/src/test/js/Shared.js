@@ -294,6 +294,7 @@ function mockOntologyManager() {
             this.getConceptSchemeIRIs = jasmine.createSpy('getConceptSchemeIRIs').and.returnValue([]);
             this.downloadOntology = jasmine.createSpy('downloadOntology');
             this.deleteOntology = jasmine.createSpy('deleteOntology').and.returnValue($q.when());
+            this.deleteOntologyBranch = jasmine.createSpy('deleteOntologyBranch').and.returnValue($q.when());
             this.getAnnotationPropertyHierarchies = jasmine.createSpy('getAnnotationPropertyHierarchies');
             this.uploadChangesFile = jasmine.createSpy('uploadChangesFile').and.returnValue($q.when({}));
             this.getFailedImports = jasmine.createSpy('getFailedImports').and.returnValue($q.when([]));
@@ -347,7 +348,6 @@ function mockMappingManager() {
             this.getPropIdByMappingId = jasmine.createSpy('getPropIdByMappingId').and.returnValue('');
             this.getAllClassMappings = jasmine.createSpy('getAllClassMappings').and.returnValue([]);
             this.getAllDataMappings = jasmine.createSpy('getAllDataMappings').and.returnValue([]);
-            this.getDataMappingFromClass = jasmine.createSpy('getDataMappingFromClass').and.returnValue({});
             this.getPropsLinkingToClass = jasmine.createSpy('getPropsLinkingToClass').and.returnValue([]);
             this.getPropMappingTitle = jasmine.createSpy('getPropMappingTitle').and.returnValue('');
             this.getBaseClass = jasmine.createSpy('getBaseClass').and.returnValue({});
@@ -369,7 +369,7 @@ function mockDelimitedManager() {
             this.previewFile = jasmine.createSpy('previewFile').and.callFake(function(rowCount) {
                 return rowCount ? $q.when() : $q.reject('Something went wrong');
             });
-            this.previewMap = jasmine.createSpy('previewMap').and.callFake(function(jsonld, format) {
+            this.previewMap = jasmine.createSpy('previewMap').and.callFake((jsonld, format) => {
                 if (jsonld) {
                     return format === 'jsonld' ? $q.when([]) : $q.when('');
                 } else {
@@ -378,6 +378,7 @@ function mockDelimitedManager() {
             });
             this.mapAndDownload = jasmine.createSpy('mapAndDownload');
             this.mapAndUpload = jasmine.createSpy('mapAndUpload').and.returnValue($q.when());
+            this.mapAndCommit = jasmine.createSpy('mapAndCommit').and.returnValue($q.when());
             this.reset = jasmine.createSpy('reset');
             this.getHeader = jasmine.createSpy('getHeader').and.returnValue('');
         });
@@ -393,7 +394,7 @@ function mockMapperState() {
             this.mapping = undefined;
             this.sourceOntologies = [];
             this.mappingSearchString = '';
-            this.availablePropsByClass = {};
+            this.propsByClass = {};
             this.editMapping = false;
             this.newMapping = false;
             this.step = 0;
@@ -413,6 +414,9 @@ function mockMapperState() {
             this.displayDownloadMappingOverlay = false;
             this.displayMappingConfigOverlay = false;
             this.displayPropMappingOverlay = false;
+            this.displayRunMappingDatasetOverlay = false;
+            this.displayRunMappingDownloadOverlay = false;
+            this.displayRunMappingOntologyOverlay = false;
             this.editIriTemplate = false;
             this.selectedClassMappingId = '';
             this.selectedPropMappingId = '';
@@ -426,10 +430,16 @@ function mockMapperState() {
             this.saveMapping = jasmine.createSpy("saveMapping").and.returnValue($q.when());
             this.setMasterBranch = jasmine.createSpy("setMasterBranch");
             this.setInvalidProps = jasmine.createSpy('setInvalidProps');
-            this.getAvailableProps = jasmine.createSpy('getAvailableProps').and.returnValue([]);
-            this.setAvailableProps = jasmine.createSpy('setAvailableProps');
-            this.hasAvailableProps = jasmine.createSpy('hasAvailableProps');
-            this.removeAvailableProps = jasmine.createSpy('removeAvailableProps');
+            this.getProps = jasmine.createSpy('getProps').and.returnValue([]);
+            this.getPropsByClassMappingId = jasmine.createSpy('getPropsByClassMappingId').and.returnValue([]);
+            this.setProps = jasmine.createSpy('setProps');
+            this.setPropsByClassMappingId = jasmine.createSpy('setPropsByClassMappingId');
+            this.hasProps = jasmine.createSpy('hasProps');
+            this.hasPropsByClassMappingId = jasmine.createSpy('hasPropsByClassMappingId');
+            this.hasPropsSet = jasmine.createSpy('hasPropsSet');
+            this.hasPropsSetByClassMappingId = jasmine.createSpy('hasPropsSetByClassMappingId');
+            this.removeProps = jasmine.createSpy('removeProps');
+            this.removePropsByClassMappingId = jasmine.createSpy('removePropsByClassMappingId');
             this.getClassProps = jasmine.createSpy('getClassProps').and.returnValue([]);
             this.getClasses = jasmine.createSpy('getClasses').and.returnValue([]);
             this.getMappedColumns = jasmine.createSpy('getMappedColumns').and.returnValue([]);
@@ -577,6 +587,9 @@ function mockOntologyState() {
                 },
                 userBranch: false,
                 createdFromExists: true,
+                userCanModify: false,
+                userCanModifyMaster: false,
+                masterBranchIRI: '',
                 ontologyRecord: {
                     title: '',
                     recordId: '',
@@ -732,13 +745,18 @@ function mockOntologyState() {
             this.addToClassIRIs = jasmine.createSpy('addToClassIRIs');
             this.removeFromClassIRIs = jasmine.createSpy('removeFromClassIRIs');
             this.addErrorToUploadItem = jasmine.createSpy('addErrorToUploadItem');
+            this.attemptMerge = jasmine.createSpy('attemptMerge').and.returnValue($q.when());
+            this.checkConflicts = jasmine.createSpy('checkConflicts').and.returnValue($q.when());
+            this.merge = jasmine.createSpy('merge').and.returnValue($q.when());
+            this.cancelMerge = jasmine.createSpy('cancelMerge');
+            this.canModify = jasmine.createSpy('canModify');
         });
     });
 }
 
 function mockOntologyUtilsManager() {
     module(function($provide) {
-        $provide.service('ontologyUtilsManagerService', function() {
+        $provide.service('ontologyUtilsManagerService', function($q) {
             this.containsDerivedConcept = jasmine.createSpy('containsDerivedConcept');
             this.containsDerivedSemanticRelation = jasmine.createSpy('containsDerivedSemanticRelation');
             this.containsDerivedConceptScheme = jasmine.createSpy('containsDerivedConceptScheme');
@@ -768,6 +786,9 @@ function mockOntologyUtilsManager() {
             this.updateflatIndividualsHierarchy = jasmine.createSpy('updateflatIndividualsHierarchy');
             this.checkIri = jasmine.createSpy('checkIri');
             this.getSelectList = jasmine.createSpy('getSelectList');
+            this.getRemovePropOverlayMessage = jasmine.createSpy('getRemovePropOverlayMessage').and.returnValue('');
+            this.getPropValueDisplay = jasmine.createSpy('getPropValueDisplay').and.returnValue('');
+            this.removeProperty = jasmine.createSpy('removeProperty').and.returnValue($q.when({}));
         });
     });
 }
@@ -792,6 +813,7 @@ function mockPropertyManager() {
             this.editId = jasmine.createSpy('editId');
             this.createValueObj = jasmine.createSpy('createValueObj').and.returnValue({});
             this.create = jasmine.createSpy('create').and.returnValue($q.resolve({}));
+            this.getDatatypeMap = jasmine.createSpy('getDatatypeMap').and.returnValue({});
         });
     });
 }
@@ -963,7 +985,7 @@ function mockCatalogState() {
                     }
                 }
             };
-            this.currentPage = 0;
+            this.currentPage = 1;
             this.links = {
                 prev: '',
                 next: ''
@@ -1108,7 +1130,7 @@ function mockDiscoverState() {
                     original: []
                 },
                 instanceDetails: {
-                    currentPage: 0,
+                    currentPage: 1,
                     data: [],
                     limit: 99,
                     links: {
@@ -1271,6 +1293,7 @@ function mockMergeRequestManager() {
             this.createRequest = jasmine.createSpy('createRequest').and.returnValue($q.when());
             this.getRequest = jasmine.createSpy('getRequest').and.returnValue($q.when({}));
             this.deleteRequest = jasmine.createSpy('deleteRequest').and.returnValue($q.when());
+            this.acceptRequest = jasmine.createSpy('acceptRequest').and.returnValue($q.when());
             this.isAccepted = jasmine.createSpy('isAccepted').and.returnValue(false);
         });
     });
@@ -1278,14 +1301,14 @@ function mockMergeRequestManager() {
 
 function mockMergeRequestsState() {
     module(function($provide) {
-        $provide.service('mergeRequestsStateService', function() {
-            this.open = {
-                active: true,
-                selected: undefined
-            };
+        $provide.service('mergeRequestsStateService', function($q) {
+            this.selected = undefined;
+            this.acceptedFilter = false;
             this.requests = [];
             this.showDelete = false;
-            this.requestToDelete = false;
+            this.requestToDelete = undefined;
+            this.showAccept = false;
+            this.requestToAccept = undefined;
             this.createRequest = false;
             this.createRequestStep = 0;
             this.requestConfig = {};
@@ -1294,7 +1317,7 @@ function mockMergeRequestsState() {
             this.setRequests = jasmine.createSpy('setRequests');
             this.setRequestDetails = jasmine.createSpy('setRequestDetails');
             this.startCreate = jasmine.createSpy('startCreate');
-            this.getCurrentTab = jasmine.createSpy('getCurrentTab').and.returnValue(this.open);
+            this.resolveRequestConflicts = jasmine.createSpy('resolveRequestConflicts').and.returnValue($q.when());
         });
     });
 }
@@ -1315,7 +1338,7 @@ function mockPolicyManager() {
             this.stringEqual = 'stringEqual';
             this.getPolicies = jasmine.createSpy('getPolicies').and.returnValue($q.when([]));
             this.getPolicy = jasmine.createSpy('getPolicy').and.returnValue($q.when({}));
-            this.updatePolicy = jasmine.createSpy('getPolicy').and.returnValue($q.when());
+            this.updatePolicy = jasmine.createSpy('updatePolicy').and.returnValue($q.when());
         });
     });
 }
@@ -1323,7 +1346,28 @@ function mockPolicyManager() {
 function mockPolicyEnforcement() {
     module(function($provide) {
         $provide.service('policyEnforcementService', function($q) {
+            this.permit = 'Permit';
+            this.deny = 'Deny';
+            this.indeterminate = 'Indeterminate';
             this.evaluateRequest = jasmine.createSpy('evaulateRequest').and.returnValue($q.when());
+        });
+    });
+}
+
+function mockModal() {
+    module(function($provide) {
+        $provide.service('modalService', function() {
+            this.openModal = jasmine.createSpy('openModal');
+            this.openConfirmModal = jasmine.createSpy('openConfirmModal');
+        });
+    });
+}
+
+function mockRecordPermissionsManager() {
+    module(function($provide) {
+        $provide.service('recordPermissionsManagerService', function($q) {
+            this.getRecordPolicy = jasmine.createSpy('getRecordPolicy').and.returnValue($q.when({}));
+            this.updateRecordPolicy = jasmine.createSpy('getRecordPolicy').and.returnValue($q.when());
         });
     });
 }

@@ -114,26 +114,26 @@ describe('IRI Template Overlay directive', function() {
             expect(this.element.querySelectorAll('.template-then').length).toBe(1);
             expect(this.element.querySelectorAll('.template-ends-with').length).toBe(1);
         });
-        it('with a .help-block', function() {
-            expect(this.element.querySelectorAll('.help-block').length).toBe(1);
+        it('with a .form-text', function() {
+            expect(this.element.querySelectorAll('.form-text').length).toBe(1);
         });
         it('with the correct classes for errors', function() {
             var failTests = ['/', '#', '?', 'test/', '/test', 'test#', '#test', 'test?', '?test', 't: test', 'test#test', 'test?test', 'test/test'];
             var successTests = ['t:test', 'test:/test', 'TEST:test', 't:test.test'];
             this.controller.beginsWith = '';
             scope.$digest();
-            var beginsWith = angular.element(this.element.querySelectorAll('.template-begins-with')[0]);
-            expect(beginsWith.hasClass('has-error')).toBe(true);
+            var beginsWith = angular.element(this.element.querySelectorAll('.template-begins-with input')[0]);
+            expect(beginsWith.hasClass('is-invalid')).toBe(true);
 
             failTests.forEach(function(test) {
                 this.controller.beginsWith = test;
                 scope.$digest();
-                expect(beginsWith.hasClass('has-error')).toBe(true);
+                expect(beginsWith.hasClass('is-invalid')).toBe(true);
             }, this);
             successTests.forEach(function(test) {
                 this.controller.beginsWith = test;
                 scope.$digest();
-                expect(beginsWith.hasClass('has-error')).toBe(false);
+                expect(beginsWith.hasClass('is-invalid')).toBe(false);
             }, this);
         });
         it('with the correct number of options for ends with', function() {

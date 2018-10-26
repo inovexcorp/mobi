@@ -28,13 +28,13 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.mobi.ontologies.dcterms._Thing;
+import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.AttributeDesignator;
 import com.mobi.security.policy.api.Request;
 import com.mobi.vocabularies.xsd.XSD;
@@ -84,7 +84,7 @@ public class MobiPIPTest extends OrmEnabledTestCase {
         repo.initialize();
 
         pathId = VALUE_FACTORY.createIRI(MobiPIP.PROP_PATH_NAMESPACE + "("
-                + RestUtils.encode("^<" + pathPropId.stringValue() + ">/<" + titleIRI.stringValue()) + ">)");
+                + ResourceUtils.encode("^<" + pathPropId.stringValue() + ">/<" + titleIRI.stringValue()) + ">)");
 
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(subjectId, prop1Id, VALUE_FACTORY.createLiteral(true));

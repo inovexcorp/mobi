@@ -24,35 +24,43 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name associationBlock
+         *
+         * @description
+         * The `associationBlock` module only provides the `associationBlock` directive which creates a section for
+         * displaying the classes and properties in an ontology.
+         */
         .module('associationBlock', [])
+        /**
+         * @ngdoc directive
+         * @name associationBlock.directive:associationBlock
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         *
+         * @description
+         * `associationBlock` is a directive that creates a section that displays the
+         * {@link everythingTree.directive:everythingTree} for the current
+         * {@link ontologyState.service:ontologyStateService selected ontology}. The directive is replaced by the
+         * contents of its template.
+         */
         .directive('associationBlock', associationBlock);
 
-        associationBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
+        associationBlock.$inject = ['ontologyStateService'];
 
-        function associationBlock(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
+        function associationBlock(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/associationBlock/associationBlock.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
-                    dvm.om = ontologyManagerService;
-                    dvm.utils = ontologyUtilsManagerService;
-
-                    dvm.deleteEntity = function() {
-                        if (dvm.om.isClass(dvm.sm.listItem.selected)) {
-                            dvm.utils.deleteClass();
-                        } else if (dvm.om.isObjectProperty(dvm.sm.listItem.selected)) {
-                            dvm.utils.deleteObjectProperty();
-                        } else if (dvm.om.isDataTypeProperty(dvm.sm.listItem.selected)) {
-                            dvm.utils.deleteDataTypeProperty();
-                        }
-                        dvm.showDeleteConfirmation = false;
-                    }
-                }
+                    dvm.os = ontologyStateService;
+                },
+                templateUrl: 'modules/ontology-editor/directives/associationBlock/associationBlock.html'
             }
         }
 })();

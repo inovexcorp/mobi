@@ -30,7 +30,7 @@
          *
          * @description
          * The `relationshipsBlock` module only provides the `relationshipsBlock` directive which creates
-         * the relationships block within the ontology editor.
+         * section for displaying the relationships on a concept or concept scheme.
          */
         .module('relationshipsBlock', [])
         /**
@@ -41,19 +41,25 @@
          * @requires ontologyManager.service:ontologyManagerService
          * @requires ontologyState.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires modal.service:modalService
          * @requires prefixes.service:prefixes
          *
          * @description
-         * HTML contents in the relationships block with provides the users with a display of SKOS relationships
-         * for the selected entity. A link to add additional relationships is also provided.
+         * `relationshipsBlock` is a directive that creates a section that displays the SKOS relationships on the
+         * {@link ontologyState.service:ontologyStateService selected concept or concept scheme} using
+         * {@link propertyValues.directive:propertyValues}. If the selected entity is a concept, the section header
+         * contains a button to {@link relationshipOverlay.directive:relationshipOverlay add a relationship}. If the
+         * selected entity is a concept scheme, the section header contains a button to
+         * {@link topConceptOverlay.directive:topConceptOverlay add a top concept}. The directive is replaced by the
+         * contents of its template.
          *
          * @param {Object[]} relationshipList the list of relationships to display
          */
         .directive('relationshipsBlock', relationshipsBlock);
 
-        relationshipsBlock.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'prefixes'];
+        relationshipsBlock.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'modalService', 'prefixes'];
 
-        function relationshipsBlock(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes) {
+        function relationshipsBlock(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, modalService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -71,19 +77,40 @@
                     dvm.showTopConceptOverlay = false;
                     dvm.showRemoveOverlay = false;
 
+                    dvm.clickPlus = function() {
+                        if (dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)) {
+                            dvm.showTopConceptOverlay();
+                        } else {
+                            dvm.showRelationshipOverlay();
+                        }
+                    }
+                    dvm.isDisabled = function() {
+                        if (dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)) {
+                            return !dvm.hasTopConceptProperty();
+                        } else {
+                            return !dvm.relationshipList.length;
+                        }
+                    }
+                    dvm.showRelationshipOverlay = function() {
+                        modalService.openModal('relationshipOverlay', {relationshipList: dvm.relationshipList}, dvm.updateHierarchy);
+                    }
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
-                        dvm.index = index;
-                        dvm.showRemoveOverlay = true;
+                        modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
+                            dvm.ontoUtils.removeProperty(key, index).then(dvm.removeFromHierarchy);
+                        });
                     }
-                    dvm.updateHierarchy = function(relationship, values) {
-                        dvm.ontoUtils.updateVocabularyHierarchies(relationship, values);
+                    dvm.updateHierarchy = function(updatedRelationshipObj) {
+                        dvm.ontoUtils.updateVocabularyHierarchies(updatedRelationshipObj.relationship, updatedRelationshipObj.values);
                     }
                     dvm.removeFromHierarchy = function(axiomObject) {
                         dvm.ontoUtils.removeFromVocabularyHierarchies(dvm.key, axiomObject);
                     }
                     dvm.hasTopConceptProperty = function() {
                         return !_.isEmpty(dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, prefixes.skos + 'hasTopConcept', dvm.os.listItem));
+                    }
+                    dvm.showTopConceptOverlay = function() {
+                        modalService.openModal('topConceptOverlay', {}, dvm.updateHierarchy);
                     }
                 }
             }

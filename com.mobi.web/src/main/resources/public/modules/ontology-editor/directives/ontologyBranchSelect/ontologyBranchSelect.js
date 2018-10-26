@@ -24,14 +24,43 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name ontologyBranchSelect
+         *
+         * @description
+         * The `ontologyBranchSelect` module provides the `ontologyBranchSelect` directive which creates a
+         * selector for the current ontology's branches.
+         */
         .module('ontologyBranchSelect', [])
+        /**
+         * @ngdoc directive
+         * @name ontologyBranchSelect.directive:ontologyBranchSelect
+         * @scope
+         * @restrict E
+         * @requires catalogManager.service:catalogManagerService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires prefixes.service:prefixes
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires util.service:utilService
+         * @requires stateManager.service:stateManagerService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `ontologyBranchSelect` is a directive that creates a `ui-select` containing the branches of the current
+         * {@link ontologyState.service:ontologyStateService listItem} and binds the selected branch to `bindModel`.
+         * Each branch in the `ui-select` has buttons for editing the metadata and deleting the branch which will open
+         * a {@link confirmModal.directive:confirmModal}. The directive also houses the method for opening a modal for
+         * {@link editBranchOverlay.directive:editBranchOverlay editing a branch}. The directive is replaced by the
+         * contents of its template.
+         *
+         * @param {Object} bindModel The currently selected branch
+         */
         .directive('ontologyBranchSelect', ontologyBranchSelect);
 
-        ontologyBranchSelect.$inject = ['$filter', '$q', '$timeout', 'catalogManagerService', 'ontologyStateService', 'prefixes',
-            'ontologyManagerService', 'utilService', 'stateManagerService'];
+        ontologyBranchSelect.$inject = ['$filter', '$q', '$timeout', 'catalogManagerService', 'ontologyStateService', 'prefixes', 'ontologyManagerService', 'utilService', 'stateManagerService', 'modalService'];
 
-        function ontologyBranchSelect($filter, $q, $timeout, catalogManagerService, ontologyStateService, prefixes, ontologyManagerService, utilService,
-            stateManagerService) {
+        function ontologyBranchSelect($filter, $q, $timeout, catalogManagerService, ontologyStateService, prefixes, ontologyManagerService, utilService, stateManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -49,8 +78,6 @@
                     dvm.os = ontologyStateService;
                     dvm.cm = catalogManagerService;
                     dvm.util = utilService;
-                    dvm.showDeleteConfirmation = false;
-                    dvm.showEditOverlay = false;
                     dvm.deleteError = '';
 
                     var catalogId = _.get(dvm.cm.localCatalog, '@id', '');
@@ -72,32 +99,31 @@
                             }, $q.reject)
                             .then(() => dvm.os.resetStateTabs(), dvm.util.createErrorToast);
                     }
-
                     dvm.openDeleteConfirmation = function($event, branch) {
                         $event.stopPropagation();
                         dvm.branch = branch;
-                        dvm.showDeleteConfirmation = true;
+                        var title = dvm.util.getDctermsValue(branch, 'title');
+                        var msg = '';
+                        if (dvm.cm.isUserBranch(branch)) {
+                            msg += '<p>You have made diverging changes from the head of Branch: <strong>' + title + '</strong>. Continuing with this operation will only delete your diverging changes.</p>'
+                        }
+                        modalService.openConfirmModal(msg + '<p>Are you sure that you want to delete Branch: <strong>' + title + '</strong>?</p>', dvm.delete);
                     }
-
                     dvm.openEditOverlay = function($event, branch) {
                         $event.stopPropagation();
-                        dvm.branch = branch;
-                        dvm.showEditOverlay = true;
+                        modalService.openModal('editBranchOverlay', {branch}, () => dvm.submit(branch));
                     }
-
                     dvm.delete = function() {
-                        om.deleteOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id'])
+                        om.deleteOntologyBranch(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id'])
                             .then(() => {
                                 dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id']);
-                                dvm.showDeleteConfirmation = false;
-                            }, errorMessage => dvm.deleteError = errorMessage);
+                            }, dvm.util.createErrorToast);
                     }
-
-                    dvm.submit = function() {
-                        if (dvm.branch['@id'] === dvm.bindModel) {
+                    dvm.submit = function(branch) {
+                        if (branch['@id'] === dvm.bindModel) {
                             dvm.bindModel = '';
                             $timeout(function() {
-                                dvm.bindModel = dvm.branch['@id'];
+                                dvm.bindModel = branch['@id'];
                             });
                         }
                     }

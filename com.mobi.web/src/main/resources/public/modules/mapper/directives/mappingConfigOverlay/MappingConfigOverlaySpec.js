@@ -94,19 +94,13 @@ describe('Mapping Config Overlay directive', function() {
         });
         it('for the list of ontology records', function() {
             var headers = {
-                'x-total-count': 10,
-                links: {
-                    prev: 'prev',
-                    next: 'next'
-                }
+                'x-total-count': 10
             };
             this.response.headers.and.returnValue(headers);
-            utilSvc.parseLinks.and.returnValue(headers.links);
             this.compile();
             expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogManagerSvc.localCatalog['@id'], this.controller.recordsConfig);
             expect(this.controller.records).toEqual(this.response.data);
             expect(this.controller.totalSize).toEqual(headers['x-total-count']);
-            expect(this.controller.links).toEqual(headers.links);
         });
         it('if the mapping does not have an ontology set', function() {
             this.compile();
@@ -168,10 +162,10 @@ describe('Mapping Config Overlay directive', function() {
         beforeEach(function() {
             this.compile();
         });
-        describe('should get the list of ontology records', function() {
+        describe('should set the list of ontology records', function() {
             it('unless an error occurs', function() {
                 catalogManagerSvc.getRecords.and.returnValue($q.reject('Error message'));
-                this.controller.getRecords();
+                this.controller.setRecords();
                 scope.$apply();
                 expect(this.controller.recordsConfig.pageIndex).toBe(0);
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogManagerSvc.localCatalog['@id'], this.controller.recordsConfig);
@@ -179,58 +173,28 @@ describe('Mapping Config Overlay directive', function() {
             });
             it('successfully', function() {
                 var headers = {
-                    'x-total-count': 10,
-                    links: {
-                        prev: 'prev',
-                        next: 'next'
-                    }
+                    'x-total-count': 10
                 };
                 this.response.headers.and.returnValue(headers);
-                utilSvc.parseLinks.and.returnValue(headers.links);
                 var record = {'@id': 'record'};
                 this.controller.selectedRecord = angular.copy(record);
                 this.response.data.push(record);
-                this.controller.getRecords();
+                this.controller.setRecords();
                 scope.$apply();
                 expect(this.controller.recordsConfig.pageIndex).toBe(0);
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogManagerSvc.localCatalog['@id'], this.controller.recordsConfig);
                 expect(this.controller.records).toEqual(this.response.data);
                 expect(this.controller.totalSize).toEqual(headers['x-total-count']);
-                expect(this.controller.links).toEqual(headers.links);
                 expect(this.controller.selectedRecord).toBe(record);
                 expect(this.controller.recordsErrorMessage).toBe('');
             });
         });
-        describe('should get a page of records', function() {
-            beforeEach(function() {
-                this.pageIndex = this.controller.recordsConfig.pageIndex;
-                utilSvc.getResultsPage.and.returnValue($q.when(this.response));
-            });
-            it('unless an error occurs', function() {
-                utilSvc.getResultsPage.and.returnValue($q.reject('Error message'));
-                this.controller.getRecordPage('prev');
-                scope.$apply();
-                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(jasmine.any(String));
-                expect(this.controller.recordsErrorMessage).toBe('Error retrieving ontologies');
-                expect(this.controller.recordsConfig.pageIndex).toBe(this.pageIndex);
-                expect(this.controller.records).toEqual(this.response.data);
-            });
-            it('if the direction is previous', function() {
-                this.controller.getRecordPage('prev');
-                scope.$apply();
-                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.controller.links.prev);
-                expect(this.controller.recordsConfig.pageIndex).toBe(this.pageIndex - 1);
-                expect(this.controller.records).toEqual(this.response.data);
-                expect(this.controller.recordsErrorMessage).toBe('');
-            });
-            it('if the direction is next', function() {
-                this.controller.getRecordPage('next');
-                scope.$apply();
-                expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.controller.links.next);
-                expect(this.controller.recordsConfig.pageIndex).toBe(this.pageIndex + 1);
-                expect(this.controller.records).toEqual(this.response.data);
-                expect(this.controller.recordsErrorMessage).toBe('');
-            });
+        it('should set the initial list of ontology records', function() {
+            spyOn(this.controller, 'setRecords');
+            this.controller.currentPage = 10;
+            this.controller.setInitialRecords();
+            expect(this.controller.currentPage).toEqual(1);
+            expect(this.controller.setRecords).toHaveBeenCalled();
         });
         describe('should select an ontology', function() {
             beforeEach(function() {
@@ -420,7 +384,7 @@ describe('Mapping Config Overlay directive', function() {
                 expect(mappingManagerSvc.findIncompatibleMappings).not.toHaveBeenCalled();
                 expect(mappingManagerSvc.setSourceOntologyInfo).not.toHaveBeenCalled();
                 expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
-                expect(mapperStateSvc.setAvailableProps).not.toHaveBeenCalled();
+                expect(mapperStateSvc.setProps).not.toHaveBeenCalled();
                 expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
             });
             describe('if it changed', function() {
@@ -435,6 +399,7 @@ describe('Mapping Config Overlay directive', function() {
                     mappingManagerSvc.getAllClassMappings.and.returnValue([this.classMapping]);
                     this.controller.classes = [{classObj: {'@id': 'class1'}}, {classObj: {'@id': 'class2'}}];
                     mappingManagerSvc.getMappingEntity.and.returnValue({'@id': 'mapping'});
+                    mappingManagerSvc.getClassIdByMapping.and.returnValue('class');
                 });
                 it('setting appropriate state', function() {
                     this.controller.set();
@@ -445,7 +410,7 @@ describe('Mapping Config Overlay directive', function() {
                     expect(mapperStateSvc.changeProp).toHaveBeenCalledWith('mapping', prefixes.delim + 'sourceBranch', this.ontologyInfo.branchId, this.oldOntologyInfo.branchId, true);
                     expect(mapperStateSvc.changeProp).toHaveBeenCalledWith('mapping', prefixes.delim + 'sourceCommit', this.ontologyInfo.commitId, this.oldOntologyInfo.commitId, true);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
+                    expect(mapperStateSvc.setProps).toHaveBeenCalledWith('class');
                     expect(mapperStateSvc.availableClasses).toEqual(this.controller.classes);
                     expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
                 });
@@ -584,11 +549,11 @@ describe('Mapping Config Overlay directive', function() {
     });
     it('should class getRecords when the search button is clicked', function() {
         this.compile();
-        spyOn(this.controller, 'getRecords');
+        spyOn(this.controller, 'setInitialRecords');
 
         var searchButton = angular.element(this.element.querySelectorAll('.record-search-bar button')[0]);
         searchButton.triggerHandler('click');
-        expect(this.controller.getRecords).toHaveBeenCalled();
+        expect(this.controller.setInitialRecords).toHaveBeenCalled();
     });
     it('should select an ontology record when clicked', function() {
         this.compile();
@@ -612,7 +577,7 @@ describe('Mapping Config Overlay directive', function() {
         this.compile();
         spyOn(this.controller, 'cancel');
 
-        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         continueButton.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });

@@ -1,4 +1,4 @@
-@Version("1.1.0.${build}")
+@Version("1.2.2.${build}")
 
 package com.mobi.security.policy.rest;
 

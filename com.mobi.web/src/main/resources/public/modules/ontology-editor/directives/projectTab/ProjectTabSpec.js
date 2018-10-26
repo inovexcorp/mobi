@@ -21,18 +21,15 @@
  * #L%
  */
 describe('Project Tab directive', function() {
-    var $compile, scope, ontologyStateSvc;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
         module('projectTab');
-        mockOntologyState();
-        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyStateSvc = _ontologyStateService_;
         });
 
         this.element = $compile(angular.element('<project-tab></project-tab>'))(scope);
@@ -42,7 +39,6 @@ describe('Project Tab directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        ontologyStateSvc = null;
         this.element.remove();
     });
 
@@ -50,10 +46,6 @@ describe('Project Tab directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('project-tab')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
-        });
-        it('with a .editor', function() {
-            expect(this.element.querySelectorAll('.editor').length).toBe(1);
         });
         it('with a selected-details', function() {
             expect(this.element.find('selected-details').length).toBe(1);

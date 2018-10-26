@@ -24,12 +24,42 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name conceptSchemesTab
+         *
+         * @description
+         * The `conceptSchemesTab` module only provides the `conceptSchemesTab` directive which creates a page for
+         * viewing the concepts and concept schemes in an ontology/vocabulary.
+         */
         .module('conceptSchemesTab', [])
+        /**
+         * @ngdoc directive
+         * @name conceptSchemesTab.directive:conceptSchemesTab
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires propertyManager.service:propertyManagerService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `conceptSchemesTab` is a directive that creates a page containing the
+         * {@link conceptSchemeHierarchyBlock.directive:conceptSchemeHierarchyBlock} of the current
+         * {@link ontologyState.service:ontologyStateService selected ontology/vocabulary} and information about a
+         * selected entity from that list. The selected entity display includes a
+         * {@link selectedDetails.directive:selectedDetails}, a button to delete the entity, an
+         * {@link annotationBlock.directive:annotationBlock}, a
+         * {@link relationshipsBlock.directive:relationshipsBlock}, and a {@link usagesBlock.directive:usagesBlock}.
+         * The directive houses the method for opening a modal for deleting concepts or concept schemes. The directive
+         * is replaced by the contents of its template.
+         */
         .directive('conceptSchemesTab', conceptSchemesTab);
 
-        conceptSchemesTab.$inject = ['ontologyStateService', 'ontologyManagerService', 'propertyManagerService'];
+        conceptSchemesTab.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'propertyManagerService', 'modalService'];
 
-        function conceptSchemesTab(ontologyStateService, ontologyManagerService, propertyManagerService) {
+        function conceptSchemesTab(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, propertyManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,14 +70,26 @@
                     var dvm = this;
                     var pm = propertyManagerService;
                     var om = ontologyManagerService;
-                    var os = ontologyStateService;
+                    var ontoUtils = ontologyUtilsManagerService;
                     dvm.relationshipList = [];
+                    dvm.os = ontologyStateService;
 
-                    $scope.$watch(() => os.listItem.selected, function(newValue) {
-                        if (om.isConcept(os.listItem.selected, os.listItem.derivedConcepts)) {
-                            var schemeRelationships = _.filter(pm.conceptSchemeRelationshipList, iri => _.includes(os.listItem.iriList, iri));
-                            dvm.relationshipList = _.concat(os.listItem.derivedSemanticRelations, schemeRelationships);
-                        } else if (om.isConceptScheme(os.listItem.selected, os.listItem.derivedConceptSchemes)) {
+                    dvm.showDeleteConfirmation = function() {
+                        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.deleteEntity);
+                    }
+                    dvm.deleteEntity = function() {
+                        if (om.isConcept(dvm.os.listItem.selected, dvm.os.listItem.derivedConcepts)) {
+                            ontoUtils.deleteConcept();
+                        } else if (om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)) {
+                            ontoUtils.deleteConceptScheme();
+                        }
+                    }
+
+                    $scope.$watch(() => dvm.os.listItem.selected, function(newValue) {
+                        if (om.isConcept(dvm.os.listItem.selected, dvm.os.listItem.derivedConcepts)) {
+                            var schemeRelationships = _.filter(pm.conceptSchemeRelationshipList, iri => _.includes(dvm.os.listItem.iriList, iri));
+                            dvm.relationshipList = _.concat(dvm.os.listItem.derivedSemanticRelations, schemeRelationships);
+                        } else if (om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)) {
                             dvm.relationshipList = pm.schemeRelationshipList;
                         }
                     });

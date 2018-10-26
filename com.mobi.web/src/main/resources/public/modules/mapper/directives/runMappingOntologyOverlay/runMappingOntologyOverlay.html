@@ -1,0 +1,44 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="run-mapping-ontology-overlay overlay sm">
+    <form class="content" name="dvm.form">
+        <h6>Run Mapping to Ontology</h6>
+        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
+        <span class="form-text text-muted">Select an ontology whose MASTER branch to commit the data mapping.</span>
+        <div class="form-group">
+            <custom-label>Ontology</custom-label>
+            <ui-select ng-model="dvm.ontology">
+                <ui-select-match placeholder="Select Ontology">
+                    <span title="{{dvm.getOntologyIRI($select.selected)}}">{{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
+                </ui-select-match>
+                <ui-select-choices refresh="dvm.getOntologies($select.search)" refresh-delay="300" repeat="ontology in dvm.ontologies">
+                    <div title="{{dvm.getOntologyIRI(ontology)}}" ng-bind-html="dvm.util.getDctermsValue(ontology, 'title') | highlight:$select.search | trusted"></div>
+                </ui-select-choices>
+            </ui-select>
+        </div>
+        <div class="btn-container clearfix">
+            <button class="btn btn-primary float-right" ng-click="dvm.run()" ng-disabled="dvm.form.$invalid || !dvm.ontology">Run</button>
+            <button class="btn float-right" ng-click="dvm.cancel()">Cancel</button>
+        </div>
+    </form>
+</div>

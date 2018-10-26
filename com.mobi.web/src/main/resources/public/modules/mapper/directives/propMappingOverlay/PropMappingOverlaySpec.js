@@ -31,6 +31,7 @@ describe('Prop Mapping Overlay directive', function() {
         mockMappingManager();
         mockMapperState();
         mockOntologyManager();
+        mockPropertyManager();
         injectTrustedFilter();
 
         inject(function(_$compile_, _$rootScope_, _prefixes_, _utilService_, _mappingManagerService_, _mapperStateService_, _ontologyManagerService_) {
@@ -205,6 +206,19 @@ describe('Prop Mapping Overlay directive', function() {
                 expect(this.controller.classMappings).toEqual([]);
             });
         });
+        it('should check if the datatype is a lang string', function() {
+            this.controller.datatype = 'notLangString';
+            expect(this.controller.isLangString()).toBe(false);
+            this.controller.datatype = prefixes.rdf + 'langString';
+            expect(this.controller.isLangString()).toBe(true);
+        });
+        it('should clear the datatype', function() {
+            this.controller.showDatatypeSelect = true;
+            this.controller.datatype = 'datatype';
+            this.controller.clearDatatype();
+            expect(this.controller.showDatatypeSelect).toBe(false);
+            expect(this.controller.datatype).toBe(undefined);
+        });
         describe('should set the value of the property mapping', function() {
             beforeEach(function() {
                 this.controller.selectedProp = {ontologyId: 'propOntology', propObj: {'@id': 'prop'}};
@@ -230,8 +244,7 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.addClassMapping).not.toHaveBeenCalled();
                         expect(mapperStateSvc.addObjectMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.classMapping['@id']);
                         expect(mapperStateSvc.addDataMapping).not.toHaveBeenCalled();
-                        expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
-                        expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
+                        expect(mapperStateSvc.setProps).not.toHaveBeenCalled();
                         expect(mapperStateSvc.newProp).toBe(false);
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
@@ -243,24 +256,51 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.addClassMapping).toHaveBeenCalledWith(this.controller.rangeClass);
                         expect(mapperStateSvc.addObjectMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.classMapping['@id']);
                         expect(mapperStateSvc.addDataMapping).not.toHaveBeenCalled();
-                        expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
-                        expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
+                        expect(mapperStateSvc.setProps).toHaveBeenCalledWith('range');
                         expect(mapperStateSvc.newProp).toBe(false);
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
                     });
                 });
-                it('for a data property', function() {
-                    ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-                    mapperStateSvc.addDataMapping.and.returnValue(this.propMapping);
-                    this.controller.set();
-                    expect(mapperStateSvc.addClassMapping).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.addObjectMapping).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.addDataMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.controller.selectedColumn);
-                    expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMappingId);
-                    expect(mapperStateSvc.newProp).toBe(false);
-                    expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                describe('for a data property', function() {
+                    beforeEach(function() {
+                        ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+                        mapperStateSvc.addDataMapping.and.returnValue(this.propMapping);
+                    });
+                    it('with no datatype override', function() {
+                        this.controller.set();
+                        expect(mapperStateSvc.addClassMapping).not.toHaveBeenCalled();
+                        expect(mapperStateSvc.addObjectMapping).not.toHaveBeenCalled();
+                        expect(mapperStateSvc.addDataMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.controller.selectedColumn, undefined, undefined);
+                        expect(mapperStateSvc.newProp).toBe(false);
+                        expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                        expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                    });
+                    describe('with a datatype override set', function() {
+
+                        it('that is not a lang string', function() {
+                            this.controller.datatype = prefixes.xsd + 'double';
+                            this.controller.set();
+                            expect(mapperStateSvc.addClassMapping).not.toHaveBeenCalled();
+                            expect(mapperStateSvc.addObjectMapping).not.toHaveBeenCalled();
+                            expect(mapperStateSvc.addDataMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.controller.selectedColumn, 'xsd:double', undefined);
+                            expect(mapperStateSvc.newProp).toBe(false);
+                            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                            expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                        });
+                        it('that is a lang string', function() {
+                            this.controller.datatype = prefixes.rdf + 'langString';
+                            this.controller.language = 'en';
+                            this.controller.set();
+                            expect(mapperStateSvc.addClassMapping).not.toHaveBeenCalled();
+                            expect(mapperStateSvc.addObjectMapping).not.toHaveBeenCalled();
+                            expect(mapperStateSvc.addDataMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.controller.selectedColumn, 'rdf:langString', 'en');
+                            expect(mapperStateSvc.newProp).toBe(false);
+                            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                            expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                        });
+                    });
+
                 });
             });
             describe('if a property mapping is being edited', function() {
@@ -303,20 +343,38 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
                     });
                 });
-                it('and it is for a data property', function() {
-                    this.controller.selectedColumn = '0';
-                    mapperStateSvc.invalidProps = [{'@id': this.controller.selectedProp.propObj['@id']}];
-                    mappingManagerSvc.isDataMapping.and.returnValue(true);
-                    utilSvc.getPropertyValue.and.returnValue('10');
-                    this.controller.selectedPropMapping[prefixes.delim + 'columnIndex'] = [{'@value': '10'}]
-                    this.controller.set();
-                    expect(utilSvc.getPropertyValue).toHaveBeenCalledWith(this.controller.selectedPropMapping, prefixes.delim + 'columnIndex');
-                    expect(this.controller.selectedPropMapping[prefixes.delim + 'columnIndex']).toEqual([{'@value': '0'}]);
-                    expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(mapperStateSvc.selectedPropMappingId, prefixes.delim + 'columnIndex', this.controller.selectedColumn, '10');
-                    expect(mapperStateSvc.invalidProps).not.toContain({'@id': this.controller.selectedProp.propObj['@id']});
-                    expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMappingId);
-                    expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                describe('and it is for a data property', function() {
+                    it('with the column index updated', function() {
+                        this.controller.selectedColumn = '0';
+                        mapperStateSvc.invalidProps = [{'@id': this.controller.selectedProp.propObj['@id']}];
+                        mappingManagerSvc.isDataMapping.and.returnValue(true);
+                        utilSvc.getPropertyValue.and.returnValue('10');
+                        this.controller.selectedPropMapping[prefixes.delim + 'columnIndex'] = [{'@value': '10'}]
+                        this.controller.set();
+                        expect(utilSvc.getPropertyValue).toHaveBeenCalledWith(this.controller.selectedPropMapping, prefixes.delim + 'columnIndex');
+                        expect(this.controller.selectedPropMapping[prefixes.delim + 'columnIndex']).toEqual([{'@value': '0'}]);
+                        expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(mapperStateSvc.selectedPropMappingId, prefixes.delim + 'columnIndex', this.controller.selectedColumn, '10');
+                        expect(mapperStateSvc.invalidProps).not.toContain({'@id': this.controller.selectedProp.propObj['@id']});
+                        expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                        expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMappingId);
+                        expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                    });
+                    it('with the datatypeSpec updated', function() {
+                        this.controller.selectedPropMapping[prefixes.delim + 'columnIndex'] = [{'@value': '10'}]
+                        this.controller.datatype = prefixes.xsd + 'double';
+                        mapperStateSvc.invalidProps = [{'@id': this.controller.selectedProp.propObj['@id']}];
+                        mappingManagerSvc.isDataMapping.and.returnValue(true);
+                        utilSvc.getPropertyId.and.returnValue('string');
+                        this.controller.selectedPropMapping[prefixes.delim + 'datatypeSpec'] = [{'@id': 'string'}]
+                        this.controller.set();
+                        expect(utilSvc.getPropertyId).toHaveBeenCalledWith(this.controller.selectedPropMapping, prefixes.delim + 'datatypeSpec');
+                        expect(this.controller.selectedPropMapping[prefixes.delim + 'datatypeSpec']).toEqual([{'@id': prefixes.xsd + 'double'}]);
+                        expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(mapperStateSvc.selectedPropMappingId, prefixes.delim + 'datatypeSpec', this.controller.datatype, 'string', true);
+                        expect(mapperStateSvc.invalidProps).not.toContain({'@id': this.controller.selectedProp.propObj['@id']});
+                        expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                        expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMappingId);
+                        expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                    });
                 });
             });
         });
@@ -346,11 +404,45 @@ describe('Prop Mapping Overlay directive', function() {
             beforeEach(function() {
                 this.controller.selectedProp = {propObj: {}};
             });
-            it('a data property', function() {
-                ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-                scope.$digest();
-                expect(this.element.querySelectorAll('.column-select-container').length).toBe(1);
-                expect(this.element.find('column-select').length).toBe(1);
+            describe('a data or annotation property', function() {
+                beforeEach(function() {
+                    ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+                });
+                it('not expanded', function() {
+                    this.controller.showDatatypeSelect = false;
+                    scope.$digest();
+                    expect(this.element.querySelectorAll('.column-select-container').length).toBe(1);
+                    expect(this.element.find('column-select').length).toBe(1);
+                    expect(this.element.querySelectorAll('.datatype-select-container').length).toBe(1);
+                    expect(this.element.querySelectorAll('.datatype-select-container a').length).toBe(1);
+                    expect(this.element.find('iri-select').length).toBe(0);
+                });
+                describe('expanded', function() {
+                    beforeEach(function() {
+                        this.controller.showDatatypeSelect = true;
+                    });
+                    it('and is not a lang string', function () {
+                        scope.$digest();
+                        expect(this.element.querySelectorAll('.column-select-container').length).toBe(1);
+                        expect(this.element.find('column-select').length).toBe(1);
+                        expect(this.element.querySelectorAll('.datatype-select-container').length).toBe(1);
+                        expect(this.element.querySelectorAll('.datatype-select-container a').length).toBe(1);
+                        expect(this.element.find('iri-select').length).toBe(1);
+                        expect(this.element.querySelectorAll('.language-select-container').length).toBe(0);
+                        expect(this.element.find('language-select').length).toBe(0);
+                    });
+                    it('and is a lang string', function () {
+                        this.controller.datatype = prefixes.rdf + 'langString';
+                        scope.$digest();
+                        expect(this.element.querySelectorAll('.column-select-container').length).toBe(1);
+                        expect(this.element.find('column-select').length).toBe(1);
+                        expect(this.element.querySelectorAll('.datatype-select-container').length).toBe(1);
+                        expect(this.element.querySelectorAll('.datatype-select-container a').length).toBe(1);
+                        expect(this.element.find('iri-select').length).toBe(1);
+                        expect(this.element.querySelectorAll('.language-select-container').length).toBe(1);
+                        expect(this.element.find('language-select').length).toBe(1);
+                    });
+                });
             });
             it('an object property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
@@ -394,7 +486,7 @@ describe('Prop Mapping Overlay directive', function() {
     });
     it('should call cancel when the button is clicked', function() {
         spyOn(this.controller, 'cancel');
-        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
         continueButton.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });

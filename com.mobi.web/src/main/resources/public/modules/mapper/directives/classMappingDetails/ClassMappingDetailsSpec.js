@@ -30,6 +30,7 @@ describe('Class Mapping Details directive', function() {
         mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
+        mockPropertyManager();
         mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _prefixes_, _utilService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
@@ -154,6 +155,7 @@ describe('Class Mapping Details directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
+            mapperStateSvc.getPropsByClassMappingId.and.returnValue([{ ontologyId: '', propObj: {'@id': ''} }]);
             spyOn(this.controller, 'getPropValue').and.returnValue('');
         });
         it('for wrapping containers', function() {
@@ -169,13 +171,13 @@ describe('Class Mapping Details directive', function() {
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
-        it('depending on whether the selected class mapping has available properties to map', function() {
+        it('depending on whether the selected class mapping has properties to map', function() {
             var button = angular.element(this.element.querySelectorAll('.class-mapping-props button.add-prop-mapping-button')[0]);
-            mapperStateSvc.hasAvailableProps.and.returnValue(true);
+            mapperStateSvc.hasPropsByClassMappingId.and.returnValue(true);
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
 
-            mapperStateSvc.hasAvailableProps.and.returnValue(false);
+            mapperStateSvc.hasPropsByClassMappingId.and.returnValue(false);
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
@@ -220,6 +222,7 @@ describe('Class Mapping Details directive', function() {
     it('should select a property when clicked', function() {
         var property = {'@id': 'prop'};
         mappingManagerSvc.getPropMappingsByClass.and.returnValue([property]);
+        mapperStateSvc.getPropsByClassMappingId.and.returnValue([{ ontologyId: '', propObj: {'@id': ''} }]);
         spyOn(this.controller, 'getPropValue').and.returnValue('');
         scope.$digest();
         spyOn(this.controller, 'getLinkedColumnIndex').and.returnValue('0');
@@ -231,6 +234,7 @@ describe('Class Mapping Details directive', function() {
     it('should call switchClass when a property is double clicked', function() {
         var property = {};
         mappingManagerSvc.getPropMappingsByClass.and.returnValue([property]);
+        mapperStateSvc.getPropsByClassMappingId.and.returnValue([{ ontologyId: '', propObj: {'@id': ''} }]);
         spyOn(this.controller, 'getPropValue').and.returnValue('');
         spyOn(this.controller, 'switchClass');
         scope.$digest();
@@ -241,6 +245,7 @@ describe('Class Mapping Details directive', function() {
     it('should call editProp when an edit property link is clicked', function() {
         var property = {};
         mappingManagerSvc.getPropMappingsByClass.and.returnValue([property]);
+        mapperStateSvc.getPropsByClassMappingId.and.returnValue([{ ontologyId: '', propObj: {'@id': ''} }]);
         spyOn(this.controller, 'getPropValue').and.returnValue('');
         spyOn(this.controller, 'editProp');
         scope.$digest();
@@ -251,6 +256,7 @@ describe('Class Mapping Details directive', function() {
     it('should call deleteProp when a delete property link is clicked', function() {
         var property = {};
         mappingManagerSvc.getPropMappingsByClass.and.returnValue([property]);
+        mapperStateSvc.getPropsByClassMappingId.and.returnValue([{ ontologyId: '', propObj: {'@id': ''} }]);
         spyOn(this.controller, 'getPropValue').and.returnValue('');
         spyOn(this.controller, 'deleteProp');
         scope.$digest();

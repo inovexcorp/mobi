@@ -2,27 +2,21 @@
 @import "./src/main/resources/public/css/variables";
 
 .ontology-branch-select {
-    left: 10px;
-    position: absolute;
-    top: 8px;
-    width: 12%;
+    padding: 0 1rem;
 
     input {
         font-size: 12px;
     }
-
     .ui-select-bootstrap {
         .ui-select-choices-row > span {
             font-size: 12px;
             padding: 3px 8px;
         }
-
         .ui-select-match-text span {
             font-size: 12px;
             line-height: 20px;
         }
     }
-
     .branch-display {
         display: flex;
         flex-direction: row;
@@ -30,41 +24,28 @@
         &.active {
             font-weight: bold;
         }
-
         &.master .fa-fw {
             display: none;
         }
-
         span {
             flex: 1;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
         .fa-fw {
-            color: $gray-light;
             line-height: 20px;
             margin-left: 5px;
             text-decoration: none;
 
             &:hover {
-                color: $gray-dark;
+                color: var(--grey) !important;
             }
         }
-
         .fa-fw-red {
-            color: $brand-danger;
+            color: var(--danger);
             line-height: 20px;
             margin-left: 5px;
             text-decoration: none;
-        }
-    }
-
-    .active .branch-display .pull-right {
-        color: #fff;
-
-        &:hover {
-            color: $gray-light;
         }
     }
 }

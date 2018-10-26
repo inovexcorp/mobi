@@ -20,20 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="concept-scheme-hierarchy-block">
-    <block>
-        <block-header>
-            <span>Concept Schemes</span><a class="pull-right scheme-link" ng-click="dvm.os.unSelectItem(); dvm.os.showCreateConceptSchemeOverlay = true"><i class="fa fa-plus"></i><span>Scheme</span></a>
-        </block-header>
-        <block-content>
-            <hierarchy-tree hierarchy="dvm.os.listItem.conceptSchemes.flat"></hierarchy-tree>
-        </block-content>
-        <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Entity</span></button>
-        </block-footer>
-    </block>
-    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Entity'" confirm-click="dvm.deleteEntity()" cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
-        <p>Are you sure that you want to delete <strong>{{dvm.os.listItem.selected['@id']}}</strong>?</p>
-    </confirmation-overlay>
-    <create-concept-scheme-overlay ng-if="dvm.os.showCreateConceptSchemeOverlay"></create-concept-scheme-overlay>
+<div class="concept-scheme-hierarchy-block horizontal-scroll">
+    <info-message ng-if="!dvm.os.listItem.conceptSchemes.flat.length">(No concept schemes defined)</info-message>
+    <hierarchy-tree hierarchy="dvm.os.listItem.conceptSchemes.flat" class="py-1"></hierarchy-tree>
 </div>

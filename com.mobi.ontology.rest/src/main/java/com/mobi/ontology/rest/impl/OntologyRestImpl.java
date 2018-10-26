@@ -30,6 +30,7 @@ import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
+import static com.mobi.rest.util.RestUtils.modelToTrig;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -39,6 +40,7 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -63,6 +65,7 @@ import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
+import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -81,6 +84,8 @@ import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.security.policy.api.ontologies.policy.Delete;
+import com.mobi.sparql.utils.Query;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
@@ -111,6 +116,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
@@ -175,10 +181,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionAttributes(
-            @AttributeValue(id = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-                    value = "http://mobi.com/ontologies/ontology-editor#OntologyRecord"))
-    @ResourceId(id = "http://mobi.com/catalog-local")
+    @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
+    @ResourceId("http://mobi.com/catalog-local")
     public Response uploadFile(ContainerRequestContext context, InputStream fileInputStream, String title,
                                String description, List<FormDataBodyPart> keywords) {
         checkStringParam(title, "The title is missing.");
@@ -195,10 +199,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionAttributes(
-            @AttributeValue(id = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-                    value = "http://mobi.com/ontologies/ontology-editor#OntologyRecord"))
-    @ResourceId(id = "http://mobi.com/catalog-local")
+    @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
+    @ResourceId("http://mobi.com/catalog-local")
     public Response uploadOntologyJson(ContainerRequestContext context, String title, String description,
                                        List<String> keywords, String ontologyJson) {
         checkStringParam(title, "The title is missing.");
@@ -214,7 +216,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                 String commitIdStr, String rdfFormat, boolean clearCache, boolean skolemize,
                                 boolean applyInProgressCommit) {
@@ -222,8 +224,9 @@ public class OntologyRestImpl implements OntologyRest {
             if (clearCache) {
                 ontologyCache.removeFromCache(recordIdStr, branchIdStr, commitIdStr);
             }
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit).orElseThrow(() ->
-                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit)
+                    .orElseThrow(() ->
+                            ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             String ontologyAsRdf = getOntologyAsRdf(ontology, rdfFormat, skolemize);
             Response.ResponseBuilder ok = Response.ok(ontologyAsRdf);
             return ok.build();
@@ -233,16 +236,12 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
-    public Response deleteOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr) {
-        IRI recordId = valueFactory.createIRI(recordIdStr);
-        User activeUser = getActiveUser(context, engineManager);
+    @ActionId(Delete.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response deleteOntology(ContainerRequestContext context, String recordIdStr) {
         try {
-            if (StringUtils.isBlank(branchIdStr)) {
-                catalogManager.deleteRecord(activeUser, recordId, OntologyRecord.class);
-            } else {
-                ontologyManager.deleteOntologyBranch(recordId, valueFactory.createIRI(branchIdStr));
-            }
+            catalogManager.deleteRecord(getActiveUser(context, engineManager), valueFactory.createIRI(recordIdStr),
+                    OntologyRecord.class);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
@@ -252,7 +251,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadOntologyFile(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                          String commitIdStr, String rdfFormat, String fileName) {
         try {
@@ -273,8 +272,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response saveChangesToOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                           String commitIdStr, String entityIdStr, String entityJson) {
         try {
@@ -294,8 +293,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response uploadChangesToOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                             String commitIdStr, InputStream fileInputStream) {
         if (fileInputStream == null) {
@@ -348,7 +347,25 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Modify.TYPE)
+    @ActionAttributes(
+            @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
+    )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response deleteOntologyBranch(ContainerRequestContext context, String recordIdStr, String branchIdStr) {
+        try {
+            ontologyManager.deleteOntologyBranch(valueFactory.createIRI(recordIdStr),
+                    valueFactory.createIRI(branchIdStr));
+        } catch (MobiException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+        return Response.ok().build();
+    }
+
+    @Override
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVocabularyStuff(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                        String commitIdStr) {
         try {
@@ -386,7 +403,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyStuff(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                      String commitIdStr) {
         try {
@@ -430,7 +447,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getIRIsInOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                       String commitIdStr) {
         try {
@@ -442,7 +459,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getAnnotationsInOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                              String commitIdStr) {
         try {
@@ -455,8 +472,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addAnnotationToOntology(ContainerRequestContext context, String recordIdStr,
                                             String annotationJson) {
         verifyJsonldType(annotationJson, OWL.ANNOTATIONPROPERTY.stringValue());
@@ -468,8 +485,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteAnnotationFromOntology(ContainerRequestContext context, String recordIdStr,
                                                  String annotationIdStr, String branchIdStr, String commitIdStr) {
         try {
@@ -482,11 +499,12 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesInOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                          String commitIdStr, boolean applyInProgressCommit) {
         try {
-            JSONArray result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray, applyInProgressCommit);
+            JSONArray result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray,
+                    applyInProgressCommit);
             return Response.ok(result).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -494,8 +512,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addClassToOntology(ContainerRequestContext context, String recordIdStr, String classJson) {
         verifyJsonldType(classJson, OWL.CLASS.stringValue());
         try {
@@ -506,8 +524,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteClassFromOntology(ContainerRequestContext context, String recordIdStr, String classIdStr,
                                             String branchIdStr, String commitIdStr) {
         try {
@@ -520,7 +538,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDatatypesInOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                            String commitIdStr) {
         try {
@@ -533,8 +551,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addDatatypeToOntology(ContainerRequestContext context, String recordIdStr, String datatypeJson) {
         verifyJsonldType(datatypeJson, OWL.DATATYPEPROPERTY.stringValue());
         try {
@@ -545,8 +563,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteDatatypeFromOntology(ContainerRequestContext context, String recordIdStr,
                                                String datatypeIdStr, String branchIdStr, String commitIdStr) {
         try {
@@ -559,7 +577,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getObjectPropertiesInOntology(ContainerRequestContext context, String recordIdStr,
                                                   String branchIdStr, String commitIdStr) {
         try {
@@ -572,8 +590,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addObjectPropertyToOntology(ContainerRequestContext context, String recordIdStr,
                                                 String objectPropertyJson) {
         verifyJsonldType(objectPropertyJson, OWL.OBJECTPROPERTY.stringValue());
@@ -585,8 +603,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteObjectPropertyFromOntology(ContainerRequestContext context, String recordIdStr,
                                                      String objectPropertyIdStr, String branchIdStr,
                                                      String commitIdStr) {
@@ -600,7 +618,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDataPropertiesInOntology(ContainerRequestContext context, String recordIdStr,
                                                 String branchIdStr, String commitIdStr) {
         try {
@@ -613,8 +631,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addDataPropertyToOntology(ContainerRequestContext context, String recordIdStr,
                                               String dataPropertyJson) {
         verifyJsonldType(dataPropertyJson, OWL.DATATYPEPROPERTY.stringValue());
@@ -626,8 +644,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteDataPropertyFromOntology(ContainerRequestContext context, String recordIdStr,
                                                    String dataPropertyIdStr, String branchIdStr, String commitIdStr) {
         try {
@@ -640,7 +658,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getNamedIndividualsInOntology(ContainerRequestContext context, String recordIdStr,
                                                   String branchIdStr, String commitIdStr) {
         try {
@@ -653,8 +671,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addIndividualToOntology(ContainerRequestContext context, String recordIdStr,
                                             String individualJson) {
         verifyJsonldType(individualJson, OWL.INDIVIDUAL.stringValue());
@@ -666,8 +684,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ActionId(id = Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteIndividualFromOntology(ContainerRequestContext context, String recordIdStr,
                                                  String individualIdStr, String branchIdStr, String commitIdStr) {
         try {
@@ -680,7 +698,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getIRIsInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                 String branchIdStr, String commitIdStr) {
         try {
@@ -691,7 +709,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getImportsClosure(ContainerRequestContext context, String recordIdStr, String rdfFormat,
                                       String branchIdStr, String commitIdStr) {
         try {
@@ -706,7 +724,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getAnnotationsInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                        String branchIdStr, String commitIdStr) {
         try {
@@ -717,7 +735,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                    String branchIdStr, String commitIdStr) {
         try {
@@ -728,7 +746,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDatatypesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                      String branchIdStr, String commitIdStr) {
         try {
@@ -739,7 +757,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getObjectPropertiesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                             String branchIdStr, String commitIdStr) {
         try {
@@ -751,7 +769,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDataPropertiesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                           String branchIdStr, String commitIdStr) {
         try {
@@ -763,7 +781,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getNamedIndividualsInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                             String branchIdStr, String commitIdStr) {
         try {
@@ -775,7 +793,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyClassHierarchy(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                               String commitIdStr) {
         try {
@@ -789,7 +807,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyObjectPropertyHierarchy(ContainerRequestContext context, String recordIdStr,
                                                        String branchIdStr, String commitIdStr) {
         try {
@@ -803,7 +821,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyDataPropertyHierarchy(ContainerRequestContext context, String recordIdStr,
                                                      String branchIdStr, String commitIdStr) {
         try {
@@ -817,7 +835,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyAnnotationPropertyHierarchy(ContainerRequestContext context, String recordIdStr,
                                                            String branchIdStr, String commitIdStr) {
         try {
@@ -831,7 +849,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConceptHierarchy(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                         String commitIdStr) {
         try {
@@ -846,7 +864,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConceptSchemeHierarchy(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                               String commitIdStr) {
         try {
@@ -861,7 +879,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesWithIndividuals(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                               String commitIdStr) {
         try {
@@ -877,7 +895,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntityUsages(ContainerRequestContext context, String recordIdStr, String entityIRIStr,
                                     String branchIdStr, String commitIdStr, String queryType) {
         try {
@@ -900,7 +918,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getSearchResults(ContainerRequestContext context, String recordIdStr, String searchText,
                                      String branchIdStr, String commitIdStr) {
         try {
@@ -932,7 +950,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
-    @ResourceId(type = ValueType.PATH, id = "recordId")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getFailedImports(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                      String commitIdStr) {
         try {
@@ -941,6 +959,44 @@ public class OntologyRestImpl implements OntologyRest {
             return Response.ok(getUnloadableImportIRIs(ontology)).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response queryOntology(ContainerRequestContext context, String recordIdStr, String queryString,
+                                  String branchIdStr, String commitIdStr) {
+        checkStringParam(queryString, "Parameter 'query' must be set.");
+
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, false).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+
+            String queryType = Query.getQueryType(queryString);
+            switch (queryType) {
+                case "select":
+                    TupleQueryResult tupResults = ontologyManager.getTupleQueryResults(ontology, queryString);
+                    if (tupResults.hasNext()) {
+                        JSONObject json = JSONQueryResults.getResponse(tupResults);
+                        return Response.ok(json, MediaType.APPLICATION_JSON_TYPE).build();
+                    } else {
+                        return Response.noContent().build();
+                    }
+                case "construct":
+                    Model modelResult = ontologyManager.getGraphQueryResults(ontology, queryString);
+                    if (modelResult.size() >= 1) {
+                        String trigStr = modelToTrig(modelResult, sesameTransformer);
+                        return Response.ok(trigStr, MediaType.TEXT_PLAIN_TYPE).build();
+                    } else {
+                        return Response.noContent().build();
+                    }
+                default:
+                    throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
+            }
+        } catch (MalformedQueryException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -1626,6 +1682,8 @@ public class OntologyRestImpl implements OntologyRest {
                 }
                 commitId = (Resource) commitStmt.next().getObject();
             }
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }

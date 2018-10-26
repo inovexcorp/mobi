@@ -3,24 +3,36 @@
 
 .search-tab {
     .ui-select-highlight {
-        background-color: yellow;
+        background-color: var(--yellow);
     }
-
     .padding {
         padding-top: 10px;
     }
-
     .result-header {
-        border-bottom: 1px solid $gray-light;
         cursor: pointer;
-        display: flex;
         padding: 5px 0;
+    }
+    .search {
+        position: relative;
 
-        strong {
-            display: inline-block;
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .fa-search,
+        .fa-times-circle {
+            position: absolute;
+            font-size: 1.25em;
+            top: 12px;
+        }
+
+        .fa-search {
+            left: 10px;
+        }
+
+        .fa-times-circle {
+            right: 10px;
+            text-decoration: none;
+
+            &:hover {
+                color: var(--body) !important;
+            }
         }
     }
 }

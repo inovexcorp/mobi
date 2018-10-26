@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="results-block col-xs-12">
+<div class="results-block col">
     <block>
         <block-header>
             <catalog-breadcrumb></catalog-breadcrumb>
@@ -28,7 +28,7 @@
         <block-content class="padding">
             <pagination-header list-key="'records'" change-sort="dvm.changeSort()"></pagination-header>
             <div class="results-list list-group">
-                <button ng-repeat="record in dvm.state.results" class="record list-group-item" ng-click="dvm.openRecord(record)">
+                <button ng-repeat="record in dvm.state.results track by record['@id']" class="record list-group-item" ng-click="dvm.openRecord(record)">
                     <record-types record="record"></record-types>
                     <h3>{{dvm.util.getDctermsValue(record, 'title')}}</h3>
                     <entity-dates entity="record"></entity-dates>
@@ -39,7 +39,7 @@
             </div>
         </block-content>
         <block-footer>
-            <catalog-pagination></catalog-pagination>
+            <catalog-pagination list-key="'records'" get-page="dvm.getRecords()"></catalog-pagination>
         </block-footer>
     </block>
 </div>

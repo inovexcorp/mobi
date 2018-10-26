@@ -2,7 +2,5 @@
 @import "./src/main/resources/public/css/variables";
 
 .merge-requests {
-    background-color: $gray-lighter;
-    display: flex;
-    flex-direction: column;
+    background-color: var(--light);
 }

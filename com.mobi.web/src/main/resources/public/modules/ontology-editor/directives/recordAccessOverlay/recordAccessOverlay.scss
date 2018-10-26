@@ -1,0 +1,6 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.md-virtual-repeat-container.md-autocomplete-suggestions-container {
+    z-index: 5000;
+}

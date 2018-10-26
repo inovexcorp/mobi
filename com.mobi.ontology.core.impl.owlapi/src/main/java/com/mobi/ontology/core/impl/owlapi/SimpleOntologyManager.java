@@ -53,8 +53,6 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
@@ -206,28 +204,8 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public Ontology createOntology(OntologyId ontologyId) {
-        return new SimpleOntology(ontologyId, this, sesameTransformer, bNodeService);
-    }
-
-    @Override
-    public Ontology createOntology(File file, boolean resolveImports) throws FileNotFoundException {
-        return new SimpleOntology(file, this, sesameTransformer, bNodeService, resolveImports);
-    }
-
-    @Override
-    public Ontology createOntology(IRI iri) {
-        return new SimpleOntology(iri, this, sesameTransformer, bNodeService);
-    }
-
-    @Override
     public Ontology createOntology(InputStream inputStream, boolean resolveImports) {
         return new SimpleOntology(inputStream, this, sesameTransformer, bNodeService, resolveImports);
-    }
-
-    @Override
-    public Ontology createOntology(String json, boolean resolveImports) {
-        return new SimpleOntology(json, this, sesameTransformer, bNodeService, resolveImports);
     }
 
     @Override
@@ -492,6 +470,16 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public TupleQueryResult getTupleQueryResults(Ontology ontology, String queryString) {
+        return runQueryOnOntology(ontology, queryString, null, "getTupleQueryResults(ontology, queryString)");
+    }
+
+    @Override
+    public Model getGraphQueryResults(Ontology ontology, String queryString) {
+        return runGraphQueryOnOntology(ontology, queryString, null, "getGraphQueryResults(ontology, queryString)");
+    }
+
+    @Override
     public Model getOntologyModel(Resource recordId) {
         return catalogManager.getCompiledResource(getHeadOfBranch(getMasterBranch(recordId)));
     }
@@ -574,6 +562,55 @@ public class SimpleOntologyManager implements OntologyManager {
                 query = addBinding.apply(query);
             }
             return query.evaluateAndReturn();
+        } finally {
+            logTrace(methodName, start);
+        }
+    }
+
+    /**
+     * Executes the provided Graph query on the provided Ontology.
+     *
+     * @param ontology    the ontology to query on.
+     * @param queryString the query string that you wish to run.
+     * @param addBinding  the binding to add to the query, if needed.
+     * @param methodName  the name of the method to provide more accurate logging messages.
+     * @return the results of the query as a model.
+     */
+    private Model runGraphQueryOnOntology(Ontology ontology, String queryString,
+                                          @Nullable Function<GraphQuery, GraphQuery> addBinding,
+                                          String methodName) {
+        Repository repo = repositoryManager.createMemoryRepository();
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Ontology> importedOntologies = ontology.getImportsClosure();
+            conn.begin();
+            importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
+            conn.commit();
+            return runGraphQueryOnOntology(queryString, addBinding, methodName, conn);
+        } finally {
+            repo.shutDown();
+        }
+    }
+
+    /**
+     * Executes the provided Graph query on the provided RepositoryConnection.
+     *
+     * @param queryString the query string that you wish to run.
+     * @param addBinding  the binding to add to the query, if needed.
+     * @param methodName  the name of the method to provide more accurate logging messages.
+     * @param conn        the {@link RepositoryConnection} to run the query against.
+     * @return the results of the query as a model.
+     */
+    private Model runGraphQueryOnOntology(String queryString,
+                                          @Nullable Function<GraphQuery, GraphQuery> addBinding,
+                                          String methodName, RepositoryConnection conn) {
+        long start = getStartTime();
+        try {
+            GraphQuery query = conn.prepareGraphQuery(queryString);
+            if (addBinding != null) {
+                query = addBinding.apply(query);
+            }
+            return QueryResults.asModel(query.evaluate(), modelFactory);
         } finally {
             logTrace(methodName, start);
         }

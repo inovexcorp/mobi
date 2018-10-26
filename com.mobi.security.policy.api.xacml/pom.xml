@@ -28,7 +28,7 @@
     <parent>
         <artifactId>mobi-parent</artifactId>
         <groupId>com.mobi</groupId>
-        <version>1.13.32-SNAPSHOT</version>
+        <version>1.14.9-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -77,6 +77,7 @@
                     <arguments>
                         <argument>-Xsimplify</argument>
                     </arguments>
+                    <catalog>${project.basedir}/src/main/resources/catalog.cat</catalog>
                 </configuration>
                 <dependencies>
                     <dependency>

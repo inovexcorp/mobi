@@ -258,20 +258,13 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /mobirest/ontologies/{recordId} endpoint which deletes the ontology unless the
-             * branchId is provided. In which case just the branch is removed.
+             * Calls the DELETE /mobirest/ontologies/{recordId} endpoint which deletes the ontology.
              *
-             * @param {string} recordId The id of the Record to be deleted if no branchId is provided.
-             * @param {string} branchId The id of the Branch that should be removed.
+             * @param {string} recordId The id of the Record to be deleted.
              * @return {Promise} HTTP OK unless there was an error.
              */
-            self.deleteOntology = function(recordId, branchId) {
-                var config = {};
-                if (branchId) {
-                    config.params = { branchId };
-                }
-
-                return $http.delete(prefix + '/' + encodeURIComponent(recordId), config)
+            self.deleteOntology = function(recordId) {
+                return $http.delete(prefix + '/' + encodeURIComponent(recordId))
                     .then(_.noop, util.rejectError);
             }
             /**
@@ -297,6 +290,24 @@
                     fileName: fileName || 'ontology'
                 });
                 util.startDownload(prefix + '/' + encodeURIComponent(recordId) + '?' + params);
+            }
+            /**
+             * @ngdoc method
+             * @name deleteOntologyBranch
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the DELETE /mobirest/ontologies/{recordId}/branches/{branchId} endpoint which deletes the provided
+             * branch from the OntologyRecord
+             *
+             * @param {string} recordId The id of the Record.
+             * @param {string} branchId The id of the Branch that should be removed.
+             * @return {Promise} HTTP OK unless there was an error.
+             */
+            self.deleteOntologyBranch = function(recordId, branchId) {
+                return $http.delete(prefix + '/' + encodeURIComponent(recordId) + '/branches/'
+                    + encodeURIComponent(branchId))
+                    .then(_.noop, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -1365,22 +1376,25 @@
              *
              * @description
              * Gets the provided entity's name. This name is either the `rdfs:label`, `dcterms:title`, or `dc:title`.
-             * If none of those annotations exist, it returns the beautified `@id`. Returns a string for the entity
-             * name.
+             * If none of those annotations exist, it returns the beautified `@id`. Prioritizes english language tagged
+             * values over the others. Returns a string for the entity name.
              *
              * @param {Object} entity The entity you want the name of.
              * @returns {string} The beautified IRI string.
              */
             self.getEntityName = function(entity) {
-                var result = utilService.getPropertyValue(entity, prefixes.rdfs + 'label')
-                    || utilService.getDctermsValue(entity, 'title')
-                    || utilService.getPropertyValue(entity, prefixes.dc + 'title')
-                    || utilService.getPropertyValue(entity, prefixes.skos + 'prefLabel')
-                    || utilService.getPropertyValue(entity, prefixes.skos + 'altLabel');
+                var result = getPrioritizedValue(entity, prefixes.rdfs + 'label')
+                    || getPrioritizedValue(entity, prefixes.dcterms + 'title')
+                    || getPrioritizedValue(entity, prefixes.dc + 'title')
+                    || getPrioritizedValue(entity, prefixes.skos + 'prefLabel')
+                    || getPrioritizedValue(entity, prefixes.skos + 'altLabel');
                 if (!result && _.has(entity, '@id')) {
                     result = utilService.getBeautifulIRI(entity['@id']);
                 }
                 return result;
+            }
+            function getPrioritizedValue(entity, prop) {
+                return _.get(_.find(_.get(entity, "['" + prop + "']"), {'@language': 'en'}), '@value') || utilService.getPropertyValue(entity, prop);
             }
             /**
              * @ngdoc method

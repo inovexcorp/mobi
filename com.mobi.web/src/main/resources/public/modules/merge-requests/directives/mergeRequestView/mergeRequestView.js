@@ -41,7 +41,6 @@
          * @requires mergeRequestManager.service:mergeRequestManagerService
          * @requires mergeRequestState.service:mergeRequestStateService
          * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
          *
          * @description
          * `mergeRequestView` is a directive which creates a div containing a {@link block.directive:block}
@@ -49,8 +48,9 @@
          * {@link mergeRequestsState.service:mergeRequestsStateService selected MergeRequest} including a
          * {@link commitDifferenceTabset.directive:commitDifferenceTabset} to display the changes and commits
          * between the source and target branch of the MergeRequest. The block also contains buttons to delete
-         * the MergeRequest and go back to the {@link mergeRequestList.directive:mergeRequestList} of the current
-         * tab. This directive is replaced by the contents of its template.
+         * the MergeRequest, accept the MergeRequest, and go back to the
+         * {@link mergeRequestList.directive:mergeRequestList}. This directive is replaced by the contents of its
+         * template.
          */
         .directive('mergeRequestView', mergeRequestView);
 
@@ -68,24 +68,79 @@
                     dvm.mm = mergeRequestManagerService;
                     dvm.util = utilService;
                     dvm.state = mergeRequestsStateService;
-                    var currentTab = dvm.state.getCurrentTab();
-                    dvm.selected = currentTab.selected;
+                    dvm.resolveConflicts = false;
+                    dvm.copiedConflicts = [];
+                    dvm.resolveError = false;
 
-                    dvm.mm.getRequest(dvm.selected.request['@id'])
-                        .then(request => {
-                            dvm.selected.request = request;
-                            dvm.state.setRequestDetails(dvm.selected);
+                    dvm.mm.getRequest(dvm.state.selected.jsonld['@id'])
+                        .then(jsonld => {
+                            dvm.state.selected.jsonld = jsonld;
+                            dvm.state.setRequestDetails(dvm.state.selected);
                         }, error => {
                             dvm.util.createWarningToast('The request you had selected no longer exists');
                             dvm.back();
                         });
 
                     dvm.back = function() {
-                        currentTab.selected = undefined;
+                        dvm.state.selected = undefined;
                     }
                     dvm.showDelete = function() {
-                        dvm.state.requestToDelete = dvm.selected;
+                        dvm.state.requestToDelete = dvm.state.selected;
                         dvm.state.showDelete = true;
+                    }
+                    dvm.showAccept = function() {
+                        dvm.state.requestToAccept = dvm.state.selected;
+                        dvm.state.showAccept = true;
+                    }
+                    dvm.showResolutionForm = function() {
+                        dvm.resolveConflicts = true;
+                        dvm.copiedConflicts = angular.copy(dvm.state.selected.conflicts);
+                        _.forEach(dvm.copiedConflicts, conflict => {
+                            conflict.resolved = false;
+                        });
+                        dvm.resolveError = false;
+                    }
+                    dvm.resolve = function() {
+                        var resolutions = createResolutions();
+                        dvm.state.resolveRequestConflicts(dvm.state.selected, resolutions)
+                            .then(() => {
+                                dvm.util.createSuccessToast('Conflicts successfully resolved');
+                                dvm.resolveConflicts = false;
+                                dvm.copiedConflicts = [];
+                                dvm.resolveError = false;
+                            }, error => {
+                                dvm.resolveError = true;
+                            });
+                    }
+                    dvm.cancelResolve = function() {
+                        dvm.resolveConflicts = false;
+                        dvm.copiedConflicts = [];
+                        dvm.resolveError = false;
+                    }
+                    dvm.allResolved = function() {
+                        return !_.some(dvm.copiedConflicts, {resolved: false});
+                    }
+
+                    function createResolutions() {
+                        var resolutions = {
+                            additions: [],
+                            deletions: []
+                        };
+                        _.forEach(dvm.copiedConflicts, conflict => {
+                            if (conflict.resolved === 'left') {
+                                addToResolutions(resolutions, conflict.right);
+                            } else if (conflict.resolved === 'right') {
+                                addToResolutions(resolutions, conflict.left);
+                            }
+                        });
+                        return resolutions;
+                    }
+                    function addToResolutions(resolutions, notSelected) {
+                        if (notSelected.additions.length) {
+                            resolutions.deletions = _.concat(resolutions.deletions, notSelected.additions);
+                        } else {
+                            resolutions.additions = _.concat(resolutions.additions, notSelected.deletions);
+                        }
                     }
                 }
             }

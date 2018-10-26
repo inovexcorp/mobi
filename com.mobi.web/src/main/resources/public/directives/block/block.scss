@@ -3,7 +3,7 @@
 
 .block {
     background: #FFF;
-    box-shadow: 5px 5px 5px 0px $gray-light;
+    box-shadow: 5px 5px 5px 0px var(--light-dark);
     display: flex;
     flex-direction: column;
     float: left;

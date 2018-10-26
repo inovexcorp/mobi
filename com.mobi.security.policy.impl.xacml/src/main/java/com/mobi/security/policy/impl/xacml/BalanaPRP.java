@@ -29,20 +29,36 @@ import static com.mobi.security.policy.api.xacml.XACML.SYNTAX_ERROR;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.exception.MobiException;
+import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.base.RepositoryResult;
 import com.mobi.security.policy.api.PRP;
 import com.mobi.security.policy.api.Policy;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.cache.PolicyCache;
 import com.mobi.security.policy.api.exception.PolicySyntaxException;
 import com.mobi.security.policy.api.exception.ProcessingException;
+import com.mobi.security.policy.api.xacml.PolicyQueryParams;
+import com.mobi.security.policy.api.xacml.XACML;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
+import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import com.mobi.vfs.api.VirtualFile;
+import com.mobi.vfs.api.VirtualFilesystem;
+import com.mobi.vfs.ontologies.documents.BinaryFile;
+import com.mobi.vocabularies.xsd.XSD;
+import org.apache.commons.io.IOUtils;
 import org.wso2.balana.AbstractPolicy;
 import org.wso2.balana.MatchResult;
 import org.wso2.balana.PDPConfig;
 import org.wso2.balana.ParsingException;
 import org.wso2.balana.PolicySet;
+import org.wso2.balana.attr.BagAttribute;
+import org.wso2.balana.attr.StringAttribute;
 import org.wso2.balana.combine.PolicyCombiningAlgorithm;
+import org.wso2.balana.cond.EvaluationResult;
 import org.wso2.balana.ctx.AbstractRequestCtx;
 import org.wso2.balana.ctx.EvaluationCtx;
 import org.wso2.balana.ctx.EvaluationCtxFactory;
@@ -52,6 +68,9 @@ import org.wso2.balana.finder.PolicyFinder;
 import org.wso2.balana.finder.PolicyFinderModule;
 import org.wso2.balana.finder.PolicyFinderResult;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -65,11 +84,25 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
     private PDPConfig config;
 
     private PolicyCache policyCache;
+    private Repository repository;
+    private VirtualFilesystem vfs;
+    private XACMLPolicyManager policyManager;
     private ValueFactory vf;
 
     @Reference
     void setPolicyCache(PolicyCache policyCache) {
         this.policyCache = policyCache;
+    }
+
+    @Reference
+    void setVfs(VirtualFilesystem vfs) {
+        this.vfs = vfs;
+    }
+
+    @Reference
+    void setPolicyManager(XACMLPolicyManager policyManager) {
+        this.policyManager = policyManager;
+        this.repository = this.policyManager.getRepository();
     }
 
     @Reference
@@ -135,6 +168,35 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
         // iterate through all the policies we currently have loaded
         Optional<Cache<String, Policy>> cache = policyCache.getPolicyCache();
         if (cache.isPresent()) {
+            EvaluationResult relatedResourceResult;
+            try {
+                 relatedResourceResult = context.getAttribute(new URI(XSD.STRING),
+                        new URI(XACML.RESOURCE_ID),null, new URI(XACML.RESOURCE_CATEGORY));
+            } catch (URISyntaxException e) {
+                throw new MobiException("Invalid URIs in policy.", e);
+            }
+            // TODO: Add same for ACTION_ID and SUBJECT_ID
+            BagAttribute relatedResourceBag = (BagAttribute) relatedResourceResult.getAttributeValue();
+            String relatedResource = ((StringAttribute) relatedResourceBag.iterator().next()).getValue();
+
+            PolicyQueryParams queryParams = new PolicyQueryParams.Builder()
+                    .addResourceIRI(vf.createIRI(relatedResource))
+                    .build();
+            List<Resource> policyIds = PolicyUtils.findPolicies(queryParams, repository);
+            policyIds.forEach(policyId -> {
+                if (!cache.get().containsKey(policyId.stringValue())) {
+                    try (RepositoryConnection conn = repository.getConnection()) {
+                        RepositoryResult<Statement> statements = conn.getStatements(policyId,
+                                vf.createIRI(BinaryFile.retrievalURL_IRI), null);
+                        VirtualFile file = vfs.resolveVirtualFile(statements.iterator().next().getObject()
+                                .stringValue());
+                        String policyStr = IOUtils.toString(file.readContent(), "UTF-8");
+                        cache.get().put(policyId.stringValue(), new BalanaPolicy(policyStr, vf));
+                    } catch (IOException e) {
+                        throw new MobiException("Error retrieving policy from VFS.", e);
+                    }
+                }
+            });
             return StreamSupport.stream(cache.get().spliterator(), false)
                     .map(Cache.Entry::getValue)
                     .filter(policy -> policy instanceof XACMLPolicy)

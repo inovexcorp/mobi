@@ -64,28 +64,18 @@ describe('Characteristics Block directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('characteristics-block')).toBe(true);
         });
-        _.forEach(['block', 'block-header', 'block-content'], function(tag) {
-            it('with a ' + tag, function() {
-                expect(this.element.find(tag).length).toBe(1);
-            });
+        it('with a .section-header', function() {
+            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        describe('with checkboxes', function() {
-            it('unless nothing is selected', function() {
-                expect(this.element.find('checkbox').length).toBe(0);
+        describe('with checkboxes if a', function() {
+            it('object property is selected', function() {
+                ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+                scope.$digest();
+                expect(this.element.find('checkbox').length).toBe(2);
             });
-            describe('if a', function() {
-                beforeEach(function() {
-                    ontologyStateSvc.listItem.selected = {};
-                });
-                it('object property is selected', function() {
-                    ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-                    scope.$apply();
-                    expect(this.element.find('checkbox').length).toBe(2);
-                });
-                it('data property is selected', function() {
-                    scope.$apply();
-                    expect(this.element.find('checkbox').length).toBe(1);
-                });
+            it('data property is selected', function() {
+                scope.$digest();
+                expect(this.element.find('checkbox').length).toBe(1);
             });
         });
     });
@@ -160,14 +150,14 @@ describe('Characteristics Block directive', function() {
         });
     });
     it('correctly updates the checkboxes when the selected entities changes', function() {
-        _.forEach(this.controller.characteristics, function(obj) {
+        _.forEach(this.controller.characteristics, obj => {
             obj.checked = false;
         });
         spyOn(this.controller, 'onChange');
         ontologyStateSvc.listItem.selected = {'@type': [this.functionalProperty, this.asymmetricProperty]};
         scope.$digest();
         expect(this.controller.onChange).not.toHaveBeenCalled();
-        _.forEach(this.controller.characteristics, function(obj) {
+        _.forEach(this.controller.characteristics, obj => {
             expect(obj.checked).toBe(true);
         });
     });

@@ -324,14 +324,16 @@
              * @param {string} propId The id of the data property in the ontology
              * @param {number} columnIndex The column index to set the data property mapping's `columnIndex`
              * property to
+             * @param {string} datatypeSpec The default datatype the DataMapping should use
+             * @param {string} languageSpec The default language tag the DataMapping should use
              * @returns {Object} The new data property mapping object
              */
-            self.addDataProp = function(mapping, ontology, classMappingId, propId, columnIndex) {
+            self.addDataProp = function(mapping, ontology, classMappingId, propId, columnIndex, datatypeSpec, languageSpec) {
                 var propMapping;
                 // Check if class mapping exists and the property exists in the ontology or the property is one of the
                 // supported annotations
                 var propEntity = om.getEntity([ontology], propId);
-                if (entityExists(mapping, classMappingId) && ((propEntity && om.isDataTypeProperty(propEntity)) || _.includes(self.annotationProperties, propId))) {
+                if (entityExists(mapping, classMappingId) && ((propEntity && om.isDataTypeProperty(propEntity)) || _.includes(self.annotationProperties, propId) || om.isAnnotation(propEntity))) {
                     // Add new data mapping id to data properties of class mapping
                     propMapping = {
                         '@id': self.getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
@@ -344,6 +346,12 @@
                     propMapping['@type'] = [prefixes.delim + 'DataMapping', prefixes.delim + 'PropertyMapping'];
                     propMapping[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
                     propMapping[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
+                    if (datatypeSpec) {
+                        propMapping[prefixes.delim + 'datatypeSpec'] = [{'@id': datatypeSpec}];
+                        if (languageSpec) {
+                            propMapping[prefixes.delim + 'languageSpec'] = [{'@value': languageSpec}];
+                        }
+                    }
                     mapping.push(propMapping);
                 }
 
@@ -579,7 +587,7 @@
              */
             self.findSourceOntologyWithProp = function(propertyIRI, ontologies) {
                 return _.find(ontologies, ontology => {
-                    var properties = _.concat(om.getDataTypeProperties([ontology.entities]), om.getObjectProperties([ontology.entities]));
+                    var properties = _.concat(om.getDataTypeProperties([ontology.entities]), om.getObjectProperties([ontology.entities]), om.getAnnotations([ontology.entities]));
                     return _.findIndex(properties, {'@id': propertyIRI}) !== -1;
                 });
             }
@@ -610,7 +618,7 @@
              * Finds the list of any Class, Data, or Object Mappings within the passed mapping that are no longer
              * compatible with the passed list of source ontologies. A Class, Data, or Object is incompatible if
              * its IRI doesn't exist in the ontologies or if it has been deprecated. A ObjectMapping is also
-             * incompatible if its range has changed or its range class is incompatiable. If a DataMapping uses a
+             * incompatible if its range has changed or its range class is incompatible. If a DataMapping uses a
              * supported annotation property, it will not be incompatible.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
@@ -635,8 +643,8 @@
                         incompatibleMappings.push(propMapping);
                     } else if (propOntology) {
                         var propObj = om.getEntity([propOntology.entities], propId);
-                        // Incompatible if data property is deprecated or is no longer a data property
-                        if (om.isDeprecated(propObj) || !om.isDataTypeProperty(propObj)) {
+                        // Incompatible if data property is deprecated or is no longer a data or annotation property
+                        if (om.isDeprecated(propObj) || (!om.isDataTypeProperty(propObj) && !om.isAnnotation(propObj))) {
                             incompatibleMappings.push(propMapping);
                         }
                     }
@@ -731,28 +739,6 @@
              */
             self.getPropIdByMapping = function(propMapping) {
                 return util.getPropertyId(propMapping, prefixes.delim + 'hasProperty', '');
-            }
-            /**
-             * @ngdoc method
-             * @name getDataMappingFromClass
-             * @methodOf mappingManager.service:mappingManagerService
-             *
-             * @description
-             * Retrieves the data mapping which maps the specified property from the specified class
-             * mapping in the passed mapping.
-             *
-             * @param {Object[]} mapping The mapping JSON-LD array
-             * @param {string} classMappingId The id of the class mapping with the requested data property
-             * @param {string} propId The id of the requested data property
-             * @returns {Object} The data property mapping which maps the specified data property
-             */
-            self.getDataMappingFromClass = function(mapping, classMappingId, propId) {
-                var dataProperties = _.map(getDataProperties(getEntityById(mapping, classMappingId)), '@id');
-                var dataMappings = self.getPropMappingsByPropId(mapping, propId);
-                if (dataProperties.length && dataMappings.length) {
-                    return _.find(dataMappings, mapping => dataProperties.indexOf(mapping['@id']) >= 0);
-                }
-                return undefined;
             }
             /**
              * @ngdoc method

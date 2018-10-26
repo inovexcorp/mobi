@@ -53,13 +53,11 @@ describe('Commits Tab directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('commits-tab')).toBe(true);
         });
-        _.forEach(['block', 'block-content', 'block-header', 'commit-history-table'], function(item) {
-            it('for ' + item, function() {
-                expect(this.element.find(item).length).toBe(1);
-            });
+        it('with a .section-header', function() {
+            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
-        it('for .col-xs-8', function() {
-            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
+        it('with a .col-8', function() {
+            expect(this.element.querySelectorAll('.col-8').length).toBe(1);
         });
     });
     describe('controller methods', function() {

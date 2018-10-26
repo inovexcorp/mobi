@@ -22,7 +22,7 @@
   -->
 <div class="request-details-form">
     <div class="details-form-container row">
-        <div class="col-xs-8 col-xs-offset-2">
+        <div class="col-8 offset-2">
             <div class="summary-line">
                 <strong>Branch: {{dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')}}</strong> into 
                 <strong>Branch: {{dvm.util.getDctermsValue(dvm.state.requestConfig.targetBranch, 'title')}}</strong> in 
@@ -30,7 +30,18 @@
             </div>
             <form>
                 <text-input ng-model="dvm.state.requestConfig.title" display-text="'Title'" required="true"></text-input>
-                <text-area ng-model="dvm.state.requestConfig.description" display-text="'Description'"></text-area>
+                <text-area ng-model="dvm.state.requestConfig.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+                <div class="form-group">
+                    <custom-label muted-text="'(Optional)'">Assignee(s)</custom-label>
+                    <ui-select multiple ng-model="dvm.state.requestConfig.assignees">
+                        <ui-select-match placeholder="Select Assignee(s)">
+                            <span title="{{$item.iri}}">{{$item.username}}</span>
+                        </ui-select-match>
+                        <ui-select-choices repeat="user.username as user in dvm.um.users | filter:$select.search">
+                            <div title="{{user.iri}}" ng-bind-html="user.username | highlight: $select.search | trusted"></div>
+                        </ui-select-choices>
+                    </ui-select>
+                </div>
             </form>
         </div>
     </div>
