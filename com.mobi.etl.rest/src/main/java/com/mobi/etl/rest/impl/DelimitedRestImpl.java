@@ -53,6 +53,7 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
@@ -329,13 +330,15 @@ public class DelimitedRestImpl implements DelimitedRest {
         Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() -> ErrorUtils.sendError(
                 "OntologyRecord " + ontologyRecordIRI + " master branch cannot be found.", Response.Status.BAD_REQUEST));
 
-        Model ontologyData =  ontologyManager.getOntologyModel(record.getResource());
+        IRI recordIRI = vf.createIRI(ontologyRecordIRI);
+        Model ontologyData =  ontologyManager.getOntologyModel(recordIRI);
 
-        mappingData.forEach(statement -> {
-            if (ontologyData.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())) {
-                mappingData.remove(statement.getSubject(), statement.getPredicate(), statement.getObject());
-            }
-        });
+        mappingData.removeAll(ontologyData);
+//        mappingData.forEach(statement -> {
+//            if (ontologyData.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())) {
+//                mappingData.remove(statement.getSubject(), statement.getPredicate(), statement.getObject());
+//            }
+//        });
 
         versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), masterBranchId, user,
                 "Mapping data from " + mappingRecordIRI, mappingData, null);
