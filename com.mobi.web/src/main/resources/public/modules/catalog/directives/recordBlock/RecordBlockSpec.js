@@ -50,7 +50,7 @@ describe('Record Block directive', function() {
             'x-total-count': 2,
         };
         this.response = {
-            data: {},
+            data: [],
             headers: jasmine.createSpy('headers').and.returnValue(this.headers)
         };
         catalogManagerSvc.getRecordBranches.and.returnValue($q.when(this.response));

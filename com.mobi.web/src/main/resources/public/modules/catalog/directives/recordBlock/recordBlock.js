@@ -109,9 +109,9 @@
                         };
                         dvm.cm.getRecordBranches(dvm.record['@id'], currentCatalog.catalog['@id'], paginatedConfig)
                             .then(response => {
-                                dvm.state.results = response.data;
+                                dvm.state.results = _.filter(response.data, branch => !dvm.cm.isUserBranch(branch));
                                 var headers = response.headers();
-                                dvm.totalSize = _.get(headers, 'x-total-count', 0);
+                                dvm.totalSize = _.get(headers, 'x-total-count', 0) - (response.data.length - dvm.state.results.length);
                             }, dvm.util.createErrorToast);
                     }
                 }
