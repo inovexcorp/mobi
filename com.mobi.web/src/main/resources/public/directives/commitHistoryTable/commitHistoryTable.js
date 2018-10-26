@@ -194,6 +194,10 @@
                         dvm.deltaX = 5 + dvm.circleRadius;
                     }
 
+                    $scope.$on('$destroy', function() {
+                        httpService.cancel(dvm.id);
+                    });
+
                     function recurse(c) {
                         // Find the column this commit belongs to and the ids of its base and auxiliary commits
                         var col = _.find(cols, col => _.includes(col.commits, c.commit.id));
