@@ -111,7 +111,7 @@
                             if (removeSource) {
                                 return om.deleteOntologyBranch(dvm.state.requestToAccept.recordIri, sourceBranchId)
                                     .then(() => {
-                                        if (_.find(os.list, listItem => listItem.ontologyRecord.recordId === dvm.state.requestToAccept.recordIri)) {
+                                        if (_.some(os.list, {ontologyRecord: {recordId: dvm.state.requestToAccept.recordIri}})) {
                                             os.removeBranch(dvm.state.requestToAccept.recordIri, sourceBranchId);
                                         }
                                     }, $q.reject);
