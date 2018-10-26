@@ -57,9 +57,9 @@
          */
         .directive('commitHistoryTable', commitHistoryTable);
 
-        commitHistoryTable.$inject = ['catalogManagerService', 'utilService', 'userManagerService', 'modalService', 'Snap', 'chroma'];
+        commitHistoryTable.$inject = ['httpService', 'catalogManagerService', 'utilService', 'userManagerService', 'modalService', 'Snap', 'chroma'];
 
-        function commitHistoryTable(catalogManagerService, utilService, userManagerService, modalService, Snap, chroma) {
+        function commitHistoryTable(httpService, catalogManagerService, utilService, userManagerService, modalService, Snap, chroma) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -99,6 +99,7 @@
                     dvm.columnSpacing = 25;
                     dvm.deltaX = 5 + dvm.circleRadius;
                     dvm.deltaY = 56;
+                    dvm.id = 'commit-history-table';
 
                     $scope.$watchGroup(['dvm.branchTitle', 'dvm.commitId', 'dvm.targetId'], () => dvm.getCommits());
 
@@ -114,7 +115,8 @@
                     }
                     dvm.getCommits = function() {
                         if (dvm.commitId) {
-                            var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId);
+                            httpService.cancel(dvm.id);
+                            var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId, dvm.id);
                             promise.then(commits => {
                                 dvm.commits = commits;
                                 dvm.error = '';
@@ -191,6 +193,10 @@
                         wrapper = undefined;
                         dvm.deltaX = 5 + dvm.circleRadius;
                     }
+
+                    $scope.$on('$destroy', function() {
+                        httpService.cancel(dvm.id);
+                    });
 
                     function recurse(c) {
                         // Find the column this commit belongs to and the ids of its base and auxiliary commits

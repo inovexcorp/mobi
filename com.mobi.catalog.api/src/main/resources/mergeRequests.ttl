@@ -47,6 +47,12 @@
     rdfs:domain :MergeRequest ;
     rdfs:range mcat:Branch .
 
+:removeSource a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "remove source"@en ;
+    rdf:comment "A boolean to indicate whether the source branch should be removed upon acceptance."@en ;
+    rdfs:domain :MergeRequest ;
+    rdfs:range xsd:boolean .
+
 # AcceptedMergeRequest
 
 :AcceptedMergeRequest a owl:Class ;
