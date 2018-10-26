@@ -267,6 +267,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         fd.field("sourceBranchId", BRANCH_ID);
         fd.field("targetBranchId", BRANCH_ID);
         fd.field("assignees", UsernameTestFilter.USERNAME);
+        fd.field("removeSource", "true");
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);

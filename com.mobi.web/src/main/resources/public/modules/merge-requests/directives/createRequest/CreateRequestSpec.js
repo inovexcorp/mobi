@@ -103,7 +103,8 @@ describe('Create Request directive', function() {
                         targetBranchId: 'targetBranchId',
                         targetBranch: {},
                         difference: {},
-                        assignees: ['user']
+                        assignees: ['user'],
+                        removeSource: true
                     };
                 });
                 it('1', function() {
@@ -116,6 +117,7 @@ describe('Create Request directive', function() {
                     expect(_.has(mergeRequestsStateSvc.requestConfig, 'sourceBranch')).toEqual(false);
                     expect(_.has(mergeRequestsStateSvc.requestConfig, 'targetBranch')).toEqual(false);
                     expect(_.has(mergeRequestsStateSvc.requestConfig, 'difference')).toEqual(false);
+                    expect(_.has(mergeRequestsStateSvc.requestConfig, 'removeSource')).toEqual(false);
                 });
                 it('2', function() {
                     mergeRequestsStateSvc.createRequestStep = 2;
@@ -135,7 +137,7 @@ describe('Create Request directive', function() {
                 expect(mergeRequestsStateSvc.requestConfig).toEqual(this.originalConfig);
             });
         });
-        describe('should determine whether the next button should be disbaled if the step is', function() {
+        describe('should determine whether the next button should be disabled if the step is', function() {
             it('0', function() {
                 expect(this.controller.isDisabled()).toEqual(true);
                 mergeRequestsStateSvc.requestConfig.recordId = 'record';

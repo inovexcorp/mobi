@@ -100,7 +100,8 @@ public interface MergeRequestRest {
                                  @FormDataParam("recordId") String recordId,
                                  @FormDataParam("sourceBranchId") String sourceBranchId,
                                  @FormDataParam("targetBranchId") String targetBranchId,
-                                 @FormDataParam("assignees") List<FormDataBodyPart> assignees);
+                                 @FormDataParam("assignees") List<FormDataBodyPart> assignees,
+                                 @FormDataParam("removeSource") @DefaultValue("false") boolean removeSource);
 
     /**
      * Returns a {@link MergeRequest} with the provided ID.
