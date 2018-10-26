@@ -366,9 +366,9 @@
              * @propertyOf mergeRequestsState.service:mergeRequestsStateService
              *
              * @description
-             * Checks if the jsonld for a Merge Request has the removeSource property set to true. Returns boolean result.
+             * Checks if the JSON-LD for a Merge Request has the removeSource property set to true. Returns boolean result.
              *
-             * @param jsonld The jsonld of a Merge Request
+             * @param jsonld The JSON-LD of a Merge Request
              * @returns {boolean} True if the removeSource property is true, otherwise false
              */
             self.removeSource = function(jsonld) {
