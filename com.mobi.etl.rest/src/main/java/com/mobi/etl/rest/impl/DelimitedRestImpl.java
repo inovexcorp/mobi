@@ -337,7 +337,6 @@ public class DelimitedRestImpl implements DelimitedRest {
             }
         });
 
-
         versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), masterBranchId, user,
                 "Mapping data from " + mappingRecordIRI, mappingData, null);
 
