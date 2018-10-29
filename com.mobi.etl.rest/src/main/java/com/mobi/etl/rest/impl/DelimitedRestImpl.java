@@ -317,6 +317,7 @@ public class DelimitedRestImpl implements DelimitedRest {
         checkStringParam(ontologyRecordIRI, "Must provide the IRI of an ontology record");
 
         User user = getActiveUser(context, engineManager);
+        Response response;
 
         OntologyRecord record = catalogManager.getRecord(configProvider.getLocalCatalogIRI(),
                 vf.createIRI(ontologyRecordIRI), ontologyRecordFactory).orElseThrow(() ->
@@ -334,19 +335,19 @@ public class DelimitedRestImpl implements DelimitedRest {
         Model ontologyData =  ontologyManager.getOntologyModel(recordIRI);
 
         mappingData.removeAll(ontologyData);
-//        mappingData.forEach(statement -> {
-//            if (ontologyData.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())) {
-//                mappingData.remove(statement.getSubject(), statement.getPredicate(), statement.getObject());
-//            }
-//        });
 
-        versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), masterBranchId, user,
-                "Mapping data from " + mappingRecordIRI, mappingData, null);
+        if (!mappingData.isEmpty()) {
+            versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), masterBranchId, user,
+                    "Mapping data from " + mappingRecordIRI, mappingData, null);
+            response = Response.ok().build();
+        } else {
+            response = Response.status(204).entity("No commit was submitted, commit was empty due to duplicates").build();
+        }
 
         // Remove temp file
         removeTempFile(fileName);
 
-        return Response.ok().build();
+        return response;
     }
 
     /**

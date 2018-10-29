@@ -54,6 +54,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
+import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ModelFactory;
@@ -171,6 +172,9 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
 
     @Mock
     private Dataset dataset;
+
+    @Mock
+    private BNodeService bNodeService;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -795,9 +799,28 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getRecord(eq(catalogId), eq(vf.createIRI(ONTOLOGY_RECORD_IRI)), eq(ontologyRecordFactory));
+        //TODO:check if ontologyModel to not return empty
+        verify(ontologyManager).getOntologyModel(vf.createIRI(ONTOLOGY_RECORD_IRI));
+        //TODO:Show updated dataModel removed duplicates
         verify(versioningManager).commit(eq(catalogId), eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
                 eq(vf.createIRI(MASTER_BRANCH_IRI)), eq(user), anyString(), eq(model), eq(null));
+    }
+    //TODO:Once tests pass, fix front end to show belows response on main page of mapping tool
+    @Test
+    public void mapCSVHandlingEmptyCommits() throws Exception {
+        // Setup:
+        Statement data = vf.createStatement(vf.createIRI("http://test.org/ontology-record"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
+        com.mobi.rdf.api.Model model = mf.createModel(Collections.singleton(data));
+        when(converter.convert(any(SVConfig.class))).thenReturn(model);
+        String fileName = UUID.randomUUID().toString() + ".csv";
+        copyResourceToTemp("test.csv", fileName);
+
+        Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
+                .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
+        //assertEquals(response.getStatus(), 204);
+        //TODO:check ontologyModel to not return empty
+        verify(ontologyManager).getOntologyModel(vf.createIRI(ONTOLOGY_RECORD_IRI));
+        //TODO:Verify dataModel is empty
     }
 
     @Test
