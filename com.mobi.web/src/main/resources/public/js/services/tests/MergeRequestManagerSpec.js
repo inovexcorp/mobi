@@ -103,7 +103,8 @@ describe('Merge Request Manager service', function() {
                 recordId: 'recordId',
                 sourceBranchId: 'branch1',
                 targetBranchId: 'branch2',
-                assignees: ['user1', 'user2']
+                assignees: ['user1', 'user2'],
+                removeSource: true
             };
         });
         it('unless an error occurs', function() {

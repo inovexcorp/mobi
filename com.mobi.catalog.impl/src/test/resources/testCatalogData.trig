@@ -1451,6 +1451,7 @@ GRAPH mergereqs:mergereq {
         mergereqs:onRecord records:versioned-rdf-record ;
         mergereqs:sourceBranch branches:branch ;
         mergereqs:targetBranch branches:master ;
+        mergereqs:removeSource "false"^^xsd:boolean ;
         dc:creator muser:tester .
 }
 
@@ -1464,5 +1465,6 @@ GRAPH mergereqs:mergereq2 {
         mergereqs:onRecord records:versioned-rdf-record ;
         mergereqs:sourceBranch branches:master ;
         mergereqs:targetBranch branches:branch ;
+        mergereqs:removeSource "true"^^xsd:boolean ;
         dc:creator muser:tester .
 }

@@ -174,9 +174,9 @@ public interface MergeRequestManager {
 
     /**
      * Accepts a {@link MergeRequest} by performing a merge between the source and target {@link Branch branches},
-     * changing the type to an {@link com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest}, and
+     * changing the type to an {@link com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest},
      * replacing the sourceBranch and targetBranch predicates with sourceBranchTitle, sourceCommit, targetBranchTitle,
-     * and targetCommit.
+     * and targetCommit, and removing the removeSource predicate.
      *
      * @param requestId The {@link Resource} representing the {@link MergeRequest} ID to delete.
      * @param user The {@link User} performing the acceptance

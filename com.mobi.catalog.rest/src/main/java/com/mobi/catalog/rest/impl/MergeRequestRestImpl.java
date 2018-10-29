@@ -129,7 +129,7 @@ public class MergeRequestRestImpl implements MergeRequestRest {
     @Override
     public Response createMergeRequests(ContainerRequestContext context, String title, String description,
                                         String recordId, String sourceBranchId, String targetBranchId,
-                                        List<FormDataBodyPart> assignees) {
+                                        List<FormDataBodyPart> assignees, boolean removeSource) {
 
         checkStringParam(title, "Merge Request title is required");
         checkStringParam(recordId, "Merge Request record is required");
@@ -137,7 +137,7 @@ public class MergeRequestRestImpl implements MergeRequestRest {
         checkStringParam(targetBranchId, "Merge Request target branch is required");
         User activeUser = getActiveUser(context, engineManager);
         MergeRequestConfig.Builder builder = new MergeRequestConfig.Builder(title, createIRI(recordId, vf),
-                createIRI(sourceBranchId, vf), createIRI(targetBranchId, vf), activeUser);
+                createIRI(sourceBranchId, vf), createIRI(targetBranchId, vf), activeUser, removeSource);
         if (!StringUtils.isBlank(description)) {
             builder.description(description);
         }
