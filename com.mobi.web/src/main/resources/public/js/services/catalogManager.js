@@ -1004,15 +1004,18 @@
              *      history.
              * @param {string} targetId - The commit id of the commit which should be the oldest commit in 
              *      the history.
+             * @param {string} [id=''] The identifier for this request
              * @return {Promise} A promise that resolves with the list of Commits or rejects with an error message
              */
-            self.getCommitHistory = function(commitId, targetId) {
+            self.getCommitHistory = function(commitId, targetId, id = '') {
                 var config = {
                     params: { targetId }
                 };
 
-                return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/history', config)
-                    .then(response => response.data, util.rejectError);
+                var url = commitsPrefix + '/' + encodeURIComponent(commitId) + '/history';
+                var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+
+                return promise.then(response => response.data, util.rejectError);
             }
 
             /**

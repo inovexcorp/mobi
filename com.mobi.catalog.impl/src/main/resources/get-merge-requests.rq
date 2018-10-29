@@ -10,6 +10,7 @@ WHERE {
     OPTIONAL { ?requestId mq:targetBranch ?targetBranch }
     OPTIONAL { ?requestId mq:sourceCommit ?sourceCommit }
     OPTIONAL { ?requestId mq:targetCommit ?targetCommit }
+    OPTIONAL { ?requestId mq:removeSource ?removeSource }
 
     %FILTERS%
 }

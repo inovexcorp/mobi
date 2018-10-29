@@ -29,9 +29,9 @@ import java.util.Optional;
 
 /**
  * MergeRequestFilterParams class to help query getMergeRequests. Allows equality filtering on a particular Resource.
- * Equality filtering options include assignee, onRecord, sourceBranch, and targetBranch. AcceptedMergeRequests can
- * additionally filter on sourceCommit and targetCommit. Also provides a way to sort (ascending or descending) the
- * getMergeRequest query results by a provided sortBy Resource.
+ * Equality filtering options include assignee, onRecord, sourceBranch, targetBranch, and removeSource.
+ * AcceptedMergeRequests can additionally filter on sourceCommit and targetCommit. Also provides a way to sort
+ * (ascending or descending) the getMergeRequest query results by a provided sortBy Resource.
  */
 public class MergeRequestFilterParams {
     private Resource assignee;
@@ -41,6 +41,7 @@ public class MergeRequestFilterParams {
     private Resource sourceCommit;
     private Resource targetCommit;
     private Resource sortBy;
+    private Optional<Boolean> removeSource;
     private boolean ascending;
     private boolean accepted;
     private boolean filters;
@@ -52,6 +53,7 @@ public class MergeRequestFilterParams {
         this.targetBranch = builder.targetBranch;
         this.sourceCommit = builder.sourceCommit;
         this.targetCommit = builder.targetCommit;
+        this.removeSource = builder.removeSource;
         this.sortBy = builder.sortBy;
         this.ascending = builder.ascending;
         this.accepted = builder.accepted;
@@ -86,6 +88,10 @@ public class MergeRequestFilterParams {
         return Optional.ofNullable(sortBy);
     }
 
+    public Optional<Boolean> getRemoveSource() {
+        return removeSource;
+    }
+
     public boolean sortAscending() {
         return ascending;
     }
@@ -106,6 +112,7 @@ public class MergeRequestFilterParams {
         private Resource sourceCommit = null;
         private Resource targetCommit = null;
         private Resource sortBy = null;
+        private Optional<Boolean> removeSource = Optional.empty();
         private boolean ascending = false;
         private boolean accepted = false;
         private boolean filters = false;
@@ -156,6 +163,18 @@ public class MergeRequestFilterParams {
          */
         public Builder setTargetBranch(Resource targetBranch) {
             this.targetBranch = targetBranch;
+            filters = true;
+            return this;
+        }
+
+        /**
+         * Set the filter on removeSource of the MergeRequest.
+         *
+         * @param removeSource The boolean indicating whether or not to remove the source branch
+         * @return MergeRequestFilterParams.Builder
+         */
+        public Builder setRemoveSource(boolean removeSource) {
+            this.removeSource = Optional.of(removeSource);
             filters = true;
             return this;
         }
