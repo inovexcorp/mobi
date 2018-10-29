@@ -312,7 +312,7 @@
                     }
                 };
                 return $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map-to-ontology', null, config)
-                    .then(response => response.data, util.rejectError);
+                    .then(_.identity, util.rejectError);
             }
 
             /**

@@ -105,7 +105,10 @@
                     }
                     function runMapping(id) {
                         state.mapping.record.id = id;
-                        dm.mapAndCommit(id, dvm.ontology['@id']).then(() => {
+                        dm.mapAndCommit(id, dvm.ontology['@id']).then(response => {
+                            if (response.status === 204) {
+                                dvm.util.createWarningToast('Nothing was committed because the model was empty', {timeOut: 8000});
+                            }
                             testOntology(dvm.ontology)
                             reset();
                         }, onError);

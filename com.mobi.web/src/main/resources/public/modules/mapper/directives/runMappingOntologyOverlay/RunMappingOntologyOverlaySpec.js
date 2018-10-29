@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Run Mapping Ontology Overlay directive', function() {
+fdescribe('Run Mapping Ontology Overlay directive', function() {
     var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, catalogManagerSvc, ontologyStateSvc, utilSvc, prefixes;
 
     beforeEach(function() {
@@ -73,6 +73,7 @@ describe('Run Mapping Ontology Overlay directive', function() {
                 this.step = mapperStateSvc.step;
                 this.controller.ontology = {'@id': 'ontologyIRI', [prefixes.catalog + 'masterBranch']: [{'@id': 'branch'}]};
                 mapperStateSvc.displayRunMappingOntologyOverlay = true;
+                delimitedManagerSvc.mapAndCommit.and.returnValue($q.when({status: 200}));
             });
             describe('if it is also being saved', function() {
                 describe('and there are changes', function() {
