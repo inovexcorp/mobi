@@ -36,6 +36,8 @@ import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequestFactory;
+import com.mobi.catalog.api.ontologies.mergerequests.Comment;
+import com.mobi.catalog.api.ontologies.mergerequests.CommentFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFactory;
 import com.mobi.catalog.api.versioning.VersioningManager;
@@ -71,6 +73,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     private CatalogUtilsService catalogUtils;
     private VersioningManager versioningManager;
     private MergeRequestFactory mergeRequestFactory;
+    private CommentFactory commentFactory;
     private AcceptedMergeRequestFactory acceptedMergeRequestFactory;
     private VersionedRDFRecordFactory recordFactory;
     private BranchFactory branchFactory;
@@ -99,6 +102,11 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     @Reference
     void setMergeRequestFactory(MergeRequestFactory mergeRequestFactory) {
         this.mergeRequestFactory = mergeRequestFactory;
+    }
+
+    @Reference
+    void setCommentFactory(CommentFactory commentFactory) {
+        this.commentFactory = commentFactory;
     }
 
     @Reference
@@ -378,6 +386,34 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                 }
             });
         });
+    }
+
+    @Override
+    public Comment createComment(Resource requestId, String comment) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public Comment createComment(Resource requestId, Resource commentId, String comment) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public List<Comment> getComments(Resource requestId) {
+        return null;
+    }
+
+    @Override
+    public Comment getComment(Resource commentId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return catalogUtils.getExpectedObject(commentId, commentFactory, conn);
+        }
     }
 
     private String getBranchTitle(Branch branch) {

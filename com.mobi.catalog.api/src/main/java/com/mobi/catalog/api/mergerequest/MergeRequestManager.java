@@ -26,6 +26,7 @@ package com.mobi.catalog.api.mergerequest;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.ontologies.mergerequests.Comment;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.Resource;
@@ -226,4 +227,12 @@ public interface MergeRequestManager {
      * @param conn A RepositoryConnection to use for lookup
      */
     void cleanMergeRequests(Resource recordId, Resource branchId, RepositoryConnection conn);
+
+    Comment createComment(Resource requestId, String comment);
+
+    Comment createComment(Resource requestId, Resource commentId, String comment);
+
+    List<Comment> getComments(Resource requestId);
+
+    Comment getComment(Resource commentId);
 }
