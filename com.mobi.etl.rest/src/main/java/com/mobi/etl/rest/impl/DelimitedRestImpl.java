@@ -49,9 +49,11 @@ import com.mobi.etl.rest.DelimitedRest;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
@@ -113,6 +115,7 @@ public class DelimitedRestImpl implements DelimitedRest {
     private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
     private OntologyRecordFactory ontologyRecordFactory;
+    private OntologyManager ontologyManager;
     private VersioningManager versioningManager;
     private EngineManager engineManager;
 
@@ -166,6 +169,11 @@ public class DelimitedRestImpl implements DelimitedRest {
     @Reference
     void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
         this.ontologyRecordFactory = ontologyRecordFactory;
+    }
+
+    @Reference
+    void setOntologyManager(OntologyManager ontologyManager) {
+        this.ontologyManager = ontologyManager;
     }
 
     @Reference
@@ -309,6 +317,7 @@ public class DelimitedRestImpl implements DelimitedRest {
         checkStringParam(ontologyRecordIRI, "Must provide the IRI of an ontology record");
 
         User user = getActiveUser(context, engineManager);
+        Response response;
 
         OntologyRecord record = catalogManager.getRecord(configProvider.getLocalCatalogIRI(),
                 vf.createIRI(ontologyRecordIRI), ontologyRecordFactory).orElseThrow(() ->
@@ -316,18 +325,29 @@ public class DelimitedRestImpl implements DelimitedRest {
                         Response.Status.BAD_REQUEST));
 
         // Convert the data
-        Model data = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
+        Model mappingData = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
                 separator, false);
 
         Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() -> ErrorUtils.sendError(
                 "OntologyRecord " + ontologyRecordIRI + " master branch cannot be found.", Response.Status.BAD_REQUEST));
-        versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), masterBranchId, user,
-                "Mapping data from " + mappingRecordIRI, data, null);
+
+        IRI recordIRI = vf.createIRI(ontologyRecordIRI);
+        Model ontologyData =  ontologyManager.getOntologyModel(recordIRI);
+
+        mappingData.removeAll(ontologyData);
+
+        if (!mappingData.isEmpty()) {
+            versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), masterBranchId, user,
+                    "Mapping data from " + mappingRecordIRI, mappingData, null);
+            response = Response.ok().build();
+        } else {
+            response = Response.status(204).entity("No commit was submitted, commit was empty due to duplicates").build();
+        }
 
         // Remove temp file
         removeTempFile(fileName);
 
-        return Response.ok().build();
+        return response;
     }
 
     /**
