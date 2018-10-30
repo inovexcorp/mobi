@@ -125,6 +125,14 @@
                                 dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, dvm.os.listItem.selected['@id'], dvm.os.listItem.conceptSchemes.index);
                                 dvm.os.listItem.concepts.flat = dvm.os.flattenHierarchy(dvm.os.listItem.concepts.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                                 dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                                if (dvm.os.listItem.editorTabStates.concepts.entityIRI === dvm.os.listItem.selected['@id']) {
+                                    _.unset(dvm.os.listItem.editorTabStates.concepts, 'entityIRI');
+                                    _.unset(dvm.os.listItem.editorTabStates.concepts, 'usages');
+                                }
+                                if (dvm.os.listItem.editorTabStates.schemes.entityIRI === dvm.os.listItem.selected['@id']) {
+                                    _.unset(dvm.os.listItem.editorTabStates.schemes, 'entityIRI');
+                                    _.unset(dvm.os.listItem.editorTabStates.schemes, 'usages');
+                                }
                             }
                             // Made into a Concept Scheme
                             if (!wasConceptScheme && isConceptScheme) {
@@ -139,6 +147,10 @@
                             if (!isConceptScheme && wasConceptScheme) {
                                 dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, dvm.os.listItem.selected['@id'], dvm.os.listItem.conceptSchemes.index);
                                 dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                                if (dvm.os.listItem.editorTabStates.schemes.entityIRI === dvm.os.listItem.selected['@id']) {
+                                    _.unset(dvm.os.listItem.editorTabStates.schemes, 'entityIRI');
+                                    _.unset(dvm.os.listItem.editorTabStates.schemes, 'usages');
+                                }
                             }
                             if (addedTypes.length) {
                                 dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], '@type': addedTypes});
