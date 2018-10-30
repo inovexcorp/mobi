@@ -105,6 +105,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Application;
@@ -786,13 +788,12 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
     @Test
     public void mapCSVIntoOntologyRecordTestNoDuplicates() throws Exception {
         // Setup:
-        Statement testData = vf.createStatement(vf.createIRI("http://test.org/ontology-record-2"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
-        com.mobi.rdf.api.Model testModel = mf.createModel(Collections.singleton(testData));
-        Statement data = vf.createStatement(vf.createIRI("http://test.org/ontology-record"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
-        com.mobi.rdf.api.Model model = mf.createModel(Collections.singleton(data));
-        model.add(vf.createIRI("http://test.org/ontology-record-2"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
-        Statement ontologyData = vf.createStatement(vf.createIRI("http://test.org/ontology-record"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
-        com.mobi.rdf.api.Model ontologyModel = mf.createModel(Collections.singleton(ontologyData));
+        Statement statement1 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-1"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
+        Statement statement2 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-2"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
+
+        com.mobi.rdf.api.Model model = mf.createModel(Stream.of(statement1, statement2).collect(Collectors.toList()));
+        com.mobi.rdf.api.Model expectedModel = mf.createModel(Collections.singleton(statement2));
+        com.mobi.rdf.api.Model ontologyModel = mf.createModel(Collections.singleton(statement1));
         when(converter.convert(any(SVConfig.class))).thenReturn(model);
         when(ontologyManager.getOntologyModel(any(Resource.class))).thenReturn(ontologyModel);
         String fileName = UUID.randomUUID().toString() + ".csv";
@@ -801,20 +802,21 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 200);
-        assertEquals(model, testModel);
+        assertEquals(model, expectedModel);
         verify(ontologyManager).getOntologyModel(vf.createIRI(ONTOLOGY_RECORD_IRI));
         verify(versioningManager).commit(eq(catalogId), eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
                 eq(vf.createIRI(MASTER_BRANCH_IRI)), eq(user), anyString(), eq(model), eq(null));
     }
-    //TODO:Once tests pass, fix front end to show belows response on main page of mapping tool
+
     @Test
-    public void mapCSVHandlingEmptyCommits() throws Exception {
+    public void mapCSVIntoOntologyHandlingEmptyCommits() throws Exception {
         // Setup:
-        com.mobi.rdf.api.Model emptyModel = mf.createModel();
-        Statement data = vf.createStatement(vf.createIRI("http://test.org/ontology-record"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
-        com.mobi.rdf.api.Model model = mf.createModel(Collections.singleton(data));
-        Statement ontologyData = vf.createStatement(vf.createIRI("http://test.org/ontology-record"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
-        com.mobi.rdf.api.Model ontologyModel = mf.createModel(Collections.singleton(ontologyData));
+        Statement statement1 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-1"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
+        Statement statement2 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-2"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
+
+        com.mobi.rdf.api.Model model = mf.createModel(Stream.of(statement1, statement2).collect(Collectors.toList()));
+        com.mobi.rdf.api.Model ontologyModel = mf.createModel(Stream.of(statement1, statement2).collect(Collectors.toList()));
+        com.mobi.rdf.api.Model expectedModel = mf.createModel();
         when(converter.convert(any(SVConfig.class))).thenReturn(model);
         when(ontologyManager.getOntologyModel(any(Resource.class))).thenReturn(ontologyModel);
         String fileName = UUID.randomUUID().toString() + ".csv";
@@ -823,7 +825,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 204);
-        assertEquals(model, emptyModel);
+        assertEquals(model, expectedModel);
         verify(ontologyManager).getOntologyModel(vf.createIRI(ONTOLOGY_RECORD_IRI));
     }
 

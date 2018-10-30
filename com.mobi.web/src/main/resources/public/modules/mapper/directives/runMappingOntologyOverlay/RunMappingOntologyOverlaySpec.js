@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Run Mapping Ontology Overlay directive', function() {
+describe('Run Mapping Ontology Overlay directive', function() {
     var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, catalogManagerSvc, ontologyStateSvc, utilSvc, prefixes;
 
     beforeEach(function() {
