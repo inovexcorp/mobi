@@ -76,12 +76,29 @@
                     }
                     dvm.submit = function() {
                         var originalTypes = angular.copy(dvm.os.listItem.selected['@type']);
+                        // Handle vocabulary stuff
+                        var wasConcept = dvm.ontoUtils.containsDerivedConcept(originalTypes);
+                        var isConcept = dvm.ontoUtils.containsDerivedConcept(dvm.types);
+                        var wasConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(originalTypes);
+                        var isConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(dvm.types);
+
+                        if (isConcept && isConceptScheme) {
+                            dvm.error = 'Individual cannot be both a Concept and Concept Scheme';
+                            return;
+                        }
+
                         dvm.os.listItem.selected['@type'] = dvm.types;
 
                         var addedTypes = _.difference(dvm.types, originalTypes);
                         var removedTypes = _.difference(originalTypes, dvm.types);
 
                         if (addedTypes.length || removedTypes.length) {
+                            // Handle vocabulary stuff
+                            var wasConcept = dvm.ontoUtils.containsDerivedConcept(originalTypes);
+                            var isConcept = dvm.ontoUtils.containsDerivedConcept(dvm.types);
+                            var wasConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(originalTypes);
+                            var isConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(dvm.types);
+
                             // Handle added types
                             _.forEach(addedTypes, type => {
                                 var indivs = _.get(dvm.os.listItem.classesAndIndividuals, type, []);
@@ -103,12 +120,6 @@
                             _.set(dvm.os.listItem, 'classesWithIndividuals', _.keys(dvm.os.listItem.classesAndIndividuals));
                             dvm.os.listItem.individualsParentPath = dvm.os.getIndividualsParentPath(dvm.os.listItem);
                             dvm.os.listItem.individuals.flat = dvm.os.createFlatIndividualTree(dvm.os.listItem);
-
-                            // Handle vocabulary stuff
-                            var wasConcept = dvm.ontoUtils.containsDerivedConcept(originalTypes);
-                            var isConcept = dvm.ontoUtils.containsDerivedConcept(dvm.types);
-                            var wasConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(originalTypes);
-                            var isConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(dvm.types);
 
                             // Made into a Concept
                             if (!wasConcept && isConcept) {
@@ -159,8 +170,10 @@
                                 dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], '@type': removedTypes});
                             }
                             dvm.ontoUtils.saveCurrentChanges();
+                            $scope.close();
+                        } else {
+                            $scope.close();
                         }
-                        $scope.close();
                     }
                     dvm.cancel = function() {
                         $scope.dismiss();
