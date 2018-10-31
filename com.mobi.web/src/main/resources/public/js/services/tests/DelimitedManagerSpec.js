@@ -280,10 +280,10 @@ describe('Delimited Manager service', function() {
             }));
         });
         it('successfully', function() {
-            $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map-to-ontology?' + this.params).respond(200, '');
+            $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map-to-ontology?' + this.params).respond(204, '');
             delimitedManagerSvc.mapAndCommit(this.mappingRecordIRI, this.ontologyRecordIRI)
                 .then(function(response) {
-                    expect(response).toBe('');
+                    expect(response.status).toBe(204);
                 }, function(response) {
                     fail('Promise should have resolved');
                 });
