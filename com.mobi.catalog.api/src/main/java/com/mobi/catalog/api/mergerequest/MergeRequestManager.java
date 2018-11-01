@@ -228,11 +228,13 @@ public interface MergeRequestManager {
      */
     void cleanMergeRequests(Resource recordId, Resource branchId, RepositoryConnection conn);
 
-    Comment createComment(Resource requestId, String comment);
+    Comment createComment(Resource requestId, User user, String commentStr);
 
-    Comment createComment(Resource requestId, Resource commentId, String comment);
+    Comment createComment(Resource requestId, User user, String commentStr, Resource parentCommentId);
 
-    List<Comment> getComments(Resource requestId);
+    List<List<Comment>> getComments(Resource requestId);
 
-    Comment getComment(Resource commentId);
+    Optional<Comment> getComment(Resource commentId);
+
+    void updateComment(Resource commentId, Comment comment);
 }

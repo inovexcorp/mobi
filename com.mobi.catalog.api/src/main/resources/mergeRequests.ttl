@@ -93,11 +93,11 @@
 :onMergeRequest a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:label "on MergeRequest"@en ;
     rdfs:comment "The MergeRequest that the Comment relates to." ;
-    rdfs:domain :MergeRequest ;
+    rdfs:domain :Comment ;
     rdfs:range :MergeRequest .
 
 :replyComment a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:label "reply Comment"@en ;
     rdfs:comment "The reply Comment made on an existing Comment." ;
-    rdfs:domain :MergeRequest ;
+    rdfs:domain :Comment ;
     rdfs:range :Comment .

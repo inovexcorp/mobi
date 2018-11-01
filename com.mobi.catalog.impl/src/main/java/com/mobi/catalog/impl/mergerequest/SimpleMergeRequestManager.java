@@ -55,6 +55,8 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -66,6 +68,7 @@ import java.util.stream.StreamSupport;
 public class SimpleMergeRequestManager implements MergeRequestManager {
 
     static final String MERGE_REQUEST_NAMESPACE = "https://mobi.com/merge-requests#";
+    static final String COMMENT_NAMESPACE = "https://mobi.com/comments#";
     static final String COMPONENT_NAME = "com.mobi.catalog.api.mergerequest.MergeRequestManager";
 
     private ValueFactory vf;
@@ -78,6 +81,17 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     private VersionedRDFRecordFactory recordFactory;
     private BranchFactory branchFactory;
     private CommitFactory commitFactory;
+
+    private static final String GET_COMMENT_CHAINS;
+
+    static {
+        try {
+            GET_COMMENT_CHAINS = IOUtils.toString(
+                    SimpleMergeRequestManager.class.getResourceAsStream("/get-comment-chains.rq"), "UTF-8");
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
 
     @Reference
     void setVf(ValueFactory vf) {
@@ -389,30 +403,68 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     }
 
     @Override
-    public Comment createComment(Resource requestId, String comment) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+    public Comment createComment(Resource requestId, User user, String commentStr) {
+        // TODO: LIMIT THE LENGTH
+        OffsetDateTime now = OffsetDateTime.now();
+        Comment comment = commentFactory.createNew(vf.createIRI(COMMENT_NAMESPACE + UUID.randomUUID()));
+        comment.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
+        comment.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
+        comment.setProperty(user.getResource(), vf.createIRI(_Thing.creator_IRI));
+        comment.setProperty(vf.createLiteral(commentStr), vf.createIRI(_Thing.description_IRI));
+        MergeRequest mergeRequest = getMergeRequest(requestId).orElseThrow(
+                () -> new IllegalArgumentException("MergeRequest " + requestId + " does not exist"));
+        comment.setOnMergeRequest(mergeRequest);
 
+        try (RepositoryConnection connection = configProvider.getRepository().getConnection()) {
+            connection.add(comment.getModel(), comment.getResource());
         }
-        return null;
+        return comment;
     }
 
     @Override
-    public Comment createComment(Resource requestId, Resource commentId, String comment) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+    public Comment createComment(Resource requestId, User user, String commentStr, Resource parentCommentId) {
+        Comment parent = getComment(parentCommentId).orElseThrow(
+                () -> new IllegalArgumentException("Parent comment " + parentCommentId + " does not exist"));
+        Comment comment = createComment(requestId, user, commentStr);
+        parent.setReplyComment(comment);
+        updateComment(parent.getResource(), parent);
 
+        return comment;
+    }
+
+    @Override
+    public List<List<Comment>> getComments(Resource requestId) {
+        List<List<Comment>> rtn = new ArrayList<>();
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(GET_COMMENT_CHAINS);
+            query.setBinding("mergeRequest", requestId);
+            query.evaluate().forEach(bindings -> {
+                bindings.getValue("parent").ifPresent(parent -> {
+                    List<String> chain = Arrays.asList(Bindings.requiredLiteral(bindings, "chain").stringValue()
+                            .split(" "));
+                    chain.add(0, parent.stringValue());
+                    rtn.add(chain.stream().map(vf::createIRI)
+                            .map(iri -> getComment(iri).orElseThrow(() -> new IllegalStateException("Comment " + iri
+                                    + "does not exist.")))
+                            .collect(Collectors.toList()));
+                });
+            });
         }
-        return null;
+        return rtn;
     }
 
     @Override
-    public List<Comment> getComments(Resource requestId) {
-        return null;
-    }
-
-    @Override
-    public Comment getComment(Resource commentId) {
+    public Optional<Comment> getComment(Resource commentId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            return catalogUtils.getExpectedObject(commentId, commentFactory, conn);
+            return catalogUtils.optObject(commentId, commentFactory, conn);
+        }
+    }
+
+    @Override
+    public void updateComment(Resource commentId, Comment comment) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            catalogUtils.validateResource(commentId, commentFactory.getTypeIRI(), conn);
+            catalogUtils.updateObject(comment, conn);
         }
     }
 

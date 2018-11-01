@@ -1,0 +1,15 @@
+prefix comment: <https://mobi.com/comments#>
+prefix mq: <http://mobi.com/ontologies/merge-requests#>
+prefix mergereqs: <https://mobi.com/merge-requests#>
+
+select ?parent (group_concat(?child) as ?chain)
+where {
+    ?parent a mq:Comment ;
+          mq:onRequest ?mergeRequest ;
+          mq:replyComment+ ?child .
+
+    FILTER NOT EXISTS {
+        ?comment mq:replyComment ?parent .
+    }
+}
+GROUP BY ?parent

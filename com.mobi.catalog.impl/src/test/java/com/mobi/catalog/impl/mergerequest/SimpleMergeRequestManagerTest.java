@@ -43,6 +43,7 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest;
+import com.mobi.catalog.api.ontologies.mergerequests.Comment;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -82,6 +83,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     private SimpleMergeRequestManager manager;
     private OrmFactory<MergeRequest> mergeRequestFactory = getRequiredOrmFactory(MergeRequest.class);
     private OrmFactory<AcceptedMergeRequest> acceptedMergeRequestFactory = getRequiredOrmFactory(AcceptedMergeRequest.class);
+    private OrmFactory<Comment> commentFactory = getRequiredOrmFactory(Comment.class);
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
@@ -104,6 +106,16 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     private Commit targetCommit1;
     private Commit sourceCommit2;
     private Commit targetCommit2;
+    private Comment comment1;
+    private Comment comment2;
+    private Comment comment3;
+    private Comment comment4;
+    private Comment commentA;
+    private Comment commentB;
+    private Comment commentC;
+    private Comment commentX;
+    private Comment commentY;
+    private Comment commentZ;
 
     private final IRI LOCAL_CATALOG_IRI = VALUE_FACTORY.createIRI("http://mobi.com/catalogs#local");
     private final IRI RECORD_1_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record1");
@@ -198,11 +210,60 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         request5.setSourceCommit(sourceCommit2);
         request5.setTargetCommit(targetCommit2);
 
+
+        comment1 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#1"));
+        comment1.setReplyComment(comment2);
+        comment1.setOnMergeRequest(request1);
+        OffsetDateTime now = OffsetDateTime.now();
+        comment1.setProperty(VALUE_FACTORY.createLiteral(now), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
+        comment1.setProperty(VALUE_FACTORY.createLiteral(now), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+        comment1.setProperty(user1.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
+        comment1.setProperty(VALUE_FACTORY.createLiteral("Comment1"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        comment2 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#2"));
+        comment2.setReplyComment(comment3);
+        comment2.setOnMergeRequest(request1);
+        comment3 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#3"));
+        comment3.setReplyComment(comment4);
+        comment3.setOnMergeRequest(request1);
+        comment4 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#4"));
+        comment4.setOnMergeRequest(request1);
+
+        commentA = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#A"));
+        commentA.setReplyComment(commentB);
+        commentA.setOnMergeRequest(request1);
+        commentB = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#B"));
+        commentB.setReplyComment(commentC);
+        commentB.setOnMergeRequest(request1);
+        commentC = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#C"));
+        commentC.setOnMergeRequest(request1);
+
+        commentX = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#X"));
+        commentX.setReplyComment(commentY);
+        commentX.setOnMergeRequest(request2);
+        commentY = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#Y"));
+        commentY.setReplyComment(commentZ);
+        commentY.setOnMergeRequest(request2);
+        commentZ = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#Z"));
+        commentZ.setOnMergeRequest(request2);
+
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(request1.getModel(), request1.getResource());
             conn.add(request2.getModel(), request2.getResource());
             conn.add(request4.getModel(), request4.getResource());
             conn.add(request5.getModel(), request5.getResource());
+
+            conn.add(comment1.getModel(), comment1.getResource());
+            conn.add(comment2.getModel(), comment2.getResource());
+            conn.add(comment3.getModel(), comment3.getResource());
+            conn.add(comment4.getModel(), comment4.getResource());
+
+            conn.add(commentA.getModel(), commentA.getResource());
+            conn.add(commentB.getModel(), commentB.getResource());
+            conn.add(commentC.getModel(), commentC.getResource());
+
+            conn.add(commentX.getModel(), commentX.getResource());
+            conn.add(commentY.getModel(), commentY.getResource());
+            conn.add(commentZ.getModel(), commentZ.getResource());
         }
 
         MockitoAnnotations.initMocks(this);
@@ -782,5 +843,16 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
                 return predicate.test((T) argument);
             }
         };
+    }
+
+    @Test
+    public void getCommentTest() {
+        Optional<Comment> commentOpt = manager.getComment(comment1.getResource());
+        assertTrue(commentOpt.isPresent());
+        Comment comment = commentOpt.get();
+        assertEquals(comment1.getResource(), comment.getResource());
+        assertEquals(comment1.getOnMergeRequest(), comment.getOnMergeRequest());
+        assertEquals(comment1.getReplyComment(), comment.getReplyComment());
+        assertEquals(comment1.getProperty());
     }
 }
