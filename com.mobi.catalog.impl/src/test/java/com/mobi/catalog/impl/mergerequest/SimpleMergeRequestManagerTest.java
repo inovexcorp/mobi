@@ -44,6 +44,7 @@ import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.Comment;
+import com.mobi.catalog.api.ontologies.mergerequests.CommentFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -212,7 +213,6 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
 
         comment1 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#1"));
-        comment1.setReplyComment(comment2);
         comment1.setOnMergeRequest(request1);
         OffsetDateTime now = OffsetDateTime.now();
         comment1.setProperty(VALUE_FACTORY.createLiteral(now), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
@@ -220,31 +220,36 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         comment1.setProperty(user1.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
         comment1.setProperty(VALUE_FACTORY.createLiteral("Comment1"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
         comment2 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#2"));
-        comment2.setReplyComment(comment3);
         comment2.setOnMergeRequest(request1);
         comment3 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#3"));
-        comment3.setReplyComment(comment4);
         comment3.setOnMergeRequest(request1);
         comment4 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#4"));
         comment4.setOnMergeRequest(request1);
 
+        comment1.setReplyComment(comment2);
+        comment2.setReplyComment(comment3);
+        comment3.setReplyComment(comment4);
+
         commentA = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#A"));
-        commentA.setReplyComment(commentB);
         commentA.setOnMergeRequest(request1);
         commentB = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#B"));
-        commentB.setReplyComment(commentC);
         commentB.setOnMergeRequest(request1);
         commentC = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#C"));
         commentC.setOnMergeRequest(request1);
 
+        commentA.setReplyComment(commentB);
+        commentB.setReplyComment(commentC);
+
+
         commentX = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#X"));
-        commentX.setReplyComment(commentY);
         commentX.setOnMergeRequest(request2);
         commentY = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#Y"));
-        commentY.setReplyComment(commentZ);
         commentY.setOnMergeRequest(request2);
         commentZ = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#Z"));
         commentZ.setOnMergeRequest(request2);
+
+        commentX.setReplyComment(commentY);
+        commentY.setReplyComment(commentZ);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(request1.getModel(), request1.getResource());
@@ -304,6 +309,9 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         when(utilsService.throwAlreadyExists(any(Resource.class), any(OrmFactory.class))).thenReturn(new IllegalArgumentException());
         doThrow(new IllegalArgumentException()).when(utilsService).validateResource(eq(request3.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
         when(utilsService.getConflicts(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(Collections.emptySet());
+
+        when(utilsService.optObject(any(Resource.class), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+        when(utilsService.optObject(eq(comment1.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(comment1));
 
         manager = new SimpleMergeRequestManager();
         injectOrmFactoryReferencesIntoService(manager);
@@ -853,6 +861,25 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         assertEquals(comment1.getResource(), comment.getResource());
         assertEquals(comment1.getOnMergeRequest(), comment.getOnMergeRequest());
         assertEquals(comment1.getReplyComment(), comment.getReplyComment());
-        assertEquals(comment1.getProperty());
+        assertEquals(comment1.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).get(), comment.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).get());
+        assertEquals(comment1.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).get(), comment.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).get());
+        assertEquals(comment1.getProperty(VALUE_FACTORY.createIRI(_Thing.creator_IRI)).get(), comment.getProperty(VALUE_FACTORY.createIRI(_Thing.creator_IRI)).get());
+        assertEquals(comment1.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI)).get(), comment.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI)).get());
+
+        verify(utilsService).optObject(eq(comment1.getResource()), any(CommentFactory.class), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void getCommentDoesNotExistTest() {
+        Resource commentId = VALUE_FACTORY.createIRI("urn:test");
+        Optional<Comment> commentOpt = manager.getComment(commentId);
+        assertTrue(!commentOpt.isPresent());
+        verify(utilsService).optObject(eq(commentId), any(CommentFactory.class), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void getComments() {
+        List<List<Comment>> comments = manager.getComments(request1.getResource());
+        assertEquals(2, comments.size());
     }
 }

@@ -1,6 +1,4 @@
-prefix comment: <https://mobi.com/comments#>
 prefix mq: <http://mobi.com/ontologies/merge-requests#>
-prefix mergereqs: <https://mobi.com/merge-requests#>
 
 select ?parent (group_concat(?child) as ?chain)
 where {
