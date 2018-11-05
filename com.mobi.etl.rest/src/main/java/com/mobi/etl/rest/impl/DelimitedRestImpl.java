@@ -312,7 +312,7 @@ public class DelimitedRestImpl implements DelimitedRest {
 
     @Override
     public Response etlFileOntology(ContainerRequestContext context, String fileName, String mappingRecordIRI,
-                                    String ontologyRecordIRI, boolean containsHeaders, String separator) {
+                                    String ontologyRecordIRI, String branchIRI, boolean containsHeaders, String separator) {
         checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
         checkStringParam(ontologyRecordIRI, "Must provide the IRI of an ontology record");
 
