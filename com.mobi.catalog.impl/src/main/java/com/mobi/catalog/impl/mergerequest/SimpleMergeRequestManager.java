@@ -440,12 +440,12 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             query.setBinding("mergeRequest", requestId);
             query.evaluate().forEach(bindings -> {
                 bindings.getValue("parent").ifPresent(parent -> {
-                    List<String> chain = Arrays.asList(Bindings.requiredLiteral(bindings, "chain").stringValue()
-                            .split(" "));
+                    List<String> chain = new ArrayList<String>(Arrays.asList(
+                            Bindings.requiredLiteral(bindings, "chain").stringValue().split(" ")));
                     chain.add(0, parent.stringValue());
                     rtn.add(chain.stream().map(vf::createIRI)
                             .map(iri -> getComment(iri).orElseThrow(() -> new IllegalStateException("Comment " + iri
-                                    + "does not exist.")))
+                                    + " does not exist.")))
                             .collect(Collectors.toList()));
                 });
             });

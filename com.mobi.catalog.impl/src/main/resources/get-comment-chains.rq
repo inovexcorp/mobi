@@ -3,7 +3,7 @@ prefix mq: <http://mobi.com/ontologies/merge-requests#>
 select ?parent (group_concat(?child) as ?chain)
 where {
     ?parent a mq:Comment ;
-          mq:onRequest ?mergeRequest ;
+          mq:onMergeRequest ?mergeRequest ;
           mq:replyComment+ ?child .
 
     FILTER NOT EXISTS {
