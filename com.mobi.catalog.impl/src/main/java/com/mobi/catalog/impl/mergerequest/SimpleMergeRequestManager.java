@@ -434,7 +434,10 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
 
     @Override
     public List<List<Comment>> getComments(Resource requestId) {
-        List<List<Comment>> rtn = new ArrayList<>();
+        getMergeRequest(requestId).orElseThrow(
+                () -> new IllegalArgumentException("MergeRequest " + requestId + " does not exist"));
+
+        List<List<Comment>> commentChains = new ArrayList<>();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(GET_COMMENT_CHAINS);
             query.setBinding("mergeRequest", requestId);
@@ -443,14 +446,14 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                     List<String> chain = new ArrayList<String>(Arrays.asList(
                             Bindings.requiredLiteral(bindings, "chain").stringValue().split(" ")));
                     chain.add(0, parent.stringValue());
-                    rtn.add(chain.stream().map(vf::createIRI)
+                    commentChains.add(chain.stream().map(vf::createIRI)
                             .map(iri -> getComment(iri).orElseThrow(() -> new IllegalStateException("Comment " + iri
                                     + " does not exist.")))
                             .collect(Collectors.toList()));
                 });
             });
         }
-        return rtn;
+        return commentChains;
     }
 
     @Override

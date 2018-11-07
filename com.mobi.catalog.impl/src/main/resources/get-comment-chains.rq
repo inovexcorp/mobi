@@ -1,13 +1,17 @@
 prefix mq: <http://mobi.com/ontologies/merge-requests#>
+prefix dct: <http://purl.org/dc/terms/>
+
 
 select ?parent (group_concat(?child) as ?chain)
 where {
     ?parent a mq:Comment ;
           mq:onMergeRequest ?mergeRequest ;
+          dct:issued ?issued ;
           mq:replyComment+ ?child .
 
     FILTER NOT EXISTS {
         ?comment mq:replyComment ?parent .
     }
 }
-GROUP BY ?parent
+GROUP BY ?parent ?issued
+ORDER BY ?issued

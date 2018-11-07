@@ -45,6 +45,8 @@ import static org.testng.Assert.fail;
 import com.mobi.catalog.api.mergerequest.MergeRequestConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestFilterParams;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
+import com.mobi.catalog.api.ontologies.mergerequests.Comment;
+import com.mobi.catalog.api.ontologies.mergerequests.CommentFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequestFactory;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -52,6 +54,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
+import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
@@ -87,7 +90,9 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
@@ -97,12 +102,20 @@ import javax.ws.rs.core.Response;
 public class MergeRequestRestImplTest extends MobiRestTestNg {
     private MergeRequestRestImpl rest;
     private MergeRequestFactory mergeRequestFactory;
+    private CommentFactory commentFactory;
     private UserFactory userFactory;
     private ValueFactory vf;
     private ModelFactory mf;
     private ValueConverterRegistry vcr;
     private MergeRequest request1;
     private MergeRequest request2;
+    private Comment comment1;
+    private Comment comment2;
+    private Comment comment3;
+    private List<List<Comment>> commentChains;
+    private JSONObject commentJson;
+
+
     private User user;
 
     private final String CATALOG_IRI = "http://test.org/catalog";
@@ -135,6 +148,12 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         mergeRequestFactory.setValueFactory(vf);
         mergeRequestFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(mergeRequestFactory);
+
+        commentFactory = new CommentFactory();
+        commentFactory.setModelFactory(mf);
+        commentFactory.setValueFactory(vf);
+        commentFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(commentFactory);
 
         userFactory = new UserFactory();
         userFactory.setModelFactory(mf);
@@ -173,12 +192,28 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         request2 = mergeRequestFactory.getExisting(request2.getResource(), contextModel2).get();
         user = userFactory.createNew(vf.createIRI("http://test.org/" + UsernameTestFilter.USERNAME));
 
+        comment1 = commentFactory.createNew(vf.createIRI("http://mobi.com/test/comments#1"));
+        comment1.setOnMergeRequest(request1);
+        comment1.setProperty(vf.createLiteral("2018-11-05T13:40:55.257-07:00"), vf.createIRI(_Thing.issued_IRI));
+        comment1.setProperty(vf.createLiteral("2018-11-05T13:40:55.257-07:00"), vf.createIRI(_Thing.modified_IRI));
+        comment1.setProperty(user.getResource(), vf.createIRI(_Thing.creator_IRI));
+        comment1.setProperty(vf.createLiteral("Comment1"), vf.createIRI(_Thing.description_IRI));
+        comment2 = commentFactory.createNew(vf.createIRI("http://mobi.com/test/comments#2"));
+        comment2.setOnMergeRequest(request1);
+        comment3 = commentFactory.createNew(vf.createIRI("http://mobi.com/test/comments#3"));
+        comment3.setOnMergeRequest(request1);
+        comment1.setReplyComment(comment2);
+
+        commentChains = Arrays.asList(Arrays.asList(comment1, comment2), Arrays.asList(comment3));
+        commentJson = JSONObject.fromObject("{'comment': 'This is a comment.'}");
+
         rest = new MergeRequestRestImpl();
         rest.setManager(requestManager);
         rest.setEngineManager(engineManager);
         rest.setTransformer(transformer);
         rest.setVf(vf);
         rest.setMergeRequestFactory(mergeRequestFactory);
+        rest.setCommentFactory(commentFactory);
         rest.setConfigProvider(configProvider);
 
         return new ResourceConfig()
@@ -199,6 +234,12 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         when(requestManager.getMergeRequest(any(Resource.class))).thenReturn(Optional.empty());
         when(requestManager.getMergeRequest(eq(request1.getResource()))).thenReturn(Optional.of(request1));
         doNothing().when(requestManager).acceptMergeRequest(any(Resource.class), any(User.class), any(RepositoryConnection.class));
+
+        when(requestManager.getComments(eq(request1.getResource()))).thenReturn(commentChains);
+        when(requestManager.createComment(eq(request1.getResource()), any(User.class), anyString())).thenReturn(comment1);
+        when(requestManager.createComment(eq(request1.getResource()), any(User.class), anyString(), eq(comment1.getResource()))).thenReturn(comment2);
+        when(requestManager.getComment(any(Resource.class))).thenReturn(Optional.empty());
+        when(requestManager.getComment(comment1.getResource())).thenReturn(Optional.of(comment1));
 
         doThrow(new IllegalArgumentException()).when(requestManager).deleteMergeRequest(vf.createIRI(doesNotExist));
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
@@ -587,6 +628,211 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     public void deleteMergeRequestWithInvalidIRITest() {
         Response response = target().path("merge-requests/" + encode(invalidIRIString))
                 .request().delete();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    /* GET merge-requests/{requestId}/comments */
+
+    @Test
+    public void getCommentsTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments").request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(requestManager).getComments(eq(request1.getResource()));
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 2);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getCommentsWithErrorTest() {
+        // Setup
+        doThrow(new MobiException()).when(requestManager).getComments(any(Resource.class));
+
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments").request().get();
+        assertEquals(response.getStatus(), 500);
+        verify(requestManager).getComments(eq(request1.getResource()));
+    }
+
+    /* POST merge-requests/{requestId}/comments */
+
+    @Test
+    public void createCommentTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
+                .request().post(Entity.json(commentJson));
+        assertEquals(response.getStatus(), 201);
+        verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
+        verify(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString());
+        assertEquals(comment1.getResource().stringValue(), response.readEntity(String.class));
+    }
+
+    @Test
+    public void createCommentRequestDoesNotExistTest() {
+        doThrow(new MobiException()).when(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString());
+
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
+                .request().post(Entity.json(commentJson));
+        assertEquals(response.getStatus(), 500);
+        verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
+        verify(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString());
+    }
+
+    @Test
+    public void createCommentNoJsonTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
+                .request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void createCommentEmptyCommentTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
+                .request().post(Entity.json("{'comment':''}"));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void createReplyCommentTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
+                .queryParam("commentId", comment1.getResource().stringValue())
+                .request().post(Entity.json(commentJson));
+        assertEquals(response.getStatus(), 201);
+        verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
+        verify(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString(), eq(comment1.getResource()));
+        assertEquals(comment2.getResource().stringValue(), response.readEntity(String.class));
+    }
+
+    @Test
+    public void createReplyCommentRequestDoesNotExistTest() {
+        doThrow(new MobiException()).when(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString(), eq(comment1.getResource()));
+
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
+                .queryParam("commentId", comment1.getResource().stringValue())
+                .request().post(Entity.json(commentJson));
+        assertEquals(response.getStatus(), 500);
+        verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
+        verify(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString(), eq(comment1.getResource()));
+    }
+
+    @Test
+    public void createReplyCommentNoJsonTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
+                .queryParam("commentId", comment2.getResource().stringValue())
+                .request().post(Entity.json(""));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void createReplyCommentEmptyCommentTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
+                .queryParam("commentId", comment2.getResource().stringValue())
+                .request().post(Entity.json("{'comment':''}"));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    /* GET merge-requests/{requestId}/comments/{commentId} */
+
+    @Test
+    public void getCommentTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode(comment1.getResource().stringValue())).request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(requestManager).getComment(comment1.getResource());
+        try {
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertEquals(result.getString("@id"), comment1.getResource().stringValue());
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getMissingCommentTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode("http://mobi.com/error")).request().get();
+        assertEquals(response.getStatus(), 404);
+        verify(requestManager).getComment(vf.createIRI("http://mobi.com/error"));
+    }
+
+    @Test
+    public void getCommentWithErrorTest() {
+        // Setup:
+        doThrow(new MobiException()).when(requestManager).getComment(comment1.getResource());
+
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode(comment1.getResource().stringValue())).request().get();
+        assertEquals(response.getStatus(), 500);
+        verify(requestManager).getComment(comment1.getResource());
+    }
+
+    @Test
+    public void getCommentWithInvalidIRITest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode(invalidIRIString)).request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    /* POST merge-requests/{requestId}/comments/{commentId} */
+
+    @Test
+    public void updateCommentTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode(comment1.getResource().stringValue()))
+                .request()
+                .put(Entity.entity(groupedModelToString(comment1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+        verify(requestManager).updateComment(eq(comment1.getResource()), any(Comment.class));
+        assertEquals(response.getStatus(), 200);
+    }
+
+    @Test
+    public void updateCommentEmptyJsonTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode(comment1.getResource().stringValue()))
+                .request()
+                .put(Entity.json("[]"));
+        verify(requestManager, never()).updateComment(eq(comment1.getResource()), any(Comment.class));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void updateCommentWithInvalidJsonTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode(comment1.getResource().stringValue()))
+                .request()
+                .put(Entity.json("['test': true]"));
+        verify(requestManager, never()).updateComment(eq(comment1.getResource()), any(Comment.class));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void updateCommentThatDoesNotMatchTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode(comment1.getResource().stringValue()))
+                .request()
+                .put(Entity.entity(groupedModelToString(comment2.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+        verify(requestManager, never()).updateComment(eq(comment1.getResource()), any(Comment.class));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void updateCommentWithErrorTest() {
+        doThrow(new MobiException()).when(requestManager).updateComment(eq(comment1.getResource()), any(Comment.class));
+        Response response = target().path("merge-requests/"+ encode(request1.getResource().stringValue()) + "/comments/"
+                + encode(comment1.getResource().stringValue()))
+                .request()
+                .put(Entity.entity(groupedModelToString(comment1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+        verify(requestManager).updateComment(eq(comment1.getResource()), any(Comment.class));
+        assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void updateCommentWithInvalidIRITest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode(invalidIRIString))
+                .request()
+                .put(Entity.entity(groupedModelToString(comment1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
     }
 }
