@@ -83,6 +83,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     private CommitFactory commitFactory;
 
     private static final String GET_COMMENT_CHAINS;
+    private static final int MAX_COMMENT_STRING_LENGTH = 1000000;
 
     static {
         try {
@@ -404,7 +405,9 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
 
     @Override
     public Comment createComment(Resource requestId, User user, String commentStr) {
-        // TODO: LIMIT THE LENGTH
+        if (commentStr.length() > MAX_COMMENT_STRING_LENGTH) {
+            throw new IllegalArgumentException("Comment string length must be less than " + MAX_COMMENT_STRING_LENGTH);
+        }
         OffsetDateTime now = OffsetDateTime.now();
         Comment comment = commentFactory.createNew(vf.createIRI(COMMENT_NAMESPACE + UUID.randomUUID()));
         comment.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));

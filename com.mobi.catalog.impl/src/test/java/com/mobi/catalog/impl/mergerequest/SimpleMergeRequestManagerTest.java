@@ -935,6 +935,16 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void createCommentLargeStringTest() {
+        thrown.expect(IllegalArgumentException.class);
+
+        String commentStr = new String(new char[1100000]).replace('\0', ' ');
+        Comment comment = manager.createComment(request1.getResource(), user1, commentStr);
+
+        verify(utilsService).optObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+    }
+
+    @Test
     public void createCommentRequestDoesNotExistTest() {
         thrown.expect(IllegalArgumentException.class);
 
