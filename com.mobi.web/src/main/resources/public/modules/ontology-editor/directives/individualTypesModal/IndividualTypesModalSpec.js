@@ -40,9 +40,9 @@ describe('Individual Types Modal directive', function() {
         });
 
         this.iri = 'id';
-        ontologyStateSvc.listItem.selected = {'@id': this.iri, '@type': ['type'], 'title': [{'@value': 'title'}]};
-        ontologyStateSvc.listItem.classesAndIndividuals = {'type': [this.iri]};
-        ontologyStateSvc.listItem.classesWithIndividuals = ['type'];
+        ontologyStateSvc.listItem.selected = {'@id': this.iri, '@type': [prefixes.owl + 'NamedIndividual', 'type1', 'type2'], 'title': [{'@value': 'title'}]};
+        ontologyStateSvc.listItem.classesAndIndividuals = {'type1': [this.iri], 'type2': [this.iri]};
+        ontologyStateSvc.listItem.classesWithIndividuals = ['type1', 'type2'];
         scope.close = jasmine.createSpy('close');
         scope.dismiss = jasmine.createSpy('dismiss');
         this.element = $compile(angular.element('<individual-types-modal close="close()" dismiss="dismiss()"></individual-types-modal>'))(scope);
@@ -89,8 +89,8 @@ describe('Individual Types Modal directive', function() {
         });
         describe('should update the individual types', function() {
             beforeEach(function() {
-                ontologyStateSvc.getIndividualsParentPath.and.returnValue(['type']);
-                ontologyStateSvc.createFlatIndividualTree.and.returnValue(['type']);
+                ontologyStateSvc.getIndividualsParentPath.and.returnValue(['type1']);
+                ontologyStateSvc.createFlatIndividualTree.and.returnValue(['type1']);
                 ontologyStateSvc.flattenHierarchy.and.returnValue([this.iri]);
                 ontoUtils.containsDerivedConcept.and.callFake(arr => _.some(arr, iri => _.includes(iri, 'concept')));
                 ontoUtils.containsDerivedConceptScheme.and.callFake(arr => _.some(arr, iri => _.includes(iri, 'scheme')));
@@ -98,37 +98,37 @@ describe('Individual Types Modal directive', function() {
             it('if a type was added', function() {
                 this.controller.types.push('new');
                 this.controller.submit();
-                expect(ontologyStateSvc.listItem.selected['@type']).toEqual(['type', 'new']);
-                expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'type': [this.iri], 'new': [this.iri]});
-                expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['type', 'new']);
+                expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2', 'new']);
+                expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'type1': [this.iri], 'type2': [this.iri], 'new': [this.iri]});
+                expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['type1', 'type2', 'new']);
                 expect(ontologyStateSvc.getIndividualsParentPath).toHaveBeenCalledWith(ontologyStateSvc.listItem);
-                expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['type']);
+                expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['type1']);
                 expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
-                expect(ontologyStateSvc.listItem.individuals.flat).toEqual(['type']);
+                expect(ontologyStateSvc.listItem.individuals.flat).toEqual(['type1']);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': this.iri, '@type': ['new']});
                 expect(ontologyStateSvc.addToDeletions).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
             });
             it('if a type was removed', function() {
-                this.controller.types = [];
+                this.controller.types = [prefixes.owl + 'NamedIndividual', 'type1'];
                 this.controller.submit();
-                expect(ontologyStateSvc.listItem.selected['@type']).toEqual([]);
-                expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({});
-                expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual([]);
+                expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'type1': [this.iri]});
+                expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['type1']);
                 expect(ontologyStateSvc.getIndividualsParentPath).toHaveBeenCalledWith(ontologyStateSvc.listItem);
-                expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['type']);
+                expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['type1']);
                 expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
-                expect(ontologyStateSvc.listItem.individuals.flat).toEqual(['type']);
+                expect(ontologyStateSvc.listItem.individuals.flat).toEqual(['type1']);
                 expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': this.iri, '@type': ['type']});
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': this.iri, '@type': ['type2']});
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
             });
             it('if the individual is now a concept', function() {
                 this.controller.types.push('concept');
                 this.controller.submit();
-                expect(ontologyStateSvc.listItem.selected['@type']).toEqual(['type', 'concept']);
+                expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2', 'concept']);
                 expect(ontologyStateSvc.listItem.concepts.hierarchy).toEqual([{entityIRI: this.iri}]);
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith([{entityIRI: this.iri}], ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.concepts.flat).toEqual([this.iri]);
@@ -136,23 +136,86 @@ describe('Individual Types Modal directive', function() {
                 expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@type', jasmine.anything());
                 expect(ontoUtils.updateVocabularyHierarchies).toHaveBeenCalledWith('title', [{'@value': 'title'}]);
             });
-            it('if the individual is no longer a concept', function() {
-                ontologyStateSvc.listItem.selected['@type'] = ['concept']
-                this.controller.types = ['type'];
-                ontologyStateSvc.listItem.concepts.flat = [this.iri];
-                ontologyStateSvc.listItem.conceptSchemes.flat = [this.iri];
-                ontologyStateSvc.flattenHierarchy.and.returnValue([]);
-                this.controller.submit();
-                expect(ontologyStateSvc.listItem.selected['@type']).toEqual(['type']);
-                expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, this.iri, ontologyStateSvc.listItem.concepts.index);
-                expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
-                expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
-                expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
+            describe('if the individual is no longer a concept', function() {
+                beforeEach(function() {
+                    ontologyStateSvc.listItem.selected['@type'] = [prefixes.owl + 'NamedIndividual', 'type1', 'concept']
+                    this.controller.types = [prefixes.owl + 'NamedIndividual', 'type1'];
+                    ontologyStateSvc.listItem.concepts.flat = [this.iri];
+                    ontologyStateSvc.listItem.conceptSchemes.flat = [this.iri];
+                    ontologyStateSvc.flattenHierarchy.and.returnValue([]);
+                });
+                describe('and the individual is selected in the concepts page', function() {
+                    beforeEach(function() {
+                        ontologyStateSvc.listItem.editorTabStates.concepts = {
+                            entityIRI: this.iri,
+                            usages: {},
+                        };
+                    });
+                    it('and the concepts page is active', function() {
+                        ontologyStateSvc.getActiveKey.and.returnValue('concepts');
+                        this.controller.submit();
+                        expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, this.iri, ontologyStateSvc.listItem.concepts.index);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                        expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
+                        expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
+                        expect(ontologyStateSvc.listItem.editorTabStates.concepts).toEqual({});
+                        expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
+                    });
+                    it('and the concepts page is not active', function() {
+                        this.controller.submit();
+                        expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, this.iri, ontologyStateSvc.listItem.concepts.index);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                        expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
+                        expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
+                        expect(ontologyStateSvc.listItem.editorTabStates.concepts).toEqual({});
+                        expect(ontologyStateSvc.unSelectItem).not.toHaveBeenCalled();
+                    });
+                });
+                describe('and the individual is selected in the schemes page', function() {
+                    beforeEach(function() {
+                        ontologyStateSvc.listItem.editorTabStates.schemes = {
+                            entityIRI: this.iri,
+                            usages: {},
+                        };
+                    });
+                    it('and the schemes page is active', function() {
+                        ontologyStateSvc.getActiveKey.and.returnValue('schemes');
+                        this.controller.submit();
+                        expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, this.iri, ontologyStateSvc.listItem.concepts.index);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                        expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
+                        expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
+                        expect(ontologyStateSvc.listItem.editorTabStates.schemes).toEqual({});
+                        expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
+                    });
+                    it('and the schemes page is not active', function() {
+                        this.controller.submit();
+                        expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, this.iri, ontologyStateSvc.listItem.concepts.index);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                        expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
+                        expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
+                        expect(ontologyStateSvc.listItem.editorTabStates.schemes).toEqual({});
+                        expect(ontologyStateSvc.unSelectItem).not.toHaveBeenCalled();
+                    });
+                });
+                it('and is not selected elsewhere', function() {
+                    this.controller.submit();
+                    expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                    expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, this.iri, ontologyStateSvc.listItem.concepts.index);
+                    expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                    expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
+                    expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
+                    expect(ontologyStateSvc.unSelectItem).not.toHaveBeenCalled();
+                });
             });
             it('if the individual is now a concept scheme', function() {
                 this.controller.types.push('scheme');
                 this.controller.submit();
-                expect(ontologyStateSvc.listItem.selected['@type']).toEqual(['type', 'scheme']);
+                expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2', 'scheme']);
                 expect(ontologyStateSvc.listItem.conceptSchemes.hierarchy).toEqual([{entityIRI: this.iri}]);
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith([{entityIRI: this.iri}], ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([this.iri]);
@@ -160,28 +223,66 @@ describe('Individual Types Modal directive', function() {
                 expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@type', jasmine.anything());
                 expect(ontoUtils.updateVocabularyHierarchies).toHaveBeenCalledWith('title', [{'@value': 'title'}]);
             });
-            it('if the individual is no longer a scheme', function() {
-                ontologyStateSvc.listItem.selected['@type'] = ['scheme']
-                this.controller.types = ['type'];
-                ontologyStateSvc.listItem.conceptSchemes.flat = [this.iri];
-                ontologyStateSvc.flattenHierarchy.and.returnValue([]);
+            describe('if the individual is no longer a scheme', function() {
+                beforeEach(function() {
+                    ontologyStateSvc.listItem.selected['@type'] = [prefixes.owl + 'NamedIndividual', 'type1', 'scheme']
+                    this.controller.types = [prefixes.owl + 'NamedIndividual', 'type1'];
+                    ontologyStateSvc.listItem.conceptSchemes.flat = [this.iri];
+                    ontologyStateSvc.flattenHierarchy.and.returnValue([]);
+                });
+                describe('and the individual is selected in the schemes page', function() {
+                    beforeEach(function() {
+                        ontologyStateSvc.listItem.editorTabStates.schemes = {
+                            entityIRI: this.iri,
+                            usages: {},
+                        };
+                    });
+                    it('and the schemes page is active', function() {
+                        ontologyStateSvc.getActiveKey.and.returnValue('schemes');
+                        this.controller.submit();
+                        expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                        expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
+                        expect(ontologyStateSvc.listItem.editorTabStates.schemes).toEqual({});
+                        expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
+                    });
+                    it('and the schemes page is not active', function() {
+                        this.controller.submit();
+                        expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                        expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
+                        expect(ontologyStateSvc.listItem.editorTabStates.schemes).toEqual({});
+                        expect(ontologyStateSvc.unSelectItem).not.toHaveBeenCalled();
+                    });
+                });
+                it('and the individual is not selected elsewhere', function() {
+                    this.controller.submit();
+                    expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                    expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                    expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
+                    expect(ontologyStateSvc.unSelectItem).not.toHaveBeenCalled();
+                });
+            });
+            it('unless all types were removed except NamedIndividual', function() {
+                this.controller.types = [prefixes.owl + 'NamedIndividual'];
                 this.controller.submit();
-                expect(ontologyStateSvc.listItem.selected['@type']).toEqual(['type']);
-                expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
-                expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
+                expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2']);
+                expect(this.controller.error).toBeTruthy();
+                expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
+                expect(scope.close).not.toHaveBeenCalled();
             });
             it('unless the individual is now both a scheme and a concept', function() {
                 this.controller.types.push('scheme');
                 this.controller.types.push('concept');
                 this.controller.submit();
-                expect(ontologyStateSvc.listItem.selected['@type']).toEqual(['type']);
+                expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2']);
                 expect(this.controller.error).toBeTruthy();
                 expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
                 expect(scope.close).not.toHaveBeenCalled();
             });
             it('unless nothing changed', function() {
                 this.controller.submit();
-                expect(ontologyStateSvc.listItem.selected['@type']).toEqual(['type']);
+                expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2']);
                 expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
             });

@@ -75,7 +75,12 @@
                         return iri === prefixes.owl + 'NamedIndividual';
                     }
                     dvm.submit = function() {
+                        if (dvm.types.length < 2) {
+                            dvm.error = 'Individual must have a type other than Named Individual';
+                            return;
+                        }
                         var originalTypes = angular.copy(dvm.os.listItem.selected['@type']);
+
                         // Handle vocabulary stuff
                         var wasConcept = dvm.ontoUtils.containsDerivedConcept(originalTypes);
                         var isConcept = dvm.ontoUtils.containsDerivedConcept(dvm.types);
@@ -93,6 +98,8 @@
                         var removedTypes = _.difference(originalTypes, dvm.types);
 
                         if (addedTypes.length || removedTypes.length) {
+                            var unselect = false;
+
                             // Handle vocabulary stuff
                             var wasConcept = dvm.ontoUtils.containsDerivedConcept(originalTypes);
                             var isConcept = dvm.ontoUtils.containsDerivedConcept(dvm.types);
@@ -139,10 +146,16 @@
                                 if (dvm.os.listItem.editorTabStates.concepts.entityIRI === dvm.os.listItem.selected['@id']) {
                                     _.unset(dvm.os.listItem.editorTabStates.concepts, 'entityIRI');
                                     _.unset(dvm.os.listItem.editorTabStates.concepts, 'usages');
+                                    if (dvm.os.getActiveKey() === 'concepts') {
+                                        unselect = true;
+                                    }
                                 }
                                 if (dvm.os.listItem.editorTabStates.schemes.entityIRI === dvm.os.listItem.selected['@id']) {
                                     _.unset(dvm.os.listItem.editorTabStates.schemes, 'entityIRI');
                                     _.unset(dvm.os.listItem.editorTabStates.schemes, 'usages');
+                                    if (dvm.os.getActiveKey() === 'schemes') {
+                                        unselect = true;
+                                    }
                                 }
                             }
                             // Made into a Concept Scheme
@@ -161,6 +174,9 @@
                                 if (dvm.os.listItem.editorTabStates.schemes.entityIRI === dvm.os.listItem.selected['@id']) {
                                     _.unset(dvm.os.listItem.editorTabStates.schemes, 'entityIRI');
                                     _.unset(dvm.os.listItem.editorTabStates.schemes, 'usages');
+                                    if (dvm.os.getActiveKey() === 'schemes') {
+                                        unselect = true;
+                                    }
                                 }
                             }
                             if (addedTypes.length) {
@@ -168,6 +184,9 @@
                             }
                             if (removedTypes.length) {
                                 dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], '@type': removedTypes});
+                            }
+                            if (unselect) {
+                                dvm.os.unSelectItem();
                             }
                             dvm.ontoUtils.saveCurrentChanges();
                             $scope.close();
