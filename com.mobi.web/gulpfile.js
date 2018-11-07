@@ -58,7 +58,6 @@ var jsFiles = function(prefix) {
             prefix + 'codemirror-minified/**/javascript.js',
             prefix + 'codemirror-minified/**/matchbrackets.js',
             prefix + 'angular/**/angular.min.js',
-            prefix + 'popper.js/dist/umd/popper.min.js',
             prefix + 'jquery/**/jquery.min.js',
             prefix + 'popper.js/' + (prefix.includes(dest) ? '**' : 'dist/umd') + '/popper.min.js',
             prefix + 'bootstrap/' + (prefix.includes(dest) ? '**' : 'dist/js') + '/bootstrap.min.js',

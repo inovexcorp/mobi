@@ -252,6 +252,11 @@ describe('Merge Request View directive', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('.assignees li').length).toEqual(2);
         });
+        it('depending on if the source branch is to be removed', function() {
+            mergeRequestsStateSvc.selected.removeSource = true;
+            scope.$digest();
+            expect(this.element.querySelectorAll('checkbox').length).toEqual(1);
+        });
         it('depending on whether the merge request is accepted', function() {
             var indicator = angular.element(this.element.querySelectorAll('.open-indicator')[0]);
             expect(indicator.hasClass('badge-primary')).toEqual(true);

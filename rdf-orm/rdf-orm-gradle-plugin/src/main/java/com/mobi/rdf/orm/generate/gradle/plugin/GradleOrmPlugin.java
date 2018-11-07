@@ -1,14 +1,12 @@
-@Version("3.0.0.${build}")
-
-package com.mobi.catalog.rest;
+package com.mobi.rdf.orm.generate.gradle.plugin;
 
 /*-
  * #%L
- * com.mobi.catalog.rest
+ * RDF ORM Gradle Plugin
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,13 @@ package com.mobi.catalog.rest;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.gradle.api.Plugin;
+import org.gradle.api.Project;
+
+public class GradleOrmPlugin implements Plugin<Project> {
+
+    @Override
+    public void apply(Project target) {
+        target.getTasks().create("generateOntologies", OrmGenerationTask.class);
+    }
+}

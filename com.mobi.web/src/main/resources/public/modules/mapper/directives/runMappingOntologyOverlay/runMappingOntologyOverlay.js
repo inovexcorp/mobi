@@ -105,9 +105,14 @@
                     }
                     function runMapping(id) {
                         state.mapping.record.id = id;
-                        dm.mapAndCommit(id, dvm.ontology['@id']).then(() => {
-                            testOntology(dvm.ontology)
-                            reset();
+                        dm.mapAndCommit(id, dvm.ontology['@id']).then(response => {
+                            if (response.status === 204) {
+                                dvm.util.createWarningToast('No commit was submitted, commit was empty due to duplicates', {timeOut: 8000});
+                                reset();
+                            } else {
+                                testOntology(dvm.ontology)
+                                reset();
+                            }
                         }, onError);
                     }
                     function reset() {

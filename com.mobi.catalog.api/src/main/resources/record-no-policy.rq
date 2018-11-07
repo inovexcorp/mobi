@@ -1,0 +1,11 @@
+PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+
+select ?record ?master ?publisher
+where {
+  	?record a mcat:VersionedRDFRecord  ;
+  	    mcat:masterBranch ?master ;
+  	    dc:publisher ?publisher .
+
+    FILTER (!EXISTS { ?pol <http://mobi.com/ontologies/policy#relatedResource> ?record })
+}

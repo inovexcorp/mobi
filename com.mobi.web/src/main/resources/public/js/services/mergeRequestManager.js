@@ -88,7 +88,8 @@
              * @param {string} requestConfig.recordId The required IRI of the VersionedRDFRecord of the new MergeRequest
              * @param {string} requestConfig.sourceBranchId The required IRI of the source Branch for the new MergeRequest
              * @param {string} requestConfig.targetBranchId The required IRI of the target Branch for the new MergeRequest
-             * @param {string[]} requestConfig.assignees The optional usernames of the assignees of the new MergeRequest.
+             * @param {string[]} requestConfig.assignees The optional usernames of the assignees of the new MergeRequest
+             * @param {string} requestConfig.removeSource A boolean indicating whether the sourceBranch should be removed on acceptance
              * @return {Promise} A promise that resolves to the IRI of the new MergeRequest or is rejected with
              * an error message
              */
@@ -108,6 +109,9 @@
                     fd.append('description', requestConfig.description);
                 }
                 _.forEach(_.get(requestConfig, 'assignees', []), username => fd.append('assignees', username));
+                if (_.has(requestConfig, 'removeSource')) {
+                    fd.append('removeSource', requestConfig.removeSource);
+                }
                 return $http.post(prefix, fd, config)
                     .then(response => response.data, util.rejectError);
             }
