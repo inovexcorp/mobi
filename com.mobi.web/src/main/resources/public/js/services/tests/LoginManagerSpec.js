@@ -21,12 +21,10 @@
  * #L%
  */
 describe('Login Manager service', function() {
-    var loginManagerSvc, $httpBackend, state, scope, $q, analyticManagerSvc, analyticStateSvc, catalogManagerSvc, catalogStateSvc, datasetManagerSvc, datasetStateSvc, delimitedManagerSvc, discoverStateSvc, mapperStateSvc, mergeRequestsStateSvc, ontologyManagerSvc, ontologyStateSvc, sparqlManagerSvc, stateManagerSvc, userManagerSvc, userStateSvc;
+    var loginManagerSvc, $httpBackend, state, scope, $q, catalogManagerSvc, catalogStateSvc, datasetManagerSvc, datasetStateSvc, delimitedManagerSvc, discoverStateSvc, mapperStateSvc, mergeRequestsStateSvc, ontologyManagerSvc, ontologyStateSvc, sparqlManagerSvc, stateManagerSvc, userManagerSvc, userStateSvc;
 
     beforeEach(function() {
         module('loginManager');
-        mockAnalyticManager();
-        mockAnalyticState();
         mockCatalogManager();
         mockCatalogState();
         mockDatasetManager();
@@ -49,14 +47,12 @@ describe('Login Manager service', function() {
             });
         });
 
-        inject(function(loginManagerService, _$httpBackend_, _$state_, _$rootScope_, _$q_, _analyticManagerService_, _analyticStateService_, _catalogManagerService_, _catalogStateService_, _datasetManagerService_, _datasetStateService_, _delimitedManagerService_, _discoverStateService_, _mapperStateService_, _mergeRequestsStateService_, _ontologyManagerService_, _ontologyStateService_, _sparqlManagerService_, _stateManagerService_, _userManagerService_, _userStateService_) {
+        inject(function(loginManagerService, _$httpBackend_, _$state_, _$rootScope_, _$q_, _catalogManagerService_, _catalogStateService_, _datasetManagerService_, _datasetStateService_, _delimitedManagerService_, _discoverStateService_, _mapperStateService_, _mergeRequestsStateService_, _ontologyManagerService_, _ontologyStateService_, _sparqlManagerService_, _stateManagerService_, _userManagerService_, _userStateService_) {
             loginManagerSvc = loginManagerService;
             $httpBackend = _$httpBackend_;
             state = _$state_;
             scope = _$rootScope_;
             $q = _$q_;
-            analyticManagerSvc = _analyticManagerService_;
-            analyticStateSvc = _analyticStateService_;
             catalogManagerSvc = _catalogManagerService_;
             catalogStateSvc = _catalogStateService_;
             datasetManagerSvc = _datasetManagerService_;
@@ -80,8 +76,6 @@ describe('Login Manager service', function() {
         state = null;
         scope = null;
         $q = null;
-        analyticManagerSvc = null;
-        analyticStateSvc = null;
         catalogManagerSvc = null;
         catalogStateSvc = null;
         datasetManagerSvc = null;
@@ -174,7 +168,6 @@ describe('Login Manager service', function() {
         $httpBackend.expectGET('/mobirest/user/logout').respond(200, {});
         loginManagerSvc.logout();
         flushAndVerify($httpBackend);
-        expect(analyticStateSvc.reset).toHaveBeenCalled();
         expect(catalogStateSvc.reset).toHaveBeenCalled();
         expect(datasetStateSvc.reset).toHaveBeenCalled();
         expect(delimitedManagerSvc.reset).toHaveBeenCalled();
