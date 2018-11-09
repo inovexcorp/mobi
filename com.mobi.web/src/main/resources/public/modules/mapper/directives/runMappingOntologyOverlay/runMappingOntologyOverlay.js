@@ -71,8 +71,14 @@
                     dvm.util = utilService;
                     dvm.errorMessage = '';
                     dvm.ontologies = [];
+                    dvm.branches = [];
                     dvm.ontology = undefined;
 
+                    dvm.changeOntology = function(ontologyRecord) {
+                        if (ontologyRecord) {
+                            setOntologyBranches(ontologyRecord);
+                        }
+                    }
                     dvm.getOntologyIRI = function(ontology) {
                         return dvm.util.getPropertyId(ontology, prefixes.ontEdit + 'ontologyIRI');
                     }
@@ -88,6 +94,19 @@
                             .then(response => {
                                 dvm.ontologies = response.data;
                             });
+                    }
+                    //dvm.cm.getBranchHeadCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
+
+                    function setOntologyBranches(ontologyRecord) {
+                        var catalogId = _.get(cm.localCatalog, '@id', '');
+                        var recordId = _.get(ontologyRecord, '@id', '');
+                        var paginatedConfig = {
+                            sortOption: _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
+                        };
+                        if (recordId) {
+                            return cm.getRecordBranches(recordId, catalogId, paginatedConfig)
+                                .then(branches => dvm.branches = branches);
+                        }
                     }
                     dvm.run = function() {
                         if (state.editMapping && state.isMappingChanged()) {
@@ -105,7 +124,7 @@
                     }
                     function runMapping(id) {
                         state.mapping.record.id = id;
-                        dm.mapAndCommit(id, dvm.ontology['@id']).then(response => {
+                        dm.mapAndCommit(id, dvm.ontology['@id'], branchId).then(response => {
                             if (response.status === 204) {
                                 dvm.util.createWarningToast('No commit was submitted, commit was empty due to duplicate data', {timeOut: 8000});
                                 reset();
