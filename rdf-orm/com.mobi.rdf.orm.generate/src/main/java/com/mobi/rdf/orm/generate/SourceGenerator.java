@@ -535,7 +535,12 @@ public class SourceGenerator {
         method.body()._return(JExpr.invoke("clearProperty")
                 .arg(JExpr.ref("valueFactory")
                         .invoke("createIRI")
-                        .arg(classMethodIriMap.get(interfaceClass).get(interfaceMethod))));
+                        .arg(interfaceClass.staticRef(classMethodIriMap.get(interfaceClass).get(interfaceMethod)))));
+
+
+
+
+
     }
 
     private void generateImplConstructors(final JDefinedClass impl, final JDefinedClass interfaceClazz) {
