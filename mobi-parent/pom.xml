@@ -54,7 +54,7 @@
         <maven-bundle-plugin.version>3.5.0</maven-bundle-plugin.version>
         <bndlib.version>3.1.0</bndlib.version>
         <commons-lang3.version>3.4</commons-lang3.version>
-        <rdf4j.version>2.2.4</rdf4j.version>
+        <rdf4j.version>2.4.1</rdf4j.version>
         <owlapi.version>5.1.4</owlapi.version>
         <karaf.version>4.2.0</karaf.version>
         <httpclient.version>4.5.2</httpclient.version>
@@ -62,7 +62,7 @@
         <swagger.version>1.5.7</swagger.version>
         <osgi.version>6.0.0</osgi.version>
         <servlet.version>3.1.0</servlet.version>
-        <jackson.version>2.8.5</jackson.version>
+        <jackson.version>2.9.7</jackson.version>
         <guice.version>4.1.0</guice.version>
         <poi.version>3.14_1</poi.version>
         <opencsv.version>3.7</opencsv.version>
@@ -248,7 +248,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-jaxb-annotations</artifactId>
-                <version>2.6.0</version>
+                <version>${jackson.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.glassfish.jersey.media</groupId>
