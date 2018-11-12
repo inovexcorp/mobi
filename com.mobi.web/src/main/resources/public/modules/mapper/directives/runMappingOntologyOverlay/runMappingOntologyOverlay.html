@@ -36,7 +36,7 @@
                 </ui-select-choices>
             </ui-select>
             <custom-label>Branch</custom-label>
-            <ui-select ng-model="dvm.bindModel" ng-model="item.dvm.ontology.branchId" ng-disabled="!dvm.ontology" on-select="dvm.changeBranch($item)">
+            <ui-select ng-model="dvm.bindModel" ng-disabled="!dvm.ontology">
                 <ui-select-match placeholder="Select a Branch">
                     <span>{{dvm.util.getDctermsValue(branchTitle, 'title')}}</span>
                 </ui-select-match>
