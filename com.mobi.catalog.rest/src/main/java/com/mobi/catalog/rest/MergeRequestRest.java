@@ -181,6 +181,8 @@ public interface MergeRequestRest {
     /**
      * Returns a {@link MergeRequest} with the provided ID.
      *
+     * @param requestId The String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
      * @param commentId The String representing the {@link Comment} ID. NOTE: Assumes ID represents an IRI unless String
      *                 begins with "_:".
      * @return A Response with the {@link Comment} with the provided ID
@@ -190,7 +192,7 @@ public interface MergeRequestRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves a Comment from the application by its ID")
-    Response getComment(@PathParam("commentId") String commentId);
+    Response getComment(@PathParam("requestId") String requestId, @PathParam("commentId") String commentId);
 
     /**
      * Creates a new {@link Comment} in the repository with the passed form data. Requires the `commentStr` to be set.
@@ -202,19 +204,19 @@ public interface MergeRequestRest {
      *                  String begins with "_:".
      * @param commentId The optional IRI of the parent {@link Comment} that the newly created Comment is a reply
      *                       to. NOTE: Assumes ID represents an IRI unless String begins with "_:".
-     * @param commentJson The JSON string containing comment text for the {@link Comment}.
+     * @param commentStr The string containing comment text for the {@link Comment}.
      * @return A Response with the IRI string of the created {@link Comment}.
      */
     @POST
     @Path("{requestId}/comments")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @ApiOperation("Creates a new Comment on the MergeRequest in the application with the provided information")
     Response createComment(@Context ContainerRequestContext context,
                            @PathParam("requestId") String requestId,
                            @QueryParam("commentId") String commentId,
-                           String commentJson);
+                           String commentStr);
 
 
     /**

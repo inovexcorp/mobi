@@ -241,7 +241,7 @@ public interface MergeRequestManager {
     Comment createComment(Resource requestId, User user, String commentStr);
 
     /**
-     * Create a reply {@link Comment} on an existing {@link MergeRequest}. This comment will be the in a comment thread
+     * Create a reply {@link Comment} on an existing {@link MergeRequest}. This comment will be in a comment thread
      * on the MergeRequest with its parent {@link Comment} being the provided {@code parentCommentId}.
      *
      * @param requestId The {@link Resource} of the associated {@link MergeRequest} to comment on
@@ -253,7 +253,6 @@ public interface MergeRequestManager {
      *      not exist
      */
     Comment createComment(Resource requestId, User user, String commentStr, Resource parentCommentId);
-
 
     /**
      * Gets the {@link List} of all {@link Comment} chains in Mobi for the {@link MergeRequest} sorted by issued date of

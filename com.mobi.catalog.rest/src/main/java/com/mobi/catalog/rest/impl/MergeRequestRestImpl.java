@@ -234,27 +234,32 @@ public class MergeRequestRestImpl implements MergeRequestRest {
     public Response getComments(String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
-            List<List<Comment>> comments = manager.getComments(requestIdResource);
-            List<List<JSONObject>> commentsJson = comments.stream().map(
+            List<List<JSONObject>> commentsJson = manager.getComments(requestIdResource).stream().map(
                     commentChain -> commentChain.stream()
                             .map(comment -> getObjectFromJsonld(groupedModelToString(comment.getModel(),
                                     getRDFFormat("jsonld"), transformer)))
                             .collect(Collectors.toList())).collect(Collectors.toList());
             return Response.ok(commentsJson).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
-    public Response getComment(String commentId) {
-        Resource commentIdResource = createIRI(commentId, vf);
+    public Response getComment(String requestId, String commentId) {
         try {
-            Comment comment = manager.getComment(commentIdResource).orElseThrow(() ->
-                    ErrorUtils.sendError("Comment " + commentIdResource + " could not be found",
+            manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->
+                    ErrorUtils.sendError("Comment " + requestId + " could not be found",
+                            Response.Status.NOT_FOUND));
+            Comment comment = manager.getComment(createIRI(commentId, vf)).orElseThrow(() ->
+                    ErrorUtils.sendError("Comment " + commentId + " could not be found",
                             Response.Status.NOT_FOUND));
             String json = groupedModelToString(comment.getModel(), getRDFFormat("jsonld"), transformer);
             return Response.ok(getObjectFromJsonld(json)).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -262,10 +267,8 @@ public class MergeRequestRestImpl implements MergeRequestRest {
 
     @Override
     public Response createComment(ContainerRequestContext context, String requestId, String commentId,
-                                  String commentJson) {
-        checkStringParam(commentJson, "Comment JSON is required");
-        String commentStr = JSONObject.fromObject(commentJson).optString("comment");
-        checkStringParam(commentStr, "Comment is required");
+                                  String commentStr) {
+        checkStringParam(commentStr, "Comment string is required");
         User activeUser = getActiveUser(context, engineManager);
 
         try {
@@ -290,6 +293,8 @@ public class MergeRequestRestImpl implements MergeRequestRest {
         try {
             manager.updateComment(commentIdResource, jsonToComment(commentIdResource, newComment));
             return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }

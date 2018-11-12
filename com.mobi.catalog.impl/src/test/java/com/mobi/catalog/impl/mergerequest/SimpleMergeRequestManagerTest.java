@@ -876,14 +876,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         Optional<Comment> commentOpt = manager.getComment(comment1.getResource());
         assertTrue(commentOpt.isPresent());
         Comment comment = commentOpt.get();
-        assertEquals(comment1.getResource(), comment.getResource());
-        assertEquals(comment1.getOnMergeRequest(), comment.getOnMergeRequest());
-        assertEquals(comment1.getReplyComment(), comment.getReplyComment());
-        assertEquals(comment1.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).get(), comment.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).get());
-        assertEquals(comment1.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).get(), comment.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).get());
-        assertEquals(comment1.getProperty(VALUE_FACTORY.createIRI(_Thing.creator_IRI)).get(), comment.getProperty(VALUE_FACTORY.createIRI(_Thing.creator_IRI)).get());
-        assertEquals(comment1.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI)).get(), comment.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI)).get());
-
+        assertEquals(comment1.getModel(), comment.getModel());
         verify(utilsService).optObject(eq(comment1.getResource()), any(CommentFactory.class), any(RepositoryConnection.class));
     }
 

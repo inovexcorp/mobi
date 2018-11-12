@@ -113,8 +113,6 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     private Comment comment2;
     private Comment comment3;
     private List<List<Comment>> commentChains;
-    private JSONObject commentJson;
-
 
     private User user;
 
@@ -124,6 +122,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
 
     private final String doesNotExist = "urn:doesNotExist";
     private final String invalidIRIString = "invalidIRI";
+    private final String commentText = "This is a comment";
 
     @Mock
     private MergeRequestManager requestManager;
@@ -205,7 +204,6 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         comment1.setReplyComment(comment2);
 
         commentChains = Arrays.asList(Arrays.asList(comment1, comment2), Arrays.asList(comment3));
-        commentJson = JSONObject.fromObject("{'comment': 'This is a comment.'}");
 
         rest = new MergeRequestRestImpl();
         rest.setManager(requestManager);
@@ -661,7 +659,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     @Test
     public void createCommentTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
-                .request().post(Entity.json(commentJson));
+                .request().post(Entity.text(commentText));
         assertEquals(response.getStatus(), 201);
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString());
@@ -673,7 +671,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         doThrow(new MobiException()).when(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString());
 
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
-                .request().post(Entity.json(commentJson));
+                .request().post(Entity.text(commentText));
         assertEquals(response.getStatus(), 500);
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString());
@@ -682,14 +680,14 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     @Test
     public void createCommentNoJsonTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
-                .request().post(Entity.json(""));
+                .request().post(Entity.text(""));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void createCommentEmptyCommentTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
-                .request().post(Entity.json("{'comment':''}"));
+                .request().post(Entity.text(""));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -697,7 +695,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     public void createReplyCommentTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
                 .queryParam("commentId", comment1.getResource().stringValue())
-                .request().post(Entity.json(commentJson));
+                .request().post(Entity.text(commentText));
         assertEquals(response.getStatus(), 201);
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString(), eq(comment1.getResource()));
@@ -710,25 +708,18 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
                 .queryParam("commentId", comment1.getResource().stringValue())
-                .request().post(Entity.json(commentJson));
+                .request().post(Entity.text(commentText));
         assertEquals(response.getStatus(), 500);
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString(), eq(comment1.getResource()));
     }
 
-    @Test
-    public void createReplyCommentNoJsonTest() {
-        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
-                .queryParam("commentId", comment2.getResource().stringValue())
-                .request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
-    }
 
     @Test
     public void createReplyCommentEmptyCommentTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
                 .queryParam("commentId", comment2.getResource().stringValue())
-                .request().post(Entity.json("{'comment':''}"));
+                .request().post(Entity.text(""));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -739,6 +730,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(comment1.getResource().stringValue())).request().get();
         assertEquals(response.getStatus(), 200);
+        verify(requestManager).getMergeRequest(request1.getResource());
         verify(requestManager).getComment(comment1.getResource());
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
@@ -749,11 +741,20 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     }
 
     @Test
-    public void getMissingCommentTest() {
+    public void getCommentMissingTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode("http://mobi.com/error")).request().get();
         assertEquals(response.getStatus(), 404);
+        verify(requestManager).getMergeRequest(request1.getResource());
         verify(requestManager).getComment(vf.createIRI("http://mobi.com/error"));
+    }
+
+    @Test
+    public void getCommentMissingRequestTest() {
+        Response response = target().path("merge-requests/" + encode("http://mobi.com/error") + "/comments/"
+                + encode(comment1.getResource().stringValue())).request().get();
+        assertEquals(response.getStatus(), 404);
+        verify(requestManager).getMergeRequest(vf.createIRI("http://mobi.com/error"));
     }
 
     @Test
@@ -764,6 +765,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(comment1.getResource().stringValue())).request().get();
         assertEquals(response.getStatus(), 500);
+        verify(requestManager).getMergeRequest(request1.getResource());
         verify(requestManager).getComment(comment1.getResource());
     }
 
