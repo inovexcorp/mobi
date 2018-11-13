@@ -572,7 +572,10 @@ function mockOntologyState() {
                    individuals: {
                        active: false
                    },
-                   concept: {
+                   concepts: {
+                       active: false
+                   },
+                   schemes: {
                        active: false
                    },
                    search: {
@@ -1318,6 +1321,7 @@ function mockMergeRequestsState() {
             this.setRequestDetails = jasmine.createSpy('setRequestDetails');
             this.startCreate = jasmine.createSpy('startCreate');
             this.resolveRequestConflicts = jasmine.createSpy('resolveRequestConflicts').and.returnValue($q.when());
+            this.removeSource = jasmine.createSpy('removeSource').and.returnValue(true);
         });
     });
 }

@@ -46,9 +46,9 @@
          */
         .directive('ontologyTab', ontologyTab);
 
-        ontologyTab.$inject = ['ontologyStateService'];
+        ontologyTab.$inject = ['$q', 'ontologyStateService', 'stateManagerService', 'catalogManagerService', 'utilService', 'prefixes'];
 
-        function ontologyTab(ontologyStateService) {
+        function ontologyTab($q, ontologyStateService, stateManagerService, catalogManagerService, utilService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -57,8 +57,35 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.sm = ontologyStateService;
+                    var sm = stateManagerService;
+                    var cm = catalogManagerService;
+                    var util = utilService;
+
+                    dvm.os = ontologyStateService;
                     dvm.savedChanges = '<i class="fa fa-exclamation-triangle"></i> Changes';
+
+                    function checkBranchExists() {
+                        if (!_.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId})) {
+                            var catalogId = _.get(cm.localCatalog, '@id', '');
+                            var masterBranch = _.find(dvm.os.listItem.branches, branch => util.getDctermsValue(branch, 'title') === 'MASTER')['@id'];
+                            var state = sm.getOntologyStateByRecordId(dvm.os.listItem.ontologyRecord.recordId);
+                            var commitId = util.getPropertyId(_.find(state.model, {[prefixes.ontologyState + 'branch']: [{'@id': masterBranch}]}), prefixes.ontologyState + 'commit');
+                            cm.getBranchHeadCommit(masterBranch, dvm.os.listItem.ontologyRecord.recordId, catalogId)
+                                .then(headCommit => {
+                                    var headCommitId = _.get(headCommit, "commit['@id']", '');
+                                    if (!commitId) {
+                                        commitId = headCommitId;
+                                    }
+                                    return $q.all([
+                                        sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, masterBranch, commitId),
+                                        dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, masterBranch, commitId, commitId === headCommitId)
+                                    ]);
+                                }, $q.reject)
+                                .then(() => dvm.os.resetStateTabs(), util.createErrorToast);
+                        }
+                    }
+
+                    checkBranchExists();
                 }
             }
         }

@@ -23,7 +23,11 @@
 <div class="selected-details">
     <div ng-if="dvm.os.listItem.selected">
         <span class="entity-name">{{dvm.om.getEntityName(dvm.os.listItem.selected)}}</span>
-        <static-iri iri="dvm.os.listItem.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+        <static-iri ng-if="!dvm.readOnly" iri="dvm.os.listItem.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
     </div>
-    <p ng-if="dvm.os.listItem.selected['@type'].length" class="type-wrapper"><span class="type-label">Type(s):</span><span class="types text-muted">{{dvm.getTypes()}}</span></p>
+    <p ng-if="dvm.os.listItem.selected['@type'].length" class="type-wrapper">
+        <span class="type-label">Type(s):</span>
+        <span class="types text-muted">{{dvm.getTypes()}}</span>
+        <a ng-if="dvm.om.isIndividual(dvm.os.listItem.selected) && !dvm.readOnly && !dvm.os.listItem.selected.mobi.imported && dvm.os.canModify()" ng-click="dvm.showTypesOverlay()"><i class="fa fa-pencil"></i></a>
+    </p>
 </div>

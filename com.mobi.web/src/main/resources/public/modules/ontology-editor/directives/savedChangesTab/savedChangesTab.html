@@ -24,30 +24,42 @@
     <div class="col-8 offset-2">
         <div class="has-changes h-100 d-flex flex-column" ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length">
             <div class="changes-info">
-                <error-display ng-if="!dvm.os.listItem.upToDate">There have been other commits made on this Branch.
-                    <span ng-if="!dvm.os.listItem.userBranch"> Please either commit your changes or remove them to resync your working branch with the HEAD.</span>
-                </error-display>
-                <div class="btn-container clearfix">
-                    <button class="btn btn-danger pull-left" ng-click="dvm.removeChanges()" ng-disabled="!dvm.os.isCommittable(dvm.os.listItem)">Remove All Changes</button>
+                <div class="error-text col-8 pull-right">
+                    <error-display ng-if="!dvm.os.listItem.upToDate">There have been other commits made on this Branch.
+                        <span ng-if="!dvm.os.listItem.userBranch"> Please either commit your changes or remove them to resync your working branch with the HEAD.</span>
+                    </error-display>
+                </div>
+                <div class="btn-container clearfix col-7">
+                    <button class="btn btn-danger pull-left m-2" ng-click="dvm.removeChanges()" ng-disabled="!dvm.os.isCommittable(dvm.os.listItem)">Remove All Changes</button>
                 </div>
             </div>
-            <div class="changes flex-1 vertical-scroll">
-                <div class="property-values mt-3" ng-repeat="item in dvm.showList">
-                    <div class="prop-header d-flex align-items-center clearfix">
-                        <p class="text text-truncate m-0" title="{{item.id}}">{{dvm.util.getBeautifulIRI(item.id)}}</p>
-                        <small class="ml-1 text-muted text-truncate"><a ng-click="dvm.go($event, item.id)">{{item.id}}</a></small>
-                    </div>
-                    <div class="prop-value-container p-1 ml-3 mt-1">
-                        <statement-container ng-if="item.additions.length" additions class="m-0">
-                            <statement-display ng-repeat="addition in item.additions | orderBy:dvm.util.getPredicateLocalName" predicate="addition.p" object="addition.o" addition/>
-                        </statement-container>
-                        <statement-container ng-if="item.deletions.length" deletions class="m-0">
-                            <statement-display ng-repeat="deletion in item.deletions | orderBy:dvm.util.getPredicateLocalName" predicate="deletion.p" object="deletion.o" deletion/>
-                        </statement-container>
+            <div class="changes flex-1 px-1 vertical-scroll">
+                <div class="list-group my-3" ng-repeat="item in dvm.showList" id="accordion_{{$id}}">
+                    <div class="expansion-panel list-group-item">
+                        <div aria-controls="collapse_{{$id}}" aria-expanded="false" class="expansion-panel-toggler collapsed" data-target="#collapse_{{$id}}" data-toggle="collapse" id="heading_{{$id}}" role="button">
+                            <div class="expansion-panel-header">
+                                <p class="remove-min-width m-0" title="{{item.id}}">{{dvm.util.getBeautifulIRI(item.id)}}</p>
+                                <small class="remove-min-width"><a ng-click="dvm.go($event, item.id)">{{item.id}}</a></small>
+                            </div>
+                            <div class="expansion-panel-icon ml-3 text-black-secondary">
+                                <i class="collapsed-show material-icons">keyboard_arrow_down</i>
+                                <i class="collapsed-hide material-icons">keyboard_arrow_up</i>
+                            </div>
+                        </div>
+                        <div aria-labelledby="heading_{{$id}}" class="collapse" data-parent="#accordion_{{$id}}" id="collapse_{{$id}}">
+                            <div class="expansion-panel-body">
+                                <statement-container ng-if="item.additions.length" additions class="m-0">
+                                    <statement-display ng-repeat="addition in item.additions | orderBy:dvm.util.getPredicateLocalName" predicate="addition.p" object="addition.o" addition/>
+                                </statement-container>
+                                <statement-container ng-if="item.deletions.length" deletions class="m-0">
+                                    <statement-display ng-repeat="deletion in item.deletions | orderBy:dvm.util.getPredicateLocalName" predicate="deletion.p" object="deletion.o" deletion/>
+                                </statement-container>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="text-center">
-                    <button ng-if="dvm.showList.length !== dvm.list.length" ng-click="dvm.getMoreResults()" class="btn btn-outline-primary"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a>
+                    <button ng-if="dvm.showList.length !== dvm.list.length" ng-click="dvm.getMoreResults()" class="btn btn-outline-primary"><i class="fa fa-fw fa-plus"></i><span>Load More</span></button>
                 </div>
             </div>
         </div>

@@ -26,7 +26,6 @@
     angular
         .module('catalog', [
             /* Custom Directives */
-            'branchBlock',
             'catalogBreadcrumb',
             'catalogPagination',
             'catalogTabset',

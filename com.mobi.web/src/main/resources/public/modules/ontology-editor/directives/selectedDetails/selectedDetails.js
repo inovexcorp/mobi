@@ -27,14 +27,17 @@
         .module('selectedDetails', [])
         .directive('selectedDetails', selectedDetails);
 
-        selectedDetails.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'manchesterConverterService'];
+        selectedDetails.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'manchesterConverterService', 'modalService'];
 
-        function selectedDetails($filter, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, manchesterConverterService) {
+        function selectedDetails($filter, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, manchesterConverterService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/selectedDetails/selectedDetails.html',
                 scope: {},
+                bindToController: {
+                    readOnly: '<'
+                },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
@@ -54,13 +57,15 @@
                                 })
                         ), ', ');
                     }
-
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.os.onEdit(iriBegin, iriThen, iriEnd)
                             .then(() => {
                                 ontoUtils.saveCurrentChanges();
                                 ontoUtils.updateLabel();
                             });
+                    }
+                    dvm.showTypesOverlay = function() {
+                        modalService.openModal('individualTypesModal');
                     }
                 }
             }

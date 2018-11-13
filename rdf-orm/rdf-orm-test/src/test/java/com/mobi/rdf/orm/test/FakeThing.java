@@ -174,4 +174,9 @@ class FakeThing implements Thing, OrmFactory<FakeThing> {
     public ValueFactory getValueFactory() {
         return null;
     }
+
+    @Override
+    public boolean clearProperty(IRI predicate, IRI... context) {
+        return false;
+    }
 }

@@ -38,6 +38,7 @@ public class MergeRequestConfig {
     private Resource targetBranchId;
     private User creator;
     private Set<User> assignees;
+    private boolean removeSource;
 
     public MergeRequestConfig(Builder builder) {
         this.title = builder.title;
@@ -47,6 +48,7 @@ public class MergeRequestConfig {
         this.targetBranchId = builder.targetBranchId;
         this.creator = builder.creator;
         this.assignees = builder.assignees;
+        this.removeSource = builder.removeSource;
     }
 
     public String getTitle() {
@@ -77,6 +79,10 @@ public class MergeRequestConfig {
         return assignees;
     }
 
+    public boolean getRemoveSource() {
+        return removeSource;
+    }
+
 
     public static class Builder {
         private String title;
@@ -86,14 +92,16 @@ public class MergeRequestConfig {
         private Resource targetBranchId;
         private User creator;
         private Set<User> assignees = new HashSet<>();
+        private boolean removeSource;
 
         public Builder(String title, Resource recordId, Resource sourceBranchId, Resource targetBranchId,
-                       User creator) {
+                       User creator, boolean removeSource) {
             this.title = title;
             this.recordId = recordId;
             this.sourceBranchId = sourceBranchId;
             this.targetBranchId = targetBranchId;
             this.creator = creator;
+            this.removeSource = removeSource;
         }
 
         public Builder description(String description) {
