@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Super Class Select directive', function() {
+describe('Ontology Class Select directive', function() {
     var $compile, scope, ontologyStateSvc, ontoUtils;
 
     beforeEach(function() {
         module('templates');
-        module('superClassSelect');
+        module('ontologyClassSelect');
         mockOntologyState();
         mockUtil();
         mockOntologyUtilsManager();
@@ -40,9 +40,10 @@ describe('Super Class Select directive', function() {
         });
 
         scope.values = [];
-        this.element = $compile(angular.element('<super-class-select values="values"></super-class-select>'))(scope);
+        scope.lockChoice = jasmine.createSpy('lockChoice');
+        this.element = $compile(angular.element('<ontology-class-select values="values" lock-choice="lockChoice(iri)"></ontology-class-select>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('superClassSelect');
+        this.controller = this.element.controller('ontologyClassSelect');
     });
 
     afterEach(function() {
@@ -59,42 +60,35 @@ describe('Super Class Select directive', function() {
             scope.$apply();
             expect(scope.values).toEqual(['different']);
         });
+        it('lockChoice should be called in parent scope', function() {
+            this.controller.lockChoice({iri: 'iri'});
+            expect(scope.lockChoice).toHaveBeenCalledWith('iri');
+        });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('super-class-select')).toBe(true);
-            expect(this.element.hasClass('advanced-language-select')).toBe(true);
+            expect(this.element.hasClass('ontology-class-select')).toBe(true);
+            expect(this.element.hasClass('form-group')).toBe(true);
         });
-        it('for correct links', function() {
-            expect(this.element.querySelectorAll('.btn-link .fa-plus').length).toBe(1);
-            expect(this.element.querySelectorAll('.btn-link .fa-times').length).toBe(0);
-            this.controller.isShown = true;
-            scope.$apply();
-            expect(this.element.querySelectorAll('.btn-link .fa-plus').length).toBe(0);
-            expect(this.element.querySelectorAll('.btn-link .fa-times').length).toBe(1);
+        _.forEach(['custom-label', 'ui-select', 'ui-select-match', 'ui-select-choices'], el => {
+            it('with a ' + el, function() {
+                expect(this.element.find(el).length).toBe(1);
+            });
         });
-        it('with an ontology-class-select', function() {
-            expect(this.element.find('ontology-class-select').length).toBe(0);
-            this.controller.isShown = true;
-            scope.$apply();
-            expect(this.element.find('ontology-class-select').length).toBe(1);
+        _.forEach(['span[title]', 'div[title]'], sel => {
+            it('with a ' + sel, function() {
+                expect(this.element.querySelectorAll(sel).length).toBe(1);
+            });
         });
     });
     describe('controller methods', function() {
-        it('show sets the proper variables', function() {
-            this.controller.show();
-            expect(this.controller.isShown).toBe(true);
+        it('getValues should call the correct method', function() {
+            ontologyStateSvc.listItem.classes.iris = { classA: 'ontologyId' };
+            ontoUtils.getSelectList.and.returnValue(['list']);
+            this.controller.getValues('text');
+            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['classA'], 'text', ontoUtils.getDropDownText);
+            expect(this.controller.array).toEqual(['list']);
         });
-        it('hide sets the proper variables', function() {
-            this.controller.hide();
-            expect(this.controller.isShown).toBe(false);
-            expect(this.controller.iris).toEqual([]);
-        });
-    });
-    it('correctly updates values when iris length changes', function() {
-        this.controller.iris = ['test'];
-        scope.$digest();
-        expect(scope.values).toEqual([{'@id': 'test'}]);
     });
 });
