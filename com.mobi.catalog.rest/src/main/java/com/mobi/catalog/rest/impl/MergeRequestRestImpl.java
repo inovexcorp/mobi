@@ -251,7 +251,7 @@ public class MergeRequestRestImpl implements MergeRequestRest {
     public Response getComment(String requestId, String commentId) {
         try {
             manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->
-                    ErrorUtils.sendError("Comment " + requestId + " could not be found",
+                    ErrorUtils.sendError("MergeRequest " + requestId + " could not be found",
                             Response.Status.NOT_FOUND));
             Comment comment = manager.getComment(createIRI(commentId, vf)).orElseThrow(() ->
                     ErrorUtils.sendError("Comment " + commentId + " could not be found",

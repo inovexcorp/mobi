@@ -678,13 +678,6 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     }
 
     @Test
-    public void createCommentNoJsonTest() {
-        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
-                .request().post(Entity.text(""));
-        assertEquals(response.getStatus(), 400);
-    }
-
-    @Test
     public void createCommentEmptyCommentTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
                 .request().post(Entity.text(""));
