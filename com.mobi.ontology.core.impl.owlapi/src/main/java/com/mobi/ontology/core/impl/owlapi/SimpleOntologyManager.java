@@ -155,7 +155,7 @@ public class SimpleOntologyManager implements OntologyManager {
         }
     }
 
-    SimpleOntologyManager() {
+    public SimpleOntologyManager() {
     }
 
     @Reference
