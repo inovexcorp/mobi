@@ -452,6 +452,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
                     List<String> chain = new ArrayList<String>(Arrays.asList(
                             Bindings.requiredLiteral(bindings, "chain").stringValue().split(" ")));
                     chain.add(0, parent.stringValue());
+                    chain.remove("");
                     commentChains.add(chain.stream().map(vf::createIRI)
                             .map(iri -> getComment(iri).orElseThrow(() -> new IllegalStateException("Comment " + iri
                                     + " does not exist.")))

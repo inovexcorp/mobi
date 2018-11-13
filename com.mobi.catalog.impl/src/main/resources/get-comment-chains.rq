@@ -6,8 +6,11 @@ select ?parent (group_concat(?child) as ?chain)
 where {
     ?parent a mq:Comment ;
           mq:onMergeRequest ?mergeRequest ;
-          dct:issued ?issued ;
-          mq:replyComment+ ?child .
+          dct:issued ?issued .
+
+    OPTIONAL {
+        ?parent mq:replyComment+ ?child .
+    }
 
     FILTER NOT EXISTS {
         ?comment mq:replyComment ?parent .

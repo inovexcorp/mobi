@@ -115,6 +115,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     private Comment commentA;
     private Comment commentB;
     private Comment commentC;
+    private Comment commentI;
     private Comment commentX;
     private Comment commentY;
     private Comment commentZ;
@@ -243,6 +244,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         commentA.setReplyComment(commentB);
         commentB.setReplyComment(commentC);
 
+        commentI = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#I"));
+        commentI.setOnMergeRequest(request1);
+        commentI.setProperty(VALUE_FACTORY.createLiteral("2018-11-10T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
+        commentI.setProperty(VALUE_FACTORY.createLiteral("2018-11-10T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
 
         commentX = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#X"));
         commentX.setProperty(VALUE_FACTORY.createLiteral("2018-11-02T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
@@ -270,6 +275,8 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
             conn.add(commentA.getModel(), commentA.getResource());
             conn.add(commentB.getModel(), commentB.getResource());
             conn.add(commentC.getModel(), commentC.getResource());
+
+            conn.add(commentI.getModel(), commentI.getResource());
 
             conn.add(commentX.getModel(), commentX.getResource());
             conn.add(commentY.getModel(), commentY.getResource());
@@ -325,9 +332,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         when(utilsService.optObject(eq(commentA.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(commentA));
         when(utilsService.optObject(eq(commentB.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(commentB));
         when(utilsService.optObject(eq(commentC.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(commentC));
-        when(utilsService.optObject(eq(commentX.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(comment1));
-        when(utilsService.optObject(eq(commentY.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(comment2));
-        when(utilsService.optObject(eq(commentZ.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(comment3));
+        when(utilsService.optObject(eq(commentX.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(commentX));
+        when(utilsService.optObject(eq(commentY.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(commentY));
+        when(utilsService.optObject(eq(commentZ.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(commentZ));
+        when(utilsService.optObject(eq(commentI.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(commentI));
         doThrow(new IllegalArgumentException()).when(utilsService).validateResource(eq(DOES_NOT_EXIST_IRI), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
 
 
@@ -911,7 +919,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     @Test
     public void getCommentsTest() {
         List<List<Comment>> comments = manager.getComments(request1.getResource());
-        assertEquals(2, comments.size());
+        assertEquals(3, comments.size());
         String firstThreadTime = comments.get(0).get(0).getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).get().stringValue();
         String secondThreadTime = comments.get(1).get(0).getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).get().stringValue();
         assertTrue(OffsetDateTime.parse(firstThreadTime).isBefore(OffsetDateTime.parse(secondThreadTime)));
