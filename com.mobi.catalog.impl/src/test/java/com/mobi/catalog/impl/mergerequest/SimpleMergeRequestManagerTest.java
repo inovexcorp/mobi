@@ -67,6 +67,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.time.OffsetDateTime;
@@ -330,7 +331,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         doThrow(new IllegalArgumentException()).when(utilsService).validateResource(eq(DOES_NOT_EXIST_IRI), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
 
 
-        manager = new SimpleMergeRequestManager();
+        manager = Mockito.spy(new SimpleMergeRequestManager());
         injectOrmFactoryReferencesIntoService(manager);
         manager.setVf(VALUE_FACTORY);
         manager.setCatalogUtils(utilsService);
@@ -655,8 +656,14 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.deleteMergeRequest(request1.getResource(), conn);
         }
-        verify(utilsService, times(7)).validateResource(any(Resource.class), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService, times(8)).remove(any(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, times(12)).validateResource(any(Resource.class), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment1.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment2.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment3.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment4.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentA.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentB.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentC.getResource()), any(RepositoryConnection.class));
         verify(utilsService).validateResource(eq(request1.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).remove(eq(request1.getResource()), any(RepositoryConnection.class));
     }
@@ -818,7 +825,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         verify(utilsService, never()).remove(eq(request2.getResource()), any(RepositoryConnection.class));
         verify(utilsService, never()).remove(eq(request3.getResource()), any(RepositoryConnection.class));
         verify(utilsService, never()).remove(eq(request4.getResource()), any(RepositoryConnection.class));
-        verify(utilsService, never()).updateObject(any(MergeRequest.class), any(RepositoryConnection.class));
+        verify(manager, never()).updateMergeRequest(any(Resource.class), any(MergeRequest.class));
     }
 
     @Test
@@ -849,9 +856,14 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.deleteMergeRequestsWithRecordId(RECORD_1_IRI, conn);
         }
-        verify(utilsService, times(7)).validateResource(any(Resource.class), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService, times(9)).remove(any(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).remove(eq(request1.getResource()), any(RepositoryConnection.class));
+        verify(utilsService, times(12)).validateResource(any(Resource.class), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment1.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment2.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment3.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment4.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentA.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentB.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentC.getResource()), any(RepositoryConnection.class));        verify(utilsService).remove(eq(request1.getResource()), any(RepositoryConnection.class));
         verify(utilsService).remove(eq(request4.getResource()), any(RepositoryConnection.class));
         verify(utilsService, never()).remove(eq(request2.getResource()), any(RepositoryConnection.class));
         verify(utilsService, never()).remove(eq(request3.getResource()), any(RepositoryConnection.class));
@@ -1017,11 +1029,40 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     /* deleteComment */
 
     @Test
-    public void deleteCommentTest() {
+    public void deleteCommentHeadTest() {
         manager.deleteComment(comment1.getResource());
 
+        verify(manager).getComment(eq(comment1.getResource()));
+        verify(manager, never()).updateComment(any(Resource.class), any(Comment.class));
         verify(utilsService).validateResource(eq(comment1.getResource()), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).remove(eq(comment1.getResource()), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void deleteCommentMiddleTest() {
+        manager.deleteComment(comment2.getResource());
+
+        comment1.setReplyComment(comment3);
+
+        verify(manager).getComment(eq(comment2.getResource()));
+        verify(manager).getComment(eq(comment1.getResource()));
+        verify(manager).getComment(eq(comment3.getResource()));
+        verify(manager).updateComment(eq(comment1.getResource()), eq(comment1));
+        verify(utilsService).validateResource(eq(comment2.getResource()), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment2.getResource()), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void deleteCommentTailTest() {
+        manager.deleteComment(comment4.getResource());
+
+        comment3.removeProperty(comment4.getResource(), VALUE_FACTORY.createIRI(Comment.replyComment_IRI));
+
+        verify(manager).getComment(eq(comment4.getResource()));
+        verify(manager).getComment(eq(comment3.getResource()));
+        verify(manager).updateComment(eq(comment3.getResource()), eq(comment3));
+        verify(utilsService).validateResource(eq(comment4.getResource()), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment4.getResource()), any(RepositoryConnection.class));
     }
 
     @Test
@@ -1039,8 +1080,14 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void deleteCommentsWithRequestId() {
         manager.deleteCommentsWithRequestId(request1.getResource());
 
-        verify(utilsService, times(7)).validateResource(any(Resource.class), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService, times(7)).remove(any(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, times(12)).validateResource(any(Resource.class), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment1.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment2.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment3.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment4.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentA.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentB.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentC.getResource()), any(RepositoryConnection.class));
     }
 
     @Test

@@ -316,7 +316,8 @@ public class MergeRequestRestImpl implements MergeRequestRest {
             if (commentUser.isPresent() && commentUser.get().stringValue().equals(user.getResource().stringValue())) {
                 manager.deleteComment(commentIRI);
             } else {
-                ErrorUtils.sendError("User not permitted to delete comment " + commentId, Response.Status.FORBIDDEN);
+                throw ErrorUtils.sendError("User not permitted to delete comment " + commentId,
+                        Response.Status.FORBIDDEN);
             }
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
