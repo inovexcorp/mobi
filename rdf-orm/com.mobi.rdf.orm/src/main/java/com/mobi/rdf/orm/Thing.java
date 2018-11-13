@@ -28,7 +28,6 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.api.*;
 import com.mobi.rdf.orm.impl.ThingImpl;
 
 import java.util.Optional;
@@ -124,6 +123,15 @@ public interface Thing {
      * @return Whether or not the {@link Value} was removed
      */
     boolean removeProperty(Value value, IRI predicate, IRI... context);
+
+    /**
+     * Clear out the values associated with the given predicate in this {@link Thing}.
+     *
+     * @param predicate The {@link IRI} of the predicate to clear out
+     * @param context   The {@link IRI} contexts to remove with
+     * @return Whether or not data was removed from this {@link Thing}
+     */
+    boolean clearProperty(IRI predicate, IRI... context);
 
     /**
      * @return The {@link ValueFactory} instance to use for this object
