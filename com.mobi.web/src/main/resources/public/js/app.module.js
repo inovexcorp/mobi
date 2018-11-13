@@ -119,7 +119,6 @@
             'valueDisplay',
 
             /* Custom Modules */
-            'analytics',
             'catalog',
             'datasets',
             'discover',
@@ -133,8 +132,6 @@
             'webtop',
 
             /* Custom Services */
-            'analyticManager',
-            'analyticState',
             'catalogManager',
             'catalogState',
             'datasetManager',
