@@ -24,6 +24,7 @@ package com.mobi.rdf.orm.impl;
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.mobi.rdf.api.IRI;
@@ -42,14 +43,13 @@ import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
 import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
-import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Optional;
 
-public class TestCoreThingApi {
+public class CoreThingApiTest {
 
     private static final ThingFactory thingFactory = new ThingFactory();
 
@@ -99,24 +99,34 @@ public class TestCoreThingApi {
                 valueFactory).orElseThrow(() -> new Exception("FAILED TO GET THING"));
 
         Value typeValue = t.getProperty(valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")).get();
-        TestCase.assertEquals(valueFactory.createIRI("http://xmlns.com/foaf/0.1/Agent"), typeValue);
+        assertEquals(valueFactory.createIRI("http://xmlns.com/foaf/0.1/Agent"), typeValue);
 
         int ageValue = Integer.parseInt(t.getProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")).get().stringValue());
-        TestCase.assertEquals(100, ageValue);
+        assertEquals(100, ageValue);
 
         t.addProperty(valueFactory.createLiteral("Ben"), valueFactory.createIRI("urn://mobi.com/silly#myNameIs"),
                 valueFactory.createIRI("urn://mobi.com/orm/test/testAgent"));
         String nameValue = t.getProperty(valueFactory.createIRI("urn://mobi.com/silly#myNameIs"),
                 valueFactory.createIRI("urn://mobi.com/orm/test/testAgent")).get().stringValue();
-        TestCase.assertEquals("Ben", nameValue);
+        assertEquals("Ben", nameValue);
 
         t.setProperty(valueFactory.createLiteral("John"), valueFactory.createIRI("urn://mobi.com/silly#myNameIs"),
                 valueFactory.createIRI("urn://mobi.com/orm/test/testAgent"));
-        TestCase.assertEquals(1, t.getModel().filter(t.getResource(),
+        assertEquals(1, t.getModel().filter(t.getResource(),
                 valueFactory.createIRI("urn://mobi.com/silly#myNameIs"), null, t.getResource()).size());
-        TestCase.assertEquals("John",
+        assertEquals("John",
                 t.getModel().filter(t.getResource(), valueFactory.createIRI("urn://mobi.com/silly#myNameIs"), null,
                         t.getResource()).iterator().next().getObject().stringValue());
+
+        assertTrue(t.clearProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")));
+        assertFalse(t.getProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")).isPresent());
+        assertFalse(t.clearProperty(valueFactory.createIRI("http://xmlns.com/foaf/0.1/age")));
+        assertEquals("John",
+                t.getModel().filter(t.getResource(), valueFactory.createIRI("urn://mobi.com/silly#myNameIs"), null,
+                        t.getResource()).iterator().next().getObject().stringValue());
+
+        t.setProperty(null, valueFactory.createIRI("urn://mobi.com/silly#myNameIs"));
+        assertFalse(t.getProperty(valueFactory.createIRI("urn://mobi.com/silly#myNameIs")).isPresent());
     }
 
     @Test
@@ -127,8 +137,8 @@ public class TestCoreThingApi {
         t2.setProperty(valueFactory.createLiteral("Ben"), pred,
                 (IRI) t2.getResource());
         Optional<Value> opt = t2.getProperty(pred, (IRI) t2.getResource());
-        TestCase.assertTrue(opt.isPresent());
-        TestCase.assertEquals(valueFactory.createLiteral("Ben"), opt.orElse(null));
+        assertTrue(opt.isPresent());
+        assertEquals(valueFactory.createLiteral("Ben"), opt.orElse(null));
 
         final Thing t = thingFactory.getExisting(myIri, model,
                 valueFactory).orElseThrow(() -> new Exception("FAILED TO GET THING THAT WAS JUST CREATED"));
@@ -137,7 +147,7 @@ public class TestCoreThingApi {
     @Test
     public void testOptionalEmpty() {
         Optional<Thing> optional = thingFactory.getExisting(valueFactory.createIRI("urn://doesnotexist.org"), model);
-        TestCase.assertFalse(optional.isPresent());
+        assertFalse(optional.isPresent());
     }
 
     @Test
@@ -148,7 +158,7 @@ public class TestCoreThingApi {
         IRI pred3 = valueFactory.createIRI("urn:pred3");
         IRI context = valueFactory.createIRI("http://test.com/c1");
 
-        Model model =  modelFactory.createModel();
+        Model model = modelFactory.createModel();
         model.add(sub, pred1, valueFactory.createLiteral("A"));
         model.add(sub, pred2, valueFactory.createLiteral("B"));
         model.add(sub, pred2, valueFactory.createLiteral("C"));
