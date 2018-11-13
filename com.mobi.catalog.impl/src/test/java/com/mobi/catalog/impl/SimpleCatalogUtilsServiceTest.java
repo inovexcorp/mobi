@@ -96,6 +96,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     private final IRI RANDOM_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test#random");
     private final IRI DIFFERENT_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test#different");
     private final IRI USER_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/users#taken");
+    private final IRI USER2_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/users#user2");
     private final IRI CATALOG_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-distributed");
     private final IRI RECORD_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#record");
     private final IRI RECORD_NO_CATALOG_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#record-no-catalog");
@@ -1278,7 +1279,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     @Test
     public void getInProgressCommitWithUserTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            InProgressCommit commit = service.getInProgressCommit(VERSIONED_RDF_RECORD_IRI, USER_IRI, conn);
+            InProgressCommit commit = service.getInProgressCommit(VERSIONED_RDF_RECORD_IRI, USER2_IRI, conn);
             assertFalse(commit.getModel().isEmpty());
             assertEquals(IN_PROGRESS_COMMIT_IRI, commit.getResource());
         }
@@ -1377,7 +1378,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     @Test
     public void getInProgressCommitIRITest() {
         try (RepositoryConnection conn = repo.getConnection()) {
-            Optional<Resource> iri = service.getInProgressCommitIRI(VERSIONED_RDF_RECORD_IRI, USER_IRI, conn);
+            Optional<Resource> iri = service.getInProgressCommitIRI(VERSIONED_RDF_RECORD_IRI, USER2_IRI, conn);
             assertTrue(iri.isPresent());
             assertEquals(IN_PROGRESS_COMMIT_IRI, iri.get());
         }

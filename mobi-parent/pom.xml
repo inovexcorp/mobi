@@ -53,9 +53,9 @@
         <antlr.version>4.6</antlr.version>
         <maven-bundle-plugin.version>3.5.0</maven-bundle-plugin.version>
         <bndlib.version>3.1.0</bndlib.version>
-        <commons-lang3.version>3.4</commons-lang3.version>
+        <commons-lang3.version>3.7</commons-lang3.version>
         <rdf4j.version>2.4.1</rdf4j.version>
-        <owlapi.version>5.1.4</owlapi.version>
+        <owlapi.version>5.1.7</owlapi.version>
         <karaf.version>4.2.0</karaf.version>
         <httpclient.version>4.5.2</httpclient.version>
         <jaxrs.version>2.0.1</jaxrs.version>
@@ -65,7 +65,7 @@
         <jackson.version>2.9.7</jackson.version>
         <guice.version>4.1.0</guice.version>
         <poi.version>3.14_1</poi.version>
-        <opencsv.version>3.7</opencsv.version>
+        <opencsv.version>4.2</opencsv.version>
         <commons-io.version>2.5</commons-io.version>
         <commons-codec.version>1.10</commons-codec.version>
         <commons-lang.version>2.6</commons-lang.version>
@@ -73,7 +73,7 @@
         <commons-collections.version>3.2.1</commons-collections.version>
         <commons-validator.version>1.6</commons-validator.version>
         <logback.version>1.1.2</logback.version>
-        <commons-rdf-api.version>0.3.0-incubating</commons-rdf-api.version>
+        <commons-rdf-api.version>0.5.0</commons-rdf-api.version>
         <powermock.version>1.6.4</powermock.version>
         <hamcrest.version>1.3</hamcrest.version>
         <ehcache.version>3.3.1</ehcache.version>
@@ -127,6 +127,12 @@
                 <groupId>net.sourceforge.owlapi</groupId>
                 <artifactId>owlapi-distribution</artifactId>
                 <version>${owlapi.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>jackson-databind</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
@@ -136,6 +142,11 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
                 <version>${jackson.version}</version>
             </dependency>
 
