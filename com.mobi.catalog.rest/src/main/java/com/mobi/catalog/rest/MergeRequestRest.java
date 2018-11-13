@@ -234,4 +234,22 @@ public interface MergeRequestRest {
     @RolesAllowed("user")
     @ApiOperation("Updates a MergeRequest by its ID using the provided JSON-LD")
     Response updateComment(@PathParam("commentId") String commentId, String newComment);
+
+    /**
+     * Deletes an existing {@link Comment} that has the {@code commentId} if it belongs to the active {@link User}.
+     *
+     * @param context The context of the request.
+     * @param requestId The String representing the {@link MergeRequest} ID the comment is on. NOTE: Assumes ID
+     *                  represents an IRI unless String begins with "_:".
+     * @param commentId The String representing the {@link Comment} ID to delete. NOTE: Assumes ID represents an IRI
+     *                  unless String begins with "_:".
+     * @return A Response indicating the status of the delete.
+     */
+    @DELETE
+    @Path("{requestId}/comments/{commentId}")
+    @RolesAllowed("user")
+    @ApiOperation("Deletes a Comment that has the provided commentId")
+    Response deleteComment(@Context ContainerRequestContext context,
+                           @PathParam("requestId") String requestId,
+                           @PathParam("commentId") String commentId);
 }

@@ -48,6 +48,7 @@ import com.mobi.catalog.rest.MergeRequestRest;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -292,6 +293,31 @@ public class MergeRequestRestImpl implements MergeRequestRest {
         Resource commentIdResource = createIRI(commentId, vf);
         try {
             manager.updateComment(commentIdResource, jsonToComment(commentIdResource, newComment));
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public Response deleteComment(ContainerRequestContext context, String requestId, String commentId) {
+        try {
+            Resource commentIRI = createIRI(commentId, vf);
+            manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->
+                    ErrorUtils.sendError("Comment " + requestId + " could not be found",
+                            Response.Status.NOT_FOUND));
+            Comment comment = manager.getComment(commentIRI).orElseThrow(() ->
+                    ErrorUtils.sendError("Comment " + commentId + " could not be found",
+                            Response.Status.NOT_FOUND));
+            Optional<com.mobi.rdf.api.Value> commentUser = comment.getProperty(vf.createIRI(_Thing.creator_IRI));
+            User user = getActiveUser(context, engineManager);
+            if (commentUser.isPresent() && commentUser.get().stringValue().equals(user.getResource().stringValue())) {
+                manager.deleteComment(commentIRI);
+            } else {
+                ErrorUtils.sendError("User not permitted to delete comment " + commentId, Response.Status.FORBIDDEN);
+            }
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);

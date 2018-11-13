@@ -280,4 +280,20 @@ public interface MergeRequestManager {
      * @throws IllegalArgumentException If the provided {@link Comment} does not exist in the repository
      */
     void updateComment(Resource commentId, Comment comment);
+
+    /**
+     * Deletes an existing {@link Comment} identified by the provided the {@link Resource}.
+     *
+     * @param commentId The {@link Resource} representing the {@link Comment} ID to delete.
+     * @throws IllegalArgumentException If the provided {@link Resource} does not exist in the repository
+     */
+    void deleteComment(Resource commentId);
+
+    /**
+     * Removes all Comments that are linked to the {@link MergeRequest} identified by the provided Resource.
+     *
+     * @param requestId Removes all Comments that are linked to the {@link MergeRequest} identified by the provided
+     *                  Resource.
+     */
+    void deleteCommentsWithRequestId(Resource requestId);
 }
