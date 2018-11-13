@@ -97,8 +97,6 @@
                                 dvm.ontologies = response.data;
                             });
                     }
-                    //dvm.cm.getBranchHeadCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
-
                     function setOntologyBranches(ontologyRecord) {
                         var catalogId = _.get(cm.localCatalog, '@id', '');
                         var recordId = _.get(ontologyRecord, '@id', '');
@@ -107,7 +105,10 @@
                         };
                         if (recordId) {
                             return cm.getRecordBranches(recordId, catalogId, paginatedConfig)
-                                .then(branches => dvm.branches = branches);
+                                .then(response => {
+                                    dvm.branches = response.data;
+                                    dvm.branchId = _.get(_.find(dvm.branches, branch => dvm.util.getDctermsValue(branch, 'title') === 'MASTER'), '@id');
+                                });
                         }
                     }
                     dvm.run = function() {
@@ -146,14 +147,13 @@
                     function testOntology(ontologyRecord) {
                         var item = _.find(os.list, {ontologyRecord: {recordId: ontologyRecord['@id']}});
                         if (item) {
-                            var masterBranch = dvm.util.getPropertyId(ontologyRecord, prefixes.catalog + 'masterBranch');
-                            if (_.get(item, 'ontologyRecord.branchId') === masterBranch) {
+                            if (_.get(item, 'ontologyRecord.branchId') === dvm.branchId) {
                                 item.upToDate = false;
                                 if (item.merge.active) {
                                     dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor for ' + dvm.util.getDctermsValue(ontologyRecord, 'title') + ' that is out of date. Please reopen the merge form.', {timeOut: 5000});
                                 }
                             }
-                            if (item.merge.active && _.get(item.merge.target, '@id') === masterBranch) {
+                            if (item.merge.active && _.get(item.merge.target, '@id') === dvm.branchId) {
                                 dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor for ' + dvm.util.getDctermsValue(ontologyRecord, 'title') + ' that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
                             }
                         }

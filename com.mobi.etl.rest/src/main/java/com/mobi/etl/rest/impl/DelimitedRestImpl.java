@@ -315,6 +315,7 @@ public class DelimitedRestImpl implements DelimitedRest {
                                     String ontologyRecordIRI, String branchIRI, boolean containsHeaders, String separator) {
         checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
         checkStringParam(ontologyRecordIRI, "Must provide the IRI of an ontology record");
+        checkStringParam(branchIRI, "Must provide the IRI of an ontology branch");
 
         User user = getActiveUser(context, engineManager);
         Response response;
@@ -328,16 +329,17 @@ public class DelimitedRestImpl implements DelimitedRest {
         Model mappingData = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
                 separator, false);
 
-        Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() -> ErrorUtils.sendError(
-                "OntologyRecord " + ontologyRecordIRI + " master branch cannot be found.", Response.Status.BAD_REQUEST));
+        Resource branchId = vf.createIRI(branchIRI);
+        //Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() -> ErrorUtils.sendError(
+        //        "OntologyRecord " + ontologyRecordIRI + " master branch cannot be found.", Response.Status.BAD_REQUEST));
 
         IRI recordIRI = vf.createIRI(ontologyRecordIRI);
-        Model ontologyData =  ontologyManager.getOntologyModel(recordIRI);
+        Model ontologyData =  ontologyManager.getOntologyModel(recordIRI, branchId);
 
         mappingData.removeAll(ontologyData);
 
         if (!mappingData.isEmpty()) {
-            versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), masterBranchId, user,
+            versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), branchId, user,
                     "Mapping data from " + mappingRecordIRI, mappingData, null);
             response = Response.ok().build();
         } else {

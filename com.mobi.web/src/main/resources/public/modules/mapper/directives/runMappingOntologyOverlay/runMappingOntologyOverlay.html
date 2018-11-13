@@ -38,11 +38,11 @@
             <custom-label>Branch</custom-label>
             <ui-select ng-model="dvm.branchId" ng-disabled="!dvm.ontology">
                 <ui-select-match placeholder="Select a Branch">
-                    <span>{{dvm.util.getDctermsValue(branchTitle, 'title')}}</span>
+                    <span>{{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
                 </ui-select-match>
-                <ui-select-choices repeat="branch['@id'] as branch in dvm.branches">
-                    <div class="branch-display" ng-init="branchTitle = dvm.util.getDctermsValue(branch, 'title')" ng-class="{'master': branchTitle === 'MASTER'}">
-                        <span ng-bind-html="branchTitle | highlight:$select.search | trusted" title="{{branchTitle}}"></span>
+                <ui-select-choices repeat="branch['@id'] as branch in dvm.branches | filter:$select.search">
+                    <div class="branch-display" ng-class="{'active': branch['@id'] === dvm.branchId}">
+                        <span ng-bind-html="dvm.util.getDctermsValue(branch, 'title')| highlight:$select.search | trusted" title="{{branch['id']}}"></span>
                     </div>
                 </ui-select-choices>
             </ui-select>
