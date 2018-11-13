@@ -47,7 +47,7 @@
          * exists in the current {@link ontologyState.service:ontologyStateService selected ontology}. The the IRI if
          * for an entity that is not imported, an edit button is displayed that will open the
          * {@link editIriOverlay.directive:editIriOverlay}. The directive accepts a method that will be called when an
-         * edit of the IRI is completed.The directive is replaced by the contents of its template.
+         * edit of the IRI is completed. The directive is replaced by the contents of its template.
          *
          * @param {Function} onEdit A function to be called when the `editIriOverlay` is confirmed
          * @param {string} iri The IRI to be displayed and optionally edited
