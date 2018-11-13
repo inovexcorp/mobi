@@ -272,6 +272,16 @@ public interface MergeRequestManager {
     Optional<Comment> getComment(Resource commentId);
 
     /**
+     * Gets the {@link Comment} identified by the provided {@link Resource}.
+     *
+     * @param commentId The {@link Resource} identifying a {@link Comment}
+     * @param conn A RepositoryConnection to use for lookup
+     *
+     * @return The {@link Comment} if it exists.
+     */
+    Optional<Comment> getComment(Resource commentId, RepositoryConnection conn);
+
+    /**
      * Replaces the stored {@link Comment} of {@code requestId} with the provided {@link Comment}
      * {@code request}. Assumes that {@code comment} is properly populated.
      *

@@ -466,8 +466,13 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     @Override
     public Optional<Comment> getComment(Resource commentId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            return catalogUtils.optObject(commentId, commentFactory, conn);
+            return getComment(commentId, conn);
         }
+    }
+
+    @Override
+    public Optional<Comment> getComment(Resource commentId, RepositoryConnection conn) {
+        return catalogUtils.optObject(commentId, commentFactory, conn);
     }
 
     @Override
@@ -482,17 +487,17 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     public void deleteComment(Resource commentId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             // Adjust comment chain pointers if they exist
-            Comment comment = getComment(commentId).orElseThrow(
+            Comment comment = getComment(commentId, conn).orElseThrow(
                     () -> new IllegalArgumentException("Comment " + commentId + " does not exist"));
             Iterator<Statement> statements = conn.getStatements(null, vf.createIRI(Comment.replyComment_IRI),
                     commentId);
             if (statements.hasNext()) {
                 Resource parentCommentIRI = statements.next().getSubject();
-                Comment parentComment = getComment(parentCommentIRI).orElseThrow(
+                Comment parentComment = getComment(parentCommentIRI, conn).orElseThrow(
                         () -> new IllegalArgumentException("Parent comment " + parentCommentIRI + " does not exist"));
                 Optional<Resource> childCommentResourceOpt = comment.getReplyComment_resource();
                 if (childCommentResourceOpt.isPresent()) {
-                    Comment childComment = getComment(childCommentResourceOpt.get()).orElseThrow(
+                    Comment childComment = getComment(childCommentResourceOpt.get(), conn).orElseThrow(
                             () -> new IllegalArgumentException("Child comment " + childCommentResourceOpt.get()
                                     + " does not exist"));
                     parentComment.setReplyComment(childComment);
