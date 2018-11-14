@@ -431,6 +431,10 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     public Comment createComment(Resource requestId, User user, String commentStr, Resource parentCommentId) {
         Comment parent = getComment(parentCommentId).orElseThrow(
                 () -> new IllegalArgumentException("Parent comment " + parentCommentId + " does not exist"));
+        while (parent.getReplyComment_resource().isPresent()) {
+            parent = getComment(parent.getReplyComment_resource().get()).orElseThrow(
+                    () -> new IllegalArgumentException("Parent comment " + parentCommentId + " does not exist"));
+        }
         Comment comment = createComment(requestId, user, commentStr);
         parent.setReplyComment(comment);
         updateComment(parent.getResource(), parent);
