@@ -66,6 +66,7 @@ describe('Catalog Manager service', function() {
     describe('should set the correct initial state', function() {
         it('unless an error occurs', function() {
             spyOn(catalogManagerSvc, 'getRecordTypes').and.returnValue($q.reject());
+            spyOn(catalogManagerSvc, 'getSortOptions').and.returnValue($q.reject());
             $httpBackend.whenGET('/mobirest/catalogs').respond(400, '');
             catalogManagerSvc.initialize()
                 .then(response => fail('Promise should have rejected'));
@@ -73,11 +74,14 @@ describe('Catalog Manager service', function() {
             expect(catalogManagerSvc.recordTypes).toEqual([]);
             expect(catalogManagerSvc.localCatalog).toBeUndefined();
             expect(catalogManagerSvc.distributedCatalog).toBeUndefined();
+            expect(catalogManagerSvc.sortOptions).toEqual([]);
         });
         describe('successfully', function() {
             beforeEach(function() {
                 this.types = ['type1', 'type2'];
+                this.sortOptions = ['sort1', 'sort2'];
                 spyOn(catalogManagerSvc, 'getRecordTypes').and.returnValue($q.when(this.types));
+                spyOn(catalogManagerSvc, 'getSortOptions').and.returnValue($q.when(this.sortOptions));
             });
             it('unless a catalog cannot be found', function() {
                 $httpBackend.whenGET('/mobirest/catalogs').respond(200, []);
@@ -97,6 +101,11 @@ describe('Catalog Manager service', function() {
                 expect(catalogManagerSvc.recordTypes).toEqual(this.types);
                 expect(catalogManagerSvc.localCatalog).toEqual(localCatalog);
                 expect(catalogManagerSvc.distributedCatalog).toEqual(distributedCatalog);
+                expect(catalogManagerSvc.sortOptions.length).toEqual(this.sortOptions.length * 2);
+                _.forEach(this.sortOptions, function(option) {
+                    expect(_.find(catalogManagerSvc.sortOptions, {field: option, asc: true})).not.toBeUndefined();
+                    expect(_.find(catalogManagerSvc.sortOptions, {field: option, asc: false})).not.toBeUndefined();
+                });
             });
         });
     });

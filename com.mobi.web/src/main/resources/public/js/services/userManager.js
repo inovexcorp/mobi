@@ -120,38 +120,41 @@
              * results of the GET /mobirest/groups, GET /mobirest/groups/{groupTitle},
              * GET /mobirest/groups/{groupTitle}/roles, and GET /mobirest/groups/{groupTitle}/roles
              * endpoints for the groups list. If an error occurs in any of the HTTP calls,
-             * logs the error on the console.
+             * logs the error on the console. Returns a promise.
+             *
+             * @return {Promise} A Promise that indicates the function has completed.
              */
             self.initialize = function() {
-                $http.get(userPrefix)
-                    .then(response => $q.all(_.map(response.data, username => self.getUser(username))), error => $q.reject(error))
-                    .then(responses => {
-                        self.users = responses;
-                        return $q.all(_.map(self.users, user => listUserRoles(user.username)));
-                    }, error => $q.reject(error))
-                    .then(responses => {
-                        _.forEach(responses, (response, idx) => {
-                            self.users[idx].roles = response;
-                        });
-                    }, error => console.log(util.getErrorMessage(error, 'Something went wrong. Could not load users.')));
-
-                $http.get(groupPrefix)
-                    .then(response => $q.all(_.map(response.data, groupTitle => self.getGroup(groupTitle))), error => $q.reject(error))
-                    .then(responses => {
-                        self.groups = responses;
-                        return $q.all(_.map(self.groups, group => self.getGroupUsers(group.title)));
-                    }, error => $q.reject(error))
-                    .then(responses => {
-                        _.forEach(responses, (response, idx) => {
-                            self.groups[idx].members = _.map(response, 'username');
-                        });
-                        return $q.all(_.map(self.groups, group => listGroupRoles(group.title)));
-                    }, error => $q.reject(error))
-                    .then(responses => {
-                        _.forEach(responses, (response, idx) => {
-                            self.groups[idx].roles = response;
-                        });
-                    }, error => console.log(util.getErrorMessage(error, 'Something went wrong. Could not load groups.')));
+                return $q.all([
+                    $http.get(userPrefix)
+                        .then(response => $q.all(_.map(response.data, username => self.getUser(username))), error => $q.reject(error))
+                        .then(responses => {
+                            self.users = responses;
+                            return $q.all(_.map(self.users, user => listUserRoles(user.username)));
+                        }, error => $q.reject(error))
+                        .then(responses => {
+                            _.forEach(responses, (response, idx) => {
+                                self.users[idx].roles = response;
+                            });
+                        }, error => console.log(util.getErrorMessage(error, 'Something went wrong. Could not load users.'))),
+                    $http.get(groupPrefix)
+                        .then(response => $q.all(_.map(response.data, groupTitle => self.getGroup(groupTitle))), error => $q.reject(error))
+                        .then(responses => {
+                            self.groups = responses;
+                            return $q.all(_.map(self.groups, group => self.getGroupUsers(group.title)));
+                        }, error => $q.reject(error))
+                        .then(responses => {
+                            _.forEach(responses, (response, idx) => {
+                                self.groups[idx].members = _.map(response, 'username');
+                            });
+                            return $q.all(_.map(self.groups, group => listGroupRoles(group.title)));
+                        }, error => $q.reject(error))
+                        .then(responses => {
+                            _.forEach(responses, (response, idx) => {
+                                self.groups[idx].roles = response;
+                            });
+                        }, error => console.log(util.getErrorMessage(error, 'Something went wrong. Could not load groups.')))
+                    ]);
             }
 
             /**
