@@ -29,8 +29,8 @@
          * @name superClassSelect
          *
          * @description
-         * The `superClassSelect` module only provides the `superClassSelect` directive which creates
-         * the super class select.
+         * The `superClassSelect` module only provides the `superClassSelect` directive which creates a collapsible
+         * {@link classSelect.directive:classSelect} for super classes.
          */
         .module('superClassSelect', [])
         /**
@@ -43,8 +43,11 @@
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
-         * HTML contents in the super class select which provides a link to show a dropdown select of
-         * all available classes.
+         * `classSelect` is a directive that creates a collapsible {@link classSelect.directive:classSelect} for
+         * selecting the super classes of a class. When collapsed and then reopened, all previous values are cleared.
+         * The directive is replaced by the contents of its template.
+         *
+         * @param {string[]} values The selected class IRIs for super classes
          */
         .directive('superClassSelect', superClassSelect);
 
@@ -60,25 +63,24 @@
                     values: '='
                 },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.util = utilService;
                     dvm.isShown = false;
-                    dvm.array = [];
+                    dvm.iris = _.map(dvm.values, '@id');
 
                     dvm.show = function() {
                         dvm.isShown = true;
                     }
                     dvm.hide = function() {
                         dvm.isShown = false;
-                        dvm.values = [];
+                        dvm.iris = [];
                     }
-                    dvm.getValues = function(searchText) {
-                        dvm.array =  dvm.ontoUtils.getSelectList(_.keys(os.listItem.classes.iris), searchText, dvm.ontoUtils.getDropDownText);
-                    }
-                }
+
+                    $scope.$watch(() => dvm.iris.length, () => dvm.values = _.map(dvm.iris, iri => ({'@id': iri})));
+                }]
             }
         }
 })();
