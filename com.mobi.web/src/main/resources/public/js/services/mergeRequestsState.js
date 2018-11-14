@@ -83,50 +83,6 @@
             self.acceptedFilter = false
             /**
              * @ngdoc property
-             * @name showDelete
-             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
-             * @type {boolean}
-             *
-             * @description
-             * `showDelete` determines whether the Delete Merge Request {@link confirmationOverlay.directive:confirmationOverlay}
-             * should be shown.
-             */
-            self.showDelete = false;
-            /**
-             * @ngdoc property
-             * @name showAccept
-             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
-             * @type {boolean}
-             *
-             * @description
-             * `showAccept` determines whether the Accept Merge Request {@link confirmationOverlay.directive:confirmationOverlay}
-             * should be shown.
-             */
-            self.showAccept = false;
-            /**
-             * @ngdoc property
-             * @name requestToDelete
-             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
-             * @type {Object}
-             *
-             * @description
-             * `requestToDelete` contains an object representing the request that will be deleted from the
-             * Delete Merge Request {@link confirmationOverlay.directive:confirmationOverlay}.
-             */
-            self.requestToDelete = undefined;
-            /**
-             * @ngdoc property
-             * @name requestToAccept
-             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
-             * @type {Object}
-             *
-             * @description
-             * `requestToAccept` contains an object representing the request that will be accepted in the
-             * Accept Merge Request {@link confirmationOverlay.directive:confirmationOverlay}.
-             */
-            self.requestToAccept = undefined;
-            /**
-             * @ngdoc property
              * @name createRequest
              * @propertyOf mergeRequestsState.service:mergeRequestsStateService
              * @type {boolean}
@@ -368,11 +324,33 @@
              * @description
              * Checks if the JSON-LD for a Merge Request has the removeSource property set to true. Returns boolean result.
              *
-             * @param jsonld The JSON-LD of a Merge Request
+             * @param {Object} jsonld The JSON-LD of a Merge Request
              * @returns {boolean} True if the removeSource property is true, otherwise false
              */
             self.removeSource = function(jsonld) {
                 return util.getPropertyValue(jsonld, prefixes.mergereq + 'removeSource') === 'true';
+            }
+            /**
+             * @ngdoc method
+             * @name deleteRequest
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             *
+             * @description
+             * Deletes the provided Merge Request from the application. If successful, unselects the current `selected`
+             * request and updates the list of requests. Displays an error toast if unsuccessful.
+             *
+             * @param {Object} request An item from the `requests` array that represents the request to delete
+             */
+            self.deleteRequest = function(request) {
+                mm.deleteRequest(request.jsonld['@id'])
+                    .then(() => {
+                        var hasSelected = !!self.selected;
+                        self.selected = undefined;
+                        util.createSuccessToast('Request successfully deleted');
+                        if (!hasSelected) {
+                            self.setRequests(self.acceptedFilter);
+                        }
+                    }, util.createErrorToast);
             }
 
             function getDate(jsonld) {

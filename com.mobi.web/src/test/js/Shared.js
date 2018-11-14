@@ -1308,10 +1308,6 @@ function mockMergeRequestsState() {
             this.selected = undefined;
             this.acceptedFilter = false;
             this.requests = [];
-            this.showDelete = false;
-            this.requestToDelete = undefined;
-            this.showAccept = false;
-            this.requestToAccept = undefined;
             this.createRequest = false;
             this.createRequestStep = 0;
             this.requestConfig = {};
