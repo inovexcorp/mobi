@@ -26,8 +26,8 @@
     <feature name="mobi-deps" description="Mobi Dependency Bundles" version="${project.version}">
         <feature prerequisite="true">eventadmin</feature>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.ezmorph/1.0.6_1</bundle>
-        <bundle start-level="80">mvn:org.apache.httpcomponents/httpclient-osgi/4.5.2</bundle>
-        <bundle start-level="80">mvn:org.apache.httpcomponents/httpcore-osgi/4.4</bundle>
+        <bundle start-level="80">mvn:org.apache.httpcomponents/httpclient-osgi/4.5.5</bundle>
+        <bundle start-level="80">mvn:org.apache.httpcomponents/httpcore-osgi/4.4.9</bundle>
         <bundle start-level="80">mvn:javax.ws.rs/javax.ws.rs-api/2.0.1</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.json-lib/2.4_1</bundle>
         <bundle start-level="80">mvn:com.fasterxml.jackson.module/jackson-module-jaxb-annotations/${jackson.version}</bundle>
@@ -35,7 +35,6 @@
         <bundle start-level="80">mvn:com.nimbusds/nimbus-jose-jwt/4.11</bundle>
         <bundle start-level="80">mvn:net.minidev/json-smart/1.3.1</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.oro/2.0.8_6</bundle>
-        <!--<bundle start-level="80">mvn:com.inovexcorp.mobi/jsonld-java/0.8.3</bundle>-->
         <bundle start-level="80">mvn:com.github.jsonld-java/jsonld-java/0.12.2</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.aopalliance/1.0_6</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jcip-annotations/1.0_2</bundle>
@@ -79,16 +78,11 @@
 
         <!-- Ontology Dependencies -->
         <bundle start-level="80">mvn:org.tukaani/xz/1.6</bundle>
-        <bundle start-level="80">mvn:com.google.inject/guice/${guice.version}</bundle>
-        <bundle start-level="80">mvn:com.google.inject.extensions/guice-assistedinject/${guice.version}</bundle>
-        <bundle start-level="80">mvn:com.google.inject.extensions/guice-multibindings/${guice.version}</bundle>
         <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-databind/${jackson.version}</bundle>
         <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-core/${jackson.version}</bundle>
         <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-annotations/${jackson.version}</bundle>
         <bundle start-level="80">mvn:com.google.guava/guava/18.0</bundle>
-        <!--<bundle start-level="80">mvn:com.google.guava/guava/20.0</bundle>-->
         <bundle start-level="80">mvn:com.google.guava/guava/22.0</bundle>
-        <bundle start-level="80">mvn:org.matonto.bundles/trove4j/3.0.3_1</bundle>
         <bundle start-level="80">mvn:com.github.ben-manes.caffeine/caffeine/2.5.6</bundle>
         <bundle start-level="80">mvn:org.apache.commons/commons-rdf-api/${commons-rdf-api.version}</bundle>
         <bundle start-level="80">mvn:org.apache.commons/commons-vfs2/2.1</bundle>
