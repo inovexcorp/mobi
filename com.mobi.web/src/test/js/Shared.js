@@ -599,7 +599,7 @@ function mockOntologyState() {
                     branchId: '',
                     commitId: ''
                 },
-                mockMergeRequestManager: {
+                merge: {
                     active: false,
                     target: undefined,
                     checkbox: false,

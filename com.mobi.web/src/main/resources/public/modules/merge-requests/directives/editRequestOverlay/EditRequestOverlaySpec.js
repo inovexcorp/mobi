@@ -52,25 +52,24 @@ describe('Edit Request Overlay directive', function() {
 
         this.getDefer = $q.defer();
         
-        prefixes.dcterms = 'dc:';
-        prefixes.mergereq = 'mergereq:';
-        
         mergeRequestsStateSvc.selected = {
             'recordIri': 'urn://test/ontology/1',
             'title': 'Test Ontology 1',
             'jsonld': {
                 '@id': 'urn://test/merge-request/1',
-                'dc:title': [{'@value': 'Test Ontology 1'}],
-                'dc:description': [{'@value': ''}],
-                'mergereq:sourceBranch': [{'@id': 'urn://test/branch/source'}],
-                'mergereq:targetBranch': [{'@id': 'urn://test/branch/target'}],
-                'mergereq:assignee': [{'@id': 'urn://test/user/user-1'}]
+                [prefixes.dcterms + 'title']: [{'@value': 'Test Ontology 1'}],
+                [prefixes.dcterms + 'description']: [{'@value': ''}],
+                [prefixes.mergereq + 'sourceBranch']: [{'@id': 'urn://test/branch/source'}],
+                [prefixes.mergereq + 'targetBranch']: [{'@id': 'urn://test/branch/target'}],
+                [prefixes.mergereq + 'assignee']: [{'@id': 'urn://test/user/user-1'}],
+                [prefixes.mergereq + 'removeSource']: [{'@type': prefixes.xsd + 'boolean', '@value': 'true'}]
             },
             'sourceBranchId': {'@id': 'urn://test/branch/source'},
             'targetBranchId': {'@id': 'urn://test/branch/target'},
             'sourceBranch': {'@id': 'urn://test/branch/source'},
             'targetBranch': {'@id': 'urn://test/branch/target'},
-            'difference': {'additions': [], 'deletions': []}
+            'difference': {'additions': [], 'deletions': []},
+            'removeSource': true
         };
         
         this.element = $compile(angular.element('<edit-request-overlay></edit-request-overlay>'))(scope);
@@ -120,8 +119,13 @@ describe('Edit Request Overlay directive', function() {
     });
     describe('should update the merge request', function() {
         it('with a new title', function() {
+            utilSvc.updateDctermsValue.and.callFake((entity, prop, value) => {
+                if (prop === 'title') {
+                    entity[prefixes.dcterms + 'title'][0]['@value'] = 'Updated Title';
+                }
+            });
             var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
-            updatedJson['dc:title'][0]['@value'] = 'Updated Title';
+            updatedJson[prefixes.dcterms + 'title'][0]['@value'] = 'Updated Title';
             
             mergeRequestsStateSvc.requestConfig.title = 'Updated Title';
             
@@ -129,9 +133,14 @@ describe('Edit Request Overlay directive', function() {
             
             expect(mergeRequestManagerSvc.updateRequest).toHaveBeenCalledWith(mergeRequestsStateSvc.selected.jsonld['@id'], updatedJson);
         });
-        it('with a new title', function() {
+        it('with a new description', function() {
+            utilSvc.updateDctermsValue.and.callFake((entity, prop, value) => {
+                if (prop === 'description') {
+                    entity[prefixes.dcterms + 'description'][0]['@value'] = 'Updated description.';
+                }
+            });
             var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
-            updatedJson['dc:description'][0]['@value'] = 'Updated description.';
+            updatedJson[prefixes.dcterms + 'description'][0]['@value'] = 'Updated description.';
             
             mergeRequestsStateSvc.requestConfig.description = 'Updated description.';
             
@@ -141,7 +150,7 @@ describe('Edit Request Overlay directive', function() {
         });
         it('with a new target branch', function() {
             var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
-            updatedJson['mergereq:targetBranch'][0]['@id'] = 'urn://test/branch/new-target';
+            updatedJson[[prefixes.mergereq + 'targetBranch']][0]['@id'] = 'urn://test/branch/new-target';
             
             mergeRequestsStateSvc.requestConfig.targetBranch = {'@id': 'urn://test/branch/new-target'};
             
@@ -151,12 +160,22 @@ describe('Edit Request Overlay directive', function() {
         });
         it('with a new assignee', function() {
             var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
-            updatedJson['mergereq:assignee'][0]['@id'] = 'urn://test/user/user-2';
+            updatedJson[[prefixes.mergereq + 'assignee']][0]['@id'] = 'urn://test/user/user-2';
             
             mergeRequestsStateSvc.requestConfig.assignees = ['urn://test/user/user-2'];
             
             this.controller.submit();
             
+            expect(mergeRequestManagerSvc.updateRequest).toHaveBeenCalledWith(mergeRequestsStateSvc.selected.jsonld['@id'], updatedJson);
+        });
+        it('with a new removeSource value', function() {
+            var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
+            updatedJson[[prefixes.mergereq + 'removeSource']][0]['@value'] = 'false';
+
+            mergeRequestsStateSvc.requestConfig.removeSource = false;
+
+            this.controller.submit();
+
             expect(mergeRequestManagerSvc.updateRequest).toHaveBeenCalledWith(mergeRequestsStateSvc.selected.jsonld['@id'], updatedJson);
         });
     });
