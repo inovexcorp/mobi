@@ -77,7 +77,7 @@
             }
 
             self.initialize = function() {
-                self.getStates()
+                return self.getStates()
                     .then(states => self.states = states, () => util.createErrorToast('Problem getting states'));
             }
 

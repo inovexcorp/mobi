@@ -189,10 +189,14 @@
              *
              * @description
              * Test whether a user is currently logged in and if not, navigates to the log in page. If a user
-             * is logged in, intitializes the {@link catalogManager.service:catalogManagerService catalogManagerService},
-             * {@link catalogState.service:catalogStateService catalogStateService},
-             * {@link ontologyManager.service:ontologyManagerService ontologyManagerService},
-             * and the {@link userManager.service:userManagerService userManagerService}. Returns
+             * is logged in, intitializes the {@link catalogManager.service:catalogManagerService},
+             * {@link catalogState.service:catalogStateService},
+             * {@link mergeRequestsState.service:mergeRequestsStateService},
+             * {@link ontologyManager.service:ontologyManagerService},
+             * {@link ontologyState.service:ontologyStateService},
+             * {@link datasetManager.service:datasetManagerService},
+             * {@link stateManager.service:stateManagerService},
+             * and the {@link userManager.service:userManagerService}. Returns
              * a Promise with whether or not a user is logged in.
              *
              * @return {Promise} A Promise that resolves if a user is logged in and rejects with the HTTP
@@ -206,27 +210,32 @@
                     return $q.reject(data);
                 };
                 return self.getCurrentLogin().then(data => {
-                    if (data.scope !== anon) {
-                        self.currentUser = data.sub;
-                        if (!weGood) {
+                    if (data.scope === anon) {
+                        return $q.reject(data);
+                    }
+                    self.currentUser = data.sub;
+                    var promises = [
+                        stateManagerService.initialize(),
+                        userManagerService.getUser(self.currentUser).then(user => {
+                            self.currentUserIRI = user.iri;
+                        })
+                    ];
+                    if (!weGood) {
+                        promises = promises.concat([
                             catalogManagerService.initialize().then(() => {
                                 catalogStateService.initialize();
                                 mergeRequestsStateService.initialize();
                                 ontologyManagerService.initialize();
                                 ontologyStateService.initialize();
-                            });
-                            userManagerService.initialize();
-                            datasetManagerService.initialize();
-                            weGood = true;
-                        }
-                        stateManagerService.initialize();
-                        userManagerService.getUser(self.currentUser).then(user => {
-                            self.currentUserIRI = user.iri;
-                        });
-                        return $q.when();
-                    } else {
-                        return handleError(data);
+                            }),
+                            userManagerService.initialize(),
+                            datasetManagerService.initialize()
+                        ]);
                     }
+                    return $q.all(promises);
+                }, $q.reject)
+                .then(() => {
+                    weGood = true;
                 }, handleError);
             };
 
