@@ -74,7 +74,39 @@
              * ```
              * This list is populated by the `initialize` method.
              */
-            self.sortOptions = [];
+            self.sortOptions = [
+                {
+                    field: 'http://purl.org/dc/terms/modified',
+                    ascending: true,
+                    label: 'Modified (asc)'
+                },
+                {
+                    field: 'http://purl.org/dc/terms/modified',
+                    ascending: false,
+                    label: 'Modified (desc)'
+                },
+                {
+                    field: 'http://purl.org/dc/terms/issued',
+                    ascending: true,
+                    label: 'Issued (asc)'
+                },
+                {
+                    field: 'http://purl.org/dc/terms/issued',
+                    ascending: false,
+                    label: 'Issued (desc)'
+                },
+                {
+                    field: 'http://purl.org/dc/terms/title',
+                    ascending: true,
+                    label: 'Title (asc)'
+                },
+                {
+                    field: 'http://purl.org/dc/terms/title',
+                    ascending: false,
+                    label: 'Title (desc)'
+                }
+            ];
+            // self.sortOptions = [];
             /**
              * @ngdoc property
              * @name recordTypes
@@ -124,7 +156,19 @@
              * with an error message
              */
             self.initialize = function() {
-                return $q.all([self.getRecordTypes(), self.getSortOptions(), $http.get(prefix)])
+                return $q.all([self.getRecordTypes(), $http.get(prefix)])
+                    .then(responses => {
+                        self.localCatalog = _.find(responses[1].data, {[prefixes.dcterms + 'title']: [{'@value': 'Mobi Catalog (Local)'}]});
+                        self.distributedCatalog = _.find(responses[1].data, {[prefixes.dcterms + 'title']: [{'@value': 'Mobi Catalog (Distributed)'}]});
+                        if (!self.localCatalog) {
+                            return $q.reject('Could not find local catalog');
+                        }
+                        if (!self.distributedCatalog) {
+                            return $q.reject('Could not find distributed catalog');
+                        }
+                        self.recordTypes = responses[0];
+                    }, () => $q.reject('Error in catalogManager initialization'));
+                /*return $q.all([self.getRecordTypes(), self.getSortOptions(), $http.get(prefix)])
                     .then(responses => {
                         self.localCatalog = _.find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'Mobi Catalog (Local)'}]});
                         self.distributedCatalog = _.find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'Mobi Catalog (Distributed)'}]});
@@ -149,7 +193,7 @@
                                 });
                             }
                         });
-                    }, () => $q.reject('Error in catalogManager initialization'));
+                    }, () => $q.reject('Error in catalogManager initialization'));*/
             }
 
             /**
