@@ -98,6 +98,7 @@ describe('Run Mapping Ontology Overlay directive', function() {
                     describe('successfully', function() {
                         beforeEach(function() {
                             this.newId = 'id';
+                            this.branchId = undefined;
                             mapperStateSvc.saveMapping.and.returnValue($q.when(this.newId));
                             utilSvc.getPropertyId.and.returnValue('branch');
                         });
@@ -107,7 +108,7 @@ describe('Run Mapping Ontology Overlay directive', function() {
                             scope.$apply();
                             expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
                             expect(mapperStateSvc.mapping.record.id).toEqual(this.newId);
-                            expect(delimitedManagerSvc.mapAndCommit).toHaveBeenCalledWith(this.newId, this.controller.ontology['@id']);
+                            expect(delimitedManagerSvc.mapAndCommit).toHaveBeenCalledWith(this.newId, this.controller.ontology['@id'], this.branchId);
                             expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
                             expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                             expect(mapperStateSvc.initialize).toHaveBeenCalled();
@@ -122,7 +123,7 @@ describe('Run Mapping Ontology Overlay directive', function() {
                             scope.$apply();
                             expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
                             expect(mapperStateSvc.mapping.record.id).toEqual(this.newId);
-                            expect(delimitedManagerSvc.mapAndCommit).toHaveBeenCalledWith(this.newId, this.controller.ontology['@id']);
+                            expect(delimitedManagerSvc.mapAndCommit).toHaveBeenCalledWith(this.newId, this.controller.ontology['@id'], this.branchId);
                             expect(utilSvc.createWarningToast).toHaveBeenCalled();
                             expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                             expect(mapperStateSvc.initialize).toHaveBeenCalled();
@@ -143,7 +144,7 @@ describe('Run Mapping Ontology Overlay directive', function() {
                         this.controller.run();
                         scope.$apply();
                         expect(mapperStateSvc.saveMapping).not.toHaveBeenCalled();
-                        expect(delimitedManagerSvc.mapAndCommit).toHaveBeenCalledWith(this.newId, this.controller.ontology['@id']);
+                        expect(delimitedManagerSvc.mapAndCommit).toHaveBeenCalledWith(this.newId, this.controller.ontology['@id'], this.branchId);
                         expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
                         expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                         expect(mapperStateSvc.initialize).toHaveBeenCalled();
@@ -156,7 +157,7 @@ describe('Run Mapping Ontology Overlay directive', function() {
                         this.controller.run();
                         scope.$apply();
                         expect(mapperStateSvc.saveMapping).not.toHaveBeenCalled();
-                        expect(delimitedManagerSvc.mapAndCommit).toHaveBeenCalledWith(this.newId, this.controller.ontology['@id']);
+                        expect(delimitedManagerSvc.mapAndCommit).toHaveBeenCalledWith(this.newId, this.controller.ontology['@id'], this.branchId);
                         expect(utilSvc.createWarningToast).toHaveBeenCalled();
                         expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                         expect(mapperStateSvc.initialize).toHaveBeenCalled();
@@ -175,7 +176,7 @@ describe('Run Mapping Ontology Overlay directive', function() {
                     this.controller.run();
                     scope.$apply();
                     expect(mapperStateSvc.saveMapping).not.toHaveBeenCalled();
-                    expect(delimitedManagerSvc.mapAndCommit).toHaveBeenCalledWith(this.newId, this.controller.ontology['@id']);
+                    expect(delimitedManagerSvc.mapAndCommit).toHaveBeenCalledWith(this.newId, this.controller.ontology['@id'], this.branchId);
                     expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                     expect(mapperStateSvc.initialize).toHaveBeenCalled();
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -195,7 +196,7 @@ describe('Run Mapping Ontology Overlay directive', function() {
             expect(this.element.querySelectorAll('form.content').length).toBe(1);
         });
         it('with a ui-select', function() {
-            expect(this.element.find('ui-select').length).toBe(1);
+            expect(this.element.find('ui-select').length).toBe(2);
         });
         it('with buttons for cancel and set', function() {
             var buttons = this.element.find('button');
