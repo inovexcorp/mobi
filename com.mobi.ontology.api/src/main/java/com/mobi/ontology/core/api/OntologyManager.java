@@ -30,8 +30,6 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Optional;
 import javax.annotation.Nonnull;
@@ -369,18 +367,20 @@ public interface OntologyManager {
      *
      * @param ontology   the Ontology you wish to query.
      * @param queryString the Sparql query string you want to execute.
+     * @param includeImports include data from ontology imports when querying
      * @return a Tuple Set with the query results.
      */
-    TupleQueryResult getTupleQueryResults(Ontology ontology, String queryString);
+    TupleQueryResult getTupleQueryResults(Ontology ontology, String queryString, boolean includeImports);
 
     /**
      * Searches the provided ontology & its import closures using the provided Sparql query.
      *
      * @param ontology   the Ontology you wish to query.
      * @param queryString the Sparql query string you want to execute.
+     * @param includeImports include data from ontology imports when querying
      * @return a model with the query results.
      */
-    Model getGraphQueryResults(Ontology ontology, String queryString);
+    Model getGraphQueryResults(Ontology ontology, String queryString, boolean includeImports);
 
     /**
      * Gets the compiled resource of the head Commit on the master Branch for the OntologyRecord specified by the
