@@ -68,11 +68,19 @@
                     var dm = delimitedManagerService;
                     var cm = catalogManagerService;
                     var os = ontologyStateService;
+                    var branches = [];
                     dvm.util = utilService;
                     dvm.errorMessage = '';
                     dvm.ontologies = [];
+                    dvm.branches = [];
+                    dvm.branchId = undefined;
                     dvm.ontology = undefined;
 
+                    dvm.changeOntology = function(ontologyRecord) {
+                        if (ontologyRecord) {
+                            setOntologyBranches(ontologyRecord);
+                        }
+                    }
                     dvm.getOntologyIRI = function(ontology) {
                         return dvm.util.getPropertyId(ontology, prefixes.ontEdit + 'ontologyIRI');
                     }
@@ -88,6 +96,20 @@
                             .then(response => {
                                 dvm.ontologies = response.data;
                             });
+                    }
+                    function setOntologyBranches(ontologyRecord) {
+                        var catalogId = _.get(cm.localCatalog, '@id', '');
+                        var recordId = _.get(ontologyRecord, '@id', '');
+                        var paginatedConfig = {
+                            sortOption: _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
+                        };
+                        if (recordId) {
+                            return cm.getRecordBranches(recordId, catalogId, paginatedConfig)
+                                .then(response => {
+                                    dvm.branches = response.data;
+                                    dvm.branchId = _.get(_.find(dvm.branches, branch => dvm.util.getDctermsValue(branch, 'title') === 'MASTER'), '@id');
+                                });
+                        }
                     }
                     dvm.run = function() {
                         if (state.editMapping && state.isMappingChanged()) {
@@ -105,9 +127,9 @@
                     }
                     function runMapping(id) {
                         state.mapping.record.id = id;
-                        dm.mapAndCommit(id, dvm.ontology['@id']).then(response => {
+                        dm.mapAndCommit(id, dvm.ontology['@id'], dvm.branchId).then(response => {
                             if (response.status === 204) {
-                                dvm.util.createWarningToast('No commit was submitted, commit was empty due to duplicates', {timeOut: 8000});
+                                dvm.util.createWarningToast('No commit was submitted, commit was empty due to duplicate data', {timeOut: 8000});
                                 reset();
                             } else {
                                 testOntology(dvm.ontology)
@@ -125,14 +147,13 @@
                     function testOntology(ontologyRecord) {
                         var item = _.find(os.list, {ontologyRecord: {recordId: ontologyRecord['@id']}});
                         if (item) {
-                            var masterBranch = dvm.util.getPropertyId(ontologyRecord, prefixes.catalog + 'masterBranch');
-                            if (_.get(item, 'ontologyRecord.branchId') === masterBranch) {
+                            if (_.get(item, 'ontologyRecord.branchId') === dvm.branchId) {
                                 item.upToDate = false;
                                 if (item.merge.active) {
                                     dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor for ' + dvm.util.getDctermsValue(ontologyRecord, 'title') + ' that is out of date. Please reopen the merge form.', {timeOut: 5000});
                                 }
                             }
-                            if (item.merge.active && _.get(item.merge.target, '@id') === masterBranch) {
+                            if (item.merge.active && _.get(item.merge.target, '@id') === dvm.branchId) {
                                 dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor for ' + dvm.util.getDctermsValue(ontologyRecord, 'title') + ' that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
                             }
                         }
