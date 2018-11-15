@@ -242,7 +242,8 @@ public interface MergeRequestManager {
 
     /**
      * Create a reply {@link Comment} on an existing {@link MergeRequest}. This comment will be in a comment thread
-     * on the MergeRequest with its parent {@link Comment} being the provided {@code parentCommentId}.
+     * on the MergeRequest with its parent {@link Comment} being the provided {@code parentCommentId}. If the parent
+     * {@link Comment} has a child, the new reply {@link Comment} will be added to the bottom of the chain.
      *
      * @param requestId The {@link Resource} of the associated {@link MergeRequest} to comment on
      * @param user The {@link User} making the comment on the MergeRequest

@@ -196,8 +196,9 @@ public interface MergeRequestRest {
 
     /**
      * Creates a new {@link Comment} in the repository with the passed form data. Requires the `commentStr` to be set.
-     * If a `commentId` is provided, the the created comment is made as a reply comment to the Comment specified.
-     * Returns a Response with the IRI of the new {@link Comment}.
+     * If a `commentId` is provided, the the created comment is made as a reply comment to the Comment specified. If
+     * the `commentId` already has a reply comment, the newly created comment is added to the bottom of the comment
+     * chain. Returns a Response with the IRI of the new {@link Comment}.
      *
      * @param context The context of the request.
      * @param requestId The String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless

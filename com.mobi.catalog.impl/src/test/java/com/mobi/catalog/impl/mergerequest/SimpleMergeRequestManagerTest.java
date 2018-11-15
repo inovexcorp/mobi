@@ -1012,6 +1012,23 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void createReplyCommentParentHasReplyAlreadyTest() {
+        String commentStr = "This is a test comment.";
+        Comment comment = manager.createComment(request1.getResource(), user1, commentStr, commentA.getResource());
+        assertEquals(request1.getResource(), comment.getOnMergeRequest_resource().get());
+        assertEquals(user1.getResource(), comment.getProperty(VALUE_FACTORY.createIRI(_Thing.creator_IRI)).get());
+        assertEquals(commentStr, comment.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI)).get().stringValue());
+        assertTrue(comment.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
+        assertTrue(comment.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
+        assertFalse(comment.getReplyComment().isPresent());
+
+        Comment commentCRepo = manager.getComment(commentC.getResource()).get();
+        assertEquals(comment.getResource(), commentCRepo.getReplyComment_resource().get());
+
+        verify(utilsService).optObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+    }
+
+    @Test
     public void createReplyCommentRequestDoesNotExistTest() {
         thrown.expect(IllegalArgumentException.class);
 
