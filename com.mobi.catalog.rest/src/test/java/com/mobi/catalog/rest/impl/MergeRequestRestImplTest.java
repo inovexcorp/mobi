@@ -830,4 +830,81 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
                 .put(Entity.entity(groupedModelToString(comment1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
     }
+
+    /* DELETE merge-requests/{requestId}/comments/{commentId} */
+
+    @Test
+    public void deleteComment() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode(comment1.getResource().stringValue()))
+                .request().delete();
+        verify(requestManager).getMergeRequest(request1.getResource());
+        verify(requestManager).deleteComment(comment1.getResource());
+        assertEquals(response.getStatus(), 200);
+    }
+
+    @Test
+    public void deleteCommentWithIllegalArgumentException() {
+        doThrow(new IllegalArgumentException()).when(requestManager).deleteComment(eq(comment1.getResource()));
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode(comment1.getResource().stringValue()))
+                .request().delete();
+        verify(requestManager).getMergeRequest(request1.getResource());
+        verify(requestManager).deleteComment(comment1.getResource());
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void deleteCommentWithIllegalStateException() {
+        doThrow(new IllegalStateException()).when(requestManager).deleteComment(eq(comment1.getResource()));
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode(comment1.getResource().stringValue()))
+                .request().delete();
+        verify(requestManager).getMergeRequest(request1.getResource());
+        verify(requestManager).deleteComment(comment1.getResource());
+        assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void deleteCommentWithMobiException() {
+        doThrow(new MobiException()).when(requestManager).deleteComment(eq(comment1.getResource()));
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode(comment1.getResource().stringValue()))
+                .request().delete();
+        verify(requestManager).getMergeRequest(request1.getResource());
+        verify(requestManager).deleteComment(comment1.getResource());
+        assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void deleteCommentRequestDoesNotExist() {
+        Response response = target().path("merge-requests/" + encode("http://mobi.com/error") + "/comments/"
+                + encode(comment1.getResource().stringValue()))
+                .request().delete();
+        assertEquals(response.getStatus(), 404);
+        verify(requestManager).getMergeRequest(vf.createIRI("http://mobi.com/error"));
+    }
+
+    @Test
+    public void deleteCommentCommentDoesNotExist() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode("http://mobi.com/error"))
+                .request().delete();
+        assertEquals(response.getStatus(), 404);
+        verify(requestManager).getMergeRequest(request1.getResource());
+        verify(requestManager).getComment(vf.createIRI("http://mobi.com/error"));
+    }
+
+    @Test
+    public void deleteCommentUserDoesNotMatch() {
+        User user2 = userFactory.createNew(vf.createIRI("urn:user2"));
+        when(engineManager.retrieveUser(UsernameTestFilter.USERNAME)).thenReturn(Optional.of(user2));
+
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode(comment1.getResource().stringValue()))
+                .request().delete();
+        assertEquals(response.getStatus(), 403);
+        verify(requestManager).getMergeRequest(request1.getResource());
+        verify(requestManager).getComment(comment1.getResource());
+    }
 }
