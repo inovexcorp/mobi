@@ -965,7 +965,7 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response queryOntology(ContainerRequestContext context, String recordIdStr, String queryString,
-                                  String branchIdStr, String commitIdStr) {
+                                  String branchIdStr, String commitIdStr, boolean includeImports) {
         checkStringParam(queryString, "Parameter 'query' must be set.");
 
         try {
@@ -975,7 +975,7 @@ public class OntologyRestImpl implements OntologyRest {
             String queryType = Query.getQueryType(queryString);
             switch (queryType) {
                 case "select":
-                    TupleQueryResult tupResults = ontologyManager.getTupleQueryResults(ontology, queryString);
+                    TupleQueryResult tupResults = ontologyManager.getTupleQueryResults(ontology, queryString, includeImports);
                     if (tupResults.hasNext()) {
                         JSONObject json = JSONQueryResults.getResponse(tupResults);
                         return Response.ok(json, MediaType.APPLICATION_JSON_TYPE).build();
@@ -983,7 +983,7 @@ public class OntologyRestImpl implements OntologyRest {
                         return Response.noContent().build();
                     }
                 case "construct":
-                    Model modelResult = ontologyManager.getGraphQueryResults(ontology, queryString);
+                    Model modelResult = ontologyManager.getGraphQueryResults(ontology, queryString, includeImports);
                     if (modelResult.size() >= 1) {
                         String trigStr = modelToTrig(modelResult, sesameTransformer);
                         return Response.ok(trigStr, MediaType.TEXT_PLAIN_TYPE).build();
