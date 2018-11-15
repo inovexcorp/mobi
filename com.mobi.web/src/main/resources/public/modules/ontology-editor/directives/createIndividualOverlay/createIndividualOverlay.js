@@ -46,8 +46,8 @@
          * `createIndividualOverlay` is a directive that creates content for a modal that creates an individual in the
          * current {@link ontologyState.service:ontologyStateService selected ontology}. The form in the modal contains
          * a text input for the indivdiual name (which populates the {@link staticIri.directive:staticIri IRI}) and
-         * a 'ui-select' for the classes this individual will be an instance of. Meant to be used in conjunction with
-         * the {@link modalService.directive:modalService}.
+         * a {@link classSelect.directive:classSelect} for the classes this individual will be an instance of. Meant to
+         * be used in conjunction with the {@link modalService.directive:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal
@@ -70,7 +70,6 @@
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefix = dvm.os.getDefaultPrefix();
-                    dvm.classes = _.keys(dvm.os.listItem.classes.iris);
 
                     dvm.individual = {
                         '@id': dvm.prefix,
@@ -86,9 +85,6 @@
                         dvm.iriHasChanged = true;
                         dvm.individual['@id'] = iriBegin + iriThen + iriEnd;
                         dvm.os.setCommonIriParts(iriBegin, iriThen);
-                    }
-                    dvm.getClassOntologyIri = function(iri) {
-                        return _.get(dvm.os.listItem.classes.iris, "['" + iri + "']", dvm.os.listItem.ontologyId);
                     }
                     dvm.create = function() {
                         // update relevant lists

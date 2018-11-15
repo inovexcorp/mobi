@@ -83,3 +83,21 @@
     rdfs:comment "The title of the target Branch when the described MergeRequest was accepted."@en ;
     rdfs:domain :AcceptedMergeRequest ;
     rdfs:range xsd:string .
+
+# Comment
+
+:Comment a owl:Class ;
+    rdfs:label "Comment"@en ;
+    rdfs:comment "A comment made on a MergeRequest."@en .
+
+:onMergeRequest a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "on MergeRequest"@en ;
+    rdfs:comment "The MergeRequest that the Comment relates to." ;
+    rdfs:domain :Comment ;
+    rdfs:range :MergeRequest .
+
+:replyComment a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "reply Comment"@en ;
+    rdfs:comment "The reply Comment made on an existing Comment." ;
+    rdfs:domain :Comment ;
+    rdfs:range :Comment .

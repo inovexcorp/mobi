@@ -42,8 +42,18 @@
          * @requires $state
          * @requires catalogManager.service:catalogManagerService
          * @requires catalogState.service:catalogStateService
+         * @requires datasetManager.service:datasetManagerService
+         * @requires datasetState.service:datasetStateService
+         * @requires delimitedManager.service:delimitedManangerService
+         * @requires discoverState.service:discoverStateService
+         * @requires mapperState.service:mapperStateService
+         * @requires mergeRequestsState.service:mergeRequestsStateService
          * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires sparqlManager.service:sparqlManagerService
+         * @requires stateManager.service:stateManagerService
          * @requires userManager.service:userManagerService
+         * @requires userState.service:userStateService
          *
          * @description
          * `loginManagerService` is a service that provides access to the Mobi login REST
@@ -52,8 +62,6 @@
         .service('loginManagerService', loginManagerService);
 
         loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
-            'analyticManagerService',
-            'analyticStateService',
             'catalogManagerService',
             'catalogStateService',
             'datasetManagerService',
@@ -70,7 +78,7 @@
             'userStateService'
         ];
 
-    function loginManagerService($q, $http, $state, REST_PREFIX, analyticManagerService, analyticStateService, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService) {
+    function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService) {
             var self = this,
                 anon = 'self anon',
                 prefix = REST_PREFIX + 'user/',
@@ -155,7 +163,6 @@
              * is current. Navigates back to the login page.
              */
             self.logout = function() {
-                analyticStateService.reset();
                 catalogStateService.reset();
                 datasetStateService.reset();
                 delimitedManagerService.reset();
@@ -210,7 +217,6 @@
                             });
                             userManagerService.initialize();
                             datasetManagerService.initialize();
-                            analyticManagerService.initialize();
                             weGood = true;
                         }
                         stateManagerService.initialize();

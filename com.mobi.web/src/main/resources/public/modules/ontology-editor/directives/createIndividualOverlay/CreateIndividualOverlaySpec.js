@@ -30,8 +30,6 @@ describe('Create Individual Overlay directive', function() {
         mockPrefixes();
         mockOntologyUtilsManager();
         injectCamelCaseFilter();
-        injectTrustedFilter();
-        injectHighlightFilter();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
@@ -73,14 +71,10 @@ describe('Create Individual Overlay directive', function() {
             expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
         });
-        it('with a form', function() {
-            expect(this.element.find('form').length).toBe(1);
-        });
-        it('with a static-iri', function() {
-            expect(this.element.find('static-iri').length).toBe(1);
-        });
-        it('with a ui-select', function() {
-            expect(this.element.find('ui-select').length).toBe(1);
+        _.forEach(['form', 'static-iri', 'ontology-class-select'], el => {
+            it('with a ' + el, function() {
+                expect(this.element.find(el).length).toBe(1);
+            });
         });
         it('with an input for the individual name', function() {
             expect(this.element.querySelectorAll('input[name="name"]').length).toBe(1);
@@ -148,17 +142,6 @@ describe('Create Individual Overlay directive', function() {
             expect(this.controller.iriHasChanged).toBe(true);
             expect(this.controller.individual['@id']).toBe('begin' + 'then' + 'end');
             expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
-        });
-        describe('should get an class\'s ontology IRI', function() {
-            beforeEach(function() {
-                ontologyStateSvc.listItem.classes.iris = {classA: 'ontology'};
-            });
-            it('if it is set', function() {
-                expect(this.controller.getClassOntologyIri('classA')).toBe('ontology');
-            });
-            it('if it is not set', function() {
-                expect(this.controller.getClassOntologyIri('classB')).toBe(ontologyStateSvc.listItem.ontologyId);
-            });
         });
         describe('should create an individual', function() {
             beforeEach(function() {

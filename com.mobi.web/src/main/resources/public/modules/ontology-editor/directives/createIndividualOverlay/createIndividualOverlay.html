@@ -32,17 +32,7 @@
             <custom-label>Name</custom-label>
             <input type="text" name="name" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required ng-model="dvm.name" focus-me="true" />
         </div>
-        <div class="form-group">
-            <custom-label>Type</custom-label>
-            <ui-select multiple ng-model="dvm.individual['@type']">
-                <ui-select-match placeholder="Select a Class">
-                    <span title="{{$item}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
-                </ui-select-match>
-                <ui-select-choices group-by="dvm.getClassOntologyIri" repeat="iri in dvm.classes | removeIriFromArray:dvm.individual['@type'] | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
-                    <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getDropDownText(iri) | highlight:$select.search | trusted"></div>
-                </ui-select-choices>
-            </ui-select>
-        </div>
+        <ontology-class-select values="dvm.individual['@type']"></ontology-class-select>
     </form>
 </div>
 <div class="modal-footer">
