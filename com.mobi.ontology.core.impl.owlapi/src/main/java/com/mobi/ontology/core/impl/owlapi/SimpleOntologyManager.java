@@ -315,7 +315,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getSubClassesOf(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_SUB_CLASSES_OF, null, "getSubClassesOf(ontology)");
+        return runQueryOnOntology(ontology, GET_SUB_CLASSES_OF, null, "getSubClassesOf(ontology)", true);
     }
 
     @Override
@@ -326,7 +326,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public TupleQueryResult getSubClassesFor(Ontology ontology, IRI iri) {
         return runQueryOnOntology(ontology, String.format(GET_CLASSES_FOR, iri.stringValue()), null,
-                "getSubClassesFor(ontology, iri)");
+                "getSubClassesFor(ontology, iri)", true);
     }
 
     @Override
@@ -338,7 +338,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public TupleQueryResult getSubPropertiesFor(Ontology ontology, IRI iri) {
         return runQueryOnOntology(ontology, String.format(GET_PROPERTIES_FOR, iri.stringValue()), null,
-                "getSubPropertiesFor(ontology, iri)");
+                "getSubPropertiesFor(ontology, iri)", true);
     }
 
     @Override
@@ -350,7 +350,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF, null,
-                "getSubDatatypePropertiesOf(ontology)");
+                "getSubDatatypePropertiesOf(ontology)", true);
     }
 
     @Override
@@ -361,7 +361,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public TupleQueryResult getSubAnnotationPropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_ANNOTATION_PROPERTIES_OF, null,
-                "getSubAnnotationPropertiesOf(ontology)");
+                "getSubAnnotationPropertiesOf(ontology)", true);
     }
 
     @Override
@@ -371,7 +371,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getSubObjectPropertiesOf(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(ontology)");
+        return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(ontology)", true);
     }
 
     @Override
@@ -381,7 +381,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getClassesWithIndividuals(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(ontology)");
+        return runQueryOnOntology(ontology, GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(ontology)", true);
     }
 
     @Override
@@ -394,7 +394,7 @@ public class SimpleOntologyManager implements OntologyManager {
         return runQueryOnOntology(ontology, SELECT_ENTITY_USAGES, tupleQuery -> {
             tupleQuery.setBinding(ENTITY_BINDING, entity);
             return tupleQuery;
-        }, "getEntityUsages(ontology, entity)");
+        }, "getEntityUsages(ontology, entity)", true);
     }
 
     @Override
@@ -433,7 +433,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getConceptRelationships(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_CONCEPT_RELATIONSHIPS, null, "getConceptRelationships(ontology)");
+        return runQueryOnOntology(ontology, GET_CONCEPT_RELATIONSHIPS, null, "getConceptRelationships(ontology)", true);
     }
 
     @Override
@@ -444,7 +444,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public TupleQueryResult getConceptSchemeRelationships(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_CONCEPT_SCHEME_RELATIONSHIPS, null,
-                "getConceptSchemeRelationships(ontology)");
+                "getConceptSchemeRelationships(ontology)", true);
     }
 
     @Override
@@ -458,7 +458,7 @@ public class SimpleOntologyManager implements OntologyManager {
         return runQueryOnOntology(ontology, GET_SEARCH_RESULTS, tupleQuery -> {
             tupleQuery.setBinding(SEARCH_TEXT, valueFactory.createLiteral(searchText.toLowerCase()));
             return tupleQuery;
-        }, "getSearchResults(ontology, searchText)");
+        }, "getSearchResults(ontology, searchText)", true);
     }
 
     @Override
@@ -470,18 +470,26 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public TupleQueryResult getTupleQueryResults(Ontology ontology, String queryString) {
-        return runQueryOnOntology(ontology, queryString, null, "getTupleQueryResults(ontology, queryString)");
+    public TupleQueryResult getTupleQueryResults(Ontology ontology, String queryString, boolean includeImports) {
+        return runQueryOnOntology(ontology, queryString, null,
+                "getTupleQueryResults(ontology, queryString)", includeImports);
     }
 
     @Override
-    public Model getGraphQueryResults(Ontology ontology, String queryString) {
-        return runGraphQueryOnOntology(ontology, queryString, null, "getGraphQueryResults(ontology, queryString)");
+    public Model getGraphQueryResults(Ontology ontology, String queryString, boolean includeImports) {
+        return runGraphQueryOnOntology(ontology, queryString, null,
+                "getGraphQueryResults(ontology, queryString)", includeImports);
     }
 
     @Override
     public Model getOntologyModel(Resource recordId) {
         return catalogManager.getCompiledResource(getHeadOfBranch(getMasterBranch(recordId)));
+    }
+
+    @Override
+    public Model getOntologyModel(Resource recordId, Resource branchId) {
+        Branch branch = catalogManager.getBranch(configProvider.getLocalCatalogIRI(), recordId, branchId, branchFactory).get();
+        return catalogManager.getCompiledResource(recordId, branchId, getHeadOfBranch(branch));
     }
 
     private Optional<Ontology> getOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
@@ -529,14 +537,11 @@ public class SimpleOntologyManager implements OntologyManager {
      */
     private TupleQueryResult runQueryOnOntology(Ontology ontology, String queryString,
                                                 @Nullable Function<TupleQuery, TupleQuery> addBinding,
-                                                String methodName) {
+                                                String methodName, boolean includeImports) {
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
-            Set<Ontology> importedOntologies = ontology.getImportsClosure();
-            conn.begin();
-            importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
-            conn.commit();
+            addOntologyData(ontology, conn, includeImports);
             return runQueryOnOntology(queryString, addBinding, methodName, conn);
         } finally {
             repo.shutDown();
@@ -578,14 +583,11 @@ public class SimpleOntologyManager implements OntologyManager {
      */
     private Model runGraphQueryOnOntology(Ontology ontology, String queryString,
                                           @Nullable Function<GraphQuery, GraphQuery> addBinding,
-                                          String methodName) {
+                                          String methodName, boolean includeImports) {
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
-            Set<Ontology> importedOntologies = ontology.getImportsClosure();
-            conn.begin();
-            importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
-            conn.commit();
+            addOntologyData(ontology, conn, includeImports);
             return runGraphQueryOnOntology(queryString, addBinding, methodName, conn);
         } finally {
             repo.shutDown();
@@ -613,6 +615,17 @@ public class SimpleOntologyManager implements OntologyManager {
             return QueryResults.asModel(query.evaluate(), modelFactory);
         } finally {
             logTrace(methodName, start);
+        }
+    }
+
+    private void addOntologyData(Ontology ontology, RepositoryConnection conn, boolean includeImports) {
+        if (includeImports) {
+            Set<Ontology> importedOntologies = ontology.getImportsClosure();
+            conn.begin();
+            importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
+            conn.commit();
+        } else {
+            conn.add(ontology.asModel(modelFactory));
         }
     }
 

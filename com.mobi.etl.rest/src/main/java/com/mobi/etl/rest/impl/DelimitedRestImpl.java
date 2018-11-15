@@ -35,6 +35,8 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.ontologies.mcat.Modify;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
@@ -63,6 +65,11 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.exception.RepositoryException;
+import com.mobi.rest.security.annotations.ActionAttributes;
+import com.mobi.rest.security.annotations.ActionId;
+import com.mobi.rest.security.annotations.AttributeValue;
+import com.mobi.rest.security.annotations.ResourceId;
+import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.CharsetUtils;
 import com.mobi.rest.util.ErrorUtils;
 import com.opencsv.CSVReader;
@@ -311,10 +318,16 @@ public class DelimitedRestImpl implements DelimitedRest {
     }
 
     @Override
+    @ActionId(value = Modify.TYPE)
+    @ActionAttributes(
+            @AttributeValue(type = ValueType.QUERY, id = OntologyRecord.branch_IRI, value = "branchIRI")
+    )
+    @ResourceId(type = ValueType.QUERY, value = "ontologyRecordIRI")
     public Response etlFileOntology(ContainerRequestContext context, String fileName, String mappingRecordIRI,
-                                    String ontologyRecordIRI, boolean containsHeaders, String separator) {
+                                    String ontologyRecordIRI, String branchIRI, boolean containsHeaders, String separator) {
         checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
         checkStringParam(ontologyRecordIRI, "Must provide the IRI of an ontology record");
+        checkStringParam(branchIRI, "Must provide the IRI of an ontology branch");
 
         User user = getActiveUser(context, engineManager);
         Response response;
@@ -328,16 +341,14 @@ public class DelimitedRestImpl implements DelimitedRest {
         Model mappingData = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
                 separator, false);
 
-        Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() -> ErrorUtils.sendError(
-                "OntologyRecord " + ontologyRecordIRI + " master branch cannot be found.", Response.Status.BAD_REQUEST));
-
+        Resource branchId = vf.createIRI(branchIRI);
         IRI recordIRI = vf.createIRI(ontologyRecordIRI);
-        Model ontologyData =  ontologyManager.getOntologyModel(recordIRI);
+        Model ontologyData =  ontologyManager.getOntologyModel(recordIRI, branchId);
 
         mappingData.removeAll(ontologyData);
 
         if (!mappingData.isEmpty()) {
-            versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), masterBranchId, user,
+            versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), branchId, user,
                     "Mapping data from " + mappingRecordIRI, mappingData, null);
             response = Response.ok().build();
         } else {
