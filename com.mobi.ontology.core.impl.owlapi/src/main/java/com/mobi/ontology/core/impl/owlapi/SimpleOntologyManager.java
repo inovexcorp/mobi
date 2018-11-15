@@ -486,6 +486,12 @@ public class SimpleOntologyManager implements OntologyManager {
         return catalogManager.getCompiledResource(getHeadOfBranch(getMasterBranch(recordId)));
     }
 
+    @Override
+    public Model getOntologyModel(Resource recordId, Resource branchId) {
+        Branch branch = catalogManager.getBranch(configProvider.getLocalCatalogIRI(), recordId, branchId, branchFactory).get();
+        return catalogManager.getCompiledResource(recordId, branchId, getHeadOfBranch(branch));
+    }
+
     private Optional<Ontology> getOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                            @Nonnull Resource commitId) {
         Optional<Ontology> result;

@@ -390,4 +390,14 @@ public interface OntologyManager {
      * @return a Model containing the Ontology Statements.
      */
     Model getOntologyModel(Resource recordId);
+
+    /**
+     * Gets the compiled resource of the head Commit on the master Branch for the OntologyRecord specified by the
+     * provided Resource.
+     *
+     * @param recordId the record id for the OntologyRecord you want to get the Model for.
+     * @param branchId the branch id for the OntologyRecord you want to get the Model for.
+     * @return a Model containing the Ontology Statements.
+     */
+    Model getOntologyModel(Resource recordId, Resource branchId);
 }
