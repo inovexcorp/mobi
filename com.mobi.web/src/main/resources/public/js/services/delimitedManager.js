@@ -300,6 +300,7 @@
              *
              * @param {string} mappingIRI the IRI of a saved Mapping
              * @param {string} ontologyRecordIRI the IRI of a OntologyRecord
+             * @param {string} branchIRI the IRI of record branch
              * @return {Promise} A Promise of the whole HTTP response that resolves if the upload was successful; rejects with an error message otherwise
              */
             self.mapAndCommit = function(mappingRecordIRI, ontologyRecordIRI, branchIRI) {
