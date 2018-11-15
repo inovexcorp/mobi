@@ -73,6 +73,7 @@
     "ng-handsontable": "^0.13.0",
     "ngclipboard": "^1.1.1",
     "popper.js": "^1.14.3",
+    "showdown": "^1.9.0",
     "snapsvg": "^0.5.1",
     "sparqljs": "^1.5.1",
     "ui-bootstrap4": "^3.0.3",

@@ -170,6 +170,29 @@
                     .then(_.noop, util.rejectError);
             }
 
+            self.getComments = function(requestId) {
+                return $http.get(prefix + '/' + encodeURIComponent(requestId) + '/comments')
+                    .then(response => response.data, util.rejectError);
+            }
+
+            self.deleteComment = function(requestId, commentId) {
+                return $http.delete(prefix + '/' + encodeURIComponent(requestId) + '/comments/' + encodeURIComponent(commentId))
+                    .then(_.noop, util.rejectError);
+            }
+
+            self.createComment = function(requestId, commentStr, replyComment = '')  {
+                var config = {
+                    headers: {
+                        'Content-Type': 'text/plain'
+                    }
+                };
+                if (replyComment) {
+                    config.params = { commentId: replyComment };
+                }
+                return $http.post(prefix + '/' + encodeURIComponent(requestId) + '/comments', commentStr, config)
+                    .then(_.noop, util.rejectError);
+            }
+
             /**
              * @ngdoc method
              * @name isAccepted

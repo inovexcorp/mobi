@@ -1298,6 +1298,9 @@ function mockMergeRequestManager() {
             this.deleteRequest = jasmine.createSpy('deleteRequest').and.returnValue($q.when());
             this.acceptRequest = jasmine.createSpy('acceptRequest').and.returnValue($q.when());
             this.isAccepted = jasmine.createSpy('isAccepted').and.returnValue(false);
+            this.getComments = jasmine.createSpy('getComments').and.returnValue($q.when([]));
+            this.createComment = jasmine.createSpy('createComment').and.returnValue($q.when(''));
+            this.deleteComment = jasmine.createSpy('deleteComment').and.returnValue($q.when());
         });
     });
 }

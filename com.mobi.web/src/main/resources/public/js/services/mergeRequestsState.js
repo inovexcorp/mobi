@@ -256,43 +256,48 @@
                 request.targetCommit = '';
                 request.removeSource = '';
                 request.difference = '';
-                if (mm.isAccepted(request.jsonld)) {
-                    request.sourceTitle = util.getPropertyValue(request.jsonld, prefixes.mergereq + 'sourceBranchTitle');
-                    request.targetTitle = util.getPropertyValue(request.jsonld, prefixes.mergereq + 'targetBranchTitle');
-                    request.sourceCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceCommit')
-                    request.targetCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetCommit')
-                    cm.getDifference(request.sourceCommit, request.targetCommit)
-                        .then(diff => {
-                            request.difference = diff;
-                        }, util.createErrorToast)
-                } else {
-                    var sourceIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceBranch');
-                    var targetIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetBranch');
-                    var promise = cm.getRecordBranch(sourceIri, request.recordIri, catalogId)
-                        .then(branch => {
-                            request.sourceBranch = branch;
-                            request.sourceCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
-                            request.sourceTitle = util.getDctermsValue(branch, 'title');
-                            request.removeSource = self.removeSource(request.jsonld);
-                        }, $q.reject);
+                request.comments = [];
+                mm.getComments(request.jsonld['@id'])
+                    .then(comments => {
+                        request.comments = comments;
+                        if (mm.isAccepted(request.jsonld)) {
+                            request.sourceTitle = util.getPropertyValue(request.jsonld, prefixes.mergereq + 'sourceBranchTitle');
+                            request.targetTitle = util.getPropertyValue(request.jsonld, prefixes.mergereq + 'targetBranchTitle');
+                            request.sourceCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceCommit')
+                            request.targetCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetCommit')
+                            cm.getDifference(request.sourceCommit, request.targetCommit)
+                                .then(diff => {
+                                    request.difference = diff;
+                                }, util.createErrorToast)
+                        } else {
+                            var sourceIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceBranch');
+                            var targetIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetBranch');
+                            var promise = cm.getRecordBranch(sourceIri, request.recordIri, catalogId)
+                                .then(branch => {
+                                    request.sourceBranch = branch;
+                                    request.sourceCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
+                                    request.sourceTitle = util.getDctermsValue(branch, 'title');
+                                    request.removeSource = self.removeSource(request.jsonld);
+                                }, $q.reject);
 
-                    if (targetIri) {
-                        promise.then(() => cm.getRecordBranch(targetIri, request.recordIri, catalogId), $q.reject)
-                            .then(branch => {
-                                request.targetBranch = branch;
-                                request.targetCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
-                                request.targetTitle = util.getDctermsValue(branch, 'title');
-                                return cm.getDifference(request.sourceCommit, request.targetCommit);
-                            }, $q.reject)
-                            .then(diff => {
-                                request.difference = diff;
-                                return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
-                            }, $q.reject)
-                            .then(conflicts => request.conflicts = conflicts, util.createErrorToast);
-                    } else {
-                        promise.then(_.noop, util.createErrorToast);
-                    }
-                }
+                            if (targetIri) {
+                                promise.then(() => cm.getRecordBranch(targetIri, request.recordIri, catalogId), $q.reject)
+                                    .then(branch => {
+                                        request.targetBranch = branch;
+                                        request.targetCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
+                                        request.targetTitle = util.getDctermsValue(branch, 'title');
+                                        return cm.getDifference(request.sourceCommit, request.targetCommit);
+                                    }, $q.reject)
+                                    .then(diff => {
+                                        request.difference = diff;
+                                        return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
+                                    }, $q.reject)
+                                    .then(conflicts => request.conflicts = conflicts, util.createErrorToast);
+                            } else {
+                                promise.then(_.noop, util.createErrorToast);
+                            }
+                        }
+                    }, util.createErrorToast);
             }
             /**
              * @ngdoc method

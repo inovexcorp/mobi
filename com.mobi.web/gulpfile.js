@@ -80,7 +80,8 @@ var jsFiles = function(prefix) {
             prefix + 'ngclipboard/**/ngclipboard.min.js',
             prefix + 'angular-aria/angular-aria.min.js',
             prefix + 'daemonite-material/**/material.js',
-            prefix + 'angular-material/angular-material.min.js'
+            prefix + 'angular-material/angular-material.min.js',
+            prefix + 'showdown/**/showdown.min.js'
         ]
     },
     styleFiles = function(prefix, suffix) {

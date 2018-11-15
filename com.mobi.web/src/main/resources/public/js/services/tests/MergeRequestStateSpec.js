@@ -230,6 +230,7 @@ describe('Merge Requests State service', function() {
         it('accepted', function() {
             mergeRequestManagerSvc.isAccepted.and.returnValue(true);
             mergeRequestsStateSvc.setRequestDetails(this.request);
+            scope.$apply();
             expect(this.request.sourceTitle).toEqual(prefixes.mergereq + 'sourceBranchTitle');
             expect(this.request.targetTitle).toEqual(prefixes.mergereq + 'targetBranchTitle');
             expect(this.request.sourceCommit).toEqual(prefixes.mergereq + 'sourceCommit');
@@ -250,6 +251,7 @@ describe('Merge Requests State service', function() {
                     this.expected.targetTitle = 'title';
                     this.expected.targetCommit = prefixes.catalog + 'head';
                     this.expected.removeSource = false;
+                    this.expected.comments = [];
                 });
                 describe('and getDifference resolves', function() {
                     describe('and getBranchConflicts resolves', function() {
@@ -332,6 +334,7 @@ describe('Merge Requests State service', function() {
                 this.expected.targetCommit = '';
                 this.expected.difference = '';
                 this.expected.removeSource = '';
+                this.expected.comments = [];
                 catalogManagerSvc.getRecordBranch.and.returnValue($q.reject('Error Message'));
                 mergeRequestsStateSvc.setRequestDetails(this.request);
                 scope.$apply();

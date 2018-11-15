@@ -416,8 +416,8 @@ describe('Merge Request View directive', function() {
                     expect(this.element.querySelectorAll('block-content .view').length).toEqual(1);
                     expect(this.element.querySelectorAll('block-footer .view-buttons').length).toEqual(1);
                 });
-                it('with a commit-difference-tabset', function() {
-                    expect(this.element.find('commit-difference-tabset').length).toEqual(1);
+                it('with a merge-request-tabset', function() {
+                    expect(this.element.find('merge-request-tabset').length).toEqual(1);
                 });
                 it('with a button to Delete', function() {
                     var button = this.element.querySelectorAll('block-footer button.btn-danger');
