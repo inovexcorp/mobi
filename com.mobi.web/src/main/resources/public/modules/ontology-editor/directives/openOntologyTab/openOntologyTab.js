@@ -181,15 +181,21 @@
                         modalService.openModal('recordAccessOverlay', {ruleId, resource: record['@id']});
                     }
 
-                    $scope.$watch(() => dvm.os.list.length, () => {
-                        dvm.getPageOntologyRecords();
-                    });
-                    $scope.$watch(() => dvm.os.uploadList.length, (newValue, oldValue) => {
-                        dvm.showSnackbar = newValue > 0;
-                        if (newValue === 0) {
-                            dvm.search();
+                    $scope.$watch(() => dvm.os.list.length, (newValue, oldValue) => {
+                        if (newValue !== oldValue) {
+                            dvm.getPageOntologyRecords();
                         }
                     });
+                    $scope.$watch(() => dvm.os.uploadList.length, (newValue, oldValue) => {
+                        if (newValue !== oldValue) {
+                            dvm.showSnackbar = newValue > 0;
+                            if (newValue === 0) {
+                                dvm.search();
+                            }
+                        }
+                    });
+
+                    dvm.getPageOntologyRecords();
                 }]
             }
         }
