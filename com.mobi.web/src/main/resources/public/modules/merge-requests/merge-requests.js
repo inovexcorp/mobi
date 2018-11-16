@@ -27,12 +27,12 @@
         .module('merge-requests', [
             /* Custom Directives */
             'createRequest',
+            'editRequestOverlay',
             'mergeRequestList',
             'mergeRequestsPage',
             'mergeRequestView',
             'requestBranchSelect',
             'requestDetailsForm',
-            'requestRecordSelect',
-            'editRequestOverlay'
+            'requestRecordSelect'
         ]);
 })();

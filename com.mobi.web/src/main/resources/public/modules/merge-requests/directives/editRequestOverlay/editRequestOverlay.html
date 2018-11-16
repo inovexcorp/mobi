@@ -26,24 +26,25 @@
 </div>
 <div class="modal-body">
     <form name="dvm.editMergeRequestForm" novalidate autocomplete="off">
+        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
         <div class="form-group">
-                <text-input ng-model="dvm.state.requestConfig.title" display-text="'Title'" required="true">{{dvm.state.requestConfig.title}}</text-input>
+            <text-input ng-model="dvm.request.title" display-text="'Title'" required="true">{{dvm.request.title}}</text-input>
         </div>
         <div class="form-group">
-                <text-area ng-model="dvm.state.requestConfig.description" display-text="'Description'" muted-text="'(Optional)'">{{dvm.state.requestConfig.description}}</text-area>
+            <text-area ng-model="dvm.request.description" display-text="'Description'" muted-text="'(Optional)'">{{dvm.request.description}}</text-area>
         </div>
         <div class="edit-target-branch">
             <div class="form-group">
-                <span class="form-control-static">Merge <strong>Branch: {{dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')}}</strong> into</span>
+                <span class="form-control-static">Merge <strong>Branch: {{dvm.request.sourceTitle}}</strong> into</span>
             </div>
-            <branch-select class="select-branch" ng-model="dvm.state.requestConfig.targetBranch" required="true" change-event="dvm.changeTarget()" branches="dvm.branches"></branch-select>
+            <branch-select class="select-branch" ng-model="dvm.request.targetBranch" required="true" change-event="dvm.changeTarget()" branches="dvm.branches"></branch-select>
             <div class="form-group">
                 <span class="form-control-static">in <strong>{{dvm.state.selected.recordTitle}}</strong></span>
             </div>
         </div>
         <div class="form-group">
             <custom-label muted-text="'(Optional)'">Assignee(s)</custom-label>
-            <ui-select multiple ng-model="dvm.state.requestConfig.assignees">
+            <ui-select multiple ng-model="dvm.request.assignees">
                 <ui-select-match placeholder="Select Assignee(s)">
                     <span title="{{$item.iri}}">{{$item.username}}</span>
                 </ui-select-match>
@@ -52,7 +53,7 @@
                 </ui-select-choices>
             </ui-select>
         </div>
-        <checkbox ng-if="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title') !== 'MASTER'" ng-model="dvm.state.requestConfig.removeSource" display-text="'Remove ' + dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title') + ' after merge.'"></checkbox>
+        <checkbox ng-if="dvm.util.getDctermsValue(dvm.request.sourceBranch, 'title') !== 'MASTER'" ng-model="dvm.request.removeSource" display-text="'Remove ' + dvm.util.getDctermsValue(dvm.request.sourceBranch, 'title') + ' after merge.'"></checkbox>
     </form>
 </div>
 <div class="modal-footer">

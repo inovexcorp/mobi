@@ -72,7 +72,6 @@
                     dvm.resolveConflicts = false;
                     dvm.copiedConflicts = [];
                     dvm.resolveError = false;
-                    dvm.showEditButton = false;
 
                     dvm.mm.getRequest(dvm.state.selected.jsonld['@id'])
                         .then(jsonld => {

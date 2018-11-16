@@ -178,8 +178,8 @@
              * Calls the PUT /mobirest/merge-requests/{requestId} endpoint to update a Merge Request
              * with a matching IRI.
              * 
-             * @param {type} requestId
-             * @param {type} jsonld
+             * @param {string} requestId An IRI of a MergeRequest
+             * @param {Object} jsonld A MergeRequest JSON-LD object
              * @return {Promise} A promise that resolves to the IRI of the updated MergeRequest or is rejected with
              * an error message
              */

@@ -127,7 +127,7 @@ describe('Edit Request Overlay directive', function() {
             var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
             updatedJson[prefixes.dcterms + 'title'][0]['@value'] = 'Updated Title';
             
-            mergeRequestsStateSvc.requestConfig.title = 'Updated Title';
+            this.controller.request.title = 'Updated Title';
             
             this.controller.submit();
             
@@ -142,7 +142,7 @@ describe('Edit Request Overlay directive', function() {
             var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
             updatedJson[prefixes.dcterms + 'description'][0]['@value'] = 'Updated description.';
             
-            mergeRequestsStateSvc.requestConfig.description = 'Updated description.';
+            this.controller.request.description = 'Updated description.';
             
             this.controller.submit();
             
@@ -152,7 +152,7 @@ describe('Edit Request Overlay directive', function() {
             var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
             updatedJson[[prefixes.mergereq + 'targetBranch']][0]['@id'] = 'urn://test/branch/new-target';
             
-            mergeRequestsStateSvc.requestConfig.targetBranch = {'@id': 'urn://test/branch/new-target'};
+            this.controller.request.targetBranch = {'@id': 'urn://test/branch/new-target'};
             
             this.controller.submit();
             
@@ -162,7 +162,7 @@ describe('Edit Request Overlay directive', function() {
             var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
             updatedJson[[prefixes.mergereq + 'assignee']][0]['@id'] = 'urn://test/user/user-2';
             
-            mergeRequestsStateSvc.requestConfig.assignees = ['urn://test/user/user-2'];
+            this.controller.request.assignees = ['urn://test/user/user-2'];
             
             this.controller.submit();
             
@@ -172,7 +172,7 @@ describe('Edit Request Overlay directive', function() {
             var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
             updatedJson[[prefixes.mergereq + 'removeSource']][0]['@value'] = 'false';
 
-            mergeRequestsStateSvc.requestConfig.removeSource = false;
+            this.controller.request.removeSource = false;
 
             this.controller.submit();
 
