@@ -22,8 +22,8 @@
   -->
 <div class="reply-comment">
     <div ng-if="!dvm.edit" class="reply-box text-muted border p-1 rounded" ng-click="dvm.edit = true">Reply here...</div>
-    <div ng-if="dvm.edit">
-        <markdown-editor class="mb-2" ng-model="dvm.replyComment" place-holder="'Write your reply comment here...'"></markdown-editor>
+    <div class="reply-editor clearfix" ng-if="dvm.edit">
+        <markdown-editor ng-model="dvm.replyComment" place-holder="'Write your reply comment here...'" is-focus-me="true"></markdown-editor>
         <button type="button" class="btn btn-primary float-right" ng-disabled="!dvm.replyComment" ng-click="dvm.reply()">Comment</button>
     </div>
 </div>

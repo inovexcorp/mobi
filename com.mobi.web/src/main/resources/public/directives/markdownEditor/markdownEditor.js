@@ -29,54 +29,51 @@
          * @name markdownEditor
          *
          * @description
-         * The `markdownEditor` module only provides the `markdownEditor` directive which creates a
+         * The `markdownEditor` module only provides the `markdownEditor` component which creates a Bootstrap
+         * `.form-group` with a textarea for writing Markdown.
          */
         .module('markdownEditor', [])
         /**
-         * @ngdoc directive
-         * @name markdownEditor.directive:markdownEditor
-         * @scope
-         * @restrict E
+         * @ngdoc component
+         * @name markdownEditor.component:markdownEditor
          *
          * @description
-         * `markdownEditor` is a directive which creates a 
+         * `markdownEditor` is a component which creates a Bootstrap `.form-group` containing a textarea with a header.
+         * The header contains a button for toggling a preview of the contents of the textarea displayed as rendered
+         * Markdown. The header also contains a link to documentation on Markdown.
          *
-         * @param {*} bindModel The variable to bind the value of the markdownEditor to
+         * @param {*} bindModel The variable to bind the value of the text area to
+         * @param {string} placeHolder A placeholder string for the text area
+         * @param {boolean} isFocusMe Whether or not the text area should be focused
          */
-        .directive('markdownEditor', markdownEditor);
+        .component('markdownEditor', {
+            bindings: {
+                bindModel: '=ngModel',
+                placeHolder: '<',
+                isFocusMe: '<?'
+            },
+            controllerAs: 'dvm',
+            controller: ['$sce', 'showdown', MarkdownEditorController],
+            templateUrl: 'directives/markdownEditor/markdownEditor.html'
+        });
 
-        markdownEditor.$inject = ['$sce', 'showdown'];
+        function MarkdownEditorController($sce, showdown) {
+            var dvm = this;
+            dvm.converter = new showdown.Converter();
+            dvm.converter.setFlavor('github');
 
-        function markdownEditor($sce, showdown) {
-            return {
-                restrict: 'E',
-                replace: true,
-                scope: {},
-                bindToController: {
-                    bindModel: '=ngModel',
-                    placeHolder: '<'
-                },
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    var converter = new showdown.Converter();
-                    converter.setFlavor('github');
+            dvm.showPreview = false;
+            dvm.preview = '';
+            dvm.markdownTooltip = $sce.trustAsHtml('For information about markdown syntax, see <a href="https://guides.github.com/features/mastering-markdown/" target="_blank">here</a>');
 
-                    dvm.showPreview = false;
+            dvm.togglePreview = function() {
+                if (dvm.showPreview) {
                     dvm.preview = '';
-                    dvm.markdownTooltip = $sce.trustAsHtml('For information about markdown syntax, see <a href="https://guides.github.com/features/mastering-markdown/" target="_blank">here</a>');
-
-                    dvm.togglePreview = function() {
-                        if (dvm.showPreview) {
-                            dvm.preview = '';
-                            dvm.showPreview = false;
-                        } else {
-                            dvm.preview = converter.makeHtml(dvm.bindModel);
-                            dvm.showPreview = true;
-                        }
-                    }
-                },
-                templateUrl: 'directives/markdownEditor/markdownEditor.html'
+                    dvm.showPreview = false;
+                } else {
+                    dvm.preview = dvm.converter.makeHtml(dvm.bindModel);
+                    dvm.showPreview = true;
+                }
             }
         }
 })();

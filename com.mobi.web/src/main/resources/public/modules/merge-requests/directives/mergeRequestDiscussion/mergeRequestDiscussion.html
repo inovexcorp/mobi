@@ -22,12 +22,12 @@
   -->
 <div class="merge-request-discussion py-2">
     <div class="comment-chain" ng-repeat="chain in dvm.request.comments" ng-class="{'mt-3': !$first}">
-        <comment-display ng-repeat="comment in chain track by comment['@id']" class="mt-3" comment="comment" is-reply="$index > 0" request="dvm.request" ng-class="{'ml-5': $index > 0}"></comment-display>
-        <reply-comment ng-if="!dvm.mm.isAccepted(dvm.request.jsonld)" ng-class="{'ml-5': chain.length > 1}" parent-id="chain[0]['@id']" request="dvm.request"></reply-comment>
+        <comment-display ng-repeat="comment in chain track by comment['@id']" class="mt-3" comment="comment" is-reply="$index > 0" request="dvm.request" ng-class="{'reply': $index > 0}"></comment-display>
+        <reply-comment ng-if="!dvm.mm.isAccepted(dvm.request.jsonld)" ng-class="{'reply': chain.length > 1}" parent-id="chain[0]['@id']" request="dvm.request"></reply-comment>
     </div>
-    <div class="new-comment pt-3" ng-if="!dvm.mm.isAccepted(dvm.request.jsonld)">
+    <div class="new-comment pt-3 clearfix" ng-if="!dvm.mm.isAccepted(dvm.request.jsonld)">
         <h6>New Comment</h6>
-        <markdown-editor class="mb-2" ng-model="dvm.newComment" place-holder="'Write your comment here...'"></markdown-editor>
+        <markdown-editor ng-model="dvm.newComment" place-holder="'Write your comment here...'"></markdown-editor>
         <button type="button" class="btn btn-primary float-right" ng-disabled="!dvm.newComment" ng-click="dvm.comment()">Comment</button>
     </div>
 </div>

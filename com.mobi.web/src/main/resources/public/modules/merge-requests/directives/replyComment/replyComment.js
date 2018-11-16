@@ -29,59 +29,51 @@
          * @name replyComment
          *
          * @description
-         * The `replyComment` module only provides the `replyComment` directive
-         * which creates a {@link materialTabset.directive:materialTabset} with tabs related to the discussion and
-         * difference of a Merge Request.
+         * The `replyComment` module only provides the `replyComment` component which creates a display for replying
+         * to comments on a Merge Request.
          */
         .module('replyComment', [])
         /**
-         * @ngdoc directive
-         * @name replyComment.directive:replyComment
-         * @scope
-         * @restrict E
+         * @ngdoc component
+         * @name replyComment.component:replyComment
+         * @requires mergeRequestManager.service:mergeRequestManagerService
+         * @requires util.service:utilService
          *
          * @description
-         * `replyComment` is a directive which creates a div containing 
-         * The directive is replaced by the contents of its template.
+         * `replyComment` is a component which creates a div containing a box indicating a reply can be made. Once that
+         * box is clicked, it is replaced with a {@link markdownEditor.component:markdownEditor} and a button for
+         * submitting a reply to the provided parent comment of the provided request.
          *
-         * @param {Object} request An object representing a Merge Request
+         * @param {Object} request An object representing the Merge Request with the parent comment
+         * @param {string} parentId The IRI id of the parent comment this component will reply to
          */
-        .directive('replyComment', replyComment);
-
-    replyComment.$inject = ['$q', 'mergeRequestManagerService', 'utilService'];
-
-    function replyComment($q, mergeRequestManagerService, utilService) {
-        return {
-            restrict: 'E',
-            templateUrl: 'modules/merge-requests/directives/replyComment/replyComment.html',
-            replace: true,
-            scope: {},
-            bindToController: {
-                request: '<',
+        .component('replyComment', {
+            bindings: {
+                request: '=',
                 parentId: '<',
             },
             controllerAs: 'dvm',
-            controller: function() {
-                var dvm = this;
-                var mm = mergeRequestManagerService;
-                var util = utilService;
-                dvm.edit = false;
-                dvm.replyComment = '';
+            controller: ['$q', 'mergeRequestManagerService', 'utilService', ReplyCommentController],
+            templateUrl: 'modules/merge-requests/directives/replyComment/replyComment.html',
+        });
 
-                dvm.reply = function() {
-                    console.log('Making reply comment to ' + dvm.parentId + ' with ' + dvm.newComment);
-                    mm.createComment(dvm.request.jsonld['@id'], dvm.replyComment, dvm.parentId)
-                        .then(() => {
-                            console.log('Comment made');
-                            dvm.replyComment = '';
-                            dvm.edit = false;
-                            return mm.getComments(dvm.request.jsonld['@id']);
-                        }, $q.reject)
-                        .then(comments => {
-                            dvm.request.comments = comments;
-                        }, util.createErrorToast);
-                }
-            }
+    function ReplyCommentController($q, mergeRequestManagerService, utilService) {
+        var dvm = this;
+        var mm = mergeRequestManagerService;
+        var util = utilService;
+        dvm.edit = false;
+        dvm.replyComment = '';
+
+        dvm.reply = function() {
+            mm.createComment(dvm.request.jsonld['@id'], dvm.replyComment, dvm.parentId)
+                .then(() => {
+                    dvm.replyComment = '';
+                    dvm.edit = false;
+                    return mm.getComments(dvm.request.jsonld['@id']);
+                }, $q.reject)
+                .then(comments => {
+                    dvm.request.comments = comments;
+                }, util.createErrorToast);
         }
     }
 })();

@@ -104,6 +104,17 @@ function injectIndentConstant() {
     });
 }
 
+function injectShowdownConstant() {
+    module(function($provide) {
+        $provide.constant('showdown', {
+            Converter: jasmine.createSpy('Converter').and.returnValue({
+                setFlavor: jasmine.createSpy('setFlavor'),
+                makeHtml: jasmine.createSpy('makeHtml').and.returnValue('')
+            })
+        });
+    });
+}
+
 function injectBeautifyFilter() {
     module(function($provide) {
         $provide.value('beautifyFilter', jasmine.createSpy('beautifyFilter').and.callFake(_.identity));

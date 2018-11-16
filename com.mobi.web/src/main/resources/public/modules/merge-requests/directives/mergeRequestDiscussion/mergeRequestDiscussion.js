@@ -29,57 +29,51 @@
          * @name mergeRequestDiscussion
          *
          * @description
-         * The `mergeRequestDiscussion` module only provides the `mergeRequestDiscussion` directive
+         * The `mergeRequestDiscussion` module only provides the `mergeRequestDiscussion` component
          * which creates a {@link materialTabset.directive:materialTabset} with tabs related to the discussion and
          * difference of a Merge Request.
          */
         .module('mergeRequestDiscussion', [])
         /**
-         * @ngdoc directive
-         * @name mergeRequestDiscussion.directive:mergeRequestDiscussion
-         * @scope
-         * @restrict E
+         * @ngdoc component
+         * @name mergeRequestDiscussion.component:mergeRequestDiscussion
+         * @requires mergeRequestManager.service:mergeRequestManagerService
+         * @requires util.service:utilService
          *
          * @description
-         * `mergeRequestDiscussion` is a directive which creates a div containing 
-         * The directive is replaced by the contents of its template.
+         * `mergeRequestDiscussion` is a component which creates a div containing
+         * {@link commentDisplay.component:commentDisplay comment displays} of the comment chains on a merge request
+         * along with a {@link markdownEditor.component:markdownEditor} for making new comments and
+         * {@link replyComment.component:replyComment reply comments} on comment chains. If a request is accepted,
+         * no markdown editors are shown since the discussion on the request is now read only.
          *
-         * @param {Object} request An object representing a Merge Request
+         * @param {Object} request An object representing a Merge Request with comments
          */
-        .directive('mergeRequestDiscussion', mergeRequestDiscussion);
-
-    mergeRequestDiscussion.$inject = ['$q', 'mergeRequestManagerService', 'utilService'];
-
-    function mergeRequestDiscussion($q, mergeRequestManagerService, utilService) {
-        return {
-            restrict: 'E',
-            templateUrl: 'modules/merge-requests/directives/mergeRequestDiscussion/mergeRequestDiscussion.html',
-            replace: true,
-            scope: {},
-            bindToController: {
-                request: '=',
+        .component('mergeRequestDiscussion', {
+            bindings: {
+                request: '='
             },
             controllerAs: 'dvm',
-            controller: function() {
-                var dvm = this;
-                var mm = mergeRequestManagerService;
-                var util = utilService;
+            controller: ['$q', 'mergeRequestManagerService', 'utilService', MergeRequestDiscussionController],
+            templateUrl: 'modules/merge-requests/directives/mergeRequestDiscussion/mergeRequestDiscussion.html',
+        });
 
-                dvm.newComment = '';
+    function MergeRequestDiscussionController($q, mergeRequestManagerService, utilService) {
+        var dvm = this;
+        var util = utilService;
+        dvm.mm = mergeRequestManagerService;
 
-                dvm.comment = function() {
-                    console.log('Making comment with ' + dvm.newComment);
-                    mm.createComment(dvm.request.jsonld['@id'], dvm.newComment)
-                        .then(() => {
-                            console.log('Comment made');
-                            dvm.newComment = '';
-                            return mm.getComments(dvm.request.jsonld['@id']);
-                        }, $q.reject)
-                        .then(comments => {
-                            dvm.request.comments = comments;
-                        }, util.createErrorToast);
-                }
-            }
+        dvm.newComment = '';
+
+        dvm.comment = function() {
+            dvm.mm.createComment(dvm.request.jsonld['@id'], dvm.newComment)
+                .then(() => {
+                    dvm.newComment = '';
+                    return dvm.mm.getComments(dvm.request.jsonld['@id']);
+                }, $q.reject)
+                .then(comments => {
+                    dvm.request.comments = comments;
+                }, util.createErrorToast);
         }
     }
 })();

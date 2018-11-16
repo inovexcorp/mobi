@@ -5,6 +5,9 @@
     .fa {
         font-size: 1rem;
     }
+    .fa-info:hover {
+        color: var(--body) !important;
+    }
     .markdown-editor-header {
         border: 1px solid rgba(1, 1, 1, 0.42);
         border-top-left-radius: 4px;
