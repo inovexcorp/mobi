@@ -36,8 +36,6 @@
         /**
          * @ngdoc component
          * @name editRequestOverlay.component:editRequestOverlay
-         * @scope
-         * @restrict E
          * @requires mergeRequestManager.service:mergeRequestManagerService
          * @requires mergeRequestState.service:mergeRequestStateService
          * @requires util.service:utilService
@@ -45,7 +43,8 @@
          *
          * @description
          * `editRequestOverlay` is a component that creates content for a modal that edits a merge request on the
-         * {@link mergeRequestsState.service:mergeRequestsStateSvc selected entity}. The form in the modal contains a
+         * {@link mergeRequestsState.service:mergeRequestsStateSvc selected entity}. Meant to be used in conjunction
+         * with the {@link modalService.directive:modalService}.
          * 
          * Meant to be used in conjunction with the {@link modalService.directive:modalService}.
          *
@@ -58,11 +57,11 @@
                 dismiss: '&'
             },
             controllerAs: 'dvm',
-            controller: ['mergeRequestsStateService', 'mergeRequestManagerService', 'catalogManagerService', 'userManagerService', 'utilService', 'prefixes', editRequestOverlayController],
+            controller: ['mergeRequestsStateService', 'mergeRequestManagerService', 'catalogManagerService', 'userManagerService', 'utilService', 'prefixes', EditRequestOverlayController],
             templateUrl: 'modules/merge-requests/directives/editRequestOverlay/editRequestOverlay.html'
         });
 
-        function editRequestOverlayController(mergeRequestsStateService, mergeRequestManagerService, catalogManagerService, userManagerService, utilService, prefixes) {
+        function EditRequestOverlayController(mergeRequestsStateService, mergeRequestManagerService, catalogManagerService, userManagerService, utilService, prefixes) {
             var cm = catalogManagerService;
             var catalogId = _.get(cm.localCatalog, '@id');
 
@@ -95,7 +94,7 @@
                 dvm.request.recordId = dvm.state.selected.recordIri;
                 dvm.request.title = dvm.state.selected.title;
                 dvm.request.description = dvm.util.getDctermsValue(dvm.state.selected.jsonld, 'description');
-                dvm.request.sourceTitile = dvm.state.selected.sourceTitle;
+                dvm.request.sourceTitle = dvm.state.selected.sourceTitle;
                 dvm.request.sourceBranch = angular.copy(dvm.state.selected.sourceBranch);
                 dvm.request.targetBranch = angular.copy(dvm.state.selected.targetBranch);
                 dvm.request.difference = angular.copy(dvm.state.selected.difference);
@@ -115,9 +114,7 @@
                 jsonld[prefixes.mergereq + 'assignee'] = [];
                 jsonld[prefixes.mergereq + 'removeSource'] = [{'@type': prefixes.xsd + 'boolean', '@value': dvm.request.removeSource.toString()}];
 
-                _.forEach(dvm.request.assignees, function(user) {
-                    jsonld[prefixes.mergereq + 'assignee'].push({'@id': user });
-                })
+                _.forEach(dvm.request.assignees, user => jsonld[prefixes.mergereq + 'assignee'].push({'@id': user }));
 
                 return jsonld;
             }

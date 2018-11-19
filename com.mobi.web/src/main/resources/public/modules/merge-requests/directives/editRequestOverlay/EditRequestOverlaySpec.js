@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Edit Request Overlay directive', function() {
+describe('Edit Request Overlay Component', function() {
     var $compile, scope, $q, mergeRequestsStateSvc, mergeRequestManagerSvc, catalogManagerSvc, modalSvc, userManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
@@ -71,8 +71,10 @@ describe('Edit Request Overlay directive', function() {
             'difference': {'additions': [], 'deletions': []},
             'removeSource': true
         };
-        
-        this.element = $compile(angular.element('<edit-request-overlay></edit-request-overlay>'))(scope);
+
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<edit-request-overlay close="close()" dismiss="dismiss()"></edit-request-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('editRequestOverlay');
     });
@@ -91,6 +93,21 @@ describe('Edit Request Overlay directive', function() {
         this.element.remove();
     });
 
+    it('initializes with the correct values', function() {
+        var expectedRequest = {
+            recordId: mergeRequestsStateSvc.selected.recordIri,
+            title: mergeRequestsStateSvc.selected.title,
+            description: mergeRequestsStateSvc.selected.jsonld[prefixes.dcterms + 'description'][0]['@value'],
+            sourceTitle: mergeRequestsStateSvc.selected.sourceTitle,
+            sourceBranch: mergeRequestsStateSvc.selected.sourceBranch,
+            targetBranch: mergeRequestsStateSvc.selected.targetBranch,
+            difference: mergeRequestsStateSvc.selected.difference,
+            assignees: [mergeRequestsStateSvc.selected.jsonld[prefixes.mergereq + 'assignee'][0]['@id']],
+            removeSource: mergeRequestsStateSvc.selected.removeSource
+        };
+
+        expect(this.controller.request).toEqual(expectedRequest);
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('EDIT-REQUEST-OVERLAY');
@@ -104,11 +121,23 @@ describe('Edit Request Overlay directive', function() {
         it('with .form-groups', function() {
             expect(this.element.querySelectorAll('.form-group').length).toBe(5);
         });
-        it('with custom-labels', function() {
+        it('with a custom-label', function() {
             expect(this.element.find('custom-label').length).toBe(1);
         });
-        it('with ui-selects', function() {
+        it('with a text-input', function() {
+            expect(this.element.find('text-input').length).toBe(1);
+        });
+        it('with a text-area', function() {
+            expect(this.element.find('text-area').length).toBe(1);
+        });
+        it('with a ui-select', function() {
             expect(this.element.find('ui-select').length).toBe(1);
+        });
+        it('with a branch-select', function() {
+            expect(this.element.find('branch-select').length).toBe(1);
+        });
+        it('with a checkbox', function() {
+            expect(this.element.find('checkbox').length).toBe(1);
         });
         it('with buttons to submit and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
@@ -117,66 +146,34 @@ describe('Edit Request Overlay directive', function() {
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
-    describe('should update the merge request', function() {
-        it('with a new title', function() {
-            utilSvc.updateDctermsValue.and.callFake((entity, prop, value) => {
+    describe('controller methods', function() {
+        it('should update the merge request', function() {
+            utilSvc.updateDctermsValue.and.callFake((entity, prop) => {
                 if (prop === 'title') {
                     entity[prefixes.dcterms + 'title'][0]['@value'] = 'Updated Title';
-                }
-            });
-            var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
-            updatedJson[prefixes.dcterms + 'title'][0]['@value'] = 'Updated Title';
-            
-            this.controller.request.title = 'Updated Title';
-            
-            this.controller.submit();
-            
-            expect(mergeRequestManagerSvc.updateRequest).toHaveBeenCalledWith(mergeRequestsStateSvc.selected.jsonld['@id'], updatedJson);
-        });
-        it('with a new description', function() {
-            utilSvc.updateDctermsValue.and.callFake((entity, prop, value) => {
-                if (prop === 'description') {
+                } else if (prop === 'description') {
                     entity[prefixes.dcterms + 'description'][0]['@value'] = 'Updated description.';
                 }
             });
             var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
+            updatedJson[prefixes.dcterms + 'title'][0]['@value'] = 'Updated Title';
             updatedJson[prefixes.dcterms + 'description'][0]['@value'] = 'Updated description.';
-            
-            this.controller.request.description = 'Updated description.';
-            
-            this.controller.submit();
-            
-            expect(mergeRequestManagerSvc.updateRequest).toHaveBeenCalledWith(mergeRequestsStateSvc.selected.jsonld['@id'], updatedJson);
-        });
-        it('with a new target branch', function() {
-            var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
             updatedJson[[prefixes.mergereq + 'targetBranch']][0]['@id'] = 'urn://test/branch/new-target';
-            
-            this.controller.request.targetBranch = {'@id': 'urn://test/branch/new-target'};
-            
-            this.controller.submit();
-            
-            expect(mergeRequestManagerSvc.updateRequest).toHaveBeenCalledWith(mergeRequestsStateSvc.selected.jsonld['@id'], updatedJson);
-        });
-        it('with a new assignee', function() {
-            var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
             updatedJson[[prefixes.mergereq + 'assignee']][0]['@id'] = 'urn://test/user/user-2';
-            
-            this.controller.request.assignees = ['urn://test/user/user-2'];
-            
-            this.controller.submit();
-            
-            expect(mergeRequestManagerSvc.updateRequest).toHaveBeenCalledWith(mergeRequestsStateSvc.selected.jsonld['@id'], updatedJson);
-        });
-        it('with a new removeSource value', function() {
-            var updatedJson = angular.copy(mergeRequestsStateSvc.selected.jsonld);
             updatedJson[[prefixes.mergereq + 'removeSource']][0]['@value'] = 'false';
 
+            this.controller.request.title = 'Updated Title';
+            this.controller.request.description = 'Updated description.';
+            this.controller.request.targetBranch = {'@id': 'urn://test/branch/new-target'};
+            this.controller.request.assignees = ['urn://test/user/user-2'];
             this.controller.request.removeSource = false;
 
             this.controller.submit();
-
             expect(mergeRequestManagerSvc.updateRequest).toHaveBeenCalledWith(mergeRequestsStateSvc.selected.jsonld['@id'], updatedJson);
+        });
+        it('should cancel the edit', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
 });

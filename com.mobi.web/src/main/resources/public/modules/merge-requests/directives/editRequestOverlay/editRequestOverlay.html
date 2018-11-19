@@ -53,7 +53,7 @@
                 </ui-select-choices>
             </ui-select>
         </div>
-        <checkbox ng-if="dvm.util.getDctermsValue(dvm.request.sourceBranch, 'title') !== 'MASTER'" ng-model="dvm.request.removeSource" display-text="'Remove ' + dvm.util.getDctermsValue(dvm.request.sourceBranch, 'title') + ' after merge.'"></checkbox>
+        <checkbox ng-if="dvm.request.sourceTitle !== 'MASTER'" ng-model="dvm.request.removeSource" display-text="'Remove ' + dvm.request.sourceTitle + ' after merge.'"></checkbox>
     </form>
 </div>
 <div class="modal-footer">
