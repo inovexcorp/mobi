@@ -87,6 +87,7 @@
                         _.forEach(dvm.state.uploadList, item => httpService.cancel(item.id));
                         dvm.state.uploadList = [];
                         dvm.state.uploadFiles = [];
+                        dvm.state.uploadPending = 0;
                     }
                     dvm.hasPending = function() {
                         return _.some(dvm.state.uploadList, dvm.isPending);
