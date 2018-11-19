@@ -241,6 +241,17 @@
             self.uploadList = [];
 
             /**
+             * @ngdoc property
+             * @name uploadPending
+             * @propertyOf ontologyState.service:ontologyStateService
+             * @type {number}
+             *
+             * @description
+             * `uploadFiles` holds the number of pending uploads.
+             */
+            self.uploadPending = 0;
+
+            /**
              * @ngdoc method
              * @name addErrorToUploadItem
              * @methodOf ontologyState.service:ontologyStateService
