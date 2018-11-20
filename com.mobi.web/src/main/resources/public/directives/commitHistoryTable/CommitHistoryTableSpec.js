@@ -57,7 +57,8 @@ describe('Commit History Table directive', function() {
         scope.branchTitle = 'title';
         scope.commitId = 'commit';
         scope.targetId = 'target';
-        this.element = $compile(angular.element('<commit-history-table commit-id="commitId" branch-title="branchTitle" target-id="targetId"></commit-history-table>'))(scope);
+        scope.commitData = [];
+        this.element = $compile(angular.element('<commit-history-table commit-id="commitId" branch-title="branchTitle" target-id="targetId" commit-data="commitData"></commit-history-table>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('commitHistoryTable');
         this.isolatedScope = this.element.isolateScope();
@@ -132,6 +133,11 @@ describe('Commit History Table directive', function() {
             this.controller.targetId = 'new';
             scope.$digest();
             expect(scope.targetId).toEqual(original);
+        });
+        it('commitData should be two way bound', function() {
+            this.controller.commitData = [{}];
+            scope.$digest();
+            expect(scope.commitData).toEqual([{}]);
         });
     });
     describe('controller methods', function() {

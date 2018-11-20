@@ -843,7 +843,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void removeBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId) {
+    public List<Resource> removeBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
             IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
@@ -851,9 +851,10 @@ public class SimpleCatalogManager implements CatalogManager {
                 throw new IllegalStateException("Branch " + branchId + " is the master Branch and cannot be removed.");
             }
             conn.begin();
-            utils.removeBranch(versionedRDFRecordId, branch, conn);
+            List<Resource> deletedCommits = utils.removeBranch(versionedRDFRecordId, branch, conn);
             mergeRequestManager.cleanMergeRequests(versionedRDFRecordId, branchId, conn);
             conn.commit();
+            return deletedCommits;
         }
     }
 

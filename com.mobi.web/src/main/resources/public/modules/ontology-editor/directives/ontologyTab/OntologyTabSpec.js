@@ -72,7 +72,6 @@ describe('Ontology Tab directive', function() {
         stateManagerSvc.getOntologyStateByRecordId.and.returnValue(ontoState);
         utilSvc.getDctermsValue.and.returnValue('MASTER');
         utilSvc.getPropertyId.and.returnValue(this.commitId);
-        // scope.$digest();
     });
 
     afterEach(function() {
@@ -87,20 +86,20 @@ describe('Ontology Tab directive', function() {
     });
 
     describe('should initialize calling the correct methods', function() {
-        describe('checkBranchExists calls the correct methods', function() {
-            describe('when the branch does not exist', function() {
+        describe('when the ontology is open on a branch', function() {
+            describe('and the branch does not exist', function() {
                 beforeEach(function() {
                     ontologyStateSvc.listItem.ontologyRecord.branchId = 'not found';
                 });
-                describe('when getBranchHeadCommit is resolved', function() {
-                    it('when updateOntologyState and updateOntology are resolved', function() {
+                describe('and getBranchHeadCommit is resolved', function() {
+                    it('and updateOntologyState and updateOntology are resolved', function() {
                         stateManagerSvc.updateOntologyState.and.returnValue($q.when());
                         ontologyStateSvc.updateOntology.and.returnValue($q.when());
                         scope.$digest();
                         expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(this.branchId,
                             ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                         expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                            this.branchId, this.commitId);
+                            this.commitId, this.branchId);
                         expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                             this.branchId, this.commitId, true);
                         expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalled();
@@ -119,14 +118,14 @@ describe('Ontology Tab directive', function() {
                         expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
                     });
                 });
-                it('when getBranchHeadCommit does not resolve', function() {
+                it('and getBranchHeadCommit does not resolve', function() {
                     catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.reject(this.errorMessage));
                     scope.$digest();
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith(this.errorMessage);
                     expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
                 });
             });
-            it('when the branch exists', function() {
+            it('and the branch exists', function() {
                 ontologyStateSvc.listItem.ontologyRecord.branchId = this.branchId;
                 scope.$digest();
                 expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
@@ -134,6 +133,13 @@ describe('Ontology Tab directive', function() {
                 expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
             });
+        });
+        it('when the ontology is not open on a branch', function() {
+            scope.$digest();
+            expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
+            expect(stateManagerSvc.updateOntologyState).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
         });
     });
 

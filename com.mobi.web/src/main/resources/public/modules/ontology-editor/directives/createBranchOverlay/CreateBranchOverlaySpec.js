@@ -119,7 +119,7 @@ describe('Create Branch Overlay directive', function() {
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId,
                             ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                         expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                            this.branchId, this.commitId);
+                            this.commitId, this.branchId);
                         expect(scope.close).toHaveBeenCalled();
                     });
                     it('and when updateOntologyState is rejected', function() {
@@ -130,8 +130,8 @@ describe('Create Branch Overlay directive', function() {
                             .ontologyRecord.recordId, this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId,
                             ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
-                        expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                            this.branchId, this.commitId);
+                        expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.commitId,
+                            this.branchId);
                         expect(this.controller.error).toBe(this.error);
                         expect(scope.close).not.toHaveBeenCalled();
                     });

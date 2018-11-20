@@ -1,0 +1,12 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+
+#SELECT ?inRecord
+#WHERE {
+#    BIND( EXISTS {
+#        ?record mcat:branch/mcat:head/(mcat:baseCommit|mcat:auxiliaryCommit)* ?commit .
+#    } AS ?inRecord )
+#}
+
+ASK {
+    ?record mcat:branch/mcat:head/(mcat:baseCommit|mcat:auxiliaryCommit)* ?commit .
+}

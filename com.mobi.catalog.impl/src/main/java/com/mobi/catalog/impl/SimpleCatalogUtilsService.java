@@ -59,6 +59,7 @@ import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
+import com.mobi.query.api.BooleanQuery;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -113,6 +114,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private static final String GET_COMMIT_CHAIN;
     private static final String GET_NEW_LATEST_VERSION;
     private static final String GET_COMMIT_PATHS;
+    private static final String COMMIT_IN_RECORD;
     private static final String USER_BINDING = "user";
     private static final String PARENT_BINDING = "parent";
     private static final String RECORD_BINDING = "record";
@@ -134,6 +136,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             );
             GET_COMMIT_PATHS = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-paths.rq"),
+                    "UTF-8"
+            );
+            COMMIT_IN_RECORD = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/commit-in-record.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -383,9 +389,9 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn) {
+    public List<Resource> removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn) {
         Branch branch = getObject(branchId, branchFactory, conn);
-        removeBranch(recordId, branch, conn);
+        return removeBranch(recordId, branch, conn);
     }
 
     @Override
@@ -396,9 +402,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn) {
+    public List<Resource> removeBranch(Resource recordId, Branch branch, RepositoryConnection conn) {
         List<Resource> deletedCommits = new ArrayList<>();
         removeBranch(recordId, branch, deletedCommits, conn);
+        return deletedCommits;
     }
 
     private void removeBranch(Resource recordId, Branch branch, List<Resource> deletedCommits,
@@ -796,10 +803,27 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public void validateCommitPath(Resource catalogId, Resource recordId, Resource commitId,
+                                   RepositoryConnection conn) {
+        validateRecord(catalogId, recordId, versionedRDFRecordFactory.getTypeIRI(), conn);
+        if (!commitInRecord(recordId, commitId, conn)) {
+            throw throwDoesNotBelong(commitId, commitFactory, recordId, versionedRDFRecordFactory);
+        }
+    }
+
+    @Override
     public boolean commitInBranch(Resource branchId, Resource commitId, RepositoryConnection conn) {
         Branch branch = getExpectedObject(branchId, branchFactory, conn);
         Resource head = getHeadCommitIRI(branch);
         return (head.equals(commitId) || getCommitChain(head, false, conn).contains(commitId));
+    }
+
+    @Override
+    public boolean commitInRecord(Resource recordId, Resource commitId, RepositoryConnection conn) {
+        BooleanQuery query = conn.prepareBooleanQuery(COMMIT_IN_RECORD);
+        query.setBinding(RECORD_BINDING, recordId);
+        query.setBinding(COMMIT_BINDING, commitId);
+        return query.evaluate();
     }
 
     @Override

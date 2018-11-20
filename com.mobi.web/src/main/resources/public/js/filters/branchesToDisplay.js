@@ -61,7 +61,7 @@
         var util = utilService;
         var lm = loginManagerService;
         return function(branches) {
-            var displayBranches;
+            var displayBranches = _.filter(branches, branch => !cm.isBranch(branch));
             var myUserBranches = _.filter(branches, branch => cm.isUserBranch(branch) && lm.currentUserIRI === util.getDctermsId(branch, 'publisher'));
             if (myUserBranches.length) {
                 var toHide = _.map(myUserBranches, branch => util.getPropertyId(branch, prefixes.catalog + 'createdFrom'));

@@ -331,7 +331,7 @@ public interface CatalogUtilsService {
      * @param branchId The Resource identifying the Branch you want to remove.
      * @param conn     A RepositoryConnection to use for lookup.
      */
-    void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn);
+    List<Resource> removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn);
 
     /**
      * Removes the Branch identified by the provided Resources from the repository. Does not check if branch is master.
@@ -350,8 +350,9 @@ public interface CatalogUtilsService {
      * @param recordId The Resource identifying the VersionedRDFRecord which has the Branch.
      * @param branch   The Branch object you want to remove.
      * @param conn     A RepositoryConnection to use for lookup.
+     * @return List of IRIs of all deleted Commits.
      */
-    void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn);
+    List<Resource> removeBranch(Resource recordId, Branch branch, RepositoryConnection conn);
 
     /**
      * Retrieves the IRI of the head Commit of the provided Branch. Throws an IllegalStateException if the Branch does
@@ -539,6 +540,20 @@ public interface CatalogUtilsService {
                             RepositoryConnection conn);
 
     /**
+     * Validates the existence of a Commit on some Branch of a VersionedRDFRecord.
+     *
+     * @param catalogId The {@link Resource} identifying the {@link Catalog} which should have the {@link Record}.
+     * @param recordId  The {@link Resource} identifying the {@link Record} which should have a {@link Branch} with the
+     *                  {@link Commit}.
+     * @param commitId  The {@link Resource} of the {@link Commit}.
+     * @param conn      A RepositoryConnection to use for lookup.
+     * @throws IllegalArgumentException Thrown if the {@link Catalog} could not be found, the {@link Record} could not
+     *                                  be found, the {@link Record} does not belong to the {@link Catalog}, or the
+     *                                  {@link Commit} does not belong to a {@link Branch} on that {@link Record}
+     */
+    void validateCommitPath(Resource catalogId, Resource recordId, Resource commitId, RepositoryConnection conn);
+
+    /**
      * Checks if a Commit exists in a Branch.
      *
      * @param branchId The {@link Resource} of the {@link Branch} which should have the {@link Commit}.
@@ -548,6 +563,17 @@ public interface CatalogUtilsService {
      * {@code false} otherwise.
      */
     boolean commitInBranch(Resource branchId, Resource commitId, RepositoryConnection conn);
+
+    /**
+     * Checks if a {@link Commit} exists in a {@link Branch} on a {@link VersionedRDFRecord}.
+     *
+     * @param recordId The {@link Resource} of the {@link VersionedRDFRecord} which should have the {@link Commit}.
+     * @param commitId The {@link Resource} of the {@link Commit}.
+     * @param conn     A RepositoryConnection to use for lookup.
+     * @return {@code true} if the (@link Commit} {@link Resource} is in the commit chain of a {@link Branch} on the
+     *      {@link VersionedRDFRecord} and {@code false} otherwise.
+     */
+    boolean commitInRecord(Resource recordId, Resource commitId, RepositoryConnection conn);
 
     /**
      * Gets a List which represents the commit chain from the initial commit to the specified commit in either

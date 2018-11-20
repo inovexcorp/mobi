@@ -30,7 +30,7 @@
                 <div class="d-flex">
                     <a class="nav-link text-truncate" ng-click="dvm.onClick(item)">{{item.ontologyRecord.title}}</a><span class="close-icon fa fa-times" ng-click="dvm.onClose(item)"></span>
                 </div>
-                <ontology-branch-select ng-if="item.active" ng-model="item.ontologyRecord.branchId"></ontology-branch-select>
+                <open-ontology-select ng-if="item.active"></open-ontology-select>
             </li>
         </ul>
     </div>

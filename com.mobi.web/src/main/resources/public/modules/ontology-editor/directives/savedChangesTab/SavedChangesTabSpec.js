@@ -307,7 +307,7 @@ describe('Saved Changes Tab directive', function() {
                             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId,
                                 ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                             expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                                this.newBranchId, this.commitId);
+                                this.commitId, this.newBranchId);
                             expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                                 this.newBranchId);
                             expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.otherUserBranchId, ontologyStateSvc.listItem.ontologyRecord.recordId,
@@ -329,7 +329,7 @@ describe('Saved Changes Tab directive', function() {
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId,
                             ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                         expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                            this.newBranchId, this.commitId);
+                            this.commitId, this.newBranchId);
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
                     });
                 });

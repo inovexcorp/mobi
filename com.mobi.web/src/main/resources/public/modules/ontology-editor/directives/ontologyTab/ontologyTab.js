@@ -65,7 +65,7 @@
                     dvm.savedChanges = '<i class="fa fa-exclamation-triangle"></i> Changes';
 
                     function checkBranchExists() {
-                        if (!_.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId})) {
+                        if (dvm.os.listItem.ontologyRecord.branchId && !_.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId})) {
                             var catalogId = _.get(cm.localCatalog, '@id', '');
                             var masterBranch = _.find(dvm.os.listItem.branches, branch => util.getDctermsValue(branch, 'title') === 'MASTER')['@id'];
                             var state = sm.getOntologyStateByRecordId(dvm.os.listItem.ontologyRecord.recordId);
@@ -77,7 +77,7 @@
                                         commitId = headCommitId;
                                     }
                                     return $q.all([
-                                        sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, masterBranch, commitId),
+                                        sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, commitId, masterBranch),
                                         dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, masterBranch, commitId, commitId === headCommitId)
                                     ]);
                                 }, $q.reject)

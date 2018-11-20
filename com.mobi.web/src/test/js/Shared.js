@@ -953,6 +953,7 @@ function mockCatalogManager() {
             this.isDistribution = jasmine.createSpy('isDistribution');
             this.isBranch = jasmine.createSpy('isBranch');
             this.isUserBranch = jasmine.createSpy('isUserBranch');
+            this.isCommit = jasmine.createSpy('isCommit');
         });
     });
 }

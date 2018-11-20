@@ -57,12 +57,11 @@ describe('State Manager service', function() {
         this.recordId = 'recordId';
         this.branchId = 'branchId';
         this.commitId = 'commitId';
-        this.ontologyState = [{
-            '@type': ['http://mobi.com/states/ontology-editor/state-record'],
+        this.recordState = {
+            '@type': [prefixes.ontologyState + 'StateRecord'],
             [prefixes.ontologyState + 'record']: [{'@id': this.recordId}],
-            [prefixes.ontologyState + 'branches']: [],
-            [prefixes.ontologyState + 'currentBranch']: [{'@id': this.branchId}]
-        }];
+        };
+        this.ontologyState = [this.recordState];
     });
 
     afterEach(function() {
@@ -192,11 +191,46 @@ describe('State Manager service', function() {
             expect(util.createErrorToast).toHaveBeenCalledWith('Problem getting states');
         });
     });
-    it('createOntologyState calls the correct method', function() {
-        spyOn(stateManagerSvc, 'createState');
-        stateManagerSvc.createOntologyState(this.recordId, this.branchId, this.commitId);
-        expect(uuidSvc.v4).toHaveBeenCalled();
-        expect(stateManagerSvc.createState).toHaveBeenCalledWith(jasmine.any(Object), 'ontology-editor');
+    describe('createOntologyState calls the correct method with the correct state', function() {
+        beforeEach(function() {
+            spyOn(stateManagerSvc, 'createState');
+        });
+        it('if it is for a branch', function() {
+            stateManagerSvc.createOntologyState(this.recordId, this.commitId, this.branchId);
+            expect(uuidSvc.v4).toHaveBeenCalled();
+            expect(stateManagerSvc.createState).toHaveBeenCalledWith([
+                {
+                    '@id': jasmine.any(String),
+                    '@type': [prefixes.ontologyState + 'StateRecord'],
+                    [prefixes.ontologyState + 'record']: [{'@id': this.recordId}],
+                    [prefixes.ontologyState + 'branchStates']: [{'@id': jasmine.any(String)}],
+                    [prefixes.ontologyState + 'currentState']: [{'@id': jasmine.any(String)}]
+                },
+                {
+                    '@id': jasmine.any(String),
+                    '@type': [prefixes.ontologyState + 'StateCommit', prefixes.ontologyState + 'StateBranch'],
+                    [prefixes.ontologyState + 'commit']: [{'@id': this.commitId}],
+                    [prefixes.ontologyState + 'branch']: [{'@id': this.branchId}],
+                }
+            ], 'ontology-editor');
+        });
+        it('if it is for a commit', function() {
+            stateManagerSvc.createOntologyState(this.recordId, this.commitId);
+            expect(uuidSvc.v4).toHaveBeenCalled();
+            expect(stateManagerSvc.createState).toHaveBeenCalledWith([
+                {
+                    '@id': jasmine.any(String),
+                    '@type': [prefixes.ontologyState + 'StateRecord'],
+                    [prefixes.ontologyState + 'record']: [{'@id': this.recordId}],
+                    [prefixes.ontologyState + 'currentState']: [{'@id': jasmine.any(String)}]
+                },
+                {
+                    '@id': jasmine.any(String),
+                    '@type': [prefixes.ontologyState + 'StateCommit'],
+                    [prefixes.ontologyState + 'commit']: [{'@id': this.commitId}],
+                }
+            ], 'ontology-editor');
+        });
     });
     describe('getOntologyStateByRecordId', function() {
         it('when state is not present', function() {
@@ -209,14 +243,66 @@ describe('State Manager service', function() {
             expect(result).toEqual({id: this.stateId, model: this.ontologyState});
         });
     });
-    it('updateOntologyState calls the correct method', function() {
-        spyOn(stateManagerSvc, 'updateState');
-        spyOn(stateManagerSvc, 'getOntologyStateByRecordId').and.returnValue({
-            id: this.stateId,
-            model: this.ontologyState
+    describe('updateOntologyState calls the correct method with the correct state', function() {
+        beforeEach(function() {
+            spyOn(stateManagerSvc, 'updateState');
+            spyOn(stateManagerSvc, 'getOntologyStateByRecordId').and.returnValue({
+                id: this.stateId,
+                model: this.ontologyState
+            });
         });
-        stateManagerSvc.updateOntologyState(this.recordId, this.branchId, this.commitId);
-        expect(stateManagerSvc.updateState).toHaveBeenCalledWith(this.stateId, jasmine.any(Object));
+        it('if a commit was current before', function() {
+            this.commitState = {'@id': 'commitState', '@type': [prefixes.ontologyState + 'StateCommit']};
+            this.recordState[prefixes.ontologyState + 'currentState'] = [{'@id': 'commitState'}];
+            this.ontologyState.push(this.commitState);
+            stateManagerSvc.updateOntologyState(this.recordId, 'newCommit', this.branchId);
+            expect(stateManagerSvc.updateState).toHaveBeenCalledWith(this.stateId, {
+                asymmetricMatch: actual => !_.includes(this.commitState)
+            });
+        });
+        it('if a branch is not in the update', function() {
+            stateManagerSvc.updateOntologyState(this.recordId, this.commitId);
+            expect(stateManagerSvc.updateState).toHaveBeenCalledWith(this.stateId, [
+                _.set(this.recordState, "['" + prefixes.ontologyState + "currentState']", [{'@id': jasmine.any(String)}]),
+                {
+                    '@id': jasmine.any(String),
+                    '@type': [prefixes.ontologyState + 'StateCommit'],
+                    [prefixes.ontologyState + 'commit']: [{'@id': this.commitId}],
+                }
+            ]);
+        });
+        describe('if a branch is in the update', function() {
+            it('and the branch was opened before', function() {
+                this.recordState[prefixes.ontologyState + 'branchStates'] = [{'@id': 'branchState'}];
+                this.recordState[prefixes.ontologyState + 'currentState'] = [{'@id': 'branchState'}];
+                this.ontologyState.push({
+                    '@id': 'branchState',
+                    [prefixes.ontologyState + 'branch']: [{'@id': this.branchId}],
+                    [prefixes.ontologyState + 'commit']: [{'@id': this.commitId}],
+                });
+                stateManagerSvc.updateOntologyState(this.recordId, 'newCommit', this.branchId);
+                expect(stateManagerSvc.updateState).toHaveBeenCalledWith(this.stateId, [
+                    this.recordState,
+                    {
+                        '@id': 'branchState',
+                        [prefixes.ontologyState + 'branch']: [{'@id': this.branchId}],
+                        [prefixes.ontologyState + 'commit']: [{'@id': 'newCommit'}],
+                    }
+                ]);
+            });
+            it('and the branch had not been opened before', function() {
+                stateManagerSvc.updateOntologyState(this.recordId, 'newCommit', this.branchId);
+                expect(stateManagerSvc.updateState).toHaveBeenCalledWith(this.stateId, [
+                    _.set(_.set(this.recordState, "['" + prefixes.ontologyState + "branchStates']", [{'@id': jasmine.any(String)}]), "['" + prefixes.ontologyState + "currentState']", [{'@id': jasmine.any(String)}]),
+                    {
+                        '@id': jasmine.any(String),
+                        '@type': [prefixes.ontologyState + 'StateCommit', prefixes.ontologyState + 'StateBranch'],
+                        [prefixes.ontologyState + 'branch']: [{'@id': this.branchId}],
+                        [prefixes.ontologyState + 'commit']: [{'@id': 'newCommit'}]
+                    }
+                ]);
+            });
+        });
     });
     it('deleteOntologyState calls the correct method', function() {
         spyOn(stateManagerSvc, 'deleteState');
@@ -228,15 +314,15 @@ describe('State Manager service', function() {
         expect(stateManagerSvc.deleteState).toHaveBeenCalledWith(this.stateId);
     });
     it('deleteOntologyBranch calls the correct method', function() {
-        var tempState = angular.copy(this.ontologyState);
-        this.ontologyState[0][prefixes.ontologyState + 'branches'].push({'@id': 'branchIri'});
-        this.ontologyState.push({'@id': 'branchIri', [prefixes.ontologyState + 'branch']: [{'@id': 'branchId'}]});
+        var tempState = _.cloneDeep(this.ontologyState);
+        this.recordState[prefixes.ontologyState + 'branchStates'] = [{'@id': 'branchState'}];
+        this.ontologyState.push({'@id': 'branchState', [prefixes.ontologyState + 'branch']: [{'@id': this.branchId}]});
         spyOn(stateManagerSvc, 'updateState');
         spyOn(stateManagerSvc, 'getOntologyStateByRecordId').and.returnValue({
             id: this.stateId,
             model: this.ontologyState
         });
-        stateManagerSvc.deleteOntologyBranch(this.recordId, 'branchId');
-        expect(stateManagerSvc.updateState).toHaveBeenCalledWith(this.stateId, [tempState[0]]);
+        stateManagerSvc.deleteOntologyBranch(this.recordId, this.branchId);
+        expect(stateManagerSvc.updateState).toHaveBeenCalledWith(this.stateId, tempState);
     });
 });

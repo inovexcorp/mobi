@@ -89,7 +89,7 @@
                         }
                         ontoUtils.addLanguageToNewEntity(dvm.os.newOntology, dvm.os.newLanguage);
                         dvm.os.createOntology(dvm.os.newOntology, title, description, _.map(dvm.os.newKeywords, _.trim))
-                            .then(response => sm.createOntologyState(response.recordId, response.branchId, response.commitId), $q.reject)
+                            .then(response => sm.createOntologyState(response.recordId, response.commitId, response.branchId), $q.reject)
                             .then(() => $scope.close(), onError);
                     }
                     dvm.cancel = function() {

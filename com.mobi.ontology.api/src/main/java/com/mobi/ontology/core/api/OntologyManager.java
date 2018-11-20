@@ -115,6 +115,17 @@ public interface OntologyManager {
                                         @Nonnull Resource commitId);
 
     /**
+     * Retrieves an Ontology using a record id and the id of a commit on a branch in that record.
+     *
+     * @param recordId the record id for the OntologyRecord you want to retrieve.
+     * @param commitId the commit id for the Commit you want to retrieve.
+     * @return an Optional of the Ontology if found, otherwise Optional.empty().
+     * @throws MobiOntologyCreationException - the ontology can't be created.
+     * @throws IllegalArgumentException - the record cannot be found.
+     */
+    Optional<Ontology> retrieveOntologyByCommit(@Nonnull Resource recordId, @Nonnull Resource commitId);
+
+    /**
      * Deletes a branch associated with an OntologyRecord.
      *
      * @param recordId The record id for the OntologyRecord which contains the Branch you want to delete.
