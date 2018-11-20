@@ -21,7 +21,7 @@
  * #L%
  */
 describe('New Ontology Overlay directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, utilSvc, stateManagerSvc, prefixes, ontoUtils, splitIRI;
+    var $compile, scope, $q, ontologyStateSvc, utilSvc, prefixes, ontoUtils, splitIRI;
 
     beforeEach(function() {
         module('templates');
@@ -29,19 +29,17 @@ describe('New Ontology Overlay directive', function() {
         mockUtil();
         mockOntologyState();
         mockPrefixes();
-        mockStateManager();
         mockOntologyUtilsManager();
         injectRegexConstant();
         injectCamelCaseFilter();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _utilService_, _stateManagerService_, _prefixes_, _ontologyUtilsManagerService_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _utilService_, _prefixes_, _ontologyUtilsManagerService_, _splitIRIFilter_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             utilSvc = _utilService_;
-            stateManagerSvc = _stateManagerService_;
             prefixes = _prefixes_;
             ontoUtils = _ontologyUtilsManagerService_;
             splitIRI = _splitIRIFilter_;
@@ -66,7 +64,6 @@ describe('New Ontology Overlay directive', function() {
         $q = null;
         ontologyStateSvc = null;
         utilSvc = null;
-        stateManagerSvc = null;
         prefixes = null;
         ontoUtils = null;
         splitIRI = null;
@@ -159,16 +156,16 @@ describe('New Ontology Overlay directive', function() {
                 this.controller.create();
                 scope.$apply();
                 expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', 'description', ['one', 'two']);
-                expect(stateManagerSvc.createOntologyState).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.createOntologyState).not.toHaveBeenCalled();
                 expect(this.controller.error).toBe(this.errorMessage);
                 expect(scope.close).not.toHaveBeenCalled();
             });
             it('unless an error occurs with creating ontology state', function() {
-                stateManagerSvc.createOntologyState.and.returnValue($q.reject(this.errorMessage));
+                ontologyStateSvc.createOntologyState.and.returnValue($q.reject(this.errorMessage));
                 this.controller.create();
                 scope.$apply();
                 expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', 'description', ['one', 'two']);
-                expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.commitId, this.response.branchId);
+                expect(ontologyStateSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.commitId, this.response.branchId);
                 expect(scope.close).not.toHaveBeenCalled();
                 expect(this.controller.error).toBe(this.errorMessage);
             });
@@ -179,7 +176,7 @@ describe('New Ontology Overlay directive', function() {
                     expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(ontologyStateSvc.newOntology, ontologyStateSvc.newLanguage);
                     expect(_.has(ontologyStateSvc.newOntology, prefixes.owl + 'imports')).toBe(false);
                     expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', 'description', ['one', 'two']);
-                    expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.commitId, this.response.branchId);
+                    expect(ontologyStateSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.commitId, this.response.branchId);
                     expect(scope.close).toHaveBeenCalled();
                 });
                 it('without description', function() {
@@ -189,7 +186,7 @@ describe('New Ontology Overlay directive', function() {
                     expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(ontologyStateSvc.newOntology, ontologyStateSvc.newLanguage);
                     expect(_.has(ontologyStateSvc.newOntology, prefixes.owl + 'imports')).toBe(false);
                     expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', '', ['one', 'two']);
-                    expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.commitId, this.response.branchId);
+                    expect(ontologyStateSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.commitId, this.response.branchId);
                     expect(scope.close).toHaveBeenCalled();
                 });
             });

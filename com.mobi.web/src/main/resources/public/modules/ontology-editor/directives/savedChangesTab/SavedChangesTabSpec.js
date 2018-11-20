@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Saved Changes Tab directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, utilSvc, catalogManagerSvc, prefixes;
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, utilSvc, catalogManagerSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -30,16 +30,14 @@ describe('Saved Changes Tab directive', function() {
         mockUtil();
         mockCatalogManager();
         mockOntologyManager()
-        mockStateManager();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _stateManagerService_, _utilService_, _catalogManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _utilService_, _catalogManagerService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
-            stateManagerSvc = _stateManagerService_;
             utilSvc = _utilService_;
             catalogManagerSvc = _catalogManagerService_;
             prefixes = _prefixes_;
@@ -293,7 +291,7 @@ describe('Saved Changes Tab directive', function() {
                     });
                     describe('and when updateOntologyState is resolved', function() {
                         beforeEach(function() {
-                            stateManagerSvc.updateOntologyState.and.returnValue($q.when());
+                            ontologyStateSvc.updateOntologyState.and.returnValue($q.when());
                             catalogManagerSvc.isUserBranch.and.callFake(branchToCheck => branchToCheck['@id'] === this.otherUserBranchId);
                         });
                         it('and when deleteOntologyBranch is resolved', function() {
@@ -306,7 +304,7 @@ describe('Saved Changes Tab directive', function() {
                                 .ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
                             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId,
                                 ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
-                            expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
+                            expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                                 this.commitId, this.newBranchId);
                             expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                                 this.newBranchId);
@@ -321,14 +319,14 @@ describe('Saved Changes Tab directive', function() {
                         });
                     });
                     it('and when updateOntologyState is rejected', function() {
-                        stateManagerSvc.updateOntologyState.and.returnValue($q.reject('error'));
+                        ontologyStateSvc.updateOntologyState.and.returnValue($q.reject('error'));
                         this.controller.restoreBranchWithUserBranch();
                         scope.$digest();
                         expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem
                             .ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId,
                             ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
-                        expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
+                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                             this.commitId, this.newBranchId);
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
                     });

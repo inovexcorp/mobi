@@ -41,32 +41,36 @@
          * @requires prefixes.service:prefixes
          * @requires ontologyManager.service:ontologyManagerService
          * @requires util.service:utilService
-         * @requires stateManager.service:stateManagerService
          * @requires modal.service:modalService
          *
          * @description
-         * `openOntologySelect` is a component that creates a `ui-select` containing the branches of the current
-         * {@link ontologyState.service:ontologyStateService listItem} and optionally the currently open commit. Each
-         * branch in the `ui-select` has buttons for editing the metadata and deleting the branch which will open
-         * a {@link confirmModal.directive:confirmModal}. The component also houses the method for opening a modal for
-         * {@link editBranchOverlay.directive:editBranchOverlay editing a branch}.
+         * `openOntologySelect` is a component that creates a `ui-select` containing the branches of the provided
+         * {@link ontologyState.service:ontologyStateService listItem} and depending on the provided state, the
+         * currently open commit. Each branch in the `ui-select` has buttons for editing the metadata and deleting the
+         * branch which will open a {@link confirmModal.directive:confirmModal}. The component also houses the method
+         * for opening a modal for {@link editBranchOverlay.directive:editBranchOverlay editing a branch}.
+         *
+         * @param {Object} listItem An item from the `list` in ontologyStateService
+         * @param {Object} state An item from the `states` in stateManagerService
          */
         .component('openOntologySelect', {
+            bindings: {
+                listItem: '=',
+                state: '='
+            },
             controllerAs: 'dvm',
-            controller: ['$scope', '$q', '$timeout', 'catalogManagerService', 'ontologyStateService', 'prefixes', 'ontologyManagerService', 'utilService', 'stateManagerService', 'modalService', OpenOntologySelectController],
+            controller: ['$scope', '$q', '$timeout', 'catalogManagerService', 'ontologyStateService', 'prefixes', 'ontologyManagerService', 'utilService', 'modalService', OpenOntologySelectController],
             templateUrl: 'modules/ontology-editor/directives/openOntologySelect/openOntologySelect.html'
         });
 
-        function OpenOntologySelectController($scope, $q, $timeout, catalogManagerService, ontologyStateService, prefixes, ontologyManagerService, utilService, stateManagerService, modalService) {
+        function OpenOntologySelectController($scope, $q, $timeout, catalogManagerService, ontologyStateService, prefixes, ontologyManagerService, utilService, modalService) {
             var dvm = this;
-            var sm = stateManagerService;
             var om = ontologyManagerService;
 
             dvm.os = ontologyStateService;
             dvm.cm = catalogManagerService;
             dvm.util = utilService;
             dvm.deleteError = '';
-            dvm.state = sm.getOntologyStateByRecordId(dvm.os.listItem.ontologyRecord.recordId);
             dvm.selected = undefined;
             dvm.selectList = [];
 
@@ -96,20 +100,20 @@
                 if (dvm.cm.isBranch(item)) {
                     var branchId = item['@id'];
                     var commitId = dvm.util.getPropertyId(_.find(dvm.state.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]}), prefixes.ontologyState + 'commit');
-                    dvm.cm.getBranchHeadCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
+                    dvm.cm.getBranchHeadCommit(branchId, dvm.listItem.ontologyRecord.recordId, catalogId)
                         .then(headCommit => {
                             var headCommitId = _.get(headCommit, "commit['@id']", '');
                             if (!commitId) {
                                 commitId = headCommitId;
                             }
                             return $q.all([
-                                sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, commitId, branchId),
-                                dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId, commitId === headCommitId)
+                                dvm.os.updateOntologyState(dvm.listItem.ontologyRecord.recordId, commitId, branchId),
+                                dvm.os.updateOntology(dvm.listItem.ontologyRecord.recordId, branchId, commitId, commitId === headCommitId)
                             ]);
                         }, $q.reject)
                         .then(() => {
                             setSelectList();
-                            dvm.os.resetStateTabs();
+                            dvm.os.resetStateTabs(dvm.listItem);
                         }, dvm.util.createErrorToast);
                 }
             }
@@ -128,23 +132,23 @@
                 modalService.openModal('editBranchOverlay', {branch}, () => dvm.submit(branch));
             }
             dvm.delete = function() {
-                om.deleteOntologyBranch(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id'])
+                om.deleteOntologyBranch(dvm.listItem.ontologyRecord.recordId, dvm.branch['@id'])
                     .then(() => {
-                        dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id']);
+                        dvm.os.removeBranch(dvm.listItem.ontologyRecord.recordId, dvm.branch['@id']);
                     }, dvm.util.createErrorToast);
             }
             dvm.submit = function(branch) {
-                if (branch['@id'] === dvm.os.listItem.ontologyRecord.branchId) {
-                    dvm.os.listItem.ontologyRecord.branchId = '';
+                if (branch['@id'] === dvm.listItem.ontologyRecord.branchId) {
+                    dvm.listItem.ontologyRecord.branchId = '';
                     $timeout(function() {
-                        dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
+                        dvm.listItem.ontologyRecord.branchId = branch['@id'];
                     });
                 }
             }
 
             dvm.$doCheck = function() {
-                var recordState = _.find(dvm.state.model, {'@type': [prefixes.ontologyState + 'StateRecord']});
-                var currentValue = _.get(recordState, "['" + prefixes.ontologyState + "currentState'][0]['@id']");
+                var recordState = _.find(_.get(dvm.state, 'model', []), {'@type': [prefixes.ontologyState + 'StateRecord']});
+                var currentValue = _.get(recordState, "['" + prefixes.ontologyState + "currentState'][0]['@id']", '');
                 if (currentStateId !== currentValue) {
                     currentStateId = currentValue;
                     setSelected();
@@ -155,7 +159,7 @@
             function setSelected() {
                 var currentState = _.find(dvm.state.model, {'@id': currentStateId});
                 if (_.includes(_.get(currentState, '@type', []), prefixes.ontologyState + 'StateBranch')) {
-                    dvm.selected = _.find(dvm.os.listItem.branches, {'@id': _.get(currentState, "['" + prefixes.ontologyState + "branch'][0]['@id']")});
+                    dvm.selected = _.find(dvm.listItem.branches, {'@id': _.get(currentState, "['" + prefixes.ontologyState + "branch'][0]['@id']")});
                 } else {
                     var commitId = _.get(currentState, "['" + prefixes.ontologyState + "commit'][0]['@id']");
                     dvm.selected = {
@@ -167,9 +171,9 @@
             }
             function setSelectList() {
                 if (dvm.cm.isBranch(dvm.selected)) {
-                    dvm.selectList = dvm.os.listItem.branches;
+                    dvm.selectList = dvm.listItem.branches;
                 } else if (dvm.cm.isCommit(dvm.selected)) {
-                    dvm.selectList = _.concat(dvm.os.listItem.branches, [dvm.selected]);
+                    dvm.selectList = _.concat(dvm.listItem.branches, [dvm.selected]);
                 } else {
                     dvm.selectList = [];
                 }

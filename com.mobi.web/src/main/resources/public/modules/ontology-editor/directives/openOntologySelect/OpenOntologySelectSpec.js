@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Open Ontology Select component', function() {
-    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, utilSvc, prefixes, modalSvc;
+    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, ontologyManagerSvc, utilSvc, prefixes, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -36,23 +36,24 @@ describe('Open Ontology Select component', function() {
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyStateService_, _ontologyManagerService_, _$q_, _stateManagerService_, _utilService_, _prefixes_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _ontologyStateService_, _ontologyManagerService_, _utilService_, _prefixes_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
-            $q = _$q_;
-            stateManagerSvc = _stateManagerService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
             modalSvc = _modalService_;
         });
 
         this.catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
+        this.recordId = 'recordId';
         this.branchId = 'branchId';
-        this.branch = {'@id': this.branchId, '@type': [prefixes.catalog + 'Branch']};
         this.commitId = 'commitId';
+
+        this.branch = {'@id': this.branchId, '@type': [prefixes.catalog + 'Branch']};
         this.currentState = {
             '@id': 'currentState'
         };
@@ -60,17 +61,23 @@ describe('Open Ontology Select component', function() {
             '@type': [prefixes.ontologyState + 'StateRecord'],
             [prefixes.ontologyState + 'currentState']: [{'@id': this.currentState['@id']}]
         };
-        this.state = {model: [this.recordState, this.currentState]};
         this.errorMessage = 'error';
 
-        ontologyStateSvc.listItem.userCanModify = true;
-        ontologyStateSvc.listItem.branches = [this.branch];
-        stateManagerSvc.getOntologyStateByRecordId.and.returnValue(this.state);
+        scope.listItem = {
+            ontologyRecord: {
+                recordId: this.recordId,
+                branchId: this.branchId,
+                commitId: this.commitId
+            },
+            userCanModify: true,
+            branches: [this.branch]
+        };
+        scope.state = {model: [this.recordState, this.currentState]};
     });
 
     beforeEach(function helpers() {
         this.compile = function() {
-            this.element = $compile(angular.element('<open-ontology-select></open-ontology-select>'))(scope);
+            this.element = $compile(angular.element('<open-ontology-select list-item="listItem" state="state"></open-ontology-select>'))(scope);
             scope.$apply();
             this.controller = this.element.controller('openOntologySelect');
         }
@@ -83,7 +90,6 @@ describe('Open Ontology Select component', function() {
         catalogManagerSvc = null;
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
-        stateManagerSvc = null;
         utilSvc = null;
         modalSvc = null;
         if (this.element) {
@@ -101,7 +107,7 @@ describe('Open Ontology Select component', function() {
             this.currentState[prefixes.ontologyState + 'branch'] = [{'@id': this.branchId}];
             this.compile();
             expect(this.controller.selected).toEqual(this.branch);
-            expect(this.controller.selectList).toEqual(ontologyStateSvc.listItem.branches);
+            expect(this.controller.selectList).toEqual(scope.listItem.branches);
         });
         it('a commit is currently selected', function() {
             this.currentState['@type'] = [prefixes.ontologyState + 'StateCommit'];
@@ -157,14 +163,14 @@ describe('Open Ontology Select component', function() {
         });
         it('depending on whether the user can modify record', function() {
             catalogManagerSvc.isBranch.and.returnValue(true);
-            ontologyStateSvc.listItem.userCanModify = true;
+            scope.listItem.userCanModify = true;
             scope.$digest();
             expect(this.element.querySelectorAll('.fa-trash-o').length).toBe(1);
             expect(this.element.querySelectorAll('.fa-pencil').length).toBe(1);
         });
         it('depending on whether the the user cannot modify record', function() {
             catalogManagerSvc.isBranch.and.returnValue(true);
-            ontologyStateSvc.listItem.userCanModify = false;
+            scope.listItem.userCanModify = false;
             scope.$digest();
             expect(this.element.querySelectorAll('.fa-trash-o').length).toBe(0);
             expect(this.element.querySelectorAll('.fa-pencil').length).toBe(0);
@@ -173,6 +179,28 @@ describe('Open Ontology Select component', function() {
     describe('controller methods', function() {
         beforeEach(function() {
             this.compile();
+        });
+        it('should get the correct group title for an entity', function() {
+            catalogManagerSvc.isBranch.and.returnValue(true);
+            expect(this.controller.getGroupTitle({})).toEqual('Branches');
+
+            catalogManagerSvc.isBranch.and.returnValue(false);
+            catalogManagerSvc.isCommit.and.returnValue(true);
+            expect(this.controller.getGroupTitle({})).toEqual('Commits');
+
+            catalogManagerSvc.isCommit.and.returnValue(false);
+            expect(this.controller.getGroupTitle({})).toEqual('(NONE)');
+        });
+        it('should get the correct type string for an entity', function() {
+            catalogManagerSvc.isBranch.and.returnValue(true);
+            expect(this.controller.getType({})).toEqual('Branch');
+
+            catalogManagerSvc.isBranch.and.returnValue(false);
+            catalogManagerSvc.isCommit.and.returnValue(true);
+            expect(this.controller.getType({})).toEqual('Commit');
+
+            catalogManagerSvc.isCommit.and.returnValue(false);
+            expect(this.controller.getType({})).toEqual('(NONE)');
         });
         describe('changeEntity calls the correct methods', function() {
             describe('if the entity is a branch', function() {
@@ -194,31 +222,28 @@ describe('Open Ontology Select component', function() {
                             ]
                         };
                         catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({ commit: { '@id': this.commitId } }));
-                        stateManagerSvc.getOntologyStateByRecordId.and.returnValue(ontoState);
+                        ontologyStateSvc.getOntologyStateByRecordId.and.returnValue(ontoState);
                         utilSvc.getPropertyId.and.callFake((entity, propertyIRI) => _.get(entity, "['" + propertyIRI + "'][0]['@id']", ''));
                     });
                     it('when updateOntologyState and updateOntology are resolved', function() {
-                        stateManagerSvc.updateOntologyState.and.returnValue($q.when());
+                        ontologyStateSvc.updateOntologyState.and.returnValue($q.when());
                         ontologyStateSvc.updateOntology.and.returnValue($q.when());
                         this.controller.changeEntity(this.branch);
                         scope.$apply();
-                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(this.branchId,
-                            ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
-                        expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.commitId,
-                            this.branchId);
-                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                            this.branchId, this.commitId, true);
-                        expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalled();
+                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
+                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith(this.recordId, this.commitId, this.branchId);
+                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId, true);
+                        expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalledWith(scope.listItem);
                     });
                     it('and updateOntologyState does not resolve', function() {
-                        stateManagerSvc.updateOntologyState.and.returnValue($q.reject(this.errorMessage));
+                        ontologyStateSvc.updateOntologyState.and.returnValue($q.reject(this.errorMessage));
                         this.controller.changeEntity(this.branch);
                         scope.$digest()
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith(this.errorMessage);
                         expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
                     });
                     it('and updateOntology does not resolve', function() {
-                        stateManagerSvc.updateOntologyState.and.returnValue($q.when());
+                        ontologyStateSvc.updateOntologyState.and.returnValue($q.when());
                         ontologyStateSvc.updateOntology.and.returnValue($q.reject(this.errorMessage));
                         this.controller.changeEntity(this.branch);
                         scope.$digest()
@@ -270,14 +295,14 @@ describe('Open Ontology Select component', function() {
         describe('delete calls the correct methods', function() {
             beforeEach(function() {
                 this.controller.branch = this.branch;
-                ontologyStateSvc.listItem.branches = [this.branch];
+                scope.listItem.branches = [this.branch];
                 scope.$digest();
             });
             it('when resolved', function() {
                 ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.when());
                 this.controller.delete();
                 scope.$apply();
-                expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.branch['@id']);
+                expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.controller.branch['@id']);
             });
             it('when rejected', function() {
                 ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.reject(this.errorMessage));

@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="open-ontology-select">
-    <ui-select ng-model="dvm.selected" ng-disabled="dvm.os.hasChanges(dvm.os.listItem) || dvm.os.isCommittable(dvm.os.listItem)" on-select="dvm.changeEntity($item)">
+    <ui-select ng-model="dvm.selected" ng-disabled="dvm.os.hasChanges(dvm.listItem) || dvm.os.isCommittable(dvm.listItem)" on-select="dvm.changeEntity($item)">
         <ui-select-match placeholder="Open at...">
             <span>{{dvm.getType($select.selected)}}: {{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
         </ui-select-match>
@@ -29,8 +29,8 @@
             <div class="entity-display" ng-init="title = dvm.util.getDctermsValue(entity, 'title')" ng-class="{'master': title === 'MASTER', 'active': entity['@id'] === dvm.selected['@id']}">
                 <span ng-bind-html="title | highlight:$select.search | trusted" title="{{title}}"></span>
                 <a ng-if="dvm.cm.isUserBranch(entity)" class="fa fa-exclamation-triangle fa-fw-red"></a>
-                <a ng-if="dvm.cm.isBranch(entity) && entity['@id'] !== dvm.os.listItem.ontologyRecord.branchId && dvm.os.listItem.userCanModify" class="fa fa-trash-o fa-fw text-muted" ng-click="dvm.openDeleteConfirmation($event, entity)"></a>
-                <a ng-if="dvm.cm.isBranch(entity) && dvm.os.listItem.userCanModify" class="fa fa-pencil fa-fw text-muted" ng-click="dvm.openEditOverlay($event, entity)"></a>
+                <a ng-if="dvm.cm.isBranch(entity) && entity['@id'] !== dvm.listItem.ontologyRecord.branchId && dvm.listItem.userCanModify" class="fa fa-trash-o fa-fw text-muted" ng-click="dvm.openDeleteConfirmation($event, entity)"></a>
+                <a ng-if="dvm.cm.isBranch(entity) && dvm.listItem.userCanModify" class="fa fa-pencil fa-fw text-muted" ng-click="dvm.openEditOverlay($event, entity)"></a>
             </div>
         </ui-select-choices>
     </ui-select>

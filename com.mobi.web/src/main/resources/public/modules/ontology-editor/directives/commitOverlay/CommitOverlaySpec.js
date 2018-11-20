@@ -21,23 +21,20 @@
  * #L%
  */
 describe('Commit Overlay directive', function() {
-    var $compile, scope, $q, catalogManagerSvc, stateManagerSvc, ontologyStateSvc;
+    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('commitOverlay');
         mockOntologyState();
         mockCatalogManager();
-        mockStateManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _stateManagerService_,
-            _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
-            stateManagerSvc = _stateManagerService_;
             ontologyStateSvc = _ontologyStateService_;
         });
 
@@ -59,7 +56,6 @@ describe('Commit Overlay directive', function() {
         scope = null;
         $q = null;
         catalogManagerSvc = null;
-        stateManagerSvc = null;
         ontologyStateSvc = null;
         this.element.remove();
     });
@@ -111,26 +107,26 @@ describe('Commit Overlay directive', function() {
                     it('and when updateOntologyState is resolved', function() {
                         ontologyStateSvc.listItem.inProgressCommit.additions = ['test'];
                         ontologyStateSvc.listItem.inProgressCommit.deletions = ['test'];
-                        stateManagerSvc.updateOntologyState.and.returnValue($q.when(''));
+                        ontologyStateSvc.updateOntologyState.and.returnValue($q.when(''));
                         this.controller.commit();
                         scope.$digest();
                         expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(
                             ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId,
                             this.controller.comment);
-                        expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
+                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                             this.commitId, ontologyStateSvc.listItem.ontologyRecord.branchId);
                         expect(ontologyStateSvc.listItem.ontologyRecord.commitId).toEqual(this.commitId);
                         expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
                         expect(scope.close).toHaveBeenCalled();
                     });
                     it('and when updateOntologyState is rejected', function() {
-                        stateManagerSvc.updateOntologyState.and.returnValue($q.reject('error'));
+                        ontologyStateSvc.updateOntologyState.and.returnValue($q.reject('error'));
                         this.controller.commit();
                         scope.$digest();
                         expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(
                             ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId,
                             this.controller.comment);
-                        expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.commitId,
+                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.commitId,
                             ontologyStateSvc.listItem.ontologyRecord.branchId);
                         expect(this.controller.error).toEqual('error');
                     });
@@ -141,7 +137,7 @@ describe('Commit Overlay directive', function() {
                     scope.$digest();
                     expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.branchId,
                         ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.controller.comment);
-                    expect(stateManagerSvc.updateOntologyState).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.updateOntologyState).not.toHaveBeenCalled();
                     expect(this.controller.error).toEqual('error');
                 });
             });
@@ -166,7 +162,7 @@ describe('Commit Overlay directive', function() {
                                 ontologyStateSvc.listItem.inProgressCommit.deletions = ['test'];
                                 oldBranchId = ontologyStateSvc.listItem.ontologyRecord.branchId;
                                 oldCommitId = ontologyStateSvc.listItem.ontologyRecord.commitId;
-                                stateManagerSvc.updateOntologyState.and.returnValue($q.when(''));
+                                ontologyStateSvc.updateOntologyState.and.returnValue($q.when(''));
                                 this.controller.commit();
                                 scope.$digest();
                                 expect(catalogManagerSvc.createRecordUserBranch).toHaveBeenCalledWith(ontologyStateSvc
@@ -180,7 +176,7 @@ describe('Commit Overlay directive', function() {
                                 expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(
                                     ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId,
                                     this.controller.comment);
-                                expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.commitId,
+                                expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.commitId,
                                     ontologyStateSvc.listItem.ontologyRecord.branchId);
                                 expect(ontologyStateSvc.listItem.ontologyRecord.commitId).toEqual(this.commitId);
                                 expect(ontologyStateSvc.listItem.userBranch).toEqual(true);
@@ -188,7 +184,7 @@ describe('Commit Overlay directive', function() {
                                 expect(scope.close).toHaveBeenCalled();
                             });
                             it('and when updateOntologyState is rejected', function() {
-                                stateManagerSvc.updateOntologyState.and.returnValue($q.reject('error'));
+                                ontologyStateSvc.updateOntologyState.and.returnValue($q.reject('error'));
                                 oldBranchId = ontologyStateSvc.listItem.ontologyRecord.branchId;
                                 oldCommitId = ontologyStateSvc.listItem.ontologyRecord.commitId;
                                 this.controller.commit();
@@ -204,7 +200,7 @@ describe('Commit Overlay directive', function() {
                                 expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(
                                     ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId,
                                     this.controller.comment);
-                                expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.commitId,
+                                expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.commitId,
                                     ontologyStateSvc.listItem.ontologyRecord.branchId);
                                 expect(this.controller.error).toEqual('error');
                             });
@@ -225,7 +221,7 @@ describe('Commit Overlay directive', function() {
                             expect(ontologyStateSvc.listItem.ontologyRecord.branchId).toEqual(this.branchId);
                             expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.branchId,
                                 ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.controller.comment);
-                            expect(stateManagerSvc.updateOntologyState).not.toHaveBeenCalled();
+                            expect(ontologyStateSvc.updateOntologyState).not.toHaveBeenCalled();
                             expect(this.controller.error).toEqual('error');
                         });
                     });
