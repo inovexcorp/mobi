@@ -43,10 +43,9 @@
          *
          * @description
          * `editRequestOverlay` is a component that creates content for a modal that edits a merge request on the
-         * {@link mergeRequestsState.service:mergeRequestsStateSvc selected entity}. Meant to be used in conjunction
+         * {@link mergeRequestsState.service:mergeRequestsStateSvc selected entity}. Provides fields to edit Merge
+         * Request title, description, target branch, assignees, and branch removal. Meant to be used in conjunction
          * with the {@link modalService.directive:modalService}.
-         * 
-         * Meant to be used in conjunction with the {@link modalService.directive:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal
@@ -80,8 +79,10 @@
 
                 dvm.mm.updateRequest(jsonld['@id'], jsonld)
                     .then(() => {
+                        var recordTitle = dvm.state.selected.recordTitle;
                         dvm.util.createSuccessToast('Successfully updated request');
                         dvm.state.selected = dvm.state.getRequestObj(jsonld);
+                        dvm.state.selected.recordTitle = recordTitle;
                         dvm.state.setRequestDetails(dvm.state.selected);
                         dvm.close();
                     }, onError);

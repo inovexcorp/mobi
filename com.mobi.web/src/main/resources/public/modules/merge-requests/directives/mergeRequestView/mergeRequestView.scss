@@ -40,6 +40,7 @@
         margin: 0px 0px 0px 0px;
         align-items: center;
         justify-items: center;
+        word-break: break-all;
         -webkit-transition: background-color ease-in-out 0.1s;
         transition: background-color ease-in-out 0.1s;
 
@@ -48,9 +49,11 @@
             transition: opacity ease-in-out 0.1s;
             opacity: 0;
 
-            button:hover {
+            button {
                 text-decoration: none;
-                color: inherit;
+                &:hover {
+                    color: inherit;
+                }
             }
         }
 
@@ -60,6 +63,10 @@
             .edit-button-container {
                 opacity: 1;
             }
+        }
+
+        .description {
+            padding-bottom: 10px;
         }
     }
 }

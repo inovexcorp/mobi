@@ -77,6 +77,7 @@ describe('Edit Request Overlay Component', function() {
         this.element = $compile(angular.element('<edit-request-overlay close="close()" dismiss="dismiss()"></edit-request-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('editRequestOverlay');
+        // this.isolatedScope = this.element.isolateScope();
     });
 
     afterEach(function() {
@@ -93,6 +94,16 @@ describe('Edit Request Overlay Component', function() {
         this.element.remove();
     });
 
+    // describe('in isolated scope', function() {
+    //     it('close should be called in parent scope when invoked', function() {
+    //         this.isolatedScope.close();
+    //         expect(scope.close).toHaveBeenCalled();
+    //     });
+    //     it('dismiss should be called in parent scope when invoked', function() {
+    //         this.isolatedScope.dismiss();
+    //         expect(scope.dismiss).toHaveBeenCalled();
+    //     });
+    // });
     it('initializes with the correct values', function() {
         var expectedRequest = {
             recordId: mergeRequestsStateSvc.selected.recordIri,
@@ -119,7 +130,7 @@ describe('Edit Request Overlay Component', function() {
             expect(this.element.find('form').length).toBe(1);
         });
         it('with .form-groups', function() {
-            expect(this.element.querySelectorAll('.form-group').length).toBe(5);
+            expect(this.element.querySelectorAll('.form-group').length).toBe(4);
         });
         it('with a custom-label', function() {
             expect(this.element.find('custom-label').length).toBe(1);

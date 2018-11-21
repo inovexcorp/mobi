@@ -35,13 +35,10 @@
         </div>
         <div class="edit-target-branch">
             <div class="form-group">
-                <span class="form-control-static">Merge <strong>Branch: {{dvm.request.sourceTitle}}</strong> into</span>
-            </div>
-            <branch-select class="select-branch" ng-model="dvm.request.targetBranch" required="true" change-event="dvm.changeTarget()" branches="dvm.branches"></branch-select>
-            <div class="form-group">
-                <span class="form-control-static">in <strong>{{dvm.state.selected.recordTitle}}</strong></span>
+                <span class="form-control-static">In <strong>Ontology: {{dvm.state.selected.recordTitle}}</strong>, merge <strong>Branch: {{dvm.request.sourceTitle}}</strong> into</span>
             </div>
         </div>
+        <branch-select class="select-branch" ng-model="dvm.request.targetBranch" required="true" change-event="dvm.changeTarget()" branches="dvm.branches"></branch-select>
         <div class="form-group">
             <custom-label muted-text="'(Optional)'">Assignee(s)</custom-label>
             <ui-select multiple ng-model="dvm.request.assignees">
