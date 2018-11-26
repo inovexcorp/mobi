@@ -459,7 +459,6 @@
              */
             self.getOntology = function(recordId, rdfFormat = 'jsonld') {
                 var state = self.getOntologyStateByRecordId(recordId);
-                // var state = sm.getOntologyStateByRecordId(recordId);
                 if (!_.isEmpty(state)) {
                     var recordState = _.find(state.model, {'@type': [prefixes.ontologyState + 'StateRecord']});
                     var inProgressCommit = emptyInProgressCommit;
@@ -490,7 +489,6 @@
                         })
                         .then(ontology => ({ontology, recordId, branchId, commitId, upToDate, inProgressCommit}), () =>
                             self.deleteOntologyState(recordId)
-                            // sm.deleteOntologyState(recordId)
                                 .then(() => self.getLatestOntology(recordId, rdfFormat), $q.reject)
                         );
                 }
@@ -518,7 +516,6 @@
                         branchId = _.get(masterBranch, '@id', '');
                         commitId = _.get(masterBranch, "['" + prefixes.catalog + "head'][0]['@id']", '');
                         return self.createOntologyState(recordId, commitId, branchId);
-                        // return sm.createOntologyState(recordId, commitId, branchId);
                     }, $q.reject)
                     .then(() => om.getOntology(recordId, branchId, commitId, rdfFormat), $q.reject)
                     .then(ontology => {return {ontology, recordId, branchId, commitId, upToDate: true, inProgressCommit: emptyInProgressCommit}}, $q.reject);
@@ -618,7 +615,6 @@
                             listItem.selected = oldListItem.selected;
                         }
                         return self.updateOntologyState(recordId, commitId, branchId);
-                        // return sm.updateOntologyState(recordId, commitId, branchId);
                     }, $q.reject)
                     .then(() => {
                         var activeKey = self.getActiveKey(oldListItem);
@@ -1062,7 +1058,6 @@
             }
             self.removeBranch = function(recordId, branchId) {
                 self.deleteOntologyBranch(recordId, branchId);
-                // sm.deleteOntologyBranch(recordId, branchId);
                 _.remove(self.getListItemByRecordId(recordId).branches, {'@id': branchId});
             }
             self.afterSave = function() {
@@ -1081,12 +1076,9 @@
                         });
 
                         if (_.isEmpty(self.getOntologyStateByRecordId(self.listItem.ontologyRecord.recordId))) {
-                        // if (_.isEmpty(sm.getOntologyStateByRecordId(self.listItem.ontologyRecord.recordId))) {
                             return self.createOntologyState(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.commitId, self.listItem.ontologyRecord.branchId);
-                            // return sm.createOntologyState(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.commitId, self.listItem.ontologyRecord.branchId);
                         } else {
                             return self.updateOntologyState(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.commitId, self.listItem.ontologyRecord.branchId);
-                            // return sm.updateOntologyState(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.commitId, self.listItem.ontologyRecord.branchId);
                         }
                     }, $q.reject);
             }

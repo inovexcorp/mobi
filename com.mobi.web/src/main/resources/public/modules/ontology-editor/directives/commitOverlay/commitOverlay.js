@@ -112,7 +112,6 @@
                             .then(commitIri => {
                                 commitId = commitIri;
                                 return dvm.os.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, commitId, branchId);
-                                // return sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, commitId, branchId);
                             }, $q.reject)
                             .then(() => {
                                 dvm.os.listItem.ontologyRecord.branchId = branchId;
