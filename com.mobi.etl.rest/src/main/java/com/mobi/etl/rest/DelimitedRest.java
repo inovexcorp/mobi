@@ -172,6 +172,7 @@ public interface DelimitedRest {
      * @param mappingRecordIRI the id of the MappingRecord
      * @param ontologyRecordIRI the id of the DatasetRecord
      * @param branchIRI the id of the BranchRecord
+     * @param update whether to treat the mapped data as an update or new additions
      * @param containsHeaders whether the delimited file has headers
      * @param separator the character the columns are separated by if it is a CSV
      * @return a Response indicating the success of the request
@@ -186,6 +187,7 @@ public interface DelimitedRest {
                              @QueryParam("mappingRecordIRI") String mappingRecordIRI,
                              @QueryParam("ontologyRecordIRI") String ontologyRecordIRI,
                              @QueryParam("branchIRI") String branchIRI,
+                             @QueryParam("update") boolean update,
                              @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
                              @DefaultValue(",") @QueryParam("separator") String separator);
 }

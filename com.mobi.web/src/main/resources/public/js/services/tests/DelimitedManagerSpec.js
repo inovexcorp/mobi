@@ -38,7 +38,9 @@ describe('Delimited Manager service', function() {
 
         this.mappingRecordIRI = 'http://test.org/mapping';
         this.datasetRecordIRI = 'http://test.org/record';
-        this.ontologyRecordIRI = 'http://test.org/ontology'
+        this.ontologyRecordIRI = 'http://test.org/ontology';
+        this.branchIRI = 'http://test.org/branch';
+        this.update = false;
 
         delimitedManagerSvc.fileName = 'test';
         delimitedManagerSvc.separator = ',';
@@ -55,18 +57,10 @@ describe('Delimited Manager service', function() {
 
     describe('should upload a delimited file', function() {
         it('unless an error occurs', function() {
-            $httpBackend.expectPOST('/mobirest/delimited-files',
-                function(data) {
-                    return data instanceof FormData;
-                }, function(headers) {
-                    return headers['Content-Type'] === undefined;
-                }).respond(400, null, null, 'Error Message');
+            $httpBackend.expectPOST('/mobirest/delimited-files', data => data instanceof FormData, headers => headers['Content-Type'] === undefined)
+                .respond(400, null, null, 'Error Message');
             delimitedManagerSvc.upload({})
-                .then(function(value) {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
                 status: 400,
@@ -74,18 +68,10 @@ describe('Delimited Manager service', function() {
             }));
         });
         it('successfully', function() {
-            $httpBackend.expectPOST('/mobirest/delimited-files',
-                function(data) {
-                    return data instanceof FormData;
-                }, function(headers) {
-                    return headers['Content-Type'] === undefined;
-                }).respond(200, '');
+            $httpBackend.expectPOST('/mobirest/delimited-files', data => data instanceof FormData, headers => headers['Content-Type'] === undefined)
+                .respond(200, '');
             delimitedManagerSvc.upload({})
-                .then(function(value) {
-                    expect(value).toEqual('');
-                }, function(response) {
-                    fail('Promise should have resolved');
-                });
+                .then(value => expect(value).toEqual(''), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -100,11 +86,7 @@ describe('Delimited Manager service', function() {
             });
             $httpBackend.expectGET('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '?' + params).respond(400, null, null, 'Error Message');
             delimitedManagerSvc.previewFile(this.rowEnd)
-                .then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
                 status: 400,
@@ -118,11 +100,7 @@ describe('Delimited Manager service', function() {
             });
             $httpBackend.expectGET('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '?' + params).respond(200, []);
             delimitedManagerSvc.previewFile(this.rowEnd)
-                .then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toBe('No rows were found');
-                });
+                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('No rows were found'));
             flushAndVerify($httpBackend);
         });
         it('successfully', function() {
@@ -163,17 +141,10 @@ describe('Delimited Manager service', function() {
                 separator: delimitedManagerSvc.separator
             });
             $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map-preview?' + params,
-                function(data) {
-                    return data instanceof FormData;
-                }, function(headers) {
-                    return headers['Content-Type'] === undefined && headers['Accept'] === 'application/json';
-                }).respond(400, null, null, 'Error Message');
+                data => data instanceof FormData, headers => headers['Content-Type'] === undefined && headers['Accept'] === 'application/json')
+                .respond(400, null, null, 'Error Message');
             delimitedManagerSvc.previewMap(this.jsonld, this.format)
-                .then(function(response) {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
                 status: 400,
@@ -187,17 +158,10 @@ describe('Delimited Manager service', function() {
                 separator: delimitedManagerSvc.separator
             });
             $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map-preview?' + params,
-                function(data) {
-                    return data instanceof FormData;
-                }, function(headers) {
-                    return headers['Content-Type'] === undefined && headers['Accept'] === 'application/json';
-                }).respond(200, []);
+                data => data instanceof FormData, headers => headers['Content-Type'] === undefined && headers['Accept'] === 'application/json')
+                .respond(200, []);
             delimitedManagerSvc.previewMap(this.jsonld, this.format)
-                .then(function(response) {
-                    expect(response).toEqual([]);
-                }, function(response) {
-                    fail('Promise should have resolved');
-                });
+                .then(response => expect(response).toEqual([]), () => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('as other formats using mapping JSON-LD', function() {
@@ -208,17 +172,10 @@ describe('Delimited Manager service', function() {
                 separator: delimitedManagerSvc.separator
             });
             $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map-preview?' + params,
-                function(data) {
-                    return data instanceof FormData;
-                }, function(headers) {
-                    return headers['Content-Type'] === undefined && headers['Accept'] === 'text/plain';
-                }).respond(200, []);
+                data => data instanceof FormData, headers => headers['Content-Type'] === undefined && headers['Accept'] === 'text/plain')
+                .respond(200, []);
             delimitedManagerSvc.previewMap(this.jsonld, this.format)
-                .then(function(response) {
-                    expect(response).toEqual([]);
-                }, function(response) {
-                    fail('Promise should have resolved');
-                });
+                .then(response => expect(response).toEqual([]), () => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -234,11 +191,7 @@ describe('Delimited Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map?' + this.params).respond(400, null, null, 'Error Message');
             delimitedManagerSvc.mapAndUpload(this.mappingRecordIRI, this.datasetRecordIRI)
-                .then(function(response) {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
                 status: 400,
@@ -248,11 +201,7 @@ describe('Delimited Manager service', function() {
         it('successfully', function() {
             $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map?' + this.params).respond(200, '');
             delimitedManagerSvc.mapAndUpload(this.mappingRecordIRI, this.datasetRecordIRI)
-                .then(function(response) {
-                    expect(response).toBe('');
-                }, function(response) {
-                    fail('Promise should have resolved');
-                });
+                .then(response => expect(response).toBe(''), () => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -261,18 +210,16 @@ describe('Delimited Manager service', function() {
             this.params = $httpParamSerializer({
                 ontologyRecordIRI: this.ontologyRecordIRI,
                 mappingRecordIRI: this.mappingRecordIRI,
+                branchIRI: this.branchIRI,
+                update: false,
                 containsHeaders: delimitedManagerSvc.containsHeaders,
                 separator: delimitedManagerSvc.separator
             });
         });
         it('unless an error occurs', function() {
             $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map-to-ontology?' + this.params).respond(400, null, null, 'Error Message');
-            delimitedManagerSvc.mapAndCommit(this.mappingRecordIRI, this.ontologyRecordIRI)
-                .then(function(response) {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+            delimitedManagerSvc.mapAndCommit(this.mappingRecordIRI, this.ontologyRecordIRI, this.branchIRI, this.update)
+                .then(() => fail('Promise should have rejected', response => expect(response).toBe('Error Message')));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
                 status: 400,
@@ -281,12 +228,8 @@ describe('Delimited Manager service', function() {
         });
         it('successfully', function() {
             $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map-to-ontology?' + this.params).respond(204, '');
-            delimitedManagerSvc.mapAndCommit(this.mappingRecordIRI, this.ontologyRecordIRI)
-                .then(function(response) {
-                    expect(response.status).toBe(204);
-                }, function(response) {
-                    fail('Promise should have resolved');
-                });
+            delimitedManagerSvc.mapAndCommit(this.mappingRecordIRI, this.ontologyRecordIRI, this.branchIRI, this.update)
+                .then(response => expect(response.status).toBe(204), () => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
