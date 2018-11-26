@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Merge Request Tabset component', function() {
-    var $compile, scope, $q, mergeRequestManagerSvc, utilSvc;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -29,12 +29,9 @@ describe('Merge Request Tabset component', function() {
         mockMergeRequestManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _mergeRequestManagerService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            $q = _$q_;
-            mergeRequestManagerSvc = _mergeRequestManagerService_;
-            utilSvc = _utilService_;
         });
 
         scope.request = {difference: {additions: [], deletions: []}};
@@ -46,9 +43,6 @@ describe('Merge Request Tabset component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        $q = null;
-        mergeRequestManagerSvc = null;
-        utilSvc = null;
         this.element.remove();
     });
 

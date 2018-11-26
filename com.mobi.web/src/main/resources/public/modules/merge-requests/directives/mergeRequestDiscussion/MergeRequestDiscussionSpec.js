@@ -38,7 +38,7 @@ describe('Merge Request Discussion component', function() {
         });
 
         scope.request = {jsonld: {'@id': 'request'}, comments: []};
-        this.element = $compile(angular.element('<merge-request-discussion request="request" parent-id="parentId"></merge-request-discussion>'))(scope);
+        this.element = $compile(angular.element('<merge-request-discussion request="request"></merge-request-discussion>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('mergeRequestDiscussion');
     });

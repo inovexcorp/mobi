@@ -45,7 +45,7 @@ describe('Merge Request List directive', function() {
         $compile = null;
         scope = null;
         mergeRequestsStateSvc = null;
-        mergeRequestManagerSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
