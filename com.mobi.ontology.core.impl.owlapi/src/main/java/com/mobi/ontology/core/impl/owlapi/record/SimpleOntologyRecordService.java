@@ -166,7 +166,6 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
      */
     protected void clearOntologyCache(OntologyRecord record) {
         ontologyCache.clearCache(record.getResource());
-//        ontologyCache.clearCache(record.getResource(), null);
         record.getOntologyIRI().ifPresent(ontologyCache::clearCacheImports);
     }
 

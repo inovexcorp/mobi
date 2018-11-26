@@ -997,7 +997,7 @@ public class SimpleCatalogManager implements CatalogManager {
         long start = System.currentTimeMillis();
         Optional<Commit> rtn;
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            rtn = Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
+            rtn = utils.optObject(commitId, commitFactory, conn);
         } finally {
             log.trace("getCommit took {}ms", System.currentTimeMillis() - start);
         }

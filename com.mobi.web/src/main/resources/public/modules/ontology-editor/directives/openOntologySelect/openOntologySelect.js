@@ -74,7 +74,7 @@
             dvm.selected = undefined;
             dvm.selectList = [];
 
-            var currentStateId = '';
+            dvm.currentStateId = '';
 
             var catalogId = _.get(dvm.cm.localCatalog, '@id', '');
 
@@ -135,6 +135,14 @@
                 om.deleteOntologyBranch(dvm.listItem.ontologyRecord.recordId, dvm.branch['@id'])
                     .then(() => {
                         dvm.os.removeBranch(dvm.listItem.ontologyRecord.recordId, dvm.branch['@id']);
+                        var currentState = _.find(dvm.state.model, {'@id': dvm.currentStateId});
+                        if (_.isEqual(_.get(currentState, '@type', []), [prefixes.ontologyState + 'StateCommit'])) {
+                            dvm.cm.getCommit(_.get(currentState, "['" + prefixes.ontologyState + "commit'][0]['@id']"))
+                                .then(_.noop, error => {
+                                    dvm.util.createWarningToast('Commit no longer exists. Opening MASTER');
+                                    dvm.changeEntity({'@id': dvm.listItem.masterBranchIRI, '@type': [prefixes.catalog + 'Branch']});
+                                });
+                        }
                     }, dvm.util.createErrorToast);
             }
             dvm.submit = function(branch) {
@@ -149,15 +157,15 @@
             dvm.$doCheck = function() {
                 var recordState = _.find(_.get(dvm.state, 'model', []), {'@type': [prefixes.ontologyState + 'StateRecord']});
                 var currentValue = _.get(recordState, "['" + prefixes.ontologyState + "currentState'][0]['@id']", '');
-                if (currentStateId !== currentValue) {
-                    currentStateId = currentValue;
+                if (dvm.currentStateId !== currentValue) {
+                    dvm.currentStateId = currentValue;
                     setSelected();
                     setSelectList();
                 }
             }
 
             function setSelected() {
-                var currentState = _.find(dvm.state.model, {'@id': currentStateId});
+                var currentState = _.find(dvm.state.model, {'@id': dvm.currentStateId});
                 if (_.includes(_.get(currentState, '@type', []), prefixes.ontologyState + 'StateBranch')) {
                     dvm.selected = _.find(dvm.listItem.branches, {'@id': _.get(currentState, "['" + prefixes.ontologyState + "branch'][0]['@id']")});
                 } else {
