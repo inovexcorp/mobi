@@ -187,6 +187,10 @@
                     $scope.$watch(() => dvm.os.uploadList.length, (newValue, oldValue) => {
                         if (newValue !== oldValue) {
                             dvm.showSnackbar = newValue > 0;
+                        }
+                    });
+                    $scope.$watch(() => dvm.os.uploadPending, (newValue, oldValue) => {
+                        if (newValue !== oldValue) {
                             if (newValue === 0) {
                                 dvm.search();
                             }

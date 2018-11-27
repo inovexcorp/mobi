@@ -87,14 +87,15 @@
                         _.forEach(dvm.state.uploadList, item => httpService.cancel(item.id));
                         dvm.state.uploadList = [];
                         dvm.state.uploadFiles = [];
+                        dvm.state.uploadPending = 0;
                     }
                     dvm.hasPending = function() {
                         return _.some(dvm.state.uploadList, dvm.isPending);
                     }
                     dvm.getTitle = function() {
+                        dvm.state.uploadPending = dvm.getNumberPending();
                         if (dvm.hasPending()) {
-                            var num = dvm.getNumberPending();
-                            return 'Uploading ' + (num === 1 ? '1 item' : num + ' items');
+                            return 'Uploading ' + (dvm.state.uploadPending === 1 ? '1 item' : dvm.state.uploadPending + ' items');
                         } else {
                             return dvm.state.uploadList.length + ' uploads complete';
                         }

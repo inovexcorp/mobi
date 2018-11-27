@@ -143,6 +143,7 @@
                                     dvm.changeEntity({'@id': dvm.listItem.masterBranchIRI, '@type': [prefixes.catalog + 'Branch']});
                                 });
                         }
+                        setSelectList();
                     }, dvm.util.createErrorToast);
             }
             dvm.submit = function(branch) {
