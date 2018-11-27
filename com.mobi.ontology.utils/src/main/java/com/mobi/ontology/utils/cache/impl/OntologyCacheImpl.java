@@ -48,8 +48,8 @@ public class OntologyCacheImpl implements OntologyCache {
     }
 
     @Override
-    public String generateKey(String recordIri, String branchIri, String commitIri) {
-        return String.format("%s&%s&%s", recordIri, branchIri, commitIri);
+    public String generateKey(String recordIri, String commitIri) {
+        return String.format("%s&%s", recordIri, commitIri);
     }
 
     @Override
@@ -76,11 +76,10 @@ public class OntologyCacheImpl implements OntologyCache {
     }
 
     @Override
-    public void clearCache(@Nonnull Resource recordId, Resource branchId) {
-        String key = recordId.toString() + (branchId != null ? "&" + branchId.stringValue() : "");
+    public void clearCache(@Nonnull Resource recordId) {
         getOntologyCache().ifPresent(cache -> {
             for (Cache.Entry<String, Ontology> entry : cache) {
-                if (entry.getKey().startsWith(key)) {
+                if (entry.getKey().startsWith(recordId.stringValue())) {
                     cache.remove(entry.getKey());
                 }
             }
@@ -88,10 +87,10 @@ public class OntologyCacheImpl implements OntologyCache {
     }
 
     @Override
-    public void removeFromCache(String recordIdStr, String branchIdStr, String commitIdStr) {
+    public void removeFromCache(String recordIdStr, String commitIdStr) {
         Cache<String, Ontology> cache;
         Optional<Cache<String, Ontology>> optCache = getOntologyCache();
-        String key = generateKey(recordIdStr, branchIdStr, commitIdStr);
+        String key = generateKey(recordIdStr, commitIdStr);
         if (optCache.isPresent() && (cache = optCache.get()).containsKey(key)) {
             cache.remove(key);
         }

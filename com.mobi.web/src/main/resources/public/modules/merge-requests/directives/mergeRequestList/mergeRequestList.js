@@ -38,19 +38,20 @@
          * @name mergeRequestList.directive:mergeRequestList
          * @scope
          * @restrict E
-         * @requires mergeRequestState.service:mergeRequestStateService
+         * @requires mergeRequestsState.service:mergeRequestsStateService
+         * @requires modal.service:modalService
          *
          * @description
          * `mergeRequestList` is a directive which creates a div containing a {@link block.directive:block}
          * with the list of MergeRequests retrieved by the
-         * {@link mergeRequestsState.service:mergeRequestsStateService}. The directive is replaced
-         * by the contents of its template.
+         * {@link mergeRequestsState.service:mergeRequestsStateService}. The directive houses the method for opening a
+         * modal for deleting merge requests. The directive is replaced by the contents of its template.
          */
         .directive('mergeRequestList', mergeRequestList);
 
-        mergeRequestList.$inject = ['mergeRequestsStateService'];
+        mergeRequestList.$inject = ['mergeRequestsStateService', 'modalService'];
 
-        function mergeRequestList(mergeRequestsStateService) {
+        function mergeRequestList(mergeRequestsStateService, modalService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/merge-requests/directives/mergeRequestList/mergeRequestList.html',
@@ -67,9 +68,9 @@
 
                     dvm.state.setRequests(dvm.state.acceptedFilter);
 
-                    dvm.showDeleteOverlay = function(request) {
-                        dvm.state.requestToDelete = request;
-                        dvm.state.showDelete = true;
+                    dvm.showDeleteOverlay = function(request, event) {
+                        event.stopPropagation();
+                        modalService.openConfirmModal('<p>Are you sure you want to delete ' + request.title + '?</p>', () => dvm.state.deleteRequest(request));
                     }
                 }
             }
