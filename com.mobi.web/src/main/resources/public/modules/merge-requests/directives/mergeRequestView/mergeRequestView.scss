@@ -36,4 +36,37 @@
     .resolve-conflicts {
         border-top: 1px solid var(--light-dark);
     }
+    .details.row {
+        margin: 0px 0px 0px 0px;
+        align-items: center;
+        justify-items: center;
+        word-break: break-all;
+        -webkit-transition: background-color ease-in-out 0.1s;
+        transition: background-color ease-in-out 0.1s;
+
+        .edit-button-container {
+            -webkit-transition: opacity ease-in-out 0.1s;
+            transition: opacity ease-in-out 0.1s;
+            opacity: 0;
+
+            button {
+                text-decoration: none;
+                &:hover {
+                    color: inherit;
+                }
+            }
+        }
+
+        &:hover {
+            background-color: var(--light);
+
+            .edit-button-container {
+                opacity: 1;
+            }
+        }
+
+        .description {
+            padding-bottom: 10px;
+        }
+    }
 }

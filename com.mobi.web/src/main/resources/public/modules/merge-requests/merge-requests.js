@@ -28,6 +28,7 @@
             /* Custom Directives */
             'commentDisplay',
             'createRequest',
+            'editRequestOverlay',
             'mergeRequestDiscussion',
             'mergeRequestList',
             'mergeRequestsPage',

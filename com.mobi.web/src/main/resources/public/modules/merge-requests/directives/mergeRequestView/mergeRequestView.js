@@ -163,6 +163,9 @@
                     dvm.allResolved = function() {
                         return !_.some(dvm.copiedConflicts, {resolved: false});
                     }
+                    dvm.editRequest = function() {
+                        modalService.openModal('editRequestOverlay');
+                    }
 
                     function createResolutions() {
                         var resolutions = {
