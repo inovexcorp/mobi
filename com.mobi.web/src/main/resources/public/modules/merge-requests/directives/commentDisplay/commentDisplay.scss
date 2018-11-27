@@ -1,0 +1,27 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.comment-display {
+    .comment-body {
+        -webkit-transition: background-color ease-in-out 0.1s;
+                transition: background-color ease-in-out 0.1s;
+
+        .button-container {
+            -webkit-transition: opacity ease-in-out 0.1s;
+                    transition: opacity ease-in-out 0.1s;
+            opacity: 0;
+
+            button:hover {
+                text-decoration: none;
+                color: inherit;
+            }
+        }
+        &:hover {
+            background-color: var(--light);
+
+            .button-container {
+                opacity: 1;
+            }
+        }
+    }
+}

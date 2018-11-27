@@ -104,6 +104,17 @@ function injectIndentConstant() {
     });
 }
 
+function injectShowdownConstant() {
+    module(function($provide) {
+        $provide.constant('showdown', {
+            Converter: jasmine.createSpy('Converter').and.returnValue({
+                setFlavor: jasmine.createSpy('setFlavor'),
+                makeHtml: jasmine.createSpy('makeHtml').and.returnValue('')
+            })
+        });
+    });
+}
+
 function injectBeautifyFilter() {
     module(function($provide) {
         $provide.value('beautifyFilter', jasmine.createSpy('beautifyFilter').and.callFake(_.identity));
@@ -1297,6 +1308,9 @@ function mockMergeRequestManager() {
             this.deleteRequest = jasmine.createSpy('deleteRequest').and.returnValue($q.when());
             this.acceptRequest = jasmine.createSpy('acceptRequest').and.returnValue($q.when());
             this.isAccepted = jasmine.createSpy('isAccepted').and.returnValue(false);
+            this.getComments = jasmine.createSpy('getComments').and.returnValue($q.when([]));
+            this.createComment = jasmine.createSpy('createComment').and.returnValue($q.when(''));
+            this.deleteComment = jasmine.createSpy('deleteComment').and.returnValue($q.when());
         });
     });
 }
@@ -1307,10 +1321,6 @@ function mockMergeRequestsState() {
             this.selected = undefined;
             this.acceptedFilter = false;
             this.requests = [];
-            this.showDelete = false;
-            this.requestToDelete = undefined;
-            this.showAccept = false;
-            this.requestToAccept = undefined;
             this.createRequest = false;
             this.createRequestStep = 0;
             this.requestConfig = {};
