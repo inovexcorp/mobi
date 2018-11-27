@@ -22,19 +22,21 @@
  */
 
 describe('Tree Item directive', function() {
-    var $compile, scope, ontologyStateSvc, settingsManagerSvc;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, settingsManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('treeItem');
         injectRegexConstant();
         mockSettingsManager();
+        mockOntologyManager();
         mockOntologyState();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _settingsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _settingsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
+            ontologyManagerSvc = _ontologyManagerService_;
             settingsManagerSvc = _settingsManagerService_;
         });
 
@@ -149,13 +151,13 @@ describe('Tree Item directive', function() {
                 scope.$digest();
                 var result = this.controller.getTreeDisplay();
                 expect(result).toBe('anon');
-                expect(ontologyStateSvc.getEntityNameByIndex).not.toHaveBeenCalled();
+                expect(ontologyManagerSvc.getEntityName).not.toHaveBeenCalled();
             });
-            it('should call getEntityNameByIndex if pretty', function() {
+            it('should call getEntityName if pretty', function() {
                 settingsManagerSvc.getTreeDisplay.and.returnValue('pretty');
                 this.element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
                 scope.$digest();
-                expect(ontologyStateSvc.getEntityNameByIndex).toHaveBeenCalledWith('id', ontologyStateSvc.listItem);
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(this.controller.currentEntity);
             });
         });
         describe('toggleOpen', function() {
