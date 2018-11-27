@@ -93,7 +93,7 @@ describe('Edit Request Overlay Component', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
+    describe('controller bound variable', function() {
         it('close should be called in parent scope when invoked', function() {
             this.controller.close();
             expect(scope.close).toHaveBeenCalled();
