@@ -75,6 +75,7 @@
                     dvm.branches = [];
                     dvm.branchId = undefined;
                     dvm.ontology = undefined;
+                    dvm.update = false;
 
                     dvm.changeOntology = function(ontologyRecord) {
                         if (ontologyRecord) {
@@ -127,7 +128,7 @@
                     }
                     function runMapping(id) {
                         state.mapping.record.id = id;
-                        dm.mapAndCommit(id, dvm.ontology['@id'], dvm.branchId).then(response => {
+                        dm.mapAndCommit(id, dvm.ontology['@id'], dvm.branchId, dvm.update).then(response => {
                             if (response.status === 204) {
                                 dvm.util.createWarningToast('No commit was submitted, commit was empty due to duplicate data', {timeOut: 8000});
                                 reset();
