@@ -40,8 +40,10 @@
          * @restrict E
          * @requires mergeRequestManager.service:mergeRequestManagerService
          * @requires mergeRequestState.service:mergeRequestStateService
-         * @requires modal.service:modalService
          * @requires util.service:utilService
+         * @requires modal.service:modalService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyState.service:ontologytateService
          *
          * @description
          * `mergeRequestView` is a directive which creates a div containing a {@link block.directive:block}
@@ -50,14 +52,14 @@
          * {@link commitDifferenceTabset.directive:commitDifferenceTabset} to display the changes and commits
          * between the source and target branch of the MergeRequest. The block also contains buttons to delete
          * the MergeRequest, accept the MergeRequest, and go back to the
-         * {@link mergeRequestList.directive:mergeRequestList}. This directive is replaced by the contents of its
-         * template.
+         * {@link mergeRequestList.directive:mergeRequestList}. This directive houses the method for opening a
+         * modal for accepting merge requests. This directive is replaced by the contents of its template.
          */
         .directive('mergeRequestView', mergeRequestView);
 
-        mergeRequestView.$inject = ['mergeRequestManagerService', 'mergeRequestsStateService', 'modalService', 'utilService'];
+        mergeRequestView.$inject = ['$q', 'mergeRequestManagerService', 'mergeRequestsStateService', 'utilService', 'modalService', 'ontologyStateService', 'ontologyManagerService'];
 
-        function mergeRequestView(mergeRequestManagerService, mergeRequestsStateService, modalService, utilService) {
+        function mergeRequestView($q, mergeRequestManagerService, mergeRequestsStateService, utilService, modalService, ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/merge-requests/directives/mergeRequestView/mergeRequestView.html',
@@ -66,6 +68,8 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var os = ontologyStateService;
+                    var om = ontologyManagerService;
                     dvm.mm = mergeRequestManagerService;
                     dvm.util = utilService;
                     dvm.state = mergeRequestsStateService;
@@ -86,12 +90,50 @@
                         dvm.state.selected = undefined;
                     }
                     dvm.showDelete = function() {
-                        dvm.state.requestToDelete = dvm.state.selected;
-                        dvm.state.showDelete = true;
+                        modalService.openConfirmModal('<p>Are you sure you want to delete <strong>' + dvm.state.selected.title + '</strong>?</p>', () => dvm.state.deleteRequest(dvm.state.selected));
                     }
                     dvm.showAccept = function() {
-                        dvm.state.requestToAccept = dvm.state.selected;
-                        dvm.state.showAccept = true;
+                        modalService.openConfirmModal('<p>Are you sure that you want to accept <strong>' + dvm.state.selected.title + '</strong>?</p>', dvm.acceptRequest);
+                    }
+                    dvm.acceptRequest = function() {
+                        var requestToAccept = angular.copy(dvm.state.selected);
+                        var targetBranchId = requestToAccept.targetBranch['@id'];
+                        var sourceBranchId = requestToAccept.sourceBranch['@id'];
+                        var removeSource = dvm.state.removeSource(requestToAccept.jsonld);
+                        dvm.mm.acceptRequest(requestToAccept.jsonld['@id'])
+                            .then(() => {
+                                dvm.util.createSuccessToast('Request successfully accepted');
+                                return dvm.mm.getRequest(requestToAccept.jsonld['@id'])
+                            }, $q.reject)
+                            .then(jsonld => {
+                                requestToAccept.jsonld = jsonld;
+                                return dvm.state.setRequestDetails(requestToAccept);
+                            }, $q.reject)
+                            .then(() => {
+                                if (removeSource) {
+                                    return om.deleteOntologyBranch(requestToAccept.recordIri, sourceBranchId)
+                                        .then(() => {
+                                            if (_.some(os.list, {ontologyRecord: {recordId: requestToAccept.recordIri}})) {
+                                                os.removeBranch(requestToAccept.recordIri, sourceBranchId);
+                                            }
+                                        }, $q.reject);
+                                }
+                                return $q.when();
+                            }, $q.reject)
+                            .then(() => {
+                                dvm.state.selected = requestToAccept;
+                                if (!_.isEmpty(os.listItem)) {
+                                    if (_.get(os.listItem, 'ontologyRecord.branchId') === targetBranchId) {
+                                        os.listItem.upToDate = false;
+                                        if (os.listItem.merge.active) {
+                                            dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form.', {timeOut: 5000});
+                                        }
+                                    }
+                                    if (os.listItem.merge.active && _.get(os.listItem.merge.target, '@id') === targetBranchId) {
+                                        dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
+                                    }
+                                }
+                            }, dvm.util.createErrorToast);
                     }
                     dvm.showResolutionForm = function() {
                         dvm.resolveConflicts = true;
