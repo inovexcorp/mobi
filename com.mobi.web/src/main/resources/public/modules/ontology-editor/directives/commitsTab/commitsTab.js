@@ -44,8 +44,9 @@
          * @description
          * `commitsTab` is a directive that creates a page containing the
          * {@link commitHistoryTable.directive:commitHistoryTable} for the current
-         * {@link ontologyState.service:ontologyStateService selected ontology} with a graph. The directive is replaced
-         * by the contents of its template.
+         * {@link ontologyState.service:ontologyStateService selected ontology} with a graph. It also creates a table
+         * with buttons for viewing the ontology at each commit. The directive is replaced by the contents of its
+         * template.
          */
         .directive('commitsTab', commitsTab);
 
@@ -62,9 +63,13 @@
                     var dvm = this;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
+                    dvm.commits = [];
 
                     dvm.getBranchTitle = function() {
                         return dvm.util.getDctermsValue(_.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId}), 'title');
+                    }
+                    dvm.openOntologyAtCommit = function(commit) {
+                        dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, '', commit.id, true)
                     }
                 }
             }

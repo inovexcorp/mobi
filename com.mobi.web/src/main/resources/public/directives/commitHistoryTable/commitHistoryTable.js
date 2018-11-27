@@ -48,12 +48,14 @@
          * the branch identified by the passed record id amd branch JSON-LD object. Can optionally also display a SVG
          * graph generated using Snap.svg showing the network the commits. Clicking on a commit id or its corresponding
          * circle in the graph will open up a {@link commitInfoOverlay.directive:commitInfoOverlay commit info overlay}.
-         * The directive is replaced by the content of the template.
+         * Can optionally provide a variable to bind the retrieved commits to. The directive is replaced by the content
+         * of the template.
          *
          * @param {string} commitId The IRI string of a commit in the local catalog
          * @param {string} branchTitle The title of the branch the user is currently on.
          * @param {string} [targetId=''] targetId limits the commits displayed to only go as far back as this specified
          *      commit.
+         * @param {Object[]} commitData A variable to bind the retrieved commits to
          */
         .directive('commitHistoryTable', commitHistoryTable);
 
@@ -68,7 +70,8 @@
                 bindToController: {
                     commitId: '<',
                     branchTitle: '<',
-                    targetId: '<?'
+                    targetId: '<?',
+                    commitData: '=?'
                 },
                 templateUrl: 'directives/commitHistoryTable/commitHistoryTable.html',
                 link: function(scope, el, attrs, ctrl) {
@@ -118,6 +121,7 @@
                             httpService.cancel(dvm.id);
                             var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId, dvm.id);
                             promise.then(commits => {
+                                dvm.commitData = commits;
                                 dvm.commits = commits;
                                 dvm.error = '';
                                 if ($scope.graph) {
@@ -126,12 +130,14 @@
                             }, errorMessage => {
                                 dvm.error = errorMessage;
                                 dvm.commits = [];
+                                dvm.commitData = [];
                                 if ($scope.graph) {
                                     dvm.reset();
                                 }
                             });
                         } else {
                             dvm.commits = [];
+                            dvm.commitData = [];
                             if ($scope.graph) {
                                 dvm.reset();
                             }
@@ -156,7 +162,9 @@
                             colorIdx++;
                             c.circle.attr({fill: color});
                             cols.push({x: 0, commits: [c.commit.id], color: color});
-                            drawBranchTitle(c.circle);
+                            if (dvm.branchTitle) {
+                                drawBranchTitle(c.circle);
+                            }
                             recurse(c);
                             // Update deltaX based on how many columns there are or the minimum width
                             dvm.deltaX = _.max([dvm.deltaX + xI * dvm.columnSpacing, titleWidth + 10 + dvm.circleRadius]);
