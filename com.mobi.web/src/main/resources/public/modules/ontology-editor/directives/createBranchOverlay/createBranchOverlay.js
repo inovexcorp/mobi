@@ -40,7 +40,6 @@
          * @restrict E
          * @requires catalogManager.service:catalogManagerService
          * @requires ontologyState.service:ontologyStateService
-         * @requires stateManager.service:stateManagerService
          * @requires prefixes.service:prefixes
          *
          * @description
@@ -54,9 +53,9 @@
          */
         .directive('createBranchOverlay', createBranchOverlay);
 
-        createBranchOverlay.$inject = ['$q', 'catalogManagerService', 'ontologyStateService', 'stateManagerService', 'prefixes'];
+        createBranchOverlay.$inject = ['$q', 'catalogManagerService', 'ontologyStateService', 'prefixes'];
 
-        function createBranchOverlay($q, catalogManagerService, ontologyStateService, stateManagerService, prefixes) {
+        function createBranchOverlay($q, catalogManagerService, ontologyStateService, prefixes) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/ontology-editor/directives/createBranchOverlay/createBranchOverlay.html',
@@ -68,7 +67,6 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     var cm = catalogManagerService;
-                    var sm = stateManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
 
                     dvm.os = ontologyStateService;
@@ -90,7 +88,7 @@
                             dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
                             commitId = branch[prefixes.catalog + 'head'][0]['@id'];
                             dvm.os.listItem.upToDate = true;
-                            return sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, commitId);
+                            return dvm.os.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, commitId, dvm.os.listItem.ontologyRecord.branchId);
                         }, $q.reject)
                         .then(() => {
                             $scope.close();

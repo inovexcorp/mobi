@@ -40,7 +40,6 @@
          * @restrict E
          * @requires ontologyState.service:ontologyStateService
          * @requires catalogManager.service:catalogManagerService
-         * @requires stateManager.service:stateManagerService
          * @requires util.service:utilService
          *
          * @description
@@ -54,9 +53,9 @@
          */
         .directive('commitOverlay', commitOverlay);
 
-        commitOverlay.$inject = ['$q', 'ontologyStateService', 'catalogManagerService', 'stateManagerService', 'utilService'];
+        commitOverlay.$inject = ['$q', 'ontologyStateService', 'catalogManagerService', 'utilService'];
 
-        function commitOverlay($q, ontologyStateService, catalogManagerService, stateManagerService, utilService) {
+        function commitOverlay($q, ontologyStateService, catalogManagerService, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/ontology-editor/directives/commitOverlay/commitOverlay.html',
@@ -68,7 +67,6 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     var cm = catalogManagerService;
-                    var sm = stateManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
                     var util = utilService;
 
@@ -113,7 +111,7 @@
                         cm.createBranchCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.comment)
                             .then(commitIri => {
                                 commitId = commitIri;
-                                return sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId);
+                                return dvm.os.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, commitId, branchId);
                             }, $q.reject)
                             .then(() => {
                                 dvm.os.listItem.ontologyRecord.branchId = branchId;

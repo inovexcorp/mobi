@@ -499,11 +499,12 @@ public interface CatalogManager {
      * @param catalogId            The Resource identifying the Catalog which contains the Record.
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
      * @param branchId             The Resource identifying the Branch you want to remove.
+     * @return List of IRIs of all the Commits removed as part of the Branch
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
      *                                  Record does not belong to the Catalog, or the Branch could not be found.
      * @throws IllegalStateException    Thrown if a Commit in the Branch does not have the additions/deletions set.
      */
-    void removeBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId);
+    List<Resource> removeBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId);
 
     /**
      * Gets the Branch identified by the provided Resources. The Branch will be of type T which is determined by the
