@@ -349,6 +349,10 @@ describe('Merge Request View directive', function() {
             expect(this.controller.copiedConflicts).toEqual([]);
             expect(this.controller.resolveError).toEqual(false);
         });
+        it('should call modal service to open edit overlay', function() {
+            this.controller.editRequest();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('editRequestOverlay');
+        });
         it('should test whether all conflicts are resolved', function() {
             expect(this.controller.allResolved()).toEqual(true);
 

@@ -221,7 +221,7 @@
             self.setRequests = function(accepted = false) {
                 mm.getRequests({accepted})
                     .then(data => {
-                        self.requests = _.map(data, getRequestObj);
+                        self.requests = _.map(data, self.getRequestObj);
                         var recordsToRetrieve = _.uniq(_.map(self.requests, 'recordIri'));
                         return $q.all(_.map(recordsToRetrieve, iri => cm.getRecord(iri, catalogId)));
                     }, $q.reject)
@@ -358,15 +358,7 @@
                     }, util.createErrorToast);
             }
 
-            function getDate(jsonld) {
-                var dateStr = util.getDctermsValue(jsonld, 'issued');
-                return util.getDate(dateStr, 'shortDate');
-            }
-            function getCreator(jsonld) {
-                var iri = util.getDctermsId(jsonld, 'creator');
-                return _.get(_.find(um.users, {iri}), 'username');
-            }
-            function getRequestObj(jsonld) {
+            self.getRequestObj = function(jsonld) {
                 return {
                     jsonld,
                     title: util.getDctermsValue(jsonld, 'title'),
@@ -375,6 +367,15 @@
                     recordIri: util.getPropertyId(jsonld, prefixes.mergereq + 'onRecord'),
                     assignees: _.map(_.get(jsonld, "['" + prefixes.mergereq + "assignee']"), obj => _.get(_.find(um.users, {iri: obj['@id']}), 'username'))
                 };
+            }
+
+            function getDate(jsonld) {
+                var dateStr = util.getDctermsValue(jsonld, 'issued');
+                return util.getDate(dateStr, 'shortDate');
+            }
+            function getCreator(jsonld) {
+                var iri = util.getDctermsId(jsonld, 'creator');
+                return _.get(_.find(um.users, {iri}), 'username');
             }
         }
 })();

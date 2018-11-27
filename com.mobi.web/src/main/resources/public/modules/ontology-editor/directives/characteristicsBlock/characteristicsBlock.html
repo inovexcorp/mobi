@@ -25,6 +25,6 @@
         <h5>Characteristics</h5>
     </div>
     <div class="pt-2">
-        <checkbox ng-repeat="(key, obj) in dvm.characteristics | filter:dvm.filter" is-disabled="dvm.os.listItem.selected.mobi.imported" ng-model="obj.checked" display-text="obj.displayText" change-event="dvm.onChange(obj)"></checkbox>
+        <checkbox ng-repeat="(key, obj) in dvm.characteristics | filter:dvm.filter" is-disabled="dvm.os.listItem.selected.mobi.imported || !dvm.os.canModify()" ng-model="obj.checked" display-text="obj.displayText" change-event="dvm.onChange(obj)"></checkbox>
     </div>
 </div>
