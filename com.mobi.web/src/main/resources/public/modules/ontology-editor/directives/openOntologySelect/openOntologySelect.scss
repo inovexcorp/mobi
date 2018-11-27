@@ -1,7 +1,7 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.ontology-branch-select {
+.open-ontology-select {
     padding: 0 1rem;
 
     input {
@@ -16,8 +16,12 @@
             font-size: 12px;
             line-height: 20px;
         }
+        .ui-select-choices-group-label {
+            font-size: 12px;
+            padding: 3px 8px;
+        }
     }
-    .branch-display {
+    .entity-display {
         display: flex;
         flex-direction: row;
 

@@ -66,6 +66,8 @@ describe('Ontology Button Stack directive', function() {
             expect(this.element.find('circle-button').length).toBe(5);
         });
         it('depending on whether the ontology is committable', function() {
+            ontologyStateSvc.listItem.ontologyRecord.branchId = 'branch';
+            scope.$digest();
             var commitButton = angular.element(this.element.querySelectorAll('circle-button.btn-info')[0]);
             var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
             expect(commitButton.attr('disabled')).toBeTruthy();
@@ -115,6 +117,16 @@ describe('Ontology Button Stack directive', function() {
             expect(commitButton.attr('disabled')).toBeTruthy();
             expect(createEntityButton.attr('disabled')).toBeTruthy();
             expect(mergeButton.attr('disabled')).toBeTruthy();
+        });
+        it('depending on whether the ontology is open on a branch', function() {
+            ontologyStateSvc.isCommittable.and.returnValue(true);
+            scope.$digest();
+            var commitButton = angular.element(this.element.querySelectorAll('circle-button.btn-info')[0]);
+            expect(commitButton.attr('disabled')).toBeTruthy();
+
+            ontologyStateSvc.listItem.ontologyRecord.branchId = 'branch';
+            scope.$digest();
+            expect(commitButton.attr('disabled')).toBeFalsy();
         });
     });
     describe('controller methods', function() {

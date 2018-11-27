@@ -113,7 +113,7 @@ describe('Ontology Sidebar directive', function() {
             scope.$digest();
             var tab = angular.element(this.element.querySelectorAll('li.nav-item')[0]);
             expect(tab.hasClass('active')).toEqual(true);
-            expect(tab.find('ontology-branch-select').length).toEqual(1);
+            expect(tab.find('open-ontology-select').length).toEqual(1);
         });
     });
     it('should call onClick when the Ontologies button is clicked', function() {

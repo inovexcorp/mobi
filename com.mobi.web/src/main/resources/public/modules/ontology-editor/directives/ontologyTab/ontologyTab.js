@@ -31,6 +31,9 @@
          * @scope
          * @restrict E
          * @requires ontologyState.service:ontologyStateService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * `ontologyTab` is a directive that creates a `div` containing all the directives necessary for
@@ -46,9 +49,9 @@
          */
         .directive('ontologyTab', ontologyTab);
 
-        ontologyTab.$inject = ['$q', 'ontologyStateService', 'stateManagerService', 'catalogManagerService', 'utilService', 'prefixes'];
+        ontologyTab.$inject = ['$q', 'ontologyStateService', 'catalogManagerService', 'utilService', 'prefixes'];
 
-        function ontologyTab($q, ontologyStateService, stateManagerService, catalogManagerService, utilService, prefixes) {
+        function ontologyTab($q, ontologyStateService, catalogManagerService, utilService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -57,7 +60,6 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var sm = stateManagerService;
                     var cm = catalogManagerService;
                     var util = utilService;
 
@@ -65,10 +67,10 @@
                     dvm.savedChanges = '<i class="fa fa-exclamation-triangle"></i> Changes';
 
                     function checkBranchExists() {
-                        if (!_.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId})) {
+                        if (dvm.os.listItem.ontologyRecord.branchId && !_.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId})) {
                             var catalogId = _.get(cm.localCatalog, '@id', '');
                             var masterBranch = _.find(dvm.os.listItem.branches, branch => util.getDctermsValue(branch, 'title') === 'MASTER')['@id'];
-                            var state = sm.getOntologyStateByRecordId(dvm.os.listItem.ontologyRecord.recordId);
+                            var state = dvm.os.getOntologyStateByRecordId(dvm.os.listItem.ontologyRecord.recordId);
                             var commitId = util.getPropertyId(_.find(state.model, {[prefixes.ontologyState + 'branch']: [{'@id': masterBranch}]}), prefixes.ontologyState + 'commit');
                             cm.getBranchHeadCommit(masterBranch, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                                 .then(headCommit => {
@@ -77,7 +79,7 @@
                                         commitId = headCommitId;
                                     }
                                     return $q.all([
-                                        sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, masterBranch, commitId),
+                                        dvm.os.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, commitId, masterBranch),
                                         dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, masterBranch, commitId, commitId === headCommitId)
                                     ]);
                                 }, $q.reject)

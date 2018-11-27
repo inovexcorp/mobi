@@ -1497,4 +1497,12 @@ describe('Catalog Manager service', function() {
         entity['@type'].push(prefixes.catalog + 'Test');
         expect(catalogManagerSvc.isVersion(entity)).toBe(true);
     });
+    it('should test whether an entity is a Commit', function() {
+        var entity = {'@type': []};
+        expect(catalogManagerSvc.isCommit(entity)).toBe(false);
+        entity['@type'].push(prefixes.catalog + 'Commit');
+        expect(catalogManagerSvc.isCommit(entity)).toBe(true);
+        entity['@type'].push(prefixes.catalog + 'Test');
+        expect(catalogManagerSvc.isCommit(entity)).toBe(true);
+    });
 });

@@ -1,0 +1,11 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.merge-request-discussion {
+    comment-display.reply .comment-display {
+        margin-left: 3rem !important;
+    }
+    reply-comment.reply .reply-comment {
+        margin-left: 3rem !important;
+    }
+}
