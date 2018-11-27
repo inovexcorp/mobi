@@ -201,7 +201,7 @@
             }
             /**
              * @ngdoc method
-             * @name deleteComment
+             * @name createComment
              * @methodOf mergeRequestManager.service:mergeRequestManagerService
              *
              * @description
@@ -235,7 +235,7 @@
              * Determines whether the passed request is accepted or not.
              *
              * @param {Object} request A MergeRequest JSON-LD object
-             * @return {booelan} True if the MergeRequest is accepted; false otherwise
+             * @return {boolean} True if the MergeRequest is accepted; false otherwise
              */
             self.isAccepted = function(request) {
                 return _.includes(request['@type'], prefixes.mergereq + 'AcceptedMergeRequest');
