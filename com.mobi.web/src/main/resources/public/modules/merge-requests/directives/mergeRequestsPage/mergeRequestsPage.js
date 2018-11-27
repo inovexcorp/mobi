@@ -39,24 +39,19 @@
          * @scope
          * @restrict E
          * @requires mergeRequestsState.service:mergeRequestsStateService
-         * @requires mergeRequestManager.service:mergeRequestManagerService
-         * @requires util.service:utilService
-         * @requires ontologyState.service:ontologyStateService
-         * @requires ontologyManager.service:ontologyManagerService
          *
          * @description
          * `mergeRequestsPage` is a directive which creates a div containing the main parts of the Merge Requests
-         * tool and {@link confirmationOverlay.directive:confirmationOverlay confirmation overlays} for deleting and
-         * accepting MergeRequests. The main parts of the page are the {@link mergeRequestList.directive:mergeRequestList},
+         * tool. The main parts of the page are the {@link mergeRequestList.directive:mergeRequestList},
          * {@link mergeRequestView.directive:mergeRequestView}, and
          * {@link createRequest.directive:createRequest createRequest page}. The directive is replaced by the contents
          * of its template.
          */
         .directive('mergeRequestsPage', mergeRequestsPage);
 
-    mergeRequestsPage.$inject = ['$q', 'mergeRequestsStateService', 'mergeRequestManagerService', 'utilService', 'ontologyStateService', 'ontologyManagerService'];
+    mergeRequestsPage.$inject = ['mergeRequestsStateService'];
 
-    function mergeRequestsPage($q, mergeRequestsStateService, mergeRequestManagerService, utilService, ontologyStateService, ontologyManagerService) {
+    function mergeRequestsPage(mergeRequestsStateService) {
         return {
             restrict: 'E',
             templateUrl: 'modules/merge-requests/directives/mergeRequestsPage/mergeRequestsPage.html',
@@ -65,75 +60,7 @@
             controllerAs: 'dvm',
             controller: function() {
                 var dvm = this;
-                var mm = mergeRequestManagerService;
-                var util = utilService;
-                var os = ontologyStateService;
-                var om = ontologyManagerService;
                 dvm.state = mergeRequestsStateService;
-                dvm.errorMessage = '';
-
-                dvm.closeDelete = function() {
-                    dvm.state.requestToDelete = undefined;
-                    dvm.state.showDelete = false;
-                    dvm.errorMessage = '';
-                }
-                dvm.deleteRequest = function() {
-                    mm.deleteRequest(dvm.state.requestToDelete.jsonld['@id'])
-                        .then(() => {
-                            var hasSelected = !!dvm.state.selected;
-                            dvm.state.selected = undefined;
-                            util.createSuccessToast('Request successfully deleted');
-                            dvm.closeDelete();
-                            if (!hasSelected) {
-                                dvm.state.setRequests(dvm.state.acceptedFilter);
-                            }
-                        }, error => dvm.errorMessage = error);
-                }
-                dvm.closeAccept = function() {
-                    dvm.state.requestToAccept = undefined;
-                    dvm.state.showAccept = false;
-                    dvm.errorMessage = '';
-                }
-                dvm.acceptRequest = function() {
-                    var targetBranchId = dvm.state.requestToAccept.targetBranch['@id'];
-                    var sourceBranchId = dvm.state.requestToAccept.sourceBranch['@id'];
-                    var removeSource = dvm.state.removeSource(dvm.state.requestToAccept.jsonld);
-                    mm.acceptRequest(dvm.state.requestToAccept.jsonld['@id'])
-                        .then(() => {
-                            util.createSuccessToast('Request successfully accepted');
-                            return mm.getRequest(dvm.state.selected.jsonld['@id'])
-                        }, $q.reject)
-                        .then(jsonld => {
-                            dvm.state.requestToAccept.jsonld = jsonld;
-                            return dvm.state.setRequestDetails(dvm.state.requestToAccept);
-                        }, $q.reject)
-                        .then(() => {
-                            if (removeSource) {
-                                return om.deleteOntologyBranch(dvm.state.requestToAccept.recordIri, sourceBranchId)
-                                    .then(() => {
-                                        if (_.some(os.list, {ontologyRecord: {recordId: dvm.state.requestToAccept.recordIri}})) {
-                                            os.removeBranch(dvm.state.requestToAccept.recordIri, sourceBranchId);
-                                        }
-                                    }, $q.reject);
-                            }
-                            return $q.when();
-                        }, $q.reject)
-                        .then(() => {
-                            dvm.state.selected = dvm.state.requestToAccept;
-                            dvm.closeAccept();
-                            if (!_.isEmpty(os.listItem)) {
-                                if (_.get(os.listItem, 'ontologyRecord.branchId') === targetBranchId) {
-                                    os.listItem.upToDate = false;
-                                    if (os.listItem.merge.active) {
-                                        util.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form.', {timeOut: 5000});
-                                    }
-                                }
-                                if (os.listItem.merge.active && _.get(os.listItem.merge.target, '@id') === targetBranchId) {
-                                    util.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
-                                }
-                            }
-                        }, error => dvm.errorMessage = error);
-                }
             }
         }
     }

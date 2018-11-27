@@ -20,12 +20,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="merge-requests-page">
-    <div class="padding h-100 row">
-        <div class="col-8 offset-2 h-100">
-            <merge-request-list ng-if="!dvm.state.selected && !dvm.state.createRequest" class="h-100"></merge-request-list>
-            <merge-request-view ng-if="dvm.state.selected" class="h-100"></merge-request-view>
-            <create-request ng-if="dvm.state.createRequest" class="h-100"></create-request>
+<div class="comment-display">
+    <p class="comment-title mb-1 pb-1 border-bottom">
+        <strong>{{dvm.getCreator()}}</strong> <span class="text-muted">{{dvm.isReply ? 'replied' : 'commented'}} on {{dvm.getIssued() | date:'short'}}</span>
+    </p>
+    <div class="comment-body d-flex p-1">
+        <div class="comment-body-text flex-1 remove-min-width" ng-bind-html="dvm.getComment() | trusted"></div>
+        <div class="button-container">
+            <button ng-if="dvm.isCreator() && !dvm.mm.isAccepted(dvm.request.jsonld)" type="button" class="btn btn-link remove-min-width p-0 fa fa-times fa-fw" ng-click="dvm.confirmDelete()" title="Delete"></button>
         </div>
     </div>
 </div>
