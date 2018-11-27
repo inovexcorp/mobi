@@ -40,7 +40,6 @@
          * @restrict E
          * @requires ontologyState.service:ontologyStateService
          * @requires prefixes.service:prefixes
-         * @requires stateManager.service:stateManagerService
          * @requires util.service:utilService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
@@ -55,9 +54,9 @@
          */
         .directive('newOntologyOverlay', newOntologyOverlay);
 
-        newOntologyOverlay.$inject = ['$q', '$filter', 'REGEX', 'ontologyStateService', 'prefixes', 'stateManagerService', 'utilService', 'ontologyUtilsManagerService'];
+        newOntologyOverlay.$inject = ['$q', '$filter', 'REGEX', 'ontologyStateService', 'prefixes', 'utilService', 'ontologyUtilsManagerService'];
 
-        function newOntologyOverlay($q, $filter, REGEX, ontologyStateService, prefixes, stateManagerService, utilService, ontologyUtilsManagerService) {
+        function newOntologyOverlay($q, $filter, REGEX, ontologyStateService, prefixes, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 scope: {
@@ -67,7 +66,6 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    var sm = stateManagerService;
                     var util = utilService;
                     var ontoUtils = ontologyUtilsManagerService;
 
@@ -89,7 +87,7 @@
                         }
                         ontoUtils.addLanguageToNewEntity(dvm.os.newOntology, dvm.os.newLanguage);
                         dvm.os.createOntology(dvm.os.newOntology, title, description, _.map(dvm.os.newKeywords, _.trim))
-                            .then(response => sm.createOntologyState(response.recordId, response.branchId, response.commitId), $q.reject)
+                            .then(response => dvm.os.createOntologyState(response.recordId, response.commitId, response.branchId), $q.reject)
                             .then(() => $scope.close(), onError);
                     }
                     dvm.cancel = function() {

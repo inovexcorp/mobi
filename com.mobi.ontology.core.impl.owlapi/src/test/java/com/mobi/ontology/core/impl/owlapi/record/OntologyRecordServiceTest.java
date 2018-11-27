@@ -255,7 +255,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         when(utilsService.getRevisionChanges(eq(commitIRI), eq(connection))).thenReturn(difference);
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
         doNothing().when(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(testIRI), any(RepositoryConnection.class));
-        doNothing().when(ontologyCache).clearCache(any(Resource.class), any(Resource.class));
+        doNothing().when(ontologyCache).clearCache(any(Resource.class));
         doNothing().when(ontologyCache).clearCacheImports(any(Resource.class));
         when(xacmlPolicyManager.addPolicy(any(XACMLPolicy.class))).thenReturn(recordPolicyIRI);
         when(connection.getStatements(eq(null), eq(VALUE_FACTORY.createIRI(Policy.relatedResource_IRI)), any(IRI.class))).thenReturn(results);
@@ -444,7 +444,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         verify(utilsService).removeVersion(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).removeBranch(eq(testRecord.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
         verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));
-        verify(ontologyCache).clearCache(any(Resource.class), any(Resource.class));
+        verify(ontologyCache).clearCache(any(Resource.class));
         verify(ontologyCache).clearCacheImports(any(Resource.class));
     }
 

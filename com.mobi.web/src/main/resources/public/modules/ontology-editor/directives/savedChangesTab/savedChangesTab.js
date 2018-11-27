@@ -40,7 +40,6 @@
          * @restrict E
          * @requires ontologyState.service:ontologyStateService
          * @requires ontologyManager.service:ontologyManagerService
-         * @requires stateManager.service:stateManagerService
          * @requires util.service:utilService
          * @requires catalogManager.service:catalogManagerService
          * @requires prefixes.service:prefixes
@@ -61,9 +60,9 @@
          */
         .directive('savedChangesTab', savedChangesTab);
 
-        savedChangesTab.$inject = ['$q', 'ontologyStateService', 'ontologyManagerService', 'stateManagerService', 'utilService', 'catalogManagerService', 'prefixes'];
+        savedChangesTab.$inject = ['$q', 'ontologyStateService', 'ontologyManagerService', 'utilService', 'catalogManagerService', 'prefixes'];
 
-        function savedChangesTab($q, ontologyStateService, ontologyManagerService, stateManagerService, utilService, catalogManagerService, prefixes) {
+        function savedChangesTab($q, ontologyStateService, ontologyManagerService, utilService, catalogManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -74,7 +73,6 @@
                     var dvm = this;
                     var cm = catalogManagerService;
                     var om = ontologyManagerService;
-                    var sm = stateManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
                     var typeIRI = prefixes.rdf + 'type';
                     var types = [prefixes.owl + 'Class', prefixes.owl + 'ObjectProperty', prefixes.owl + 'DatatypeProperty', prefixes.owl + 'AnnotationProperty', prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept', prefixes.skos + 'ConceptScheme'];
@@ -122,7 +120,7 @@
                                 dvm.os.listItem.branches.push(branch);
                                 dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
                                 var commitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
-                                return sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, createdBranchId, commitId);
+                                return dvm.os.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, commitId, createdBranchId);
                             }, $q.reject)
                             .then(() => {
                                 return om.deleteOntologyBranch(dvm.os.listItem.ontologyRecord.recordId, userBranchId);

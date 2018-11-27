@@ -222,7 +222,7 @@ public class OntologyRestImpl implements OntologyRest {
                                 boolean applyInProgressCommit) {
         try {
             if (clearCache) {
-                ontologyCache.removeFromCache(recordIdStr, branchIdStr, commitIdStr);
+                ontologyCache.removeFromCache(recordIdStr, commitIdStr);
             }
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit)
                     .orElseThrow(() ->
@@ -1137,7 +1137,7 @@ public class OntologyRestImpl implements OntologyRest {
         checkStringParam(recordIdStr, "The recordIdStr is missing.");
         Optional<Ontology> optionalOntology;
         Optional<Cache<String, Ontology>> cache = ontologyCache.getOntologyCache();
-        String key = ontologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
+        String key = ontologyCache.generateKey(recordIdStr, commitIdStr);
 
         try {
             if (cache.isPresent() && cache.get().containsKey(key)) {
@@ -1148,9 +1148,13 @@ public class OntologyRestImpl implements OntologyRest {
                 Resource recordId = valueFactory.createIRI(recordIdStr);
 
                 if (StringUtils.isNotBlank(commitIdStr)) {
-                    checkStringParam(branchIdStr, "The branchIdStr is missing.");
-                    optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr),
-                            valueFactory.createIRI(commitIdStr));
+                    if (StringUtils.isNotBlank(branchIdStr)) {
+                        optionalOntology = ontologyManager.retrieveOntology(recordId,
+                                valueFactory.createIRI(branchIdStr), valueFactory.createIRI(commitIdStr));
+                    } else {
+                        optionalOntology = ontologyManager.retrieveOntologyByCommit(recordId,
+                                valueFactory.createIRI(commitIdStr));
+                    }
                 } else if (StringUtils.isNotBlank(branchIdStr)) {
                     optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
                 } else {
