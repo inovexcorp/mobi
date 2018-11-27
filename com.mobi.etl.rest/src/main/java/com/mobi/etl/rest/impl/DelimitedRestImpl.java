@@ -354,18 +354,18 @@ public class DelimitedRestImpl implements DelimitedRest {
             if (ontologyObjectIterator.hasNext()) {
                 mappingData.addAll(ontologyData.filter(ontologyObjectIterator.next().getSubject(), null, null));
             } else {
-                throw ErrorUtils.sendError("OntologyRecord " + ontologyRecordIRI + " is missing ontology object.",
-                        Response.Status.BAD_REQUEST);
+                logger.info("OntologyRecord " + ontologyRecordIRI + " does not have an ontology object. Continuing"
+                        + " with mapping update.");
             }
 
             Difference diff = catalogManager.getDiff(ontologyData, mappingData);
-            if (!diff.getAdditions().isEmpty() && !diff.getDeletions().isEmpty()) {
+            if (!diff.getAdditions().isEmpty() || !diff.getDeletions().isEmpty()) {
                 versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), branchId, user,
                         "Mapping data from " + mappingRecordIRI, diff.getAdditions(), diff.getDeletions());
                 response = Response.ok().build();
             } else {
                 response = Response.status(204).entity("No commit was submitted. No differences detected between "
-                        + "mapping and ontology.").build();
+                        + "mapping result data and ontology.").build();
             }
         } else {
             mappingData.removeAll(ontologyData);

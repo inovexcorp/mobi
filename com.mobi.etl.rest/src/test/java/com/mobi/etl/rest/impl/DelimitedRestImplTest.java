@@ -711,29 +711,29 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
     @Test
     public void mapIntoOntologyRecordWithoutMappingTest() {
         Response response = target().path("delimited-files/test.csv/map-to-ontology").queryParam("mappingRecordIRI", "")
-                .queryParam("update", false) .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
+                .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
 
         response = target().path("delimited-files/test.csv/map-to-ontology").queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI)
-                .queryParam("update", false).queryParam("update", false).request().post(Entity.json(""));
+               .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void mapIntoOntologyRecordWithoutOntologyTest() {
         Response response = target().path("delimited-files/test.csv/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
-                .queryParam("ontologyRecordIRI", "").queryParam("update", false).request().post(Entity.json(""));
+                .queryParam("ontologyRecordIRI", "").request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
 
         response = target().path("delimited-files/test.csv/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
-                .queryParam("update", false).request().post(Entity.json(""));
+                .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void mapIntoNonexistentOntologyRecordTest() {
         Response response = target().path("delimited-files/test.csv/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
-                .queryParam("ontologyRecordIRI", ERROR_IRI).queryParam("update", false).request().post(Entity.json(""));
+                .queryParam("ontologyRecordIRI", ERROR_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -744,7 +744,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         copyResourceToTemp("test.csv", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", ERROR_IRI)
-                .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).queryParam("update", false).request().post(Entity.json(""));
+                .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -755,7 +755,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         copyResourceToTemp("test.csv", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", "error")
-                .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).queryParam("update", false).request().post(Entity.json(""));
+                .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -767,7 +767,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         copyResourceToTemp("test.csv", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
-                .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).queryParam("update", false).request().post(Entity.json(""));
+                .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -787,7 +787,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).queryParam("branchIRI", ONTOLOGY_RECORD_BRANCH_IRI)
-                .queryParam("update", false).request().post(Entity.json(""));
+                .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 200);
         assertEquals(model, expectedModel);
         verify(catalogManager).getRecord(eq(catalogId), eq(vf.createIRI(ONTOLOGY_RECORD_IRI)), eq(ontologyRecordFactory));
@@ -811,7 +811,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).queryParam("branchIRI", MASTER_BRANCH_IRI)
-                .queryParam("update", false).request().post(Entity.json(""));
+                .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 200);
         assertEquals(model, expectedModel);
         verify(ontologyManager).getOntologyModel(vf.createIRI(ONTOLOGY_RECORD_IRI), vf.createIRI(MASTER_BRANCH_IRI));
@@ -835,7 +835,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).queryParam("branchIRI", ONTOLOGY_RECORD_BRANCH_IRI)
-                .queryParam("update", false).request().post(Entity.json(""));
+                .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 204);
         assertEquals(model, expectedModel);
         verify(ontologyManager).getOntologyModel(vf.createIRI(ONTOLOGY_RECORD_IRI), vf.createIRI(ONTOLOGY_RECORD_BRANCH_IRI));
@@ -895,28 +895,6 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
     }
 
     @Test
-    public void mapCSVUpdateIntoOntologyRecordNoOntologyObjTest() throws Exception {
-        // Setup:
-        Statement statement1 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-1"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
-        Statement statement2 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-2"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
-        Statement deleted = vf.createStatement(vf.createIRI("urn:deleted"),  vf.createIRI("http://test.org/property"), vf.createLiteral(true));
-
-        com.mobi.rdf.api.Model model = mf.createModel(Stream.of(statement1, statement2).collect(Collectors.toList()));
-        com.mobi.rdf.api.Model ontologyModel = mf.createModel(Stream.of(statement1, deleted).collect(Collectors.toList()));
-        when(converter.convert(any(SVConfig.class))).thenReturn(model);
-        when(ontologyManager.getOntologyModel(any(Resource.class), any(Resource.class))).thenReturn(ontologyModel);
-        String fileName = UUID.randomUUID().toString() + ".csv";
-        copyResourceToTemp("test.csv", fileName);
-
-        Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
-                .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).queryParam("branchIRI", ONTOLOGY_RECORD_BRANCH_IRI)
-                .queryParam("update", true).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
-        verify(catalogManager).getRecord(eq(catalogId), eq(vf.createIRI(ONTOLOGY_RECORD_IRI)), eq(ontologyRecordFactory));
-        verify(ontologyManager).getOntologyModel(vf.createIRI(ONTOLOGY_RECORD_IRI), vf.createIRI(ONTOLOGY_RECORD_BRANCH_IRI));
-    }
-
-    @Test
     public void mapExcelAdditionsIntoOntologyRecordTest() throws Exception {
         // Setup:
         Statement statement1 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-1"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
@@ -933,7 +911,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).queryParam("branchIRI", MASTER_BRANCH_IRI)
-                .queryParam("update", false).request().post(Entity.json(""));
+                .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 200);
         assertEquals(model, expectedModel);
         verify(catalogManager).getRecord(eq(catalogId), eq(vf.createIRI(ONTOLOGY_RECORD_IRI)), eq(ontologyRecordFactory));

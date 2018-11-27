@@ -187,7 +187,7 @@ public interface DelimitedRest {
                              @QueryParam("mappingRecordIRI") String mappingRecordIRI,
                              @QueryParam("ontologyRecordIRI") String ontologyRecordIRI,
                              @QueryParam("branchIRI") String branchIRI,
-                             @QueryParam("update") boolean update,
+                             @DefaultValue("false") @QueryParam("update") boolean update,
                              @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
                              @DefaultValue(",") @QueryParam("separator") String separator);
 }
