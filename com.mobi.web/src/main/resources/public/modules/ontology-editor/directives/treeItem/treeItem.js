@@ -27,9 +27,9 @@
         .module('treeItem', [])
         .directive('treeItem', treeItem);
 
-        treeItem.$inject = ['settingsManagerService', 'ontologyStateService', 'ontologyManagerService'];
+        treeItem.$inject = ['settingsManagerService', 'ontologyStateService'];
 
-        function treeItem(settingsManagerService, ontologyStateService, ontologyManagerService) {
+        function treeItem(settingsManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -50,11 +50,10 @@
                     var dvm = this;
                     var treeDisplay = settingsManagerService.getTreeDisplay();
                     var os = ontologyStateService;
-                    var om = ontologyManagerService;
 
                     dvm.getTreeDisplay = function() {
                         if (treeDisplay === 'pretty') {
-                            return om.getEntityName(dvm.currentEntity);
+                            return os.getEntityNameByIndex(_.get(dvm.currentEntity, '@id'), os.listItem);
                         }
                         return _.get(dvm.currentEntity, 'mobi.anonymous', '');
                     }

@@ -986,7 +986,7 @@
              */
             self.getEntityNameByIndex = function(entityIRI, listItem) {
                 var indices = getIndices(listItem);
-                var entity = _.result(_.find(indices, index => {
+                var entity = _.result(_.findLast(indices, index => {
                     var entity = _.get(index, entityIRI);
                      return (entity !== null && _.has(entity, 'label'));
                 }), entityIRI);
