@@ -60,8 +60,6 @@
                 controller: function() {
                     var dvm = this;
                     dvm.os = ontologyStateService;
-
-                    dvm.os.listItem.concepts.flat = dvm.os.flattenHierarchy(dvm.os.listItem.concepts.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                 }
             }
         }

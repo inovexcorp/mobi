@@ -46,9 +46,6 @@ describe('Concept Hierarchy Block directive', function() {
         this.element.remove();
     });
 
-    it('initializes concept list with the correct values', function() {
-        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
-    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
