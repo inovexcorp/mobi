@@ -44,11 +44,13 @@
          * @requires modal.service:modalService
          *
          * @description
-         * `openOntologySelect` is a component that creates a `ui-select` containing the branches of the provided
-         * {@link ontologyState.service:ontologyStateService listItem} and depending on the provided state, the
+         * `openOntologySelect` is a component that creates a `ui-select` containing the branches and tags of the
+         * provided {@link ontologyState.service:ontologyStateService listItem} and depending on the provided state, the
          * currently open commit. Each branch in the `ui-select` has buttons for editing the metadata and deleting the
          * branch which will open a {@link confirmModal.directive:confirmModal}. The component also houses the method
-         * for opening a modal for {@link editBranchOverlay.directive:editBranchOverlay editing a branch}.
+         * for opening a modal for {@link editBranchOverlay.directive:editBranchOverlay editing a branch}. Each tag in
+         * the `ui-select` has a button for deleting the tag which will open a
+         * {@link confirmModal.directive:confirmModal}.
          *
          * @param {Object} listItem An item from the `list` in ontologyStateService
          * @param {Object} state An item from the `states` in stateManagerService
@@ -81,6 +83,8 @@
             dvm.getGroupTitle = function(item) {
                 if (dvm.cm.isBranch(item)) {
                     return 'Branches';
+                } else if (dvm.cm.isTag(item)) {
+                    return 'Tags';
                 } else if (dvm.cm.isCommit(item)) {
                     return 'Commits';
                 } else {
@@ -90,6 +94,8 @@
             dvm.getType = function(item) {
                 if (dvm.cm.isBranch(item)) {
                     return 'Branch';
+                } else if (dvm.cm.isTag(item)) {
+                    return 'Tag';
                 } else if (dvm.cm.isCommit(item)) {
                     return 'Commit';
                 } else {
@@ -106,11 +112,17 @@
                             if (!commitId) {
                                 commitId = headCommitId;
                             }
-                            return $q.all([
-                                dvm.os.updateOntologyState(dvm.listItem.ontologyRecord.recordId, commitId, branchId),
-                                dvm.os.updateOntology(dvm.listItem.ontologyRecord.recordId, branchId, commitId, commitId === headCommitId)
-                            ]);
+                            return dvm.os.updateOntology(dvm.listItem.ontologyRecord.recordId, branchId, commitId, commitId === headCommitId);
                         }, $q.reject)
+                        .then(() => {
+                            setSelectList();
+                            dvm.os.resetStateTabs(dvm.listItem);
+                        }, dvm.util.createErrorToast);
+                } else if (dvm.cm.isTag(item)) {
+                    var tagId = item['@id'];
+                    var commitId = dvm.util.getPropertyId(item, prefixes.catalog + 'commit');
+                    dvm.cm.getCommit(commitId)
+                        .then(commit => dvm.os.updateOntologyWithCommit(dvm.listItem.ontologyRecord.recordId, commitId, tagId), $q.reject)
                         .then(() => {
                             setSelectList();
                             dvm.os.resetStateTabs(dvm.listItem);
@@ -169,6 +181,8 @@
                 var currentState = _.find(dvm.state.model, {'@id': dvm.currentStateId});
                 if (_.includes(_.get(currentState, '@type', []), prefixes.ontologyState + 'StateBranch')) {
                     dvm.selected = _.find(dvm.listItem.branches, {'@id': _.get(currentState, "['" + prefixes.ontologyState + "branch'][0]['@id']")});
+                } else if (_.includes(_.get(currentState, '@type', []), prefixes.ontologyState + 'StateTag')) {
+                    dvm.selected = _.find(dvm.listItem.tags, {'@id': _.get(currentState, "['" + prefixes.ontologyState + "tag'][0]['@id']")});
                 } else {
                     var commitId = _.get(currentState, "['" + prefixes.ontologyState + "commit'][0]['@id']");
                     dvm.selected = {
@@ -179,10 +193,10 @@
                 }
             }
             function setSelectList() {
-                if (dvm.cm.isBranch(dvm.selected)) {
-                    dvm.selectList = dvm.listItem.branches;
+                if (dvm.cm.isBranch(dvm.selected) || dvm.cm.isTag(dvm.selected)) {
+                    dvm.selectList = _.concat(dvm.listItem.branches, dvm.listItem.tags);
                 } else if (dvm.cm.isCommit(dvm.selected)) {
-                    dvm.selectList = _.concat(dvm.listItem.branches, [dvm.selected]);
+                    dvm.selectList = _.concat(dvm.listItem.branches, dvm.listItem.tags, [dvm.selected]);
                 } else {
                     dvm.selectList = [];
                 }

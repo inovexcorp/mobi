@@ -691,6 +691,7 @@ function mockOntologyState() {
             this.uploadThenGet = jasmine.createSpy('uploadThenGet').and.returnValue($q.resolve(''));
             this.uploadChanges = jasmine.createSpy('uploadChanges').and.returnValue($q.resolve(''));
             this.updateOntology = jasmine.createSpy('updateOntology');
+            this.updateOntologyWithCommit = jasmine.createSpy('updateOntologyWithCommit');
             this.addOntologyToList = jasmine.createSpy('addOntologyToList').and.returnValue($q.when([]));
             this.createOntologyListItem = jasmine.createSpy('createOntologyListItem').and.returnValue($q.when([]));
             this.addEntity = jasmine.createSpy('addEntity');
@@ -962,6 +963,8 @@ function mockCatalogManager() {
             this.isDistribution = jasmine.createSpy('isDistribution');
             this.isBranch = jasmine.createSpy('isBranch');
             this.isUserBranch = jasmine.createSpy('isUserBranch');
+            this.isVersion = jasmine.createSpy('isVersion');
+            this.isTag = jasmine.createSpy('isTag');
             this.isCommit = jasmine.createSpy('isCommit');
         });
     });

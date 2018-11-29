@@ -120,7 +120,7 @@
                                 dvm.os.listItem.branches.push(branch);
                                 dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
                                 var commitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
-                                return dvm.os.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, commitId, createdBranchId);
+                                return dvm.os.updateOntologyState({recordId: dvm.os.listItem.ontologyRecord.recordId, commitId, branchId: createdBranchId});
                             }, $q.reject)
                             .then(() => {
                                 return om.deleteOntologyBranch(dvm.os.listItem.ontologyRecord.recordId, userBranchId);

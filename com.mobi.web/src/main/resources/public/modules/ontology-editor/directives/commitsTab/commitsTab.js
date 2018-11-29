@@ -69,7 +69,7 @@
                         return dvm.util.getDctermsValue(_.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId}), 'title');
                     }
                     dvm.openOntologyAtCommit = function(commit) {
-                        dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, '', commit.id, true)
+                        dvm.os.updateOntologyWithCommit(dvm.os.listItem.ontologyRecord.recordId, commit.id);
                     }
                 }
             }

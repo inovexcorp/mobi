@@ -1474,6 +1474,21 @@
 
             /**
              * @ngdoc method
+             * @name isTag
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Tests whether the passed entity is a Tag or not.
+             *
+             * @param {Object} entity A JSON-LD object
+             * @return {boolean} True if the entity contains the Tag type; false otherwise
+             */
+            self.isTag = function(entity) {
+                return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Tag');
+            }
+
+            /**
+             * @ngdoc method
              * @name isCommit
              * @methodOf catalogManager.service:catalogManagerService
              *
