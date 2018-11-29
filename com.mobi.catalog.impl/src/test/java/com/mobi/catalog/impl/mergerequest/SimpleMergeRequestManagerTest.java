@@ -31,6 +31,7 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,6 +44,8 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest;
+import com.mobi.catalog.api.ontologies.mergerequests.Comment;
+import com.mobi.catalog.api.ontologies.mergerequests.CommentFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -82,6 +85,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     private SimpleMergeRequestManager manager;
     private OrmFactory<MergeRequest> mergeRequestFactory = getRequiredOrmFactory(MergeRequest.class);
     private OrmFactory<AcceptedMergeRequest> acceptedMergeRequestFactory = getRequiredOrmFactory(AcceptedMergeRequest.class);
+    private OrmFactory<Comment> commentFactory = getRequiredOrmFactory(Comment.class);
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
@@ -104,6 +108,17 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     private Commit targetCommit1;
     private Commit sourceCommit2;
     private Commit targetCommit2;
+    private Comment comment1;
+    private Comment comment2;
+    private Comment comment3;
+    private Comment comment4;
+    private Comment commentA;
+    private Comment commentB;
+    private Comment commentC;
+    private Comment commentI;
+    private Comment commentX;
+    private Comment commentY;
+    private Comment commentZ;
 
     private final IRI LOCAL_CATALOG_IRI = VALUE_FACTORY.createIRI("http://mobi.com/catalogs#local");
     private final IRI RECORD_1_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record1");
@@ -113,6 +128,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     private final String SOURCE_BRANCH_TITLE = "Source Title";
     private final IRI TARGET_BRANCH_1_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#target1");
     private final IRI TARGET_BRANCH_2_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#target2");
+    private final IRI DOES_NOT_EXIST_IRI = VALUE_FACTORY.createIRI("urn:does_not_exist");
     private final String TARGET_BRANCH_TITLE = "Target Title";
     private IRI titleIRI;
 
@@ -198,11 +214,73 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         request5.setSourceCommit(sourceCommit2);
         request5.setTargetCommit(targetCommit2);
 
+
+        comment1 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#1"));
+        comment1.setOnMergeRequest(request1);
+        comment1.setProperty(VALUE_FACTORY.createLiteral("2018-11-05T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
+        comment1.setProperty(VALUE_FACTORY.createLiteral("2018-11-05T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+        comment1.setProperty(user1.getResource(), VALUE_FACTORY.createIRI(_Thing.creator_IRI));
+        comment1.setProperty(VALUE_FACTORY.createLiteral("Comment1"), VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        comment2 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#2"));
+        comment2.setOnMergeRequest(request1);
+        comment3 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#3"));
+        comment3.setOnMergeRequest(request1);
+        comment4 = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#4"));
+        comment4.setOnMergeRequest(request1);
+
+        comment1.setReplyComment(comment2);
+        comment2.setReplyComment(comment3);
+        comment3.setReplyComment(comment4);
+
+        commentA = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#A"));
+        commentA.setOnMergeRequest(request1);
+        commentA.setProperty(VALUE_FACTORY.createLiteral("2018-11-04T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
+        commentA.setProperty(VALUE_FACTORY.createLiteral("2018-11-04T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+        commentB = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#B"));
+        commentB.setOnMergeRequest(request1);
+        commentC = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#C"));
+        commentC.setOnMergeRequest(request1);
+
+        commentA.setReplyComment(commentB);
+        commentB.setReplyComment(commentC);
+
+        commentI = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#I"));
+        commentI.setOnMergeRequest(request1);
+        commentI.setProperty(VALUE_FACTORY.createLiteral("2018-11-10T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
+        commentI.setProperty(VALUE_FACTORY.createLiteral("2018-11-10T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+
+        commentX = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#X"));
+        commentX.setProperty(VALUE_FACTORY.createLiteral("2018-11-02T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.issued_IRI));
+        commentX.setProperty(VALUE_FACTORY.createLiteral("2018-11-02T13:40:55.257-07:00"), VALUE_FACTORY.createIRI(_Thing.modified_IRI));
+        commentX.setOnMergeRequest(request2);
+        commentY = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#Y"));
+        commentY.setOnMergeRequest(request2);
+        commentZ = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#Z"));
+        commentZ.setOnMergeRequest(request2);
+
+        commentX.setReplyComment(commentY);
+        commentY.setReplyComment(commentZ);
+
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(request1.getModel(), request1.getResource());
             conn.add(request2.getModel(), request2.getResource());
             conn.add(request4.getModel(), request4.getResource());
             conn.add(request5.getModel(), request5.getResource());
+
+            conn.add(comment1.getModel(), comment1.getResource());
+            conn.add(comment2.getModel(), comment2.getResource());
+            conn.add(comment3.getModel(), comment3.getResource());
+            conn.add(comment4.getModel(), comment4.getResource());
+
+            conn.add(commentA.getModel(), commentA.getResource());
+            conn.add(commentB.getModel(), commentB.getResource());
+            conn.add(commentC.getModel(), commentC.getResource());
+
+            conn.add(commentI.getModel(), commentI.getResource());
+
+            conn.add(commentX.getModel(), commentX.getResource());
+            conn.add(commentY.getModel(), commentY.getResource());
+            conn.add(commentZ.getModel(), commentZ.getResource());
         }
 
         MockitoAnnotations.initMocks(this);
@@ -240,11 +318,28 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         });
         when(utilsService.optObject(any(Resource.class), eq(mergeRequestFactory), any(RepositoryConnection.class))).thenReturn(Optional.empty());
         when(utilsService.optObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(request1));
+        when(utilsService.optObject(eq(request4.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(request4));
+        when(utilsService.optObject(eq(request5.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(request5));
         when(utilsService.throwAlreadyExists(any(Resource.class), any(OrmFactory.class))).thenReturn(new IllegalArgumentException());
         doThrow(new IllegalArgumentException()).when(utilsService).validateResource(eq(request3.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
         when(utilsService.getConflicts(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(Collections.emptySet());
 
-        manager = new SimpleMergeRequestManager();
+        when(utilsService.optObject(eq(DOES_NOT_EXIST_IRI), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+        when(utilsService.optObject(eq(comment1.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(comment1));
+        when(utilsService.optObject(eq(comment2.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(comment2));
+        when(utilsService.optObject(eq(comment3.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(comment3));
+        when(utilsService.optObject(eq(comment4.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(comment4));
+        when(utilsService.optObject(eq(commentA.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(commentA));
+        when(utilsService.optObject(eq(commentB.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(commentB));
+        when(utilsService.optObject(eq(commentC.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(commentC));
+        when(utilsService.optObject(eq(commentX.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(commentX));
+        when(utilsService.optObject(eq(commentY.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(commentY));
+        when(utilsService.optObject(eq(commentZ.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(commentZ));
+        when(utilsService.optObject(eq(commentI.getResource()), eq(commentFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(commentI));
+        doThrow(new IllegalArgumentException()).when(utilsService).validateResource(eq(DOES_NOT_EXIST_IRI), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+
+
+        manager = spy(new SimpleMergeRequestManager());
         injectOrmFactoryReferencesIntoService(manager);
         manager.setVf(VALUE_FACTORY);
         manager.setCatalogUtils(utilsService);
@@ -569,6 +664,14 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.deleteMergeRequest(request1.getResource(), conn);
         }
+        verify(utilsService, times(13)).validateResource(any(Resource.class), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment1.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment2.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment3.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment4.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentA.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentB.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentC.getResource()), any(RepositoryConnection.class));
         verify(utilsService).validateResource(eq(request1.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).remove(eq(request1.getResource()), any(RepositoryConnection.class));
     }
@@ -582,6 +685,8 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
             manager.deleteMergeRequest(request3.getResource(), conn);
         }
         verify(utilsService).validateResource(eq(request3.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService, never()).validateResource(any(Resource.class), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService, never()).remove(any(Resource.class), any(RepositoryConnection.class));
     }
 
     /* acceptMergeRequest */
@@ -725,10 +830,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
             manager.cleanMergeRequests(RECORD_1_IRI, SOURCE_BRANCH_1_IRI, conn);
         }
         verify(utilsService).remove(eq(request1.getResource()), any(RepositoryConnection.class));
-        verify(utilsService, times(0)).remove(eq(request2.getResource()), any(RepositoryConnection.class));
-        verify(utilsService, times(0)).remove(eq(request3.getResource()), any(RepositoryConnection.class));
-        verify(utilsService, times(0)).remove(eq(request4.getResource()), any(RepositoryConnection.class));
-        verify(utilsService, times(0)).updateObject(any(MergeRequest.class), any(RepositoryConnection.class));
+        verify(utilsService, never()).remove(eq(request2.getResource()), any(RepositoryConnection.class));
+        verify(utilsService, never()).remove(eq(request3.getResource()), any(RepositoryConnection.class));
+        verify(utilsService, never()).remove(eq(request4.getResource()), any(RepositoryConnection.class));
+        verify(manager, never()).updateMergeRequest(any(Resource.class), any(MergeRequest.class));
     }
 
     @Test
@@ -737,10 +842,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
             manager.cleanMergeRequests(RECORD_1_IRI, TARGET_BRANCH_1_IRI, conn);
         }
         verify(utilsService).validateResource(eq(request1.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService, times(0)).validateResource(eq(request2.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService, times(0)).validateResource(eq(request3.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService, times(0)).validateResource(eq(request4.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService, times(0)).remove(any(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, never()).validateResource(eq(request2.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService, never()).validateResource(eq(request3.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService, never()).validateResource(eq(request4.getResource()), eq(mergeRequestFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService, never()).remove(any(Resource.class), any(RepositoryConnection.class));
     }
 
     @Test
@@ -748,8 +853,8 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.cleanMergeRequests(VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record3"), TARGET_BRANCH_1_IRI, conn);
         }
-        verify(utilsService, times(0)).updateObject(any(MergeRequest.class), any(RepositoryConnection.class));
-        verify(utilsService, times(0)).remove(any(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, never()).updateObject(any(MergeRequest.class), any(RepositoryConnection.class));
+        verify(utilsService, never()).remove(any(Resource.class), any(RepositoryConnection.class));
     }
 
     /* deleteMergeRequestsWithRecordId */
@@ -759,10 +864,17 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.deleteMergeRequestsWithRecordId(RECORD_1_IRI, conn);
         }
-        verify(utilsService).remove(eq(request1.getResource()), any(RepositoryConnection.class));
+        verify(utilsService, times(13)).validateResource(any(Resource.class), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment1.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment2.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment3.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment4.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentA.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentB.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentC.getResource()), any(RepositoryConnection.class));        verify(utilsService).remove(eq(request1.getResource()), any(RepositoryConnection.class));
         verify(utilsService).remove(eq(request4.getResource()), any(RepositoryConnection.class));
-        verify(utilsService, times(0)).remove(eq(request2.getResource()), any(RepositoryConnection.class));
-        verify(utilsService, times(0)).remove(eq(request3.getResource()), any(RepositoryConnection.class));
+        verify(utilsService, never()).remove(eq(request2.getResource()), any(RepositoryConnection.class));
+        verify(utilsService, never()).remove(eq(request3.getResource()), any(RepositoryConnection.class));
     }
 
     @Test
@@ -770,7 +882,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.deleteMergeRequestsWithRecordId(VALUE_FACTORY.createIRI("http://mobi.com/test/records#versioned-rdf-record3"), conn);
         }
-        verify(utilsService, times(0)).remove(any(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, never()).remove(any(Resource.class), any(RepositoryConnection.class));
     }
 
     private static <T> ArgumentMatcher<T> matches(Predicate<T> predicate) {
@@ -782,5 +894,250 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
                 return predicate.test((T) argument);
             }
         };
+    }
+
+    /* getComment */
+
+    @Test
+    public void getCommentTest() {
+        Optional<Comment> commentOpt = manager.getComment(comment1.getResource());
+        assertTrue(commentOpt.isPresent());
+        Comment comment = commentOpt.get();
+        assertEquals(comment1.getModel(), comment.getModel());
+        verify(utilsService).optObject(eq(comment1.getResource()), any(CommentFactory.class), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void getCommentDoesNotExistTest() {
+        Optional<Comment> commentOpt = manager.getComment(DOES_NOT_EXIST_IRI);
+        assertTrue(!commentOpt.isPresent());
+        verify(utilsService).optObject(eq(DOES_NOT_EXIST_IRI), any(CommentFactory.class), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void getCommentWithConnTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Optional<Comment> commentOpt = manager.getComment(comment1.getResource(), conn);
+            assertTrue(commentOpt.isPresent());
+            Comment comment = commentOpt.get();
+            assertEquals(comment1.getModel(), comment.getModel());
+            verify(utilsService).optObject(eq(comment1.getResource()), any(CommentFactory.class), any(RepositoryConnection.class));
+        }
+    }
+
+    @Test
+    public void getCommentDoesNotExistWithConnTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Optional<Comment> commentOpt = manager.getComment(DOES_NOT_EXIST_IRI, conn);
+            assertTrue(!commentOpt.isPresent());
+            verify(utilsService).optObject(eq(DOES_NOT_EXIST_IRI), any(CommentFactory.class), any(RepositoryConnection.class));
+        }
+    }
+
+    /* getComments */
+
+    @Test
+    public void getCommentsTest() {
+        List<List<Comment>> comments = manager.getComments(request1.getResource());
+        assertEquals(3, comments.size());
+        String firstThreadTime = comments.get(0).get(0).getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).get().stringValue();
+        String secondThreadTime = comments.get(1).get(0).getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).get().stringValue();
+        assertTrue(OffsetDateTime.parse(firstThreadTime).isBefore(OffsetDateTime.parse(secondThreadTime)));
+    }
+
+    @Test
+    public void getCommentsDoesNotExistTest() {
+        thrown.expect(IllegalArgumentException.class);
+
+        manager.getComments(DOES_NOT_EXIST_IRI);
+    }
+
+    @Test
+    public void getCommentsWithNoCommentsOnRequestTest() {
+        List<List<Comment>> comments = manager.getComments(request5.getResource());
+        assertEquals(0, comments.size());
+    }
+
+    /* createComment */
+
+    @Test
+    public void createCommentTest() {
+        String commentStr = "This is a test comment.";
+        Comment comment = manager.createComment(request1.getResource(), user1, commentStr);
+        assertEquals(request1.getResource(), comment.getOnMergeRequest_resource().get());
+        assertEquals(user1.getResource(), comment.getProperty(VALUE_FACTORY.createIRI(_Thing.creator_IRI)).get());
+        assertEquals(commentStr, comment.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI)).get().stringValue());
+        assertTrue(comment.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
+        assertTrue(comment.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
+        assertFalse(comment.getReplyComment().isPresent());
+
+        verify(utilsService).optObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void createCommentLargeStringTest() {
+        thrown.expect(IllegalArgumentException.class);
+
+        String commentStr = new String(new char[1100000]).replace('\0', ' ');
+        Comment comment = manager.createComment(request1.getResource(), user1, commentStr);
+
+        verify(utilsService).optObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void createCommentRequestDoesNotExistTest() {
+        thrown.expect(IllegalArgumentException.class);
+
+        String commentStr = "This is a test comment.";
+        manager.createComment(DOES_NOT_EXIST_IRI, user1, commentStr);
+
+        verify(utilsService).optObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void createReplyCommentTest() {
+        String commentStr = "This is a test comment.";
+        Comment comment = manager.createComment(request1.getResource(), user1, commentStr, commentZ.getResource());
+        assertEquals(request1.getResource(), comment.getOnMergeRequest_resource().get());
+        assertEquals(user1.getResource(), comment.getProperty(VALUE_FACTORY.createIRI(_Thing.creator_IRI)).get());
+        assertEquals(commentStr, comment.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI)).get().stringValue());
+        assertTrue(comment.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
+        assertTrue(comment.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
+        assertFalse(comment.getReplyComment().isPresent());
+
+        Comment commentZRepo = manager.getComment(commentZ.getResource()).get();
+        assertEquals(comment.getResource(), commentZRepo.getReplyComment_resource().get());
+
+        verify(utilsService).optObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void createReplyCommentParentHasReplyAlreadyTest() {
+        String commentStr = "This is a test comment.";
+        Comment comment = manager.createComment(request1.getResource(), user1, commentStr, commentA.getResource());
+        assertEquals(request1.getResource(), comment.getOnMergeRequest_resource().get());
+        assertEquals(user1.getResource(), comment.getProperty(VALUE_FACTORY.createIRI(_Thing.creator_IRI)).get());
+        assertEquals(commentStr, comment.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI)).get().stringValue());
+        assertTrue(comment.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
+        assertTrue(comment.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
+        assertFalse(comment.getReplyComment().isPresent());
+
+        Comment commentCRepo = manager.getComment(commentC.getResource()).get();
+        assertEquals(comment.getResource(), commentCRepo.getReplyComment_resource().get());
+
+        verify(utilsService).optObject(eq(request1.getResource()), eq(mergeRequestFactory), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void createReplyCommentRequestDoesNotExistTest() {
+        thrown.expect(IllegalArgumentException.class);
+
+        String commentStr = "This is a test comment.";
+        manager.createComment(DOES_NOT_EXIST_IRI, user1, commentStr, commentZ.getResource());
+
+        verify(utilsService).optObject(eq(DOES_NOT_EXIST_IRI), eq(mergeRequestFactory), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void createReplyCommentParentDoesNotExistTest() {
+        thrown.expect(IllegalArgumentException.class);
+
+        String commentStr = "This is a test comment.";
+        manager.createComment(request1.getResource(), user1, commentStr, DOES_NOT_EXIST_IRI);
+
+        verify(utilsService).optObject(eq(DOES_NOT_EXIST_IRI), eq(mergeRequestFactory), any(RepositoryConnection.class));
+    }
+
+    /* updateComment */
+
+    @Test
+    public void updateCommentTest() {
+        Comment comment1Update = commentFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/comments#1"));
+        manager.updateComment(comment1Update.getResource(), comment1Update);
+
+        verify(utilsService).validateResource(eq(comment1Update.getResource()), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).updateObject(eq(comment1Update), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void updateCommentDoesNotExistTest() {
+        // Setup
+        thrown.expect(IllegalArgumentException.class);
+
+        Comment commentDoesNotExist = commentFactory.createNew(DOES_NOT_EXIST_IRI);
+        manager.updateComment(DOES_NOT_EXIST_IRI, commentDoesNotExist);
+
+        verify(utilsService).validateResource(eq(commentDoesNotExist.getResource()), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).updateObject(eq(commentDoesNotExist), any(RepositoryConnection.class));
+    }
+
+    /* deleteComment */
+
+    @Test
+    public void deleteCommentHeadTest() {
+        manager.deleteComment(comment1.getResource());
+
+        verify(manager).getComment(eq(comment1.getResource()), any(RepositoryConnection.class));
+        verify(manager, never()).updateComment(any(Resource.class), any(Comment.class));
+        verify(utilsService).validateResource(eq(comment1.getResource()), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment1.getResource()), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void deleteCommentMiddleTest() {
+        manager.deleteComment(comment2.getResource());
+
+        comment1.setReplyComment(comment3);
+
+        verify(manager).getComment(eq(comment2.getResource()), any(RepositoryConnection.class));
+        verify(manager).getComment(eq(comment1.getResource()), any(RepositoryConnection.class));
+        verify(manager).getComment(eq(comment3.getResource()), any(RepositoryConnection.class));
+        verify(manager).updateComment(eq(comment1.getResource()), eq(comment1));
+        verify(utilsService).validateResource(eq(comment2.getResource()), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment2.getResource()), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void deleteCommentTailTest() {
+        manager.deleteComment(comment4.getResource());
+
+        comment3.removeProperty(comment4.getResource(), VALUE_FACTORY.createIRI(Comment.replyComment_IRI));
+
+        verify(manager).getComment(eq(comment4.getResource()), any(RepositoryConnection.class));
+        verify(manager).getComment(eq(comment3.getResource()), any(RepositoryConnection.class));
+        verify(manager).updateComment(eq(comment3.getResource()), eq(comment3));
+        verify(utilsService).validateResource(eq(comment4.getResource()), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment4.getResource()), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void deleteCommentDoesNotExistTest() {
+        // Setup
+        thrown.expect(IllegalArgumentException.class);
+
+        manager.deleteComment(DOES_NOT_EXIST_IRI);
+        verify(utilsService).validateResource(eq(DOES_NOT_EXIST_IRI), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+    }
+
+    /* deleteCommentsWithRequestId */
+
+    @Test
+    public void deleteCommentsWithRequestId() {
+        manager.deleteCommentsWithRequestId(request1.getResource());
+
+        verify(utilsService, times(13)).validateResource(any(Resource.class), eq(commentFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment1.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment2.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment3.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(comment4.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentA.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentB.getResource()), any(RepositoryConnection.class));
+        verify(utilsService).remove(eq(commentC.getResource()), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void deleteCommentsWithRequestIdRequestWithNoComments() {
+        manager.deleteCommentsWithRequestId(request4.getResource());
+        verify(utilsService, never()).remove(any(Resource.class), any(RepositoryConnection.class));
     }
 }

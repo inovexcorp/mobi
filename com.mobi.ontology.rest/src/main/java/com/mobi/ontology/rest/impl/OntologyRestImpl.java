@@ -222,7 +222,7 @@ public class OntologyRestImpl implements OntologyRest {
                                 boolean applyInProgressCommit) {
         try {
             if (clearCache) {
-                ontologyCache.removeFromCache(recordIdStr, branchIdStr, commitIdStr);
+                ontologyCache.removeFromCache(recordIdStr, commitIdStr);
             }
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit)
                     .orElseThrow(() ->
@@ -965,7 +965,7 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response queryOntology(ContainerRequestContext context, String recordIdStr, String queryString,
-                                  String branchIdStr, String commitIdStr) {
+                                  String branchIdStr, String commitIdStr, boolean includeImports) {
         checkStringParam(queryString, "Parameter 'query' must be set.");
 
         try {
@@ -975,7 +975,7 @@ public class OntologyRestImpl implements OntologyRest {
             String queryType = Query.getQueryType(queryString);
             switch (queryType) {
                 case "select":
-                    TupleQueryResult tupResults = ontologyManager.getTupleQueryResults(ontology, queryString);
+                    TupleQueryResult tupResults = ontologyManager.getTupleQueryResults(ontology, queryString, includeImports);
                     if (tupResults.hasNext()) {
                         JSONObject json = JSONQueryResults.getResponse(tupResults);
                         return Response.ok(json, MediaType.APPLICATION_JSON_TYPE).build();
@@ -983,7 +983,7 @@ public class OntologyRestImpl implements OntologyRest {
                         return Response.noContent().build();
                     }
                 case "construct":
-                    Model modelResult = ontologyManager.getGraphQueryResults(ontology, queryString);
+                    Model modelResult = ontologyManager.getGraphQueryResults(ontology, queryString, includeImports);
                     if (modelResult.size() >= 1) {
                         String trigStr = modelToTrig(modelResult, sesameTransformer);
                         return Response.ok(trigStr, MediaType.TEXT_PLAIN_TYPE).build();
@@ -1137,7 +1137,7 @@ public class OntologyRestImpl implements OntologyRest {
         checkStringParam(recordIdStr, "The recordIdStr is missing.");
         Optional<Ontology> optionalOntology;
         Optional<Cache<String, Ontology>> cache = ontologyCache.getOntologyCache();
-        String key = ontologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
+        String key = ontologyCache.generateKey(recordIdStr, commitIdStr);
 
         try {
             if (cache.isPresent() && cache.get().containsKey(key)) {
@@ -1148,9 +1148,13 @@ public class OntologyRestImpl implements OntologyRest {
                 Resource recordId = valueFactory.createIRI(recordIdStr);
 
                 if (StringUtils.isNotBlank(commitIdStr)) {
-                    checkStringParam(branchIdStr, "The branchIdStr is missing.");
-                    optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr),
-                            valueFactory.createIRI(commitIdStr));
+                    if (StringUtils.isNotBlank(branchIdStr)) {
+                        optionalOntology = ontologyManager.retrieveOntology(recordId,
+                                valueFactory.createIRI(branchIdStr), valueFactory.createIRI(commitIdStr));
+                    } else {
+                        optionalOntology = ontologyManager.retrieveOntologyByCommit(recordId,
+                                valueFactory.createIRI(commitIdStr));
+                    }
                 } else if (StringUtils.isNotBlank(branchIdStr)) {
                     optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
                 } else {

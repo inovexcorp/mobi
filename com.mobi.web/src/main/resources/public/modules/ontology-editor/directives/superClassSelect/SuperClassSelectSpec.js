@@ -74,47 +74,11 @@ describe('Super Class Select directive', function() {
             expect(this.element.querySelectorAll('.btn-link .fa-plus').length).toBe(0);
             expect(this.element.querySelectorAll('.btn-link .fa-times').length).toBe(1);
         });
-        it('with a .form-group', function() {
-            expect(this.element.querySelectorAll('.form-group').length).toBe(0);
+        it('with an ontology-class-select', function() {
+            expect(this.element.find('ontology-class-select').length).toBe(0);
             this.controller.isShown = true;
             scope.$apply();
-            expect(this.element.querySelectorAll('.form-group').length).toBe(1);
-        });
-        it('with a custom-label', function() {
-            expect(this.element.find('custom-label').length).toBe(0);
-            this.controller.isShown = true;
-            scope.$apply();
-            expect(this.element.find('custom-label').length).toBe(1);
-        });
-        it('with a ui-select', function() {
-            expect(this.element.find('ui-select').length).toBe(0);
-            this.controller.isShown = true;
-            scope.$apply();
-            expect(this.element.find('ui-select').length).toBe(1);
-        });
-        it('with a ui-select-match', function() {
-            expect(this.element.find('ui-select-match').length).toBe(0);
-            this.controller.isShown = true;
-            scope.$apply();
-            expect(this.element.find('ui-select-match').length).toBe(1);
-        });
-        it('with a span[title]', function() {
-            expect(this.element.querySelectorAll('span[title]').length).toBe(0);
-            this.controller.isShown = true;
-            scope.$apply();
-            expect(this.element.querySelectorAll('span[title]').length).toBe(1);
-        });
-        it('with a ui-select-choices', function() {
-            expect(this.element.find('ui-select-choices').length).toBe(0);
-            this.controller.isShown = true;
-            scope.$apply();
-            expect(this.element.find('ui-select-choices').length).toBe(1);
-        });
-        it('with a div[title]', function() {
-            expect(this.element.querySelectorAll('div[title]').length).toBe(0);
-            this.controller.isShown = true;
-            scope.$apply();
-            expect(this.element.querySelectorAll('div[title]').length).toBe(1);
+            expect(this.element.find('ontology-class-select').length).toBe(1);
         });
     });
     describe('controller methods', function() {
@@ -125,14 +89,12 @@ describe('Super Class Select directive', function() {
         it('hide sets the proper variables', function() {
             this.controller.hide();
             expect(this.controller.isShown).toBe(false);
-            expect(this.controller.values).toEqual([]);
+            expect(this.controller.iris).toEqual([]);
         });
-        it('getValues should call the correct method', function() {
-            ontologyStateSvc.listItem.classes.iris = { classA: 'ontologyId' };
-            ontoUtils.getSelectList.and.returnValue(['list']);
-            this.controller.getValues('text');
-            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['classA'], 'text', ontoUtils.getDropDownText);
-            expect(this.controller.array).toEqual(['list']);
-        });
+    });
+    it('correctly updates values when iris length changes', function() {
+        this.controller.iris = ['test'];
+        scope.$digest();
+        expect(scope.values).toEqual([{'@id': 'test'}]);
     });
 });

@@ -60,11 +60,7 @@ describe('Merge Request Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectGET('/mobirest/merge-requests').respond(400, null, null, 'Error Message');
             mergeRequestManagerSvc.getRequests(this.params)
-                .then(function(response) {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
                 status: 400,
@@ -74,11 +70,7 @@ describe('Merge Request Manager service', function() {
         it('without parameters', function() {
           $httpBackend.expectGET('/mobirest/merge-requests').respond(200, []);
           mergeRequestManagerSvc.getRequests(this.params)
-              .then(function(response) {
-                  expect(response).toEqual([]);
-              }, function(response) {
-                  fail('Promise should have resolved');
-              });
+              .then(response => expect(response).toEqual([]), () => fail('Promise should have resolved'));
           flushAndVerify($httpBackend);
         });
         it('with parameters', function() {
@@ -87,11 +79,7 @@ describe('Merge Request Manager service', function() {
             this.params.sort = 'sort';
             $httpBackend.expectGET('/mobirest/merge-requests?' + $httpParamSerializer(this.params)).respond(200, []);
             mergeRequestManagerSvc.getRequests(this.params)
-                .then(function(response) {
-                    expect(response).toEqual([]);
-                }, function(response) {
-                    fail('Promise should have resolved');
-                });
+                .then(response  => expect(response).toEqual([]), () => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -108,16 +96,9 @@ describe('Merge Request Manager service', function() {
             };
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectPOST('/mobirest/merge-requests',
-                function(data) {
-                    return data instanceof FormData;
-                }).respond(400, null, null, 'Error Message');
+            $httpBackend.expectPOST('/mobirest/merge-requests', data => data instanceof FormData).respond(400, null, null, 'Error Message');
             mergeRequestManagerSvc.createRequest(this.requestConfig)
-                .then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
                 status: 400,
@@ -125,31 +106,17 @@ describe('Merge Request Manager service', function() {
             }));
         });
         it('with a description and assignees', function() {
-            $httpBackend.expectPOST('/mobirest/merge-requests',
-                function(data) {
-                    return data instanceof FormData;
-                }).respond(200, 'requestId');
+            $httpBackend.expectPOST('/mobirest/merge-requests', data => data instanceof FormData).respond(200, 'requestId');
             mergeRequestManagerSvc.createRequest(this.requestConfig)
-                .then(function(response) {
-                    expect(response).toBe('requestId');
-                }, function(response) {
-                    fail('Promise should have resolved');
-                });
+                .then(response => expect(response).toBe('requestId'), () => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a description or assignees', function() {
             delete this.requestConfig.description;
             delete this.requestConfig.assignees;
-            $httpBackend.expectPOST('/mobirest/merge-requests',
-                function(data) {
-                    return data instanceof FormData;
-                }).respond(200, 'requestId');
+            $httpBackend.expectPOST('/mobirest/merge-requests', data => data instanceof FormData).respond(200, 'requestId');
             mergeRequestManagerSvc.createRequest(this.requestConfig)
-                .then(function(response) {
-                    expect(response).toBe('requestId');
-                }, function(response) {
-                    fail('Promise should have resolved');
-                });
+                .then(response => expect(response).toBe('requestId'), () => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -160,11 +127,7 @@ describe('Merge Request Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectGET('/mobirest/merge-requests/' + this.requestId).respond(400, null, null, 'Error Message');
             mergeRequestManagerSvc.getRequest(this.requestId)
-                .then(function(response) {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
                 status: 400,
@@ -174,11 +137,7 @@ describe('Merge Request Manager service', function() {
         it('successfully', function() {
           $httpBackend.expectGET('/mobirest/merge-requests/' + this.requestId).respond(200, {});
           mergeRequestManagerSvc.getRequest(this.requestId)
-              .then(function(response) {
-                  expect(response).toEqual({});
-              }, function(response) {
-                  fail('Promise should have resolved');
-              });
+              .then(response => expect(response).toEqual({}), () => fail('Promise should have resolved'));
           flushAndVerify($httpBackend);
         });
     });
@@ -189,11 +148,7 @@ describe('Merge Request Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectDELETE('/mobirest/merge-requests/' + this.requestId).respond(400, null, null, 'Error Message');
             mergeRequestManagerSvc.deleteRequest(this.requestId)
-                .then(function(response) {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
                 status: 400,
@@ -203,9 +158,7 @@ describe('Merge Request Manager service', function() {
         it('successfully', function() {
           $httpBackend.expectDELETE('/mobirest/merge-requests/' + this.requestId).respond(200, {});
           mergeRequestManagerSvc.deleteRequest(this.requestId)
-              .then(_.noop, function(response) {
-                  fail('Promise should have resolved');
-              });
+              .then(_.noop, () => fail('Promise should have resolved'));
           flushAndVerify($httpBackend);
         });
     });
@@ -216,11 +169,7 @@ describe('Merge Request Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectPOST('/mobirest/merge-requests/' + this.requestId).respond(400, null, null, 'Error Message');
             mergeRequestManagerSvc.acceptRequest(this.requestId)
-                .then(function(response) {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
                 status: 400,
@@ -230,14 +179,42 @@ describe('Merge Request Manager service', function() {
         it('successfully', function() {
           $httpBackend.expectPOST('/mobirest/merge-requests/' + this.requestId).respond(200, '');
           mergeRequestManagerSvc.acceptRequest(this.requestId)
-              .then(_.noop, function(response) {
-                  fail('Promise should have resolved');
-              });
+              .then(_.noop, () => fail('Promise should have resolved'));
           flushAndVerify($httpBackend);
         });
     });
     it('should determine whether a request is accepted', function() {
         expect(mergeRequestManagerSvc.isAccepted({'@type': []})).toEqual(false);
         expect(mergeRequestManagerSvc.isAccepted({'@type': [prefixes.mergereq + 'AcceptedMergeRequest']})).toEqual(true);
+    });
+    describe('should update a merge request', function() {
+        beforeEach(function() {
+            this.requestId = 'request';
+            this.updatedRequest = {
+                title: 'Title',
+                description: 'Description',
+                recordId: 'recordId',
+                sourceBranchId: 'branch1',
+                targetBranchId: 'branch2',
+                assignees: ['user1', 'user2'],
+                removeSource: true
+            };
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectPUT('/mobirest/merge-requests/' + this.requestId, this.updatedRequest).respond(400, null, null, 'Error Message');
+            mergeRequestManagerSvc.updateRequest(this.requestId, this.updatedRequest)
+                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
+        });
+        it('successfully', function() {
+            $httpBackend.expectPUT('/mobirest/merge-requests/' + this.requestId, this.updatedRequest).respond(200, '');
+            mergeRequestManagerSvc.updateRequest(this.requestId, this.updatedRequest)
+                .then(_.noop, () => fail('Promise should have resolved'));
+            flushAndVerify($httpBackend);
+        });
     });
 });

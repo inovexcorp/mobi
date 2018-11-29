@@ -21,19 +21,19 @@
  * #L%
  */
 describe('Merge Request List directive', function() {
-    var $compile, scope, mergeRequestsStateSvc, utilSvc;
+    var $compile, scope, mergeRequestsStateSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
         module('mergeRequestList');
         mockMergeRequestsState();
-        mockUtil();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _mergeRequestsStateService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _mergeRequestsStateService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mergeRequestsStateSvc = _mergeRequestsStateService_;
-            utilSvc = _utilService_;
+            modalSvc = _modalService_;
         });
 
         this.element = $compile(angular.element('<merge-request-list></merge-request-list>'))(scope);
@@ -45,7 +45,7 @@ describe('Merge Request List directive', function() {
         $compile = null;
         scope = null;
         mergeRequestsStateSvc = null;
-        utilSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -56,9 +56,11 @@ describe('Merge Request List directive', function() {
     });
     describe('controller methods', function() {
         it('should show the delete confirmation overlay', function() {
-            this.controller.showDeleteOverlay({});
-            expect(mergeRequestsStateSvc.requestToDelete).toEqual({});
-            expect(mergeRequestsStateSvc.showDelete).toEqual(true);
+            var event = scope.$emit('click');
+            spyOn(event, 'stopPropagation');
+            this.controller.showDeleteOverlay({}, event);
+            expect(event.stopPropagation).toHaveBeenCalled();
+            expect(modalSvc.openConfirmModal).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {

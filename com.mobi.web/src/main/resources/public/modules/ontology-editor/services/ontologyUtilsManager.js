@@ -543,11 +543,11 @@
             function removeIndividual(entityIRI) {
                 delete _.get(os.listItem, 'individuals.iris')[entityIRI];
                 var indivTypes = os.listItem.selected['@type'];
-                var indivAndClasses = _.get(os.listItem, 'classesAndIndividuals');
+                var indivAndClasses = _.get(os.listItem, 'classesAndIndividuals', {});
 
                 _.forEach(indivTypes, type => {
                     if (type !== prefixes.owl + 'NamedIndividual') {
-                        var parentAndIndivs = indivAndClasses[type];
+                        var parentAndIndivs = _.get(indivAndClasses, "['" + type + "']", []);
                         if (parentAndIndivs.length) {
                             _.remove(parentAndIndivs, item => item === entityIRI);
                             if (!parentAndIndivs.length) {

@@ -26,6 +26,7 @@ package com.mobi.catalog.api.mergerequest;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.ontologies.mergerequests.Comment;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.Resource;
@@ -226,4 +227,84 @@ public interface MergeRequestManager {
      * @param conn A RepositoryConnection to use for lookup
      */
     void cleanMergeRequests(Resource recordId, Resource branchId, RepositoryConnection conn);
+
+    /**
+     * Create a {@link Comment} on an existing {@link MergeRequest}. This comment will be the first comment in a thread
+     * of comments on the MergeRequest.
+     *
+     * @param requestId The {@link Resource} of the associated {@link MergeRequest} to comment on
+     * @param user The {@link User} making the comment on the MergeRequest
+     * @param commentStr The comment String
+     * @return A {@link Comment} created with the provided metadata
+     * @throws IllegalArgumentException if the {@link MergeRequest} does not exist
+     */
+    Comment createComment(Resource requestId, User user, String commentStr);
+
+    /**
+     * Create a reply {@link Comment} on an existing {@link MergeRequest}. This comment will be in a comment thread
+     * on the MergeRequest with its parent {@link Comment} being the provided {@code parentCommentId}. If the parent
+     * {@link Comment} has a child, the new reply {@link Comment} will be added to the bottom of the chain.
+     *
+     * @param requestId The {@link Resource} of the associated {@link MergeRequest} to comment on
+     * @param user The {@link User} making the comment on the MergeRequest
+     * @param commentStr The comment String
+     * @param parentCommentId The {@link Resource} of the {@link Comment} that the new Comment is replying to
+     * @return A {@link Comment} created with the provided metadata
+     * @throws IllegalArgumentException if the {@link MergeRequest} does not exist or if the parent {@link Comment} does
+     *      not exist
+     */
+    Comment createComment(Resource requestId, User user, String commentStr, Resource parentCommentId);
+
+    /**
+     * Gets the {@link List} of all {@link Comment} chains in Mobi for the {@link MergeRequest} sorted by issued date of
+     * the head of the chain.
+     *
+     * @param requestId The {@link Resource} identifying a {@link MergeRequest}
+     * @return The sorted {@link List} of {@link Comment} chains for the provided {@link MergeRequest}
+     */
+    List<List<Comment>> getComments(Resource requestId);
+
+    /**
+     * Gets the {@link Comment} identified by the provided {@link Resource}.
+     *
+     * @param commentId The {@link Resource} identifying a {@link Comment}
+     * @return The {@link Comment} if it exists.
+     */
+    Optional<Comment> getComment(Resource commentId);
+
+    /**
+     * Gets the {@link Comment} identified by the provided {@link Resource}.
+     *
+     * @param commentId The {@link Resource} identifying a {@link Comment}
+     * @param conn A RepositoryConnection to use for lookup
+     *
+     * @return The {@link Comment} if it exists.
+     */
+    Optional<Comment> getComment(Resource commentId, RepositoryConnection conn);
+
+    /**
+     * Replaces the stored {@link Comment} of {@code requestId} with the provided {@link Comment}
+     * {@code request}. Assumes that {@code comment} is properly populated.
+     *
+     * @param commentId the {@link Resource} identifying a {@link Comment}
+     * @param comment the updated {@link Comment} referenced by {@code commentId}
+     * @throws IllegalArgumentException If the provided {@link Comment} does not exist in the repository
+     */
+    void updateComment(Resource commentId, Comment comment);
+
+    /**
+     * Deletes an existing {@link Comment} identified by the provided the {@link Resource}.
+     *
+     * @param commentId The {@link Resource} representing the {@link Comment} ID to delete.
+     * @throws IllegalArgumentException If the provided {@link Resource} does not exist in the repository
+     */
+    void deleteComment(Resource commentId);
+
+    /**
+     * Removes all Comments that are linked to the {@link MergeRequest} identified by the provided Resource.
+     *
+     * @param requestId Removes all Comments that are linked to the {@link MergeRequest} identified by the provided
+     *                  Resource.
+     */
+    void deleteCommentsWithRequestId(Resource requestId);
 }

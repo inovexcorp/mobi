@@ -83,50 +83,6 @@
             self.acceptedFilter = false
             /**
              * @ngdoc property
-             * @name showDelete
-             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
-             * @type {boolean}
-             *
-             * @description
-             * `showDelete` determines whether the Delete Merge Request {@link confirmationOverlay.directive:confirmationOverlay}
-             * should be shown.
-             */
-            self.showDelete = false;
-            /**
-             * @ngdoc property
-             * @name showAccept
-             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
-             * @type {boolean}
-             *
-             * @description
-             * `showAccept` determines whether the Accept Merge Request {@link confirmationOverlay.directive:confirmationOverlay}
-             * should be shown.
-             */
-            self.showAccept = false;
-            /**
-             * @ngdoc property
-             * @name requestToDelete
-             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
-             * @type {Object}
-             *
-             * @description
-             * `requestToDelete` contains an object representing the request that will be deleted from the
-             * Delete Merge Request {@link confirmationOverlay.directive:confirmationOverlay}.
-             */
-            self.requestToDelete = undefined;
-            /**
-             * @ngdoc property
-             * @name requestToAccept
-             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
-             * @type {Object}
-             *
-             * @description
-             * `requestToAccept` contains an object representing the request that will be accepted in the
-             * Accept Merge Request {@link confirmationOverlay.directive:confirmationOverlay}.
-             */
-            self.requestToAccept = undefined;
-            /**
-             * @ngdoc property
              * @name createRequest
              * @propertyOf mergeRequestsState.service:mergeRequestsStateService
              * @type {boolean}
@@ -265,7 +221,7 @@
             self.setRequests = function(accepted = false) {
                 mm.getRequests({accepted})
                     .then(data => {
-                        self.requests = _.map(data, getRequestObj);
+                        self.requests = _.map(data, self.getRequestObj);
                         var recordsToRetrieve = _.uniq(_.map(self.requests, 'recordIri'));
                         return $q.all(_.map(recordsToRetrieve, iri => cm.getRecord(iri, catalogId)));
                     }, $q.reject)
@@ -300,43 +256,48 @@
                 request.targetCommit = '';
                 request.removeSource = '';
                 request.difference = '';
-                if (mm.isAccepted(request.jsonld)) {
-                    request.sourceTitle = util.getPropertyValue(request.jsonld, prefixes.mergereq + 'sourceBranchTitle');
-                    request.targetTitle = util.getPropertyValue(request.jsonld, prefixes.mergereq + 'targetBranchTitle');
-                    request.sourceCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceCommit')
-                    request.targetCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetCommit')
-                    cm.getDifference(request.sourceCommit, request.targetCommit)
-                        .then(diff => {
-                            request.difference = diff;
-                        }, util.createErrorToast)
-                } else {
-                    var sourceIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceBranch');
-                    var targetIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetBranch');
-                    var promise = cm.getRecordBranch(sourceIri, request.recordIri, catalogId)
-                        .then(branch => {
-                            request.sourceBranch = branch;
-                            request.sourceCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
-                            request.sourceTitle = util.getDctermsValue(branch, 'title');
-                            request.removeSource = self.removeSource(request.jsonld);
-                        }, $q.reject);
+                request.comments = [];
+                mm.getComments(request.jsonld['@id'])
+                    .then(comments => {
+                        request.comments = comments;
+                        if (mm.isAccepted(request.jsonld)) {
+                            request.sourceTitle = util.getPropertyValue(request.jsonld, prefixes.mergereq + 'sourceBranchTitle');
+                            request.targetTitle = util.getPropertyValue(request.jsonld, prefixes.mergereq + 'targetBranchTitle');
+                            request.sourceCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceCommit')
+                            request.targetCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetCommit')
+                            cm.getDifference(request.sourceCommit, request.targetCommit)
+                                .then(diff => {
+                                    request.difference = diff;
+                                }, util.createErrorToast)
+                        } else {
+                            var sourceIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceBranch');
+                            var targetIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetBranch');
+                            var promise = cm.getRecordBranch(sourceIri, request.recordIri, catalogId)
+                                .then(branch => {
+                                    request.sourceBranch = branch;
+                                    request.sourceCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
+                                    request.sourceTitle = util.getDctermsValue(branch, 'title');
+                                    request.removeSource = self.removeSource(request.jsonld);
+                                }, $q.reject);
 
-                    if (targetIri) {
-                        promise.then(() => cm.getRecordBranch(targetIri, request.recordIri, catalogId), $q.reject)
-                            .then(branch => {
-                                request.targetBranch = branch;
-                                request.targetCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
-                                request.targetTitle = util.getDctermsValue(branch, 'title');
-                                return cm.getDifference(request.sourceCommit, request.targetCommit);
-                            }, $q.reject)
-                            .then(diff => {
-                                request.difference = diff;
-                                return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
-                            }, $q.reject)
-                            .then(conflicts => request.conflicts = conflicts, util.createErrorToast);
-                    } else {
-                        promise.then(_.noop, util.createErrorToast);
-                    }
-                }
+                            if (targetIri) {
+                                promise.then(() => cm.getRecordBranch(targetIri, request.recordIri, catalogId), $q.reject)
+                                    .then(branch => {
+                                        request.targetBranch = branch;
+                                        request.targetCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
+                                        request.targetTitle = util.getDctermsValue(branch, 'title');
+                                        return cm.getDifference(request.sourceCommit, request.targetCommit);
+                                    }, $q.reject)
+                                    .then(diff => {
+                                        request.difference = diff;
+                                        return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
+                                    }, $q.reject)
+                                    .then(conflicts => request.conflicts = conflicts, util.createErrorToast);
+                            } else {
+                                promise.then(_.noop, util.createErrorToast);
+                            }
+                        }
+                    }, util.createErrorToast);
             }
             /**
              * @ngdoc method
@@ -368,11 +329,44 @@
              * @description
              * Checks if the JSON-LD for a Merge Request has the removeSource property set to true. Returns boolean result.
              *
-             * @param jsonld The JSON-LD of a Merge Request
+             * @param {Object} jsonld The JSON-LD of a Merge Request
              * @returns {boolean} True if the removeSource property is true, otherwise false
              */
             self.removeSource = function(jsonld) {
                 return util.getPropertyValue(jsonld, prefixes.mergereq + 'removeSource') === 'true';
+            }
+            /**
+             * @ngdoc method
+             * @name deleteRequest
+             * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+             *
+             * @description
+             * Deletes the provided Merge Request from the application. If successful, unselects the current `selected`
+             * request and updates the list of requests. Displays an error toast if unsuccessful.
+             *
+             * @param {Object} request An item from the `requests` array that represents the request to delete
+             */
+            self.deleteRequest = function(request) {
+                mm.deleteRequest(request.jsonld['@id'])
+                    .then(() => {
+                        var hasSelected = !!self.selected;
+                        self.selected = undefined;
+                        util.createSuccessToast('Request successfully deleted');
+                        if (!hasSelected) {
+                            self.setRequests(self.acceptedFilter);
+                        }
+                    }, util.createErrorToast);
+            }
+
+            self.getRequestObj = function(jsonld) {
+                return {
+                    jsonld,
+                    title: util.getDctermsValue(jsonld, 'title'),
+                    date: getDate(jsonld),
+                    creator: getCreator(jsonld),
+                    recordIri: util.getPropertyId(jsonld, prefixes.mergereq + 'onRecord'),
+                    assignees: _.map(_.get(jsonld, "['" + prefixes.mergereq + "assignee']"), obj => _.get(_.find(um.users, {iri: obj['@id']}), 'username'))
+                };
             }
 
             function getDate(jsonld) {
@@ -382,16 +376,6 @@
             function getCreator(jsonld) {
                 var iri = util.getDctermsId(jsonld, 'creator');
                 return _.get(_.find(um.users, {iri}), 'username');
-            }
-            function getRequestObj(jsonld) {
-                return {
-                    jsonld,
-                    title: util.getDctermsValue(jsonld, 'title'),
-                    date: getDate(jsonld),
-                    creator: getCreator(jsonld),
-                    recordIri: util.getPropertyId(jsonld, prefixes.mergereq + 'onRecord'),
-                    assignees: _.map(_.get(jsonld, "['" + prefixes.mergereq + "assignee']"), obj => _.get(_.find(um.users, {iri: obj['@id']}), 'username'))
-                };
             }
         }
 })();

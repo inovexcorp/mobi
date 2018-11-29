@@ -32,24 +32,23 @@
         /**
          * @ngdoc service
          * @name ontologyState.service:ontologyStateService
-         * @requires $timeout
-         * @requires $q
-         * @requires $filter
-         * @requires $document
          * @requires ontologyManager.service:ontologyManagerService
          * @requires updateRefs.service:updateRefsService
          * @requires stateManager.service:stateManagerService
          * @requires util.service:utilService
          * @requires catalogManager.service:catalogManagerService
          * @requires propertyManager.service:propertyManagerService
-         * @requires policyEnforcement.service:policyEnforcementService
          * @requires prefixes.service:prefixes
+         * @requires manchesterConverter.service:manchesterConverterService
+         * @requires policyEnforcement.service:policyEnforcementService
+         * @requires policyManager.service:policyManagerService
+         * @requires http.service:httpService
          */
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'policyEnforcementService', 'policyManagerService', 'httpService', 'uuid'];
+        ontologyStateService.$inject = ['$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'policyEnforcementService', 'policyManagerService', 'httpService', 'uuid'];
 
-        function ontologyStateService($timeout, $q, $filter, $document, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, policyEnforcementService, policyManagerService, httpService, uuid) {
+        function ontologyStateService($q, $filter, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, policyEnforcementService, policyManagerService, httpService, uuid) {
             var self = this;
             var om = ontologyManagerService;
             var pm = propertyManagerService;
@@ -60,6 +59,8 @@
             var pe = policyEnforcementService;
             var polm = policyManagerService;
             var catalogId = '';
+            var branchStateNamespace = 'http://mobi.com/states/ontology-editor/branch-id/';
+            var commitStateNamespace = 'http://mobi.com/states/ontology-editor/commit-id/';
 
             var ontologyEditorTabStates = {
                 project: {
@@ -241,6 +242,190 @@
             self.uploadList = [];
 
             /**
+             * @ngdoc property
+             * @name uploadPending
+             * @propertyOf ontologyState.service:ontologyStateService
+             * @type {number}
+             *
+             * @description
+             * `uploadFiles` holds the number of pending uploads.
+             */
+            self.uploadPending = 0;
+
+            /**
+             * @ngdoc method
+             * @name initialize
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Initializes the `catalogId` variable.
+             */
+            self.initialize = function() {
+                catalogId = _.get(cm.localCatalog, '@id', '');
+            }
+            /**
+             * @ngdoc method
+             * @name createOntologyState
+             * @methodOf stateManager.service:stateManagerService
+             *
+             * @description
+             * Creates a new state for the ontology editor for the user using the provided Record IRI, Commit IRI, and
+             * optional Branch IRI. The state holds the last thing the user had checked out for that Record and keeps
+             * track of the last commit a User was viewing on a Branch. Returns a Promise indicating the success.
+             *
+             * @param {string} recordId A string identifying the record to keep state for
+             * @param {string} commitId A string identifying the commit the user was viewing when the state was made
+             * @param {string} [branchId = ''] An optional string identifying the branch the user was last viewing
+             * @returns {Promise} A promise that resolves if the creation was successful or rejects with an error message
+             */
+            self.createOntologyState = function(recordId, commitId, branchId = '') {
+                return sm.createState(makeOntologyState(recordId, commitId, branchId), 'ontology-editor');
+            }
+            /**
+             * @ngdoc method
+             * @name getOntologyStateByRecordId
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Retrieves an ontology editor state from the {@link stateManager.service:stateManagerService} by the id
+             * of the Record it is about.
+             *
+             * @param {string} recordId A string identifying the Record of a state
+             * @returns {Object} A state object from the stateManagerService
+             */
+            self.getOntologyStateByRecordId = function(recordId) {
+                return _.find(sm.states, {
+                    model: [{
+                        [prefixes.ontologyState + 'record']: [{'@id': recordId}]
+                    }]
+                });
+            }
+            /**
+             * @ngdoc method
+             * @name updateOntologyState
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Updates an ontology editor state for the identified Record using the provided Commit IRI and optional
+             * Branch IRI and updates the current state. If the current state was originally a Commit state, the Commit
+             * state is removed. If the current state was originally a Branch state, the Branch state stays. If a Branch
+             * IRI is provided and there is already a Branch state for it, updates the Commit on the state to the
+             * provided IRI. If no Branch IRI is provided, the current state is set to a Commit state of the provided
+             * IRI. Uses the {@link stateManager.service:stateManagerService} to do the update. Returns a Promise
+             * indicating the success.
+             *
+             * @param {string} recordId A string identifying the Record of a state
+             * @param {string} commitId A string identifying the commit the user is now viewing
+             * @param {string} [branchId = ''] An optional string identifying the branch the user is now viewing
+             * @returns {Promise} A promise that resolves if the update was successful or rejects with an error message
+             */
+            self.updateOntologyState = function(recordId, commitId, branchId = '') {
+                var ontologyState = angular.copy(self.getOntologyStateByRecordId(recordId));
+                var stateId = _.get(ontologyState, 'id', '');
+                var model = _.get(ontologyState, 'model', '');
+                var recordState = _.find(model, {'@type': [prefixes.ontologyState + 'StateRecord']});
+                var currentStateId = _.get(recordState, "['" + prefixes.ontologyState + 'currentState' + "'][0]['@id']");
+                var currentState = _.find(model, {'@id': currentStateId});
+
+                if (_.isEqual(_.get(currentState, '@type', []), [prefixes.ontologyState + 'StateCommit'])) {
+                    _.remove(model, currentState);
+                }
+
+                if (branchId) {
+                    var branchState = _.find(model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
+                    if (branchState) {
+                        currentStateId = branchState['@id'];
+                        branchState[prefixes.ontologyState + 'commit'] = [{'@id': commitId}];
+                    } else {
+                        currentStateId = branchStateNamespace + uuid.v4();
+                        recordState[prefixes.ontologyState + 'branchStates'] = _.concat(_.get(recordState, "['" + prefixes.ontologyState + "branchStates']", []), [{'@id': currentStateId}]);
+                        model.push({
+                            '@id': currentStateId,
+                            '@type': [prefixes.ontologyState + 'StateCommit', prefixes.ontologyState + 'StateBranch'],
+                            [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
+                            [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
+                        });
+                    }
+                } else {
+                    currentStateId = commitStateNamespace + uuid.v4();
+                    model.push({
+                        '@id': currentStateId,
+                        '@type': [prefixes.ontologyState + 'StateCommit'],
+                        [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
+                    });
+                }
+                recordState[prefixes.ontologyState + 'currentState'] = [{'@id': currentStateId}];
+                return sm.updateState(stateId, model);
+            }
+            /**
+             * @ngdoc method
+             * @name deleteOntologyBranch
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Updates an ontology editor state for the identified Record when the identified Branch is deleted. The
+             * Branch state for the Branch is removed from the state array and the Record state object. Calls the
+             * {@link stateManager.service:stateManagerService} to do the update. Returns a Promise indicating the
+             * success.
+             *
+             * @param {string} recordId A string identifying the Record of a state
+             * @param {string} branchId A string identifying the branch that was removed
+             * @returns {Promise} A promise that resolves if the update was successful or rejects with an error message
+             */
+            self.deleteOntologyBranch = function(recordId, branchId) {
+                var ontologyState = angular.copy(self.getOntologyStateByRecordId(recordId));
+                var record = _.find(ontologyState.model, {'@type': [prefixes.ontologyState + 'StateRecord']});
+                var branchState = _.head(_.remove(ontologyState.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]}));
+                _.remove(record[prefixes.ontologyState + 'branchStates'], {'@id': _.get(branchState, '@id')});
+                if (!record[prefixes.ontologyState + 'branchStates'].length) {
+                    delete record[prefixes.ontologyState + 'branchStates'];
+                }
+                return sm.updateState(ontologyState.id, ontologyState.model);
+
+            }
+            /**
+             * @ngdoc method
+             * @name deleteOntologyState
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Deletes the ontology editor state for the identified Record using the
+             * {@link stateManager.service:stateManagerService}. Returns a Promise indicating the success.
+             *
+             * @param {string} recordId A string identifying the Record of a state
+             * @returns {Promise} A promise that resolves if the deletion was successful or rejects with an error message
+             */
+            self.deleteOntologyState = function(recordId) {
+                var stateId = _.get(self.getOntologyStateByRecordId(recordId), 'id', '');
+                return sm.deleteState(stateId);
+            }
+
+            function makeOntologyState(recordId, commitId, branchId = '') {
+                var stateIri;
+                var recordState = {
+                    '@id': 'http://mobi.com/states/ontology-editor/' + uuid.v4(),
+                    '@type': [prefixes.ontologyState + 'StateRecord'],
+                    [prefixes.ontologyState + 'record']: [{'@id': recordId}],
+                };
+                var commitState = {
+                    '@type': [prefixes.ontologyState + 'StateCommit'],
+                    [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
+                };
+                if (branchId) {
+                    stateIri = branchStateNamespace + uuid.v4();
+                    recordState[prefixes.ontologyState + 'branchStates'] = [{'@id': stateIri}];
+                    commitState['@id'] = stateIri;
+                    commitState['@type'].push(prefixes.ontologyState + 'StateBranch');
+                    commitState[prefixes.ontologyState + 'branch'] = [{'@id': branchId}];
+                } else {
+                    stateIri = commitStateNamespace + uuid.v4();
+                    commitState['@id'] = stateIri;
+                }
+                recordState[prefixes.ontologyState + 'currentState'] = [{'@id': stateIri}];
+                return [recordState, commitState];
+            }
+
+            /**
              * @ngdoc method
              * @name addErrorToUploadItem
              * @methodOf ontologyState.service:ontologyStateService
@@ -253,18 +438,6 @@
              */
             self.addErrorToUploadItem = function(id, error) {
                 _.set(_.find(self.uploadList, {id}), 'error', error);
-            }
-
-            /**
-             * @ngdoc method
-             * @name initialize
-             * @methodOf ontologyState.service:ontologyStateService
-             *
-             * @description
-             * Initializes the `catalogId` variable.
-             */
-            self.initialize = function() {
-                catalogId = _.get(cm.localCatalog, '@id', '');
             }
             /**
              * @ngdoc method
@@ -287,8 +460,8 @@
              *
              * @description
              * Retrieves the last visible state of the ontology for the current user in the provided RDF format. If
-             * the user has not opened the ontology yet or the branch they were viewing no longer exists, retrieves
-             * the latest state of the ontology.
+             * the user has not opened the ontology yet or the branch/commit they were viewing no longer exists,
+             * retrieves the latest state of the ontology.
              *
              * @param {string} recordId The record ID of the ontology you want to get from the repository.
              * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
@@ -296,19 +469,26 @@
              * and JSON-LD serialization of the ontology.
              */
             self.getOntology = function(recordId, rdfFormat = 'jsonld') {
-                var state = sm.getOntologyStateByRecordId(recordId);
+                var state = self.getOntologyStateByRecordId(recordId);
                 if (!_.isEmpty(state)) {
-                    var record = _.find(state.model, {'@type': ['http://mobi.com/states/ontology-editor/state-record']});
+                    var recordState = _.find(state.model, {'@type': [prefixes.ontologyState + 'StateRecord']});
                     var inProgressCommit = emptyInProgressCommit;
-                    var branchId = util.getPropertyId(record, prefixes.ontologyState + 'currentBranch');
-                    var branch = _.find(state.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
-                    var commitId = util.getPropertyId(branch, prefixes.ontologyState + 'commit');
+                    var currentState = _.find(state.model, {'@id': util.getPropertyId(recordState, prefixes.ontologyState + 'currentState')});
+                    var commitId = util.getPropertyId(currentState, prefixes.ontologyState + 'commit');
+                    var branchId = util.getPropertyId(currentState, prefixes.ontologyState + 'branch');
                     var upToDate = false;
-                    return cm.getRecordBranch(branchId, recordId, catalogId)
-                        .then(branch => {
-                            upToDate = _.get(branch, "['" + prefixes.catalog + "head'][0]['@id']", '') === commitId;
-                            return cm.getInProgressCommit(recordId, catalogId);
-                        }, $q.reject)
+                    var promise;
+                    if (!branchId) {
+                        upToDate = true;
+                        promise = cm.getInProgressCommit(recordId, catalogId);
+                    } else {
+                        promise = cm.getRecordBranch(branchId, recordId, catalogId)
+                            .then(branch => {
+                                upToDate = util.getPropertyId(branch, prefixes.catalog + 'head') === commitId;
+                                return cm.getInProgressCommit(recordId, catalogId);
+                            }, $q.reject);
+                    }
+                    return promise
                         .then(response => {
                             inProgressCommit = response;
                             return om.getOntology(recordId, branchId, commitId, rdfFormat);
@@ -319,7 +499,7 @@
                             return $q.reject();
                         })
                         .then(ontology => ({ontology, recordId, branchId, commitId, upToDate, inProgressCommit}), () =>
-                            sm.deleteOntologyState(recordId, branchId, commitId)
+                            self.deleteOntologyState(recordId)
                                 .then(() => self.getLatestOntology(recordId, rdfFormat), $q.reject)
                         );
                 }
@@ -346,7 +526,7 @@
                     .then(masterBranch => {
                         branchId = _.get(masterBranch, '@id', '');
                         commitId = _.get(masterBranch, "['" + prefixes.catalog + "head'][0]['@id']", '');
-                        return sm.createOntologyState(recordId, branchId, commitId);
+                        return self.createOntologyState(recordId, commitId, branchId);
                     }, $q.reject)
                     .then(() => om.getOntology(recordId, branchId, commitId, rdfFormat), $q.reject)
                     .then(ontology => {return {ontology, recordId, branchId, commitId, upToDate: true, inProgressCommit: emptyInProgressCommit}}, $q.reject);
@@ -445,7 +625,7 @@
                         } else {
                             listItem.selected = oldListItem.selected;
                         }
-                        return sm.updateOntologyState(recordId, branchId, commitId);
+                        return self.updateOntologyState(recordId, commitId, branchId);
                     }, $q.reject)
                     .then(() => {
                         var activeKey = self.getActiveKey(oldListItem);
@@ -888,7 +1068,7 @@
                 _.remove(self.list, { ontologyRecord: { recordId }});
             }
             self.removeBranch = function(recordId, branchId) {
-                sm.deleteOntologyBranch(recordId, branchId);
+                self.deleteOntologyBranch(recordId, branchId);
                 _.remove(self.getListItemByRecordId(recordId).branches, {'@id': branchId});
             }
             self.afterSave = function() {
@@ -906,10 +1086,10 @@
                             _.unset(value, 'usages');
                         });
 
-                        if (_.isEmpty(sm.getOntologyStateByRecordId(self.listItem.ontologyRecord.recordId))) {
-                            return sm.createOntologyState(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.branchId, self.listItem.ontologyRecord.commitId);
+                        if (_.isEmpty(self.getOntologyStateByRecordId(self.listItem.ontologyRecord.recordId))) {
+                            return self.createOntologyState(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.commitId, self.listItem.ontologyRecord.branchId);
                         } else {
-                            return sm.updateOntologyState(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.branchId, self.listItem.ontologyRecord.commitId);
+                            return self.updateOntologyState(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.commitId, self.listItem.ontologyRecord.branchId);
                         }
                     }, $q.reject);
             }
@@ -1252,6 +1432,9 @@
                 };
             }
             self.canModify = function() {
+                if (!self.listItem.ontologyRecord.branchId) {
+                    return false;
+                }
                 if (self.listItem.masterBranchIRI === self.listItem.ontologyRecord.branchId) {
                     return self.listItem.userCanModifyMaster;
                 } else {

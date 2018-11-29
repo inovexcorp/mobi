@@ -35,6 +35,8 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
@@ -49,6 +51,7 @@ import com.mobi.etl.rest.DelimitedRest;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontologies.owl.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
@@ -63,6 +66,11 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.exception.RepositoryException;
+import com.mobi.rest.security.annotations.ActionAttributes;
+import com.mobi.rest.security.annotations.ActionId;
+import com.mobi.rest.security.annotations.AttributeValue;
+import com.mobi.rest.security.annotations.ResourceId;
+import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.CharsetUtils;
 import com.mobi.rest.util.ErrorUtils;
 import com.opencsv.CSVReader;
@@ -98,6 +106,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -311,13 +320,19 @@ public class DelimitedRestImpl implements DelimitedRest {
     }
 
     @Override
+    @ActionId(value = Modify.TYPE)
+    @ActionAttributes(
+            @AttributeValue(type = ValueType.QUERY, id = OntologyRecord.branch_IRI, value = "branchIRI")
+    )
+    @ResourceId(type = ValueType.QUERY, value = "ontologyRecordIRI")
     public Response etlFileOntology(ContainerRequestContext context, String fileName, String mappingRecordIRI,
-                                    String ontologyRecordIRI, boolean containsHeaders, String separator) {
+                                    String ontologyRecordIRI, String branchIRI, boolean update, boolean containsHeaders,
+                                    String separator) {
         checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
         checkStringParam(ontologyRecordIRI, "Must provide the IRI of an ontology record");
+        checkStringParam(branchIRI, "Must provide the IRI of an ontology branch");
 
         User user = getActiveUser(context, engineManager);
-        Response response;
 
         OntologyRecord record = catalogManager.getRecord(configProvider.getLocalCatalogIRI(),
                 vf.createIRI(ontologyRecordIRI), ontologyRecordFactory).orElseThrow(() ->
@@ -328,22 +343,42 @@ public class DelimitedRestImpl implements DelimitedRest {
         Model mappingData = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
                 separator, false);
 
-        Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() -> ErrorUtils.sendError(
-                "OntologyRecord " + ontologyRecordIRI + " master branch cannot be found.", Response.Status.BAD_REQUEST));
-
+        Resource branchId = vf.createIRI(branchIRI);
         IRI recordIRI = vf.createIRI(ontologyRecordIRI);
-        Model ontologyData =  ontologyManager.getOntologyModel(recordIRI);
+        Model ontologyData =  ontologyManager.getOntologyModel(recordIRI, branchId);
 
-        mappingData.removeAll(ontologyData);
+        Response response;
+        if (update) {
+            Iterator<Statement> ontologyObjectIterator = ontologyData.filter(null,
+                    vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Ontology.TYPE)).iterator();
+            if (ontologyObjectIterator.hasNext()) {
+                mappingData.addAll(ontologyData.filter(ontologyObjectIterator.next().getSubject(), null, null));
+            } else {
+                logger.info("OntologyRecord " + ontologyRecordIRI + " does not have an ontology object. Continuing"
+                        + " with mapping update.");
+            }
 
-        if (!mappingData.isEmpty()) {
-            versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), masterBranchId, user,
-                    "Mapping data from " + mappingRecordIRI, mappingData, null);
-            response = Response.ok().build();
+            Difference diff = catalogManager.getDiff(ontologyData, mappingData);
+            if (!diff.getAdditions().isEmpty() || !diff.getDeletions().isEmpty()) {
+                versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), branchId, user,
+                        "Mapping data from " + mappingRecordIRI, diff.getAdditions(), diff.getDeletions());
+                response = Response.ok().build();
+            } else {
+                response = Response.status(204).entity("No commit was submitted. No differences detected between "
+                        + "mapping result data and ontology.").build();
+            }
         } else {
-            response = Response.status(204).entity("No commit was submitted, commit was empty due to duplicates").build();
-        }
+            mappingData.removeAll(ontologyData);
 
+            if (!mappingData.isEmpty()) {
+                versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), branchId, user,
+                        "Mapping data from " + mappingRecordIRI, mappingData, null);
+                response = Response.ok().build();
+            } else {
+                response = Response.status(204).entity("No commit was submitted, commit was empty due to duplicates")
+                        .build();
+            }
+        }
         // Remove temp file
         removeTempFile(fileName);
 

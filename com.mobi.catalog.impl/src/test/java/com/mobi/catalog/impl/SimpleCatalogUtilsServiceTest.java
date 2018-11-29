@@ -999,8 +999,10 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             assertTrue(conn.getStatements(revisionToKeep, ADDITIONS_CATALOG_IRI, additionsToKeep, commitIdToKeep).hasNext());
             assertTrue(conn.getStatements(revisionToKeep, DELETIONS_CATALOG_IRI, deletionsToKeep, commitIdToKeep).hasNext());
 
-            service.removeBranch(VERSIONED_RDF_RECORD_IRI, BRANCH_IRI, conn);
+            List<Resource> deletedCommits = service.removeBranch(VERSIONED_RDF_RECORD_IRI, BRANCH_IRI, conn);
 
+            assertEquals(1, deletedCommits.size());
+            assertEquals(commitIdToRemove, deletedCommits.get(0));
             assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
             assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
             assertFalse(conn.getStatements(BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, BRANCH_IRI).hasNext());
@@ -1040,6 +1042,8 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             List<Resource> deletedCommits = new ArrayList<>();
             service.removeBranch(VERSIONED_RDF_RECORD_IRI, BRANCH_IRI, deletedCommits, conn);
 
+            assertEquals(1, deletedCommits.size());
+            assertEquals(commitIdToRemove, deletedCommits.get(0));
             assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
             assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
             assertFalse(conn.getStatements(BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, BRANCH_IRI).hasNext());
@@ -1082,8 +1086,11 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             assertTrue(conn.getStatements(commitB, typeIRI, COMMIT_CATALOG_IRI, commitB).hasNext());
             assertTrue(conn.getStatements(commitD, typeIRI, COMMIT_CATALOG_IRI, commitD).hasNext());
 
-            service.removeBranch(complexRecordIRI, complexBranchIRI, conn);
+            List<Resource> deletedCommits = service.removeBranch(complexRecordIRI, complexBranchIRI, conn);
 
+            assertEquals(2, deletedCommits.size());
+            assertTrue(deletedCommits.contains(commitA));
+            assertTrue(deletedCommits.contains(commitC));
             assertFalse(conn.getStatements(complexRecordIRI, BRANCH_CATALOG_IRI, complexBranchIRI, complexRecordIRI).hasNext());
             assertFalse(conn.getStatements(commitA, typeIRI, COMMIT_CATALOG_IRI, commitA).hasNext());
             assertFalse(conn.getStatements(commitARevision, ADDITIONS_CATALOG_IRI, commitAAdditions, commitA).hasNext());
@@ -1121,7 +1128,10 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             assertTrue(conn.getStatements(null, null, null, graphAdditionsToRemove).hasNext());
             assertTrue(conn.getStatements(null, null, null, graphDeletionsToRemove).hasNext());
 
-            service.removeBranch(quadVersionedRecordId, branchToRemove, conn);
+            List<Resource> deletedCommits = service.removeBranch(quadVersionedRecordId, branchToRemove, conn);
+
+            assertEquals(1, deletedCommits.size());
+            assertEquals(commit2, deletedCommits.get(0));
             assertFalse(conn.getStatements(quadVersionedRecordId, BRANCH_CATALOG_IRI, branchToRemove, quadVersionedRecordId).hasNext());
             assertFalse(conn.getStatements(commit2, typeIRI, COMMIT_CATALOG_IRI, commit2).hasNext());
             assertFalse(conn.getStatements(revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commit2).hasNext());
@@ -1138,7 +1148,8 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, noHeadBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
 
-            service.removeBranch(VERSIONED_RDF_RECORD_IRI, noHeadBranchIRI, conn);
+            List<Resource> deletedCommits = service.removeBranch(VERSIONED_RDF_RECORD_IRI, noHeadBranchIRI, conn);
+            assertEquals(0, deletedCommits.size());
             assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, noHeadBranchIRI, VERSIONED_RDF_RECORD_IRI).hasNext());
         }
     }

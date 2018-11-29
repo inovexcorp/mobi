@@ -230,6 +230,7 @@ describe('Merge Requests State service', function() {
         it('accepted', function() {
             mergeRequestManagerSvc.isAccepted.and.returnValue(true);
             mergeRequestsStateSvc.setRequestDetails(this.request);
+            scope.$apply();
             expect(this.request.sourceTitle).toEqual(prefixes.mergereq + 'sourceBranchTitle');
             expect(this.request.targetTitle).toEqual(prefixes.mergereq + 'targetBranchTitle');
             expect(this.request.sourceCommit).toEqual(prefixes.mergereq + 'sourceCommit');
@@ -250,6 +251,7 @@ describe('Merge Requests State service', function() {
                     this.expected.targetTitle = 'title';
                     this.expected.targetCommit = prefixes.catalog + 'head';
                     this.expected.removeSource = false;
+                    this.expected.comments = [];
                 });
                 describe('and getDifference resolves', function() {
                     describe('and getBranchConflicts resolves', function() {
@@ -332,6 +334,7 @@ describe('Merge Requests State service', function() {
                 this.expected.targetCommit = '';
                 this.expected.difference = '';
                 this.expected.removeSource = '';
+                this.expected.comments = [];
                 catalogManagerSvc.getRecordBranch.and.returnValue($q.reject('Error Message'));
                 mergeRequestsStateSvc.setRequestDetails(this.request);
                 scope.$apply();
@@ -374,6 +377,47 @@ describe('Merge Requests State service', function() {
             scope.$apply();
             expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith('target', 'source', 'record', 'catalogId', {});
             expect(mergeRequestsStateSvc.setRequestDetails).not.toHaveBeenCalled();
+        });
+    });
+    describe('should delete a request', function() {
+        beforeEach(function() {
+            this.request = {jsonld: {'@id': 'request'}};
+            mergeRequestsStateSvc.selected = this.request;
+            spyOn(mergeRequestsStateSvc, 'setRequests');
+        });
+        it('unless an error occurs', function() {
+            mergeRequestManagerSvc.deleteRequest.and.returnValue($q.reject('Error Message'));
+            mergeRequestsStateSvc.deleteRequest(this.request);
+            scope.$apply();
+            expect(mergeRequestManagerSvc.deleteRequest).toHaveBeenCalledWith('request');
+            expect(mergeRequestsStateSvc.selected).toEqual(this.request);
+            expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
+            expect(mergeRequestsStateSvc.setRequests).not.toHaveBeenCalled();
+            expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
+        });
+        describe('successfully', function() {
+            beforeEach(function() {
+                mergeRequestManagerSvc.deleteRequest.and.returnValue($q.when());
+            });
+            it('with a selected request', function() {
+                mergeRequestsStateSvc.deleteRequest(this.request);
+                scope.$apply();
+                expect(mergeRequestManagerSvc.deleteRequest).toHaveBeenCalledWith('request');
+                expect(mergeRequestsStateSvc.selected).toBeUndefined();
+                expect(utilSvc.createSuccessToast).toHaveBeenCalled();
+                expect(mergeRequestsStateSvc.setRequests).not.toHaveBeenCalled();
+                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+            });
+            it('without a selected request', function() {
+                mergeRequestsStateSvc.selected = undefined;
+                mergeRequestsStateSvc.deleteRequest(this.request);
+                scope.$apply();
+                expect(mergeRequestManagerSvc.deleteRequest).toHaveBeenCalledWith('request');
+                expect(mergeRequestsStateSvc.selected).toBeUndefined();
+                expect(utilSvc.createSuccessToast).toHaveBeenCalled();
+                expect(mergeRequestsStateSvc.setRequests).toHaveBeenCalledWith(mergeRequestsStateSvc.acceptedFilter);
+                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+            });
         });
     });
 });

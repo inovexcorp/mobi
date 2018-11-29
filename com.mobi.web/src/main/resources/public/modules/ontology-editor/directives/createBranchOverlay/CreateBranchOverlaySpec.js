@@ -21,24 +21,21 @@
  * #L%
  */
 describe('Create Branch Overlay directive', function() {
-    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, stateManagerSvc, prefixes;
+    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('createBranchOverlay');
         mockCatalogManager();
         mockOntologyState();
-        mockStateManager();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyStateService_, _$q_,
-            _stateManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _ontologyStateService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
             ontologyStateSvc = _ontologyStateService_;
-            $q = _$q_;
-            stateManagerSvc = _stateManagerService_;
             prefixes = _prefixes_;
         });
 
@@ -64,7 +61,6 @@ describe('Create Branch Overlay directive', function() {
         $q = null;
         catalogManagerSvc = null;
         ontologyStateSvc = null;
-        stateManagerSvc = null;
         prefixes = null;
         this.element.remove();
     });
@@ -111,27 +107,27 @@ describe('Create Branch Overlay directive', function() {
                         catalogManagerSvc.getRecordBranch.and.returnValue($q.when(this.branch));
                     });
                     it('and when updateOntologyState is resolved', function() {
-                        stateManagerSvc.updateOntologyState.and.returnValue($q.when());
+                        ontologyStateSvc.updateOntologyState.and.returnValue($q.when());
                         this.controller.create();
                         scope.$digest();
                         expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem
                             .ontologyRecord.recordId, this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId,
                             ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
-                        expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                            this.branchId, this.commitId);
+                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
+                            this.commitId, this.branchId);
                         expect(scope.close).toHaveBeenCalled();
                     });
                     it('and when updateOntologyState is rejected', function() {
-                        stateManagerSvc.updateOntologyState.and.returnValue($q.reject(this.error));
+                        ontologyStateSvc.updateOntologyState.and.returnValue($q.reject(this.error));
                         this.controller.create();
                         scope.$digest();
                         expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem
                             .ontologyRecord.recordId, this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId,
                             ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
-                        expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                            this.branchId, this.commitId);
+                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.commitId,
+                            this.branchId);
                         expect(this.controller.error).toBe(this.error);
                         expect(scope.close).not.toHaveBeenCalled();
                     });

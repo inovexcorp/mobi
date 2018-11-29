@@ -300,13 +300,17 @@
              *
              * @param {string} mappingIRI the IRI of a saved Mapping
              * @param {string} ontologyRecordIRI the IRI of a OntologyRecord
+             * @param {string} branchIRI the IRI of record branch
+             * @param {boolean} update True to update the ontology with new mapping results, false to add as new additions
              * @return {Promise} A Promise of the whole HTTP response that resolves if the upload was successful; rejects with an error message otherwise
              */
-            self.mapAndCommit = function(mappingRecordIRI, ontologyRecordIRI) {
+            self.mapAndCommit = function(mappingRecordIRI, ontologyRecordIRI, branchIRI, update = false) {
                 var config = {
                     params: {
                         mappingRecordIRI,
                         ontologyRecordIRI,
+                        branchIRI,
+                        update,
                         containsHeaders: self.containsHeaders,
                         separator: self.separator
                     }

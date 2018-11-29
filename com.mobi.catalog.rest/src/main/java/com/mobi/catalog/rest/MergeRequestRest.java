@@ -26,6 +26,7 @@ package com.mobi.catalog.rest;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
+import com.mobi.catalog.api.ontologies.mergerequests.Comment;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -161,4 +162,95 @@ public interface MergeRequestRest {
     @RolesAllowed("user")
     @ApiOperation("Deletes a MergeRequest that has the provided requestId")
     Response deleteMergeRequest(@PathParam("requestId") String requestId);
+
+    /**
+     * Retrieves a list of all the {@link Comment} chains in Mobi on the provided {@code requestId} sorted by issued
+     * date of the head of each comment chain.
+     *
+     * @param requestId The String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @return The list of all {@link Comment} chains for the specified {@link MergeRequest}
+     */
+    @GET
+    @Path("{requestId}/comments")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves all Comment threads on a MergeRequest")
+    Response getComments(@PathParam("requestId") String requestId);
+
+    /**
+     * Returns a {@link MergeRequest} with the provided ID.
+     *
+     * @param requestId The String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @param commentId The String representing the {@link Comment} ID. NOTE: Assumes ID represents an IRI unless String
+     *                 begins with "_:".
+     * @return A Response with the {@link Comment} with the provided ID
+     */
+    @GET
+    @Path("{requestId}/comments/{commentId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves a Comment from the application by its ID")
+    Response getComment(@PathParam("requestId") String requestId, @PathParam("commentId") String commentId);
+
+    /**
+     * Creates a new {@link Comment} in the repository with the passed form data. Requires the `commentStr` to be set.
+     * If a `commentId` is provided, the the created comment is made as a reply comment to the Comment specified. If
+     * the `commentId` already has a reply comment, the newly created comment is added to the bottom of the comment
+     * chain. Returns a Response with the IRI of the new {@link Comment}.
+     *
+     * @param context The context of the request.
+     * @param requestId The String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @param commentId The optional IRI of the parent {@link Comment} that the newly created Comment is a reply
+     *                       to. NOTE: Assumes ID represents an IRI unless String begins with "_:".
+     * @param commentStr The string containing comment text for the {@link Comment}.
+     * @return A Response with the IRI string of the created {@link Comment}.
+     */
+    @POST
+    @Path("{requestId}/comments")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_PLAIN)
+    @RolesAllowed("user")
+    @ApiOperation("Creates a new Comment on the MergeRequest in the application with the provided information")
+    Response createComment(@Context ContainerRequestContext context,
+                           @PathParam("requestId") String requestId,
+                           @QueryParam("commentId") String commentId,
+                           String commentStr);
+
+
+    /**
+     * Updates an existing {@link Comment} that has the {@code commentId} with the provided JSONLD of
+     * {@code newComment}.
+     *
+     * @param commentId The String representing the {@link Comment} ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
+     * @param newComment The String representing the JSONLD representation of the updated {@link Comment}.
+     * @return A Response indicating the status of the update.
+     */
+    @PUT
+    @Path("{requestId}/comments/{commentId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Updates a Comment by its ID using the provided JSON-LD")
+    Response updateComment(@PathParam("commentId") String commentId, String newComment);
+
+    /**
+     * Deletes an existing {@link Comment} that has the {@code commentId} if it belongs to the active {@link User}.
+     *
+     * @param context The context of the request.
+     * @param requestId The String representing the {@link MergeRequest} ID the comment is on. NOTE: Assumes ID
+     *                  represents an IRI unless String begins with "_:".
+     * @param commentId The String representing the {@link Comment} ID to delete. NOTE: Assumes ID represents an IRI
+     *                  unless String begins with "_:".
+     * @return A Response indicating the status of the delete.
+     */
+    @DELETE
+    @Path("{requestId}/comments/{commentId}")
+    @RolesAllowed("user")
+    @ApiOperation("Deletes a Comment that has the provided commentId")
+    Response deleteComment(@Context ContainerRequestContext context,
+                           @PathParam("requestId") String requestId,
+                           @PathParam("commentId") String commentId);
 }
