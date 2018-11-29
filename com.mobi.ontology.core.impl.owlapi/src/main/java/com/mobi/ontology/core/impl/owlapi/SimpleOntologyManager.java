@@ -26,6 +26,7 @@ package com.mobi.ontology.core.impl.owlapi;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -33,6 +34,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.QueryResults;
@@ -68,8 +70,10 @@ public class SimpleOntologyManager implements OntologyManager {
     private ValueFactory valueFactory;
     private SesameTransformer sesameTransformer;
     private ModelFactory modelFactory;
+    private OntologyRecordFactory ontologyRecordFactory;
     private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
+    private CatalogUtilsService utilsService;
     private RepositoryManager repositoryManager;
     private BranchFactory branchFactory;
     private OntologyCache ontologyCache;
@@ -174,6 +178,11 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Reference
+    void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
+        this.ontologyRecordFactory = ontologyRecordFactory;
+    }
+
+    @Reference
     void setConfigProvider(CatalogConfigProvider configProvider) {
         this.configProvider = configProvider;
     }
@@ -181,6 +190,11 @@ public class SimpleOntologyManager implements OntologyManager {
     @Reference
     public void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
+    }
+
+    @Reference
+    void setUtilsService(CatalogUtilsService utilsService) {
+        this.utilsService = utilsService;
     }
 
     @Reference
@@ -259,7 +273,7 @@ public class SimpleOntologyManager implements OntologyManager {
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId) {
         long start = getStartTime();
         Optional<Ontology> result = catalogManager.getBranch(configProvider.getLocalCatalogIRI(), recordId, branchId,
-                branchFactory).flatMap(branch -> getOntology(recordId, branch.getResource(), getHeadOfBranch(branch)));
+                branchFactory).flatMap(branch -> getOntology(recordId, getHeadOfBranch(branch)));
         logTrace("retrieveOntology(recordId, branchId)", start);
         return result;
     }
@@ -271,14 +285,16 @@ public class SimpleOntologyManager implements OntologyManager {
         long start = getStartTime();
 
         Optional<Cache<String, Ontology>> optCache = ontologyCache.getOntologyCache();
-        String key = ontologyCache.generateKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
+        String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
 
         if (optCache.isPresent() && optCache.get().containsKey(key)) {
-            if (log.isTraceEnabled()) log.trace("cache hit");
+            if (log.isTraceEnabled()) {
+                log.trace("cache hit");
+            }
             result = Optional.ofNullable(optCache.get().get(key));
         } else {
             result = catalogManager.getCommit(configProvider.getLocalCatalogIRI(), recordId, branchId, commitId)
-                    .flatMap(commit -> getOntology(recordId, branchId, commitId));
+                    .flatMap(commit -> getOntology(recordId, commitId));
         }
 
         logTrace("retrieveOntology(recordId, branchId, commitId)", start);
@@ -286,10 +302,22 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public Optional<Ontology> retrieveOntologyByCommit(@Nonnull Resource recordId, @Nonnull Resource commitId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utilsService.validateRecord(configProvider.getLocalCatalogIRI(), recordId,
+                    ontologyRecordFactory.getTypeIRI(), conn);
+            if (utilsService.commitInRecord(recordId, commitId, conn)) {
+                return getOntology(recordId, commitId);
+            }
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public void deleteOntologyBranch(@Nonnull Resource recordId, @Nonnull Resource branchId) {
         long start = getStartTime();
-        catalogManager.removeBranch(configProvider.getLocalCatalogIRI(), recordId, branchId);
-        ontologyCache.clearCache(recordId, branchId);
+        catalogManager.removeBranch(configProvider.getLocalCatalogIRI(), recordId, branchId).forEach(resource ->
+                ontologyCache.removeFromCache(recordId.stringValue(), resource.stringValue()));
         logTrace("deleteOntologyBranch(recordId, branchId)", start);
     }
 
@@ -371,7 +399,8 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getSubObjectPropertiesOf(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(ontology)", true);
+        return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(ontology)",
+                true);
     }
 
     @Override
@@ -381,7 +410,8 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getClassesWithIndividuals(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(ontology)", true);
+        return runQueryOnOntology(ontology, GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(ontology)",
+                true);
     }
 
     @Override
@@ -488,15 +518,15 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Model getOntologyModel(Resource recordId, Resource branchId) {
-        Branch branch = catalogManager.getBranch(configProvider.getLocalCatalogIRI(), recordId, branchId, branchFactory).get();
+        Branch branch = catalogManager.getBranch(configProvider.getLocalCatalogIRI(), recordId, branchId, branchFactory)
+                .get();
         return catalogManager.getCompiledResource(recordId, branchId, getHeadOfBranch(branch));
     }
 
-    private Optional<Ontology> getOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
-                                           @Nonnull Resource commitId) {
+    private Optional<Ontology> getOntology(@Nonnull Resource recordId, @Nonnull Resource commitId) {
         Optional<Ontology> result;
         Optional<Cache<String, Ontology>> optCache = ontologyCache.getOntologyCache();
-        String key = ontologyCache.generateKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
+        String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
 
         if (optCache.isPresent() && optCache.get().containsKey(key)) {
             log.trace("cache hit");
@@ -631,7 +661,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     private Optional<Ontology> retrieveOntologyWithRecordId(Resource recordId) {
         Branch masterBranch = getMasterBranch(recordId);
-        return getOntology(recordId, masterBranch.getResource(), getHeadOfBranch(masterBranch));
+        return getOntology(recordId, getHeadOfBranch(masterBranch));
     }
 
     private Branch getMasterBranch(Resource recordId) {

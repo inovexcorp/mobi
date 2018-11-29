@@ -42,7 +42,6 @@
          * @requires ontologyManager.service:ontologyManagerService
          * @requires ontologyState.service:ontologyStateService
          * @requires prefixes.service:prefixes
-         * @requires stateManager.service:stateManagerService
          * @requires util.service:utilService
          * @requires mapperState.service:mapperStateService
          * @requires catalogManager.service:catalogManagerService
@@ -60,9 +59,9 @@
          */
         .directive('openOntologyTab', openOntologyTab);
 
-        openOntologyTab.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'stateManagerService', 'utilService', 'mapperStateService', 'catalogManagerService', 'modalService', 'policyEnforcementService', 'policyManagerService'];
+        openOntologyTab.$inject = ['httpService', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'mapperStateService', 'catalogManagerService', 'modalService', 'policyEnforcementService', 'policyManagerService'];
 
-        function openOntologyTab(httpService, ontologyManagerService, ontologyStateService, prefixes, stateManagerService, utilService, mapperStateService, catalogManagerService, modalService, policyEnforcementService, policyManagerService) {
+        function openOntologyTab(httpService, ontologyManagerService, ontologyStateService, prefixes, utilService, mapperStateService, catalogManagerService, modalService, policyEnforcementService, policyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -71,7 +70,6 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    var sm = stateManagerService;
                     var cm = catalogManagerService;
                     var pe = policyEnforcementService;
                     var pm = policyManagerService;
@@ -134,9 +132,9 @@
                             .then(response => {
                                 _.remove(ontologyRecords, record => _.get(record, '@id', '') === dvm.recordId);
                                 dvm.os.closeOntology(dvm.recordId);
-                                var state = sm.getOntologyStateByRecordId(dvm.recordId);
+                                var state = dvm.os.getOntologyStateByRecordId(dvm.recordId);
                                 if (!_.isEmpty(state)) {
-                                    sm.deleteState(_.get(state, 'id', ''));
+                                    dvm.os.deleteOntologyState(dvm.recordId);
                                 }
                                 dvm.currentPage = 1;
                                 dvm.getPageOntologyRecords();
@@ -189,6 +187,10 @@
                     $scope.$watch(() => dvm.os.uploadList.length, (newValue, oldValue) => {
                         if (newValue !== oldValue) {
                             dvm.showSnackbar = newValue > 0;
+                        }
+                    });
+                    $scope.$watch(() => dvm.os.uploadPending, (newValue, oldValue) => {
+                        if (newValue !== oldValue) {
                             if (newValue === 0) {
                                 dvm.search();
                             }

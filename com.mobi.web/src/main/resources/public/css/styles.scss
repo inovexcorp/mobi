@@ -525,6 +525,10 @@ body {
     margin-bottom: 0;
 }
 
+.task-list-item input[type="checkbox"]{
+    margin-left: 0 !important;
+}
+
 /* Helper Classes */
 .padding {
     padding: 10px;

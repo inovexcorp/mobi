@@ -30,7 +30,7 @@
          *
          * @description
          * The `mergeRequestManager` module only provides the `mergeRequestManagerService` service which
-         * provides access to the Mobi merge-requests REST endpoints.
+         * provides access to the Mobi merge-requests REST endpoints and utility methods.
          */
         .module('mergeRequestManager', [])
         /**
@@ -39,7 +39,7 @@
          *
          * @description
          * `mergeRequestManagerService` is a service that provides access to the Mobi merge-requests REST
-         * endpoints.
+         * endpoints along with utility methods for working with Merge Requests and their components.
          */
         .service('mergeRequestManagerService', mergeRequestManagerService);
 
@@ -71,7 +71,6 @@
                 return $http.get(prefix, config)
                     .then(response => response.data, util.rejectError);
             }
-
             /**
              * @ngdoc method
              * @name createRequest
@@ -115,7 +114,6 @@
                 return $http.post(prefix, fd, config)
                     .then(response => response.data, util.rejectError);
             }
-
             /**
              * @ngdoc method
              * @name getRequest
@@ -133,7 +131,6 @@
                 return $http.get(prefix + '/' + encodeURIComponent(requestId))
                     .then(response => response.data, util.rejectError);
             }
-
             /**
              * @ngdoc method
              * @name deleteRequest
@@ -151,7 +148,6 @@
                 return $http.delete(prefix + '/' + encodeURIComponent(requestId))
                     .then(_.noop, util.rejectError);
             }
-
             /**
              * @ngdoc method
              * @name acceptRequest
@@ -161,7 +157,7 @@
              * Calls the POST /mobirest/merge-requests/{requestId} endpoint to accept a Merge Request
              * with a matching IRI and perform the represented merge.
              *
-             * @param {string} params An IRI ID of a Merge Request
+             * @param {string} requestId An IRI ID of a Merge Request
              * @returns {Promise} A promise that resolves if the request was accepted or rejects with an
              * error message.
              */
@@ -169,7 +165,86 @@
                 return $http.post(prefix + '/' + encodeURIComponent(requestId))
                     .then(_.noop, util.rejectError);
             }
-
+            /**
+             * @ngdoc method
+             * @name getComments
+             * @methodOf mergeRequestManager.service:mergeRequestManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/merge-requests/{requestId}/comments endpoint to retrieve the array of comment
+             * chains for the Merge Request with a matching IRI.
+             *
+             * @param {string} requestId An IRI ID of a Merge Request
+             * @returns {Promise} A promise that resolves with an array of arrays of JSON-LD objects representing
+             *      comment chains or rejects with an error message.
+             */
+            self.getComments = function(requestId) {
+                return $http.get(prefix + '/' + encodeURIComponent(requestId) + '/comments')
+                    .then(response => response.data, util.rejectError);
+            }
+            /**
+             * @ngdoc method
+             * @name deleteComment
+             * @methodOf mergeRequestManager.service:mergeRequestManagerService
+             *
+             * @description
+             * Calls the DELETE /mobirest/merge-requests/{requestId}/comments/{commentId} endpoint to delete a comment
+             * with a matching IRI from the Merge Request with a matching IRI.
+             *
+             * @param {string} requestId An IRI ID of a Merge Request
+             * @param {string} commentId An IRI ID of a Comment on the Merge Request
+             * @returns {Promise} A promise that resolves if the comment was deleted or rejects with an error message.
+             */
+            self.deleteComment = function(requestId, commentId) {
+                return $http.delete(prefix + '/' + encodeURIComponent(requestId) + '/comments/' + encodeURIComponent(commentId))
+                    .then(_.noop, util.rejectError);
+            }
+            /**
+             * @ngdoc method
+             * @name createComment
+             * @methodOf mergeRequestManager.service:mergeRequestManagerService
+             *
+             * @description
+             * Calls the POST /mobirest/merge-requests/{requestId}/comments endpoint to create a comment on the Merge
+             * Request with a matching IRI with the provided comment string. Can optionally specify the comment the new
+             * comment is reply to.
+             *
+             * @param {string} requestId An IRI ID of a Merge Request
+             * @param {string} commentStr A string to be the body of the new Comment
+             * @param {string} [replyComment = ''] An IRI ID of a Comment on the Merge Request
+             * @returns {Promise} A promise that resolves if the comment was created or rejects with an error message.
+             */
+            self.createComment = function(requestId, commentStr, replyComment = '')  {
+                var config = {
+                    headers: {
+                        'Content-Type': 'text/plain'
+                    }
+                };
+                if (replyComment) {
+                    config.params = { commentId: replyComment };
+                }
+                return $http.post(prefix + '/' + encodeURIComponent(requestId) + '/comments', commentStr, config)
+                    .then(_.noop, util.rejectError);
+            }
+            /**
+             * @ngdoc method
+             * @name updateRequest
+             * @methodOf mergeRequestManager.service:mergeRequestManagerService
+             *
+             * @description
+             * Calls the PUT /mobirest/merge-requests/{requestId} endpoint to update a Merge Request
+             * with a matching IRI.
+             * 
+             * @param {string} requestId An IRI of a MergeRequest
+             * @param {Object} jsonld A MergeRequest JSON-LD object
+             * @return {Promise} A promise that resolves to the IRI of the updated MergeRequest or is rejected with
+             * an error message
+             */
+            self.updateRequest = function(requestId, jsonld) {
+                return $http.put(prefix + '/' + encodeURIComponent(requestId), jsonld)
+                    .then(response => response.data, util.rejectError);
+            }
+            
             /**
              * @ngdoc method
              * @name isAccepted
@@ -179,7 +254,7 @@
              * Determines whether the passed request is accepted or not.
              *
              * @param {Object} request A MergeRequest JSON-LD object
-             * @return {booelan} True if the MergeRequest is accepted; false otherwise
+             * @return {boolean} True if the MergeRequest is accepted; false otherwise
              */
             self.isAccepted = function(request) {
                 return _.includes(request['@type'], prefixes.mergereq + 'AcceptedMergeRequest');

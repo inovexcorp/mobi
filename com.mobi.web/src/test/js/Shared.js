@@ -104,6 +104,17 @@ function injectIndentConstant() {
     });
 }
 
+function injectShowdownConstant() {
+    module(function($provide) {
+        $provide.constant('showdown', {
+            Converter: jasmine.createSpy('Converter').and.returnValue({
+                setFlavor: jasmine.createSpy('setFlavor'),
+                makeHtml: jasmine.createSpy('makeHtml').and.returnValue('')
+            })
+        });
+    });
+}
+
 function injectBeautifyFilter() {
     module(function($provide) {
         $provide.value('beautifyFilter', jasmine.createSpy('beautifyFilter').and.callFake(_.identity));
@@ -197,17 +208,12 @@ function mockStateManager() {
     module(function($provide) {
         $provide.service('stateManagerService', function($q) {
             this.states = [];
+            this.initialize = jasmine.createSpy('initialize');
             this.getStates = jasmine.createSpy('getStates').and.returnValue($q.when());
             this.createState = jasmine.createSpy('createStates').and.returnValue($q.when());
             this.getState = jasmine.createSpy('getState').and.returnValue($q.when());
             this.updateState = jasmine.createSpy('updateState').and.returnValue($q.when());
             this.deleteState = jasmine.createSpy('deleteState').and.returnValue($q.when());
-            this.initialize = jasmine.createSpy('initialize');
-            this.createOntologyState = jasmine.createSpy('createOntologyState').and.returnValue($q.when());
-            this.getOntologyStateByRecordId = jasmine.createSpy('getOntologyStateByRecordId').and.returnValue({});
-            this.updateOntologyState = jasmine.createSpy('updateOntologyState').and.returnValue($q.when());
-            this.deleteOntologyBranch = jasmine.createSpy('deleteOntologyBranch').and.returnValue($q.when());
-            this.deleteOntologyState = jasmine.createSpy('deleteOntologyState').and.returnValue($q.when());
         });
     });
 }
@@ -280,9 +286,7 @@ function mockOntologyManager() {
             this.isBlankNodeId = jasmine.createSpy('isBlankNodeId').and.returnValue(false);
             this.getBlankNodes = jasmine.createSpy('getBlankNodes').and.returnValue([]);
             this.getEntity = jasmine.createSpy('getEntity').and.returnValue({});
-            this.getEntityName = jasmine.createSpy('getEntityName').and.callFake(function(ontology, entity) {
-                return _.has(entity, '@id') ? entity['@id'] : '';
-            });
+            this.getEntityName = jasmine.createSpy('getEntityName').and.callFake((ontology, entity) => _.has(entity, '@id') ? entity['@id'] : '');
             this.getEntityDescription = jasmine.createSpy('getEntityDescription').and.returnValue('');
             this.isConcept = jasmine.createSpy('isConcept').and.returnValue(true);
             this.hasConcepts = jasmine.createSpy('hasConcepts').and.returnValue(true);
@@ -753,6 +757,11 @@ function mockOntologyState() {
             this.merge = jasmine.createSpy('merge').and.returnValue($q.when());
             this.cancelMerge = jasmine.createSpy('cancelMerge');
             this.canModify = jasmine.createSpy('canModify');
+            this.createOntologyState = jasmine.createSpy('createOntologyState').and.returnValue($q.when());
+            this.getOntologyStateByRecordId = jasmine.createSpy('getOntologyStateByRecordId').and.returnValue({});
+            this.updateOntologyState = jasmine.createSpy('updateOntologyState').and.returnValue($q.when());
+            this.deleteOntologyBranch = jasmine.createSpy('deleteOntologyBranch').and.returnValue($q.when());
+            this.deleteOntologyState = jasmine.createSpy('deleteOntologyState').and.returnValue($q.when());
         });
     });
 }
@@ -953,6 +962,7 @@ function mockCatalogManager() {
             this.isDistribution = jasmine.createSpy('isDistribution');
             this.isBranch = jasmine.createSpy('isBranch');
             this.isUserBranch = jasmine.createSpy('isUserBranch');
+            this.isCommit = jasmine.createSpy('isCommit');
         });
     });
 }
@@ -1297,7 +1307,11 @@ function mockMergeRequestManager() {
             this.getRequest = jasmine.createSpy('getRequest').and.returnValue($q.when({}));
             this.deleteRequest = jasmine.createSpy('deleteRequest').and.returnValue($q.when());
             this.acceptRequest = jasmine.createSpy('acceptRequest').and.returnValue($q.when());
+            this.updateRequest = jasmine.createSpy('updateRequest').and.returnValue($q.when());
             this.isAccepted = jasmine.createSpy('isAccepted').and.returnValue(false);
+            this.getComments = jasmine.createSpy('getComments').and.returnValue($q.when([]));
+            this.createComment = jasmine.createSpy('createComment').and.returnValue($q.when(''));
+            this.deleteComment = jasmine.createSpy('deleteComment').and.returnValue($q.when());
         });
     });
 }
@@ -1308,10 +1322,6 @@ function mockMergeRequestsState() {
             this.selected = undefined;
             this.acceptedFilter = false;
             this.requests = [];
-            this.showDelete = false;
-            this.requestToDelete = undefined;
-            this.showAccept = false;
-            this.requestToAccept = undefined;
             this.createRequest = false;
             this.createRequestStep = 0;
             this.requestConfig = {};

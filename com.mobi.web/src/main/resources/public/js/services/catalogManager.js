@@ -1472,6 +1472,21 @@
                 return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Version');
             }
 
+            /**
+             * @ngdoc method
+             * @name isCommit
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Tests whether the passed entity is a Commit or not.
+             *
+             * @param {Object} entity A JSON-LD object
+             * @return {boolean} True if the entity contains the Commit type; false otherwise
+             */
+            self.isCommit = function(entity) {
+                return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Commit');
+            }
+
             function createVersion(recordId, catalogId, versionConfig) {
                 var fd = new FormData(),
                     config = {

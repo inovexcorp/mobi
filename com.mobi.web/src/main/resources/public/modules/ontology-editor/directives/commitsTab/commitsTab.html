@@ -25,8 +25,24 @@
         <div class="section-header">
             <h5>Commits</h5>
         </div>
-        <div class="flex-1 vertical-scroll">
-            <commit-history-table commit-id="dvm.os.listItem.ontologyRecord.commitId" branch-title="dvm.getBranchTitle()" graph></commit-history-table>
+        <div class="flex-1 vertical-scroll d-flex">
+            <commit-history-table class="flex-1" commit-id="dvm.os.listItem.ontologyRecord.commitId" branch-title="dvm.getBranchTitle()" commit-data="dvm.commits" graph></commit-history-table>
+            <div class="view-table" ng-if="dvm.commits.length">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="commit in dvm.commits track by commit.id">
+                            <td class="p-0 align-middle">
+                                <button type="button" class="btn btn-flat-primary remove-min-width" ng-click="dvm.openOntologyAtCommit(commit)" ng-disabled="dvm.os.hasChanges(dvm.os.listItem)">View</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
