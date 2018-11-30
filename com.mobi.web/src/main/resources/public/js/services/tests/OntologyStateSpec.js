@@ -2347,7 +2347,7 @@ describe('Ontology State Service', function() {
                         }
                     }
                 }]
-            })).toBe('name');
+            })).toBe('importedname');
         });
         it('when the entityIRI is in multiple indices with only one label', function() {
             expect(ontologyStateSvc.getEntityNameByIndex('iri', {

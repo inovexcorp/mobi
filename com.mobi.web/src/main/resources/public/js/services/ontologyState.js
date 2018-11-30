@@ -829,6 +829,9 @@
                         listItem.iriList.push(iriList['id'])
                         listItem.iriList = _.union(listItem.iriList, _.flatten(_.values(iriList)))
                     });
+                    _.forEach(_.get(response[0], 'importedOntologies'), importedOntObj => {
+                        addImportedOntologyToListItem(listItem, importedOntObj);
+                    });
                     setHierarchyInfo(listItem.classes, response[0], 'classHierarchy');
                     listItem.classes.flat = self.flattenHierarchy(listItem.classes.hierarchy, recordId, listItem);
                     setHierarchyInfo(listItem.dataProperties, response[0], 'dataPropertyHierarchy');
@@ -841,9 +844,6 @@
                     listItem.concepts.flat = self.flattenHierarchy(listItem.concepts.hierarchy, recordId, listItem);
                     setHierarchyInfo(listItem.conceptSchemes, response[0], 'conceptSchemeHierarchy');
                     listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes.hierarchy, recordId, listItem);
-                    _.forEach(_.get(response[0], 'importedOntologies'), importedOntObj => {
-                        addImportedOntologyToListItem(listItem, importedOntObj);
-                    });
                     listItem.classesAndIndividuals = response[0].individuals;
                     listItem.classesWithIndividuals = _.keys(listItem.classesAndIndividuals);
                     listItem.individualsParentPath = self.getIndividualsParentPath(listItem);
@@ -1143,7 +1143,7 @@
              */
             self.getEntityNameByIndex = function(entityIRI, listItem) {
                 var indices = getIndices(listItem);
-                var entity = _.result(_.find(indices, index => {
+                var entity = _.result(_.findLast(indices, index => {
                     var entity = _.get(index, entityIRI);
                      return (entity !== null && _.has(entity, 'label'));
                 }), entityIRI);
