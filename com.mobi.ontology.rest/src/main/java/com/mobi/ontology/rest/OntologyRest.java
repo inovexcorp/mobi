@@ -1260,7 +1260,7 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param format      the specified format for the return construct.
+     * @param format      the specified format for the return of construct queries only.
      * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
      * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the JSONLD serialization of the results
      *      if the query is a CONSTRUCT
@@ -1277,5 +1277,4 @@ public interface OntologyRest {
                            @QueryParam("commitId") String commitIdStr,
                            @DefaultValue("jsonld") @QueryParam("format") String format,
                            @DefaultValue("true") @QueryParam("includeImports") boolean includeImports);
-
 }

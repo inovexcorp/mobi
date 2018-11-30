@@ -1002,7 +1002,6 @@ public class OntologyRestImpl implements OntologyRest {
         }
     }
 
-
     private Set<String> getUnloadableImportIRIs(Ontology ontology) {
         return ontology.getUnloadableImportIRIs().stream()
                 .map(Value::stringValue)
