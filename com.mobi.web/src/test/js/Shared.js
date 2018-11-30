@@ -763,6 +763,12 @@ function mockOntologyState() {
             this.updateOntologyState = jasmine.createSpy('updateOntologyState').and.returnValue($q.when());
             this.deleteOntologyBranch = jasmine.createSpy('deleteOntologyBranch').and.returnValue($q.when());
             this.deleteOntologyState = jasmine.createSpy('deleteOntologyState').and.returnValue($q.when());
+            this.getCurrentStateByRecordId = jasmine.createSpy('getCurrentStateByRecordId').and.returnValue({});
+            this.getCurrentStateIdByRecordId = jasmine.createSpy('getCurrentStateIdByRecordId').and.returnValue('');
+            this.getCurrentStateId = jasmine.createSpy('getCurrentStateId').and.returnValue('');
+            this.getCurrentState = jasmine.createSpy('getCurrentState').and.returnValue({});
+            this.isStateTag = jasmine.createSpy('isStateTag').and.returnValue(false);
+            this.isStateBranch = jasmine.createSpy('isStateBranch').and.returnValue(false);
         });
     });
 }

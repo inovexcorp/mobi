@@ -413,6 +413,99 @@
                 var stateId = _.get(self.getOntologyStateByRecordId(recordId), 'id', '');
                 return sm.deleteState(stateId);
             }
+            /**
+             * @ngdoc method
+             * @name getCurrentStateIdByRecordId
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Finds the ID of the current state of the ontology with the provided Record ID. The state refers to the
+             * object detailing what the user has currently "checked out".
+             *
+             * @param {string} recordId A string identifying the Record of a state
+             * @returns {string} The string ID of the current state object
+             */
+            self.getCurrentStateIdByRecordId = function(recordId) {
+                return self.getCurrentStateId(self.getOntologyStateByRecordId(recordId));
+            }
+            /**
+             * @ngdoc method
+             * @name getCurrentStateByRecordId
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Finds the current state of the ontology with the provided Record ID. The state refers to the object
+             * detailing what the user has currently "checked out".
+             *
+             * @param {string} recordId A string identifying the Record of a state
+             * @returns {Object} The JSON-LD object representing the current state
+             */
+            self.getCurrentStateByRecordId = function(recordId) {
+                var state = self.getOntologyStateByRecordId(recordId);
+                var currentStateId = self.getCurrentStateId(state);
+                return _.find(_.get(state, 'model', []), {'@id': currentStateId});
+            }
+            /**
+             * @ngdoc method
+             * @name getCurrentStateId
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Finds the ID of the current state from the provided JSON-LD of an ontology state. The state refers to the
+             * object detailing what the user has currently "checked out".
+             *
+             * @param {Object} state A JSON-LD array of an ontology state from the
+             * {@link stateManager.service:stateManagerService}
+             * @returns {string} The string ID of the current state object
+             */
+            self.getCurrentStateId = function(state) {
+                var recordState = _.find(_.get(state, 'model', []), {'@type': [prefixes.ontologyState + 'StateRecord']});
+                return _.get(recordState, "['" + prefixes.ontologyState + "currentState'][0]['@id']", '');
+            }
+            /**
+             * @ngdoc method
+             * @name getCurrentState
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Finds the current state from the provided JSON-LD of an ontology state. The state refers to the object
+             * detailing what the user has currently "checked out".
+             *
+             * @param {Object} state A JSON-LD array of an ontology state from the
+             * {@link stateManager.service:stateManagerService}
+             * @returns {Object} The JSON-LD object representing the current state
+             */
+            self.getCurrentState = function(state) {
+                return _.find(_.get(state, 'model', []), {'@id': self.getCurrentStateId(state)});
+            }
+            /**
+             * @ngdoc method
+             * @name isStateTag
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Determines whether the provided JSON-LD is a StateTag or not.
+             *
+             * @param {Object} obj A JSON-LD object
+             * @returns {boolean} True if the object is a StateTag; false otherwise
+             */
+            self.isStateTag = function(obj) {
+                return _.includes(_.get(obj, '@type', []), prefixes.ontologyState + 'StateTag');
+            }
+            /**
+             * @ngdoc method
+             * @name isStateBranch
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Determines whether the provided JSON-LD is a StateBranch or not.
+             *
+             * @param {Object} obj A JSON-LD object
+             * @returns {boolean} True if the object is a StateBranch; false otherwise
+             */
+            self.isStateBranch = function(obj) {
+                return _.includes(_.get(obj, '@type', []), prefixes.ontologyState + 'StateBranch');
+            }
 
             function makeOntologyState(idObj) {
                 var stateIri;
@@ -490,22 +583,28 @@
             self.getOntology = function(recordId, rdfFormat = 'jsonld') {
                 var state = self.getOntologyStateByRecordId(recordId);
                 if (!_.isEmpty(state)) {
-                    var recordState = _.find(state.model, {'@type': [prefixes.ontologyState + 'StateRecord']});
                     var inProgressCommit = emptyInProgressCommit;
-                    var currentState = _.find(state.model, {'@id': util.getPropertyId(recordState, prefixes.ontologyState + 'currentState')});
+                    var currentState = self.getCurrentState(state);
                     var commitId = util.getPropertyId(currentState, prefixes.ontologyState + 'commit');
+                    var tagId = util.getPropertyId(currentState, prefixes.ontologyState + 'tag');
                     var branchId = util.getPropertyId(currentState, prefixes.ontologyState + 'branch');
                     var upToDate = false;
                     var promise;
-                    if (!branchId) {
-                        upToDate = true;
-                        promise = cm.getInProgressCommit(recordId, catalogId);
-                    } else {
+                    if (branchId) {
                         promise = cm.getRecordBranch(branchId, recordId, catalogId)
                             .then(branch => {
                                 upToDate = util.getPropertyId(branch, prefixes.catalog + 'head') === commitId;
                                 return cm.getInProgressCommit(recordId, catalogId);
                             }, $q.reject);
+                    } else if (tagId) {
+                        upToDate = true;
+                        promise = cm.getRecordVersion(tagId, recordId, catalogId)
+                            .then(() => {
+                                return cm.getInProgressCommit(recordId, catalogId);
+                            }, () => self.updateOntologyState({recordId, commitId}).then(() => cm.getInProgressCommit(recordId, catalogId)), $q.reject);
+                    } else {
+                        upToDate = true;
+                        promise = cm.getInProgressCommit(recordId, catalogId);
                     }
                     return promise
                         .then(response => {

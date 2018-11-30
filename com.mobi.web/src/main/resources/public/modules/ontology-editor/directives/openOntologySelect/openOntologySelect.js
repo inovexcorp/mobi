@@ -48,9 +48,7 @@
          * provided {@link ontologyState.service:ontologyStateService listItem} and depending on the provided state, the
          * currently open commit. Each branch in the `ui-select` has buttons for editing the metadata and deleting the
          * branch which will open a {@link confirmModal.directive:confirmModal}. The component also houses the method
-         * for opening a modal for {@link editBranchOverlay.directive:editBranchOverlay editing a branch}. Each tag in
-         * the `ui-select` has a button for deleting the tag which will open a
-         * {@link confirmModal.directive:confirmModal}.
+         * for opening a modal for {@link editBranchOverlay.directive:editBranchOverlay editing a branch}.
          *
          * @param {Object} listItem An item from the `list` in ontologyStateService
          * @param {Object} state An item from the `states` in stateManagerService
@@ -148,10 +146,10 @@
                     .then(() => {
                         dvm.os.removeBranch(dvm.listItem.ontologyRecord.recordId, dvm.branch['@id']);
                         var currentState = _.find(dvm.state.model, {'@id': dvm.currentStateId});
-                        if (_.isEqual(_.get(currentState, '@type', []), [prefixes.ontologyState + 'StateCommit'])) {
-                            dvm.cm.getCommit(_.get(currentState, "['" + prefixes.ontologyState + "commit'][0]['@id']"))
+                        if (!dvm.os.isStateBranch(currentState)) {
+                            dvm.cm.getCommit(dvm.util.getPropertyId(currentState, prefixes.ontologyState + 'commit'))
                                 .then(_.noop, error => {
-                                    dvm.util.createWarningToast('Commit no longer exists. Opening MASTER');
+                                    dvm.util.createWarningToast((dvm.os.isStateTag(currentState) ? 'Tag' : 'Commit') + ' no longer exists. Opening MASTER');
                                     dvm.changeEntity({'@id': dvm.listItem.masterBranchIRI, '@type': [prefixes.catalog + 'Branch']});
                                 });
                         }
@@ -169,7 +167,7 @@
 
             dvm.$doCheck = function() {
                 var recordState = _.find(_.get(dvm.state, 'model', []), {'@type': [prefixes.ontologyState + 'StateRecord']});
-                var currentValue = _.get(recordState, "['" + prefixes.ontologyState + "currentState'][0]['@id']", '');
+                var currentValue = dvm.util.getPropertyId(recordState, prefixes.ontologyState + 'currentState');
                 if (dvm.currentStateId !== currentValue) {
                     dvm.currentStateId = currentValue;
                     setSelected();
@@ -179,12 +177,12 @@
 
             function setSelected() {
                 var currentState = _.find(dvm.state.model, {'@id': dvm.currentStateId});
-                if (_.includes(_.get(currentState, '@type', []), prefixes.ontologyState + 'StateBranch')) {
-                    dvm.selected = _.find(dvm.listItem.branches, {'@id': _.get(currentState, "['" + prefixes.ontologyState + "branch'][0]['@id']")});
-                } else if (_.includes(_.get(currentState, '@type', []), prefixes.ontologyState + 'StateTag')) {
-                    dvm.selected = _.find(dvm.listItem.tags, {'@id': _.get(currentState, "['" + prefixes.ontologyState + "tag'][0]['@id']")});
+                if (dvm.os.isStateBranch(currentState)) {
+                    dvm.selected = _.find(dvm.listItem.branches, {'@id': dvm.util.getPropertyId(currentState, prefixes.ontologyState + 'branch')});
+                } else if (dvm.os.isStateTag(currentState)) {
+                    dvm.selected = _.find(dvm.listItem.tags, {'@id': dvm.util.getPropertyId(currentState, prefixes.ontologyState + 'tag')});
                 } else {
-                    var commitId = _.get(currentState, "['" + prefixes.ontologyState + "commit'][0]['@id']");
+                    var commitId = dvm.util.getPropertyId(currentState, prefixes.ontologyState + 'commit');
                     dvm.selected = {
                         '@id': commitId,
                         '@type': [prefixes.catalog + 'Commit'],

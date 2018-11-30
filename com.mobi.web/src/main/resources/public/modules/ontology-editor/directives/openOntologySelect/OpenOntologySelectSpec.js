@@ -80,6 +80,9 @@ describe('Open Ontology Select component', function() {
             tags: [this.tag]
         };
         scope.state = {model: [this.recordState, this.currentState]};
+        utilSvc.getPropertyId.and.callFake((obj, prop) => _.get(obj, "['" + prop + "'][0]['@id']"));
+        ontologyStateSvc.isStateBranch.and.callFake(obj => _.includes(_.get(obj, '@type', []), prefixes.ontologyState + 'StateBranch'));
+        ontologyStateSvc.isStateTag.and.callFake(obj => _.includes(_.get(obj, '@type', []), prefixes.ontologyState + 'StateTag'));
     });
 
     beforeEach(function helpers() {
@@ -374,16 +377,42 @@ describe('Open Ontology Select component', function() {
             describe('when deleteOntologyBranch is resolved', function() {
                 beforeEach(function() {
                     ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.when());
+                    this.controller.currentStateId = 'current';
+                    this.currentState = {
+                        '@id': this.controller.currentStateId,
+                        '@type': [prefixes.ontologyState + 'StateCommit'],
+                        [prefixes.ontologyState + 'commit']: [{'@id': this.commitId}]
+                    };
+                    this.controller.state = {model: [this.currentState]};
+                    this.controller.listItem.masterBranchIRI = 'master';
                 });
                 describe('and a commit is checked out', function() {
+                    it('and getCommit is resolved', function() {
+                        catalogManagerSvc.getCommit.and.returnValue($q.when());
+                        this.controller.delete();
+                        scope.$apply();
+                        expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                        expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                        expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                        expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
+                        expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
+                        expect(this.controller.changeEntity).not.toHaveBeenCalled();
+                    });
+                    it('and getCommit is rejected', function() {
+                        catalogManagerSvc.getCommit.and.returnValue($q.reject('Error message'));
+                        this.controller.delete();
+                        scope.$apply();
+                        expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                        expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                        expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                        expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
+                        expect(utilSvc.createWarningToast).toHaveBeenCalledWith(jasmine.stringMatching('Commit'));
+                        expect(this.controller.changeEntity).toHaveBeenCalledWith({'@id': 'master', '@type': [prefixes.catalog + 'Branch']});
+                    });
+                });
+                describe('and a tag is checked out', function() {
                     beforeEach(function() {
-                        this.controller.currentStateId = 'current';
-                        this.controller.state = {model: [{
-                            '@id': this.controller.currentStateId,
-                            '@type': [prefixes.ontologyState + 'StateCommit'],
-                            [prefixes.ontologyState + 'commit']: [{'@id': this.commitId}]
-                        }]};
-                        this.controller.listItem.masterBranchIRI = 'master';
+                        this.currentState['@type'].push(prefixes.ontologyState + 'StateTag');
                     });
                     it('and getCommit is resolved', function() {
                         catalogManagerSvc.getCommit.and.returnValue($q.when());
@@ -404,11 +433,12 @@ describe('Open Ontology Select component', function() {
                         expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
                         expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                         expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
-                        expect(utilSvc.createWarningToast).toHaveBeenCalled();
+                        expect(utilSvc.createWarningToast).toHaveBeenCalledWith(jasmine.stringMatching('Tag'));
                         expect(this.controller.changeEntity).toHaveBeenCalledWith({'@id': 'master', '@type': [prefixes.catalog + 'Branch']});
                     });
                 });
-                it('and a commit is not checked out', function() {
+                it('and a branch is checked out', function() {
+                    this.currentState['@type'].push(prefixes.ontologyState + 'StateBranch');
                     this.controller.delete();
                     scope.$apply();
                     expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);

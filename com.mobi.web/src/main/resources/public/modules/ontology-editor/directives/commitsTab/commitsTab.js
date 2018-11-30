@@ -50,9 +50,9 @@
          */
         .directive('commitsTab', commitsTab);
 
-        commitsTab.$inject = ['ontologyStateService', 'utilService'];
+        commitsTab.$inject = ['ontologyStateService', 'utilService', 'prefixes'];
 
-        function commitsTab(ontologyStateService, utilService) {
+        function commitsTab(ontologyStateService, utilService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -65,8 +65,18 @@
                     dvm.util = utilService;
                     dvm.commits = [];
 
-                    dvm.getBranchTitle = function() {
-                        return dvm.util.getDctermsValue(_.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId}), 'title');
+                    dvm.getHeadTitle = function() {
+                        if (dvm.os.listItem.ontologyRecord.branchId) {
+                            return dvm.util.getDctermsValue(_.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId}), 'title');
+                        } else {
+                            var currentState = dvm.os.getCurrentStateByRecordId(dvm.os.listItem.ontologyRecord.recordId);
+                            if (dvm.os.isStateTag(currentState)) {
+                                var tag = _.find(dvm.os.listItem.tags, {[prefixes.catalog + 'commit']: [{'@id': dvm.os.listItem.ontologyRecord.commitId}]})
+                                return dvm.util.getDctermsValue(tag, 'title');
+                            } else {
+                                return '';
+                            }
+                        }
                     }
                     dvm.openOntologyAtCommit = function(commit) {
                         dvm.os.updateOntologyWithCommit(dvm.os.listItem.ontologyRecord.recordId, commit.id);
