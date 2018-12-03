@@ -383,9 +383,7 @@ public class FullSimpleOntologyTest {
         Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, true);
 
         String jsonld = listOntology.asJsonLD(true).toString();
-        assertEquals(IOUtils.toString(expected, Charset.defaultCharset())
-                        .replaceAll("/genid/genid[a-zA-Z0-9-]+\"", "").replaceAll("/genid/node[a-zA-Z0-9]+\"", ""),
-                jsonld.replaceAll("/genid/genid[a-zA-Z0-9-]+\"", "").replaceAll("/genid/node[a-zA-Z0-9]+\"", ""));
+        assertEquals(removeWhitespace(replaceBlankNodeSuffix(IOUtils.toString(expected, Charset.defaultCharset()))), removeWhitespace(replaceBlankNodeSuffix(jsonld)));
 
         verify(blankNodeService).skolemize(any(com.mobi.rdf.api.Model.class));
     }
@@ -401,8 +399,17 @@ public class FullSimpleOntologyTest {
         Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, true);
 
         String jsonld = listOntology.asJsonLD(false).toString();
-        assertEquals(IOUtils.toString(expected, Charset.defaultCharset()).replaceAll("_:node[a-zA-Z0-9]+\"", ""),
-                jsonld.replaceAll("_:node[a-zA-Z0-9]+\"", ""));
+        assertEquals(removeWhitespace(IOUtils.toString(expected, Charset.defaultCharset()).replaceAll("_:node[a-zA-Z0-9]+\"", "\"")),
+                removeWhitespace(jsonld.replaceAll("_:node[a-zA-Z0-9]+\"", "\"")));
         verify(blankNodeService, times(0)).skolemize(any(com.mobi.rdf.api.Model.class));
+    }
+
+    private String replaceBlankNodeSuffix(String s) {
+        String s1 = s.replaceAll("/genid/genid[a-zA-Z0-9-]+\"", "\"");
+        return s1.replaceAll("/genid/node[a-zA-Z0-9]+\"", "\"");
+    }
+
+    private String removeWhitespace(String s) {
+        return s.replaceAll("\\s+", "");
     }
 }
