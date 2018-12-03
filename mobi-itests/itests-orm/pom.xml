@@ -79,7 +79,7 @@
                                     <ontologyName>InheritTest</ontologyName>
                                 </ontology>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/test/resources/ontologies/provo.owl</ontologyFile>
+                                    <ontologyFile>${project.basedir}/src/test/resources/ontologies/provo.ttl</ontologyFile>
                                     <outputPackage>org.provo</outputPackage>
                                     <ontologyName>ProvO</ontologyName>
                                 </ontology>

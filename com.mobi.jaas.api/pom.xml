@@ -127,7 +127,7 @@
                                     <outputPackage>com.mobi.ontologies.provo</outputPackage>
                                 </ontology>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/../com.mobi.rdf.orm.ontologies/src/main/resources/owl.rdf</ontologyFile>
+                                    <ontologyFile>${project.basedir}/../com.mobi.rdf.orm.ontologies/src/main/resources/owl.ttl</ontologyFile>
                                     <outputPackage>com.mobi.ontologies.owl</outputPackage>
                                 </ontology>
                             </references>
