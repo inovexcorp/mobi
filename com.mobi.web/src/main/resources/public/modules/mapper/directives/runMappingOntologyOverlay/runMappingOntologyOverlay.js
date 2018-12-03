@@ -29,15 +29,13 @@
          * @name runMappingOntologyOverlay
          *
          * @description
-         * The `runMappingOntologyOverlay` module only provides the `runMappingOntologyOverlay` directive which creates
-         * an overlay with settings for committing the results of a mapping to an Ontology.
+         * The `runMappingOntologyOverlay` module only provides the `runMappingOntologyOverlay` component which creates
+         * content for a modal to commit the results of a mapping to an Ontology.
          */
         .module('runMappingOntologyOverlay', [])
         /**
-         * @ngdoc directive
-         * @name runMappingOntologyOverlay.directive:runMappingOntologyOverlay
-         * @scope
-         * @restrict E
+         * @ngdoc component
+         * @name runMappingOntologyOverlay.component:runMappingOntologyOverlay
          * @requires mapperState.service:mapperStateService
          * @requires delimitedManager.service:delimitedManagerService
          * @requires util.service:utilService
@@ -46,121 +44,123 @@
          * @requires prefixes.service:prefixes
          *
          * @description
-         * `runMappingOntologyOverlay` is a directive that creates an overlay containing a configuration settings
-         * for the result of running the currently selected {@link mapperState.service:mapperStateService#mapping mapping}
-         * against the uploaded {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}.
-         * This includes a ui-select to determine which ontology's master branch to commit the mapping to. The directive
-         * is replaced by the contents of its template.
+         * `runMappingOntologyOverlay` is a component that creates content for a modal that contains a configuration
+         * settings for running the currently selected {@link mapperState.service:mapperStateService#mapping mapping}
+         * against the uploaded {@link delimitedManager.service:delimitedManagerService#dataRows delimited data} and
+         * committing the results to an Ontology. This includes `ui-select`s to determine which ontology and which
+         * branch to commit the mapping to. THe user can also choose whether the result data should be considered
+         * additions or changes to the existing data on that branch. Meant to be used in conjunction with the
+         * {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
          */
-        .directive('runMappingOntologyOverlay', runMappingOntologyOverlay);
+        .component('runMappingOntologyOverlay', {
+            bindings: {
+                close: '&',
+                dismiss: '&'
+            },
+            controllerAs: 'dvm',
+            controller: ['mapperStateService', 'delimitedManagerService', 'utilService', 'catalogManagerService', 'ontologyStateService', 'prefixes', RunMappingOntologyOverlayController],
+            templateUrl: 'modules/mapper/directives/runMappingOntologyOverlay/runMappingOntologyOverlay.html'
+        });
 
-        runMappingOntologyOverlay.$inject = ['mapperStateService', 'delimitedManagerService', 'utilService', 'catalogManagerService', 'ontologyStateService', 'prefixes'];
+        function RunMappingOntologyOverlayController(mapperStateService, delimitedManagerService, utilService, catalogManagerService, ontologyStateService, prefixes) {
+            var dvm = this;
+            var state = mapperStateService;
+            var dm = delimitedManagerService;
+            var cm = catalogManagerService;
+            var os = ontologyStateService;
+            var branches = [];
+            dvm.util = utilService;
+            dvm.errorMessage = '';
+            dvm.ontologies = [];
+            dvm.branches = [];
+            dvm.branchId = undefined;
+            dvm.ontology = undefined;
+            dvm.update = false;
 
-        function runMappingOntologyOverlay(mapperStateService, delimitedManagerService, utilService, catalogManagerService, ontologyStateService, prefixes) {
-            return {
-                restrict: 'E',
-                controllerAs: 'dvm',
-                replace: true,
-                scope: {},
-                controller: function() {
-                    var dvm = this;
-                    var state = mapperStateService;
-                    var dm = delimitedManagerService;
-                    var cm = catalogManagerService;
-                    var os = ontologyStateService;
-                    var branches = [];
-                    dvm.util = utilService;
-                    dvm.errorMessage = '';
-                    dvm.ontologies = [];
-                    dvm.branches = [];
-                    dvm.branchId = undefined;
-                    dvm.ontology = undefined;
-                    dvm.update = false;
+            dvm.changeOntology = function(ontologyRecord) {
+                if (ontologyRecord) {
+                    setOntologyBranches(ontologyRecord);
+                }
+            }
+            dvm.getOntologyIRI = function(ontology) {
+                return dvm.util.getPropertyId(ontology, prefixes.ontEdit + 'ontologyIRI');
+            }
+            dvm.getOntologies = function(searchText) {
+                var catalogId = _.get(cm.localCatalog, '@id', '');
+                var paginatedConfig = {
+                    limit: 50,
+                    recordType: prefixes.ontologyEditor + 'OntologyRecord',
+                    sortOption: _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
+                    searchText
+                };
+                cm.getRecords(catalogId, paginatedConfig, 'test')
+                    .then(response => {
+                        dvm.ontologies = response.data;
+                    });
+            }
+            function setOntologyBranches(ontologyRecord) {
+                var catalogId = _.get(cm.localCatalog, '@id', '');
+                var recordId = _.get(ontologyRecord, '@id', '');
+                var paginatedConfig = {
+                    sortOption: _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
+                };
+                if (recordId) {
+                    return cm.getRecordBranches(recordId, catalogId, paginatedConfig)
+                        .then(response => {
+                            dvm.branches = response.data;
+                            dvm.branchId = _.get(_.find(dvm.branches, branch => dvm.util.getDctermsValue(branch, 'title') === 'MASTER'), '@id');
+                        });
+                }
+            }
+            dvm.run = function() {
+                if (state.editMapping && state.isMappingChanged()) {
+                    state.saveMapping().then(runMapping, onError);
+                } else {
+                    runMapping(state.mapping.record.id);
+                }
+            }
+            dvm.cancel = function() {
+                dvm.dismiss();
+            }
 
-                    dvm.changeOntology = function(ontologyRecord) {
-                        if (ontologyRecord) {
-                            setOntologyBranches(ontologyRecord);
+            function onError(errorMessage) {
+                dvm.errorMessage = errorMessage;
+            }
+            function runMapping(id) {
+                state.mapping.record.id = id;
+                dm.mapAndCommit(id, dvm.ontology['@id'], dvm.branchId, dvm.update).then(response => {
+                    if (response.status === 204) {
+                        dvm.util.createWarningToast('No commit was submitted, commit was empty due to duplicate data', {timeOut: 8000});
+                        reset();
+                    } else {
+                        testOntology(dvm.ontology)
+                        reset();
+                    }
+                }, onError);
+            }
+            function reset() {
+                state.step = state.selectMappingStep;
+                state.initialize();
+                state.resetEdit();
+                dm.reset();
+                dvm.close();
+            }
+            function testOntology(ontologyRecord) {
+                var item = _.find(os.list, {ontologyRecord: {recordId: ontologyRecord['@id']}});
+                if (item) {
+                    if (_.get(item, 'ontologyRecord.branchId') === dvm.branchId) {
+                        item.upToDate = false;
+                        if (item.merge.active) {
+                            dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor for ' + dvm.util.getDctermsValue(ontologyRecord, 'title') + ' that is out of date. Please reopen the merge form.', {timeOut: 5000});
                         }
                     }
-                    dvm.getOntologyIRI = function(ontology) {
-                        return dvm.util.getPropertyId(ontology, prefixes.ontEdit + 'ontologyIRI');
+                    if (item.merge.active && _.get(item.merge.target, '@id') === dvm.branchId) {
+                        dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor for ' + dvm.util.getDctermsValue(ontologyRecord, 'title') + ' that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
                     }
-                    dvm.getOntologies = function(searchText) {
-                        var catalogId = _.get(cm.localCatalog, '@id', '');
-                        var paginatedConfig = {
-                            limit: 50,
-                            recordType: prefixes.ontologyEditor + 'OntologyRecord',
-                            sortOption: _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
-                            searchText
-                        };
-                        cm.getRecords(catalogId, paginatedConfig, 'test')
-                            .then(response => {
-                                dvm.ontologies = response.data;
-                            });
-                    }
-                    function setOntologyBranches(ontologyRecord) {
-                        var catalogId = _.get(cm.localCatalog, '@id', '');
-                        var recordId = _.get(ontologyRecord, '@id', '');
-                        var paginatedConfig = {
-                            sortOption: _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
-                        };
-                        if (recordId) {
-                            return cm.getRecordBranches(recordId, catalogId, paginatedConfig)
-                                .then(response => {
-                                    dvm.branches = response.data;
-                                    dvm.branchId = _.get(_.find(dvm.branches, branch => dvm.util.getDctermsValue(branch, 'title') === 'MASTER'), '@id');
-                                });
-                        }
-                    }
-                    dvm.run = function() {
-                        if (state.editMapping && state.isMappingChanged()) {
-                            state.saveMapping().then(runMapping, onError);
-                        } else {
-                            runMapping(state.mapping.record.id);
-                        }
-                    }
-                    dvm.cancel = function() {
-                        state.displayRunMappingOntologyOverlay = false;
-                    }
-
-                    function onError(errorMessage) {
-                        dvm.errorMessage = errorMessage;
-                    }
-                    function runMapping(id) {
-                        state.mapping.record.id = id;
-                        dm.mapAndCommit(id, dvm.ontology['@id'], dvm.branchId, dvm.update).then(response => {
-                            if (response.status === 204) {
-                                dvm.util.createWarningToast('No commit was submitted, commit was empty due to duplicate data', {timeOut: 8000});
-                                reset();
-                            } else {
-                                testOntology(dvm.ontology)
-                                reset();
-                            }
-                        }, onError);
-                    }
-                    function reset() {
-                        state.step = state.selectMappingStep;
-                        state.initialize();
-                        state.resetEdit();
-                        dm.reset();
-                        state.displayRunMappingOntologyOverlay = false;
-                    }
-                    function testOntology(ontologyRecord) {
-                        var item = _.find(os.list, {ontologyRecord: {recordId: ontologyRecord['@id']}});
-                        if (item) {
-                            if (_.get(item, 'ontologyRecord.branchId') === dvm.branchId) {
-                                item.upToDate = false;
-                                if (item.merge.active) {
-                                    dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor for ' + dvm.util.getDctermsValue(ontologyRecord, 'title') + ' that is out of date. Please reopen the merge form.', {timeOut: 5000});
-                                }
-                            }
-                            if (item.merge.active && _.get(item.merge.target, '@id') === dvm.branchId) {
-                                dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor for ' + dvm.util.getDctermsValue(ontologyRecord, 'title') + ' that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
-                            }
-                        }
-                    }
-                },
-                templateUrl: 'modules/mapper/directives/runMappingOntologyOverlay/runMappingOntologyOverlay.html'
+                }
             }
         }
 })();

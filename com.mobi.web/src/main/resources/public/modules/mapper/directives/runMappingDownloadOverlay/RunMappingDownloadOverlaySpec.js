@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Run Mapping Download Overlay directive', function() {
+describe('Run Mapping Download Overlay component', function() {
     var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, camelCase;
 
     beforeEach(function() {
@@ -44,7 +44,9 @@ describe('Run Mapping Download Overlay directive', function() {
 
         camelCase.and.callFake(_.identity);
         mapperStateSvc.mapping = {record: {title: 'record'}, jsonld: []};
-        this.element = $compile(angular.element('<run-mapping-download-overlay></run-mapping-download-overlay>'))(scope);
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<run-mapping-download-overlay close="close()" dismiss="dismiss()"></run-mapping-download-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('runMappingDownloadOverlay');
     });
@@ -56,16 +58,16 @@ describe('Run Mapping Download Overlay directive', function() {
         mapperStateSvc = null;
         delimitedManagerSvc = null;
         camelCase = null;
+        this.element.remove();
     });
 
     it('should initialize with the correct values for fileName', function() {
-        expect(this.controller.fileName).toBe(mapperStateSvc.mapping.record.title);
+        expect(this.controller.fileName).toBe(mapperStateSvc.mapping.record.title + '_Data');
     });
     describe('controller methods', function() {
         describe('should set the correct state for running mapping', function() {
             beforeEach(function() {
                 this.step = mapperStateSvc.step;
-                mapperStateSvc.displayRunMappingDownloadOverlay = true;
             });
             describe('if it is also being saved', function() {
                 describe('and there are changes', function() {
@@ -83,7 +85,7 @@ describe('Run Mapping Download Overlay directive', function() {
                         expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
                         expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
                         expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
-                        expect(mapperStateSvc.displayRunMappingDownloadOverlay).toBe(true);
+                        expect(scope.close).not.toHaveBeenCalled();
                         expect(this.controller.errorMessage).toEqual('Error message');
                     });
                     it('successfully downloading the data', function() {
@@ -98,7 +100,7 @@ describe('Run Mapping Download Overlay directive', function() {
                         expect(mapperStateSvc.initialize).toHaveBeenCalled();
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                        expect(mapperStateSvc.displayRunMappingDownloadOverlay).toBe(false);
+                        expect(scope.close).toHaveBeenCalled();
                         expect(this.controller.errorMessage).toEqual('');
                     });
                 });
@@ -111,7 +113,7 @@ describe('Run Mapping Download Overlay directive', function() {
                     expect(mapperStateSvc.initialize).toHaveBeenCalled();
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                    expect(mapperStateSvc.displayRunMappingDownloadOverlay).toBe(false);
+                    expect(scope.close).toHaveBeenCalled();
                 });
             });
             it('if it is not being saved and downloads the data', function() {
@@ -123,33 +125,34 @@ describe('Run Mapping Download Overlay directive', function() {
                 expect(mapperStateSvc.initialize).toHaveBeenCalled();
                 expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                 expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                expect(mapperStateSvc.displayRunMappingDownloadOverlay).toBe(false);
+                expect(scope.close).toHaveBeenCalled();
             });
         });
         it('should set the correct state for canceling', function() {
             this.controller.cancel();
-            expect(mapperStateSvc.displayRunMappingDownloadOverlay).toBe(false);
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('run-mapping-download-overlay')).toBe(true);
-            expect(this.element.querySelectorAll('form.content').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('RUN-MAPPING-DOWNLOAD-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
-        it('with a text-input', function() {
-            expect(this.element.find('text-input').length).toBe(1);
+        ['text-input', 'mapper-serialization-select'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
         });
-        it('with a mapper-serialization-select', function() {
-            expect(this.element.find('mapper-serialization-select').length).toBe(1);
-        });
-        it('with buttons for cancel and set', function() {
-            var buttons = this.element.find('button');
+        it('with buttons for cancel and submit', function() {
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Run'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Cancel', 'Run'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
         });
         it('depending on the validity of the form', function() {
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
             this.controller.form.$setValidity('required', false);
@@ -160,13 +163,13 @@ describe('Run Mapping Download Overlay directive', function() {
     });
     it('should call cancel when the cancel button is clicked', function() {
         spyOn(this.controller, 'cancel');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });
     it('should call run when the run button is clicked', function() {
         spyOn(this.controller, 'run');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.run).toHaveBeenCalled();
     });

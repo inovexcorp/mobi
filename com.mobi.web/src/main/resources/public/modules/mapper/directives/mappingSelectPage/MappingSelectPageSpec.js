@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Mapping Select Page directive', function() {
-    var $compile, scope, $q, mappingManagerSvc, mapperStateSvc;
+    var $compile, scope, $q, mappingManagerSvc, mapperStateSvc, modalSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
@@ -29,13 +29,16 @@ describe('Mapping Select Page directive', function() {
         mockMappingManager();
         mockMapperState();
         mockUtil();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _mappingManagerService_, _mapperStateService_, _modalService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             mapperStateSvc = _mapperStateService_;
             mappingManagerSvc = _mappingManagerService_;
-            $q = _$q_;
+            modalSvc = _modalService_;
+            utilSvc = _utilService_;
         });
 
         mapperStateSvc.mapping = {record: {title: 'Record'}, ontology: {'@id': 'ontology'}, jsonld: []};
@@ -50,6 +53,8 @@ describe('Mapping Select Page directive', function() {
         $q = null;
         mappingManagerSvc = null;
         mapperStateSvc = null;
+        modalSvc = null;
+        utilSvc = null;
         this.element.remove();
     });
 
@@ -70,13 +75,13 @@ describe('Mapping Select Page directive', function() {
             expect(mapperStateSvc.highlightIndexes).toEqual(mappedColumns);
             expect(this.controller.loadOntologyAndContinue).toHaveBeenCalled();
         });
-        it('should set the correct state for downloading a mapping', function() {
+        it('should open the downloadMappingOverlay', function() {
             this.controller.download();
-            expect(mapperStateSvc.displayDownloadMappingOverlay).toBe(true);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('downloadMappingOverlay', {}, undefined, 'sm');
         });
         it('should set the correct state for duplicating a mapping', function() {
             this.controller.duplicate();
-            expect(mapperStateSvc.displayCreateMappingOverlay).toBe(true);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('createMappingOverlay');
         });
         describe('should load an ontology and continue', function() {
             beforeEach(function() {
@@ -93,7 +98,7 @@ describe('Mapping Select Page directive', function() {
                 expect(mapperStateSvc.getClasses).toHaveBeenCalledWith(this.ontologies);
                 expect(mapperStateSvc.availableClasses).toEqual([{}]);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
-                expect(mapperStateSvc.invalidOntology).toBe(false);
+                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
             it('unless the ontology and mapping are incompatiable', function() {
                 mappingManagerSvc.areCompatible.and.returnValue(false);
@@ -103,7 +108,7 @@ describe('Mapping Select Page directive', function() {
                 expect(mapperStateSvc.getClasses).not.toHaveBeenCalled();
                 expect(mapperStateSvc.availableClasses).toEqual([]);
                 expect(mapperStateSvc.step).toBe(this.step);
-                expect(mapperStateSvc.invalidOntology).toBe(true);
+                expect(utilSvc.createErrorToast).toHaveBeenCalled();
             });
         });
     });

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Class Mapping Overlay directive', function() {
+describe('Class Mapping Overlay component', function() {
     var $compile, scope, mappingManagerSvc, mapperStateSvc;
 
     beforeEach(function() {
@@ -37,7 +37,9 @@ describe('Class Mapping Overlay directive', function() {
         });
 
         mapperStateSvc.mapping = {jsonld: [], difference: {additions: []}};
-        this.element = $compile(angular.element('<class-mapping-overlay></class-mapping-overlay>'))(scope);
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<class-mapping-overlay close="close()" dismiss="dismiss()"></class-mapping-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('classMappingOverlay');
     });
@@ -59,48 +61,50 @@ describe('Class Mapping Overlay directive', function() {
             expect(mapperStateSvc.addClassMapping).toHaveBeenCalledWith(this.controller.selectedClass);
             expect(mapperStateSvc.setProps).toHaveBeenCalledWith('');
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mapperStateSvc.selectedClassMappingId).toBe(classMapping['@id']);
-            expect(mapperStateSvc.displayClassMappingOverlay).toBe(false);
+            expect(mapperStateSvc.selectedClassMappingId).toEqual(classMapping['@id']);
+            expect(scope.close).toHaveBeenCalled();
         });
-        it('should set the correct state for canceling', function() {
+        it('should cancel the overlay', function() {
             this.controller.cancel();
-            expect(mapperStateSvc.displayClassMappingOverlay).toBe(false);
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('class-mapping-overlay')).toBe(true);
-            expect(this.element.querySelectorAll('form.content').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('CLASS-MAPPING-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with a class select', function() {
-            expect(this.element.find('class-select').length).toBe(1);
+            expect(this.element.find('class-select').length).toEqual(1);
         });
         it('with buttons to cancel and submit', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
-            expect(buttons.length).toBe(2);
+            var buttons = this.element.querySelectorAll('.modal-footer button');
+            expect(buttons.length).toEqual(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
         it('depending on whether a class is selected', function() {
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
-            expect(this.element.find('class-preview').length).toBe(0);
+            expect(this.element.find('class-preview').length).toEqual(0);
 
             this.controller.selectedClass = {};
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
-            expect(this.element.find('class-preview').length).toBe(1);
+            expect(this.element.find('class-preview').length).toEqual(1);
         });
     });
     it('should call addClass when the button is clicked', function() {
         spyOn(this.controller, 'addClass');
-        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var continueButton = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         continueButton.triggerHandler('click');
         expect(this.controller.addClass).toHaveBeenCalled();
     });
     it('should call cancel when the button is clicked', function() {
         spyOn(this.controller, 'cancel');
-        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
+        var continueButton = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         continueButton.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });

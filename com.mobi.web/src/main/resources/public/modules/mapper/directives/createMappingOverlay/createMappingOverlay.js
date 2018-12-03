@@ -30,87 +30,85 @@
          *
          * @description
          * The `createMappingOverlay` module only provides the `createMappingOverlay` directive which creates
-         * an overlay with functionality to add a title, description, and keywords to a new MappingRecord.
+         * which creates creates content for a modal to add a title, description, and keywords to a new MappingRecord.
          */
         .module('createMappingOverlay', [])
         /**
-         * @ngdoc directive
+         * @ngdoc component
          * @name createMappingOverlay.directive:createMappingOverlay
-         * @scope
-         * @restrict E
          * @requires mappingManager.service:mappingManagerService
          * @requires mapperState.service:mapperStateService
          *
          * @description
-         * `createMappingOverlay` is a directive that creates an overlay with three inputs for metadata about a
+         * `createMappingOverlay` is a component that creates content for a modal with three inputs for metadata about a
          * new MappingRecord: a text input for the title, a {@link textArea.directive:textArea} for the description,
-         * and a {@link keywordSelect.directive:keywordSelect}. The directive is replaced by the contents of its
-         * template.
+         * and a {@link keywordSelect.directive:keywordSelect}. Meant to be used in conjunction with the
+         * {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
          */
-        .directive('createMappingOverlay', createMappingOverlay);
+        .component('createMappingOverlay', {
+            bindings: {
+                close: '&',
+                dismiss: '&'
+            },
+            controllerAs: 'dvm',
+            controller: ['mappingManagerService', 'mapperStateService', CreateMappingOverlayController],
+            templateUrl: 'modules/mapper/directives/createMappingOverlay/createMappingOverlay.html'
+        });
 
-        createMappingOverlay.$inject = ['mappingManagerService', 'mapperStateService']
+        function CreateMappingOverlayController(mappingManagerService, mapperStateService) {
+            var dvm = this;
+            var state = mapperStateService;
+            var mm = mappingManagerService;
 
-        function createMappingOverlay(mappingManagerService, mapperStateService) {
-            return {
-                restrict: 'E',
-                controllerAs: 'dvm',
-                replace: true,
-                scope: {},
-                controller: function() {
-                    var dvm = this;
-                    var state = mapperStateService;
-                    var mm = mappingManagerService;
+            dvm.errorMessage = '';
+            dvm.newMapping = state.createMapping();
+            if (state.mapping) {
+                dvm.newMapping.record = angular.copy(state.mapping.record);
+                dvm.newMapping.jsonld = angular.copy(state.mapping.jsonld);
+                dvm.newMapping.ontology = angular.copy(state.mapping.ontology);
+            }
 
-                    dvm.errorMessage = '';
-                    dvm.newMapping = state.createMapping();
-                    if (state.mapping) {
-                        dvm.newMapping.record = angular.copy(state.mapping.record);
-                        dvm.newMapping.jsonld = angular.copy(state.mapping.jsonld);
-                        dvm.newMapping.ontology = angular.copy(state.mapping.ontology);
-                    }
+            dvm.cancel = function() {
+                state.editMapping = false;
+                state.newMapping = false;
+                dvm.dismiss();
+            }
+            dvm.continue = function() {
+                var newId = mm.getMappingId(dvm.newMapping.record.title);
+                if (dvm.newMapping.jsonld.length === 0) {
+                    dvm.newMapping.jsonld = mm.createNewMapping(newId);
+                    dvm.sourceOntologies = [];
+                    dvm.availableClasses = [];
+                    nextStep();
+                } else {
+                    dvm.newMapping.jsonld = mm.copyMapping(dvm.newMapping.jsonld, newId);
+                    var sourceOntologyInfo = mm.getSourceOntologyInfo(dvm.newMapping.jsonld);
+                    mm.getSourceOntologies(sourceOntologyInfo)
+                        .then(ontologies => {
+                            if (mm.areCompatible(dvm.newMapping.jsonld, ontologies)) {
+                                state.sourceOntologies = ontologies;
+                                state.availableClasses = state.getClasses(ontologies);
+                                nextStep();
+                            } else {
+                                onError('The selected mapping is incompatible with its source ontologies');
+                            }
+                        }, () => onError('Error retrieving mapping'));
+                }
+            }
 
-                    dvm.cancel = function() {
-                        state.editMapping = false;
-                        state.newMapping = false;
-                        state.displayCreateMappingOverlay = false;
-                    }
-                    dvm.continue = function() {
-                        var newId = mm.getMappingId(dvm.newMapping.record.title);
-                        if (dvm.newMapping.jsonld.length === 0) {
-                            dvm.newMapping.jsonld = mm.createNewMapping(newId);
-                            dvm.sourceOntologies = [];
-                            dvm.availableClasses = [];
-                            nextStep();
-                        } else {
-                            dvm.newMapping.jsonld = mm.copyMapping(dvm.newMapping.jsonld, newId);
-                            var sourceOntologyInfo = mm.getSourceOntologyInfo(dvm.newMapping.jsonld);
-                            mm.getSourceOntologies(sourceOntologyInfo)
-                                .then(ontologies => {
-                                    if (mm.areCompatible(dvm.newMapping.jsonld, ontologies)) {
-                                        state.sourceOntologies = ontologies;
-                                        state.availableClasses = state.getClasses(ontologies);
-                                        nextStep();
-                                    } else {
-                                        onError('The selected mapping is incompatible with its source ontologies');
-                                    }
-                                }, () => onError('Error retrieving mapping'));
-                        }
-                    }
-
-                    function nextStep() {
-                        state.mapping = dvm.newMapping;
-                        dvm.errorMessage = '';
-                        state.mapping.difference.additions = angular.copy(state.mapping.jsonld);
-                        state.mappingSearchString = '';
-                        state.step = state.fileUploadStep;
-                        state.displayCreateMappingOverlay = false;
-                    }
-                    function onError(message) {
-                        dvm.errorMessage = message;
-                    }
-                },
-                templateUrl: 'modules/mapper/directives/createMappingOverlay/createMappingOverlay.html'
+            function nextStep() {
+                state.mapping = dvm.newMapping;
+                dvm.errorMessage = '';
+                state.mapping.difference.additions = angular.copy(state.mapping.jsonld);
+                state.mappingSearchString = '';
+                state.step = state.fileUploadStep;
+                dvm.close();
+            }
+            function onError(message) {
+                dvm.errorMessage = message;
             }
         }
 })();

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Run Mapping Ontology Overlay directive', function() {
+describe('Run Mapping Ontology Overlay component', function() {
     var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, catalogManagerSvc, ontologyStateSvc, utilSvc, prefixes;
 
     beforeEach(function() {
@@ -50,7 +50,9 @@ describe('Run Mapping Ontology Overlay directive', function() {
 
 
         mapperStateSvc.mapping = {record: {title: 'record'}, jsonld: []};
-        this.element = $compile(angular.element('<run-mapping-ontology-overlay></run-mapping-ontology-overlay>'))(scope);
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<run-mapping-ontology-overlay close="close()" dismiss="dismiss()"></run-mapping-ontology-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('runMappingOntologyOverlay');
     });
@@ -65,6 +67,7 @@ describe('Run Mapping Ontology Overlay directive', function() {
         ontologyStateSvc = null;
         utilSvc = null;
         prefixes = null;
+        this.element.remove();
     });
 
     describe('controller methods', function() {
@@ -74,7 +77,6 @@ describe('Run Mapping Ontology Overlay directive', function() {
                 this.controller.update = false;
                 this.step = mapperStateSvc.step;
                 this.controller.ontology = {'@id': 'ontologyIRI', [prefixes.catalog + 'masterBranch']: [{'@id': 'branch'}]};
-                mapperStateSvc.displayRunMappingOntologyOverlay = true;
                 delimitedManagerSvc.mapAndCommit.and.returnValue($q.when({status: 200}));
             });
             describe('if it is also being saved', function() {
@@ -94,7 +96,7 @@ describe('Run Mapping Ontology Overlay directive', function() {
                         expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
                         expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
                         expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
-                        expect(mapperStateSvc.displayRunMappingOntologyOverlay).toBe(true);
+                        expect(scope.close).not.toHaveBeenCalled();
                         expect(this.controller.errorMessage).toEqual('Error message');
                     });
                     describe('successfully', function() {
@@ -115,7 +117,7 @@ describe('Run Mapping Ontology Overlay directive', function() {
                             expect(mapperStateSvc.initialize).toHaveBeenCalled();
                             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                             expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                            expect(mapperStateSvc.displayRunMappingOntologyOverlay).toBe(false);
+                            expect(scope.close).toHaveBeenCalled();
                             expect(this.controller.errorMessage).toEqual('');
                         });
                         it('committing the data with an active merge', function() {
@@ -130,7 +132,7 @@ describe('Run Mapping Ontology Overlay directive', function() {
                             expect(mapperStateSvc.initialize).toHaveBeenCalled();
                             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                             expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                            expect(mapperStateSvc.displayRunMappingOntologyOverlay).toBe(false);
+                            expect(scope.close).toHaveBeenCalled();
                             expect(this.controller.errorMessage).toEqual('');
                         });
                     });
@@ -151,7 +153,7 @@ describe('Run Mapping Ontology Overlay directive', function() {
                         expect(mapperStateSvc.initialize).toHaveBeenCalled();
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                        expect(mapperStateSvc.displayRunMappingOntologyOverlay).toBe(false);
+                        expect(scope.close).toHaveBeenCalled();
                     });
                     it('and commits the data with an active merge', function() {
                         ontologyStateSvc.list = [{ontologyRecord: {recordId: this.controller.ontology['@id'], branchId: 'branch'}, merge: {active: true}}];
@@ -164,7 +166,7 @@ describe('Run Mapping Ontology Overlay directive', function() {
                         expect(mapperStateSvc.initialize).toHaveBeenCalled();
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                        expect(mapperStateSvc.displayRunMappingOntologyOverlay).toBe(false);
+                        expect(scope.close).toHaveBeenCalled();
                     });
                 });
             });
@@ -182,19 +184,21 @@ describe('Run Mapping Ontology Overlay directive', function() {
                     expect(mapperStateSvc.initialize).toHaveBeenCalled();
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                    expect(mapperStateSvc.displayRunMappingOntologyOverlay).toBe(false);
+                    expect(scope.close).toHaveBeenCalled();
                 });
             });
         });
         it('should set the correct state for canceling', function() {
             this.controller.cancel();
-            expect(mapperStateSvc.displayRunMappingOntologyOverlay).toBe(false);
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('run-mapping-ontology-overlay')).toBe(true);
-            expect(this.element.querySelectorAll('form.content').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('RUN-MAPPING-ONTOLOGY-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with ui-selects', function() {
             expect(this.element.find('ui-select').length).toBe(2);
@@ -202,22 +206,22 @@ describe('Run Mapping Ontology Overlay directive', function() {
         it('with radio buttons', function() {
             expect(this.element.find('radio-button').length).toBe(2);
         })
-        it('with buttons for cancel and set', function() {
-            var buttons = this.element.find('button');
+        it('with buttons for cancel and submit', function() {
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Run'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Cancel', 'Run'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
         });
     });
     it('should call cancel when the cancel button is clicked', function() {
         spyOn(this.controller, 'cancel');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });
     it('should call run when the run button is clicked', function() {
         spyOn(this.controller, 'run');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.run).toHaveBeenCalled();
     });

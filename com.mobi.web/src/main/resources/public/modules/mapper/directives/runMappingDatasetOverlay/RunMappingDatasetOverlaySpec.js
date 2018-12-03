@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Run Mapping Dataset Overlay directive', function() {
+describe('Run Mapping Dataset Overlay component', function() {
     var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, datasetManagerSvc, prefixes;
 
     beforeEach(function() {
@@ -48,7 +48,9 @@ describe('Run Mapping Dataset Overlay directive', function() {
         datasetManagerSvc.getDatasetRecords.and.returnValue($q.when({data: [[this.datasetRecord]]}));
         datasetManagerSvc.getRecordFromArray.and.returnValue(this.datasetRecord);
         mapperStateSvc.mapping = {record: {title: 'record'}, jsonld: []};
-        this.element = $compile(angular.element('<run-mapping-dataset-overlay></run-mapping-dataset-overlay>'))(scope);
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<run-mapping-dataset-overlay close="close()" dismiss="dismiss()"></run-mapping-dataset-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('runMappingDatasetOverlay');
     });
@@ -73,7 +75,6 @@ describe('Run Mapping Dataset Overlay directive', function() {
         describe('should set the correct state for running mapping', function() {
             beforeEach(function() {
                 this.step = mapperStateSvc.step;
-                mapperStateSvc.displayRunMappingDatasetOverlay = true;
             });
             describe('if it is also being saved', function() {
                 describe('and there are changes', function() {
@@ -92,7 +93,7 @@ describe('Run Mapping Dataset Overlay directive', function() {
                         expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
                         expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
                         expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
-                        expect(mapperStateSvc.displayRunMappingDatasetOverlay).toBe(true);
+                        expect(scope.close).not.toHaveBeenCalled();
                         expect(this.controller.errorMessage).toEqual('Error message');
                     });
                     it('successfully uploading the data', function() {
@@ -105,7 +106,7 @@ describe('Run Mapping Dataset Overlay directive', function() {
                         expect(mapperStateSvc.initialize).toHaveBeenCalled();
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                        expect(mapperStateSvc.displayRunMappingDatasetOverlay).toBe(false);
+                        expect(scope.close).toHaveBeenCalled();
                         expect(this.controller.errorMessage).toEqual('');
                     });
                 });
@@ -119,7 +120,7 @@ describe('Run Mapping Dataset Overlay directive', function() {
                     expect(mapperStateSvc.initialize).toHaveBeenCalled();
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                    expect(mapperStateSvc.displayRunMappingDatasetOverlay).toBe(false);
+                    expect(scope.close).toHaveBeenCalled();
                 });
             });
             it('if it is not being saved and uploads the data', function() {
@@ -132,38 +133,40 @@ describe('Run Mapping Dataset Overlay directive', function() {
                 expect(mapperStateSvc.initialize).toHaveBeenCalled();
                 expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                 expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                expect(mapperStateSvc.displayRunMappingDatasetOverlay).toBe(false);
+                expect(scope.close).toHaveBeenCalled();
             });
         });
         it('should set the correct state for canceling', function() {
             this.controller.cancel();
-            expect(mapperStateSvc.displayRunMappingDatasetOverlay).toBe(false);
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('run-mapping-dataset-overlay')).toBe(true);
-            expect(this.element.querySelectorAll('form.content').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('RUN-MAPPING-DATASET-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with a ui-select', function() {
             expect(this.element.find('ui-select').length).toBe(1);
         });
-        it('with buttons for cancel and set', function() {
-            var buttons = this.element.find('button');
+        it('with buttons for cancel and submit', function() {
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Run'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Cancel', 'Run'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
         });
     });
     it('should call cancel when the cancel button is clicked', function() {
         spyOn(this.controller, 'cancel');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });
     it('should call run when the run button is clicked', function() {
         spyOn(this.controller, 'run');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.run).toHaveBeenCalled();
     });
