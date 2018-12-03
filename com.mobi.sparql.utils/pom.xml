@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.14.25</version>
+        <version>1.14.26</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -51,12 +51,6 @@
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-runtime-osgi</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.github.jsonld-java</groupId>
-                    <artifactId>jsonld-java</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>

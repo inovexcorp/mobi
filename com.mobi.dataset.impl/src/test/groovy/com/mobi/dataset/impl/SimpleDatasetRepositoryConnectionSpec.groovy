@@ -718,7 +718,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         ]
 
         expect:
-        RepositoryResults.asList(conn.getNamedGraphs()) == expectedGraphs
+        RepositoryResults.asList(conn.getNamedGraphs()).sort() == expectedGraphs.sort()
     }
 
     def "getDefaultNamedGraphs returns the correct set of resources"() {
@@ -1037,7 +1037,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
         then:
         results.size() == 4
-        results == graphs
+        results as Set == graphs as Set
     }
 
     def "prepareTupleQuery(query) #msg"() {

@@ -677,7 +677,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private void assertConstructQuery(String queryResults) {
         assertNotNull(queryResults);
         System.out.println(queryResults);
-        assertEquals(queryResults, "[{\"@id\":\"urn:test\",\"urn:prop\":[{\"@value\":\"test\"}]}]");
+        assertEquals(queryResults, "[ {\n  \"@id\" : \"urn:test\",\n  \"urn:prop\" : [ {\n    \"@value\" : \"test\"\n  } ]\n} ]");
     }
 
     // Test upload file

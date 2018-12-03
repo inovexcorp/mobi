@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.14.25</version>
+        <version>1.14.26</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -84,7 +84,7 @@
                         <configuration>
                             <generates>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/rdfs.owl</ontologyFile>
+                                    <ontologyFile>${project.basedir}/src/main/resources/rdfs.ttl</ontologyFile>
                                     <outputPackage>com.mobi.ontologies.rdfs</outputPackage>
                                 </ontology>
                                 <ontology>
@@ -108,13 +108,13 @@
                                     <outputPackage>com.mobi.ontologies.mobi</outputPackage>
                                 </ontology>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/owl.rdf</ontologyFile>
+                                    <ontologyFile>${project.basedir}/src/main/resources/owl.ttl</ontologyFile>
                                     <outputPackage>com.mobi.ontologies.owl</outputPackage>
                                 </ontology>
                             </generates>
                             <references>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/owl.rdf</ontologyFile>
+                                    <ontologyFile>${project.basedir}/src/main/resources/owl.ttl</ontologyFile>
                                     <outputPackage>com.mobi.ontologies.owl</outputPackage>
                                 </ontology>
                             </references>
