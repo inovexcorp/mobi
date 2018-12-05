@@ -187,6 +187,36 @@ describe('Record Access Overlay directive', function() {
                 expect(this.item.changed).toEqual(true);
                 expect(scope.close).not.toHaveBeenCalled();
             });
+            describe('should save changes to the policy', function() {
+                beforeEach(function() {
+                    this.policy = {
+                        'urn:read': {
+                            everyone: true,
+                            users: [],
+                            groups: []
+                        }
+                    };
+                    this.item = {
+                        changed: false,
+                        users: userManagerSvc.users,
+                        groups: userManagerSvc.groups,
+                        selectedUsers: [],
+                        selectedGroups: [],
+                        everyone: true,
+                        policy: this.policy
+                    };
+                });
+                it('no changes were made', function() {
+                    this.controller.policy = this.item;
+                    this.controller.save(this.recordId);
+                    scope.$apply();
+                    expect(recordPermissionsManagerSvc.updateRecordPolicy).not.toHaveBeenCalledWith(this.recordId, this.policy);
+                    expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                    expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
+                    expect(this.item.changed).toEqual(false);
+                    expect(scope.close).toHaveBeenCalled();
+                });
+            });
         });
         it('should cancel the overlay', function() {
             this.controller.cancel();
