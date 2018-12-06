@@ -67,6 +67,7 @@
                 },
                 bindToController: {
                     iri: '=',
+                    readOnly: '=',
                     duplicateCheck: '<'
                 },
                 controllerAs: 'dvm',
