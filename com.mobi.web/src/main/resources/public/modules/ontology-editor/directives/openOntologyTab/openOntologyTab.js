@@ -82,6 +82,7 @@
                     dvm.util = utilService;
                     dvm.currentPage = 1;
                     dvm.limit = 10;
+                    dvm.resetFiles = null;
                     dvm.totalSize = 0;
                     dvm.filteredList = [];
                     dvm.id = "openOntologyTabTargetedSpinner";

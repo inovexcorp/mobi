@@ -87,6 +87,7 @@
                             dvm.index++;
                             setFormValues();
                         } else {
+                            state.uploadFiles.splice(0);
                             $scope.close();
                         }
                     }
@@ -97,6 +98,7 @@
                     }
                     dvm.cancel = function() {
                         state.uploadFiles.splice(0);
+                        dvm.total = 0;
                         $scope.dismiss();
                     }
 
@@ -109,6 +111,9 @@
 
                     if (dvm.total) {
                         setFormValues();
+                    }
+                    if (dvm.total < 1) {
+                        dvm.cancel();
                     }
                 }]
             };
