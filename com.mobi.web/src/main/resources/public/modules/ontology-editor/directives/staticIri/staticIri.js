@@ -51,6 +51,7 @@
          *
          * @param {Function} onEdit A function to be called when the `editIriOverlay` is confirmed
          * @param {string} iri The IRI to be displayed and optionally edited
+         * @param {boolean} readOnly Whether the IRI should be editable or not
          * @param {boolean} duplicateCheck Whether the IRI should be checked for duplicates within the selected ontology
          */
         .directive('staticIri', staticIri);
@@ -67,7 +68,7 @@
                 },
                 bindToController: {
                     iri: '=',
-                    readOnly: '=',
+                    readOnly: '<',
                     duplicateCheck: '<'
                 },
                 controllerAs: 'dvm',
