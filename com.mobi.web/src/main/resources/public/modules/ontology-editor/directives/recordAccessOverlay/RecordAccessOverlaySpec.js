@@ -187,6 +187,17 @@ describe('Record Access Overlay directive', function() {
                 expect(this.item.changed).toEqual(true);
                 expect(scope.close).not.toHaveBeenCalled();
             });
+            it('unless no changes were made', function() {
+                this.item.changed = false;
+                this.controller.policy = this.item;
+                this.controller.save(this.recordId);
+                scope.$apply();
+                expect(recordPermissionsManagerSvc.updateRecordPolicy).not.toHaveBeenCalledWith(this.recordId, this.policy);
+                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
+                expect(this.item.changed).toEqual(false);
+                expect(scope.close).toHaveBeenCalled();
+            });
         });
         it('should cancel the overlay', function() {
             this.controller.cancel();
