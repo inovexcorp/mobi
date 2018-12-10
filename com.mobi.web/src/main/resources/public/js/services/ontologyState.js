@@ -848,7 +848,7 @@
                     listItem.classesWithIndividuals = _.keys(listItem.classesAndIndividuals);
                     listItem.individualsParentPath = self.getIndividualsParentPath(listItem);
                     listItem.individuals.flat = self.createFlatIndividualTree(listItem);
-                    listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), listItem);
+                    listItem.flatEverythingTree = self.createFlatEverythingTree(listItem);
                     _.concat(pm.ontologyProperties, _.keys(listItem.dataProperties.iris), _.keys(listItem.objectProperties.iris), listItem.derivedSemanticRelations, pm.conceptSchemeRelationshipList, pm.schemeRelationshipList).forEach(iri => delete listItem.annotations.iris[iri]);
                     listItem.failedImports = _.get(response[0], 'failedImports', []);
                     listItem.branches = response[1].data;
@@ -931,20 +931,33 @@
              *
              * @description
              * Creates an array which represents the hierarchical structure of the relationship between classes
-             * and properties to be used with a virtual scrolling solution.
+             * and properties of the ontology represented by the provided `listItem` to be used with a virtual
+             * scrolling solution.
              *
-             * @param {Object[]} ontologies The array of ontologies to build the hierarchal structure for.
-             * @param {Object} listItem The listItem linked to the ontology you want to add the entity to.
-             * @returns {Object[]} An array which contains the class-property replationships.
+             * @param {Object} listItem The listItem representing the ontology to create the structure for
+             * @returns {Object[]} An array which contains the class-property relationships.
              */
-            self.createFlatEverythingTree = function(ontologies, listItem) {
+            self.createFlatEverythingTree = function(listItem) {
                 var result = [];
-                var orderedClasses = sortByName(om.getClasses(ontologies), listItem);
+                var ontology = _.get(listItem, 'ontology');
+                var ontologyId = _.get(listItem, 'ontologyId');
+                var importedOntologyListItems = _.get(listItem, 'importedOntologies', []);
+                var importedOntologyIds = _.get(listItem, 'importedOntologyIds');
+                var indices = getIndices(listItem);
+                var classes = _.map(listItem.classes.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds));
+                var orderedClasses = _.sortBy(classes, entity => _.lowerCase(getEntityNameByIndex(entity['@id'], indices)));
+
+                var allProps = _.concat(
+                    _.map(listItem.dataProperties.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
+                    _.map(listItem.objectProperties.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
+                    _.map(listItem.annotations.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
+                );
                 var orderedProperties = [];
                 var path = [];
 
                 _.forEach(orderedClasses, clazz => {
-                    orderedProperties = sortByName(om.getClassProperties(ontologies, clazz['@id']), listItem);
+                    var classProps = om.getClassProperties([allProps], clazz['@id']);
+                    orderedProperties = sortByName(classProps, listItem);
                     path = [listItem.ontologyRecord.recordId, clazz['@id']];
                     result.push(_.merge({}, clazz, {
                         indent: 0,
@@ -959,7 +972,8 @@
                         }));
                     });
                 });
-                var orderedNoDomainProperties = sortByName(om.getNoDomainProperties(ontologies), listItem);
+                var noDomainProps = om.getNoDomainProperties([allProps]);
+                var orderedNoDomainProperties = sortByName(noDomainProps, listItem);
                 if (orderedNoDomainProperties.length) {
                     result.push({
                         title: 'Properties',
@@ -1142,7 +1156,9 @@
              * @returns {string} The beautified IRI string.
              */
             self.getEntityNameByIndex = function(entityIRI, listItem) {
-                var indices = getIndices(listItem);
+                return getEntityNameByIndex(entityIRI, getIndices(listItem));
+            }
+            function getEntityNameByIndex(entityIRI, indices) {
                 var entity = _.result(_.findLast(indices, index => {
                     var entity = _.get(index, entityIRI);
                      return (entity !== null && _.has(entity, 'label'));
@@ -1740,6 +1756,9 @@
                 var importedOntologyListItems = _.get(listItem, 'importedOntologies', []);
                 var importedOntologyIds = _.get(listItem, 'importedOntologyIds');
                 var indices = getIndices(listItem);
+                return getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds);
+            }
+            function getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds) {
                 var entities = [];
                 _.forEach(indices, index => {
                     var entity = _.get(index, entityIRI);

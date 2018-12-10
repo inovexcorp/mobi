@@ -2203,20 +2203,24 @@ describe('Ontology State Service', function() {
         }]);
     });
     it('createFlatEverythingTree creates the correct array', function() {
-        ontologyManagerSvc.getClasses.and.returnValue([{'@id': 'class1'}]);
+        ontologyStateSvc.listItem = angular.copy(listItem);
+        ontologyStateSvc.listItem.classes = {iris: {[this.classId]: this.ontologyId}};
+        ontologyStateSvc.listItem.dataProperties = {iris: {}};
+        ontologyStateSvc.listItem.objectProperties = {iris: {}};
+        ontologyStateSvc.listItem.annotations = {iris: {}};
         ontologyManagerSvc.getClassProperties.and.returnValue([{'@id': 'property1'}]);
         ontologyManagerSvc.getNoDomainProperties.and.returnValue([{'@id': 'property2'}]);
-        var ontology = [{'@id': this.ontologyId}];
-        expect(ontologyStateSvc.createFlatEverythingTree([ontology], ontologyStateSvc.listItem)).toEqual([{
-            '@id': 'class1',
+        expect(ontologyStateSvc.createFlatEverythingTree(ontologyStateSvc.listItem)).toEqual([{
+            '@id': this.classId,
+            '@type': [prefixes.owl + 'Class'],
             hasChildren: true,
             indent: 0,
-            path: [this.recordId, 'class1']
+            path: [this.recordId, this.classId]
         }, {
             '@id': 'property1',
             hasChildren: false,
             indent: 1,
-            path: [this.recordId, 'class1', 'property1']
+            path: [this.recordId, this.classId, 'property1']
         }, {
             title: 'Properties',
             get: ontologyStateSvc.getNoDomainsOpened,
@@ -2228,9 +2232,8 @@ describe('Ontology State Service', function() {
             get: ontologyStateSvc.getNoDomainsOpened,
             path: [this.recordId, 'property2']
         }]);
-        expect(ontologyManagerSvc.getClasses).toHaveBeenCalledWith([ontology]);
-        expect(ontologyManagerSvc.getClassProperties).toHaveBeenCalledWith([ontology], 'class1');
-        expect(ontologyManagerSvc.getNoDomainProperties).toHaveBeenCalledWith([ontology]);
+        expect(ontologyManagerSvc.getClassProperties).toHaveBeenCalledWith([[]], this.classId);
+        expect(ontologyManagerSvc.getNoDomainProperties).toHaveBeenCalledWith([[]]);
     });
     it('createFlatIndividualTree creates the correct array', function() {
         expect(ontologyStateSvc.createFlatIndividualTree({
@@ -2516,7 +2519,7 @@ describe('Ontology State Service', function() {
                         expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'upToDate')).toBe(false);
                         expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2]);
-                        expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([this.ontology, []], response);
+                        expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                         expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'individuals.flat')).toEqual([{prop: 'individual'}]);
@@ -2604,7 +2607,7 @@ describe('Ontology State Service', function() {
                         expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'upToDate')).toBe(false);
                         expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2]);
-                        expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([this.ontology, []], response);
+                        expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                         expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'individuals.flat')).toEqual([{prop: 'individual'}]);
@@ -2693,7 +2696,7 @@ describe('Ontology State Service', function() {
                         expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'upToDate')).toBe(false);
                         expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2]);
-                        expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([this.ontology, []], response);
+                        expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                         expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'individuals.flat')).toEqual([{prop: 'individual'}]);
