@@ -109,17 +109,21 @@
                         $scope.dismiss();
                     }
                     dvm.save = function(recordId) {
-                        dvm.policy.policy[$scope.resolve.ruleId] = {
-                            everyone: dvm.policy.everyone,
-                            users: _.map(dvm.policy.selectedUsers, user => user.iri),
-                            groups: _.map(dvm.policy.selectedGroups, user => user.iri),
+                        if (dvm.policy.changed) {
+                            dvm.policy.policy[$scope.resolve.ruleId] = {
+                                everyone: dvm.policy.everyone,
+                                users: _.map(dvm.policy.selectedUsers, user => user.iri),
+                                groups: _.map(dvm.policy.selectedGroups, user => user.iri),
+                            }
+                            rp.updateRecordPolicy(recordId, dvm.policy.policy)
+                                .then(() => {
+                                    $scope.close();
+                                    dvm.policy.changed = false;
+                                    util.createSuccessToast('Permissions updated')
+                                }, utilService.createErrorToast);
+                        } else {
+                            $scope.close();
                         }
-                        rp.updateRecordPolicy(recordId, dvm.policy.policy)
-                            .then(() => {
-                                $scope.close();
-                                dvm.policy.changed = false;
-                                util.createSuccessToast('Permissions updated')
-                            }, utilService.createErrorToast);
                     }
 
                     function sortUsers(users) {
