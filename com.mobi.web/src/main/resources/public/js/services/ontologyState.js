@@ -778,7 +778,7 @@
              * scrolling solution.
              *
              * @param {Object} listItem The listItem representing the ontology to create the structure for
-             * @returns {Object[]} An array which contains the class-property replationships.
+             * @returns {Object[]} An array which contains the class-property relationships.
              */
             self.createFlatEverythingTree = function(listItem) {
                 var result = [];
