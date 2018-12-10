@@ -321,7 +321,7 @@ GRAPH commits:in-progress-commit {
     commits:in-progress-commit a mcat:Commit, mcat:InProgressCommit ;
         dc:title "In Progress Commit" ;
         prov:generated revisions:in-progress-commit ;
-        prov:wasAssociatedWith users:taken ;
+        prov:wasAssociatedWith users:user2 ;
         mcat:onVersionedRDFRecord records:versioned-rdf-record .
 
     revisions:in-progress-commit a mcat:Revision ;

@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.14.24-SNAPSHOT</version>
+        <version>1.14.27-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -36,10 +36,6 @@
     <artifactId>ontology.api</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
-
-    <properties>
-        <jackson.version>2.6.3</jackson.version>
-    </properties>
 
     <dependencies>
         <dependency>

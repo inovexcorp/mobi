@@ -181,62 +181,62 @@ public class RestUtilsTest {
 
     @Test
     public void modelToStringWithRDFFormatTest() throws Exception {
-        assertEquals(expectedJsonld, RestUtils.modelToString(model, RDFFormat.JSONLD, transformer));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToString(model, RDFFormat.JSONLD, transformer)));
         assertEquals(expectedTurtle, RestUtils.modelToString(model, RDFFormat.TURTLE, transformer));
         assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, RDFFormat.RDFXML, transformer)));
     }
 
     @Test
     public void modelToStringTest() throws Exception {
-        assertEquals(expectedJsonld, RestUtils.modelToString(model, "jsonld", transformer));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToString(model, "jsonld", transformer)));
         assertEquals(expectedTurtle, RestUtils.modelToString(model, "turtle", transformer));
         assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, "rdf/xml", transformer)));
-        assertEquals(expectedJsonld, RestUtils.modelToString(model, "something", transformer));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToString(model, "something", transformer)));
     }
 
     @Test
     public void modelToSkolemizedStringWithRDFFormatTest() throws Exception {
-        assertEquals(expectedJsonld, RestUtils.modelToSkolemizedString(model, RDFFormat.JSONLD, transformer, service));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToSkolemizedString(model, RDFFormat.JSONLD, transformer, service)));
         assertEquals(expectedTurtle, RestUtils.modelToSkolemizedString(model, RDFFormat.TURTLE, transformer, service));
         assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToSkolemizedString(model, RDFFormat.RDFXML, transformer, service)));
     }
 
     @Test
     public void modelToSkolemizedStringTest() throws Exception {
-        assertEquals(expectedJsonld, RestUtils.modelToSkolemizedString(model, "jsonld", transformer, service));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToSkolemizedString(model, "jsonld", transformer, service)));
         assertEquals(expectedTurtle, RestUtils.modelToSkolemizedString(model, "turtle", transformer, service));
         assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToSkolemizedString(model, "rdf/xml", transformer, service)));
-        assertEquals(expectedJsonld, RestUtils.modelToSkolemizedString(model, "something", transformer, service));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToSkolemizedString(model, "something", transformer, service)));
     }
 
     @Test
     public void groupedModelToStringWithRDFFormatTest() throws Exception {
-        assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, RDFFormat.JSONLD, transformer));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToString(model, RDFFormat.JSONLD, transformer)));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, RDFFormat.TURTLE, transformer));
         assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, RDFFormat.RDFXML, transformer)));
     }
 
     @Test
     public void groupedModelToStringTest() throws Exception {
-        assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, "jsonld", transformer));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToString(model, "jsonld", transformer)));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, "turtle", transformer));
         assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, "rdf/xml", transformer)));
-        assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, "something", transformer));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToString(model, "something", transformer)));
     }
 
     @Test
     public void groupedModelToSkolemizedStringWithRDFFormatTest() throws Exception {
-        assertEquals(expectedJsonld, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.JSONLD, transformer, service));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToSkolemizedString(model, RDFFormat.JSONLD, transformer, service)));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.TURTLE, transformer, service));
         assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.RDFXML, transformer, service)));
     }
 
     @Test
     public void groupedModelToSkolemizedStringTest() throws Exception {
-        assertEquals(expectedJsonld, RestUtils.groupedModelToSkolemizedString(model, "jsonld", transformer, service));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToSkolemizedString(model, "jsonld", transformer, service)));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToSkolemizedString(model, "turtle", transformer, service));
         assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, "rdf/xml", transformer, service)));
-        assertEquals(expectedJsonld, RestUtils.groupedModelToSkolemizedString(model, "something", transformer, service));
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToSkolemizedString(model, "something", transformer, service)));
     }
 
     @Test
@@ -257,14 +257,14 @@ public class RestUtilsTest {
     @Test
     public void modelToSkolemizedJsonldTest() throws Exception {
         String result = RestUtils.modelToSkolemizedJsonld(model, transformer, service);
-        assertEquals(expectedJsonld, result);
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(result));
         verify(service, atLeastOnce()).skolemize(any(Statement.class));
     }
 
     @Test
     public void modelToJsonldTest() throws Exception {
         String result = RestUtils.modelToJsonld(model, transformer);
-        assertEquals(expectedJsonld, result);
+        assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(result));
     }
 
     @Test
@@ -589,6 +589,10 @@ public class RestUtilsTest {
 
     private String normalizeLineEnds(String s) {
         return s.replace("\r\n", "\n").replace('\r', '\n');
+    }
+
+    private String removeWhitespace(String s) {
+        return s.replaceAll("\\s+", "");
     }
 
     private Set<Thing> getTestThings(Map<IRI, String> predicateValues) {

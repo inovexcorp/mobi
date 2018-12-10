@@ -30,7 +30,7 @@ import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
-import static com.mobi.rest.util.RestUtils.modelToTrig;
+import static com.mobi.rest.util.RestUtils.modelToString;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -965,7 +965,7 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response queryOntology(ContainerRequestContext context, String recordIdStr, String queryString,
-                                  String branchIdStr, String commitIdStr, boolean includeImports) {
+                                  String branchIdStr, String commitIdStr, String format, boolean includeImports) {
         checkStringParam(queryString, "Parameter 'query' must be set.");
 
         try {
@@ -985,8 +985,10 @@ public class OntologyRestImpl implements OntologyRest {
                 case "construct":
                     Model modelResult = ontologyManager.getGraphQueryResults(ontology, queryString, includeImports);
                     if (modelResult.size() >= 1) {
-                        String trigStr = modelToTrig(modelResult, sesameTransformer);
-                        return Response.ok(trigStr, MediaType.TEXT_PLAIN_TYPE).build();
+                        String modelStr = modelToString(modelResult, format, sesameTransformer);
+                        MediaType type = format.equals("jsonld") ? MediaType.APPLICATION_JSON_TYPE
+                                : MediaType.TEXT_PLAIN_TYPE;
+                        return Response.ok(modelStr, type).build();
                     } else {
                         return Response.noContent().build();
                     }
