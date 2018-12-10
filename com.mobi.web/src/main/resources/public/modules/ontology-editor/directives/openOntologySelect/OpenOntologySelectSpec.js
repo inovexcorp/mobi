@@ -341,23 +341,26 @@ describe('Open Ontology Select component', function() {
                 expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled()
             });
         });
-        describe('openDeleteConfirmation calls the correct methods if the branch is', function() {
+        describe('openDeleteConfirmation calls the correct methods if the entity is', function() {
             beforeEach(function() {
                 this.event = scope.$emit('click');
                 spyOn(this.event, 'stopPropagation');
             });
-            it('a user branch', function() {
-                catalogManagerSvc.isUserBranch.and.returnValue(true);
-                this.controller.openDeleteConfirmation(this.event, this.branch);
-                expect(this.event.stopPropagation).toHaveBeenCalled();
-                expect(this.controller.branch).toEqual(this.branch);
-                expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('diverging changes'), this.controller.delete);
-            });
-            it('not a user branch', function() {
-                this.controller.openDeleteConfirmation(this.event, this.branch);
-                expect(this.event.stopPropagation).toHaveBeenCalled();
-                expect(this.controller.branch).toEqual(this.branch);
-                expect(modalSvc.openConfirmModal).toHaveBeenCalledWith({asymmetricMatch: actual => !actual.includes('diverging changes')}, this.controller.delete);
+            describe('a branch and', function() {
+                beforeEach(function() {
+                    catalogManagerSvc.isBranch.and.returnValue(true);
+                });
+                it('a user branch', function() {
+                    catalogManagerSvc.isUserBranch.and.returnValue(true);
+                    this.controller.openDeleteConfirmation(this.event, this.branch);
+                    expect(this.event.stopPropagation).toHaveBeenCalled();
+                    expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('diverging changes'), jasmine.any(Function));
+                });
+                it('not a user branch', function() {
+                    this.controller.openDeleteConfirmation(this.event, this.branch);
+                    expect(this.event.stopPropagation).toHaveBeenCalled();
+                    expect(modalSvc.openConfirmModal).toHaveBeenCalledWith({asymmetricMatch: actual => !actual.includes('diverging changes')}, jasmine.any(Function));
+                });
             });
         });
         it('openEditOverlay calls the correct methods', function() {
@@ -367,9 +370,9 @@ describe('Open Ontology Select component', function() {
             expect(event.stopPropagation).toHaveBeenCalled();
             expect(modalSvc.openModal).toHaveBeenCalledWith('editBranchOverlay', {branch: this.branch}, jasmine.any(Function));
         });
-        describe('delete calls the correct methods', function() {
+        describe('deleteBranch calls the correct methods', function() {
             beforeEach(function() {
-                this.controller.branch = this.branch;
+                this.branch;
                 scope.listItem.branches = [this.branch];
                 scope.$digest();
                 spyOn(this.controller, 'changeEntity');
@@ -378,7 +381,7 @@ describe('Open Ontology Select component', function() {
                 beforeEach(function() {
                     ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.when());
                     this.controller.currentStateId = 'current';
-                    this.currentState = {
+                    this.controller.currentState = {
                         '@id': this.controller.currentStateId,
                         '@type': [prefixes.ontologyState + 'StateCommit'],
                         [prefixes.ontologyState + 'commit']: [{'@id': this.commitId}]
@@ -389,7 +392,7 @@ describe('Open Ontology Select component', function() {
                 describe('and a commit is checked out', function() {
                     it('and getCommit is resolved', function() {
                         catalogManagerSvc.getCommit.and.returnValue($q.when());
-                        this.controller.delete();
+                        this.controller.deleteBranch(this.branch);
                         scope.$apply();
                         expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
                         expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
@@ -400,7 +403,7 @@ describe('Open Ontology Select component', function() {
                     });
                     it('and getCommit is rejected', function() {
                         catalogManagerSvc.getCommit.and.returnValue($q.reject('Error message'));
-                        this.controller.delete();
+                        this.controller.deleteBranch(this.branch);
                         scope.$apply();
                         expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
                         expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
@@ -412,11 +415,11 @@ describe('Open Ontology Select component', function() {
                 });
                 describe('and a tag is checked out', function() {
                     beforeEach(function() {
-                        this.currentState['@type'].push(prefixes.ontologyState + 'StateTag');
+                        this.controller.currentState['@type'].push(prefixes.ontologyState + 'StateTag');
                     });
                     it('and getCommit is resolved', function() {
                         catalogManagerSvc.getCommit.and.returnValue($q.when());
-                        this.controller.delete();
+                        this.controller.deleteBranch(this.branch);
                         scope.$apply();
                         expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
                         expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
@@ -427,7 +430,7 @@ describe('Open Ontology Select component', function() {
                     });
                     it('and getCommit is rejected', function() {
                         catalogManagerSvc.getCommit.and.returnValue($q.reject('Error message'));
-                        this.controller.delete();
+                        this.controller.deleteBranch(this.branch);
                         scope.$apply();
                         expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
                         expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
@@ -438,8 +441,8 @@ describe('Open Ontology Select component', function() {
                     });
                 });
                 it('and a branch is checked out', function() {
-                    this.currentState['@type'].push(prefixes.ontologyState + 'StateBranch');
-                    this.controller.delete();
+                    this.controller.currentState['@type'].push(prefixes.ontologyState + 'StateBranch');
+                    this.controller.deleteBranch(this.branch);
                     scope.$apply();
                     expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
                     expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
@@ -451,7 +454,7 @@ describe('Open Ontology Select component', function() {
             });
             it('when deleteOntologyBranch is rejected', function() {
                 ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.reject(this.errorMessage));
-                this.controller.delete();
+                this.controller.deleteBranch(this.branch);
                 scope.$apply();
                 expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
                 expect(ontologyStateSvc.removeBranch).not.toHaveBeenCalled();

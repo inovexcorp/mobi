@@ -63,27 +63,33 @@ describe('Ontology Button Stack directive', function() {
             expect(this.element.find('circle-button-stack').length).toBe(1);
         });
         it('with circle-buttons', function() {
-            expect(this.element.find('circle-button').length).toBe(5);
+            expect(this.element.find('circle-button').length).toBe(6);
         });
         it('depending on whether the ontology is committable', function() {
             ontologyStateSvc.listItem.ontologyRecord.branchId = 'branch';
             scope.$digest();
+            var tagButton = angular.element(this.element.querySelectorAll('circle-button.btn-dark')[0]);
             var commitButton = angular.element(this.element.querySelectorAll('circle-button.btn-info')[0]);
             var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
+            expect(tagButton.attr('disabled')).toBeFalsy();
             expect(commitButton.attr('disabled')).toBeTruthy();
             expect(mergeButton.attr('disabled')).toBeFalsy();
 
             ontologyStateSvc.isCommittable.and.returnValue(true);
             scope.$digest();
+            expect(tagButton.attr('disabled')).toBeTruthy();
             expect(commitButton.attr('disabled')).toBeFalsy();
             expect(mergeButton.attr('disabled')).toBeTruthy();
         });
         it('depending on whether the ontology has changes', function() {
+            var tagButton = angular.element(this.element.querySelectorAll('circle-button.btn-dark')[0]);
             var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
+            expect(tagButton.attr('disabled')).toBeFalsy();
             expect(mergeButton.attr('disabled')).toBeFalsy();
 
             ontologyStateSvc.hasChanges.and.returnValue(true);
             scope.$digest();
+            expect(tagButton.attr('disabled')).toBeTruthy();
             expect(mergeButton.attr('disabled')).toBeTruthy();
         });
         it('depending on whether the branch is a user branch', function() {
@@ -103,6 +109,7 @@ describe('Ontology Button Stack directive', function() {
             expect(mergeButton.attr('disabled')).toBeTruthy();
         });
         it('depending on if the user cannot modify record', function() {
+            var tagButton = angular.element(this.element.querySelectorAll('circle-button.btn-dark')[0]);
             var uploadButton = angular.element(this.element.querySelectorAll('circle-button.upload-circle-button')[0]);
             var branchButton = angular.element(this.element.querySelectorAll('circle-button.btn-warning')[0]);
             var commitButton = angular.element(this.element.querySelectorAll('circle-button.btn-info')[0]);
@@ -112,6 +119,7 @@ describe('Ontology Button Stack directive', function() {
             ontologyStateSvc.listItem.userCanModify = false;
             ontologyStateSvc.canModify.and.returnValue(false);
             scope.$digest();
+            expect(tagButton.attr('disabled')).toBeTruthy();
             expect(uploadButton.attr('disabled')).toBeTruthy();
             expect(branchButton.attr('disabled')).toBeTruthy()
             expect(commitButton.attr('disabled')).toBeTruthy();
@@ -130,6 +138,10 @@ describe('Ontology Button Stack directive', function() {
         });
     });
     describe('controller methods', function() {
+        it('should open the createTagModal', function() {
+            this.controller.showCreateTagModal();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('createTagModal');
+        });
         it('should open the createBranchOverlay', function() {
             this.controller.showCreateBranchOverlay();
             expect(modalSvc.openModal).toHaveBeenCalledWith('createBranchOverlay');

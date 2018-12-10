@@ -47,8 +47,10 @@
          * `openOntologySelect` is a component that creates a `ui-select` containing the branches and tags of the
          * provided {@link ontologyState.service:ontologyStateService listItem} and depending on the provided state, the
          * currently open commit. Each branch in the `ui-select` has buttons for editing the metadata and deleting the
-         * branch which will open a {@link confirmModal.directive:confirmModal}. The component also houses the method
-         * for opening a modal for {@link editBranchOverlay.directive:editBranchOverlay editing a branch}.
+         * branch which will open a {@link confirmModal.directive:confirmModal}. Each tag in the `ui-select` has a
+         * button for deleting the tag which will open a {@link confirmModa.directive:confirmModal}. The component also
+         * houses the method for opening a modal for
+         * {@link editBranchOverlay.directive:editBranchOverlay editing a branch}.
          *
          * @param {Object} listItem An item from the `list` in ontologyStateService
          * @param {Object} state An item from the `states` in stateManagerService
@@ -75,9 +77,19 @@
             dvm.selectList = [];
 
             dvm.currentStateId = '';
+            dvm.currentState = undefined;
 
             var catalogId = _.get(dvm.cm.localCatalog, '@id', '');
 
+            dvm.canDelete = function(entity) {
+                if (dvm.cm.isBranch(entity)) {
+                    return _.get(entity, '@id') !== dvm.listItem.ontologyRecord.branchId && dvm.listItem.userCanModify;
+                } else if (dvm.cm.isTag(entity)) {
+                    return dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'tag') !== _.get(entity, '@id') && dvm.listItem.userCanModify;
+                } else {
+                    return false;
+                }
+            }
             dvm.getGroupTitle = function(item) {
                 if (dvm.cm.isBranch(item)) {
                     return 'Branches';
@@ -127,34 +139,39 @@
                         }, dvm.util.createErrorToast);
                 }
             }
-            dvm.openDeleteConfirmation = function($event, branch) {
+            dvm.openDeleteConfirmation = function($event, entity) {
                 $event.stopPropagation();
-                dvm.branch = branch;
-                var title = dvm.util.getDctermsValue(branch, 'title');
-                var msg = '';
-                if (dvm.cm.isUserBranch(branch)) {
-                    msg += '<p>You have made diverging changes from the head of Branch: <strong>' + title + '</strong>. Continuing with this operation will only delete your diverging changes.</p>'
+                var title = dvm.util.getDctermsValue(entity, 'title');
+                if (dvm.cm.isBranch(entity)) {
+                    var msg = '';
+                    if (dvm.cm.isUserBranch(entity)) {
+                        msg += '<p>You have made diverging changes from the head of Branch: <strong>' + title + '</strong>. Continuing with this operation will only delete your diverging changes.</p>'
+                    }
+                    modalService.openConfirmModal(msg + '<p>Are you sure that you want to delete Branch: <strong>' + title + '</strong>?</p>', () => dvm.deleteBranch(entity));
+                } else if (dvm.cm.isTag(entity)) {
+                    modalService.openConfirmModal('<p>Are you sure that you want to delete Tag: <strong>' + title + '</strong>?</p>', () => dvm.deleteTag(entity));
                 }
-                modalService.openConfirmModal(msg + '<p>Are you sure that you want to delete Branch: <strong>' + title + '</strong>?</p>', dvm.delete);
             }
             dvm.openEditOverlay = function($event, branch) {
                 $event.stopPropagation();
                 modalService.openModal('editBranchOverlay', {branch}, () => dvm.submit(branch));
             }
-            dvm.delete = function() {
-                om.deleteOntologyBranch(dvm.listItem.ontologyRecord.recordId, dvm.branch['@id'])
+            dvm.deleteBranch = function(branch) {
+                om.deleteOntologyBranch(dvm.listItem.ontologyRecord.recordId, branch['@id'])
                     .then(() => {
-                        dvm.os.removeBranch(dvm.listItem.ontologyRecord.recordId, dvm.branch['@id']);
-                        var currentState = _.find(dvm.state.model, {'@id': dvm.currentStateId});
-                        if (!dvm.os.isStateBranch(currentState)) {
-                            dvm.cm.getCommit(dvm.util.getPropertyId(currentState, prefixes.ontologyState + 'commit'))
+                        dvm.os.removeBranch(dvm.listItem.ontologyRecord.recordId, branch['@id']);
+                        if (!dvm.os.isStateBranch(dvm.currentState)) {
+                            dvm.cm.getCommit(dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'commit'))
                                 .then(_.noop, error => {
-                                    dvm.util.createWarningToast((dvm.os.isStateTag(currentState) ? 'Tag' : 'Commit') + ' no longer exists. Opening MASTER');
+                                    dvm.util.createWarningToast((dvm.os.isStateTag(dvm.currentState) ? 'Tag' : 'Commit') + ' no longer exists. Opening MASTER');
                                     dvm.changeEntity({'@id': dvm.listItem.masterBranchIRI, '@type': [prefixes.catalog + 'Branch']});
                                 });
                         }
                         setSelectList();
                     }, dvm.util.createErrorToast);
+            }
+            dvm.deleteTag = function() {
+                console.log('Delete Tag');
             }
             dvm.submit = function(branch) {
                 if (branch['@id'] === dvm.listItem.ontologyRecord.branchId) {
@@ -170,19 +187,19 @@
                 var currentValue = dvm.util.getPropertyId(recordState, prefixes.ontologyState + 'currentState');
                 if (dvm.currentStateId !== currentValue) {
                     dvm.currentStateId = currentValue;
+                    dvm.currentState = _.find(dvm.state.model, {'@id': dvm.currentStateId});
                     setSelected();
                     setSelectList();
                 }
             }
 
             function setSelected() {
-                var currentState = _.find(dvm.state.model, {'@id': dvm.currentStateId});
-                if (dvm.os.isStateBranch(currentState)) {
-                    dvm.selected = _.find(dvm.listItem.branches, {'@id': dvm.util.getPropertyId(currentState, prefixes.ontologyState + 'branch')});
-                } else if (dvm.os.isStateTag(currentState)) {
-                    dvm.selected = _.find(dvm.listItem.tags, {'@id': dvm.util.getPropertyId(currentState, prefixes.ontologyState + 'tag')});
+                if (dvm.os.isStateBranch(dvm.currentState)) {
+                    dvm.selected = _.find(dvm.listItem.branches, {'@id': dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'branch')});
+                } else if (dvm.os.isStateTag(dvm.currentState)) {
+                    dvm.selected = _.find(dvm.listItem.tags, {'@id': dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'tag')});
                 } else {
-                    var commitId = dvm.util.getPropertyId(currentState, prefixes.ontologyState + 'commit');
+                    var commitId = dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'commit');
                     dvm.selected = {
                         '@id': commitId,
                         '@type': [prefixes.catalog + 'Commit'],
@@ -194,7 +211,7 @@
                 if (dvm.cm.isBranch(dvm.selected) || dvm.cm.isTag(dvm.selected)) {
                     dvm.selectList = _.concat(dvm.listItem.branches, dvm.listItem.tags);
                 } else if (dvm.cm.isCommit(dvm.selected)) {
-                    dvm.selectList = _.concat(dvm.listItem.branches, dvm.listItem.tags, [dvm.selected]);
+                    dvm.selectList = _.concat(dvm.listItem.branches, [dvm.selected], dvm.listItem.tags);
                 } else {
                     dvm.selectList = [];
                 }

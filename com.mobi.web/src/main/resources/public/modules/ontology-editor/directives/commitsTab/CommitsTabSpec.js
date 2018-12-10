@@ -73,7 +73,7 @@ describe('Commits Tab directive', function() {
             expect(this.element.querySelectorAll('.view-table').length).toEqual(1);
             expect(this.element.querySelectorAll('.view-table tbody tr').length).toEqual(this.controller.commits.length);
         });
-        it('depending on whether the user has saved changes', function() {
+        it('depending on whether the user has unsaved changes', function() {
             ontologyStateSvc.hasChanges.and.returnValue(false);
             this.controller.commits = [{id: 'commit'}];
             scope.$digest();
@@ -81,6 +81,18 @@ describe('Commits Tab directive', function() {
             expect(button.attr('disabled')).toBeFalsy();
 
             ontologyStateSvc.hasChanges.and.returnValue(true);
+            scope.$digest();
+            expect(button.attr('disabled')).toBeTruthy();
+        });
+        it('depending on whether the user has saved changes', function() {
+            ontologyStateSvc.hasChanges.and.returnValue(false);
+            ontologyStateSvc.isCommittable.and.returnValue(false);
+            this.controller.commits = [{id: 'commit'}];
+            scope.$digest();
+            var button = angular.element(this.element.querySelectorAll('.view-table tbody button')[0]);
+            expect(button.attr('disabled')).toBeFalsy();
+
+            ontologyStateSvc.isCommittable.and.returnValue(true);
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });

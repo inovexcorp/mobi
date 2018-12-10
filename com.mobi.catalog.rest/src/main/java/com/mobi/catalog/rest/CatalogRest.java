@@ -371,6 +371,19 @@ public interface CatalogRest {
                            @FormDataParam("title") String title,
                            @FormDataParam("description") String description);
 
+    @POST
+    @Path("{catalogId}/records/{recordId}/tags")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @RolesAllowed("user")
+    @ApiOperation("Creates a Tag for the identified VersionedRecord.")
+    Response createTag(@Context ContainerRequestContext context,
+                       @PathParam("catalogId") String catalogId,
+                       @PathParam("recordId") String recordId,
+                       @FormDataParam("title") String title,
+                       @FormDataParam("description") String description,
+                       @FormDataParam("iri") String iri,
+                       @FormDataParam("commit") String commitId);
 
     /**
      * Gets the latest Version of a VersionedRecord identified by the provided IDs.

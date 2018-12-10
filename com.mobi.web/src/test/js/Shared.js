@@ -666,6 +666,7 @@ function mockOntologyState() {
                     deletions: []
                 },
                 branches: [],
+                tags: [],
                 ontology: [{
                     '@id': 'id',
                     mobi: {
