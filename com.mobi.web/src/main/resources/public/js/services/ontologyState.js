@@ -278,7 +278,7 @@
              * @param {Object} idObj An object of IRI ids
              * @param {string} idObj.recordId A string identifying the Record to keep state for
              * @param {string} idObj.commitId A string identifying the Commit the user is currently viewing
-             * @param {string} [idObj.branchId = ''] An optional string identifying the Branch the user is currenly
+             * @param {string} [idObj.branchId = ''] An optional string identifying the Branch the user is currently
              * viewing
              * @param {string} [idObj.tagId = ''] An optional string identifying the Tag the user is currently viewing
              * @returns {Promise} A promise that resolves if the creation was successful or rejects with an error message
