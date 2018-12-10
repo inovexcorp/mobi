@@ -787,11 +787,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 null, null, oppositeNamedGraph));
 
         changes.forEach(statement -> {
-            if (!oppositeGraphStatements.contains(statement)) {
+            Statement withContext = vf.createStatement(statement.getSubject(), statement.getPredicate(),
+                    statement.getObject(), oppositeNamedGraph);
+            if (!oppositeGraphStatements.contains(withContext)) {
                 conn.add(statement, targetNamedGraph);
             } else {
-                conn.remove(statement, oppositeNamedGraph);
-                oppositeGraphStatements.remove(statement);
+                conn.remove(withContext, oppositeNamedGraph);
+                oppositeGraphStatements.remove(withContext);
             }
         });
     }
