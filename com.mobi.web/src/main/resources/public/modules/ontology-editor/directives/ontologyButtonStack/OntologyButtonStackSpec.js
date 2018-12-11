@@ -68,13 +68,16 @@ describe('Ontology Button Stack directive', function() {
         it('depending on whether the ontology is committable', function() {
             ontologyStateSvc.listItem.ontologyRecord.branchId = 'branch';
             scope.$digest();
+            var uploadButton = angular.element(this.element.querySelectorAll('circle-button.upload-circle-button')[0]);
             var commitButton = angular.element(this.element.querySelectorAll('circle-button.btn-info')[0]);
             var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
+            expect(uploadButton.attr('disabled')).toBeFalsy();
             expect(commitButton.attr('disabled')).toBeTruthy();
             expect(mergeButton.attr('disabled')).toBeFalsy();
 
             ontologyStateSvc.isCommittable.and.returnValue(true);
             scope.$digest();
+            expect(uploadButton.attr('disabled')).toBeTruthy();
             expect(commitButton.attr('disabled')).toBeFalsy();
             expect(mergeButton.attr('disabled')).toBeTruthy();
         });
