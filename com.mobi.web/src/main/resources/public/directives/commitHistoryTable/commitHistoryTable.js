@@ -30,7 +30,7 @@
          *
          * @description
          * The `commitHistoryTable` module only provides the `commitHistoryTable` directive which creates
-         * a table and optionally a graph of the head commit of a branch.
+         * a table of commits and optionally a graph of the commit network.
          */
         .module('commitHistoryTable', [])
         /**
@@ -44,15 +44,14 @@
          * @requires modal.service:modalService
          *
          * @description
-         * `commitHistoryTable` is a directive that creates a table containing the commit chain of the head commit of
-         * the branch identified by the passed record id amd branch JSON-LD object. Can optionally also display a SVG
-         * graph generated using Snap.svg showing the network the commits. Clicking on a commit id or its corresponding
-         * circle in the graph will open up a {@link commitInfoOverlay.directive:commitInfoOverlay commit info overlay}.
-         * Can optionally provide a variable to bind the retrieved commits to. The directive is replaced by the content
-         * of the template.
+         * `commitHistoryTable` is a directive that creates a table containing the commit chain of the provided commit.
+         * Can optionally also display a SVG graph generated using Snap.svg showing the network of the commits along
+         * with an optional title for the top commit. Clicking on a commit id or its corresponding circle in the graph
+         * will open up a {@link commitInfoOverlay.directive:commitInfoOverlay commit info overlay}. Can optionally
+         * provide a variable to bind the retrieved commits to. The directive is replaced by the content of the template.
          *
          * @param {string} commitId The IRI string of a commit in the local catalog
-         * @param {string} branchTitle The title of the branch the user is currently on.
+         * @param {string} headTitle The title to put on the top commit
          * @param {string} [targetId=''] targetId limits the commits displayed to only go as far back as this specified
          *      commit.
          * @param {Object[]} commitData A variable to bind the retrieved commits to
@@ -69,7 +68,7 @@
                 scope: {},
                 bindToController: {
                     commitId: '<',
-                    branchTitle: '<',
+                    headTitle: '<?',
                     targetId: '<?',
                     commitData: '=?'
                 },
@@ -104,7 +103,7 @@
                     dvm.deltaY = 56;
                     dvm.id = 'commit-history-table';
 
-                    $scope.$watchGroup(['dvm.branchTitle', 'dvm.commitId', 'dvm.targetId'], () => dvm.getCommits());
+                    $scope.$watchGroup(['dvm.headTitle', 'dvm.commitId', 'dvm.targetId'], () => dvm.getCommits());
 
                     dvm.openCommitOverlay = function(commitId) {
                         cm.getCommit(commitId)
@@ -162,8 +161,8 @@
                             colorIdx++;
                             c.circle.attr({fill: color});
                             cols.push({x: 0, commits: [c.commit.id], color: color});
-                            if (dvm.branchTitle) {
-                                drawBranchTitle(c.circle);
+                            if (dvm.headTitle) {
+                                drawHeadTitle(c.circle);
                             }
                             recurse(c);
                             // Update deltaX based on how many columns there are or the minimum width
@@ -300,7 +299,7 @@
                         });
                         wrapper.add(path);
                     }
-                    function drawBranchTitle(circle) {
+                    function drawHeadTitle(circle) {
                         var cx = circle.asPX('cx'),
                             cy = circle.asPX('cy'),
                             r = circle.asPX('r');
@@ -312,7 +311,7 @@
                         triangle.attr({
                             'fill-opacity': '0.5'
                         });
-                        var displayText = dvm.branchTitle;
+                        var displayText = dvm.headTitle;
                         var title = Snap.parse('<title>' + displayText + '</title>');
                         var text = snap.text(rect.asPX('x') + (rect.asPX('width'))/2, rect.asPX('y') + (rect.asPX('height')/2), displayText);
                         text.attr({

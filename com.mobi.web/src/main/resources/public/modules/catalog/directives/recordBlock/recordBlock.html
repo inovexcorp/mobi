@@ -50,7 +50,7 @@
                         <div aria-labelledby="heading_{{$id}}" class="collapse" data-parent="#branches_list_{{$parent.$id}}" id="branch_collapse_{{$id}}">
                             <div class="expansion-panel-body">
                                 <span>{{dvm.util.getDctermsValue(branch, 'description')}}</span>
-                                <commit-history-table ng-if="branch.show" branch-title="dvm.util.getDctermsValue(branch, 'title')" commit-id="dvm.util.getPropertyId(branch, dvm.prefixes.catalog + 'head')" graph></commit-history-table>
+                                <commit-history-table ng-if="branch.show" head-title="dvm.util.getDctermsValue(branch, 'title')" commit-id="dvm.util.getPropertyId(branch, dvm.prefixes.catalog + 'head')" graph></commit-history-table>
                             </div>
                         </div>
                     </div>
