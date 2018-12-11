@@ -30,7 +30,7 @@
             <info-message ng-if="!dvm.request.difference.additions.length && !dvm.request.difference.deletions.length">No changes to display</info-message>
         </material-tab>
         <material-tab heading="'Commits'" active="dvm.tabs.commits">
-            <commit-history-table branch-title="dvm.request.sourceTitle" commit-id="dvm.request.sourceCommit" target-id="dvm.request.targetCommit"></commit-history-table>
+            <commit-history-table head-title="dvm.request.sourceTitle" commit-id="dvm.request.sourceCommit" target-id="dvm.request.targetCommit"></commit-history-table>
         </material-tab>
     </material-tabset>
 </div>

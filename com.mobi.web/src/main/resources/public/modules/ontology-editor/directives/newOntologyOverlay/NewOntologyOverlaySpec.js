@@ -165,7 +165,7 @@ describe('New Ontology Overlay directive', function() {
                 this.controller.create();
                 scope.$apply();
                 expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', 'description', ['one', 'two']);
-                expect(ontologyStateSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.commitId, this.response.branchId);
+                expect(ontologyStateSvc.createOntologyState).toHaveBeenCalledWith({recordId: this.response.recordId, commitId: this.response.commitId, branchId: this.response.branchId});
                 expect(scope.close).not.toHaveBeenCalled();
                 expect(this.controller.error).toBe(this.errorMessage);
             });
@@ -176,7 +176,7 @@ describe('New Ontology Overlay directive', function() {
                     expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(ontologyStateSvc.newOntology, ontologyStateSvc.newLanguage);
                     expect(_.has(ontologyStateSvc.newOntology, prefixes.owl + 'imports')).toBe(false);
                     expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', 'description', ['one', 'two']);
-                    expect(ontologyStateSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.commitId, this.response.branchId);
+                    expect(ontologyStateSvc.createOntologyState).toHaveBeenCalledWith({recordId: this.response.recordId, commitId: this.response.commitId, branchId: this.response.branchId});
                     expect(scope.close).toHaveBeenCalled();
                 });
                 it('without description', function() {
@@ -186,7 +186,7 @@ describe('New Ontology Overlay directive', function() {
                     expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(ontologyStateSvc.newOntology, ontologyStateSvc.newLanguage);
                     expect(_.has(ontologyStateSvc.newOntology, prefixes.owl + 'imports')).toBe(false);
                     expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', '', ['one', 'two']);
-                    expect(ontologyStateSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.commitId, this.response.branchId);
+                    expect(ontologyStateSvc.createOntologyState).toHaveBeenCalledWith({recordId: this.response.recordId, commitId: this.response.commitId, branchId: this.response.branchId});
                     expect(scope.close).toHaveBeenCalled();
                 });
             });

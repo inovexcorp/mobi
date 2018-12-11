@@ -78,10 +78,7 @@
                                     if (!commitId) {
                                         commitId = headCommitId;
                                     }
-                                    return $q.all([
-                                        dvm.os.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, commitId, masterBranch),
-                                        dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, masterBranch, commitId, commitId === headCommitId)
-                                    ]);
+                                    return dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, masterBranch, commitId, commitId === headCommitId);
                                 }, $q.reject)
                                 .then(() => dvm.os.resetStateTabs(), util.createErrorToast);
                         }

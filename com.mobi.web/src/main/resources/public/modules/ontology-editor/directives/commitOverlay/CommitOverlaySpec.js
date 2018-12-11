@@ -113,8 +113,8 @@ describe('Commit Overlay directive', function() {
                         expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(
                             ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId,
                             this.controller.comment);
-                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                            this.commitId, ontologyStateSvc.listItem.ontologyRecord.branchId);
+                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId,
+                            commitId: this.commitId, branchId: ontologyStateSvc.listItem.ontologyRecord.branchId});
                         expect(ontologyStateSvc.listItem.ontologyRecord.commitId).toEqual(this.commitId);
                         expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
                         expect(scope.close).toHaveBeenCalled();
@@ -126,8 +126,7 @@ describe('Commit Overlay directive', function() {
                         expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(
                             ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId,
                             this.controller.comment);
-                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.commitId,
-                            ontologyStateSvc.listItem.ontologyRecord.branchId);
+                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId, commitId: this.commitId, branchId: ontologyStateSvc.listItem.ontologyRecord.branchId});
                         expect(this.controller.error).toEqual('error');
                     });
                 });
@@ -176,8 +175,7 @@ describe('Commit Overlay directive', function() {
                                 expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(
                                     ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId,
                                     this.controller.comment);
-                                expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.commitId,
-                                    ontologyStateSvc.listItem.ontologyRecord.branchId);
+                                expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId, commitId: this.commitId, branchId: ontologyStateSvc.listItem.ontologyRecord.branchId});
                                 expect(ontologyStateSvc.listItem.ontologyRecord.commitId).toEqual(this.commitId);
                                 expect(ontologyStateSvc.listItem.userBranch).toEqual(true);
                                 expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
@@ -200,8 +198,7 @@ describe('Commit Overlay directive', function() {
                                 expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(
                                     ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId,
                                     this.controller.comment);
-                                expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.commitId,
-                                    ontologyStateSvc.listItem.ontologyRecord.branchId);
+                                expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId, commitId: this.commitId, branchId: ontologyStateSvc.listItem.ontologyRecord.branchId});
                                 expect(this.controller.error).toEqual('error');
                             });
                         });

@@ -88,7 +88,7 @@
                             dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
                             commitId = branch[prefixes.catalog + 'head'][0]['@id'];
                             dvm.os.listItem.upToDate = true;
-                            return dvm.os.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, commitId, dvm.os.listItem.ontologyRecord.branchId);
+                            return dvm.os.updateOntologyState({recordId: dvm.os.listItem.ontologyRecord.recordId, commitId, branchId: dvm.os.listItem.ontologyRecord.branchId});
                         }, $q.reject)
                         .then(() => {
                             $scope.close();
