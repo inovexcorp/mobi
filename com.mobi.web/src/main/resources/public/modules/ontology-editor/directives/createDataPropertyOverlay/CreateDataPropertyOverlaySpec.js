@@ -165,7 +165,6 @@ describe('Create Data Property Overlay directive', function() {
                 this.controller.property['@id'] = 'property-iri';
                 this.controller.property[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
-                ontologyStateSvc.getOntologiesArray.and.returnValue([]);
             });
             it('and sets the domains and ranges', function() {
                 this.controller.domains = ['domain'];
@@ -190,8 +189,7 @@ describe('Create Data Property Overlay directive', function() {
                     expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.property, this.controller.language);
                     expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(this.controller.property);
                     expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.property);
-                    expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
-                    expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
+                    expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                     expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
                     expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual(_.set({}, "['" + this.controller.property['@id'] + "']", ontologyStateSvc.listItem.ontologyId));
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
@@ -206,8 +204,7 @@ describe('Create Data Property Overlay directive', function() {
                     expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.property, this.controller.language);
                     expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(this.controller.property);
                     expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.property);
-                    expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
-                    expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
+                    expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                     expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
                     expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual(_.set({}, "['" + this.controller.property['@id'] + "']", ontologyStateSvc.listItem.ontologyId));
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);

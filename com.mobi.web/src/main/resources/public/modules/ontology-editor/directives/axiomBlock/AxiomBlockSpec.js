@@ -142,10 +142,8 @@ describe('Axiom Block directive', function() {
             it('if the axiom is domain', function() {
                 this.axiom = prefixes.rdfs + 'domain';
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
-                ontologyStateSvc.getOntologiesArray.and.returnValue([]);
                 this.controller.updateDataPropHierarchy({axiom: this.axiom, values: this.values});
-                expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
-                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
+                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
             });
         });
@@ -188,10 +186,8 @@ describe('Axiom Block directive', function() {
             it('if the axiom is domain', function() {
                 this.axiom = prefixes.rdfs + 'domain';
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
-                ontologyStateSvc.getOntologiesArray.and.returnValue([]);
                 this.controller.updateObjectPropHierarchy({axiom: this.axiom, values: this.values});
-                expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
-                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
+                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
             });
         });
