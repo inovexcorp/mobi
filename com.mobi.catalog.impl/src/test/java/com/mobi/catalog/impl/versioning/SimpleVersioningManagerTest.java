@@ -191,6 +191,51 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(baseService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
     }
 
+    /* commit(Resource, Resource, Resource, User, String, RepositoryConnection) */
+
+    @Test
+    public void commitWithInProgressCommitWithRepoConnToVersionedRDFRecordTest() throws Exception {
+        Resource result = manager.commit(CATALOG_IRI, record.getResource(), targetBranch.getResource(), user, "Message", repo.getConnection());
+        assertEquals(commit.getResource(), result);
+        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(record.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+        verify(baseService).getTargetBranch(eq(record), eq(targetBranch.getResource()), any(RepositoryConnection.class));
+        verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
+        verify(baseService).getInProgressCommit(eq(record.getResource()), eq(user), any(RepositoryConnection.class));
+        verify(baseService).createCommit(inProgressCommit, "Message", commit, null);
+        verify(baseService).addCommit(eq(targetBranch), eq(commit), any(RepositoryConnection.class));
+        verify(baseService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void commitWithInProgressCommitWithRepoConnToOntologyRecordTest() throws Exception {
+        Resource result = manager.commit(CATALOG_IRI, ontologyRecord.getResource(), targetBranch.getResource(), user, "Message", repo.getConnection());
+        assertEquals(commit.getResource(), result);
+        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
+        verify(ontologyService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
+        verify(ontologyService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
+        verify(ontologyService).getInProgressCommit(eq(ontologyRecord.getResource()), eq(user), any(RepositoryConnection.class));
+        verify(ontologyService).createCommit(inProgressCommit, "Message", commit, null);
+        verify(ontologyService).addCommit(eq(targetBranch), eq(commit), any(RepositoryConnection.class));
+        verify(ontologyService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void commitWithInProgressCommitWithRepoConnToOntologyRecordWithoutServiceTest() throws Exception {
+        // Setup:
+        manager.removeVersioningService(ontologyService);
+
+        Resource result = manager.commit(CATALOG_IRI, ontologyRecord.getResource(), targetBranch.getResource(), user, "Message", repo.getConnection());
+        assertEquals(commit.getResource(), result);
+        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+        verify(baseService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
+        verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
+        verify(baseService).getInProgressCommit(eq(ontologyRecord.getResource()), eq(user), any(RepositoryConnection.class));
+        verify(baseService).createCommit(inProgressCommit, "Message", commit, null);
+        verify(baseService).addCommit(eq(targetBranch), eq(commit), any(RepositoryConnection.class));
+        verify(baseService).removeInProgressCommit(eq(inProgressCommit), any(RepositoryConnection.class));
+    }
+
+
     /* commit(Resource, Resource, Resource, User, String, Model, Model) */
 
     @Test
@@ -229,6 +274,51 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         Model deletions = MODEL_FACTORY.createModel();
 
         Resource result = manager.commit(CATALOG_IRI, ontologyRecord.getResource(), targetBranch.getResource(), user, "Message", additions, deletions);
+        assertEquals(commit.getResource(), result);
+        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+        verify(baseService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
+        verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
+    }
+
+    /* commit(Resource, Resource, Resource, User, String, Model, Model, RepositoryConnection) */
+
+    @Test
+    public void commitWithChangesWithRepoConnToVersionedRDFRecordTest() throws Exception {
+        // Setup:
+        Model additions = MODEL_FACTORY.createModel();
+        Model deletions = MODEL_FACTORY.createModel();
+
+        Resource result = manager.commit(CATALOG_IRI, record.getResource(), targetBranch.getResource(), user, "Message", additions, deletions, repo.getConnection());
+        assertEquals(commit.getResource(), result);
+        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(record.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+        verify(baseService).getTargetBranch(eq(record), eq(targetBranch.getResource()), any(RepositoryConnection.class));
+        verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void commitWithChangesWithRepoConnToOntologyRecordTest() throws Exception {
+        // Setup:
+        Model additions = MODEL_FACTORY.createModel();
+        Model deletions = MODEL_FACTORY.createModel();
+
+        Resource result = manager.commit(CATALOG_IRI, ontologyRecord.getResource(), targetBranch.getResource(), user, "Message", additions, deletions, repo.getConnection());
+        assertEquals(commit.getResource(), result);
+        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
+        verify(ontologyService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
+        verify(ontologyService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
+        verify(ontologyService).addCommit(eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void commitWithChangesWithRepoConnToOntologyRecordWithoutServiceTest() throws Exception {
+        // Setup:
+        manager.removeVersioningService(ontologyService);
+        Model additions = MODEL_FACTORY.createModel();
+        Model deletions = MODEL_FACTORY.createModel();
+
+        Resource result = manager.commit(CATALOG_IRI, ontologyRecord.getResource(), targetBranch.getResource(), user, "Message", additions, deletions, repo.getConnection());
         assertEquals(commit.getResource(), result);
         verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
         verify(baseService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
@@ -278,6 +368,57 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         Model deletions = MODEL_FACTORY.createModel();
 
         Resource result = manager.merge(CATALOG_IRI, ontologyRecord.getResource(), sourceBranch.getResource(), targetBranch.getResource(), user, additions, deletions);
+        assertEquals(commit.getResource(), result);
+        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+        verify(baseService).getSourceBranch(eq(ontologyRecord), eq(sourceBranch.getResource()), any(RepositoryConnection.class));
+        verify(baseService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
+        verify(baseService).getBranchHeadCommit(eq(sourceBranch), any(RepositoryConnection.class));
+        verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(user), eq("Merge of Source into Target"), eq(additions), eq(deletions), eq(commit), eq(commit), any(RepositoryConnection.class));
+    }
+
+    /* merge(Resource, Resource, Resource, Resource, User, Model, Model, RepositoryConnection) */
+
+    @Test
+    public void mergeWithVersionedRDFRecordWithRepoConnTest() throws Exception {
+        // Setup:
+        Model additions = MODEL_FACTORY.createModel();
+        Model deletions = MODEL_FACTORY.createModel();
+
+        Resource result = manager.merge(CATALOG_IRI, record.getResource(), sourceBranch.getResource(), targetBranch.getResource(), user, additions, deletions, repo.getConnection());
+        assertEquals(commit.getResource(), result);
+        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(record.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+        verify(baseService).getSourceBranch(eq(record), eq(sourceBranch.getResource()), any(RepositoryConnection.class));
+        verify(baseService).getTargetBranch(eq(record), eq(targetBranch.getResource()), any(RepositoryConnection.class));
+        verify(baseService).getBranchHeadCommit(eq(sourceBranch), any(RepositoryConnection.class));
+        verify(baseService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
+        verify(baseService).addCommit(eq(targetBranch), eq(user), eq("Merge of Source into Target"), eq(additions), eq(deletions), eq(commit), eq(commit), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void mergeWithOntologyRecordWithRepoConnTest() throws Exception {
+        // Setup:
+        Model additions = MODEL_FACTORY.createModel();
+        Model deletions = MODEL_FACTORY.createModel();
+
+        Resource result = manager.merge(CATALOG_IRI, ontologyRecord.getResource(), sourceBranch.getResource(), targetBranch.getResource(), user, additions, deletions, repo.getConnection());
+        assertEquals(commit.getResource(), result);
+        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
+        verify(ontologyService).getSourceBranch(eq(ontologyRecord), eq(sourceBranch.getResource()), any(RepositoryConnection.class));
+        verify(ontologyService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
+        verify(ontologyService).getBranchHeadCommit(eq(sourceBranch), any(RepositoryConnection.class));
+        verify(ontologyService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
+        verify(ontologyService).addCommit(eq(targetBranch), eq(user), eq("Merge of Source into Target"), eq(additions), eq(deletions), eq(commit), eq(commit), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void mergeWithOntologyRecordWithRepoConnWithoutServiceTest() throws Exception {
+        // Setup:
+        manager.removeVersioningService(ontologyService);
+        Model additions = MODEL_FACTORY.createModel();
+        Model deletions = MODEL_FACTORY.createModel();
+
+        Resource result = manager.merge(CATALOG_IRI, ontologyRecord.getResource(), sourceBranch.getResource(), targetBranch.getResource(), user, additions, deletions, repo.getConnection());
         assertEquals(commit.getResource(), result);
         verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
         verify(baseService).getSourceBranch(eq(ontologyRecord), eq(sourceBranch.getResource()), any(RepositoryConnection.class));
