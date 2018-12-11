@@ -31,5 +31,11 @@
         min-height: 3.5rem;
         resize: vertical;
         overflow: auto;
+
+        ul {
+            list-style: initial;
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+        }
     }
 }
