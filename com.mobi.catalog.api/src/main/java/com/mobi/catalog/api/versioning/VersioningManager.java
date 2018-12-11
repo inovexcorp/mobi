@@ -118,7 +118,7 @@ public interface VersioningManager {
      * @param catalogId The Resource identifying the Catalog which contains the Record.
      * @param recordId The Resource identifying the VersionedRDFRecord which has the Branches.
      * @param sourceBranchId The Resource identifying the source Branch which will merge into the target Branch.
-     * @param targetBranchId The Resource identifying the target Branch which will be merge into by the source Branch.
+     * @param targetBranchId The Resource identifying the target Branch which will be merged into by the source Branch.
      * @param user The User with the InProgressCommit.
      * @param additions The statements which were added to the named graph.
      * @param deletions The statements which were deleted from the named graph.
