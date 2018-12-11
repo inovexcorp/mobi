@@ -95,7 +95,7 @@
                         if (updatedAxiomObj.axiom === prefixes.rdfs + 'subPropertyOf' && updatedAxiomObj.values.length) {
                             ontoUtils.setSuperProperties(dvm.os.listItem.selected['@id'], updatedAxiomObj.values, 'dataProperties');
                         } else if (updatedAxiomObj.axiom === prefixes.rdfs + 'domain' && updatedAxiomObj.values.length) {
-                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
+                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);
                         }
                     }
                     dvm.updateObjectPropHierarchy = function(updatedAxiomObj) {
@@ -105,7 +105,7 @@
                                 dvm.os.setVocabularyStuff();
                             }
                         } else if (updatedAxiomObj.axiom === prefixes.rdfs + 'domain' && updatedAxiomObj.values.length) {
-                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
+                            dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);
                         }
                     }
                 }

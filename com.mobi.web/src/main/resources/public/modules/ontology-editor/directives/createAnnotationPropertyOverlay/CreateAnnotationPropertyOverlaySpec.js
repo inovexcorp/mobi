@@ -147,7 +147,6 @@ describe('Create Annotation Overlay directive', function() {
                 ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
                 this.controller.property['@id'] = 'property-iri';
                 this.controller.property[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
-                ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
                 ontologyStateSvc.getOntologiesArray.and.returnValue([]);
             });
             it('if the property is an annotation property', function() {

@@ -100,7 +100,7 @@ describe('Selected Details directive', function() {
             expect(this.element.find('a').length).toBe(1);
             scope.readOnly = true;
             scope.$digest();
-            expect(this.element.find('static-iri').length).toBe(0);
+            expect(this.element.find('static-iri').length).toBe(1);
             expect(this.element.find('a').length).toBe(0);
         });
         it('depending on whether the entity is an individual', function() {
