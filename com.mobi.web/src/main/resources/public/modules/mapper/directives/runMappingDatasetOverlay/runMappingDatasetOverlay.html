@@ -20,9 +20,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="run-mapping-dataset-overlay overlay sm">
-    <form class="content" name="dvm.form">
-        <h6>Run Mapping into Dataset</h6>
+<div class="modal-header">
+    <h3>Run Mapping into Dataset</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+    <form name="dvm.form">
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
         <div class="form-group">
             <custom-label>Dataset</custom-label>
@@ -35,9 +38,9 @@
                 </ui-select-choices>
             </ui-select>
         </div>
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary float-right" ng-click="dvm.run()" ng-disabled="dvm.form.$invalid || !dvm.datasetRecordIRI">Run</button>
-            <button class="btn float-right" ng-click="dvm.cancel()">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-click="dvm.run()" ng-disabled="dvm.form.$invalid || !dvm.datasetRecordIRI">Submit</button>
 </div>
