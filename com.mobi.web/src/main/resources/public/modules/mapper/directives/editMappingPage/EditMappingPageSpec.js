@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Edit Mapping Page directive', function() {
-    var $compile, scope, $q, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc;
+    var $compile, scope, $q, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -29,14 +29,16 @@ describe('Edit Mapping Page directive', function() {
         mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             mapperStateSvc = _mapperStateService_;
             mappingManagerSvc = _mappingManagerService_;
             delimitedManagerSvc = _delimitedManagerService_;
+            modalSvc = _modalService_;
         });
 
         mapperStateSvc.mapping = {record: {id: 'Id', title: 'Title', description: 'Description', keywords: ['Keyword']}, jsonld: []};
@@ -52,10 +54,23 @@ describe('Edit Mapping Page directive', function() {
         mappingManagerSvc = null;
         mapperStateSvc = null;
         delimitedManagerSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
     describe('controller methods', function() {
+        it('should open the runMappingDownloadOverlay', function() {
+            this.controller.runMappingDownload();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('runMappingDownloadOverlay', {}, undefined, 'sm');
+        });
+        it('should open the runMappingDatasetOverlay', function() {
+            this.controller.runMappingDataset();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('runMappingDatasetOverlay', {}, undefined, 'sm');
+        });
+        it('should open the runMappingOntologyOverlay', function() {
+            this.controller.runMappingOntology();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('runMappingOntologyOverlay');
+        });
         describe('should set the correct state for saving a mapping', function() {
             beforeEach(function() {
                 this.step = mapperStateSvc.step;
@@ -100,7 +115,7 @@ describe('Edit Mapping Page directive', function() {
             it('if the mapping has been changed', function() {
                 mapperStateSvc.isMappingChanged.and.returnValue(true);
                 this.controller.cancel();
-                expect(mapperStateSvc.displayCancelConfirm).toBe(true);
+                expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('Are you sure'), this.controller.reset);
             });
             it('if the mapping has not been changed', function() {
                 this.controller.cancel();
@@ -125,6 +140,12 @@ describe('Edit Mapping Page directive', function() {
                 expect(this.controller.isSaveable()).toEqual(false);
             });
         });
+        it('should set the correct state for reseting', function() {
+            this.controller.reset();
+            expect(mapperStateSvc.initialize).toHaveBeenCalled();
+            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+            expect(delimitedManagerSvc.reset).toHaveBeenCalled();
+        });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
@@ -134,23 +155,16 @@ describe('Edit Mapping Page directive', function() {
             expect(this.element.querySelectorAll('.col-7').length).toBe(1);
             expect(this.element.querySelectorAll('.edit-tabs').length).toBe(1);
         });
-        it('with a mapping title', function() {
-            expect(this.element.find('mapping-title').length).toBe(1);
-        });
-        it('with a tabset', function() {
-            expect(this.element.find('tabset').length).toBe(1);
+        ['mapping-title', 'tabset', 'edit-mapping-form', 'rdf-preview-form'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
         });
         it('with two tabs', function() {
             expect(this.element.find('tab').length).toBe(2);
         });
         it('with blocks', function() {
             expect(this.element.find('block').length).toBe(3);
-        });
-        it('with an edit mapping form', function() {
-            expect(this.element.find('edit-mapping-form').length).toBe(1);
-        });
-        it('with an RDF preview form', function() {
-            expect(this.element.find('rdf-preview-form').length).toBe(1);
         });
         it('with buttons for canceling, saving, and saving and running', function() {
             var footers = this.element.querySelectorAll('tab block-footer');
@@ -196,11 +210,30 @@ describe('Edit Mapping Page directive', function() {
         });
     });
     it('should set the correct state when a run download button is clicked', function() {
-        var runDownloadButtons = this.element.querySelectorAll('.run-download');
-        _.toArray(runDownloadButtons).forEach(button => {
-            mapperStateSvc.displayRunMappingDownloadOverlay = false;
+        spyOn(this.controller, 'runMappingDownload');
+        var buttons = this.element.querySelectorAll('.run-download');
+        _.toArray(buttons).forEach(button => {
+            this.controller.runMappingDownload.calls.reset();
             angular.element(button).triggerHandler('click');
-            expect(mapperStateSvc.displayRunMappingDownloadOverlay).toBe(true);
+            expect(this.controller.runMappingDownload).toHaveBeenCalled();
+        });
+    });
+    it('should set the correct state when a run dataset button is clicked', function() {
+        spyOn(this.controller, 'runMappingDataset');
+        var buttons = this.element.querySelectorAll('.run-dataset');
+        _.toArray(buttons).forEach(button => {
+            this.controller.runMappingDataset.calls.reset();
+            angular.element(button).triggerHandler('click');
+            expect(this.controller.runMappingDataset).toHaveBeenCalled();
+        });
+    });
+    it('should set the correct state when a run ontology button is clicked', function() {
+        spyOn(this.controller, 'runMappingOntology');
+        var buttons = this.element.querySelectorAll('.run-ontology');
+        _.toArray(buttons).forEach(button => {
+            this.controller.runMappingOntology.calls.reset();
+            angular.element(button).triggerHandler('click');
+            expect(this.controller.runMappingOntology).toHaveBeenCalled();
         });
     });
 });

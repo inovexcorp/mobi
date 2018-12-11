@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Prop Mapping Overlay directive', function() {
+describe('Prop Mapping Overlay component', function() {
     var $compile, scope, prefixes, utilSvc, mappingManagerSvc, mapperStateSvc, ontologyManagerSvc;
 
     beforeEach(function() {
@@ -45,7 +45,9 @@ describe('Prop Mapping Overlay directive', function() {
         });
 
         this.compile = function() {
-            this.element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
+            scope.close = jasmine.createSpy('close');
+            scope.dismiss = jasmine.createSpy('dismiss');
+            this.element = $compile(angular.element('<prop-mapping-overlay close="close()" dismiss="dismiss()"></prop-mapping-overlay>'))(scope);
             scope.$digest();
             this.controller = this.element.controller('propMappingOverlay');
         }
@@ -126,6 +128,16 @@ describe('Prop Mapping Overlay directive', function() {
             });
         });
     });
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
+    });
     describe('controller methods', function() {
         it('should test whether or not the Set button should be disabled', function() {
             mapperStateSvc.newProp = true;
@@ -152,7 +164,7 @@ describe('Prop Mapping Overlay directive', function() {
             var rangeClassMappingId = 'rangeClassMapping';
             var classMapping = {'@id': classId};
             mapperStateSvc.availableClasses = [{classObj: {'@id': classId}}];
-            utilSvc.getPropertyId.and.callFake(function(obj, prop) {
+            utilSvc.getPropertyId.and.callFake((obj, prop) => {
                 switch (prop) {
                     case prefixes.rdfs + 'range':
                         return classId;
@@ -167,8 +179,10 @@ describe('Prop Mapping Overlay directive', function() {
             });
             mappingManagerSvc.getClassMappingsByClassId.and.returnValue([classMapping]);
             ontologyManagerSvc.getEntityName.and.returnValue('Class');
-            var expectedNewItem = { '@id': 'new' };
-            expectedNewItem[prefixes.dcterms + 'title'] = [{'@value': '[New Class]'}]
+            var expectedNewItem = {
+                '@id': 'new',
+                [prefixes.dcterms + 'title']: [{'@value': '[New Class]'}]
+            };
             this.controller.selectedProp = {propObj: {id : 'propObj'}};
             this.controller.selectedPropMapping = {};
             this.controller.setRangeClass();
@@ -247,7 +261,7 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.setProps).not.toHaveBeenCalled();
                         expect(mapperStateSvc.newProp).toBe(false);
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                        expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                        expect(scope.close).toHaveBeenCalled();
                     });
                     it('and a new class mapping should be created', function() {
                         this.controller.rangeClassMappingId = 'new';
@@ -259,7 +273,7 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.setProps).toHaveBeenCalledWith('range');
                         expect(mapperStateSvc.newProp).toBe(false);
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                        expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                        expect(scope.close).toHaveBeenCalled();
                     });
                 });
                 describe('for a data property', function() {
@@ -274,7 +288,7 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.addDataMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.controller.selectedColumn, undefined, undefined);
                         expect(mapperStateSvc.newProp).toBe(false);
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                        expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                        expect(scope.close).toHaveBeenCalled();
                     });
                     describe('with a datatype override set', function() {
 
@@ -286,7 +300,7 @@ describe('Prop Mapping Overlay directive', function() {
                             expect(mapperStateSvc.addDataMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.controller.selectedColumn, 'xsd:double', undefined);
                             expect(mapperStateSvc.newProp).toBe(false);
                             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                            expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                            expect(scope.close).toHaveBeenCalled();
                         });
                         it('that is a lang string', function() {
                             this.controller.datatype = prefixes.rdf + 'langString';
@@ -297,7 +311,7 @@ describe('Prop Mapping Overlay directive', function() {
                             expect(mapperStateSvc.addDataMapping).toHaveBeenCalledWith(this.controller.selectedProp, mapperStateSvc.selectedClassMappingId, this.controller.selectedColumn, 'rdf:langString', 'en');
                             expect(mapperStateSvc.newProp).toBe(false);
                             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                            expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                            expect(scope.close).toHaveBeenCalled();
                         });
                     });
 
@@ -328,7 +342,7 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(mapperStateSvc.selectedPropMappingId, prefixes.delim + 'classMapping', this.classMapping['@id'], 'original');
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMappingId);
-                        expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                        expect(scope.close).toHaveBeenCalled();
                     });
                     it('and a new class mapping should be created', function() {
                         this.controller.rangeClassMappingId = 'new';
@@ -340,7 +354,7 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(mapperStateSvc.selectedPropMappingId, prefixes.delim + 'classMapping', this.classMapping['@id'], 'original');
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMappingId);
-                        expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                        expect(scope.close).toHaveBeenCalled();
                     });
                 });
                 describe('and it is for a data property', function() {
@@ -357,7 +371,7 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.invalidProps).not.toContain({'@id': this.controller.selectedProp.propObj['@id']});
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMappingId);
-                        expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                        expect(scope.close).toHaveBeenCalled();
                     });
                     it('with the datatypeSpec updated', function() {
                         this.controller.selectedPropMapping[prefixes.delim + 'columnIndex'] = [{'@value': '10'}]
@@ -373,27 +387,29 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.invalidProps).not.toContain({'@id': this.controller.selectedProp.propObj['@id']});
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMappingId);
-                        expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
+                        expect(scope.close).toHaveBeenCalled();
                     });
                 });
             });
         });
         it('should set the correct state for canceling', function() {
             this.controller.cancel();
-            expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
             expect(mapperStateSvc.newProp).toBe(false);
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('prop-mapping-overlay')).toBe(true);
-            expect(this.element.querySelectorAll('form.content').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('PROP-MAPPING-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with a prop select', function() {
             expect(this.element.find('prop-select').length).toBe(1);
         });
         it('depending on whether a new property mapping is being created', function() {
-            var title = this.element.find('h6');
+            var title = this.element.find('h3');
             expect(title.text()).toContain('Add');
 
             mapperStateSvc.newProp = false;
@@ -463,7 +479,7 @@ describe('Prop Mapping Overlay directive', function() {
         });
         it('depending on the validity of the form', function() {
             spyOn(this.controller, 'disableSet').and.returnValue(true);
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
 
@@ -471,22 +487,22 @@ describe('Prop Mapping Overlay directive', function() {
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
-        it('with buttons to cancel and set the property mapping value', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+        it('with buttons to cancel and submit the property mapping value', function() {
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Set']).toContain(angular.element(buttons[0]).text().trim());
-            expect(['Cancel', 'Set']).toContain(angular.element(buttons[1]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
     it('should call set when the button is clicked', function() {
         spyOn(this.controller, 'set');
-        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var continueButton = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         continueButton.triggerHandler('click');
         expect(this.controller.set).toHaveBeenCalled();
     });
     it('should call cancel when the button is clicked', function() {
         spyOn(this.controller, 'cancel');
-        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
+        var continueButton = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         continueButton.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });

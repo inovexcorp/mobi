@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Mapping Config Overlay directive', function() {
+describe('Mapping Config Overlay component', function() {
     var $compile, scope, $q, utilSvc, ontologyManagerSvc, mappingManagerSvc, mapperStateSvc, catalogManagerSvc, prefixes;
 
     beforeEach(function() {
@@ -62,7 +62,9 @@ describe('Mapping Config Overlay directive', function() {
 
     beforeEach(function compile() {
         this.compile = function() {
-            this.element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
+            scope.close = jasmine.createSpy('close');
+            scope.dismiss = jasmine.createSpy('dismiss');
+            this.element = $compile(angular.element('<mapping-config-overlay close="close()" dismiss="dismiss()"></mapping-config-overlay>'))(scope);
             scope.$digest();
             this.controller = this.element.controller('mappingConfigOverlay');
         }
@@ -78,7 +80,9 @@ describe('Mapping Config Overlay directive', function() {
         mapperStateSvc = null;
         catalogManagerSvc = null;
         prefixes = null;
-        this.element.remove();
+        if (this.element) {
+            this.element.remove();
+        }
     });
 
     describe('should initialize with the correct values', function() {
@@ -156,6 +160,19 @@ describe('Mapping Config Overlay directive', function() {
                 expect(this.controller.selectedVersion).toBe('saved');
                 expect(this.controller.classes).toEqual(this.expectedVersion.classes);
             });
+        });
+    });
+    describe('controller bound variable', function() {
+        beforeEach(function() {
+            this.compile();
+        });
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
     describe('controller methods', function() {
@@ -385,7 +402,7 @@ describe('Mapping Config Overlay directive', function() {
                 expect(mappingManagerSvc.setSourceOntologyInfo).not.toHaveBeenCalled();
                 expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
                 expect(mapperStateSvc.setProps).not.toHaveBeenCalled();
-                expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
+                expect(scope.close).toHaveBeenCalled();
             });
             describe('if it changed', function() {
                 beforeEach(function() {
@@ -412,7 +429,7 @@ describe('Mapping Config Overlay directive', function() {
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(mapperStateSvc.setProps).toHaveBeenCalledWith('class');
                     expect(mapperStateSvc.availableClasses).toEqual(this.controller.classes);
-                    expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
+                    expect(scope.close).toHaveBeenCalled();
                 });
                 describe('removing incompatible mappings', function() {
                     beforeEach(function() {
@@ -452,27 +469,29 @@ describe('Mapping Config Overlay directive', function() {
         });
         it('should set the correct state for canceling', function() {
             this.controller.cancel();
-            expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
-    describe('replaces the eclement with the correct html', function() {
+    describe('contains the correct html', function() {
         beforeEach(function() {
             mapperStateSvc.mapping = {id: '', jsonld: []};
             this.compile();
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('mapping-config-overlay')).toBe(true);
-            expect(this.element.querySelectorAll('form.content').length).toBe(1);
-            expect(this.element.querySelectorAll('.row').length).toBe(1);
-            expect(this.element.querySelectorAll('.ontology-select-container').length).toBe(1);
-            expect(this.element.querySelectorAll('.preview-display').length).toBe(1);
-            expect(this.element.querySelectorAll('.ontology-records-list').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('MAPPING-CONFIG-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
-        it('with a paging-details', function() {
-            expect(this.element.find('paging-details').length).toBe(1);
+        ['.row', '.ontology-select-container', '.preview-display', '.ontology-records-list'].forEach(test => {
+            it('with a '+ test, function() {
+                expect(this.element.querySelectorAll(test).length).toBe(1);
+            });
         });
-        it('with a pagination', function() {
-            expect(this.element.find('pagination').length).toBe(1);
+        ['paging-details', 'pagination'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
         });
         it('depending on whether an error has occured', function() {
             this.controller = this.element.controller('mappingConfigOverlay');
@@ -531,7 +550,7 @@ describe('Mapping Config Overlay directive', function() {
         it('depending on whether an ontology record state has been selected', function() {
             this.controller = this.element.controller('mappingConfigOverlay');
             var versionSelect = angular.element(this.element.querySelectorAll('.version-select')[0]);
-            var setButton = angular.element(this.element.querySelectorAll('.btn-container button')[0]);
+            var setButton = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(versionSelect.attr('disabled')).toBeTruthy();
             expect(setButton.attr('disabled')).toBeTruthy();
 
@@ -540,11 +559,11 @@ describe('Mapping Config Overlay directive', function() {
             expect(versionSelect.attr('disabled')).toBeFalsy();
             expect(setButton.attr('disabled')).toBeFalsy();
         });
-        it('with buttons to cancel and set', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+        it('with buttons to cancel and submit', function() {
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Set']).toContain(angular.element(buttons[0]).text().trim());
-            expect(['Cancel', 'Set']).toContain(angular.element(buttons[1]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
     it('should class getRecords when the search button is clicked', function() {
@@ -569,7 +588,7 @@ describe('Mapping Config Overlay directive', function() {
         this.compile();
         spyOn(this.controller, 'set');
 
-        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var continueButton = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         continueButton.triggerHandler('click');
         expect(this.controller.set).toHaveBeenCalled();
     });
@@ -577,7 +596,7 @@ describe('Mapping Config Overlay directive', function() {
         this.compile();
         spyOn(this.controller, 'cancel');
 
-        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
+        var continueButton = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         continueButton.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });

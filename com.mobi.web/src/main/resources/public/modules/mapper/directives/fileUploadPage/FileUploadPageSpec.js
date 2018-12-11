@@ -21,7 +21,7 @@
  * #L%
  */
 describe('File Upload Page directive', function() {
-    var $compile, scope, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, utilSvc;
+    var $compile, scope, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, utilSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -30,14 +30,16 @@ describe('File Upload Page directive', function() {
         mockMapperState();
         mockDelimitedManager();
         mockUtil();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _utilService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mapperStateSvc = _mapperStateService_;
             mappingManagerSvc = _mappingManagerService_;
             delimitedManagerSvc = _delimitedManagerService_;
             utilSvc = _utilService_;
+            modalSvc = _modalService_;
         });
 
         mapperStateSvc.mapping = {record: {id: ''}, jsonld: []};
@@ -53,10 +55,23 @@ describe('File Upload Page directive', function() {
         mapperStateSvc = null;
         delimitedManagerSvc = null;
         utilSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
     describe('controller methods', function() {
+        it('should open the runMappingDownloadOverlay', function() {
+            this.controller.runMappingDownload();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('runMappingDownloadOverlay', {}, undefined, 'sm');
+        });
+        it('should open the runMappingDatasetOverlay', function() {
+            this.controller.runMappingDataset();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('runMappingDatasetOverlay', {}, undefined, 'sm');
+        });
+        it('should open the runMappingOntologyOverlay', function() {
+            this.controller.runMappingOntology();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('runMappingOntologyOverlay');
+        });
         it('should get the name of a data mapping', function() {
             mapperStateSvc.mapping.jsonld = [{'@id': 'dataMapping'}];
             mappingManagerSvc.findClassWithDataMapping.and.returnValue({'@id': 'classMapping'});
@@ -78,7 +93,7 @@ describe('File Upload Page directive', function() {
                 expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
                 expect(mapperStateSvc.setProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
-                expect(mapperStateSvc.displayMappingConfigOverlay).toBe(true);
+                expect(modalSvc.openModal).toHaveBeenCalledWith('mappingConfigOverlay', {}, undefined, 'lg');
             });
             it('if a saved mapping is being edited', function() {
                 mapperStateSvc.newMapping = false;
@@ -86,7 +101,7 @@ describe('File Upload Page directive', function() {
                 expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
                 expect(mapperStateSvc.setProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
-                expect(mapperStateSvc.displayMappingConfigOverlay).not.toBe(true);
+                expect(modalSvc.openModal).not.toHaveBeenCalled();
             });
         });
         it('should set the correct state for canceling', function() {
@@ -165,22 +180,22 @@ describe('File Upload Page directive', function() {
         this.continueButton.triggerHandler('click');
         expect(this.controller.edit).toHaveBeenCalled();
     });
-    it('should set displayRunMappingDownloadOverlay when the clicked', function() {
-        this.mapOntology = angular.element(this.element.querySelectorAll('.dropdown-menu button')[0]);
-        mapperStateSvc.editMapping = false;
-        this.mapOntology.triggerHandler('click');
-        expect(mapperStateSvc.displayRunMappingDownloadOverlay).toBe(true);
+    it('should call runMappingDownload when the clicked', function() {
+        spyOn(this.controller, 'runMappingDownload');
+        var button = angular.element(this.element.querySelectorAll('.dropdown-menu button')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.runMappingDownload).toHaveBeenCalled();
     });
-    it('should set displayRunMappingDatasetOverlay when the clicked', function() {
-        this.mapOntology = angular.element(this.element.querySelectorAll('.dropdown-menu button')[1]);
-        mapperStateSvc.editMapping = false;
-        this.mapOntology.triggerHandler('click');
-        expect(mapperStateSvc.displayRunMappingDatasetOverlay).toBe(true);
+    it('should call runMappingDataset when the button is clicked', function() {
+        spyOn(this.controller, 'runMappingDataset');
+        var button = angular.element(this.element.querySelectorAll('.dropdown-menu button')[1]);
+        button.triggerHandler('click');
+        expect(this.controller.runMappingDataset).toHaveBeenCalled();
     });
-    it('should set displayRunMappingOntologyOverlay when the clicked', function() {
-        this.mapOntology = angular.element(this.element.querySelectorAll('.dropdown-menu button')[2]);
-        mapperStateSvc.editMapping = false;
-        this.mapOntology.triggerHandler('click');
-        expect(mapperStateSvc.displayRunMappingOntologyOverlay).toBe(true);
+    it('should call runMappingOntology when the button clicked', function() {
+        spyOn(this.controller, 'runMappingOntology');
+        var button = angular.element(this.element.querySelectorAll('.dropdown-menu button')[2]);
+        button.triggerHandler('click');
+        expect(this.controller.runMappingOntology).toHaveBeenCalled();
     });
 });

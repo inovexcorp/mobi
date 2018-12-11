@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('IRI Template Overlay directive', function() {
-    var $compile, scope, utilSvc, prefixes, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, utilSvc;
+describe('IRI Template Overlay component', function() {
+    var $compile, scope, utilSvc, prefixes, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -54,17 +54,19 @@ describe('IRI Template Overlay directive', function() {
             hasPrefix: this.begin + this.then,
             localName: this.localName
         };
-        utilSvc.getPropertyValue.and.callFake(function(entity, iri) {
+        utilSvc.getPropertyValue.and.callFake((entity, iri) => {
             if (iri === prefixes.delim + 'hasPrefix') {
                 return this.classMapping.hasPrefix;
             } else if (iri === prefixes.delim + 'localName') {
                 return this.classMapping.localName;
             }
-        }.bind(this));
+        });
         mapperStateSvc.selectedClassMappingId = this.classMapping['@id'];
         mapperStateSvc.mapping = {jsonld: [this.classMapping]};
         delimitedManagerSvc.dataRows = [['a']];
-        this.element = $compile(angular.element('<iri-template-overlay></iri-template-overlay>'))(scope);
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<iri-template-overlay close="close()" dismiss="dismiss()"></iri-template-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('iriTemplateOverlay');
     });
@@ -81,17 +83,25 @@ describe('IRI Template Overlay directive', function() {
         this.element.remove();
     });
 
-    describe('should intialize with the correct values', function() {
+    describe('should initialize with the correct values', function() {
         it('based on the selected class mapping id', function() {
             expect(this.controller.beginsWith).toBe(this.begin);
             expect(this.controller.then).toBe(this.then);
-            var cleanOptions = _.forEach(this.controller.localNameOptions, function(opt) {
-                delete opt['$$hashKey'];
-            });
+            var cleanOptions = _.forEach(this.controller.localNameOptions, opt => delete opt['$$hashKey']);
             expect(cleanOptions[0]).toEqual({text: 'UUID', value: '${UUID}'});
             expect(delimitedManagerSvc.getHeader.calls.count()).toBe(delimitedManagerSvc.dataRows[0].length);
             expect(cleanOptions).toContain({text: delimitedManagerSvc.getHeader(0), value: this.localName});
             expect(this.controller.endsWith).toEqual({text: delimitedManagerSvc.getHeader(0), value: this.localName});
+        });
+    });
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
     describe('controller methods', function() {
@@ -100,22 +110,26 @@ describe('IRI Template Overlay directive', function() {
             this.controller.set();
             expect(utilSvc.getPropertyValue).toHaveBeenCalledWith(this.classMapping, prefixes.delim + 'hasPrefix');
             expect(utilSvc.getPropertyValue).toHaveBeenCalledWith(this.classMapping, prefixes.delim + 'localName');
-            expect(mappingManagerSvc.editIriTemplate).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId,
-                this.controller.beginsWith + this.controller.then, this.controller.endsWith.value);
+            expect(mappingManagerSvc.editIriTemplate).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId, this.controller.beginsWith + this.controller.then, this.controller.endsWith.value);
             expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(mapperStateSvc.selectedClassMappingId, prefixes.delim + 'hasPrefix', this.controller.beginsWith + this.controller.then, this.classMapping.hasPrefix);
             expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(mapperStateSvc.selectedClassMappingId, prefixes.delim + 'localName', this.controller.endsWith.value, this.classMapping.localName);
         });
-    });
-    describe('replaces the element with the correct html', function() {
-        it('for wrapping containers', function() {
-            expect(this.element.hasClass('iri-template-overlay')).toBe(true);
-            expect(this.element.querySelectorAll('form.content').length).toBe(1);
-            expect(this.element.querySelectorAll('.template-begins-with').length).toBe(1);
-            expect(this.element.querySelectorAll('.template-then').length).toBe(1);
-            expect(this.element.querySelectorAll('.template-ends-with').length).toBe(1);
+        it('should cancel the overlay', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
         });
-        it('with a .form-text', function() {
-            expect(this.element.querySelectorAll('.form-text').length).toBe(1);
+    });
+    describe('contains the correct html', function() {
+        it('for wrapping containers', function() {
+            expect(this.element.prop('tagName')).toBe('IRI-TEMPLATE-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
+        });
+        ['.template-begins-with', '.template-then', '.template-ends-with', '.form-text'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.querySelectorAll(test).length).toBe(1);
+            });
         });
         it('with the correct classes for errors', function() {
             var failTests = ['/', '#', '?', 'test/', '/test', 'test#', '#test', 'test?', '?test', 't: test', 'test#test', 'test?test', 'test/test'];
@@ -125,26 +139,26 @@ describe('IRI Template Overlay directive', function() {
             var beginsWith = angular.element(this.element.querySelectorAll('.template-begins-with input')[0]);
             expect(beginsWith.hasClass('is-invalid')).toBe(true);
 
-            failTests.forEach(function(test) {
+            failTests.forEach(test => {
                 this.controller.beginsWith = test;
                 scope.$digest();
                 expect(beginsWith.hasClass('is-invalid')).toBe(true);
-            }, this);
-            successTests.forEach(function(test) {
+            });
+            successTests.forEach(test => {
                 this.controller.beginsWith = test;
                 scope.$digest();
                 expect(beginsWith.hasClass('is-invalid')).toBe(false);
-            }, this);
+            });
         });
         it('with the correct number of options for ends with', function() {
             var endsWith = angular.element(this.element.querySelectorAll('.template-ends-with select')[0]);
             expect(endsWith.find('option').length).toBe(this.controller.localNameOptions.length);
         });
-        it('with buttons to cancel and set', function() {
-            var buttons = this.element.find('button');
+        it('with buttons to cancel and submit', function() {
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Set'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Cancel', 'Set'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
         });
     });
 });

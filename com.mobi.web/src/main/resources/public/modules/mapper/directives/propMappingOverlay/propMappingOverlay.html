@@ -20,9 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="prop-mapping-overlay overlay">
-    <form class="content" name="dvm.propMappingForm">
-        <h6>{{dvm.state.newProp ? 'Add' : 'Edit'}} Property</h6>
+
+<div class="modal-header">
+    <h3>{{dvm.state.newProp ? 'Add' : 'Edit'}} Property</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+    <form  name="dvm.propMappingForm">
         <div class="form-group">
             <custom-label>Property</custom-label>
             <prop-select props="dvm.state.getPropsByClassMappingId(dvm.state.selectedClassMappingId)"
@@ -56,9 +60,9 @@
         <div class="language-select-container" ng-if="dvm.isLangString() && dvm.showDatatypeSelect">
             <language-select ng-model="dvm.language" disable-clear="true"></language-select>
         </div>
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary float-right" ng-click="dvm.set()" ng-disabled="dvm.disableSet()">Set</button>
-            <button class="btn float-right" ng-click="dvm.cancel()">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer clearfix">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-click="dvm.set()" ng-disabled="dvm.disableSet()">Submit</button>
 </div>
