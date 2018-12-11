@@ -135,7 +135,7 @@
                         dvm.os.addEntity(dvm.os.listItem, dvm.property);
                         // update lists
                         updateLists();
-                        dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
+                        dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);
                         // Update InProgressCommit
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.property);
                         // Save the changes to the ontology
