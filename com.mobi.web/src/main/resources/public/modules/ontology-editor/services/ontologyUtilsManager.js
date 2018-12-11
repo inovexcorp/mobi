@@ -213,7 +213,7 @@
                         ur.remove(os.listItem.ontology, entityIRI);
                         os.unSelectItem();
                         if (updateEverythingTree) {
-                            os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                            os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
                         }
                         return self.saveCurrentChanges();
                     }, errorMessage => {
@@ -346,13 +346,13 @@
                     os.listItem.index[os.listItem.selected['@id']].label = newLabel;
                     if (om.isClass(os.listItem.selected)) {
                         os.listItem.classes.flat = os.flattenHierarchy(os.listItem.classes.hierarchy, os.listItem.ontologyRecord.recordId);
-                        os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                        os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
                     } else if (om.isDataTypeProperty(os.listItem.selected)) {
                         os.listItem.dataProperties.flat = os.flattenHierarchy(os.listItem.dataProperties.hierarchy, os.listItem.ontologyRecord.recordId);
-                        os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                        os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
                     } else if (om.isObjectProperty(os.listItem.selected)) {
                         os.listItem.objectProperties.flat = os.flattenHierarchy(os.listItem.objectProperties.hierarchy, os.listItem.ontologyRecord.recordId);
-                        os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                        os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
                     } else if (om.isAnnotation(os.listItem.selected)) {
                         os.listItem.annotations.flat = os.flattenHierarchy(os.listItem.annotations.hierarchy, os.listItem.ontologyRecord.recordId);
                     } else if (om.isConcept(os.listItem.selected, os.listItem.derivedConcepts)) {
@@ -481,7 +481,7 @@
                 }
                 pm.remove(os.listItem.selected, key, index);
                 if (prefixes.rdfs + 'domain' === key && !om.isBlankNodeId(axiomObject['@id'])) {
-                    os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                    os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
                 } else if (prefixes.rdfs + 'range' === key) {
                     os.updatePropertyIcon(os.listItem.selected);
                 }

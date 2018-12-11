@@ -103,7 +103,6 @@
                         dvm.ontoUtils.addLanguageToNewEntity(dvm.clazz, dvm.language);
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.clazz);
-                        dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         // update relevant lists
                         dvm.os.addToClassIRIs(dvm.os.listItem, dvm.clazz['@id']);
                         if (dvm.values.length) {
@@ -118,6 +117,8 @@
                             hierarchy.push({'entityIRI': dvm.clazz['@id']});
                             dvm.os.listItem.classes.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                         }
+                        dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);
+                        // Update InProgressCommit
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.clazz);
                         // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
