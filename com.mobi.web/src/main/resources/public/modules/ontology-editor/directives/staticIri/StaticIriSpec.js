@@ -42,8 +42,9 @@ describe('Static IRI directive', function() {
 
         scope.onEdit = jasmine.createSpy('onEdit');
         scope.iri = 'iri';
+        scope.readOnly = true;
         scope.duplicateCheck = true;
-        this.element = $compile(angular.element('<static-iri on-edit="onEdit()" iri="iri" duplicate-check="duplicateCheck"></static-iri>'))(scope);
+        this.element = $compile(angular.element('<static-iri on-edit="onEdit()" iri="iri" read-only="readOnly" duplicate-check="duplicateCheck"></static-iri>'))(scope);
         scope.$digest();
         this.isolatedScope = this.element.isolateScope();
         this.controller = this.element.controller('staticIri');
@@ -84,6 +85,7 @@ describe('Static IRI directive', function() {
         });
         it('depending on whether the IRI is imported', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
+            scope.readOnly = false;
             scope.$digest();
             expect(this.element.find('a').length).toEqual(1);
 
@@ -124,6 +126,13 @@ describe('Static IRI directive', function() {
 
                 expect(this.element.find('error-display').length).toBe(0);
                 expect(this.strong.hasClass('duplicate-iri')).toEqual(false);
+            });
+            it('is read only', function() {
+                ontologyStateSvc.listItem.selected.mobi = {imported: false};
+                ontologyStateSvc.canModify.and.returnValue(true);
+                scope.readOnly = true;
+                scope.$digest();
+                expect(this.element.find('a').length).toEqual(0);
             });
         });
     });
