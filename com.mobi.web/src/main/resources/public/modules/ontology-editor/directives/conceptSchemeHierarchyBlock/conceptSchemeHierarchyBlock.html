@@ -22,5 +22,5 @@
   -->
 <div class="concept-scheme-hierarchy-block horizontal-scroll">
     <info-message ng-if="!dvm.os.listItem.conceptSchemes.flat.length">(No concept schemes defined)</info-message>
-    <hierarchy-tree hierarchy="dvm.os.listItem.conceptSchemes.flat" class="py-1"></hierarchy-tree>
+    <hierarchy-tree ng-if="dvm.os.listItem.conceptSchemes.flat.length" hierarchy="dvm.os.listItem.conceptSchemes.flat" class="py-1"></hierarchy-tree>
 </div>

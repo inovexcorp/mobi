@@ -53,12 +53,11 @@ describe('Concept Scheme Hierarchy Block directive', function() {
         });
         it('depending on whether the tree is empty', function() {
             expect(this.element.find('info-message').length).toEqual(1);
+            expect(this.element.find('hierarchy-tree').length).toBe(0);
 
             ontologyStateSvc.listItem.conceptSchemes.flat = [{}];
             scope.$digest();
             expect(this.element.find('info-message').length).toEqual(0);
-        });
-        it('with a hierarchy-tree', function() {
             expect(this.element.find('hierarchy-tree').length).toBe(1);
         });
     });

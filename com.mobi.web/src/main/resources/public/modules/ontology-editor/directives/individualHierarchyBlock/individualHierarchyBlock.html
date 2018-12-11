@@ -22,5 +22,5 @@
   -->
 <div class="individual-hierarchy-block horizontal-scroll">
     <info-message ng-if="!dvm.os.listItem.individuals.flat.length">(No individuals defined)</info-message>
-    <individual-tree class="py-1"></individual-tree>
+    <individual-tree ng-if="dvm.os.listItem.individuals.flat.length" class="py-1"></individual-tree>
 </div>
