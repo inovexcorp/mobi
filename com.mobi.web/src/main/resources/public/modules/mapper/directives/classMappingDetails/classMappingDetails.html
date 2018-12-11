@@ -22,7 +22,7 @@
   -->
 <div class="class-mapping-details">
     <div class="iri-template">
-        <custom-label><small>IRI Template <button class="btn btn-link no-padding remove-min-width" ng-disabled="!dvm.state.selectedClassMappingId" ng-click="dvm.state.editIriTemplate = true"><i class="fa fa-pencil"></i></button></small></custom-label>
+        <custom-label><small>IRI Template <button class="btn btn-link no-padding remove-min-width" ng-disabled="!dvm.state.selectedClassMappingId" ng-click="dvm.editIriTemplate()"><i class="fa fa-pencil"></i></button></small></custom-label>
         <p><small class="text-muted">{{dvm.getIriTemplate()}}</small></p>
     </div>
 
@@ -35,7 +35,7 @@
             <div ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId)" class="list-group-item" ng-class="{'active': dvm.state.selectedPropMappingId === propMapping['@id'], 'invalid': dvm.isInvalid(propMapping)}" ng-click="dvm.state.selectedPropMappingId = propMapping['@id']; dvm.state.highlightIndexes = [dvm.getLinkedColumnIndex(propMapping)]" ng-dblclick="dvm.switchClass(propMapping)" disable-animate>
                 <div class="prop-actions float-right">
                     <a class="edit-prop" ng-click="dvm.editProp(propMapping)"><i class="fa fa-pencil"></i></a>
-                    <a class="delete-prop" ng-click="dvm.deleteProp(propMapping)"><i class="fa fa-trash"></i></a>
+                    <a class="delete-prop" ng-click="dvm.confirmDeleteProp(propMapping)"><i class="fa fa-trash"></i></a>
                 </div>
                 <h4 class="list-group-item-heading">{{dvm.util.getDctermsValue(propMapping, 'title')}}</h4>
                 <div class="list-group-item-text">

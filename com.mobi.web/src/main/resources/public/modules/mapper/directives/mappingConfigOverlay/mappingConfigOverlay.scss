@@ -1,38 +1,32 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.mapping-config-overlay {
-	.content {
-        .row {
-            margin: 0 -10px 10px;
-        }
-        .form-group {
-            clear: both;
-        }
-        .ontology-record-info {
-            overflow-y: auto;
-            max-height: 300px;
-        }
-        .page-nav {
-            float: right;
-
-            .pagination {
-                margin: 0;
-            }
-        }
-        .paging-details {
-            float: left;
-        }
-        .ontology-records-list {
-            height: 100px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            overflow-y: auto;
-
-            .list-group-item {
-                outline: 0;
-                border-radius: 0;
-            }
-        }
+mapping-config-overlay {
+    .form-group {
+        clear: both;
+    }
+	.entity-dates .date {
+		display: block;
 	}
+    .page-nav {
+        float: right;
+
+        .pagination {
+            margin: 0;
+        }
+    }
+    .paging-details {
+        float: left;
+    }
+    .ontology-records-list {
+        height: 100px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        overflow-y: auto;
+
+        .list-group-item {
+            outline: 0;
+            border-radius: 0;
+        }
+    }
 }

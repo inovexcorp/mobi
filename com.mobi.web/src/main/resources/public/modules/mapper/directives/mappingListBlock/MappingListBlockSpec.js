@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Mapping List Block directive', function() {
-    var $compile, scope, $q, utilSvc, mappingManagerSvc, mapperStateSvc, catalogManagerSvc, prefixes;
+    var $compile, scope, $q, utilSvc, mappingManagerSvc, mapperStateSvc, catalogManagerSvc, prefixes, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -31,11 +31,12 @@ describe('Mapping List Block directive', function() {
         mockMappingManager();
         mockMapperState();
         mockCatalogManager();
+        mockModal();
         injectSplitIRIFilter();
         injectHighlightFilter();
         injectTrustedFilter();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _utilService_, _mappingManagerService_, _mapperStateService_, _catalogManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _utilService_, _mappingManagerService_, _mapperStateService_, _catalogManagerService_, _prefixes_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
@@ -44,6 +45,7 @@ describe('Mapping List Block directive', function() {
             mapperStateSvc = _mapperStateService_;
             catalogManagerSvc = _catalogManagerService_;
             prefixes = _prefixes_;
+            modalSvc = _modalService_;
         });
 
         var catalogId = 'catalog';
@@ -62,6 +64,7 @@ describe('Mapping List Block directive', function() {
         mapperStateSvc = null;
         catalogManagerSvc = null;
         prefixes = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -72,21 +75,24 @@ describe('Mapping List Block directive', function() {
         it('should open the create mapping overlay', function() {
             this.controller.createMapping();
             expect(mapperStateSvc.mapping).toBeUndefined();
-            expect(mapperStateSvc.displayCreateMappingOverlay).toEqual(true);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('createMappingOverlay');
+        });
+        it('should confirm deleting a mapping', function() {
+            mapperStateSvc.mapping = {record: {title: 'title'}};
+            this.controller.confirmDeleteMapping();
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('Are you sure'), this.controller.deleteMapping);
         });
         describe('should delete a mapping', function() {
             beforeEach(function () {
                 mapperStateSvc.mapping = {record: {id: 'id'}};
                 this.mapping = angular.copy(mapperStateSvc.mapping);
                 mapperStateSvc.sourceOntologies = [{}];
-                mapperStateSvc.displayDeleteMappingConfirm = true;
             });
             it('unless an error occurs', function() {
                 mappingManagerSvc.deleteMapping.and.returnValue($q.reject('Error message'));
                 this.controller.deleteMapping();
                 scope.$apply();
                 expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(this.mapping.record.id);
-                expect(mapperStateSvc.displayDeleteMappingConfirm).toEqual(true);
                 expect(mapperStateSvc.mapping).toEqual(this.mapping);
                 expect(mapperStateSvc.sourceOntologies).toEqual([{}]);
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
@@ -97,7 +103,6 @@ describe('Mapping List Block directive', function() {
                     this.controller.deleteMapping();
                     scope.$apply();
                     expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(this.mapping.record.id);
-                    expect(mapperStateSvc.displayDeleteMappingConfirm).toEqual(false);
                     expect(mapperStateSvc.mapping).toBeUndefined();
                     expect(mapperStateSvc.sourceOntologies).toEqual([]);
                     expect(mappingManagerSvc.getMappingRecords).toHaveBeenCalled();
@@ -110,7 +115,6 @@ describe('Mapping List Block directive', function() {
                     this.controller.deleteMapping();
                     scope.$apply();
                     expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(this.mapping.record.id);
-                    expect(mapperStateSvc.displayDeleteMappingConfirm).toEqual(false);
                     expect(mapperStateSvc.mapping).toBeUndefined();
                     expect(mapperStateSvc.sourceOntologies).toEqual([]);
                     expect(mappingManagerSvc.getMappingRecords).toHaveBeenCalled();
@@ -203,13 +207,6 @@ describe('Mapping List Block directive', function() {
             mapperStateSvc.mappingSearchString = 'Test 12';
             scope.$digest();
             expect(this.element.find('li').length).toBe(0);
-        });
-        it('depending on whether a mapping is being deleted', function() {
-            expect(this.element.find('confirmation-overlay').length).toEqual(0);
-
-            mapperStateSvc.displayDeleteMappingConfirm = true;
-            scope.$digest();
-            expect(this.element.find('confirmation-overlay').length).toEqual(1);
         });
     });
     it('should call onClick when a mapping name is clicked', function() {
