@@ -48,7 +48,7 @@
          * settings for running the currently selected {@link mapperState.service:mapperStateService#mapping mapping}
          * against the uploaded {@link delimitedManager.service:delimitedManagerService#dataRows delimited data} and
          * committing the results to an Ontology. This includes `ui-select`s to determine which ontology and which
-         * branch to commit the mapping to. THe user can also choose whether the result data should be considered
+         * branch to commit the mapping to. The user can also choose whether the result data should be considered
          * additions or changes to the existing data on that branch. Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.
          *

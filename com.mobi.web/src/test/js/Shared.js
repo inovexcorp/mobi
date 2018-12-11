@@ -408,7 +408,6 @@ function mockMapperState() {
             };
             this.invalidProps = [];
             this.availableClasses = [];
-            this.editMappingName = false;
             this.selectedClassMappingId = '';
             this.selectedPropMappingId = '';
             this.newProp = false;

@@ -29,16 +29,13 @@
          * @name mappingConfigOverlay
          *
          * @description
-         * The `mappingConfigOverlay` module only provides the `mappingConfigOverlay` directive which creates
-         * an overlay with functionality to edit the configuration of the current
-         * {@link mapperState.service:mapperStateService#mapping mapping}.
+         * The `mappingConfigOverlay` module only provides the `mappingConfigOverlay` component which creates content
+         * for a modal to edit the configuration of a mapping.
          */
         .module('mappingConfigOverlay', [])
         /**
-         * @ngdoc directive
-         * @name mappingConfigOverlay.directive:mappingConfigOverlay
-         * @scope
-         * @restrict E
+         * @ngdoc component
+         * @name mappingConfigOverlay.component:mappingConfigOverlay
          * @requires $q
          * @requires util.service:utilService
          * @requires ontologyManager.service:ontologyManagerService
@@ -48,12 +45,15 @@
          * @requires prefixes.service:prefixes
          *
          * @description
-         * `mappingConfigOverlay` is a directive that creates an overlay with functionality to edit the
+         * `mappingConfigOverlay` is a component that creates content for a modal with functionality to edit the
          * configuration of the current {@link mapperState.service:mapperStateService#mapping mapping}.
          * The configuration consists of the source ontology record, the ontology record version, and the base type
          * class. If editing a mapping that already has those data points set, a new mapping will be created with the
-         * new settings and will remove any invalid entity mappings within the mapping. The directive is replaced by
-         * the contents of its template.
+         * new settings and will remove any invalid entity mappings within the mapping. Meant to be used in conjunction
+         * with the {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
          */
         .component('mappingConfigOverlay', {
             bindings: {

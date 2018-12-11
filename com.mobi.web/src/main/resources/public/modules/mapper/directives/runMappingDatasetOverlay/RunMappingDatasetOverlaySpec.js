@@ -71,6 +71,16 @@ describe('Run Mapping Dataset Overlay component', function() {
         expect(datasetManagerSvc.getDatasetRecords).toHaveBeenCalled();
         expect(datasetManagerSvc.getRecordFromArray).toHaveBeenCalledWith([this.datasetRecord]);
     });
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
+    });
     describe('controller methods', function() {
         describe('should set the correct state for running mapping', function() {
             beforeEach(function() {

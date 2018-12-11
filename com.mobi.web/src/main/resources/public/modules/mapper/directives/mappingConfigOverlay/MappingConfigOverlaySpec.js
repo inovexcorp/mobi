@@ -162,6 +162,19 @@ describe('Mapping Config Overlay component', function() {
             });
         });
     });
+    describe('controller bound variable', function() {
+        beforeEach(function() {
+            this.compile();
+        });
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
+    });
     describe('controller methods', function() {
         beforeEach(function() {
             this.compile();

@@ -29,8 +29,8 @@
          * @name createMappingOverlay
          *
          * @description
-         * The `createMappingOverlay` module only provides the `createMappingOverlay` directive which creates
-         * which creates creates content for a modal to add a title, description, and keywords to a new MappingRecord.
+         * The `createMappingOverlay` module only provides the `createMappingOverlay` component which creates content
+         * for a modal to add a title, description, and keywords to a new MappingRecord.
          */
         .module('createMappingOverlay', [])
         /**

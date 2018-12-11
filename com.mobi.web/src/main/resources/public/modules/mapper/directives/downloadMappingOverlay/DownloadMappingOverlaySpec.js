@@ -54,6 +54,16 @@ describe('Download Mapping Overlay component', function() {
         this.element.remove();
     });
 
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
+    });
     describe('controller methods', function() {
         it('should download a mapping', function() {
             this.controller.download();
@@ -83,7 +93,7 @@ describe('Download Mapping Overlay component', function() {
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
-        it('with buttons to cancel and download', function() {
+        it('with buttons to cancel and submit', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());

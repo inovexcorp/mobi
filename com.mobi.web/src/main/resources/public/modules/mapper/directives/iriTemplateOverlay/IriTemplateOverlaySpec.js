@@ -21,7 +21,7 @@
  * #L%
  */
 describe('IRI Template Overlay component', function() {
-    var $compile, scope, utilSvc, prefixes, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, utilSvc;
+    var $compile, scope, utilSvc, prefixes, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -83,7 +83,7 @@ describe('IRI Template Overlay component', function() {
         this.element.remove();
     });
 
-    describe('should intialize with the correct values', function() {
+    describe('should initialize with the correct values', function() {
         it('based on the selected class mapping id', function() {
             expect(this.controller.beginsWith).toBe(this.begin);
             expect(this.controller.then).toBe(this.then);
@@ -92,6 +92,16 @@ describe('IRI Template Overlay component', function() {
             expect(delimitedManagerSvc.getHeader.calls.count()).toBe(delimitedManagerSvc.dataRows[0].length);
             expect(cleanOptions).toContain({text: delimitedManagerSvc.getHeader(0), value: this.localName});
             expect(this.controller.endsWith).toEqual({text: delimitedManagerSvc.getHeader(0), value: this.localName});
+        });
+    });
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
     describe('controller methods', function() {
