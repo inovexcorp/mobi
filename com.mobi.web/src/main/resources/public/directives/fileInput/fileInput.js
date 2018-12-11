@@ -70,6 +70,7 @@
                             modelSet(scope, isMulti ? _.toArray(files) : files[0]);
                             onChange(scope);
                         });
+                        element.val(null);
                     });
                 }
             };
