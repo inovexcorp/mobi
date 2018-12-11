@@ -29,15 +29,13 @@
          * @name iriTemplateOverlay
          *
          * @description
-         * The `iriTemplateOverlay` module only provides the `iriTemplateOverlay` directive which creates
-         * an overlay with functionality to change the IRI template of the selected class mapping.
+         * The `iriTemplateOverlay` module only provides the `iriTemplateOverlay` component which creates content for a
+         * modal to edit the IRI template of a class mapping.
          */
         .module('iriTemplateOverlay', [])
         /**
-         * @ngdoc directive
-         * @name iriTemplateOverlay.directive:iriTemplateOverlay
-         * @scope
-         * @restrict E
+         * @ngdoc component
+         * @name iriTemplateOverlay.component:iriTemplateOverlay
          * @requires prefixes.service:prefixes
          * @requires mappingManager.service:mappingManagerService
          * @requires mapperState.service:mapperStateService
@@ -45,50 +43,54 @@
          * @requires util.service:utilService
          *
          * @description
-         * `iriTemplateOverlay` is a directive that creates an overlay with functionality to change the
-         * IRI template of the selected class mapping. The overlay splits the IRI template into part of
-         * the namespace, the delimiter between the namespace and local name, and the dynamically created
-         * local name. The local name can either be a UUID or a column header. The directive is replaced
-         * by the contents of its template.
+         * `iriTemplateOverlay` is a component that creates content for a modal that changes the IRI template of the
+         * {@link mapperState.service:mapperStateService selected class mapping}. The modal splits the IRI template
+         * into the beginning of the namespace, the delimiter between the namespace and local name, and the dynamically
+         * created local name. The local name can either be a UUID or a column header. Meant to be used in conjunction
+         * with the {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
          */
-        .directive('iriTemplateOverlay', iriTemplateOverlay);
+        .component('iriTemplateOverlay', {
+            bindings: {
+                close: '&',
+                dismiss: '&'
+            },
+            controllerAs: 'dvm',
+            controller: ['prefixes', 'utilService', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService', IriTemplateOverlayController],
+            templateUrl: 'modules/mapper/directives/iriTemplateOverlay/iriTemplateOverlay.html'
+        });
 
-        iriTemplateOverlay.$inject = ['prefixes', 'utilService', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
+        function IriTemplateOverlayController(prefixes, utilService, mapperStateService, mappingManagerService, delimitedManagerService) {
+            var dvm = this;
+            dvm.mm = mappingManagerService;
+            dvm.state = mapperStateService;
+            dvm.dm = delimitedManagerService;
+            dvm.util = utilService;
 
-        function iriTemplateOverlay(prefixes, utilService, mapperStateService, mappingManagerService, delimitedManagerService) {
-            return {
-                restrict: 'E',
-                controllerAs: 'dvm',
-                replace: true,
-                scope: {},
-                controller: function() {
-                    var dvm = this;
-                    dvm.mm = mappingManagerService;
-                    dvm.state = mapperStateService;
-                    dvm.dm = delimitedManagerService;
-                    dvm.util = utilService;
+            var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
+            var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
+            dvm.beginsWith = prefix.slice(0, -1);
+            dvm.then = prefix[prefix.length - 1];
+            dvm.localNameOptions = [{text: 'UUID', value: '${UUID}'}];
+            for (var idx = 0; idx < dvm.dm.dataRows[0].length; idx++) {
+                dvm.localNameOptions.push({text: dvm.dm.getHeader(idx), value: '${' + idx + '}'});
+            };
+            var selectedIndex = _.findIndex(dvm.localNameOptions, {'value': dvm.util.getPropertyValue(classMapping, prefixes.delim + 'localName')});
+            dvm.endsWith = selectedIndex > 0 ? dvm.localNameOptions[selectedIndex] : dvm.localNameOptions[_.findIndex(dvm.localNameOptions, {'text': 'UUID'})];
 
-                    var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
-                    var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
-                    dvm.beginsWith = prefix.slice(0, -1);
-                    dvm.then = prefix[prefix.length - 1];
-                    dvm.localNameOptions = [{text: 'UUID', value: '${UUID}'}];
-                    for (var idx = 0; idx < dvm.dm.dataRows[0].length; idx++) {
-                        dvm.localNameOptions.push({text: dvm.dm.getHeader(idx), value: '${' + idx + '}'});
-                    };
-                    var selectedIndex = _.findIndex(dvm.localNameOptions, {'value': dvm.util.getPropertyValue(classMapping, prefixes.delim + 'localName')});
-                    dvm.endsWith = selectedIndex > 0 ? dvm.localNameOptions[selectedIndex] : dvm.localNameOptions[_.findIndex(dvm.localNameOptions, {'text': 'UUID'})];
-
-                    dvm.set = function() {
-                        var originalClassMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
-                        var originalPrefix = dvm.util.getPropertyValue(originalClassMapping, prefixes.delim + 'hasPrefix');
-                        var originalLocalName = dvm.util.getPropertyValue(originalClassMapping, prefixes.delim + 'localName');
-                        dvm.mm.editIriTemplate(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId, dvm.beginsWith + dvm.then, dvm.endsWith.value);
-                        dvm.state.changeProp(dvm.state.selectedClassMappingId, prefixes.delim + 'hasPrefix', dvm.beginsWith + dvm.then, originalPrefix);
-                        dvm.state.changeProp(dvm.state.selectedClassMappingId, prefixes.delim + 'localName', dvm.endsWith.value, originalLocalName);
-                    }
-                },
-                templateUrl: 'modules/mapper/directives/iriTemplateOverlay/iriTemplateOverlay.html'
+            dvm.set = function() {
+                var originalClassMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
+                var originalPrefix = dvm.util.getPropertyValue(originalClassMapping, prefixes.delim + 'hasPrefix');
+                var originalLocalName = dvm.util.getPropertyValue(originalClassMapping, prefixes.delim + 'localName');
+                dvm.mm.editIriTemplate(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId, dvm.beginsWith + dvm.then, dvm.endsWith.value);
+                dvm.state.changeProp(dvm.state.selectedClassMappingId, prefixes.delim + 'hasPrefix', dvm.beginsWith + dvm.then, originalPrefix);
+                dvm.state.changeProp(dvm.state.selectedClassMappingId, prefixes.delim + 'localName', dvm.endsWith.value, originalLocalName);
+                dvm.close();
+            }
+            dvm.cancel = function() {
+                dvm.dismiss();
             }
         }
 })();

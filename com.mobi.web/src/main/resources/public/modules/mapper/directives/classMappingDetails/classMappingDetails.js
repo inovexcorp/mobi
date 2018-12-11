@@ -43,19 +43,23 @@
          * @requires delimitedManager.service:delimitedManagerService
          * @requires prefixes.service:prefixes
          * @requires util.service:utilService
+         * @requires modal.service:modalService
          *
          * @description
          * `classMappingDetails` is a directive that creates a div with sections to view and edit information
          * about the {@link mapperState.service:mapperStateService#selectedClassMappingId selected class mapping}.
-         * One section is for viewing and editing the IRI template of the class mapping. Another section is for
-         * view the list of property mappings associated with the class mapping, adding to that list, editing
-         * items in the list, and removing from that list. The directive is replaced by the contents of its template.
+         * One section is for viewing and editing the
+         * {@link iriTemplateOverlay.component:iriTemplateOverlay IRI template} of the class mapping. Another section is
+         * for viewing the list of property mappings associated with the class mapping, adding to that list, editing
+         * items in the list, and removing from that list. The directive houses methods for opening the modals for
+         * {@link propMappingOverlay.directive:propMappingOverlay editing, adding}, and removing PropertyMappings. The
+         * directive is replaced by the contents of its template.
          */
         .directive('classMappingDetails', classMappingDetails);
 
-        classMappingDetails.$inject = ['utilService', 'prefixes', 'mappingManagerService', 'mapperStateService', 'delimitedManagerService', 'propertyManagerService'];
+        classMappingDetails.$inject = ['utilService', 'prefixes', 'mappingManagerService', 'mapperStateService', 'delimitedManagerService', 'propertyManagerService', 'modalService'];
 
-        function classMappingDetails(utilService, prefixes, mappingManagerService, mapperStateService, delimitedManagerService, propertyManagerService) {
+        function classMappingDetails(utilService, prefixes, mappingManagerService, mapperStateService, delimitedManagerService, propertyManagerService, modalService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -69,6 +73,9 @@
                     dvm.util = utilService;
                     var pm = propertyManagerService;
 
+                    dvm.editIriTemplate = function() {
+                        modalService.openModal('iriTemplateOverlay');
+                    }
                     dvm.isInvalid = function(propMapping) {
                         return !!_.find(dvm.state.invalidProps, {'@id': propMapping['@id']});
                     }
@@ -116,16 +123,25 @@
                         }
                     }
                     dvm.addProp = function() {
-                        dvm.state.displayPropMappingOverlay = true;
                         dvm.state.newProp = true;
+                        modalService.openModal('propMappingOverlay');
                     }
                     dvm.editProp = function(propMapping) {
                         dvm.state.selectedPropMappingId = propMapping['@id'];
-                        dvm.state.displayPropMappingOverlay = true;
+                        modalService.openModal('propMappingOverlay');
                     }
-                    dvm.deleteProp = function(propMapping) {
+                    dvm.confirmDeleteProp = function(propMapping) {
                         dvm.state.selectedPropMappingId = propMapping['@id'];
-                        dvm.state.displayDeletePropConfirm = true;
+                        modalService.openConfirmModal('<p>Are you sure you want to delete <strong>' + dvm.getEntityName(dvm.state.selectedPropMappingId) + '</strong> from <strong>' + dvm.getEntityName(dvm.state.selectedClassMappingId) + '</strong>?</p>', dvm.deleteProp);
+                    }
+                    dvm.getEntityName = function(id) {
+                        return dvm.util.getDctermsValue(_.find(dvm.state.mapping.jsonld, {'@id': id}), 'title');
+                    }
+                    dvm.deleteProp = function() {
+                        var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
+                        dvm.state.deleteProp(dvm.state.selectedPropMappingId, classMapping['@id']);
+                        dvm.state.resetEdit();
+                        dvm.state.selectedClassMappingId = classMapping['@id'];
                     }
                 },
                 templateUrl: 'modules/mapper/directives/classMappingDetails/classMappingDetails.html'
