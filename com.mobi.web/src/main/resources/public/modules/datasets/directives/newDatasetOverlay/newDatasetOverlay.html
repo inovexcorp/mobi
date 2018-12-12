@@ -20,10 +20,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div ng-if="dvm.step === 0" class="new-dataset-info-overlay overlay">
-    <form name="dvm.infoForm" class="clearfix content" novalidate autocomplete="off">
-        <h1>Create New Dataset</h1>
-        <h2>Basic Info</h2>
+<div class="modal-header">
+    <h3>Create New Dataset</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+    <form name="dvm.form" novalidate autocomplete="off">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <text-input display-text="'Title'" input-name="'title'" ng-model="dvm.recordConfig.title" required="true" is-focus-me="true"></text-input>
         <text-input ng-model="dvm.recordConfig.datasetIRI" display-text="'Dataset IRI'" muted-text="'(Optional)'"></text-input>
@@ -34,23 +36,10 @@
             <custom-label>Repository ID</custom-label>
             <p class="form-control-static">{{dvm.recordConfig.repositoryId}}</p>
         </div>
-        <step-progress-bar step-number="2" current-step="dvm.step"></step-progress-bar>
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary float-right" ng-disabled="dvm.infoForm.$invalid" ng-click="dvm.step = 1">Next</button>
-            <button class="btn float-right" ng-click="dvm.onClose()">Cancel</button>
-        </div>
+        <datasets-ontology-picker selected-ontologies="dvm.selectedOntologies" error="dvm.error"></datasets-ontology-picker>
     </form>
 </div>
-<div ng-if="dvm.step === 1" class="new-dataset-ontologies-overlay overlay">
-    <form name="dvm.ontologiesForm" class="clearfix content" novalidate autocomplete="off">
-        <h1>Create New Dataset</h1>
-        <h2>Ontologies</h2>
-        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <datasets-ontology-picker selected-ontologies="dvm.selectedOntologies" error="dvm.error"></datasets-ontology-picker>
-        <step-progress-bar step-number="2" current-step="dvm.step"></step-progress-bar>
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary float-right" ng-click="dvm.create()">Submit</button>
-            <button class="btn float-right" ng-click="dvm.step = 0">Back</button>
-        </div>
-    </form>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-disabled="dvm.form.$invalid" ng-click="dvm.create()">Submit</button>
 </div>

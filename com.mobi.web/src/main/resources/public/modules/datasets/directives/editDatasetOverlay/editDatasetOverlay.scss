@@ -1,4 +1,7 @@
-.edit-dataset-overlay {
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+edit-dataset-overlay {
     .dataset-info {
         p:first-child {
             margin-bottom: 0px;

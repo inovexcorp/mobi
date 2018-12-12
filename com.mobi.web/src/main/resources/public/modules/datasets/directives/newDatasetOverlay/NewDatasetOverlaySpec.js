@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('New Dataset Overlay directive', function() {
+describe('New Dataset Overlay component', function() {
     var $compile, scope, $q, datasetManagerSvc, datasetStateSvc, utilSvc;
 
     beforeEach(function() {
@@ -30,17 +30,18 @@ describe('New Dataset Overlay directive', function() {
         mockDatasetState();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _datasetManagerService_, _datasetStateService_, _utilService_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _datasetManagerService_, _datasetStateService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             datasetStateSvc = _datasetStateService_;
             datasetManagerSvc = _datasetManagerService_;
             utilSvc = _utilService_;
-            $q = _$q_;
         });
 
-        scope.onClose = jasmine.createSpy('onClose')
-        this.element = $compile(angular.element('<new-dataset-overlay on-close="onClose()"></new-dataset-overlay>'))(scope);
+        scope.dismiss = jasmine.createSpy('dismiss');
+        scope.close = jasmine.createSpy('close');
+        this.element = $compile(angular.element('<new-dataset-overlay close="close()" dismiss="dismiss()"></new-dataset-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('newDatasetOverlay');
     });
@@ -56,9 +57,13 @@ describe('New Dataset Overlay directive', function() {
     });
 
     describe('controller bound variable', function() {
-        it('onClose should be called in parent scope when invoked', function() {
-            this.controller.onClose();
-            expect(scope.onClose).toHaveBeenCalled();
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
     describe('controller methods', function() {
@@ -76,7 +81,7 @@ describe('New Dataset Overlay directive', function() {
                 expect(datasetManagerSvc.createDatasetRecord).toHaveBeenCalledWith(this.controller.recordConfig);
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
                 expect(datasetStateSvc.setResults).not.toHaveBeenCalled();
-                expect(scope.onClose).not.toHaveBeenCalled();
+                expect(scope.close).not.toHaveBeenCalled();
                 expect(this.controller.error).toBe('Error Message');
             });
             it('successfully', function() {
@@ -87,111 +92,61 @@ describe('New Dataset Overlay directive', function() {
                 expect(datasetManagerSvc.createDatasetRecord).toHaveBeenCalledWith(this.controller.recordConfig);
                 expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                 expect(datasetStateSvc.setResults).toHaveBeenCalled();
-                expect(scope.onClose).toHaveBeenCalled();
+                expect(scope.close).toHaveBeenCalled();
                 expect(this.controller.error).toBe('');
             });
         });
+        it('should close the overlay', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
     });
-    describe('fills the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('NEW-DATASET-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
-        describe('on step 1', function() {
-            it('with a .overlay', function() {
-                expect(this.element.querySelectorAll('.new-dataset-info-overlay.overlay').length).toBe(1);
-            });
-            it('with a step-progress-bar', function() {
-                expect(this.element.find('step-progress-bar').length).toBe(1);
-            });
-            it('with text-inputs', function() {
-                expect(this.element.find('text-input').length).toBe(2);
-            });
-            it('with a text-area', function() {
-                expect(this.element.find('text-area').length).toBe(1);
-            });
-            it('with a keyword-select', function() {
-                expect(this.element.find('keyword-select').length).toBe(1);
-            });
-            it('depending on whether an error has occured', function() {
-                expect(this.element.find('error-display').length).toBe(0);
-
-                this.controller.error = 'test';
-                scope.$digest();
-                expect(this.element.find('error-display').length).toBe(1);
-            });
-            it('depending on the validity of the form', function() {
-                var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
-                expect(button.attr('disabled')).toBeTruthy();
-
-                this.controller.infoForm.$invalid = false;
-                scope.$digest();
-                expect(button.attr('disabled')).toBeFalsy();
-            });
-            it('with the correct buttons', function() {
-                var buttons = this.element.querySelectorAll('.btn-container button');
-                expect(buttons.length).toBe(2);
-                expect(['Cancel', 'Next']).toContain(angular.element(buttons[0]).text().trim());
-                expect(['Cancel', 'Next']).toContain(angular.element(buttons[1]).text().trim());
+        it('with text-inputs', function() {
+            expect(this.element.find('text-input').length).toBe(2);
+        });
+        ['text-area', 'keyword-select', 'datasets-ontology-picker'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
             });
         });
-        describe('on step 2', function() {
-            beforeEach(function() {
-                this.controller.step = 1;
-                scope.$digest();
-            });
-            it('with a .overlay', function() {
-                expect(this.element.querySelectorAll('.new-dataset-ontologies-overlay.overlay').length).toBe(1);
-            });
-            it('with a step-progress-bar', function() {
-                expect(this.element.find('step-progress-bar').length).toBe(1);
-            });
-            it('with a datasets-ontology-picker', function() {
-                expect(this.element.find('datasets-ontology-picker').length).toBe(1);
-            });
-            it('depending on whether an error has occured', function() {
-                expect(this.element.find('error-display').length).toBe(0);
+        it('depending on whether an error has occured', function() {
+            expect(this.element.find('error-display').length).toBe(0);
 
-                this.controller.error = 'test';
-                scope.$digest();
-                expect(this.element.find('error-display').length).toBe(1);
-            });
-            it('depending on whether an error has occured', function() {
-                expect(this.element.find('error-display').length).toBe(0);
+            this.controller.error = 'test';
+            scope.$digest();
+            expect(this.element.find('error-display').length).toBe(1);
+        });
+        it('depending on the validity of the form', function() {
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
 
-                this.controller.error = 'test';
-                scope.$digest();
-                expect(this.element.find('error-display').length).toBe(1);
-            });
-            it('with the correct buttons', function() {
-                var buttons = this.element.querySelectorAll('.btn-container button');
-                expect(buttons.length).toBe(2);
-                expect(['Back', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
-                expect(['Back', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
-            });
+            this.controller.form.$invalid = false;
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
+        });
+        it('with buttons to cancel and submit', function() {
+            var buttons = this.element.querySelectorAll('.modal-footer button');
+            expect(buttons.length).toBe(2);
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
-    it('should go to the next step when the next button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+    it('should call cancel when the button is clicked', function() {
+        spyOn(this.controller, 'cancel');
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
-        expect(this.controller.step).toBe(1);
-    });
-    it('should call onClose when the button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
-        button.triggerHandler('click');
-        expect(scope.onClose).toHaveBeenCalled();
-    });
-    it('should go the previous step when the back button is clicked', function() {
-        this.controller.step = 1;
-        scope.$digest();
-        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
-        button.triggerHandler('click');
-        expect(this.controller.step).toBe(0);
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
     it('should call create when the button is clicked', function() {
-        this.controller.step = 1;
-        scope.$digest();
         spyOn(this.controller, 'create');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.create).toHaveBeenCalled();
     });
