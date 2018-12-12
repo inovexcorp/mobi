@@ -32,9 +32,10 @@ import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 import static com.mobi.rest.util.RestUtils.modelToString;
 
+import com.google.common.collect.Iterables;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.google.common.collect.Iterables;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
@@ -1069,9 +1070,11 @@ public class OntologyRestImpl implements OntologyRest {
         results.forEach((key, children) -> {
             HierarchyNode node = nodes.getOrDefault(key, new HierarchyNode(key));
             children.forEach(child -> {
-                HierarchyNode obj = nodes.getOrDefault(child, new HierarchyNode(child));
-                node.addChild(obj);
-                nodes.put(child, obj);
+                if (!child.equals(key)) {
+                    HierarchyNode obj = nodes.getOrDefault(child, new HierarchyNode(child));
+                    node.addChild(obj);
+                    nodes.put(child, obj);
+                }
             });
             nodes.put(key, node);
         });
