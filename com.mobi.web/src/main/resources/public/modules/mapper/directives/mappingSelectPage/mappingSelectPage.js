@@ -29,9 +29,8 @@
          * @name mappingSelectPage
          *
          * @description
-         * The `mappingSelectPage` module only provides the `mappingSelectPage` directive which creates
-         * a Bootstrap `row` with {@link block.directive:block blocks} for editing the selecting and
-         * previewing a mapping.
+         * The `mappingSelectPage` module only provides the `mappingSelectPage` directive which creates a Bootstrap
+         * `row` with {@link block.directive:block blocks} for editing the selecting and previewing a mapping.
          */
         .module('mappingSelectPage', [])
         /**
@@ -42,6 +41,7 @@
          * @requires mapperState.service:mapperStateService
          * @requires mappingManager.service:mappingManagerService
          * @requires util.service:utilService
+         * @requires modal.service:modalService
          *
          * @description
          * `mappingSelectPage` is a directive that creates a Bootstrap `row` div with two columns for selecting
@@ -54,9 +54,9 @@
          */
         .directive('mappingSelectPage', mappingSelectPage);
 
-        mappingSelectPage.$inject = ['mapperStateService', 'mappingManagerService', 'utilService'];
+        mappingSelectPage.$inject = ['mapperStateService', 'mappingManagerService', 'utilService', 'modalService'];
 
-        function mappingSelectPage(mapperStateService, mappingManagerService, utilService) {
+        function mappingSelectPage(mapperStateService, mappingManagerService, utilService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -80,10 +80,10 @@
                         dvm.loadOntologyAndContinue();
                     }
                     dvm.download = function() {
-                        dvm.state.displayDownloadMappingOverlay = true;
+                        modalService.openModal('downloadMappingOverlay', {}, undefined, 'sm');
                     }
                     dvm.duplicate = function() {
-                        dvm.state.displayCreateMappingOverlay = true;
+                        modalService.openModal('createMappingOverlay');
                     }
                     dvm.loadOntologyAndContinue = function() {
                         mm.getSourceOntologies(mm.getSourceOntologyInfo(dvm.state.mapping.jsonld)).then(ontologies => {
@@ -93,7 +93,7 @@
                                 dvm.state.mappingSearchString = '';
                                 dvm.state.step = dvm.state.fileUploadStep;
                             } else {
-                                dvm.state.invalidOntology = true;
+                                dvm.util.createErrorToast('The source ontology for the ' + dvm.state.mapping.record.title + ' mapping and/or its imported ontologies have been changed and are no longer compatible. Unable to open the mapping', {timeOut: 8000});
                             }
                         });
                     }

@@ -38,6 +38,7 @@ import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.Statements;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
@@ -90,26 +91,32 @@ public class SimpleVersioningManager implements VersioningManager {
     }
 
     @Override
-    public com.mobi.rdf.api.Resource commit(com.mobi.rdf.api.Resource catalogId, com.mobi.rdf.api.Resource recordId, com.mobi.rdf.api.Resource branchId, User user, String message) {
+    public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message) {
         try (RepositoryConnection conn = getCatalogRepoConnection()) {
             OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
             VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
             VersioningService<VersionedRDFRecord> service =
                     versioningServices.get(correctFactory.getTypeIRI().stringValue());
             conn.begin();
-            Branch branch = service.getTargetBranch(record, branchId, conn);
-            Commit head = service.getBranchHeadCommit(branch, conn);
-            InProgressCommit inProgressCommit = service.getInProgressCommit(recordId, user, conn);
-            Commit newCommit = service.createCommit(inProgressCommit, message, head, null);
-            service.addCommit(branch, newCommit, conn);
-            service.removeInProgressCommit(inProgressCommit, conn);
+            Resource commitResource = commitToBranch(record, service, branchId, user, message, conn);
             conn.commit();
-            return newCommit.getResource();
+            return commitResource;
         }
     }
 
     @Override
-    public com.mobi.rdf.api.Resource commit(com.mobi.rdf.api.Resource catalogId, com.mobi.rdf.api.Resource recordId, com.mobi.rdf.api.Resource branchId, User user, String message,
+    public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user,
+                                            String message, RepositoryConnection conn) {
+        OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
+        VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
+        VersioningService<VersionedRDFRecord> service =
+                versioningServices.get(correctFactory.getTypeIRI().stringValue());
+        
+        return commitToBranch(record, service, branchId, user, message, conn);
+    }
+
+    @Override
+    public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message,
                                             Model additions, Model deletions) {
         try (RepositoryConnection conn = getCatalogRepoConnection()) {
             OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
@@ -117,16 +124,25 @@ public class SimpleVersioningManager implements VersioningManager {
             VersioningService<VersionedRDFRecord> service =
                     versioningServices.get(correctFactory.getTypeIRI().stringValue());
             conn.begin();
-            Branch branch = service.getTargetBranch(record, branchId, conn);
-            Commit head = service.getBranchHeadCommit(branch, conn);
-            com.mobi.rdf.api.Resource commitId = service.addCommit(branch, user, message, additions, deletions, head, null, conn);
+            Resource commitId = commitToBranch(record, service, branchId, user, message, additions, deletions, conn);
             conn.commit();
             return commitId;
         }
     }
 
     @Override
-    public com.mobi.rdf.api.Resource merge(com.mobi.rdf.api.Resource catalogId, com.mobi.rdf.api.Resource recordId, com.mobi.rdf.api.Resource sourceBranchId, com.mobi.rdf.api.Resource targetBranchId,
+    public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message,
+                                            Model additions, Model deletions, RepositoryConnection conn) {
+        OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
+        VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
+        VersioningService<VersionedRDFRecord> service =
+                versioningServices.get(correctFactory.getTypeIRI().stringValue());
+
+        return commitToBranch(record, service, branchId, user, message, additions, deletions, conn);
+    }
+
+    @Override
+    public Resource merge(Resource catalogId, Resource recordId, Resource sourceBranchId, Resource targetBranchId,
                                            User user, Model additions, Model deletions) {
         try (RepositoryConnection conn = getCatalogRepoConnection()) {
             OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
@@ -134,13 +150,93 @@ public class SimpleVersioningManager implements VersioningManager {
             VersioningService<VersionedRDFRecord> service =
                     versioningServices.get(correctFactory.getTypeIRI().stringValue());
             conn.begin();
-            Branch source = service.getSourceBranch(record, sourceBranchId, conn);
-            Branch target = service.getTargetBranch(record, targetBranchId, conn);
-            com.mobi.rdf.api.Resource commitId = service.addCommit(target, user, getMergeMessage(source, target), additions, deletions,
-                    service.getBranchHeadCommit(target, conn), service.getBranchHeadCommit(source, conn), conn);
+            Resource commitId = mergeBranches(record, service, sourceBranchId, targetBranchId, user, additions,
+                    deletions, conn);
             conn.commit();
             return commitId;
         }
+    }
+
+    @Override
+    public Resource merge(Resource catalogId, Resource recordId, Resource sourceBranchId, Resource targetBranchId,
+                                           User user, Model additions, Model deletions, RepositoryConnection conn) {
+        OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
+        VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
+        VersioningService<VersionedRDFRecord> service =
+                versioningServices.get(correctFactory.getTypeIRI().stringValue());
+
+        return mergeBranches(record, service, sourceBranchId, targetBranchId, user, additions, deletions, conn);
+    }
+
+    /**
+     * Creates and adds a new Commit to Branch with the specified branchId. Uses the provided VersioningService to
+     * perform operations.
+     *
+     * @param record A VersionedRDFRecord to commit changes to.
+     * @param service The VersioningService to perform operations.
+     * @param branchId The target Branch of the commit.
+     * @param user The User performing the operation.
+     * @param message The commit message.
+     * @param conn A RepositoryConnection used by the VersioningService.
+     * @return The Resource of the new Commit.
+     */
+    private Resource commitToBranch(VersionedRDFRecord record, VersioningService<VersionedRDFRecord> service,
+                                    Resource branchId, User user, String message, RepositoryConnection conn) {
+        Branch branch = service.getTargetBranch(record, branchId, conn);
+        Commit head = service.getBranchHeadCommit(branch, conn);
+        InProgressCommit inProgressCommit = service.getInProgressCommit(record.getResource(), user, conn);
+        Commit newCommit = service.createCommit(inProgressCommit, message, head, null);
+        service.addCommit(branch, newCommit, conn);
+        service.removeInProgressCommit(inProgressCommit, conn);
+
+        return newCommit.getResource();
+    }
+
+    /**
+     * Adds a new Commit to Branch with the specified branchId. Uses the provided VersioningService to perform
+     * the operation.
+     *
+     * @param record A VersionedRDFRecord to commit changes to.
+     * @param service The VersioningService to perform the operation.
+     * @param branchId The target Branch of the commit.
+     * @param user The User performing the operation.
+     * @param message The commit message.
+     * @param additions The Model of additions to commit.
+     * @param deletions The Model of deletions to commit.
+     * @param conn A RepositoryConnection used by the VersioningService.
+     * @return The Resource of the new Commit.
+     */
+    private Resource commitToBranch(VersionedRDFRecord record, VersioningService<VersionedRDFRecord> service,
+                                    Resource branchId, User user, String message, Model additions, Model deletions,
+                                    RepositoryConnection conn) {
+        Branch branch = service.getTargetBranch(record, branchId, conn);
+        Commit head = service.getBranchHeadCommit(branch, conn);
+
+        return service.addCommit(branch, user, message, additions, deletions, head, null, conn);
+    }
+
+    /**
+     * Adds a Commit representing the merge of the Branch associated with the sourceBranchId into the Branch associated
+     * with the targetBranchId on the target Branch.
+     *
+     * @param record A VersionedRDFRecord to commit changes to.
+     * @param service The VersioningService to perform the operation.
+     * @param sourceBranchId The Resource of the source Branch.
+     * @param targetBranchId The Resource of the target Branch.
+     * @param user The User performing the operation.
+     * @param additions The Model of additions to commit.
+     * @param deletions The Model of deletions to commit.
+     * @param conn A RepositoryConnection used by the VersioningService.
+     * @return The Resource of the new Commit.
+     */
+    private Resource mergeBranches(VersionedRDFRecord record, VersioningService<VersionedRDFRecord> service,
+                                   Resource sourceBranchId, Resource targetBranchId, User user, Model additions,
+                                   Model deletions, RepositoryConnection conn) {
+        Branch source = service.getSourceBranch(record, sourceBranchId, conn);
+        Branch target = service.getTargetBranch(record, targetBranchId, conn);
+
+        return service.addCommit(target, user, getMergeMessage(source, target), additions, deletions,
+                service.getBranchHeadCommit(target, conn), service.getBranchHeadCommit(source, conn), conn);
     }
 
     /**
@@ -162,13 +258,13 @@ public class SimpleVersioningManager implements VersioningManager {
      * types in the repository, the ordered list of OrmFactories of VersionedRDFRecord subclasses, and the available
      * {@link VersioningService, VersioningServices}.
      *
-     * @param recordId The Resource identifying the Record to retrieve the OrmFactory for
+     * @param recordId The Resource identifying the Record to retrieve the OrmFactory for.
      * @param conn A RepositoryConnection for lookup.
-     * @return The appropriate OrmFactory for the VersionedRDFRecord
+     * @return The appropriate OrmFactory for the VersionedRDFRecord.
      * @throws IllegalArgumentException if no appropriate OrmFactory is found.
      */
-    private OrmFactory<? extends VersionedRDFRecord> getFactory(com.mobi.rdf.api.Resource recordId, RepositoryConnection conn) {
-        List<com.mobi.rdf.api.Resource> types = RepositoryResults.asList(
+    private OrmFactory<? extends VersionedRDFRecord> getFactory(Resource recordId, RepositoryConnection conn) {
+        List<Resource> types = RepositoryResults.asList(
                 conn.getStatements(recordId, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
                 .stream()
                 .map(Statements::objectResource)

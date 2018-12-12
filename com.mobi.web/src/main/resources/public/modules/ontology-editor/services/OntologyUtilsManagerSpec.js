@@ -415,7 +415,6 @@ describe('Ontology Utils Manager service', function() {
             beforeEach(function() {
                 spyOn(ontologyUtilsManagerSvc, 'saveCurrentChanges');
                 ontologyManagerSvc.getEntityUsages.and.returnValue($q.when([{'@id': 'id'}]));
-                ontologyStateSvc.getOntologiesArray.and.returnValue([{prop: 'ontology'}]);
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
                 ontologyStateSvc.removeEntity.and.returnValue([ontologyStateSvc.listItem.selected]);
             });
@@ -434,7 +433,6 @@ describe('Ontology Utils Manager service', function() {
                 expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.flatEverythingTree).not.toEqual([{prop: 'everything'}]);
-                expect(ontologyStateSvc.getOntologiesArray).not.toHaveBeenCalled();
             });
             it('and when updateEverythingTree is true', function() {
                 ontologyUtilsManagerSvc.commonDelete('iri', true)
@@ -449,9 +447,8 @@ describe('Ontology Utils Manager service', function() {
                 expect(updateRefs.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, 'iri');
                 expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
-                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([{prop: 'ontology'}], ontologyStateSvc.listItem);
+                expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
-                expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
             });
         });
         it('when getEntityUsages rejects', function() {
@@ -494,7 +491,6 @@ describe('Ontology Utils Manager service', function() {
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('iri');
         ontologyStateSvc.listItem.objectProperties.iris = {};
         ontologyStateSvc.listItem.objectProperties.iris.iri = 'ontology';
-        ontologyStateSvc.getOntologiesArray.and.returnValue([{prop: 'ontology'}]);
         ontologyUtilsManagerSvc.deleteObjectProperty();
         scope.$apply();
         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
@@ -1131,7 +1127,6 @@ describe('Ontology Utils Manager service', function() {
             this.key = prefixes.rdfs + 'range';
             _.set(ontologyStateSvc.listItem.selected, this.key + '[' + this.index + ']', {'@id': 'id'});
             ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
-            ontologyStateSvc.getOntologiesArray.and.returnValue([]);
             ontologyUtilsManagerSvc.removeProperty(this.key, this.index)
                 .then(response => {
                     expect(response).toEqual({'@id': 'id'});
@@ -1142,7 +1137,6 @@ describe('Ontology Utils Manager service', function() {
             expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
             expect(ontologyUtilsManagerSvc.updateLabel).toHaveBeenCalled();
             expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
-            expect(ontologyStateSvc.getOntologiesArray).not.toHaveBeenCalled();
             expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
             expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([]);
         });
@@ -1150,7 +1144,6 @@ describe('Ontology Utils Manager service', function() {
             this.key = prefixes.rdfs + 'domain';
             _.set(ontologyStateSvc.listItem.selected, this.key + '[' + this.index + ']', {'@id': 'id'});
             ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
-            ontologyStateSvc.getOntologiesArray.and.returnValue([]);
             ontologyUtilsManagerSvc.removeProperty(this.key, this.index)
                 .then(response => {
                     expect(response).toEqual({'@id': 'id'});
@@ -1161,8 +1154,7 @@ describe('Ontology Utils Manager service', function() {
             expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
             expect(ontologyUtilsManagerSvc.updateLabel).toHaveBeenCalled();
             expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
-            expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
-            expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
             expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
         });
         it('if the selected key is neither rdfs:domain or rdfs:range', function() {
@@ -1177,7 +1169,6 @@ describe('Ontology Utils Manager service', function() {
             expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
             expect(ontologyUtilsManagerSvc.updateLabel).toHaveBeenCalled();
             expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
-            expect(ontologyStateSvc.getOntologiesArray).not.toHaveBeenCalled();
             expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
             expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([]);
         });
@@ -1204,7 +1195,6 @@ describe('Ontology Utils Manager service', function() {
                 expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.updateLabel).toHaveBeenCalled();
                 expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.getOntologiesArray).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([]);
             });
@@ -1224,7 +1214,6 @@ describe('Ontology Utils Manager service', function() {
                 expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.updateLabel).toHaveBeenCalled();
                 expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.getOntologiesArray).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([]);
             })

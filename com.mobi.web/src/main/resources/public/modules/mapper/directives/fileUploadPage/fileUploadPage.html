@@ -46,9 +46,9 @@
                 <div ng-if="!dvm.state.editMapping" class="btn-group dropup float-right">
                     <button type="button" class="btn btn-primary dropdown-toggle run-btn" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Run Mapping</button>
                     <div class="dropdown-menu">
-                        <button class="dropdown-item run-download" type="button" ng-click="dvm.state.displayRunMappingDownloadOverlay = true">Download</button>
-                        <button class="dropdown-item run-dataset" type="button" ng-click="dvm.state.displayRunMappingDatasetOverlay = true">Upload to Dataset</button>
-                        <button class="dropdown-item run-ontology" type="button" ng-click="dvm.state.displayRunMappingOntologyOverlay = true">Commit to Ontology</button>
+                        <button class="dropdown-item run-download" type="button" ng-click="dvm.runMappingDownload()">Download</button>
+                        <button class="dropdown-item run-dataset" type="button" ng-click="dvm.runMappingDataset()">Upload to Dataset</button>
+                        <button class="dropdown-item run-ontology" type="button" ng-click="dvm.runMappingOntology()">Commit to Ontology</button>
                     </div>
                 </div>
             </block-footer>

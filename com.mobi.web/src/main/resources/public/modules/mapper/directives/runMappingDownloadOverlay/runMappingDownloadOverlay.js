@@ -29,75 +29,74 @@
          * @name runMappingDownloadOverlay
          *
          * @description
-         * The `runMappingDownloadOverlay` module only provides the `runMappingDownloadOverlay` directive which creates
-         * an overlay with settings to download the results
+         * The `runMappingDownloadOverlay` module only provides the `runMappingDownloadOverlay` component which creates
+         * content for a modal to download the results of a mapping.
          */
         .module('runMappingDownloadOverlay', [])
         /**
-         * @ngdoc directive
-         * @name runMappingDownloadOverlay.directive:runMappingDownloadOverlay
-         * @scope
-         * @restrict E
+         * @ngdoc component
+         * @name runMappingDownloadOverlay.component:runMappingDownloadOverlay
          * @requires $filter
          * @requires mapperState.service:mapperStateService
          * @requires delimitedManager.service:delimitedManagerService
          * @requires util.service:utilService
          *
          * @description
-         * `runMappingDownloadOverlay` is a directive that creates an overlay containing a configuration settings
-         * for the result of running the currently selected {@link mapperState.service:mapperStateService#mapping mapping}
-         * against the uploaded {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}.
-         * This includes a {@link textInput.directive:textInput text input} for the file name of the downloaded
-         * mapped data and a {@link mapperSerializationSelect.directive:mapperSerializationSelect mapperSerializationSelect}
-         * for the RDF format of the mapped data. The directive is replaced by the contents of its template.
+         * `runMappingDownloadOverlay` is a component that creates content for a modal that contains a configuration
+         * settings for running the currently selected {@link mapperState.service:mapperStateService#mapping mapping}
+         * against the uploaded {@link delimitedManager.service:delimitedManagerService#dataRows delimited data} and
+         * downloading the results. This includes a {@link textInput.directive:textInput text input} for the file name
+         * of the downloaded mapped data and a
+         * {@link mapperSerializationSelect.directive:mapperSerializationSelect mapperSerializationSelect} for the RDF
+         * format of the mapped data. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
          */
-        .directive('runMappingDownloadOverlay', runMappingDownloadOverlay);
+        .component('runMappingDownloadOverlay', {
+            bindings: {
+                close: '&',
+                dismiss: '&'
+            },
+            controllerAs: 'dvm',
+            controller: ['$filter', 'mapperStateService', 'delimitedManagerService', 'utilService', RunMappingDownloadOverlayController],
+            templateUrl: 'modules/mapper/directives/runMappingDownloadOverlay/runMappingDownloadOverlay.html'
+        });
 
-        runMappingDownloadOverlay.$inject = ['$filter', 'mapperStateService', 'delimitedManagerService', 'utilService'];
+        function RunMappingDownloadOverlayController($filter, mapperStateService, delimitedManagerService, utilService) {
+            var dvm = this;
+            var state = mapperStateService;
+            var dm = delimitedManagerService;
+            dvm.util = utilService;
+            dvm.fileName = $filter('camelCase')(state.mapping.record.title, 'class') + '_Data';
+            dvm.format = 'turtle';
+            dvm.errorMessage = '';
 
-        function runMappingDownloadOverlay($filter, mapperStateService, delimitedManagerService, utilService) {
-            return {
-                restrict: 'E',
-                controllerAs: 'dvm',
-                replace: true,
-                scope: {},
-                controller: function() {
-                    var dvm = this;
-                    var state = mapperStateService;
-                    var dm = delimitedManagerService;
-                    dvm.util = utilService;
-                    dvm.fileName = $filter('camelCase')(state.mapping.record.title, 'class');
-                    dvm.format = 'turtle';
-                    dvm.errorMessage = '';
+            dvm.run = function() {
+                if (state.editMapping && state.isMappingChanged()) {
+                    state.saveMapping().then(runMapping, onError);
+                } else {
+                    runMapping(state.mapping.record.id);
+                }
+            }
+            dvm.cancel = function() {
+                dvm.dismiss();
+            }
 
-                    dvm.run = function() {
-                        if (state.editMapping && state.isMappingChanged()) {
-                            state.saveMapping().then(runMapping, onError);
-                        } else {
-                            runMapping(state.mapping.record.id);
-                        }
-                    }
-                    dvm.cancel = function() {
-                        state.displayRunMappingDownloadOverlay = false;
-                    }
-
-                    function onError(errorMessage) {
-                        dvm.errorMessage = errorMessage;
-                    }
-                    function runMapping(id) {
-                        state.mapping.record.id = id;
-                        dm.mapAndDownload(id, dvm.format, dvm.fileName);
-                        reset();
-                    }
-                    function reset() {
-                        state.step = state.selectMappingStep;
-                        state.initialize();
-                        state.resetEdit();
-                        dm.reset();
-                        state.displayRunMappingDownloadOverlay = false;
-                    }
-                },
-                templateUrl: 'modules/mapper/directives/runMappingDownloadOverlay/runMappingDownloadOverlay.html'
+            function onError(errorMessage) {
+                dvm.errorMessage = errorMessage;
+            }
+            function runMapping(id) {
+                state.mapping.record.id = id;
+                dm.mapAndDownload(id, dvm.format, dvm.fileName);
+                reset();
+            }
+            function reset() {
+                state.step = state.selectMappingStep;
+                state.initialize();
+                state.resetEdit();
+                dm.reset();
+                dvm.close();
             }
         }
 })();

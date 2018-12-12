@@ -209,20 +209,21 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     protected void deletePolicies(T record, RepositoryConnection conn) {
         RepositoryResult<Statement> results = conn.getStatements(null,
                 valueFactory.createIRI(Policy.relatedResource_IRI), record.getResource());
-        if (!results.hasNext()) {
+        if (results.hasNext()) {
+            Resource recordPolicyId = results.next().getSubject();
+
+            results = conn.getStatements(null, valueFactory.createIRI(Policy.relatedResource_IRI), recordPolicyId);
+            if (!results.hasNext()) {
+                LOGGER.info("Could not find policy policy for record: " + record.getResource()
+                        + " with a policyId of: " + recordPolicyId + ". Continuing with record deletion.");
+            }
+            Resource policyPolicyId = results.next().getSubject();
+            xacmlPolicyManager.deletePolicy(recordPolicyId);
+            xacmlPolicyManager.deletePolicy(policyPolicyId);
+        } else {
             LOGGER.info("Could not find policy for record: " + record.getResource()
                     + ". Continuing with record deletion.");
         }
-        Resource recordPolicyId = results.next().getSubject();
-
-        results = conn.getStatements(null, valueFactory.createIRI(Policy.relatedResource_IRI), recordPolicyId);
-        if (!results.hasNext()) {
-            LOGGER.info("Could not find policy policy for record: " + record.getResource()
-                    + " with a policyId of: " + recordPolicyId + ". Continuing with record deletion.");
-        }
-        Resource policyPolicyId = results.next().getSubject();
-        xacmlPolicyManager.deletePolicy(recordPolicyId);
-        xacmlPolicyManager.deletePolicy(policyPolicyId);
     }
 
     /**
