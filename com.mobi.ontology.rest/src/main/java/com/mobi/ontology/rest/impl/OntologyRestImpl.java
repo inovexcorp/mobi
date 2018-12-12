@@ -1143,9 +1143,11 @@ public class OntologyRestImpl implements OntologyRest {
         results.forEach((key, children) -> {
             HierarchyNode node = nodes.getOrDefault(key, new HierarchyNode(key));
             children.forEach(child -> {
-                HierarchyNode obj = nodes.getOrDefault(child, new HierarchyNode(child));
-                node.addChild(obj);
-                nodes.put(child, obj);
+                if (!child.equals(key)) {
+                    HierarchyNode obj = nodes.getOrDefault(child, new HierarchyNode(child));
+                    node.addChild(obj);
+                    nodes.put(child, obj);
+                }
             });
             nodes.put(key, node);
         });
