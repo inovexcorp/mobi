@@ -854,6 +854,10 @@ public class SimpleOntology implements Ontology {
                     LOG.debug("File is {} formatted.", format.getName());
                     break;
                 } catch (RDFParseException | UnsupportedRDFormatException | OWLRuntimeException e) {
+                    if (e.getClass() == RDFParseException.class && e.getMessage().contains("DOCTYPE is disallowed")) {
+                        throw new MobiOntologyException("For security reasons, DOCTYPE is not allowed in XML files. "
+                                + "https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Processing");
+                    }
                     markSupported.reset();
                     LOG.info("File is not {} formatted.", format.getName());
                 }
