@@ -116,30 +116,12 @@ describe('Reply Comment component', function() {
         });
         it('depending on whether the reply is being edited', function() {
             expect(this.element.querySelectorAll('.reply-box').length).toEqual(1);
-            expect(this.element.querySelectorAll('.reply-editor').length).toEqual(0);
+            expect(this.element.find('markdown-editor').length).toEqual(0);
 
             this.controller.edit = true;
             scope.$digest();
             expect(this.element.querySelectorAll('.reply-box').length).toEqual(0);
-            expect(this.element.querySelectorAll('.reply-editor').length).toEqual(1);
+            expect(this.element.find('markdown-editor').length).toEqual(1);
         });
-        it('depending on whether the reply is empty', function() {
-            this.controller.edit = true;
-            scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('.reply-editor button')[0]);
-            expect(button.attr('disabled')).toBeTruthy();
-
-            this.controller.replyComment = 'WOW';
-            scope.$digest();
-            expect(button.attr('disabled')).toBeFalsy();
-        });
-    });
-    it('should make a reply comment when the button is clicked', function() {
-        spyOn(this.controller, 'reply');
-        this.controller.edit = true;
-        scope.$digest();
-        var button = angular.element(this.element.querySelectorAll('.reply-editor button')[0]);
-        button.triggerHandler('click');
-        expect(this.controller.reply).toHaveBeenCalled();
     });
 });
