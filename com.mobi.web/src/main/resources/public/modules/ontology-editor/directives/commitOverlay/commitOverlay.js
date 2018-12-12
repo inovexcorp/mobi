@@ -111,7 +111,7 @@
                         cm.createBranchCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.comment)
                             .then(commitIri => {
                                 commitId = commitIri;
-                                return dvm.os.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, commitId, branchId);
+                                return dvm.os.updateOntologyState({recordId: dvm.os.listItem.ontologyRecord.recordId, commitId, branchId});
                             }, $q.reject)
                             .then(() => {
                                 dvm.os.listItem.ontologyRecord.branchId = branchId;

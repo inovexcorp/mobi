@@ -21,19 +21,21 @@
  * #L%
  */
 describe('Commits Tab directive', function() {
-    var $compile, scope, ontologyStateSvc;
+    var $compile, scope, ontologyStateSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('commitsTab');
         mockOntologyState();
         mockUtil();
+        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             utilSvc = _utilService_;
+            prefixes = _prefixes_;
         });
 
         this.element = $compile(angular.element('<commits-tab></commits-tab>'))(scope);
@@ -45,6 +47,7 @@ describe('Commits Tab directive', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
+        prefixes = null;
         this.element.remove();
     });
 
@@ -83,15 +86,31 @@ describe('Commits Tab directive', function() {
         });
     });
     describe('controller methods', function() {
-        it('should get the currently selected branch', function() {
-            var branch = {'@id': 'branchId', 'http://purl.org/dc/terms/title': [{'@value': 'title'}]};
-            ontologyStateSvc.listItem = {branches: [branch], ontologyRecord: {branchId: branch['@id']}};
-            this.controller.getBranchTitle();
-            expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(branch, 'title');
+        describe('should get the title for the current head commit currently selected branch', function() {
+            beforeEach(function() {
+                utilSvc.getDctermsValue.and.returnValue('title');
+            });
+            it('if a branch is checked out', function() {
+                var branch = {'@id': 'branchId', 'http://purl.org/dc/terms/title': [{'@value': 'title'}]};
+                ontologyStateSvc.listItem = {branches: [branch], ontologyRecord: {branchId: branch['@id']}};
+                expect(this.controller.getHeadTitle()).toEqual('title');
+                expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(branch, 'title');
+            });
+            it('if a tag is checked out', function() {
+                var commitId = 'commit';
+                var tag = {[prefixes.catalog + 'commit']: [{'@id': commitId}]};
+                ontologyStateSvc.isStateTag.and.returnValue(true);
+                ontologyStateSvc.listItem = {tags: [tag], ontologyRecord: {commitId}};
+                expect(this.controller.getHeadTitle()).toEqual('title');
+                expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(tag, 'title');
+            });
+            it('if a commit is checked out', function() {
+                expect(this.controller.getHeadTitle()).toEqual('');
+            });
         });
         it('should open the ontology at a commit', function() {
             this.controller.openOntologyAtCommit({id: 'commit'});
-            expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, '', 'commit', true);
+            expect(ontologyStateSvc.updateOntologyWithCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, 'commit');
         });
     });
     it('should open an ontology at a commit when its view button is clicked', function() {
