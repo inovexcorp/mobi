@@ -27,7 +27,6 @@
     </div>
     <div class="new-comment pt-3 clearfix" ng-if="!dvm.mm.isAccepted(dvm.request.jsonld)">
         <h6>New Comment</h6>
-        <markdown-editor ng-model="dvm.newComment" place-holder="'Write your comment here...'"></markdown-editor>
-        <button type="button" class="btn btn-primary float-right" ng-disabled="!dvm.newComment" ng-click="dvm.comment()">Comment</button>
+        <markdown-editor ng-model="dvm.newComment" place-holder="'Write your comment here...'" click-event="dvm.comment()" button-text="'Comment'"></markdown-editor>
     </div>
 </div>

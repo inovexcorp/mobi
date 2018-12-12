@@ -41,8 +41,8 @@
          *
          * @description
          * `replyComment` is a component which creates a div containing a box indicating a reply can be made. Once that
-         * box is clicked, it is replaced with a {@link markdownEditor.component:markdownEditor} and a button for
-         * submitting a reply to the provided parent comment of the provided request.
+         * box is clicked, it is replaced with a {@link markdownEditor.component:markdownEditor} for submitting a reply
+         * to the provided parent comment of the provided request.
          *
          * @param {Object} request An object representing the Merge Request with the parent comment
          * @param {string} parentId The IRI id of the parent comment this component will reply to
