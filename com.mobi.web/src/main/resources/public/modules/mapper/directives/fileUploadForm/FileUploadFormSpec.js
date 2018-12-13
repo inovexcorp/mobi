@@ -73,6 +73,7 @@ describe('File Upload Form directive', function() {
             });
             describe('if a file has been selected', function() {
                 beforeEach(function() {
+                    this.controller.fileName = 'No file selected';
                     this.controller.fileObj = {};
                 });
                 it('unless an error occurs', function() {
@@ -80,6 +81,7 @@ describe('File Upload Form directive', function() {
                     this.controller.upload();
                     scope.$apply();
                     expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(this.controller.fileObj);
+                    expect(this.controller.fileName).toEqual('No file selected');
                     expect(delimitedManagerSvc.previewFile).not.toHaveBeenCalled();
                     expect(mapperStateSvc.setInvalidProps).not.toHaveBeenCalled();
                     expect(this.controller.errorMessage).toBe('Error message');
@@ -88,21 +90,15 @@ describe('File Upload Form directive', function() {
                 });
                 it('successfully', function() {
                     delimitedManagerSvc.upload.and.returnValue($q.when('File Name'));
+                    this.controller.fileObj = {name: 'File Name'};
                     this.controller.upload();
                     scope.$apply();
                     expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(this.controller.fileObj);
+                    expect(this.controller.fileName).toEqual('File Name');
                     expect(delimitedManagerSvc.fileName).not.toBe('');
                     expect(this.controller.errorMessage).toBe('');
                     expect(delimitedManagerSvc.previewFile).toHaveBeenCalledWith(50);
                     expect(mapperStateSvc.setInvalidProps).toHaveBeenCalled();
-                });
-                it('fileName has been set', function() {
-                    this.controller.fileName = '';
-                    this.controller.fileObj = {name: 'File Name'};
-                    delimitedManagerSvc.upload.and.returnValue($q.when('File Name'));
-                    this.controller.upload();
-                    scope.$apply();
-                    expect(this.controller.fileName).toEqual('File Name');
                 });
             });
         });

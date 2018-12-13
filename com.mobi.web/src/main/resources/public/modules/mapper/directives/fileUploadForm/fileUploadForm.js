@@ -75,8 +75,8 @@
                     }
                     dvm.upload = function() {
                         if (dvm.fileObj) {
-                            dvm.fileName = dvm.fileObj.name;
                             dvm.dm.upload(dvm.fileObj).then(data => {
+                                dvm.fileName = dvm.fileObj.name;
                                 dvm.dm.fileName = data;
                                 dvm.errorMessage = '';
                                 return dvm.dm.previewFile(50);
