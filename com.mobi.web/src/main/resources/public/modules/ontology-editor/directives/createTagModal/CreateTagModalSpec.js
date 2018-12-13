@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Create Tag Modal component', function() {
-    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, loginManagerSvc, prefixes;
+    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -32,17 +32,14 @@ describe('Create Tag Modal component', function() {
         mockPrefixes();
         injectRegexConstant();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _ontologyStateService_, _loginManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
             ontologyStateSvc = _ontologyStateService_;
-            loginManagerSvc = _loginManagerService_;
-            prefixes = _prefixes_;
         });
 
-        loginManagerSvc.currentUserIRI = 'user';
         this.catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
         this.recordId = 'recordId';
         this.branchId = 'branchId'
@@ -63,8 +60,6 @@ describe('Create Tag Modal component', function() {
         $q = null;
         catalogManagerSvc = null;
         ontologyStateSvc = null;
-        loginManagerSvc = null;
-        prefixes = null;
         this.element.remove();
     });
 

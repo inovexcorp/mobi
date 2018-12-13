@@ -512,10 +512,13 @@ public class CatalogRestImpl implements CatalogRest {
             IRI recordIri = vf.createIRI(recordId);
             IRI commitIri = vf.createIRI(commitId);
             IRI tagIri = vf.createIRI(iri);
+            if (!catalogUtilsService.commitInRecord(recordIri, commitIri, conn)) {
+                throw ErrorUtils.sendError("Commit " + commitId + " is not in record " + recordId,
+                        Response.Status.BAD_REQUEST);
+            }
+
             OrmFactory<Tag> factory = factoryRegistry.getFactoryOfType(Tag.class).orElseThrow(() ->
                     ErrorUtils.sendError("Tag Factory not found", Response.Status.INTERNAL_SERVER_ERROR));
-
-            catalogUtilsService.commitInRecord(recordIri, commitIri, conn);
             OffsetDateTime now = OffsetDateTime.now();
             Tag tag = factory.createNew(tagIri);
             tag.setProperty(vf.createLiteral(title), vf.createIRI(_Thing.title_IRI));

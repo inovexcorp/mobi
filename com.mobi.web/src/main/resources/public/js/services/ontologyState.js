@@ -1242,8 +1242,14 @@
                 _.remove(self.list, { ontologyRecord: { recordId }});
             }
             self.removeBranch = function(recordId, branchId) {
-                self.deleteOntologyBranch(recordId, branchId);
-                _.remove(self.getListItemByRecordId(recordId).branches, {'@id': branchId});
+                var listItem = self.getListItemByRecordId(recordId);
+                return self.deleteOntologyBranch(recordId, branchId).then(() => {
+                    _.remove(listItem.branches, {'@id': branchId});
+                    return cm.getRecordVersions(recordId, catalogId);
+                }, $q.reject)
+                .then(versions => {
+                    listItem.tags = _.filter(versions, version => _.includes(_.get(version, '@type'), prefixes.catalog + 'Tag'));
+                }, $q.reject);
             }
             self.afterSave = function() {
                 return cm.getInProgressCommit(self.listItem.ontologyRecord.recordId, catalogId)

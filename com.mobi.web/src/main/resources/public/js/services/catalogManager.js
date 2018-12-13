@@ -578,7 +578,7 @@
              * @param {string} catalogId The id of the Catalog the Record should be a part of
              * @param {Object} tagConfig A configuration object containing metadata for the new Tag
              * @param {string} tagConfig.title The required title of the new Tag
-             * @param {string} tagConfig.description The optional description of the new TAg
+             * @param {string} tagConfig.description The optional description of the new Tag
              * @param {string} tagConfig.iri The IRI for the new Tag
              * @param {string} tagConfig.commit The IRI of the Commit for the new Tag
              * @param {string} commitId The id of the Commit to associate with the new Tag

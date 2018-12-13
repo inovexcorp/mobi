@@ -93,7 +93,6 @@ import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.StopWatch;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -409,7 +408,6 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getOntologyStuff(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                      String commitIdStr) {
         try {
-            log.debug("Getting ontology stuff");
             JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getOntologyStuff, true);
             return Response.ok(result).build();
@@ -419,101 +417,30 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private JSONObject getOntologyStuff(Ontology ontology) {
-        log.debug("Getting ontology stuff");
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
             // Populate repository
-            StopWatch watch = new StopWatch();
-            watch.start();
             Set<Ontology> importedOntologies = ontology.getImportsClosure();
-            watch.stop();
-            log.debug("Retrieving ontologies took " + watch.getTime() + "ms");
             conn.begin();
-            watch.reset();
-
-            watch.start();
             importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
-            watch.stop();
-            log.debug("Adding ontologies to repository took " + watch.getTime() + "ms");
             conn.commit();
             // Get stuff
-            watch.reset();
-
-            watch.start();
             Set<Ontology> onlyImports = getImportedOntologies(importedOntologies, ontology.getOntologyId());
-            watch.stop();
-            log.debug("Retrieving imported ontologies took " + watch.getTime() + "ms");
-            watch.reset();
-
             JSONObject result = new JSONObject();
-            watch.start();
             result.put("iriList", getAllIRIs(ontology, conn));
-            watch.stop();
-            log.debug("IRI list took " + watch.getTime() + "ms");
-            watch.reset();
-
-            watch.start();
             result.put("importedIRIs", doWithOntologies(onlyImports, ont -> getAllIRIs(ont, conn)));
-            watch.stop();
-            log.debug("IRI list took " + watch.getTime() + "ms");
-            watch.reset();
-
-            watch.start();
             result.put("importedOntologies", onlyImports.stream()
                     .map(ont -> getOntologyAsJsonObject(ont, "jsonld"))
                     .collect(JSONArray::new, JSONArray::add, JSONArray::add));
-            watch.stop();
-            log.debug("Imported Ontologies took " + watch.getTime() + "ms");
-            watch.reset();
-
-            watch.start();
             result.put("failedImports", getUnloadableImportIRIs(ontology));
-            watch.stop();
-            log.debug("Failed imports took " + watch.getTime() + "ms");
-            watch.reset();
-
-            watch.start();
             result.put("classHierarchy", getHierarchy(ontologyManager.getSubClassesOf(conn)));
-            watch.stop();
-            log.debug("Class hierarchy took " + watch.getTime() + "ms");
-            watch.reset();
-
-            watch.start();
             result.put("individuals", getClassIndividuals(ontologyManager.getClassesWithIndividuals(conn)));
-            watch.stop();
-            log.debug("Individuals hierarchy took " + watch.getTime() + "ms");
-            watch.reset();
-
-            watch.start();
             result.put("dataPropertyHierarchy", getHierarchy(ontologyManager.getSubDatatypePropertiesOf(conn)));
-            watch.stop();
-            log.debug("Data Property hierarchy took " + watch.getTime() + "ms");
-            watch.reset();
-
-            watch.start();
             result.put("objectPropertyHierarchy", getHierarchy(ontologyManager.getSubObjectPropertiesOf(conn)));
-            watch.stop();
-            log.debug("Object Property hierarchy took " + watch.getTime() + "ms");
-            watch.reset();
-
-            watch.start();
             result.put("annotationHierarchy", getHierarchy(ontologyManager.getSubAnnotationPropertiesOf(conn)));
-            watch.stop();
-            log.debug("Annotation hierarchy took " + watch.getTime() + "ms");
-            watch.reset();
-
-            watch.start();
             result.put("conceptHierarchy", getHierarchy(ontologyManager.getConceptRelationships(conn)));
-            watch.stop();
-            log.debug("Concept hierarchy took " + watch.getTime() + "ms");
-            watch.reset();
-
-            watch.start();
             result.put("conceptSchemeHierarchy", getHierarchy(ontologyManager.getConceptSchemeRelationships(conn)));
-            watch.stop();
-            log.debug("Concept Scheme hierarchy took " + watch.getTime() + "ms");
-            watch.reset();
             return result;
         } finally {
             repo.shutDown();
@@ -1276,10 +1203,8 @@ public class OntologyRestImpl implements OntologyRest {
     private <T extends JSON> T doWithOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                            String commitIdStr, Function<Ontology, T> iriFunction,
                                               boolean applyInProgressCommit) {
-        log.debug("Getting ontology");
         Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr,
                 applyInProgressCommit);
-        log.debug("Got ontology");
         if (optionalOntology.isPresent()) {
             return iriFunction.apply(optionalOntology.get());
         } else {

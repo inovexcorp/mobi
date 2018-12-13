@@ -38,7 +38,6 @@
          * @name createTagModal.component:createTagModal
          * @requires catalogManager.service:catalogManagerService
          * @requires ontologyState.service:ontologyStateService
-         * @requires prefixes.service:prefixes
          *
          * @description
          * `createTagModal` is a component that creates content for a modal that creates a tag on the current
@@ -59,12 +58,11 @@
             templateUrl: 'modules/ontology-editor/directives/createTagModal/createTagModal.html',
         });
 
-    CreateTagModalCtrl.$inject = ['$q', '$filter', 'REGEX', 'catalogManagerService', 'ontologyStateService', 'loginManagerService', 'prefixes'];
+    CreateTagModalCtrl.$inject = ['$q', '$filter', 'REGEX', 'catalogManagerService', 'ontologyStateService'];
 
-    function CreateTagModalCtrl($q, $filter, REGEX, catalogManagerService, ontologyStateService, loginManagerService, prefixes) {
+    function CreateTagModalCtrl($q, $filter, REGEX, catalogManagerService, ontologyStateService) {
         var dvm = this;
         var cm = catalogManagerService;
-        var lm = loginManagerService;
         var catalogId = _.get(cm.localCatalog, '@id', '');
         var now = new Date();
 

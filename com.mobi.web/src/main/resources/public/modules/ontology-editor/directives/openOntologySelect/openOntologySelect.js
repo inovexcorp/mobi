@@ -48,7 +48,7 @@
          * provided {@link ontologyState.service:ontologyStateService listItem} and depending on the provided state, the
          * currently open commit. Each branch in the `ui-select` has buttons for editing the metadata and deleting the
          * branch which will open a {@link confirmModal.directive:confirmModal}. Each tag in the `ui-select` has a
-         * button for deleting the tag which will open a {@link confirmModa.directive:confirmModal}. The component also
+         * button for deleting the tag which will open a {@link confirmModal.directive:confirmModal}. The component also
          * houses the method for opening a modal for
          * {@link editBranchOverlay.directive:editBranchOverlay editing a branch}.
          *
@@ -158,8 +158,8 @@
             }
             dvm.deleteBranch = function(branch) {
                 om.deleteOntologyBranch(dvm.listItem.ontologyRecord.recordId, branch['@id'])
+                    .then(() => dvm.os.removeBranch(dvm.listItem.ontologyRecord.recordId, branch['@id']), $q.reject)
                     .then(() => {
-                        dvm.os.removeBranch(dvm.listItem.ontologyRecord.recordId, branch['@id']);
                         if (!dvm.os.isStateBranch(dvm.currentState)) {
                             dvm.cm.getCommit(dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'commit'))
                                 .then(_.noop, error => {
