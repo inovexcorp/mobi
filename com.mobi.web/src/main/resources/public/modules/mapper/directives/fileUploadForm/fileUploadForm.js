@@ -67,6 +67,7 @@
                     dvm.dm = delimitedManagerService;
                     dvm.errorMessage = '';
                     dvm.fileObj = undefined;
+                    dvm.fileName = 'No file selected'
 
                     dvm.isExcel = function() {
                         var fileName = _.get(dvm.fileObj, 'name', '');
@@ -74,6 +75,7 @@
                     }
                     dvm.upload = function() {
                         if (dvm.fileObj) {
+                            dvm.fileName = dvm.fileObj.name;
                             dvm.dm.upload(dvm.fileObj).then(data => {
                                 dvm.dm.fileName = data;
                                 dvm.errorMessage = '';

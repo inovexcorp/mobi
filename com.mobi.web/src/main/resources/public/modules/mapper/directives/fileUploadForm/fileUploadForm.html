@@ -23,7 +23,9 @@
 <form class="file-upload-form" name="dvm.uploadForm">
     <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
     <div class="form-group">
-        <file-input ng-model="dvm.fileObj" accept=".csv,.xls,.xlsx,.tsv" on-change="dvm.upload()" required></file-input>
+        <button type="button" class="btn btn-light btn-sm ml-1" onclick="document.getElementById('open_mapping-file-input').click()">Choose File</button>
+        <span class="mx-1"> {{dvm.fileName}}</span>
+        <file-input id="open_mapping-file-input" class="hide" ng-model="dvm.fileObj" accept=".csv,.xls,.xlsx,.tsv" on-change="dvm.upload()" required></file-input>
     </div>
     <checkbox display-text="'Contains headers'" ng-model="dvm.dm.containsHeaders"></checkbox>
     <div ng-if="dvm.fileObj && !dvm.isExcel()" class="form-group">
