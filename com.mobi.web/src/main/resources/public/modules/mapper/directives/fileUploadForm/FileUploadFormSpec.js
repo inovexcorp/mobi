@@ -96,12 +96,26 @@ describe('File Upload Form directive', function() {
                     expect(delimitedManagerSvc.previewFile).toHaveBeenCalledWith(50);
                     expect(mapperStateSvc.setInvalidProps).toHaveBeenCalled();
                 });
+                it('fileName has been set', function() {
+                    this.controller.fileName = '';
+                    this.controller.fileObj = {name: 'File Name'};
+                    delimitedManagerSvc.upload.and.returnValue($q.when('File Name'));
+                    this.controller.upload();
+                    scope.$apply();
+                    expect(this.controller.fileName).toEqual('File Name');
+                });
             });
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('file-upload-form')).toBe(true);
+        });
+        it('with a button', function() {
+            expect(this.element.find('button').length).toBe(1);
+        });
+        it('with a span', function() {
+            expect(this.element.find('span').length).toBe(1);
         });
         it('with a file input', function() {
             expect(this.element.find('file-input').length).toBe(1);
