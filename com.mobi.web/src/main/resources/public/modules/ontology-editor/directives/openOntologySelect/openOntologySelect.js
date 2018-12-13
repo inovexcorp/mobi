@@ -170,8 +170,12 @@
                         setSelectList();
                     }, dvm.util.createErrorToast);
             }
-            dvm.deleteTag = function() {
-                console.log('Delete Tag');
+            dvm.deleteTag = function(tag) {
+                dvm.cm.deleteRecordVersion(tag['@id'], dvm.listItem.ontologyRecord.recordId, catalogId)
+                    .then(() => {
+                        _.remove(dvm.listItem.tags, {'@id': tag['@id']});
+                        setSelectList();
+                    }, dvm.util.createErrorToast)
             }
             dvm.submit = function(branch) {
                 if (branch['@id'] === dvm.listItem.ontologyRecord.branchId) {

@@ -179,6 +179,7 @@
                     deletions: []
                 },
                 branches: [],
+                tags: [],
                 classesAndIndividuals: {},
                 classesWithIndividuals: [],
                 individualsParentPath: [],

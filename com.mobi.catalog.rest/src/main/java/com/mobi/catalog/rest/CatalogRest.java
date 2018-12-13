@@ -371,6 +371,22 @@ public interface CatalogRest {
                            @FormDataParam("title") String title,
                            @FormDataParam("description") String description);
 
+    /**
+     * Creates a Tag for the identified VersionedRecord on the identified Commit using the passed form data and stores
+     * it in the repository. Requires the IRI for the Tag and the IRI of the Commit to attach it to. This Tag will
+     * become the latest Version for the identified VersionedRecord. Returns a Response with the IRI of the new Tag.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param title The required title for the new Tag.
+     * @param description The optional description for the new Tag.
+     * @param iri The required IRI for the new Tag. Must be unique in the repository.
+     * @param commitId The required String representing the Commit ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @return A Response with the IRI string of the created Tag.
+     */
     @POST
     @Path("{catalogId}/records/{recordId}/tags")
     @Produces(MediaType.TEXT_PLAIN)

@@ -362,6 +362,11 @@ describe('Open Ontology Select component', function() {
                     expect(modalSvc.openConfirmModal).toHaveBeenCalledWith({asymmetricMatch: actual => !actual.includes('diverging changes')}, jasmine.any(Function));
                 });
             });
+            it('a tag', function() {
+                catalogManagerSvc.isTag.and.returnValue(true);
+                this.controller.openDeleteConfirmation(this.event, this.tag);
+                expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('Are you sure that you want to delete Tag'), jasmine.any(Function));
+            });
         });
         it('openEditOverlay calls the correct methods', function() {
             var event = scope.$emit('click');
@@ -372,9 +377,6 @@ describe('Open Ontology Select component', function() {
         });
         describe('deleteBranch calls the correct methods', function() {
             beforeEach(function() {
-                this.branch;
-                scope.listItem.branches = [this.branch];
-                scope.$digest();
                 spyOn(this.controller, 'changeEntity');
             });
             describe('when deleteOntologyBranch is resolved', function() {
@@ -462,6 +464,37 @@ describe('Open Ontology Select component', function() {
                 expect(catalogManagerSvc.getCommit).not.toHaveBeenCalled();
                 expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
                 expect(this.controller.changeEntity).not.toHaveBeenCalled();
+            });
+        });
+        describe('deleteTag calls the correct methods', function() {
+            beforeEach(function() {
+                this.controller.currentStateId = 'current';
+                this.controller.currentState = {
+                    '@id': this.controller.currentStateId,
+                    '@type': [prefixes.ontologyState + 'StateCommit'],
+                    [prefixes.ontologyState + 'commit']: [{'@id': this.commitId}]
+                };
+                this.controller.selectedList = [this.branch, this.tag];
+                catalogManagerSvc.isBranch.and.callFake(obj => _.includes(_.get(obj, '@type'), prefixes.catalog + 'Branch'));
+                catalogManagerSvc.isCommit.and.callFake(obj => _.includes(_.get(obj, '@type'), prefixes.catalog + 'Commit'));
+                catalogManagerSvc.isTag.and.callFake(obj => _.includes(_.get(obj, '@type'), prefixes.catalog + 'Tag'));
+            });
+            it('when deleteRecordVersion is resolved', function() {
+                this.controller.deleteTag(this.tag);
+                scope.$apply();
+                expect(catalogManagerSvc.deleteRecordVersion).toHaveBeenCalledWith(this.tagId, this.recordId, this.catalogId);
+                expect(this.controller.listItem.tags).not.toContain(this.tag);
+                expect(this.controller.selectList).not.toContain(this.tag);
+                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+            });
+            it('when deleteRecordVersion is rejected', function() {
+                catalogManagerSvc.deleteRecordVersion.and.returnValue($q.reject(this.errorMessage));
+                this.controller.deleteTag(this.tag);
+                scope.$apply();
+                expect(catalogManagerSvc.deleteRecordVersion).toHaveBeenCalledWith(this.tagId, this.recordId, this.catalogId);
+                expect(this.controller.listItem.tags).toContain(this.tag);
+                expect(this.controller.selectList).toContain(this.tag);
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith(this.errorMessage);
             });
         });
     });

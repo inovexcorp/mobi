@@ -109,11 +109,13 @@ describe('Commits Tab directive', function() {
                 expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(branch, 'title');
             });
             it('if a tag is checked out', function() {
-                var commitId = 'commit';
-                var tag = {[prefixes.catalog + 'commit']: [{'@id': commitId}]};
+                ontologyStateSvc.getCurrentStateByRecordId.and.returnValue({});
+                var tag = {'@id': 'tag'};
+                utilSvc.getPropertyId.and.returnValue(tag['@id']);
                 ontologyStateSvc.isStateTag.and.returnValue(true);
-                ontologyStateSvc.listItem = {tags: [tag], ontologyRecord: {commitId}};
+                ontologyStateSvc.listItem = {tags: [tag], ontologyRecord: {recordId: 'recordId'}};
                 expect(this.controller.getHeadTitle()).toEqual('title');
+                expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.ontologyState + 'tag');
                 expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(tag, 'title');
             });
             it('if a commit is checked out', function() {
