@@ -53,17 +53,11 @@ describe('Concept Hierarchy Block directive', function() {
         });
         it('depending on whether the tree is empty', function() {
             expect(this.element.find('info-message').length).toEqual(1);
+            expect(this.element.find('hierarchy-tree').length).toBe(0);
 
             ontologyStateSvc.listItem.concepts.flat = [{}];
             scope.$digest();
             expect(this.element.find('info-message').length).toEqual(0);
-        });
-        it('with no link to add a concept if the user cannot modify', function() {
-            ontologyStateSvc.canModify.and.returnValue(false);
-            scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
-        });
-        it('with a hierarchy-tree', function() {
             expect(this.element.find('hierarchy-tree').length).toBe(1);
         });
     });

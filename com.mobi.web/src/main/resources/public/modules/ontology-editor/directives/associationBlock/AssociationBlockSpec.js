@@ -52,12 +52,11 @@ describe('Association Block directive', function() {
         });
         it('depending on whether the tree is empty', function() {
             expect(this.element.find('info-message').length).toEqual(1);
+            expect(this.element.find('everything-tree').length).toBe(0);
 
             ontologyStateSvc.listItem.flatEverythingTree = [{}];
             scope.$digest();
             expect(this.element.find('info-message').length).toEqual(0);
-        });
-        it('with a everything-tree', function() {
             expect(this.element.find('everything-tree').length).toBe(1);
         });
     });

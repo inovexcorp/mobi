@@ -6,10 +6,13 @@
     min-width: 100%;
 
     .repeater-container {
-        overflow: auto;
+        overflow-x: auto;
 
         .tree-item-wrapper {
             padding-right: 10px;
+        }
+        .tree-item {
+            height: 26px;
         }
     }
 }
