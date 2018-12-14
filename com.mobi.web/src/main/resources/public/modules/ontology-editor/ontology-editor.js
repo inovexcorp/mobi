@@ -53,6 +53,7 @@
             'createEntityModal',
             'createIndividualOverlay',
             'createObjectPropertyOverlay',
+            'createTagModal',
             'datatypePropertyAxioms',
             'datatypePropertyBlock',
             'datatypePropertyOverlay',
