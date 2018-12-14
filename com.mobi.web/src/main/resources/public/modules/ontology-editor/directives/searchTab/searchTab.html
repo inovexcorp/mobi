@@ -20,9 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="search-tab row p-3">
-    <div class="col-4 d-flex flex-column">
-        <div class="search">
+<div class="search-tab row m-0">
+    <div class="col-4 d-flex flex-column pt-2">
+        <div class="search pb-1">
             <search-bar ng-model="dvm.os.listItem.editorTabStates.search.searchText" submit-event="dvm.onKeyup()"></search-bar>
         </div>
         <div class="flex-1 vertical-scroll" targeted-spinner="dvm.id">
@@ -40,7 +40,7 @@
             </div>
         </div>
     </div>
-    <div class="entity-IRI col-8 d-flex flex-column" ng-if="dvm.os.listItem.editorTabStates.search.entityIRI">
+    <div class="entity-IRI col-8 d-flex flex-column pt-2" ng-if="dvm.os.listItem.editorTabStates.search.entityIRI">
         <div class="flex-1 vertical-scroll">
             <div class="d-flex">
                 <selected-details class="flex-1 remove-min-width" read-only="true"></selected-details>

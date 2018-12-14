@@ -73,7 +73,7 @@ describe('Commits Tab directive', function() {
             expect(this.element.querySelectorAll('.view-table').length).toEqual(1);
             expect(this.element.querySelectorAll('.view-table tbody tr').length).toEqual(this.controller.commits.length);
         });
-        it('depending on whether the user has saved changes', function() {
+        it('depending on whether the user has unsaved changes', function() {
             ontologyStateSvc.hasChanges.and.returnValue(false);
             this.controller.commits = [{id: 'commit'}];
             scope.$digest();
@@ -81,6 +81,18 @@ describe('Commits Tab directive', function() {
             expect(button.attr('disabled')).toBeFalsy();
 
             ontologyStateSvc.hasChanges.and.returnValue(true);
+            scope.$digest();
+            expect(button.attr('disabled')).toBeTruthy();
+        });
+        it('depending on whether the user has saved changes', function() {
+            ontologyStateSvc.hasChanges.and.returnValue(false);
+            ontologyStateSvc.isCommittable.and.returnValue(false);
+            this.controller.commits = [{id: 'commit'}];
+            scope.$digest();
+            var button = angular.element(this.element.querySelectorAll('.view-table tbody button')[0]);
+            expect(button.attr('disabled')).toBeFalsy();
+
+            ontologyStateSvc.isCommittable.and.returnValue(true);
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
@@ -97,11 +109,13 @@ describe('Commits Tab directive', function() {
                 expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(branch, 'title');
             });
             it('if a tag is checked out', function() {
-                var commitId = 'commit';
-                var tag = {[prefixes.catalog + 'commit']: [{'@id': commitId}]};
+                ontologyStateSvc.getCurrentStateByRecordId.and.returnValue({});
+                var tag = {'@id': 'tag'};
+                utilSvc.getPropertyId.and.returnValue(tag['@id']);
                 ontologyStateSvc.isStateTag.and.returnValue(true);
-                ontologyStateSvc.listItem = {tags: [tag], ontologyRecord: {commitId}};
+                ontologyStateSvc.listItem = {tags: [tag], ontologyRecord: {recordId: 'recordId'}};
                 expect(this.controller.getHeadTitle()).toEqual('title');
+                expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.ontologyState + 'tag');
                 expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(tag, 'title');
             });
             it('if a commit is checked out', function() {

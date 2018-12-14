@@ -22,6 +22,7 @@ package com.mobi.catalog.rest.impl;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitJson;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitResponse;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.getDifferenceJsonString;
@@ -41,6 +42,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
+import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
@@ -57,6 +59,7 @@ import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
@@ -66,6 +69,7 @@ import com.mobi.catalog.rest.CatalogRest;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
@@ -78,6 +82,7 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
+import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
@@ -97,6 +102,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -123,6 +129,7 @@ public class CatalogRestImpl implements CatalogRest {
     private SesameTransformer transformer;
     private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
+    private CatalogUtilsService catalogUtilsService;
     private ValueFactory vf;
     private VersioningManager versioningManager;
     private BNodeService bNodeService;
@@ -159,6 +166,11 @@ public class CatalogRestImpl implements CatalogRest {
     @Reference
     void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
+    }
+
+    @Reference
+    void setCatalogUtilsService(CatalogUtilsService catalogUtilsService) {
+        this.catalogUtilsService = catalogUtilsService;
     }
 
     @Reference
@@ -449,6 +461,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersions(UriInfo uriInfo, String catalogId, String recordId, String sort, int offset,
                                 int limit, boolean asc) {
         try {
@@ -464,6 +477,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createVersion(ContainerRequestContext context, String catalogId, String recordId, String typeIRI,
                                   String title, String description) {
         try {
@@ -486,6 +501,45 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response createTag(ContainerRequestContext context, String catalogId, String recordId, String title,
+                              String description, String iri, String commitId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            checkStringParam(iri, "Tag iri is required");
+            checkStringParam(title, "Tag title is required");
+            checkStringParam(commitId, "Tag commit is required");
+            IRI recordIri = vf.createIRI(recordId);
+            IRI commitIri = vf.createIRI(commitId);
+            IRI tagIri = vf.createIRI(iri);
+            if (!catalogUtilsService.commitInRecord(recordIri, commitIri, conn)) {
+                throw ErrorUtils.sendError("Commit " + commitId + " is not in record " + recordId,
+                        Response.Status.BAD_REQUEST);
+            }
+
+            OrmFactory<Tag> factory = factoryRegistry.getFactoryOfType(Tag.class).orElseThrow(() ->
+                    ErrorUtils.sendError("Tag Factory not found", Response.Status.INTERNAL_SERVER_ERROR));
+            OffsetDateTime now = OffsetDateTime.now();
+            Tag tag = factory.createNew(tagIri);
+            tag.setProperty(vf.createLiteral(title), vf.createIRI(_Thing.title_IRI));
+            if (description != null) {
+                tag.setProperty(vf.createLiteral(description), vf.createIRI(_Thing.description_IRI));
+            }
+            tag.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
+            tag.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
+            tag.setProperty(getActiveUser(context, engineManager).getResource(),
+                    vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
+            tag.setCommit(commitFactory.createNew(commitIri));
+            catalogManager.addVersion(vf.createIRI(catalogId), recordIri, tag);
+            return Response.status(201).entity(tag.getResource().stringValue()).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
     public Response getLatestVersion(String catalogId, String recordId) {
         try {
             Version version = catalogManager.getLatestVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -500,6 +554,7 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersion(String catalogId, String recordId, String versionId) {
         try {
             Version version = catalogManager.getVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
@@ -514,6 +569,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteVersion(String catalogId, String recordId, String versionId) {
         try {
             catalogManager.removeVersion(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(versionId));
@@ -526,6 +583,8 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateVersion(String catalogId, String recordId, String versionId, String newVersionJson) {
         try {
             Version newVersion = getNewThing(newVersionJson, vf.createIRI(versionId),
