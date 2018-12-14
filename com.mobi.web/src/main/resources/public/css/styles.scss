@@ -545,6 +545,9 @@ body {
 .vertical-scroll {
     overflow-y: auto;
 }
+.vertical-no-scroll {
+    overflow-y: hidden;
+}
 .horizontal-scroll {
     overflow-x: auto;
 }
