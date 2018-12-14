@@ -227,6 +227,7 @@ describe('Ontology State Service', function() {
                 other: {active: false}
             },
             branches: [this.branch],
+            tags: [this.tag],
             index: {
                 ontologyId: {
                     position: 0,
@@ -1802,13 +1803,48 @@ describe('Ontology State Service', function() {
         expect(ontologyStateSvc.list).toEqual([]);
         expect(ontologyStateSvc.listItem).toEqual({});
     });
-    it('removeBranch removes the correct object from the branches list', function() {
-        spyOn(ontologyStateSvc, 'deleteOntologyBranch');
-        spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
-        ontologyStateSvc.removeBranch(this.recordId, this.branchId);
-        expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
-        expect(ontologyStateSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
-        expect(listItem.branches).toEqual([]);
+    describe('removeBranch should call the correct methods', function() {
+        beforeEach(function() {
+            spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
+        });
+        describe('when deleteOntologyBranch is resolved', function() {
+            beforeEach(function() {
+                spyOn(ontologyStateSvc, 'deleteOntologyBranch').and.returnValue($q.when());
+            });
+            it('and when getRecordVersions is resolved', function() {
+                catalogManagerSvc.getRecordVersions.and.returnValue($q.when([this.tag, {}]));
+                ontologyStateSvc.removeBranch(this.recordId, this.branchId)
+                    .then(_.noop, () => fail('Promise should have resolved'));
+                scope.$apply();
+                expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
+                expect(ontologyStateSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                expect(catalogManagerSvc.getRecordVersions).toHaveBeenCalledWith(this.recordId, this.catalogId);
+                expect(listItem.branches).toEqual([]);
+                expect(listItem.tags).toEqual([this.tag]);
+            });
+            it('and when getRecordVersions is rejected', function() {
+                catalogManagerSvc.getRecordVersions.and.returnValue($q.reject(this.error));
+                ontologyStateSvc.removeBranch(this.recordId, this.branchId)
+                    .then(() => fail('Promise should have rejected'), response => expect(response).toEqual(this.error));
+                scope.$apply();
+                expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
+                expect(ontologyStateSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                expect(catalogManagerSvc.getRecordVersions).toHaveBeenCalledWith(this.recordId, this.catalogId);
+                expect(listItem.branches).toEqual([]);
+                expect(listItem.tags).toEqual([this.tag]);
+            });
+        });
+        it('when deleteOntologyBranch is rejected', function() {
+            spyOn(ontologyStateSvc, 'deleteOntologyBranch').and.returnValue($q.reject(this.error));
+            ontologyStateSvc.removeBranch(this.recordId, this.branchId)
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual(this.error));
+            scope.$apply();
+            expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
+            expect(ontologyStateSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+            expect(catalogManagerSvc.getRecordVersions).not.toHaveBeenCalled();
+            expect(listItem.branches).toEqual([this.branch]);
+            expect(listItem.tags).toEqual([this.tag]);
+        });
     });
     describe('saveChanges should call the correct methods', function() {
         describe('when getInProgressCommit resolves', function() {

@@ -23,12 +23,12 @@ package com.mobi.catalog.rest.impl;
  * #L%
  */
 
+import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getOrmFactoryRegistry;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
-import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -44,6 +44,7 @@ import static org.testng.Assert.fail;
 
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
+import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
@@ -81,6 +82,8 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
@@ -190,6 +193,15 @@ public class CatalogRestImplTest extends MobiRestTestNg {
     @Mock
     private CatalogProvUtils provUtils;
 
+    @Mock
+    private CatalogUtilsService catalogUtils;
+
+    @Mock
+    private Repository repo;
+
+    @Mock
+    private RepositoryConnection conn;
+
     @Override
     protected Application configureApp() throws Exception {
         vf = getValueFactory();
@@ -255,6 +267,8 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
         when(configProvider.getLocalCatalogIRI()).thenReturn(vf.createIRI(LOCAL_IRI));
         when(configProvider.getDistributedCatalogIRI()).thenReturn(vf.createIRI(DISTRIBUTED_IRI));
+        when(repo.getConnection()).thenReturn(conn);
+        when(configProvider.getRepository()).thenReturn(repo);
 
         rest = new CatalogRestImpl();
         injectOrmFactoryReferencesIntoService(rest);
@@ -267,6 +281,7 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         rest.setVersioningManager(versioningManager);
         rest.setbNodeService(bNodeService);
         rest.setProvUtils(provUtils);
+        rest.setCatalogUtilsService(catalogUtils);
 
         return new ResourceConfig()
                 .register(rest)
@@ -295,6 +310,9 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         when(results.getPageNumber()).thenReturn(0);
         when(results.getPageSize()).thenReturn(10);
         when(results.getTotalSize()).thenReturn(50);
+
+        when(catalogUtils.commitInRecord(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(false);
+        when(catalogUtils.commitInRecord(eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class))).thenReturn(true);
 
         when(catalogManager.getLocalCatalog()).thenReturn(localCatalog);
         when(catalogManager.getDistributedCatalog()).thenReturn(distributedCatalog);
@@ -1225,7 +1243,7 @@ public class CatalogRestImplTest extends MobiRestTestNg {
     }
 
     @Test
-    public void createTagTest() {
+    public void createVersionTagTest() {
         testCreateVersionByType(tagFactory);
     }
 
@@ -1286,6 +1304,95 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         doThrow(new MobiException()).when(catalogManager).addVersion(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Version.class));
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/versions")
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 500);
+    }
+
+    // POST catalogs/{catalogId}/records/{recordId}/tags
+
+    @Test
+    public void createTagTest() {
+        //Setup:
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "Title");
+        fd.field("description", "Description");
+        fd.field("iri", "urn:test");
+        fd.field("commit", COMMIT_IRIS[0]);
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/tags")
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 201);
+        assertEquals(response.readEntity(String.class), "urn:test");
+        verify(catalogManager).addVersion(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Tag.class));
+    }
+
+    @Test
+    public void createTagWithoutTitleTest() {
+        //Setup:
+        FormDataMultiPart fd = new FormDataMultiPart().field("iri", "urn:test").field("commit", COMMIT_IRIS[0]);
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/tags")
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void createTagWithoutIriTest() {
+        //Setup:
+        FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title").field("commit", COMMIT_IRIS[0]);
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/tags")
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void createTagWithoutCommitTest() {
+        //Setup:
+        FormDataMultiPart fd = new FormDataMultiPart().field("title", "Title").field("iri", "urn:test");
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/tags")
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void createTagForCommitNotInRecordTest() {
+        //Setup:
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "Title");
+        fd.field("iri", "urn:test");
+        fd.field("commit", COMMIT_IRIS[1]);
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/tags")
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void createTagForUserThatDoesNotExistTest() {
+        // Setup:
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "Title");
+        fd.field("iri", "urn:test");
+        fd.field("commit", COMMIT_IRIS[0]);
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/tags")
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 401);
+    }
+
+    @Test
+    public void createTagWithErrorTest() {
+        //Setup:
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "Title");
+        fd.field("iri", "urn:test");
+        fd.field("commit", COMMIT_IRIS[0]);
+        doThrow(new MobiException()).when(catalogManager).addVersion(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Tag.class));
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/tags")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
     }
