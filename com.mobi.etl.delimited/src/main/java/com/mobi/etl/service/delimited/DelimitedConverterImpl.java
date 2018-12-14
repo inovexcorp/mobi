@@ -188,7 +188,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             for (Row row : sheet) {
                 // If headers exist or the row is before the offset point, skip the row
                 if ((containsHeaders && row.getRowNum() == 0) || row.getRowNum() - (containsHeaders ? 1 : 0) < offset
-                        || (limit.isPresent() && row.getRowNum() >= limit.get() + offset)) {
+                        || (limit.isPresent() && row.getRowNum() >= limit.get() + offset) || row.getLastCellNum() < 0) {
                     lastRowNumber++;
                     continue;
                 }
