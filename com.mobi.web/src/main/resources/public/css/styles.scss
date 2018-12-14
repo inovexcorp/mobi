@@ -321,9 +321,10 @@ ul {
 
     /* Anchor inherits the color of parent and fills container completely */
     a {
+        display: inline-block;
         color: inherit !important;
         cursor: pointer;
-        display: flex;
+        min-width: 100%;
         padding: 3px 4px;
         text-decoration: none;
 
@@ -333,11 +334,6 @@ ul {
         &.unsaved:hover .unsaved-icon {
             background-color: var(--primary);
             color: #fff !important;
-        }
-
-        > span {
-            flex: 1;
-            @include textOverflow;
         }
 
         > .fa.fa-fw {
@@ -363,7 +359,7 @@ ul {
     .repeater-container {
         /* The list items which contain an anchor for all of the items in the tree */
         .tree-item {
-            width: 100%;
+            white-space: nowrap;
         }
     }
 }
@@ -544,9 +540,6 @@ body {
 }
 .vertical-scroll {
     overflow-y: auto;
-}
-.vertical-no-scroll {
-    overflow-y: hidden;
 }
 .horizontal-scroll {
     overflow-x: auto;
