@@ -529,6 +529,12 @@ body {
     margin-left: 0 !important;
 }
 
+.markdown ul {
+    list-style: initial;
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
+
 /* Helper Classes */
 .padding {
     padding: 10px;
@@ -538,6 +544,9 @@ body {
 }
 .vertical-scroll {
     overflow-y: auto;
+}
+.vertical-no-scroll {
+    overflow-y: hidden;
 }
 .horizontal-scroll {
     overflow-x: auto;

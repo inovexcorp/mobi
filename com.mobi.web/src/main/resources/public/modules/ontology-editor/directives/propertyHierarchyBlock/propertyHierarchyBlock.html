@@ -20,9 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="property-hierarchy-block horizontal-scroll">
+<div class="property-hierarchy-block horizontal-scroll py-1 vertical-no-scroll">
     <info-message ng-if="!dvm.flatPropertyTree.length">(No properties defined)</info-message>
-    <div ng-if="dvm.flatPropertyTree.length" class="tree hierarchy-tree h-100 p-0 py-1">
+    <div ng-if="dvm.flatPropertyTree.length" class="tree hierarchy-tree h-100 p-0">
         <div class="h-100 repeater-container" vs-repeat="26" vs-offset-before="10" vs-offset-after="10">
             <div ng-repeat="node in dvm.flatPropertyTree | filter:dvm.isShown" class="tree-item-wrapper">
                 <div ng-if="!node.entityIRI" class="tree-item">

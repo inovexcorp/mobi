@@ -77,6 +77,7 @@ import java.util.Set;
 public class SimpleOntologyTest extends OrmEnabledTestCase {
     private ValueFactory vf = SimpleValueFactory.getInstance();
     private InputStream restrictionInputStream;
+    private InputStream hasDoctypeInputStream;
     private File testFile;
     private IRI ontologyIRI;
 
@@ -98,6 +99,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Before
     public void setUp() throws Exception {
         restrictionInputStream = getClass().getResourceAsStream("/restriction-test-ontology.ttl");
+        hasDoctypeInputStream = getClass().getResourceAsStream("/hasDoctype.owl");
         testFile = Paths.get(getClass().getResource("/test.owl").toURI()).toFile();
 
         MockitoAnnotations.initMocks(this);
@@ -144,6 +146,11 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         String noMatch = "This is not a valid ontology file.";
         InputStream stream =  new ByteArrayInputStream(noMatch.getBytes());
         Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
+    }
+
+    @Test (expected = MobiOntologyException.class)
+    public void testStreamConstructorXMLDoctype() throws Exception {
+        Ontology ontology = new SimpleOntology(hasDoctypeInputStream, ontologyManager, transformer, bNodeService, true);
     }
 
     @Test

@@ -104,6 +104,9 @@ describe('Merge Request Discussion component', function() {
             expect(this.element.prop('tagName')).toEqual('MERGE-REQUEST-DISCUSSION');
             expect(this.element.querySelectorAll('.merge-request-discussion').length).toEqual(1);
         });
+        it('with a markdown-editor', function() {
+            expect(this.element.find('markdown-editor').length).toEqual(1);
+        });
         it('depending on how many comments have been made', function() {
             expect(this.element.querySelectorAll('.comment-chain').length).toEqual(0);
             expect(this.element.find('comment-display').length).toEqual(0);
@@ -125,19 +128,5 @@ describe('Merge Request Discussion component', function() {
             expect(this.element.querySelectorAll('.new-comment').length).toEqual(0);
             expect(this.element.find('reply-comment').length).toEqual(0);
         });
-        it('if the new comment is empty', function() {
-            var button = angular.element(this.element.querySelectorAll('.new-comment button')[0]);
-            expect(button.attr('disabled')).toBeTruthy();
-
-            this.controller.newComment = 'WOW';
-            scope.$digest();
-            expect(button.attr('disabled')).toBeFalsy();
-        });
-    });
-    it('should make a new comment when the button is clicked', function() {
-        spyOn(this.controller, 'comment');
-        var button = angular.element(this.element.querySelectorAll('.new-comment button')[0]);
-        button.triggerHandler('click');
-        expect(this.controller.comment).toHaveBeenCalled();
     });
 });

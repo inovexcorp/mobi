@@ -59,6 +59,7 @@
             var pe = policyEnforcementService;
             var polm = policyManagerService;
             var catalogId = '';
+            var tagStateNamespace = 'http://mobi.com/states/ontology-editor/tag-id/';
             var branchStateNamespace = 'http://mobi.com/states/ontology-editor/branch-id/';
             var commitStateNamespace = 'http://mobi.com/states/ontology-editor/commit-id/';
 
@@ -178,6 +179,7 @@
                     deletions: []
                 },
                 branches: [],
+                tags: [],
                 classesAndIndividuals: {},
                 classesWithIndividuals: [],
                 individualsParentPath: [],
@@ -269,17 +271,21 @@
              * @methodOf stateManager.service:stateManagerService
              *
              * @description
-             * Creates a new state for the ontology editor for the user using the provided Record IRI, Commit IRI, and
-             * optional Branch IRI. The state holds the last thing the user had checked out for that Record and keeps
-             * track of the last commit a User was viewing on a Branch. Returns a Promise indicating the success.
+             * Creates a new state for the ontology editor for the user using the IRIs. The Record IRI and Commit IRI
+             * are required. The id object can optionally have a Branch IRI or a Tag IRI or neither. The state holds the
+             * last thing the user had checked out for that Record and keeps track of the last commit a User was viewing
+             * on a Branch. Returns a Promise indicating the success.
              *
-             * @param {string} recordId A string identifying the record to keep state for
-             * @param {string} commitId A string identifying the commit the user was viewing when the state was made
-             * @param {string} [branchId = ''] An optional string identifying the branch the user was last viewing
+             * @param {Object} idObj An object of IRI ids
+             * @param {string} idObj.recordId A string identifying the Record to keep state for
+             * @param {string} idObj.commitId A string identifying the Commit the user is currently viewing
+             * @param {string} [idObj.branchId = ''] An optional string identifying the Branch the user is currently
+             * viewing
+             * @param {string} [idObj.tagId = ''] An optional string identifying the Tag the user is currently viewing
              * @returns {Promise} A promise that resolves if the creation was successful or rejects with an error message
              */
-            self.createOntologyState = function(recordId, commitId, branchId = '') {
-                return sm.createState(makeOntologyState(recordId, commitId, branchId), 'ontology-editor');
+            self.createOntologyState = function(idObj) {
+                return sm.createState(makeOntologyState(idObj), 'ontology-editor');
             }
             /**
              * @ngdoc method
@@ -306,52 +312,61 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Updates an ontology editor state for the identified Record using the provided Commit IRI and optional
-             * Branch IRI and updates the current state. If the current state was originally a Commit state, the Commit
-             * state is removed. If the current state was originally a Branch state, the Branch state stays. If a Branch
-             * IRI is provided and there is already a Branch state for it, updates the Commit on the state to the
-             * provided IRI. If no Branch IRI is provided, the current state is set to a Commit state of the provided
-             * IRI. Uses the {@link stateManager.service:stateManagerService} to do the update. Returns a Promise
-             * indicating the success.
+             * Updates an ontology editor state for the identified Record using the provided objects of IRIs and updates
+             * the current state. The Record IRI and Commit IRI are required. The id object can optionally have a Branch
+             * IRI or a Tag IRI or neither. If the current state was originally not a Branch state, it is removed. If a
+             * Branch IRI is provided and there is already a Branch state for it, updates the Commit on the state to the
+             * provided IRI. Uses the {@link stateManager.service:stateManagerService} to do the update. Returns a
+             * Promise indicating the success.
              *
-             * @param {string} recordId A string identifying the Record of a state
-             * @param {string} commitId A string identifying the commit the user is now viewing
-             * @param {string} [branchId = ''] An optional string identifying the branch the user is now viewing
+             * @param {Object} idObj An object of IRI ids
+             * @param {string} idObj.recordId A string identifying the Record of a state
+             * @param {string} idObj.commitId A string identifying the Commit the user is now viewing
+             * @param {string} [idObj.branchId = ''] An optional string identifying the Branch the user is now viewing
+             * @param {string} [idObj.tagId = ''] An optional string identifying the Tag the user is now viewing
              * @returns {Promise} A promise that resolves if the update was successful or rejects with an error message
              */
-            self.updateOntologyState = function(recordId, commitId, branchId = '') {
-                var ontologyState = angular.copy(self.getOntologyStateByRecordId(recordId));
+            self.updateOntologyState = function(idObj) {
+                var ontologyState = angular.copy(self.getOntologyStateByRecordId(idObj.recordId));
                 var stateId = _.get(ontologyState, 'id', '');
                 var model = _.get(ontologyState, 'model', '');
                 var recordState = _.find(model, {'@type': [prefixes.ontologyState + 'StateRecord']});
                 var currentStateId = _.get(recordState, "['" + prefixes.ontologyState + 'currentState' + "'][0]['@id']");
                 var currentState = _.find(model, {'@id': currentStateId});
 
-                if (_.isEqual(_.get(currentState, '@type', []), [prefixes.ontologyState + 'StateCommit'])) {
+                if (currentState && !_.includes(_.get(currentState, '@type', []), prefixes.ontologyState + 'StateBranch')) {
                     _.remove(model, currentState);
                 }
 
-                if (branchId) {
-                    var branchState = _.find(model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]});
+                if (idObj.branchId) {
+                    var branchState = _.find(model, {[prefixes.ontologyState + 'branch']: [{'@id': idObj.branchId}]});
                     if (branchState) {
                         currentStateId = branchState['@id'];
-                        branchState[prefixes.ontologyState + 'commit'] = [{'@id': commitId}];
+                        branchState[prefixes.ontologyState + 'commit'] = [{'@id': idObj.commitId}];
                     } else {
                         currentStateId = branchStateNamespace + uuid.v4();
                         recordState[prefixes.ontologyState + 'branchStates'] = _.concat(_.get(recordState, "['" + prefixes.ontologyState + "branchStates']", []), [{'@id': currentStateId}]);
                         model.push({
                             '@id': currentStateId,
                             '@type': [prefixes.ontologyState + 'StateCommit', prefixes.ontologyState + 'StateBranch'],
-                            [prefixes.ontologyState + 'branch']: [{'@id': branchId}],
-                            [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
+                            [prefixes.ontologyState + 'branch']: [{'@id': idObj.branchId}],
+                            [prefixes.ontologyState + 'commit']: [{'@id': idObj.commitId}]
                         });
                     }
+                } else if (idObj.tagId) {
+                    currentStateId = tagStateNamespace + uuid.v4();
+                    model.push({
+                        '@id': currentStateId,
+                        '@type': [prefixes.ontologyState + 'StateCommit', prefixes.ontologyState + 'StateTag'],
+                        [prefixes.ontologyState + 'tag']: [{'@id': idObj.tagId}],
+                        [prefixes.ontologyState + 'commit']: [{'@id': idObj.commitId}]
+                    });
                 } else {
                     currentStateId = commitStateNamespace + uuid.v4();
                     model.push({
                         '@id': currentStateId,
                         '@type': [prefixes.ontologyState + 'StateCommit'],
-                        [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
+                        [prefixes.ontologyState + 'commit']: [{'@id': idObj.commitId}]
                     });
                 }
                 recordState[prefixes.ontologyState + 'currentState'] = [{'@id': currentStateId}];
@@ -369,7 +384,7 @@
              * success.
              *
              * @param {string} recordId A string identifying the Record of a state
-             * @param {string} branchId A string identifying the branch that was removed
+             * @param {string} branchId A string identifying the Branch that was removed
              * @returns {Promise} A promise that resolves if the update was successful or rejects with an error message
              */
             self.deleteOntologyBranch = function(recordId, branchId) {
@@ -399,24 +414,122 @@
                 var stateId = _.get(self.getOntologyStateByRecordId(recordId), 'id', '');
                 return sm.deleteState(stateId);
             }
+            /**
+             * @ngdoc method
+             * @name getCurrentStateIdByRecordId
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Finds the ID of the current state of the ontology with the provided Record ID. The state refers to the
+             * object detailing what the user has currently "checked out".
+             *
+             * @param {string} recordId A string identifying the Record of a state
+             * @returns {string} The string ID of the current state object
+             */
+            self.getCurrentStateIdByRecordId = function(recordId) {
+                return self.getCurrentStateId(self.getOntologyStateByRecordId(recordId));
+            }
+            /**
+             * @ngdoc method
+             * @name getCurrentStateByRecordId
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Finds the current state of the ontology with the provided Record ID. The state refers to the object
+             * detailing what the user has currently "checked out".
+             *
+             * @param {string} recordId A string identifying the Record of a state
+             * @returns {Object} The JSON-LD object representing the current state
+             */
+            self.getCurrentStateByRecordId = function(recordId) {
+                var state = self.getOntologyStateByRecordId(recordId);
+                var currentStateId = self.getCurrentStateId(state);
+                return _.find(_.get(state, 'model', []), {'@id': currentStateId});
+            }
+            /**
+             * @ngdoc method
+             * @name getCurrentStateId
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Finds the ID of the current state from the provided JSON-LD of an ontology state. The state refers to the
+             * object detailing what the user has currently "checked out".
+             *
+             * @param {Object} state A JSON-LD array of an ontology state from the
+             * {@link stateManager.service:stateManagerService}
+             * @returns {string} The string ID of the current state object
+             */
+            self.getCurrentStateId = function(state) {
+                var recordState = _.find(_.get(state, 'model', []), {'@type': [prefixes.ontologyState + 'StateRecord']});
+                return _.get(recordState, "['" + prefixes.ontologyState + "currentState'][0]['@id']", '');
+            }
+            /**
+             * @ngdoc method
+             * @name getCurrentState
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Finds the current state from the provided JSON-LD of an ontology state. The state refers to the object
+             * detailing what the user has currently "checked out".
+             *
+             * @param {Object} state A JSON-LD array of an ontology state from the
+             * {@link stateManager.service:stateManagerService}
+             * @returns {Object} The JSON-LD object representing the current state
+             */
+            self.getCurrentState = function(state) {
+                return _.find(_.get(state, 'model', []), {'@id': self.getCurrentStateId(state)});
+            }
+            /**
+             * @ngdoc method
+             * @name isStateTag
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Determines whether the provided JSON-LD is a StateTag or not.
+             *
+             * @param {Object} obj A JSON-LD object
+             * @returns {boolean} True if the object is a StateTag; false otherwise
+             */
+            self.isStateTag = function(obj) {
+                return _.includes(_.get(obj, '@type', []), prefixes.ontologyState + 'StateTag');
+            }
+            /**
+             * @ngdoc method
+             * @name isStateBranch
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Determines whether the provided JSON-LD is a StateBranch or not.
+             *
+             * @param {Object} obj A JSON-LD object
+             * @returns {boolean} True if the object is a StateBranch; false otherwise
+             */
+            self.isStateBranch = function(obj) {
+                return _.includes(_.get(obj, '@type', []), prefixes.ontologyState + 'StateBranch');
+            }
 
-            function makeOntologyState(recordId, commitId, branchId = '') {
+            function makeOntologyState(idObj) {
                 var stateIri;
                 var recordState = {
                     '@id': 'http://mobi.com/states/ontology-editor/' + uuid.v4(),
                     '@type': [prefixes.ontologyState + 'StateRecord'],
-                    [prefixes.ontologyState + 'record']: [{'@id': recordId}],
+                    [prefixes.ontologyState + 'record']: [{'@id': idObj.recordId}],
                 };
                 var commitState = {
                     '@type': [prefixes.ontologyState + 'StateCommit'],
-                    [prefixes.ontologyState + 'commit']: [{'@id': commitId}]
+                    [prefixes.ontologyState + 'commit']: [{'@id': idObj.commitId}]
                 };
-                if (branchId) {
+                if (idObj.branchId) {
                     stateIri = branchStateNamespace + uuid.v4();
                     recordState[prefixes.ontologyState + 'branchStates'] = [{'@id': stateIri}];
                     commitState['@id'] = stateIri;
                     commitState['@type'].push(prefixes.ontologyState + 'StateBranch');
-                    commitState[prefixes.ontologyState + 'branch'] = [{'@id': branchId}];
+                    commitState[prefixes.ontologyState + 'branch'] = [{'@id': idObj.branchId}];
+                } else if (idObj.tagId) {
+                    stateIri = tagStateNamespace + uuid.v4();
+                    commitState['@id'] = stateIri;
+                    commitState['@type'].push(prefixes.ontologyState + 'StateTag');
+                    commitState[prefixes.ontologyState + 'tag'] = [{'@id': idObj.tagId}];
                 } else {
                     stateIri = commitStateNamespace + uuid.v4();
                     commitState['@id'] = stateIri;
@@ -471,22 +584,28 @@
             self.getOntology = function(recordId, rdfFormat = 'jsonld') {
                 var state = self.getOntologyStateByRecordId(recordId);
                 if (!_.isEmpty(state)) {
-                    var recordState = _.find(state.model, {'@type': [prefixes.ontologyState + 'StateRecord']});
                     var inProgressCommit = emptyInProgressCommit;
-                    var currentState = _.find(state.model, {'@id': util.getPropertyId(recordState, prefixes.ontologyState + 'currentState')});
+                    var currentState = self.getCurrentState(state);
                     var commitId = util.getPropertyId(currentState, prefixes.ontologyState + 'commit');
+                    var tagId = util.getPropertyId(currentState, prefixes.ontologyState + 'tag');
                     var branchId = util.getPropertyId(currentState, prefixes.ontologyState + 'branch');
                     var upToDate = false;
                     var promise;
-                    if (!branchId) {
-                        upToDate = true;
-                        promise = cm.getInProgressCommit(recordId, catalogId);
-                    } else {
+                    if (branchId) {
                         promise = cm.getRecordBranch(branchId, recordId, catalogId)
                             .then(branch => {
                                 upToDate = util.getPropertyId(branch, prefixes.catalog + 'head') === commitId;
                                 return cm.getInProgressCommit(recordId, catalogId);
                             }, $q.reject);
+                    } else if (tagId) {
+                        upToDate = true;
+                        promise = cm.getRecordVersion(tagId, recordId, catalogId)
+                            .then(() => {
+                                return cm.getInProgressCommit(recordId, catalogId);
+                            }, () => self.updateOntologyState({recordId, commitId}).then(() => cm.getInProgressCommit(recordId, catalogId)), $q.reject);
+                    } else {
+                        upToDate = true;
+                        promise = cm.getInProgressCommit(recordId, catalogId);
                     }
                     return promise
                         .then(response => {
@@ -526,7 +645,7 @@
                     .then(masterBranch => {
                         branchId = _.get(masterBranch, '@id', '');
                         commitId = _.get(masterBranch, "['" + prefixes.catalog + "head'][0]['@id']", '');
-                        return self.createOntologyState(recordId, commitId, branchId);
+                        return self.createOntologyState({recordId, commitId, branchId});
                     }, $q.reject)
                     .then(() => om.getOntology(recordId, branchId, commitId, rdfFormat), $q.reject)
                     .then(ontology => {return {ontology, recordId, branchId, commitId, upToDate: true, inProgressCommit: emptyInProgressCommit}}, $q.reject);
@@ -625,7 +744,45 @@
                         } else {
                             listItem.selected = oldListItem.selected;
                         }
-                        return self.updateOntologyState(recordId, commitId, branchId);
+                        return self.updateOntologyState({recordId, commitId, branchId});
+                    }, $q.reject)
+                    .then(() => {
+                        var activeKey = self.getActiveKey(oldListItem);
+                        _.assign(oldListItem, listItem);
+                        self.setActivePage(activeKey, oldListItem);
+                    }, $q.reject);
+            }
+            /**
+             * @ngdoc method
+             * @name updateOntologyWithCommit
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Used to update an ontology that is already open within the Ontology Editor to the specified commit. It
+             * will replace the existing listItem with a new listItem consisting of the data associated with the record
+             * ID, commit ID, and optional tag ID provided. Returns a promise.
+             *
+             * @param {string} recordId The record ID associated with the requested ontology.
+             * @param {string} commitId The commit ID associated with the requested ontology.
+             * @param {string} [tagId=''] A tag ID associated with the requested ontology.
+             * @returns {Promise} A promise indicating the success or failure of the update.
+             */
+            self.updateOntologyWithCommit = function(recordId, commitId, tagId = '') {
+                var listItem;
+                var oldListItem = self.getListItemByRecordId(recordId);
+
+                return om.getOntology(recordId, '', commitId, 'jsonld')
+                    .then(ontology => self.createOntologyListItem(om.getOntologyIRI(ontology), recordId, '', commitId, ontology, emptyInProgressCommit, true, oldListItem.ontologyRecord.title), $q.reject)
+                    .then(response => {
+                        listItem = response;
+                        listItem.editorTabStates = oldListItem.editorTabStates;
+                        if (listItem.ontologyId !== oldListItem.ontologyId) {
+                            self.setSelected(listItem.ontologyId, true, listItem);
+                            self.resetStateTabs(listItem);
+                        } else {
+                            listItem.selected = oldListItem.selected;
+                        }
+                        return tagId ? self.updateOntologyState({recordId, commitId, tagId}) : self.updateOntologyState({recordId, commitId});
                     }, $q.reject)
                     .then(() => {
                         var activeKey = self.getActiveKey(oldListItem);
@@ -640,8 +797,7 @@
                         return listItem;
                     }, $q.reject);
             }
-            self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
-                upToDate = true, title) {
+            self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate = true, title) {
                 var modifyRequest = {
                     resourceId: recordId,
                     actionId: polm.actionModify
@@ -649,7 +805,8 @@
                 var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title);
                 return $q.all([
                     om.getOntologyStuff(recordId, branchId, commitId),
-                    cm.getRecordBranches(recordId, catalogId)
+                    cm.getRecordBranches(recordId, catalogId),
+                    cm.getRecordVersions(recordId, catalogId)
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     var responseIriList = _.get(response[0], 'iriList', {});
@@ -702,6 +859,7 @@
                         listItem.createdFromExists = _.some(listItem.branches, {'@id': util.getPropertyId(branch, prefixes.catalog + 'createdFrom')});
                     }
                     listItem.masterBranchIRI = _.find(listItem.branches, {[prefixes.dcterms + 'title']: [{'@value': 'MASTER'}]})['@id'];
+                    listItem.tags = _.filter(response[2].data, version => _.includes(_.get(version, '@type'), prefixes.catalog + 'Tag'));
                     return pe.evaluateRequest(modifyRequest);
                 },  $q.reject)
                 .then(decision => {
@@ -1084,8 +1242,14 @@
                 _.remove(self.list, { ontologyRecord: { recordId }});
             }
             self.removeBranch = function(recordId, branchId) {
-                self.deleteOntologyBranch(recordId, branchId);
-                _.remove(self.getListItemByRecordId(recordId).branches, {'@id': branchId});
+                var listItem = self.getListItemByRecordId(recordId);
+                return self.deleteOntologyBranch(recordId, branchId).then(() => {
+                    _.remove(listItem.branches, {'@id': branchId});
+                    return cm.getRecordVersions(recordId, catalogId);
+                }, $q.reject)
+                .then(versions => {
+                    listItem.tags = _.filter(versions, version => _.includes(_.get(version, '@type'), prefixes.catalog + 'Tag'));
+                }, $q.reject);
             }
             self.afterSave = function() {
                 return cm.getInProgressCommit(self.listItem.ontologyRecord.recordId, catalogId)
@@ -1103,9 +1267,9 @@
                         });
 
                         if (_.isEmpty(self.getOntologyStateByRecordId(self.listItem.ontologyRecord.recordId))) {
-                            return self.createOntologyState(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.commitId, self.listItem.ontologyRecord.branchId);
+                            return self.createOntologyState({recordId: self.listItem.ontologyRecord.recordId, commitId: self.listItem.ontologyRecord.commitId, branchId: self.listItem.ontologyRecord.branchId});
                         } else {
-                            return self.updateOntologyState(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.commitId, self.listItem.ontologyRecord.branchId);
+                            return self.updateOntologyState({recordId: self.listItem.ontologyRecord.recordId, commitId: self.listItem.ontologyRecord.commitId, branchId: self.listItem.ontologyRecord.branchId});
                         }
                     }, $q.reject);
             }

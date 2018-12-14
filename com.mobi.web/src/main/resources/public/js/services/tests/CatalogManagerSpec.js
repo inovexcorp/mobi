@@ -540,44 +540,36 @@ describe('Catalog Manager service', function() {
     });
     describe('should create a new Tag', function() {
         beforeEach(function() {
-            this.versionConfig = {
-                    title: 'Title',
-                    description: 'Description'
-                };
-            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/versions';
-            this.version = {'@id': this.versionId};
-            spyOn(catalogManagerSvc, 'getRecordVersion').and.returnValue($q.when(this.version));
-            spyOn(catalogManagerSvc, 'updateRecordVersion').and.returnValue($q.when(this.versionId));
+            this.tagConfig = {
+                title: 'Title',
+                description: 'Description',
+                commitId: this.commitId,
+                iri: this.versionId
+            };
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/tags';
+            this.tag = {'@id': this.versionId};
         });
         it('unless an error occurs', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createRecordTag(this.recordId, this.catalogId, this.versionConfig, this.commitId)
+            catalogManagerSvc.createRecordTag(this.recordId, this.catalogId, this.tagConfig)
                 .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a description', function() {
-            var expectedVersion = angular.copy(this.version);
-            expectedVersion[prefixes.catalog + 'commit'] = [{'@id': this.commitId}];
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.versionId);
             var self = this;
-            catalogManagerSvc.createRecordTag(this.recordId, this.catalogId, this.versionConfig, this.commitId)
+            catalogManagerSvc.createRecordTag(this.recordId, this.catalogId, this.tagConfig)
                 .then(response => expect(response).toBe(self.versionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
-            expect(catalogManagerSvc.getRecordVersion).toHaveBeenCalledWith(this.versionId, this.recordId, this.catalogId);
-            expect(catalogManagerSvc.updateRecordVersion).toHaveBeenCalledWith(this.versionId, this.recordId, this.catalogId, expectedVersion);
         });
         it('without a description', function() {
-            delete this.versionConfig.description;
-            var expectedVersion = angular.copy(this.version);
-            expectedVersion[prefixes.catalog + 'commit'] = [{'@id': this.commitId}];
+            delete this.tagConfig.description;
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.versionId);
             var self = this;
-            catalogManagerSvc.createRecordTag(this.recordId, this.catalogId, this.versionConfig, this.commitId)
+            catalogManagerSvc.createRecordTag(this.recordId, this.catalogId, this.tagConfig)
                 .then(response => expect(response).toBe(self.versionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
-            expect(catalogManagerSvc.getRecordVersion).toHaveBeenCalledWith(this.versionId, this.recordId, this.catalogId);
-            expect(catalogManagerSvc.updateRecordVersion).toHaveBeenCalledWith(this.versionId, this.recordId, this.catalogId, expectedVersion);
         });
     });
     describe('should update a Record Version', function() {
@@ -1496,6 +1488,14 @@ describe('Catalog Manager service', function() {
         expect(catalogManagerSvc.isVersion(entity)).toBe(true);
         entity['@type'].push(prefixes.catalog + 'Test');
         expect(catalogManagerSvc.isVersion(entity)).toBe(true);
+    });
+    it('should test whether an entity is a Tag', function() {
+        var entity = {'@type': []};
+        expect(catalogManagerSvc.isTag(entity)).toBe(false);
+        entity['@type'].push(prefixes.catalog + 'Tag');
+        expect(catalogManagerSvc.isTag(entity)).toBe(true);
+        entity['@type'].push(prefixes.catalog + 'Test');
+        expect(catalogManagerSvc.isTag(entity)).toBe(true);
     });
     it('should test whether an entity is a Commit', function() {
         var entity = {'@type': []};

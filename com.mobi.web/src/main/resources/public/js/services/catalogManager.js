@@ -571,26 +571,36 @@
              *
              * @description
              * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/versions endpoint with the passed
-             * Catalog and Record ids, metadata, and associated Commit id and creates a new Tag for the identified
-             * Record. Returns a Promise with the IRI of the new Tag if successful or rejects with an error message.
+             * Catalog and Record ids, and metadata and creates a new Tag for the identified Record. Returns a Promise
+             * with the IRI of the new Tag if successful or rejects with an error message.
              *
              * @param {string} recordId The id of the Record to create the Tag for
              * @param {string} catalogId The id of the Catalog the Record should be a part of
-             * @param {Object} versionConfig A configuration object containing metadata for the new Version
-             * @param {string} versionConfig.title The required title of the new Version
-             * @param {string} versionConfig.description The optional description of the new Version
+             * @param {Object} tagConfig A configuration object containing metadata for the new Tag
+             * @param {string} tagConfig.title The required title of the new Tag
+             * @param {string} tagConfig.description The optional description of the new Tag
+             * @param {string} tagConfig.iri The IRI for the new Tag
+             * @param {string} tagConfig.commit The IRI of the Commit for the new Tag
              * @param {string} commitId The id of the Commit to associate with the new Tag
              * @return {Promise} A promise the resolves to the IRI of the new Tag or is rejected with an error
              * message
              */
-            self.createRecordTag = function(recordId, catalogId, versionConfig, commitId) {
-                versionConfig.type = prefixes.catalog + 'Tag';
-                return createVersion(recordId, catalogId, versionConfig)
-                    .then(iri => self.getRecordVersion(iri, recordId, catalogId), $q.reject)
-                    .then(version => {
-                        version[prefixes.catalog + 'commit'] = [{'@id': commitId}];
-                        return self.updateRecordVersion(version['@id'], recordId, catalogId, version);
-                    }, $q.reject)
+            self.createRecordTag = function(recordId, catalogId, tagConfig) {
+                var fd = new FormData(),
+                    config = {
+                        transformRequest: _.identity,
+                        headers: {
+                            'Content-Type': undefined
+                        }
+                    };
+                fd.append('iri', tagConfig.iri);
+                fd.append('title', tagConfig.title);
+                fd.append('commit', tagConfig.commitId);
+                if (_.has(tagConfig, 'description')) {
+                    fd.append('description', tagConfig.description);
+                }
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/tags', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1474,6 +1484,21 @@
 
             /**
              * @ngdoc method
+             * @name isTag
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Tests whether the passed entity is a Tag or not.
+             *
+             * @param {Object} entity A JSON-LD object
+             * @return {boolean} True if the entity contains the Tag type; false otherwise
+             */
+            self.isTag = function(entity) {
+                return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Tag');
+            }
+
+            /**
+             * @ngdoc method
              * @name isCommit
              * @methodOf catalogManager.service:catalogManagerService
              *
@@ -1496,7 +1521,7 @@
                         }
                     };
                 fd.append('title', versionConfig.title);
-                fd.append('type', versionConfig.versionType);
+                fd.append('type', versionConfig.type);
                 if (_.has(versionConfig, 'description')) {
                     fd.append('description', versionConfig.description);
                 }

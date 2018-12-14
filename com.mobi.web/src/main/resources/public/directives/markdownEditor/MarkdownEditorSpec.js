@@ -35,9 +35,11 @@ describe('Markdown Editor component', function() {
         });
 
         scope.bindModel = '';
-        scope.isFocusMe = true;
         scope.placeHolder = '';
-        this.element = $compile(angular.element('<markdown-editor ng-model="bindModel" is-focus-me="isFocusMe" place-holder="placeHolder"></markdown-editor>'))(scope);
+        scope.isFocusMe = true;
+        scope.buttonText = '';
+        scope.clickEvent = jasmine.createSpy('clickEvent');
+        this.element = $compile(angular.element('<markdown-editor ng-model="bindModel" is-focus-me="isFocusMe" place-holder="placeHolder" click-event="clickEvent()" button-text="buttonText"></markdown-editor>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('markdownEditor');
     });
@@ -64,8 +66,23 @@ describe('Markdown Editor component', function() {
             scope.$digest();
             expect(scope.isFocusMe).toBe(true);
         });
+        it('clickEvent should be called in the parent scope', function() {
+            this.controller.clickEvent();
+            expect(scope.clickEvent).toHaveBeenCalled();
+        });
+        it('buttonText should be one way bound', function() {
+            this.controller.buttonText = 'Test';
+            scope.$digest();
+            expect(scope.buttonText).toEqual('');
+        });
     });
     describe('controller methods', function() {
+        it('should submit the markdown', function() {
+            this.controller.click();
+            expect(scope.clickEvent).toHaveBeenCalled();
+            expect(this.controller.preview).toEqual('');
+            expect(this.controller.showPreview).toEqual(false);
+        });
         describe('should toggle the preview to', function() {
             it('true', function() {
                 this.controller.converter.makeHtml.and.returnValue('WOW');
@@ -87,8 +104,12 @@ describe('Markdown Editor component', function() {
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('MARKDOWN-EDITOR');
-            expect(this.element.querySelectorAll('.markdown-editor.form-group').length).toEqual(1);
+            expect(this.element.querySelectorAll('.markdown-editor').length).toEqual(1);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
             expect(this.element.querySelectorAll('.markdown-editor-header').length).toEqual(1);
+        });
+        it('with a button to comment', function() {
+            expect(this.element.find('button').length).toEqual(1);
         });
         it('if the preview of the markdown should be shown', function() {
             var button = angular.element(this.element.querySelectorAll('.preview-button')[0]);
@@ -104,5 +125,19 @@ describe('Markdown Editor component', function() {
             expect(this.element.find('textarea').length).toEqual(0);
             expect(this.element.querySelectorAll('.markdown-preview').length).toEqual(1);
         });
+        it('if the markdown is empty', function() {
+            var button = this.element.find('button');
+            expect(button.attr('disabled')).toBeTruthy();
+
+            this.controller.bindModel = 'WOW';
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
+        });
+    });
+    it('should call click when the button is clicked', function() {
+        spyOn(this.controller, 'click');
+        var button = this.element.find('button');
+        button.triggerHandler('click');
+        expect(this.controller.click).toHaveBeenCalled();
     });
 });
