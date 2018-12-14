@@ -71,7 +71,8 @@
                         } else {
                             var currentState = dvm.os.getCurrentStateByRecordId(dvm.os.listItem.ontologyRecord.recordId);
                             if (dvm.os.isStateTag(currentState)) {
-                                var tag = _.find(dvm.os.listItem.tags, {[prefixes.catalog + 'commit']: [{'@id': dvm.os.listItem.ontologyRecord.commitId}]});
+                                var tagId = dvm.util.getPropertyId(currentState, prefixes.ontologyState + 'tag');
+                                var tag = _.find(dvm.os.listItem.tags, {'@id': tagId});
                                 return dvm.util.getDctermsValue(tag, 'title');
                             } else {
                                 return '';
