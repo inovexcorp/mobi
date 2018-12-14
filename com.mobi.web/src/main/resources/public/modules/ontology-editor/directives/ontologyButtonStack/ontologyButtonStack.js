@@ -70,6 +70,9 @@
                     dvm.showCreateBranchOverlay = function() {
                         modalService.openModal('createBranchOverlay');
                     }
+                    dvm.showCreateTagModal = function() {
+                        modalService.openModal('createTagModal');
+                    }
                     dvm.showCommitOverlay = function() {
                         modalService.openModal('commitOverlay');
                     }

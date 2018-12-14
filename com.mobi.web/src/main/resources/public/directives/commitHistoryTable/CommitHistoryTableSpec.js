@@ -54,11 +54,11 @@ describe('Commit History Table directive', function() {
         this.commitId = 'commit';
         this.commits = [{id: this.commitId}];
 
-        scope.branchTitle = 'title';
+        scope.headTitle = 'title';
         scope.commitId = 'commit';
         scope.targetId = 'target';
         scope.commitData = [];
-        this.element = $compile(angular.element('<commit-history-table commit-id="commitId" branch-title="branchTitle" target-id="targetId" commit-data="commitData"></commit-history-table>'))(scope);
+        this.element = $compile(angular.element('<commit-history-table commit-id="commitId" head-title="headTitle" target-id="targetId" commit-data="commitData"></commit-history-table>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('commitHistoryTable');
         this.isolatedScope = this.element.isolateScope();
@@ -116,11 +116,11 @@ describe('Commit History Table directive', function() {
         });
     });
     describe('controller bound variable', function() {
-        it('branchTitle should be one way bound', function() {
-            var original = scope.branchTitle;
-            this.controller.branchTitle = '';
+        it('headTitle should be one way bound', function() {
+            var original = scope.headTitle;
+            this.controller.headTitle = '';
             scope.$digest();
-            expect(scope.branchTitle).toEqual(original);
+            expect(scope.headTitle).toEqual(original);
         });
         it('commitId should be one way bound', function() {
             var original = scope.commitId;
@@ -266,8 +266,8 @@ describe('Commit History Table directive', function() {
             scope.$apply('commitId = "new"');
             expect(this.controller.getCommits).toHaveBeenCalled();
         });
-        it('branchTitle', function() {
-            scope.$apply('branchTitle = "new"');
+        it('headTitle', function() {
+            scope.$apply('headTitle = "new"');
             expect(this.controller.getCommits).toHaveBeenCalled();
         });
         it('targetId', function() {

@@ -25,7 +25,7 @@
         <strong>{{dvm.getCreator()}}</strong> <span class="text-muted">{{dvm.isReply ? 'replied' : 'commented'}} on {{dvm.getIssued() | date:'short'}}</span>
     </p>
     <div class="comment-body d-flex p-1">
-        <div class="comment-body-text flex-1 remove-min-width" ng-bind-html="dvm.getComment() | trusted"></div>
+        <div class="markdown comment-body-text flex-1 remove-min-width" ng-bind-html="dvm.getComment() | trusted"></div>
         <div class="button-container">
             <button ng-if="dvm.isCreator() && !dvm.mm.isAccepted(dvm.request.jsonld)" type="button" class="btn btn-link remove-min-width p-0 fa fa-times fa-fw" ng-click="dvm.confirmDelete()" title="Delete"></button>
         </div>

@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE rdf:RDF [
+    <!ENTITY owl "http://www.w3.org/2002/07/owl#" >
+    <!ENTITY owl11 "http://www.w3.org/2006/12/owl11#" >
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#" >
+    <!ENTITY owl11xml "http://www.w3.org/2006/12/owl11-xml#" >
+    <!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#" >
+    <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+    <!ENTITY pizza "http://www.co-ode.org/ontologies/pizza/pizza.owl#" >
+]>
+
+
+<rdf:RDF xmlns="http://www.co-ode.org/ontologies/pizza/pizza.owl#"
+     xml:base="http://www.co-ode.org/ontologies/pizza/pizza.owl"
+     xmlns:owl11="http://www.w3.org/2006/12/owl11#"
+     xmlns:pizza="http://www.co-ode.org/ontologies/pizza/pizza.owl#"
+     xmlns:owl11xml="http://www.w3.org/2006/12/owl11-xml#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#">
+    <owl:Ontology rdf:about="">
+        <rdfs:comment xml:lang="en"
+            >An example ontology that contains all constructs required for the various versions of the Pizza Tutorial run by Manchester University (see http://www.co-ode.org/resources/tutorials/)</rdfs:comment>
+        <owl:versionInfo xml:lang="en"
+            >v.1.5. Removed protege.owl import and references. Made ontology URI date-independent</owl:versionInfo>
+        <owl:versionInfo rdf:datatype="&xsd;string">version 1.5</owl:versionInfo>
+        <owl:versionInfo xml:lang="en"
+            >v.1.4. Added Food class (used in domain/range of hasIngredient), Added several hasCountryOfOrigin restrictions on pizzas, Made hasTopping invers functional</owl:versionInfo>
+    </owl:Ontology>
+</rdf:RDF>
