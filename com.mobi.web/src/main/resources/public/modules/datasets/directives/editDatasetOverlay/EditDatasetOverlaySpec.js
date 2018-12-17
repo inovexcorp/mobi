@@ -226,7 +226,6 @@ describe('Edit Dataset Overlay component', function() {
         expect(this.controller.cancel).toHaveBeenCalled();
     });
     it('should call update when the button is clicked', function() {
-        // scope.$digest();
         spyOn(this.controller, 'update');
         var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');

@@ -43,6 +43,7 @@
          * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
          * @requires prefixes.service:prefixes
+         * @requires modal.service:modalService
          *
          * @description
          * `datasetsList` is a directive which creates a Bootstrap row containing a {@link block.directive:block block}
