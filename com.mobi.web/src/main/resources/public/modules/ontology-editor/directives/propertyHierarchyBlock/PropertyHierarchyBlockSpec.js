@@ -60,10 +60,12 @@ describe('Property Hierarchy Block directive', function() {
         });
         it('depending on whether the flat property tree is empty', function() {
             expect(this.element.find('info-message').length).toEqual(1);
+            expect(this.element.querySelectorAll('.tree').length).toBe(0);
 
             this.controller.flatPropertyTree = [{}];
             scope.$digest();
             expect(this.element.find('info-message').length).toEqual(0);
+            expect(this.element.querySelectorAll('.tree').length).toBe(1);
         });
         it('depending on whether there is a flat data property hierarchy', function() {
             expect(this.element.querySelectorAll('.tree-item').length).toBe(0);
