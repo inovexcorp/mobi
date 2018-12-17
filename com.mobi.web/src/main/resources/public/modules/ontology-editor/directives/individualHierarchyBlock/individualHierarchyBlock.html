@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="individual-hierarchy-block horizontal-scroll">
+<div class="individual-hierarchy-block py-1">
     <info-message ng-if="!dvm.os.listItem.individuals.flat.length">(No individuals defined)</info-message>
-    <individual-tree class="py-1"></individual-tree>
+    <individual-tree ng-if="dvm.os.listItem.individuals.flat.length"></individual-tree>
 </div>

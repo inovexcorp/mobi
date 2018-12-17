@@ -53,12 +53,11 @@ describe('Individual Hierarchy directive', function() {
         });
         it('depending on whether the tree is empty', function() {
             expect(this.element.find('info-message').length).toEqual(1);
+            expect(this.element.find('individual-tree').length).toBe(0);
 
             ontologyStateSvc.listItem.individuals.flat = [{}];
             scope.$digest();
             expect(this.element.find('info-message').length).toEqual(0);
-        });
-        it('with a individual-tree', function() {
             expect(this.element.find('individual-tree').length).toBe(1);
         });
     });
