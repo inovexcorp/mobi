@@ -1,6 +1,17 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
+// Fixes for AngularJS Material
+md-backdrop.md-select-backdrop {
+    z-index: 1999;
+}
+.md-select-menu-container {
+    z-index: 2000;
+}
+.md-button {
+    text-transform: none;
+}
+
 // Fixes for Material Bootstrap
 .ui-select-bootstrap > .ui-select-choices,
 .ui-select-bootstrap > .ui-select-no-choice {
@@ -294,10 +305,6 @@ ul {
             margin-left: 10px;
         }
     }
-}
-
-.md-button {
-    text-transform: none;
 }
 
 .checkbox input {

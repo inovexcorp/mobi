@@ -40,7 +40,9 @@
          * @restrict E
          * @requires discoverState.service:discoverStateService
          * @requires explore.service:exploreService
+         * @requires exploreUtils.service:exploreUtilsService
          * @requires util.service:utilService
+         * @requires modal.service:modalService
          *
          * @description
          * HTML contents in the class block header which provides a dropdown select to allow users to
@@ -48,9 +50,9 @@
          */
         .directive('classBlockHeader', classBlockHeader);
 
-        classBlockHeader.$inject = ['$filter', 'discoverStateService', 'exploreService', 'exploreUtilsService', 'utilService', 'uuid'];
+        classBlockHeader.$inject = ['discoverStateService', 'exploreService', 'exploreUtilsService', 'utilService', 'modalService'];
 
-        function classBlockHeader($filter, discoverStateService, exploreService, exploreUtilsService, utilService, uuid) {
+        function classBlockHeader(discoverStateService, exploreService, exploreUtilsService, utilService, modalService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/classBlockHeader/classBlockHeader.html',
@@ -63,21 +65,11 @@
                     var util = utilService;
                     dvm.ds = discoverStateService;
                     dvm.eu = exploreUtilsService;
-                    dvm.datasetClasses = [];
-
-                    dvm.showCancel = function() {
-                        dvm.showNewInstanceOverlay = false;
-                        dvm.datasetClasses = [];
-                    }
                     dvm.showCreate = function() {
                         dvm.eu.getClasses(dvm.ds.explore.recordId)
                             .then(classes => {
-                                dvm.datasetClasses = classes;
-                                dvm.showNewInstanceOverlay = true
-                            }, errorMessage => {
-                                dvm.datasetClasses = [];
-                                util.createErrorToast(errorMessage);
-                            });
+                                modalService.openModal('newInstanceClassOverlay', {classes});
+                            }, util.createErrorToast);
                     }
                     dvm.onSelect = function() {
                         es.getClassDetails(dvm.ds.explore.recordId)
@@ -87,31 +79,6 @@
                                 dvm.ds.explore.classDetails = [];
                                 util.createErrorToast(errorMessage);
                             });
-                    }
-                    dvm.create = function(clazz) {
-                        es.getClassInstanceDetails(dvm.ds.explore.recordId, clazz.id, {offset: 0, limit: dvm.ds.explore.instanceDetails.limit})
-                            .then(response => {
-                                dvm.ds.explore.creating = true;
-                                dvm.ds.explore.classId = clazz.id;
-                                dvm.ds.explore.classDeprecated = clazz.deprecated;
-                                dvm.ds.resetPagedInstanceDetails();
-                                _.merge(dvm.ds.explore.instanceDetails, es.createPagedResultsObject(response));
-                                var iri;
-                                if (dvm.ds.explore.instanceDetails.data.length) {
-                                    var split = $filter('splitIRI')(_.head(dvm.ds.explore.instanceDetails.data).instanceIRI);
-                                    iri = split.begin + split.then + uuid.v4();
-                                } else {
-                                    var split = $filter('splitIRI')(clazz.id);
-                                    iri = 'http://mobi.com/data/' + split.end.toLowerCase() + '/' + uuid.v4();
-                                }
-                                dvm.ds.explore.instance.entity = [{
-                                    '@id': iri,
-                                    '@type': [clazz.id]
-                                }];
-                                dvm.ds.explore.instance.metadata.instanceIRI = iri;
-                                dvm.ds.explore.breadcrumbs.push(clazz.title);
-                                dvm.ds.explore.breadcrumbs.push('New Instance');
-                            }, util.createErrorToast);
                     }
                 }
             }

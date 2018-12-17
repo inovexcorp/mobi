@@ -39,6 +39,7 @@
          * @scope
          * @restrict E
          * @requires sparqlManager.service:sparqlManagerService
+         * @requires modal.service:modalService
          *
          * @description
          * `sparqlResultBlock` is a directive that creates a {@link block.directive:block block} with a
@@ -51,9 +52,9 @@
          */
         .directive('sparqlResultBlock', sparqlResultBlock);
 
-        sparqlResultBlock.$inject = ['sparqlManagerService'];
+        sparqlResultBlock.$inject = ['sparqlManagerService', 'modalService'];
 
-        function sparqlResultBlock(sparqlManagerService) {
+        function sparqlResultBlock(sparqlManagerService, modalService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/query/directives/sparqlResultBlock/sparqlResultBlock.html',
@@ -63,6 +64,10 @@
                 controller: function() {
                     var dvm = this;
                     dvm.sparql = sparqlManagerService;
+
+                    dvm.downloadQuery = function() {
+                        modalService.openModal('downloadQueryOverlay', {}, undefined, 'sm');
+                    }
                 }
             }
         }

@@ -29,48 +29,46 @@
          * @name downloadQueryOverlay
          *
          * @description
-         * The `downloadQueryOverlay` module only provides the `downloadQueryOverlay` directive which creates
-         * an overlay to download the results of a SPARQL query.
+         * The `downloadQueryOverlay` module only provides the `downloadQueryOverlay` component which creates content
+         * for a modal to download the results of a SPARQL query.
          */
         .module('downloadQueryOverlay', [])
         /**
-         * @ngdoc directive
-         * @name downloadQueryOverlay.directive:downloadQueryOverlay
-         * @scope
-         * @restrict E
+         * @ngdoc component
+         * @name downloadQueryOverlay.component:downloadQueryOverlay
          * @requires sparqlManager.service:sparqlManagerService
          *
          * @description
-         * `downloadQueryOverlay` is a directive that creates an overlay with a form to download the results
+         * `downloadQueryOverlay` is a component that creates content for a modal with a form to download the results
          * of a {@link sparqlManager.service:sparqlManagerService#queryString SPARQL query}. The form includes
-         * a selector for the file type and the file name. The directive is replaced by the contents of its
-         * template.
+         * a selector for the file type and the file name. Meant to be used in conjunction with the
+         * {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
          */
-        .directive('downloadQueryOverlay', downloadQueryOverlay);
+        .component('downloadQueryOverlay', {
+            bindings: {
+                close: '&',
+                dismiss: '&'
+            },
+            controllerAs: 'dvm',
+            controller: ['sparqlManagerService', DownloadQueryOverlayController],
+            templateUrl: 'modules/discover/sub-modules/query/directives/downloadQueryOverlay/downloadQueryOverlay.html'
+        });
 
-        downloadQueryOverlay.$inject = ['sparqlManagerService'];
+        function DownloadQueryOverlayController(sparqlManagerService) {
+            var dvm = this;
+            var sparql = sparqlManagerService;
+            dvm.fileName = 'results';
+            dvm.fileType = 'csv';
 
-        function downloadQueryOverlay(sparqlManagerService) {
-            return {
-                restrict: 'E',
-                replace: true,
-                scope: {},
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    var sparql = sparqlManagerService;
-                    dvm.fileName = 'results';
-                    dvm.fileType = 'csv';
-
-                    dvm.download = function() {
-                        sparql.downloadResults(dvm.fileType, dvm.fileName);
-                        sparql.displayDownloadOverlay = false;
-                    }
-                    dvm.cancel = function() {
-                        sparql.displayDownloadOverlay = false;
-                    }
-                },
-                templateUrl: 'modules/discover/sub-modules/query/directives/downloadQueryOverlay/downloadQueryOverlay.html'
+            dvm.download = function() {
+                sparql.downloadResults(dvm.fileType, dvm.fileName);
+                dvm.close();
+            }
+            dvm.cancel = function() {
+                dvm.dismiss();
             }
         }
 })();

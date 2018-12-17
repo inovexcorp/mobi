@@ -21,32 +21,26 @@
  * #L%
  */
 describe('Class Block Header directive', function() {
-    var $compile, scope, exploreSvc, discoverStateSvc, $q, util, exploreUtils, splitIRI;
+    var $compile, scope, $q, discoverStateSvc, exploreSvc, exploreUtils, util, modalSvc;
 
     beforeEach(function() {
         module('templates');
         module('classBlockHeader');
         mockDiscoverState();
         mockExplore();
-        mockUtil();
         mockExploreUtils();
-        injectSplitIRIFilter();
+        mockUtil();
+        mockModal()
 
-        module(function($provide) {
-            $provide.service('uuid', function() {
-                this.v4 = jasmine.createSpy('v4').and.returnValue('');
-            });
-        });
-
-        inject(function(_$compile_, _$rootScope_, _exploreService_, _discoverStateService_, _$q_, _utilService_, _exploreUtilsService_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _discoverStateService_, _exploreService_, _exploreUtilsService_, _utilService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            exploreSvc = _exploreService_;
-            discoverStateSvc = _discoverStateService_;
             $q = _$q_;
-            util = _utilService_;
+            discoverStateSvc = _discoverStateService_;
+            exploreSvc = _exploreService_;
             exploreUtils = _exploreUtilsService_;
-            splitIRI = _splitIRIFilter_;
+            util = _utilService_;
+            modalSvc = _modalService_;
         });
 
         this.element = $compile(angular.element('<class-block-header></class-block-header>'))(scope);
@@ -57,12 +51,12 @@ describe('Class Block Header directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        $q = null;
         exploreSvc = null;
         discoverStateSvc = null;
-        $q = null;
-        util = null;
         exploreUtils = null;
-        splitIRI = null;
+        util = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -103,20 +97,8 @@ describe('Class Block Header directive', function() {
             expect(refreshButton.attr('disabled')).toBeFalsy();
             expect(createButton.attr('disabled')).toBeFalsy();
         });
-        it('depending on whether an instance is beign created', function() {
-            expect(this.element.find('new-instance-class-overlay').length).toEqual(0);
-
-            this.controller.showNewInstanceOverlay = true;
-            scope.$digest();
-            expect(this.element.find('new-instance-class-overlay').length).toEqual(1);
-        });
     });
     describe('controller methods', function() {
-        it('showCancel should set the correct variables', function() {
-            this.controller.showCancel();
-            expect(this.controller.datasetClasses).toEqual([]);
-            expect(this.controller.showNewInstanceOverlay).toEqual(false);
-        });
         describe('showCreate calls the proper methods when getClasses', function() {
             beforeEach(function() {
                 discoverStateSvc.explore.recordId = 'recordId';
@@ -125,15 +107,14 @@ describe('Class Block Header directive', function() {
                 exploreUtils.getClasses.and.returnValue($q.when([{}]));
                 this.controller.showCreate();
                 scope.$apply();
-                expect(this.controller.datasetClasses).toEqual([{}]);
-                expect(this.controller.showNewInstanceOverlay).toEqual(true);
+                expect(modalSvc.openModal).toHaveBeenCalledWith('newInstanceClassOverlay', {classes: [{}]});
             });
             it('rejects', function() {
                 exploreUtils.getClasses.and.returnValue($q.reject('Error message'));
                 this.controller.showCreate();
                 scope.$apply();
                 expect(util.createErrorToast).toHaveBeenCalledWith('Error message');
-                expect(this.controller.datasetClasses).toEqual([]);
+                expect(modalSvc.openModal).not.toHaveBeenCalled();
             });
         });
         describe('onSelect calls the proper methods when getClassDetails', function() {
@@ -155,58 +136,6 @@ describe('Class Block Header directive', function() {
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('recordId');
                 expect(discoverStateSvc.explore.classDetails).toEqual([]);
                 expect(util.createErrorToast).toHaveBeenCalledWith('error');
-            });
-        });
-        describe('create set the correct state when getClassInstanceDetails', function() {
-            beforeEach(function() {
-                this.clazz = {
-                    id: 'class',
-                    title: 'Class',
-                    deprecated: true
-                };
-            });
-            it('unless an error occurs', function() {
-                exploreSvc.getClassInstanceDetails.and.returnValue($q.reject('Error message'));
-                this.controller.create(this.clazz);
-                scope.$apply();
-                expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, this.clazz.id, {offset: 0, limit: discoverStateSvc.explore.instanceDetails.limit});
-                expect(util.createErrorToast).toHaveBeenCalledWith('Error message');
-            });
-            describe('successfully', function() {
-                beforeEach(function() {
-                    exploreSvc.getClassInstanceDetails.and.returnValue($q.when([]));
-                    splitIRI.and.returnValue({begin: 'begin/', then: 'then/', end: 'end'});
-                });
-                it('if instances already exist', function() {
-                    exploreSvc.createPagedResultsObject.and.returnValue({data: [{instanceIRI: 'instance'}]});
-                    this.controller.create(this.clazz);
-                    scope.$apply();
-                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, this.clazz.id, {offset: 0, limit: discoverStateSvc.explore.instanceDetails.limit});
-                    expect(discoverStateSvc.explore.creating).toEqual(true);
-                    expect(discoverStateSvc.explore.classId).toEqual(this.clazz.id);
-                    expect(discoverStateSvc.explore.classDeprecated).toEqual(this.clazz.deprecated);
-                    expect(discoverStateSvc.resetPagedInstanceDetails).toHaveBeenCalled();
-                    expect(discoverStateSvc.explore.instanceDetails.data).toEqual([{instanceIRI: 'instance'}]);
-                    expect(splitIRI).toHaveBeenCalledWith('instance');
-                    expect(discoverStateSvc.explore.instance.entity).toEqual([{'@id': 'begin/then/', '@type': [this.clazz.id]}]);
-                    expect(discoverStateSvc.explore.instance.metadata.instanceIRI).toEqual('begin/then/');
-                    expect(discoverStateSvc.explore.breadcrumbs).toEqual(['Classes', this.clazz.title, 'New Instance']);
-                });
-                it('if there are no instances', function() {
-                    exploreSvc.createPagedResultsObject.and.returnValue({data: []});
-                    this.controller.create(this.clazz);
-                    scope.$apply();
-                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, this.clazz.id, {offset: 0, limit: discoverStateSvc.explore.instanceDetails.limit});
-                    expect(discoverStateSvc.explore.creating).toEqual(true);
-                    expect(discoverStateSvc.explore.classId).toEqual(this.clazz.id);
-                    expect(discoverStateSvc.explore.classDeprecated).toEqual(this.clazz.deprecated);
-                    expect(discoverStateSvc.resetPagedInstanceDetails).toHaveBeenCalled();
-                    expect(discoverStateSvc.explore.instanceDetails.data).toEqual([]);
-                    expect(splitIRI).toHaveBeenCalledWith(this.clazz.id);
-                    expect(discoverStateSvc.explore.instance.entity).toEqual([{'@id': 'http://mobi.com/data/end/', '@type': [this.clazz.id]}]);
-                    expect(discoverStateSvc.explore.instance.metadata.instanceIRI).toEqual('http://mobi.com/data/end/');
-                    expect(discoverStateSvc.explore.breadcrumbs).toEqual(['Classes', this.clazz.title, 'New Instance']);
-                });
             });
         });
     });
