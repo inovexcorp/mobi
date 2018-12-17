@@ -29,48 +29,60 @@
          * @name newInstancePropertyOverlay
          *
          * @description
-         * The `newInstancePropertyOverlay` module only provides the `newInstancePropertyOverlay` directive which creates
-         * new instance property overlay.
+         * The `newInstancePropertyOverlay` module only provides the `newInstancePropertyOverlay` component which
+         * creates content for a modal to add a property to an instance.
          */
         .module('newInstancePropertyOverlay', [])
         /**
-         * @ngdoc directive
-         * @name newInstancePropertyOverlay.directive:newInstancePropertyOverlay
-         * @scope
-         * @restrict E
-         * @requires $timeout
+         * @ngdoc component
+         * @name newInstancePropertyOverlay.component:newInstancePropertyOverlay
          * @requires util.service:utilService
          * @requires discoverState.service:discoverStateService
+         * @requires exploreUtils.service:exploreUtilsService
          *
          * @description
-         * HTML contents for the new instance property overlay which provides the users with a dropdown list of the properties
-         * available to add to the selected instance.
+         * `newInstancePropertyOverlay` is a component that creates contents for a modal that adds a property to the
+         * provided instance from the provided list of properties. The modal contains a dropdown list of the properties
+         * that is searchable. When submitted, the modal passes back the IRI of the added property. Meant to be used in
+         * conjunction with the {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
+         * @param {Object} resolve An object with data provided to the modal
+         * @param {Object[]} resolve.properties The list of properties to select from
+         * @param {Object} resolve.instance The instance to add the property to.
          */
-        .directive('newInstancePropertyOverlay', newInstancePropertyOverlay);
-        
-        newInstancePropertyOverlay.$inject = ['$timeout', 'utilService', 'discoverStateService'];
-        
-        function newInstancePropertyOverlay($timeout, utilService, discoverStateService) {
-            return {
-                restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/newInstancePropertyOverlay/newInstancePropertyOverlay.html',
-                replace: true,
-                scope: {
-                    onCancel: '&',
-                    onSubmit: '&',
-                    getProperties: '&'
-                },
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    var ds = discoverStateService;
-                    dvm.util = utilService;
-                    dvm.newPropertyText = '';
-                    
-                    $timeout(function() {
-                        document.querySelector('#auto-complete').focus();
-                    }, 200);
-                }
+        .component('newInstancePropertyOverlay', {
+            bindings: {
+                close: '&',
+                dismiss: '&',
+                resolve: '<'
+            },
+            controllerAs: 'dvm',
+            controller: ['$timeout', 'utilService', 'discoverStateService', 'exploreUtilsService', NewInstancePropertyOverlayController],
+            templateUrl: 'modules/discover/sub-modules/explore/directives/newInstancePropertyOverlay/newInstancePropertyOverlay.html'
+        });
+
+        function NewInstancePropertyOverlayController($timeout, utilService, discoverStateService, exploreUtilsService) {
+            var dvm = this;
+            var ds = discoverStateService;
+            var eu = exploreUtilsService;
+            dvm.util = utilService;
+            dvm.propertyIRI = '';
+
+            $timeout(function() {
+                document.querySelector('#auto-complete').focus();
+            }, 200);
+
+            dvm.getProperties = function() {
+                return eu.getNewProperties(dvm.resolve.properties, dvm.resolve.instance, dvm.propertyIRI);
+            }
+            dvm.submit = function() {
+                dvm.resolve.instance[dvm.propertyIRI] = [];
+                dvm.close({'$value': dvm.propertyIRI});
+            }
+            dvm.cancel = function() {
+                dvm.dismiss();
             }
         }
 })();

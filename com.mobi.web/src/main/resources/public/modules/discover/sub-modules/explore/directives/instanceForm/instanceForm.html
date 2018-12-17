@@ -49,9 +49,7 @@
             </div>
         </form>
         <div class="btn-container clearfix">
-            <button type="button" ng-disabled="!dvm.eu.getNewProperties(dvm.properties, dvm.instance).length" ng-click="dvm.showOverlay = true" class="btn btn-link float-left"><i class="fa fa-plus fa-fw"></i>Add New Property</button>
+            <button type="button" ng-disabled="!dvm.eu.getNewProperties(dvm.properties, dvm.instance).length" ng-click="dvm.newInstanceProperty()" class="btn btn-link float-left"><i class="fa fa-plus fa-fw"></i>Add New Property</button>
         </div>
     </div>
-    <new-instance-property-overlay ng-if="dvm.showOverlay" on-cancel="dvm.showOverlay = false" on-submit="dvm.addNewProperty(propertyIRI)" get-properties="dvm.eu.getNewProperties(dvm.properties, dvm.instance, text)"></new-instance-property-overlay>
-    <property-value-overlay ng-if="dvm.showPropertyValueOverlay" close-overlay="dvm.showPropertyValueOverlay = false" on-submit="dvm.addToChanged(dvm.propertyIRI)" iri="dvm.propertyIRI" index="dvm.index" text="dvm.fullText" properties="dvm.reificationProperties"></property-value-overlay>
 </div>
