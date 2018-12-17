@@ -37,7 +37,6 @@
          * @ngdoc component
          * @name newInstancePropertyOverlay.component:newInstancePropertyOverlay
          * @requires util.service:utilService
-         * @requires discoverState.service:discoverStateService
          * @requires exploreUtils.service:exploreUtilsService
          *
          * @description
@@ -59,13 +58,12 @@
                 resolve: '<'
             },
             controllerAs: 'dvm',
-            controller: ['$timeout', 'utilService', 'discoverStateService', 'exploreUtilsService', NewInstancePropertyOverlayController],
+            controller: ['$timeout', 'utilService', 'exploreUtilsService', NewInstancePropertyOverlayController],
             templateUrl: 'modules/discover/sub-modules/explore/directives/newInstancePropertyOverlay/newInstancePropertyOverlay.html'
         });
 
-        function NewInstancePropertyOverlayController($timeout, utilService, discoverStateService, exploreUtilsService) {
+        function NewInstancePropertyOverlayController($timeout, utilService, exploreUtilsService) {
             var dvm = this;
-            var ds = discoverStateService;
             var eu = exploreUtilsService;
             dvm.util = utilService;
             dvm.propertyIRI = '';
