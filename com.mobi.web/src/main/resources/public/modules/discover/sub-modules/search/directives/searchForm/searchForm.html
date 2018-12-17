@@ -64,7 +64,7 @@
                 <div class="properties-container">
                     <div class="header-wrapper">
                         <custom-label class="property-label">Properties</custom-label>
-                        <button type="button" ng-disabled="!dvm.ds.search.datasetRecordId" class="float-right btn btn-link property-link" ng-click="dvm.showPropertyFilterOverlay = true"><i class="fa fa-fw fa-plus"></i>Property</button>
+                        <button type="button" ng-disabled="!dvm.ds.search.datasetRecordId" class="float-right btn btn-link property-link" ng-click="dvm.createPropertyFilter()"><i class="fa fa-fw fa-plus"></i>Property</button>
                     </div>
                     <md-list ng-class="{disabled: !dvm.ds.search.datasetRecordId}">
                         <md-list-item ng-repeat="meta in dvm.ds.search.queryConfig.filters" class="md-3-line">
@@ -84,5 +84,4 @@
             <a class="btn btn-link float-right" ng-click="dvm.ds.resetSearchQueryConfig()">Clear</a>
         </block-footer>
     </block>
-    <property-filter-overlay ng-if="dvm.showPropertyFilterOverlay" close-overlay="dvm.showPropertyFilterOverlay = false"></property-filter-overlay>
 </div>

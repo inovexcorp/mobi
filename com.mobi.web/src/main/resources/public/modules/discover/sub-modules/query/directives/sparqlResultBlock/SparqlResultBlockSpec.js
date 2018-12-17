@@ -21,17 +21,19 @@
  * #L%
  */
 describe('SPARQL Result Block directive', function() {
-    var $compile, scope, sparqlManagerSvc;
+    var $compile, scope, sparqlManagerSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
         module('sparqlResultBlock');
         mockSparqlManager();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _sparqlManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _sparqlManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             sparqlManagerSvc = _sparqlManagerService_;
+            modalSvc = _modalService_;
         });
 
         sparqlManagerSvc.data = [
@@ -47,12 +49,14 @@ describe('SPARQL Result Block directive', function() {
         sparqlManagerSvc.bindings = ['var1', 'var2'];
         this.element = $compile(angular.element('<sparql-result-block></sparql-result-block>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('sparqlResultBlock');
     });
 
     afterEach(function() {
         $compile = null;
         scope = null;
         sparqlManagerSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -94,6 +98,12 @@ describe('SPARQL Result Block directive', function() {
             sparqlManagerSvc.infoMessage = 'Info message';
             scope.$digest();
             expect(this.element.find('info-message').length).toBe(1);
+        });
+    });
+    describe('controller methods', function() {
+        it('should open the downloadQueryOverlay', function() {
+            this.controller.downloadQuery();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('downloadQueryOverlay', {}, undefined, 'sm');
         });
     });
 });

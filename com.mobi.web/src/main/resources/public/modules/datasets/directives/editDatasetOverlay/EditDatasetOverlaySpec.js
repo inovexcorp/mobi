@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Edit Dataset Overlay directive', function() {
+describe('Edit Dataset Overlay component', function() {
     var $compile, scope, $q, datasetStateSvc, datasetManagerSvc, catalogManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
@@ -84,8 +84,9 @@ describe('Edit Dataset Overlay directive', function() {
             [prefixes.dcterms + 'description']: [],
             [prefixes.catalog + 'keyword']: []
         };
-        scope.onClose = jasmine.createSpy('onClose');
-        this.element = $compile(angular.element('<edit-dataset-overlay on-close="onClose()"></edit-dataset-overlay>'))(scope);
+        scope.dismiss = jasmine.createSpy('dismiss');
+        scope.close = jasmine.createSpy('close');
+        this.element = $compile(angular.element('<edit-dataset-overlay close="close()" dismiss="dismiss()"></edit-dataset-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('editDatasetOverlay');
     });
@@ -103,9 +104,13 @@ describe('Edit Dataset Overlay directive', function() {
     });
 
     describe('controller bound variable', function() {
-        it('onClose should be called in parent scope when invoked', function() {
-            this.controller.onClose();
-            expect(scope.onClose).toHaveBeenCalled();
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
     describe('controller methods', function() {
@@ -117,7 +122,7 @@ describe('Edit Dataset Overlay directive', function() {
                 expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], jasmine.any(Array), 'title');
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
                 expect(datasetStateSvc.setResults).not.toHaveBeenCalled();
-                expect(scope.onClose).not.toHaveBeenCalled();
+                expect(scope.close).not.toHaveBeenCalled();
                 expect(this.controller.error).toBe('Error Message');
             });
             describe('successfully', function() {
@@ -135,7 +140,7 @@ describe('Edit Dataset Overlay directive', function() {
                     expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], jasmine.any(Array), 'title');
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
-                    expect(scope.onClose).toHaveBeenCalled();
+                    expect(scope.close).toHaveBeenCalled();
                     expect(this.controller.error).toBe('');
                 });
                 it('when all ontologies are removed.', function() {
@@ -145,7 +150,7 @@ describe('Edit Dataset Overlay directive', function() {
                     expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], [this.expectedRecord], 'title');
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
-                    expect(scope.onClose).toHaveBeenCalled();
+                    expect(scope.close).toHaveBeenCalled();
                     expect(this.controller.error).toBe('');
                 });
                 it('when an ontology is added.', function() {
@@ -165,31 +170,30 @@ describe('Edit Dataset Overlay directive', function() {
                     expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], [jasmine.objectContaining(expectedBlankNode), this.expectedRecord], 'title');
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
-                    expect(scope.onClose).toHaveBeenCalled();
+                    expect(scope.close).toHaveBeenCalled();
                     expect(this.controller.error).toBe('');
                 });
             });
         });
+        it('should close the overlay', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
     });
-    describe('fills the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('edit-dataset-overlay')).toBe(true);
-            expect(this.element.hasClass('overlay')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('EDIT-DATASET-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
-        it('with a .content', function() {
-            expect(this.element.querySelectorAll('.content').length).toBe(1);
+        ['form', 'text-input', 'text-area', 'keyword-select', 'datasets-ontology-picker'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
         });
-        it('with a text-input', function() {
-            expect(this.element.find('text-input').length).toBe(1);
-        });
-        it('with a text-area', function() {
-            expect(this.element.find('text-area').length).toBe(1);
-        });
-        it('with a keyword-select', function() {
-            expect(this.element.find('keyword-select').length).toBe(1);
-        });
-        it('with a datasets-ontology-picker', function() {
-            expect(this.element.find('datasets-ontology-picker').length).toBe(1);
+        it('with a .dataset-info', function() {
+            expect(this.element.querySelectorAll('.dataset-info').length).toBe(1);
         });
         it('depending on whether an error has occured', function() {
             expect(this.element.find('error-display').length).toBe(0);
@@ -201,29 +205,29 @@ describe('Edit Dataset Overlay directive', function() {
         it('depending on the validity of the form', function() {
             this.controller.infoForm.$invalid = true;
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.infoForm.$invalid = false;
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
-        it('with the correct buttons', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+        it('with buttons to cancel and submit', function() {
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Update']).toContain(angular.element(buttons[0]).text().trim());
-            expect(['Cancel', 'Update']).toContain(angular.element(buttons[1]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
-    it('should call onClose when the button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
+    it('should call cancel when the button is clicked', function() {
+        spyOn(this.controller, 'cancel');
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
-        expect(scope.onClose).toHaveBeenCalled();
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
     it('should call update when the button is clicked', function() {
-        scope.$digest();
         spyOn(this.controller, 'update');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.update).toHaveBeenCalled();
     });

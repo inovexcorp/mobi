@@ -68,6 +68,9 @@
         .header-wrapper .property-label {
             margin: 7px 0;
         }
+        md-list-item {
+            width: 100%;
+        }
     }
     md-list {
         border: 1px solid var(--light);
