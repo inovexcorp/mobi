@@ -29,72 +29,69 @@
          * @name newDatasetOverlay
          *
          * @description
-         * The `newDatasetOverlay` module only provides the `newDatasetOverlay` directive which creates
-         * creates overlays with forms to create a Dataset Record.
+         * The `newDatasetOverlay` module only provides the `newDatasetOverlay` component which creates content for a
+         * modal to create a new Dataset Record.
          */
         .module('newDatasetOverlay', [])
         /**
-         * @ngdoc directive
-         * @name newDatasetOverlay.directive:newDatasetOverlay
-         * @scope
-         * @restrict E
+         * @ngdoc component
+         * @name newDatasetOverlay.component:newDatasetOverlay
          * @requires datasetManager.service:datasetManagerService
          * @requires datasetState.service:datasetStateService
          * @requires util.service:utilService
          *
          * @description
-         * `newDatasetOverlay` is a directive that creates overlays with form containing fields for creating
-         * a new Dataset Record. The first overlay contains fields for the title, repository id, dataset IRI,
-         * description, and {@link keywordSelect.directive:keywordSelect keywords}. The repository id is a static
-         * field for now. The close functionality of the first overlay is controlled by a passed function. The second
-         * overlay contains a searchable list of Ontology Records that can be linked to the new Dataset Record.
+         * `newDatasetOverlay` is a component that creates content for a modal with a form containing fields for
+         * creating a new Dataset Record. The fields are for the title, repository id, dataset IRI, description,
+         * {@link keywordSelect.directive:keywordSelect keywords}, and
+         * {@link datasetsOntologyPicker.directive:datasetsOntologyPicker ontologies to be linked} to the new Dataset
+         * Record. The repository id is a static field for now. Meant to be used in conjunction with the
+         * {@link modalService.directive:modalService}.
          *
-         * @param {Function} onClose The method to be called when closing the overlay
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
          */
-        .directive('newDatasetOverlay', newDatasetOverlay);
+        .component('newDatasetOverlay', {
+            bindings: {
+                close: '&',
+                dismiss: '&'
+            },
+            controllerAs: 'dvm',
+            controller: ['datasetManagerService', 'datasetStateService', 'utilService', NewDatasetOverlayController],
+            templateUrl: 'modules/datasets/directives/newDatasetOverlay/newDatasetOverlay.html'
+        });
 
-        newDatasetOverlay.$inject = ['datasetManagerService', 'datasetStateService', 'utilService'];
+        function NewDatasetOverlayController(datasetManagerService, datasetStateService, utilService) {
+            var dvm = this;
+            var state = datasetStateService;
+            var dm = datasetManagerService;
+            dvm.util = utilService;
+            dvm.error = '';
+            dvm.recordConfig = {
+                title: '',
+                repositoryId: 'system',
+                datasetIRI: '',
+                description: ''
+            };
+            dvm.keywords = [];
+            dvm.selectedOntologies = [];
 
-        function newDatasetOverlay(datasetManagerService, datasetStateService, utilService) {
-            return {
-                restrict: 'E',
-                templateUrl: 'modules/datasets/directives/newDatasetOverlay/newDatasetOverlay.html',
-                scope: {},
-                bindToController: {
-                    onClose: '&'
-                },
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    var state = datasetStateService;
-                    var dm = datasetManagerService;
-                    dvm.util = utilService;
-                    dvm.error = '';
-                    dvm.recordConfig = {
-                        title: '',
-                        repositoryId: 'system',
-                        datasetIRI: '',
-                        description: ''
-                    };
-                    dvm.keywords = [];
-                    dvm.selectedOntologies = [];
-                    dvm.step = 0;
+            dvm.create = function() {
+                dvm.recordConfig.keywords = _.map(dvm.keywords, _.trim);
+                dvm.recordConfig.ontologies = _.map(dvm.selectedOntologies, '@id');
+                dm.createDatasetRecord(dvm.recordConfig)
+                    .then(() => {
+                        dvm.util.createSuccessToast('Dataset successfully created');
+                        state.setResults();
+                        dvm.close();
+                    }, onError);
+            }
+            dvm.cancel = function() {
+                dvm.dismiss();
+            }
 
-                    dvm.create = function() {
-                        dvm.recordConfig.keywords = _.map(dvm.keywords, _.trim);
-                        dvm.recordConfig.ontologies = _.map(dvm.selectedOntologies, '@id');
-                        dm.createDatasetRecord(dvm.recordConfig)
-                            .then(() => {
-                                dvm.util.createSuccessToast('Dataset successfully created');
-                                state.setResults();
-                                dvm.onClose();
-                            }, onError);
-                    }
-
-                    function onError(errorMessage) {
-                        dvm.error = errorMessage;
-                    }
-                }
+            function onError(errorMessage) {
+                dvm.error = errorMessage;
             }
         }
 })();

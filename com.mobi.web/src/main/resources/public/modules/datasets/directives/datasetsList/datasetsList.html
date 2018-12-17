@@ -67,12 +67,4 @@
             </block-footer>
         </block>
     </div>
-    <confirmation-overlay class="delete-dataset" ng-if="dvm.showDeleteConfirm" header-text="'Delete ' + dvm.util.getDctermsValue(dvm.state.selectedDataset.record, 'title')" confirm-click="dvm.delete()" cancel-click="dvm.showDeleteConfirm = false; dvm.error = ''" confirm-text="'Yes'" cancel-text="'No'">
-        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <p>Are you sure that you want to delete <strong>{{dvm.util.getDctermsValue(dvm.state.selectedDataset.record, 'title')}}</strong>?</p>
-    </confirmation-overlay>
-    <confirmation-overlay class="clear-dataset" ng-if="dvm.showClearConfirm" header-text="'Clear ' + dvm.util.getDctermsValue(dvm.state.selectedDataset.record, 'title')" confirm-click="dvm.clear()" cancel-click="dvm.showClearConfirm = false; dvm.error = ''" confirm-text="'Yes'" cancel-text="'No'">
-        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <p>Are you sure that you want to clear <strong>{{dvm.util.getDctermsValue(dvm.state.selectedDataset.record, 'title')}}</strong>?</p>
-    </confirmation-overlay>
 </div>

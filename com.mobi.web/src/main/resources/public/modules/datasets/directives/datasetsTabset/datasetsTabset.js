@@ -39,6 +39,7 @@
          * @scope
          * @restrict E
          * @requires datasetState.service:datasetStateService
+         * @requires modal.service:modalService
          *
          * @description
          * `datasetsTabset` is a directive which creates a div containing a blue bar, a white bar, and the rest
@@ -51,9 +52,9 @@
          */
         .directive('datasetsTabset', datasetsTabset);
 
-        datasetsTabset.$inject = ['datasetStateService'];
+        datasetsTabset.$inject = ['datasetStateService', 'modalService'];
 
-        function datasetsTabset(datasetStateService) {
+        function datasetsTabset(datasetStateService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -64,6 +65,9 @@
                     var dvm = this;
                     dvm.state = datasetStateService;
 
+                    dvm.showNewOverlay = function() {
+                        modalService.openModal('newDatasetOverlay');
+                    }
                     dvm.onKeyUp = function(event) {
                         if (event.keyCode === 13) {
                             dvm.state.resetPagination();

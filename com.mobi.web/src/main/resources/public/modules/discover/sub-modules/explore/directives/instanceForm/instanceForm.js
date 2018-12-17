@@ -97,11 +97,12 @@
                     dvm.showPropertyValueOverlay = false;
                     dvm.changed = [];
                     dvm.missingProperties = [];
-                    dvm.propertyIRI = '';
-                    dvm.index = 0;
                     dvm.instance = dvm.ds.getInstance();
                     dvm.eu = exploreUtilsService;
 
+                    dvm.newInstanceProperty = function() {
+                        modalService.openModal('newInstancePropertyOverlay', {properties: dvm.properties, instance: dvm.instance}, dvm.addToChanged);
+                    }
                     dvm.showIriConfirm = function() {
                         modalService.openConfirmModal('<p>Changing this IRI might break relationships within the dataset. Are you sure you want to continue?</p>', dvm.showIriOverlay);
                     }
@@ -136,16 +137,8 @@
                     dvm.setIRI = function(iriObj) {
                         dvm.instance['@id'] = iriObj.iriBegin + iriObj.iriThen + iriObj.iriEnd;
                     }
-                    dvm.addNewProperty = function(property) {
-                        dvm.instance[property] = [];
-                        dvm.addToChanged(property);
-                        dvm.showOverlay = false;
-                    }
                     dvm.onSelect = function(text, propertyIRI, index) {
-                        dvm.fullText = text;
-                        dvm.propertyIRI = propertyIRI;
-                        dvm.index = index;
-                        dvm.showPropertyValueOverlay = true;
+                        modalService.openModal('propertyValueOverlay', {iri: propertyIRI, index: index, text, properties: dvm.reificationProperties}, dvm.addToChanged, 'lg');
                     }
                     dvm.getMissingProperties = function() {
                         var missing = [];

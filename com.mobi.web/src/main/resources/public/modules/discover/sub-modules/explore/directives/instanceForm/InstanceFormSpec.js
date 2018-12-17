@@ -196,24 +196,12 @@ describe('Instance Form directive', function() {
         it('with a .btn.btn-link', function() {
             expect(this.element.querySelectorAll('.btn.btn-link').length).toBe(1);
         });
-        it('with a new-instance-property-overlay', function() {
-            expect(this.element.find('new-instance-property-overlay').length).toBe(0);
-
-            this.controller.showOverlay = true;
-            scope.$digest();
-
-            expect(this.element.find('new-instance-property-overlay').length).toBe(1);
-        });
-        it('with a property-value-overlay', function() {
-            expect(this.element.find('property-value-overlay').length).toBe(0);
-
-            this.controller.showPropertyValueOverlay = true;
-            scope.$digest();
-
-            expect(this.element.find('property-value-overlay').length).toBe(1);
-        });
     });
     describe('controller methods', function() {
+        it('newInstanceProperty should show the newInstancePropertyOverlay', function() {
+            this.controller.newInstanceProperty();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('newInstancePropertyOverlay', {properties: this.controller.properties, instance: this.controller.instance}, this.controller.addToChanged);
+        });
         it('showIriConfirm should open a confirm modal for editing the IRI', function() {
             this.controller.showIriConfirm();
             expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.any(String), this.controller.showIriOverlay);
@@ -319,19 +307,9 @@ describe('Instance Form directive', function() {
             this.controller.setIRI({iriBegin: 'begin', iriThen: '#', iriEnd: 'end'});
             expect(this.controller.instance['@id']).toBe('begin#end');
         });
-        it('addNewProperty should set variables correctly', function() {
-            spyOn(this.controller, 'addToChanged');
-            this.controller.showOverlay = true;
-            this.controller.addNewProperty('newProperty');
-            expect(_.has(this.controller.instance, 'newProperty')).toBe(true);
-            expect(this.controller.addToChanged).toHaveBeenCalledWith('newProperty');
-            expect(this.controller.showOverlay).toBe(false);
-        });
         it('onSelect sets the correct variables', function() {
-            this.controller.showPropertyValueOverlay = false;
-            this.controller.onSelect('text');
-            this.controller.fullText = 'text';
-            this.controller.showPropertyValueOverlay = true;
+            this.controller.onSelect('text', 'iri', 0);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('propertyValueOverlay', {text: 'text', iri: 'iri', index: 0, properties: this.controller.reificationProperties}, this.controller.addToChanged, 'lg');
         });
         it('getMissingProperties retrieves the proper list of messages', function() {
             util.getBeautifulIRI.and.callFake(_.identity);

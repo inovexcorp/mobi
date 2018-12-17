@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Upload Data Overlay directive', function() {
+describe('Upload Data Overlay component', function() {
     var $compile, scope, $q, datasetManagerSvc, datasetStateSvc, utilSvc, httpSvc;
 
     beforeEach(function() {
@@ -43,8 +43,9 @@ describe('Upload Data Overlay directive', function() {
 
         datasetStateSvc.selectedDataset = {record: {'@id': 'dataset'}};
         utilSvc.getDctermsValue.and.returnValue('Test');
-        scope.onClose = jasmine.createSpy('onClose');
-        this.element = $compile(angular.element('<upload-data-overlay on-close="onClose()"></upload-data-overlay>'))(scope);
+        scope.dismiss = jasmine.createSpy('dismiss');
+        scope.close = jasmine.createSpy('close');
+        this.element = $compile(angular.element('<upload-data-overlay close="close()" dismiss="dismiss()"></upload-data-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('uploadDataOverlay');
     });
@@ -65,9 +66,13 @@ describe('Upload Data Overlay directive', function() {
         expect(this.controller.importing).toEqual(false);
     });
     describe('controller bound variable', function() {
-        it('onClose should be called in parent scope when invoked', function() {
-            this.controller.onClose();
-            expect(scope.onClose).toHaveBeenCalled();
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
     describe('controller methods', function() {
@@ -78,7 +83,7 @@ describe('Upload Data Overlay directive', function() {
                 scope.$apply();
                 expect(datasetManagerSvc.uploadData).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], this.controller.fileObj, this.controller.uploadId);
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
-                expect(scope.onClose).not.toHaveBeenCalled();
+                expect(scope.close).not.toHaveBeenCalled();
             });
             it('successfully', function() {
                 this.controller.upload();
@@ -87,23 +92,26 @@ describe('Upload Data Overlay directive', function() {
                 expect(datasetManagerSvc.uploadData).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], this.controller.fileObj, this.controller.uploadId);
                 expect(this.controller.importing).toEqual(false);
                 expect(utilSvc.createSuccessToast).toHaveBeenCalled();
-                expect(scope.onClose).toHaveBeenCalled();
+                expect(scope.close).toHaveBeenCalled();
             });
         });
         it('should cancel any import and close the overlay', function() {
             this.controller.cancel();
             expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.uploadId);
-            expect(scope.onClose).toHaveBeenCalled();
+            expect(scope.dismiss).toHaveBeenCalled();
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('upload-data-overlay')).toBe(true);
-            expect(this.element.hasClass('overlay')).toBe(true);
-            expect(this.element.querySelectorAll('form.content').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('UPLOAD-DATA-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
-        it('with a file-input', function() {
-            expect(this.element.find('file-input').length).toBe(1);
+        ['form', 'file-input'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
         });
         it('depending on whether an error has occured', function() {
             expect(this.element.find('error-display').length).toBe(0);
@@ -115,7 +123,7 @@ describe('Upload Data Overlay directive', function() {
         it('depending on whether data is importing', function() {
             this.controller.form.$invalid = false;
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(this.element.querySelectorAll('.importing-indicator').length).toEqual(0);
             expect(button.attr('disabled')).toBeFalsy();
 
@@ -126,7 +134,7 @@ describe('Upload Data Overlay directive', function() {
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('with buttons to cancel and submit', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
@@ -134,13 +142,13 @@ describe('Upload Data Overlay directive', function() {
     });
     it('should call upload when the Submit button is clicked', function() {
         spyOn(this.controller, 'upload');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.upload).toHaveBeenCalled();
     });
     it('should call cancel when the button is clicked', function() {
         spyOn(this.controller, 'cancel');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button:not(.btn-primary)')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });
