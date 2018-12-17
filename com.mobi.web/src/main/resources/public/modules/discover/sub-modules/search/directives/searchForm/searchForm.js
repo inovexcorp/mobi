@@ -42,6 +42,7 @@
          * @requires discoverState.service:discoverStateService
          * @requires explore.service:exploreService
          * @requires util.service:utilService
+         * @requires modal.service:modalService
          *
          * @description
          * HTML contents in the search form within the Search page for entering a keyword search combined
@@ -49,9 +50,9 @@
          */
         .directive('searchForm', searchForm);
 
-        searchForm.$inject = ['searchService', 'discoverStateService', 'exploreService', 'utilService'];
+        searchForm.$inject = ['searchService', 'discoverStateService', 'exploreService', 'utilService', 'modalService'];
 
-        function searchForm(searchService, discoverStateService, exploreService, utilService) {
+        function searchForm(searchService, discoverStateService, exploreService, utilService, modalService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/search/directives/searchForm/searchForm.html',
@@ -67,6 +68,9 @@
                     dvm.typeSearch = '';
                     dvm.errorMessage = '';
 
+                    dvm.createPropertyFilter = function() {
+                        modalService.openModal('propertyFilterOverlay');
+                    }
                     dvm.submit = function() {
                         s.submitSearch(dvm.ds.search.datasetRecordId, dvm.ds.search.queryConfig)
                             .then(data => {

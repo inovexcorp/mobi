@@ -50,7 +50,8 @@ describe('Property Selector directive', function() {
         scope.keys = ['key'];
         scope.property = {'@id': 'id'};
         scope.range = 'range';
-        this.element = $compile(angular.element('<property-selector keys="keys" property="property" range="range"></property-selector>'))(scope);
+        scope.rangeChangeEvent = jasmine.createSpy('rangeChangeEvent');
+        this.element = $compile(angular.element('<property-selector keys="keys" property="property" range="range" range-change-event="rangeChangeEvent()"></property-selector>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('propertySelector');
     });
@@ -81,6 +82,10 @@ describe('Property Selector directive', function() {
             this.controller.range = 'new-range';
             scope.$apply();
             expect(scope.range).toEqual('new-range');
+        });
+        it('rangeChangeEvent should be called in the parent scope', function() {
+            this.controller.rangeChangeEvent();
+            expect(scope.rangeChangeEvent).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {

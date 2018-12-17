@@ -40,6 +40,8 @@
          * @restrict E
          * @requires discoverState.service:discoverStateService
          * @requires util.service:utilService
+         * @requires exploreUtils.service:exploreUtilsService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * HTML contents in the instance view page which shows the complete list of properites
