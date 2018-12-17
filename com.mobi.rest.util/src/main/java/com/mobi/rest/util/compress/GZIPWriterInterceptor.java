@@ -34,6 +34,10 @@ import javax.ws.rs.ext.Provider;
 import javax.ws.rs.ext.WriterInterceptor;
 import javax.ws.rs.ext.WriterInterceptorContext;
 
+/**
+ * WriterInterceptor class that intercepts all REST Responses from the system, writes the content out as a
+ * GZIPOutputStream, and sets the Content Encoding to GZIP in the Response header.
+ */
 @Provider
 @Component(immediate = true)
 public class GZIPWriterInterceptor implements WriterInterceptor {
