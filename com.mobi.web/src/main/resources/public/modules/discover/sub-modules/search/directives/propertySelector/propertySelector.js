@@ -49,9 +49,9 @@
          */
         .directive('propertySelector', propertySelector);
 
-        propertySelector.$inject = ['discoverStateService', 'ontologyManagerService', 'prefixes', 'utilService'];
+        propertySelector.$inject = ['$timeout', 'discoverStateService', 'ontologyManagerService', 'prefixes', 'utilService'];
 
-        function propertySelector(discoverStateService, ontologyManagerService, prefixes, utilService) {
+        function propertySelector($timeout, discoverStateService, ontologyManagerService, prefixes, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/search/directives/propertySelector/propertySelector.html',
@@ -61,7 +61,8 @@
                 bindToController: {
                     keys: '=',
                     property: '=',
-                    range: '='
+                    range: '=',
+                    rangeChangeEvent: '&'
                 },
                 controllerAs: 'dvm',
                 controller: function() {
@@ -94,6 +95,7 @@
                         dvm.ranges = _.get(dvm.property, prefixes.rdfs + 'range', [{'@id': prefixes.xsd + 'string'}]);
                         if (dvm.ranges.length === 1) {
                             dvm.range = dvm.ranges[0]['@id'];
+                            $timeout(() => dvm.rangeChangeEvent());
                         }
                     }
 

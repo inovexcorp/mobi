@@ -141,25 +141,25 @@ describe('Property Value Overlay component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('PROPERTY-VALUE-OVERLAY');
+            expect(this.element.prop('tagName')).toEqual('PROPERTY-VALUE-OVERLAY');
             expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         ['h3', 'p'].forEach(test => {
             it('with a ' + test, function() {
-                expect(this.element.find(test).length).toBe(1);
+                expect(this.element.find(test).length).toEqual(1);
             });
         });
         it('if property is ommitted', function() {
-            expect(this.element.querySelectorAll('.form-group').length).toBe(1);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
 
             spyOn(this.controller, 'notOmmitted').and.returnValue(false);
             scope.$digest();
-            expect(this.element.querySelectorAll('.form-group').length).toBe(0);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(0);
         });
         it('with a custom-label', function() {
-            expect(this.element.find('custom-label').length).toBe(1);
+            expect(this.element.find('custom-label').length).toEqual(1);
         });
         it('if the reification property has been changed', function() {
             var label = this.element.find('custom-label');
@@ -170,33 +170,33 @@ describe('Property Value Overlay component', function() {
             expect(label.hasClass('changed')).toEqual(false);
         });
         it('if the reification property has a boolean range', function() {
-            expect(this.element.querySelectorAll('.boolean-property').length).toBe(1);
+            expect(this.element.querySelectorAll('.boolean-property').length).toEqual(1);
 
             exploreUtilsSvc.isBoolean.and.returnValue(false);
             scope.$digest();
-            expect(this.element.querySelectorAll('.boolean-property').length).toBe(0);
+            expect(this.element.querySelectorAll('.boolean-property').length).toEqual(0);
         });
         it('if the reification property is a data property', function() {
             exploreUtilsSvc.isBoolean.and.returnValue(false);
             scope.$digest();
-            expect(this.element.querySelectorAll('.data-property').length).toBe(1);
+            expect(this.element.querySelectorAll('.data-property').length).toEqual(1);
 
             exploreUtilsSvc.isPropertyOfType.and.returnValue(false);
             scope.$digest();
-            expect(this.element.querySelectorAll('.data-property').length).toBe(0);
+            expect(this.element.querySelectorAll('.data-property').length).toEqual(0);
         });
         it('if the reification property is an object property', function() {
-            expect(this.element.querySelectorAll('.object-property').length).toBe(1);
+            expect(this.element.querySelectorAll('.object-property').length).toEqual(1);
 
             exploreUtilsSvc.isPropertyOfType.and.returnValue(false);
             scope.$digest();
-            expect(this.element.querySelectorAll('.object-property').length).toBe(0);
+            expect(this.element.querySelectorAll('.object-property').length).toEqual(0);
         });
         it('with a .btn-container.clearfix', function() {
-            expect(this.element.querySelectorAll('.btn-container.clearfix').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-container.clearfix').length).toEqual(1);
         });
         it('with a .btn.btn-link', function() {
-            expect(this.element.querySelectorAll('.btn.btn-link').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn.btn-link').length).toEqual(1);
         });
         it('with buttons to cancel and submit', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
@@ -212,9 +212,9 @@ describe('Property Value Overlay component', function() {
         });
         it('notOmmitted should return the proper value depending on what is provided', function() {
             ['@id', '@type', prefixes.rdf + 'subject', prefixes.rdf + 'predicate', prefixes.rdf + 'object'].forEach(iri => {
-                expect(this.controller.notOmmitted(iri)).toBe(false);
+                expect(this.controller.notOmmitted(iri)).toEqual(false);
             });
-            expect(this.controller.notOmmitted('other')).toBe(true);
+            expect(this.controller.notOmmitted('other')).toEqual(true);
         });
         describe('submit should call the correct methods when the entity', function() {
             it('contains reification property', function() {
@@ -258,8 +258,8 @@ describe('Property Value Overlay component', function() {
             });
         });
         it('isChanged should return the proper value', function() {
-            expect(this.controller.isChanged(this.reificationProp)).toBe(true);
-            expect(this.controller.isChanged('new')).toBe(false);
+            expect(this.controller.isChanged(this.reificationProp)).toEqual(true);
+            expect(this.controller.isChanged('new')).toEqual(false);
         });
         it('cancel dismisses the overlay', function() {
             this.controller.cancel();

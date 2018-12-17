@@ -84,14 +84,14 @@ describe('New Instance Property Overlay component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('NEW-INSTANCE-CLASS-OVERLAY');
+            expect(this.element.prop('tagName')).toEqual('NEW-INSTANCE-CLASS-OVERLAY');
             expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         ['form', 'h3', 'p', 'md-autocomplete'].forEach(test => {
             it('with a ' + test, function() {
-                expect(this.element.find(test).length).toBe(1);
+                expect(this.element.find(test).length).toEqual(1);
             });
         });
         it('with buttons to cancel and submit', function() {
