@@ -34,7 +34,7 @@
                 <groups-list></groups-list>
             </block-content>
             <block-footer class="centered">
-                <button class="btn btn-link" ng-click="dvm.deleteGroup()" ng-disabled="!dvm.state.selectedGroup || !dvm.um.isAdmin(dvm.lm.currentUser)">
+                <button class="btn btn-link" ng-click="dvm.confirmDeleteGroup()" ng-disabled="!dvm.state.selectedGroup || !dvm.um.isAdmin(dvm.lm.currentUser)">
                     <i class="fa fa-trash"></i>Delete Group
                 </button>
             </block-footer>
@@ -78,8 +78,7 @@
                                 <span>Members</span>
                             </block-header>
                             <block-content>
-                                <member-table ng-if="dvm.state.selectedGroup" members="dvm.state.selectedGroup.members"
-                                    add-member="dvm.addMember()" remove-member="dvm.removeMember()"></member-table>
+                                <member-table ng-if="dvm.state.selectedGroup" members="dvm.state.selectedGroup.members" add-member="dvm.addMember(member)" remove-member="dvm.confirmRemoveMember(member)" link-to-user="true"></member-table>
                             </block-content>
                         </block>
                     </div>

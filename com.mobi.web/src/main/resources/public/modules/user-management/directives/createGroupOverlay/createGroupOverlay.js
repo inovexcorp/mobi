@@ -29,69 +29,66 @@
          * @name createGroupOverlay
          *
          * @description
-         * The `createGroupOverlay` module only provides the `createGroupOverlay` directive which creates an
-         * overlay for adding a group to Mobi.
+         * The `createGroupOverlay` module only provides the `createGroupOverlay` component which creates content for a
+         * modal to add a group to Mobi.
          */
         .module('createGroupOverlay', [])
         /**
-         * @ngdoc directive
-         * @name createGroupOverlay.directive:createGroupOverlay
-         * @scope
-         * @restrict E
-         * @requires $q
+         * @ngdoc component
+         * @name createGroupOverlay.component:createGroupOverlay
          * @requires userManager.service:userManagerService
          * @requires userState.service:userStateService
          * @requires loginManager.service:loginManagerService
          *
          * @description
-         * `createGroupOverlay` is a directive that creates an overlay with a form to add a group to Mobi.
-         * The form includes the group title, a group description, and group
-         * {@link memberTable.directive:memberTable members}. The directive is replaced by the contents of its
-         * template.
+         * `createGroupOverlay` is a component that creates content for a modal with a form to add a group to Mobi. The
+         * form includes the group title, a group description, and group
+         * {@link memberTable.directive:memberTable members}. Meant to be used in conjunction with the
+         * {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
          */
-        .directive('createGroupOverlay', createGroupOverlay);
-
-    createGroupOverlay.$inject = ['$q', 'userStateService', 'userManagerService', 'loginManagerService'];
-
-    function createGroupOverlay($q, userStateService, userManagerService, loginManagerService) {
-        return {
-            restrict: 'E',
-            controllerAs: 'dvm',
-            replace: true,
-            scope: {},
-            controller: function() {
-                var dvm = this;
-                dvm.state = userStateService;
-                dvm.um = userManagerService;
-                dvm.lm = loginManagerService;
-                dvm.newGroup = {
-                    title: '',
-                    description: '',
-                    roles: [],
-                    members: [dvm.lm.currentUser]
-                }
-                dvm.errorMessage = '';
-
-                dvm.getTitles = function() {
-                    return _.map(dvm.um.groups, 'title');
-                }
-                dvm.add = function() {
-                    dvm.um.addGroup(dvm.newGroup).then(response => dvm.um.addGroupUsers(dvm.newGroup.title, dvm.newGroup.members), $q.reject)
-                    .then(response => {
-                        dvm.errorMessage = '';
-                        dvm.state.displayCreateGroupOverlay = false;
-                    }, error => dvm.errorMessage = error);
-                }
-                dvm.addMember = function() {
-                    dvm.newGroup.members.push(dvm.state.memberName);
-                    dvm.state.memberName = '';
-                }
-                dvm.removeMember = function() {
-                    _.pull(dvm.newGroup.members, dvm.state.memberName);
-                    dvm.state.memberName = '';
-                }
+        .component('createGroupOverlay', {
+            bindings: {
+                close: '&',
+                dismiss: '&'
             },
+            controllerAs: 'dvm',
+            controller: ['$q', 'userManagerService', 'loginManagerService', CreateGroupOverlayController],
             templateUrl: 'modules/user-management/directives/createGroupOverlay/createGroupOverlay.html'
-        };
+        });
+
+    function CreateGroupOverlayController($q, userManagerService, loginManagerService) {
+        var dvm = this;
+        dvm.um = userManagerService;
+        dvm.lm = loginManagerService;
+        dvm.newGroup = {
+            title: '',
+            description: '',
+            roles: [],
+            members: [dvm.lm.currentUser]
+        }
+        dvm.errorMessage = '';
+
+        dvm.getTitles = function() {
+            return _.map(dvm.um.groups, 'title');
+        }
+        dvm.add = function() {
+            dvm.um.addGroup(dvm.newGroup).then(response => dvm.um.addGroupUsers(dvm.newGroup.title, dvm.newGroup.members), $q.reject)
+            .then(response => {
+                dvm.errorMessage = '';
+                dvm.close();
+            }, error => dvm.errorMessage = error);
+        }
+        dvm.addMember = function(member) {
+            dvm.newGroup.members.push(member);
+        }
+        dvm.removeMember = function(member) {
+            _.pull(dvm.newGroup.members, member);
+        }
+        dvm.cancel = function() {
+            dvm.dismiss();
+        }
     }
 })();

@@ -879,15 +879,6 @@ function mockUserState() {
             this.showUsers = false;
             this.selectedGroup = undefined;
             this.selectedUser = undefined;
-            this.memberName = '';
-            this.displayDeleteUserConfirm = false;
-            this.displayDeleteGroupConfirm = false;
-            this.displayCreateUserOverlay = false;
-            this.displayCreateGroupOverlay = false;
-            this.displayRemoveMemberConfirm = false;
-            this.displayEditGroupInfoOverlay = false;
-            this.displayEditUserProfileOverlay = false;
-            this.displayResetPasswordOverlay = false;
             this.reset = jasmine.createSpy('reset');
         });
     });

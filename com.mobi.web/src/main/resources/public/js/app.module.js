@@ -75,7 +75,6 @@
             'commitDifferenceTabset',
             'commitHistoryTable',
             'commitInfoOverlay',
-            'confirmationOverlay',
             'confirmModal',
             'customLabel',
             'disableAnimate',
