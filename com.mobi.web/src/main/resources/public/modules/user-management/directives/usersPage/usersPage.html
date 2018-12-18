@@ -34,7 +34,7 @@
                 <users-list></users-list>
             </block-content>
             <block-footer class="centered">
-                <button class="btn btn-link" ng-click="dvm.deleteUser()" ng-disabled="!dvm.state.selectedUser || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.state.selectedUser.username === dvm.lm.currentUser">
+                <button class="btn btn-link" ng-click="dvm.confirmDeleteUser()" ng-disabled="!dvm.state.selectedUser || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.state.selectedUser.username === dvm.lm.currentUser">
                     <i class="fa fa-trash"></i>Delete User
                 </button>
             </block-footer>
