@@ -21,19 +21,17 @@
  * #L%
  */
 describe('New Instance Property Overlay component', function() {
-    var $compile, scope, discoverStateSvc, exploreUtils, util;
+    var $compile, scope, exploreUtils, util;
 
     beforeEach(function() {
         module('templates');
         module('newInstancePropertyOverlay');
-        mockDiscoverState();
         mockExploreUtils();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _discoverStateService_, _exploreUtilsService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _exploreUtilsService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            discoverStateSvc = _discoverStateService_;
             exploreUtils = _exploreUtilsService_;
             util = _utilService_;
         });
@@ -49,7 +47,6 @@ describe('New Instance Property Overlay component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        discoverStateSvc = null;
         exploreUtils = null;
         util = null;
         this.element.remove();
