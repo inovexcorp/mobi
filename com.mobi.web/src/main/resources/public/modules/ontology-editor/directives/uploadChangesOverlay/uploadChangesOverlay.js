@@ -67,13 +67,12 @@
                     var dvm = this;
                     dvm.error = '';
                     dvm.file = undefined;
-                    dvm.fileName = 'No file selected'
+                    dvm.fileName = 'No file selected';
                     dvm.os = ontologyStateService;
 
                     dvm.update = function() {
                         dvm.fileName = dvm.file.name;
-                    }
-
+                    };
                     dvm.submit = function() {
                         if (dvm.os.hasInProgressCommit()) {
                             dvm.error = 'Unable to upload changes. Please either commit your current changes or discard them and try again.';
