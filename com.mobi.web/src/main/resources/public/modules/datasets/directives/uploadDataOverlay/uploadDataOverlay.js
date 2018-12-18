@@ -73,7 +73,7 @@
 
             dvm.update = function() {
                 dvm.fileName = dvm.fileObj.name;
-            };
+            }
             dvm.submit = function() {
                 dvm.importing = true;
                 dm.uploadData(state.selectedDataset.record['@id'], dvm.fileObj, dvm.uploadId)

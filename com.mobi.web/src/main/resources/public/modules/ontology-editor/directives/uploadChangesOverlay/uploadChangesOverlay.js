@@ -72,7 +72,7 @@
 
                     dvm.update = function() {
                         dvm.fileName = dvm.file.name;
-                    };
+                    }
                     dvm.submit = function() {
                         if (dvm.os.hasInProgressCommit()) {
                             dvm.error = 'Unable to upload changes. Please either commit your current changes or discard them and try again.';
@@ -84,10 +84,10 @@
                                 $scope.close();
                             }, errorMessage => dvm.error = errorMessage);
                         }
-                    };
+                    }
                     dvm.cancel = function() {
                         $scope.dismiss();
-                    };
+                    }
                 }]
             };
         }
