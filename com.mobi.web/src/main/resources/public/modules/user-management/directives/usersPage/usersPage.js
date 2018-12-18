@@ -29,9 +29,9 @@
          * @name usersPage
          *
          * @description
-         * The `usersPage` module only provides the `usersPage` directive which creates
-         * a Bootstrap `row` with {@link block.directive:block blocks} for selecting and editing
-         * a user in the {@link userManager.service:userManagerServiec#users users list}.
+         * The `usersPage` module only provides the `usersPage` directive which creates a Bootstrap `row` with
+         * {@link block.directive:block blocks} for selecting and editing a user in the
+         * {@link userManager.service:userManagerService#users users list}.
          */
         .module('usersPage', [])
         /**
@@ -43,6 +43,7 @@
          * @requires userManager.service:userManagerService
          * @requires loginManager.service:loginManagerService
          * @requires util.service:utilService
+         * @requires modal.service:modalService
          *
          * @description
          * `usersPage` is a directive that creates a Bootstrap `row` div with three columns
@@ -57,9 +58,9 @@
          */
         .directive('usersPage', usersPage);
 
-    usersPage.$inject = ['userStateService', 'userManagerService', 'loginManagerService', 'utilService'];
+    usersPage.$inject = ['userStateService', 'userManagerService', 'loginManagerService', 'utilService', 'modalService'];
 
-    function usersPage(userStateService, userManagerService, loginManagerService, utilService) {
+    function usersPage(userStateService, userManagerService, loginManagerService, utilService, modalService) {
         return {
             restrict: 'E',
             replace: true,
@@ -78,17 +79,22 @@
                         dvm.roles.admin = _.includes(_.get(dvm.state.selectedUser, 'roles', []), 'admin');
                     }
                 });
-                dvm.deleteUser = function() {
-                    dvm.state.displayDeleteUserConfirm = true;
+                dvm.confirmDeleteUser = function() {
+                    modalService.openConfirmModal('Are you sure you want to remove <strong>' + dvm.state.selectedUser.username + '</strong>?', dvm.deleteUser);
                 }
                 dvm.createUser = function() {
-                    dvm.state.displayCreateUserOverlay = true;
+                    modalService.openModal('createUserOverlay');
                 }
                 dvm.editProfile = function() {
-                    dvm.state.displayEditUserProfileOverlay = true;
+                    modalService.openModal('editUserProfileOverlay');
                 }
                 dvm.resetPassword = function() {
-                    dvm.state.displayResetPasswordOverlay = true;
+                    modalService.openModal('resetPasswordOverlay');
+                }
+                dvm.deleteUser = function() {
+                    dvm.um.deleteUser(dvm.state.selectedUser.username).then(response => {
+                        dvm.state.selectedUser = undefined;
+                    }, dvm.util.createErrorToast);
                 }
                 dvm.changeRoles = function() {
                     var request = dvm.roles.admin ? dvm.um.addUserRoles(dvm.state.selectedUser.username, ['admin']) : dvm.um.deleteUserRole(dvm.state.selectedUser.username, 'admin');

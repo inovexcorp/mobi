@@ -39,7 +39,6 @@ describe('User State service', function() {
         userStateSvc.reset();
         expect(userStateSvc.selectedGroup).toBeUndefined();
         expect(userStateSvc.selectedUser).toBeUndefined();
-        expect(userStateSvc.memberName).toBe('');
         expect(userStateSvc.filteredGroupList).toBe(true);
     });
 });
