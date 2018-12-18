@@ -27,7 +27,7 @@
         .module('user-management', [
             /* Custom directives */
             'createGroupOverlay',
-            'createUserOverlays',
+            'createUserOverlay',
             'editGroupInfoOverlay',
             'editUserProfileOverlay',
             'groupsList',
@@ -36,7 +36,6 @@
             'permissionsInput',
             'permissionsPage',
             'resetPasswordOverlay',
-            'userManagementOverlays',
             'userManagementTabset',
             'usersList',
             'usersPage',

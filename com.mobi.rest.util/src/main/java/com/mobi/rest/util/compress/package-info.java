@@ -1,10 +1,14 @@
+@Version("1.0.0.${build}")
+
+package com.mobi.rest.util.compress;
+
 /*-
  * #%L
- * com.mobi.web
+ * com.mobi.rest.util
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,25 +24,5 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('User State service', function() {
-    var userStateSvc;
 
-    beforeEach(function() {
-        module('userState');
-
-        inject(function(userStateService) {
-            userStateSvc = userStateService;
-        });
-    });
-
-    afterEach(function() {
-        userStateSvc = null;
-    });
-
-    it('should reset variables', function() {
-        userStateSvc.reset();
-        expect(userStateSvc.selectedGroup).toBeUndefined();
-        expect(userStateSvc.selectedUser).toBeUndefined();
-        expect(userStateSvc.filteredGroupList).toBe(true);
-    });
-});
+import aQute.bnd.annotation.Version;

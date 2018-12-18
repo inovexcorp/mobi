@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Groups Page directive', function() {
-    var $compile, scope, $q, userStateSvc, userManagerSvc, loginManagerSvc, utilSvc;
+    var $compile, scope, $q, userStateSvc, userManagerSvc, loginManagerSvc, utilSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -30,15 +30,17 @@ describe('Groups Page directive', function() {
         mockUserManager();
         mockLoginManager();
         mockUtil();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _userStateService_, _userManagerService_, _loginManagerService_, _utilService_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _userStateService_, _userManagerService_, _loginManagerService_, _utilService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             userStateSvc = _userStateService_;
             userManagerSvc = _userManagerService_;
             userStateSvc = _userStateService_;
             utilSvc = _utilService_;
-            $q = _$q_;
+            modalSvc = _modalService_;
         });
 
         this.element = $compile(angular.element('<groups-page></groups-page>'))(scope);
@@ -54,47 +56,88 @@ describe('Groups Page directive', function() {
         userManagerSvc = null;
         loginManagerSvc = null;
         utilSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
     describe('controller methods', function() {
-        it('should set the correct state for creating a group', function() {
+        it('should open a modal for creating a group', function() {
             this.controller.createGroup();
-            expect(userStateSvc.displayCreateGroupOverlay).toBe(true);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('createGroupOverlay');
         });
-        it('should set the correct state for deleting a group', function() {
-            this.controller.deleteGroup();
-            expect(userStateSvc.displayDeleteGroupConfirm).toBe(true);
+        it('should open a modal for deleting a group', function() {
+            userStateSvc.selectedGroup = {title: 'test'};
+            this.controller.confirmDeleteGroup();
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('Are you sure you want to remove'), this.controller.deleteGroup);
         });
-        it('should set the correct state for editing a group description', function() {
+        it('should open a modal for editing a group description', function() {
             this.controller.editDescription();
-            expect(userStateSvc.displayEditGroupInfoOverlay).toBe(true);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('editGroupInfoOverlay');
         });
         it('should set the correct state for removing a member', function() {
-            this.controller.removeMember();
-            expect(userStateSvc.displayRemoveMemberConfirm).toBe(true);
+            userStateSvc.selectedGroup = {title: 'test'};
+            this.controller.confirmRemoveMember('user');
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('Are you sure you want to remove'), jasmine.any(Function));
+        });
+        describe('should delete a group', function() {
+            beforeEach(function() {
+                this.group = userStateSvc.selectedGroup = {title: 'group'};
+            });
+            it('unless an error occurs', function() {
+                userManagerSvc.deleteGroup.and.returnValue($q.reject('Error message'));
+                this.controller.deleteGroup();
+                scope.$apply();
+                expect(userManagerSvc.deleteGroup).toHaveBeenCalledWith(this.group.title);
+                expect(userStateSvc.selectedGroup).toEqual(this.group);
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
+            });
+            it('successfully', function() {
+                this.controller.deleteGroup();
+                scope.$apply();
+                expect(userManagerSvc.deleteGroup).toHaveBeenCalledWith(this.group.title);
+                expect(userStateSvc.selectedGroup).toBeUndefined();
+                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+            });
         });
         describe('should add a group member', function() {
             beforeEach(function() {
-                this.username = userStateSvc.memberName = 'user';
+                this.username = 'user';
                 userStateSvc.selectedGroup = {title: 'group'};
             });
             it('unless an error occurs', function() {
                 userManagerSvc.addUserGroup.and.returnValue($q.reject('Error message'));
-                this.controller.addMember();
+                this.controller.addMember(this.username);
                 scope.$apply();
                 expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(this.username, userStateSvc.selectedGroup.title);
-                expect(userStateSvc.memberName).toBe(this.username);
-                expect(this.controller.errorMessage).toBe('Error message');
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
             });
             it('successfully', function() {
-                this.controller.addMember();
+                this.controller.addMember(this.username);
                 scope.$apply();
                 expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(this.username, userStateSvc.selectedGroup.title);
-                expect(this.controller.errorMessage).toBe('');
-                expect(userStateSvc.memberName).toBe('');
+                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
         });
+        describe('should remove a group member', function() {
+            beforeEach(function() {
+                this.memberName = 'user';
+                this.group = userStateSvc.selectedGroup = {title: 'group'};
+            });
+            it('unless an error occurs', function() {
+                userManagerSvc.deleteUserGroup.and.returnValue($q.reject('Error message'));
+                this.controller.removeMember(this.memberName);
+                scope.$apply();
+                expect(userManagerSvc.deleteUserGroup).toHaveBeenCalledWith(this.memberName, this.group.title);
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
+            });
+            it('unless an error occurs', function() {
+                this.controller.removeMember(this.memberName);
+                scope.$apply();
+                expect(userManagerSvc.deleteUserGroup).toHaveBeenCalledWith(this.memberName, this.group.title);
+                expect(userStateSvc.selectedGroup).toEqual(this.group);
+                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+            });
+        })
         describe('should correctly update the admin status of a group', function() {
             beforeEach(function() {
                 userStateSvc.selectedGroup = {title: 'group'};
@@ -197,11 +240,11 @@ describe('Groups Page directive', function() {
         createButton.triggerHandler('click');
         expect(this.controller.createGroup).toHaveBeenCalled();
     });
-    it('should call deleteGroup when the button is clicked', function() {
-        spyOn(this.controller, 'deleteGroup');
+    it('should call confirmDeleteGroup when the button is clicked', function() {
+        spyOn(this.controller, 'confirmDeleteGroup');
         var deleteButton = angular.element(this.element.querySelectorAll('.col-4 block-footer button.btn-link')[0]);
         deleteButton.triggerHandler('click');
-        expect(this.controller.deleteGroup).toHaveBeenCalled();
+        expect(this.controller.confirmDeleteGroup).toHaveBeenCalled();
     });
     it('should call editDescription when the button is clicked', function() {
         spyOn(this.controller, 'editDescription');
