@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Search Form directive', function() {
-    var $compile, scope, $q, searchSvc, discoverStateSvc, exploreSvc;
+    var $compile, scope, $q, searchSvc, discoverStateSvc, exploreSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -30,14 +30,16 @@ describe('Search Form directive', function() {
         mockSearch();
         mockExplore();
         mockUtil();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _searchService_, _discoverStateService_, _exploreService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _searchService_, _discoverStateService_, _exploreService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             searchSvc = _searchService_;
             discoverStateSvc = _discoverStateService_;
             exploreSvc = _exploreService_;
+            modalSvc = _modalService_;
         });
 
         discoverStateSvc.search.queryConfig.filters = [{
@@ -58,10 +60,15 @@ describe('Search Form directive', function() {
         searchSvc = null;
         discoverStateSvc = null;
         exploreSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
     describe('controller methods', function() {
+        it('should open the propertyFilterOverlay', function() {
+            this.controller.createPropertyFilter();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('propertyFilterOverlay');
+        });
         describe('should submit the search query', function() {
             beforeEach(function() {
                 discoverStateSvc.search.results = {};

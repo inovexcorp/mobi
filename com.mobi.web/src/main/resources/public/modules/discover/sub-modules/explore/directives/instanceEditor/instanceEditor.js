@@ -42,6 +42,7 @@
          * @requires discoverState.service:discoverStateService
          * @requires util.service:utilService
          * @requires explore.service:exploreService
+         * @requires exploreUtils.service:exploreUtilsService
          *
          * @description
          * HTML contents in the instance view page which shows the complete list of properites
