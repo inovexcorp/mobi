@@ -60,6 +60,12 @@ describe('Upload Changes Overlay directive', function() {
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
+        it('with a button', function() {
+            expect(this.element.find('button').length).toBe(4);
+        });
+        it('with a span', function() {
+            expect(this.element.find('span').length).toBe(2);
+        });
         _.forEach(['form', 'file-input'], function(tag) {
             it('with a ' + tag, function() {
                 expect(this.element.find(tag).length).toBe(1);
@@ -103,11 +109,12 @@ describe('Upload Changes Overlay directive', function() {
                     },
                     ontology: []
                 };
+                this.controller.fileName = 'No file selected';
                 this.controller.file = {};
             });
             it('unless an error occurs', function() {
                 ontologyStateSvc.uploadChanges.and.returnValue($q.reject('Error message'));
-                this.controller.upload();
+                this.controller.submit();
                 scope.$apply();
                 expect(ontologyStateSvc.uploadChanges).toHaveBeenCalledWith(this.controller.file, this.controller.os.listItem.ontologyRecord.recordId, this.controller.os.listItem.ontologyRecord.branchId, this.controller.os.listItem.ontologyRecord.commitId);
                 expect(ontologyStateSvc.listItem.editorTabStates.savedChanges.active).toBe(false);
@@ -115,9 +122,12 @@ describe('Upload Changes Overlay directive', function() {
                 expect(scope.close).not.toHaveBeenCalled();
             });
             it('succesfully', function() {
-                this.controller.upload();
+                this.controller.file = {name: 'File Name'};
+                this.controller.update();
+                this.controller.submit();
                 scope.$apply();
                 expect(ontologyStateSvc.uploadChanges).toHaveBeenCalledWith(this.controller.file, this.controller.os.listItem.ontologyRecord.recordId, this.controller.os.listItem.ontologyRecord.branchId, this.controller.os.listItem.ontologyRecord.commitId);
+                expect(this.controller.fileName).toEqual('File Name');
                 expect(ontologyStateSvc.listItem.editorTabStates.savedChanges.active).toBe(true);
                 expect(this.controller.error).toBeFalsy();
                 expect(scope.close).toHaveBeenCalled();

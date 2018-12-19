@@ -28,7 +28,7 @@
     <parent>
         <artifactId>mobi-itests</artifactId>
         <groupId>com.mobi</groupId>
-        <version>1.14.41-SNAPSHOT</version>
+        <version>1.14.42-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
