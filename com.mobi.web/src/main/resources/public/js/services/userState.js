@@ -105,6 +105,17 @@
             self.showUsers = true;
             /**
              * @ngdoc property
+             * @name userState.service:userStateService#showPermissions
+             * @propertyOf userState.service:userStateService
+             * @type {boolean}
+             *
+             * @description
+             * `showPermissions` holds a boolean indicating whether the
+             * {@link permissionsPage.directive:permissionsPage permissions page} should be shown.
+             */
+            self.showPermissions = false;
+            /**
+             * @ngdoc property
              * @name userState.service:userStateService#selectedGroup
              * @propertyOf userState.service:userStateService
              * @type {object}
@@ -125,105 +136,6 @@
              * {@link userManager.service:userManagerService#users users list}.
              */
             self.selectedUser = undefined;
-            /**
-             * @ngdoc property
-             * @name userState.service:userStateService#memberName
-             * @propertyOf userState.service:userStateService
-             * @type {string}
-             *
-             * @description
-             * `memberName` holds the username of the selected group member.
-             */
-            self.memberName = '';
-
-            /**
-             * @ngdoc property
-             * @name userState.service:userStateService#displayDeleteUserConfirm
-             * @propertyOf userState.service:userStateService
-             * @type {boolean}
-             *
-             * @description
-             * `displayDeleteUserConfirm` holds a boolean indicating whether or not the delete
-             * user confirmation overlay should be shown.
-             */
-            self.displayDeleteUserConfirm = false;
-            /**
-             * @ngdoc property
-             * @name userState.service:userStateService#displayDeleteGroupConfirm
-             * @propertyOf userState.service:userStateService
-             * @type {boolean}
-             *
-             * @description
-             * `displayDeleteGroupConfirm` holds a boolean indicating whether or not the delete
-             * group confirmation overlay should be shown.
-             */
-            self.displayDeleteGroupConfirm = false;
-            /**
-             * @ngdoc property
-             * @name userState.service:userStateService#displayCreateUserOverlay
-             * @propertyOf userState.service:userStateService
-             * @type {boolean}
-             *
-             * @description
-             * `displayCreateUserOverlay` holds a boolean indicating whether or not the
-             * {@link createUserOverlays.directive:createUserOverlays Create User Overlays} should be shown.
-             */
-            self.displayCreateUserOverlay = false;
-            /**
-             * @ngdoc property
-             * @name userState.service:userStateService#displayCreateGroupOverlay
-             * @propertyOf userState.service:userStateService
-             * @type {boolean}
-             *
-             * @description
-             * `displayCreateGroupOverlay` holds a boolean indicating whether or not the
-             * {@link createGroupOverlay.directive:createGroupOverlay Create Group Overlay} should be shown.
-             */
-            self.displayCreateGroupOverlay = false;
-            /**
-             * @ngdoc property
-             * @name userState.service:userStateService#displayResetPasswordOverlay
-             * @propertyOf userState.service:userStateService
-             * @type {boolean}
-             *
-             * @description
-             * `displayResetPasswordOverlay` holds a boolean indicating whether or not the
-             * {@link resetPasswordOverlay.directive:resetPasswordOverlay Reset Password Overlay} should be shown.
-             */
-            self.displayResetPasswordOverlay = false;
-            /**
-             * @ngdoc property
-             * @name userState.service:userStateService#displayEditProfileOverlay
-             * @propertyOf userState.service:userStateService
-             * @type {boolean}
-             *
-             * @description
-             * `displayEditProfileOverlay` holds a boolean indicating whether or not the
-             * {@link editProfileOverlay.directive:editProfileOverlay Edit Profile Overlay} should be shown.
-             */
-            self.displayEditProfileOverlay = false;
-            /**
-             * @ngdoc property
-             * @name userState.service:userStateService#displayEditGroupInfoOverlay
-             * @propertyOf userState.service:userStateService
-             * @type {boolean}
-             *
-             * @description
-             * `displayEditGroupInfoOverlay` holds a boolean indicating whether or not the
-             * {@link editGroupInfoOverlay.directive:editGroupInfoOverlay Edit Group Info Overlay} should be shown.
-             */
-            self.displayEditGroupInfoOverlay = false;
-            /**
-             * @ngdoc property
-             * @name userState.service:userStateService#displayRemoveMemberConfirm
-             * @propertyOf userState.service:userStateService
-             * @type {boolean}
-             *
-             * @description
-             * `displayRemoveMemberConfirm` holds a boolean indicating whether or not the remove
-             * member confirmation overlay should be shown.
-             */
-            self.displayRemoveMemberConfirm = false;
 
             /**
              * @ngdoc method
@@ -236,7 +148,6 @@
             self.reset = function() {
                 self.selectedGroup = undefined;
                 self.selectedUser = undefined;
-                self.memberName = '';
                 self.filteredGroupList = true;
                 self.groupSearchString = '';
                 self.userSearchString = '';

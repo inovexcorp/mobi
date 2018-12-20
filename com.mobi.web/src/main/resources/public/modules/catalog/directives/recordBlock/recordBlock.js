@@ -43,6 +43,7 @@
          * @requires catalogState.service:cataStateService
          * @requires catalogManager.service:catalogManagerService
          * @requires utilService.service:utilService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * `recordBlock` is a directive which creates a div with a {@link block.directive:block block}
@@ -52,18 +53,16 @@
          * record's title, {@link recordTypes.directive:recordTypes types}, issued and modified
          * {@link entityDates.directive:entityDates dates},
          * {@link entityDescription.directive:entityDescription description}, and
-         * {@link recordKeywords.directive:recordKeywords keywords}. If the record is a `VersionedRdfRecord`,
-         * displays a paginated list of the record's branches with a
-         * {@link paginationHeader.directive:paginationHeader paginationHeader} and
-         * {@link catalogPagination.directive:catalogPagination catalogPagination}. Clicking a branch in the
-         * list will add it to the current catalog's `openedPath`. The directive is replaced by the contents
-         * of its template.
+         * {@link recordKeywords.directive:recordKeywords keywords}. If the record is a `VersionedRdfRecord`, an
+         * infinite scrolled list of branches is loaded 10 at a time. Clicking on a branch will expand the expansion
+         * panel, providing the branch description and a {@link commitHistoryTable.directive:commitHistoryTable}. The
+         * directive is replaced by the contents of its template.
          */
         .directive('recordBlock', recordBlock);
 
-    recordBlock.$inject = ['catalogStateService', 'catalogManagerService', 'utilService'];
+    recordBlock.$inject = ['catalogStateService', 'catalogManagerService', 'utilService', 'prefixes'];
 
-    function recordBlock(catalogStateService, catalogManagerService, utilService) {
+    function recordBlock(catalogStateService, catalogManagerService, utilService, prefixes) {
         return {
             restrict: 'E',
             replace: true,
@@ -71,40 +70,49 @@
             scope: {},
             controller: function() {
                 var dvm = this;
+
                 dvm.state = catalogStateService;
                 dvm.cm = catalogManagerService;
                 dvm.util = utilService;
-                var currentCatalog = dvm.state.getCurrentCatalog();
+                dvm.prefixes = prefixes;
+                dvm.totalSize = 0;
 
+                var currentCatalog = dvm.state.getCurrentCatalog();
+                var increment = currentCatalog.branches.limit;
+                dvm.limit = increment;
                 dvm.record = {};
+
                 dvm.cm.getRecord(_.last(currentCatalog.openedPath)['@id'], currentCatalog.catalog['@id'])
                     .then(response => {
                         dvm.record = response;
                         currentCatalog.openedPath[currentCatalog.openedPath.length - 1] = response;
-                        tryToGetBranches();
+                        getBranches();
                     }, () => {
-                        dvm.state.resetPagination();
                         currentCatalog.openedPath = _.initial(currentCatalog.openedPath);
                     });
 
-                dvm.changeSort = function() {
-                    tryToGetBranches();
-                }
-                dvm.openBranch = function(branch) {
-                    dvm.state.resetPagination();
-                    currentCatalog.openedPath.push(branch);
+                dvm.loadMore = function () {
+                    dvm.limit += increment;
+                    getBranches();
+                };
+                dvm.showPanel = function(branch) {
+                    _.forEach(dvm.state.results, result => delete result.show);
+                    branch.show = true;
                 }
 
-                function tryToGetBranches() {
+                function getBranches() {
                     if (dvm.cm.isVersionedRDFRecord(dvm.record)) {
-                        dvm.state.currentPage = 0;
                         var paginatedConfig = {
-                            pageIndex: dvm.state.currentPage,
-                            limit: currentCatalog.branches.limit,
-                            sortOption: currentCatalog.branches.sortOption,
-                        }
+                            pageIndex: 0,
+                            limit: dvm.limit,
+                            sortOption: _.find(dvm.cm.sortOptions, {field: prefixes.dcterms + 'modified', asc: false})
+                        };
                         dvm.cm.getRecordBranches(dvm.record['@id'], currentCatalog.catalog['@id'], paginatedConfig)
-                            .then(dvm.state.setPagination, dvm.util.createErrorToast);
+                            .then(response => {
+                                dvm.state.results = _.filter(response.data, branch => !dvm.cm.isUserBranch(branch));
+                                var headers = response.headers();
+                                dvm.totalSize = _.get(headers, 'x-total-count', 0) - (response.data.length - dvm.state.results.length);
+                            }, dvm.util.createErrorToast);
                     }
                 }
             },

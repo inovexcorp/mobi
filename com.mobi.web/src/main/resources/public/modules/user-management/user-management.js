@@ -27,18 +27,19 @@
         .module('user-management', [
             /* Custom directives */
             'createGroupOverlay',
-            'createUserOverlays',
+            'createUserOverlay',
             'editGroupInfoOverlay',
             'editUserProfileOverlay',
             'groupsList',
             'groupsPage',
             'memberTable',
             'permissionsInput',
+            'permissionsPage',
             'resetPasswordOverlay',
-            'userManagementOverlays',
             'userManagementTabset',
             'usersList',
             'usersPage',
+
             /* Custom Filters */
             'usernameSearch'
         ]);

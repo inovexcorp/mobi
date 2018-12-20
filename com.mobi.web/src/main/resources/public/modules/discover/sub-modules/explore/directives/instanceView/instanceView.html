@@ -23,13 +23,13 @@
 <div class="instance-view">
     <block>
         <block-header>
-            <breadcrumbs class="pull-left" items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
-            <a class="pull-right edit-button" ng-click="dvm.ds.explore.editing = true"><i class="fa fa-pencil-square-o"></i>Edit</a>
+            <breadcrumbs class="float-left" items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
+            <a class="float-right edit-button" ng-click="dvm.edit()"><i class="fa fa-pencil-square-o"></i>Edit</a>
         </block-header>
-        <block-content>
+        <block-content class="padding">
             <div class="row">
-                <div class="col-xs-8 col-xs-offset-2">
-                    <h2>{{dvm.ds.explore.instance.metadata.title}} <small>&lt;{{dvm.ds.explore.instance.metadata.instanceIRI}}&gt;</small></h2>
+                <div class="col-8 offset-2">
+                    <h2>{{dvm.ds.explore.instance.metadata.title}} <small class="text-muted">&lt;{{dvm.ds.explore.instance.metadata.instanceIRI}}&gt;</small></h2>
                     <p class="lead">{{dvm.ds.explore.instance.metadata.description}}</p>
                     <div ng-repeat="(key, value) in dvm.entity track by $index">
                         <h3 class="property">{{dvm.util.getBeautifulIRI(key)}}</h3>
@@ -37,7 +37,7 @@
                             <li ng-repeat="item in value track by $index" ng-init="reification = dvm.getReification(key, item)">
                                 <div class="value-container">
                                     <value-display value="item"></value-display>
-                                    <span class="show-reification pull-right" ng-show="reification" ng-click="showReification = !showReification"><i class="fa" ng-class="{'fa-angle-down': !showReification, 'fa-angle-up': showReification}"></i></span>
+                                    <span class="show-reification float-right" ng-show="reification" ng-click="showReification = !showReification"><i class="fa" ng-class="{'fa-angle-down': !showReification, 'fa-angle-up': showReification}"></i></span>
                                 </div>
                                 <div class="well well-sm" uib-collapse="!showReification">
                                     <div ng-repeat="(keyR, valueR) in reification track by $index">

@@ -24,23 +24,37 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name projectTab
+         *
+         * @description
+         * The `projectTab` module only provides the `projectTab` directive which creates a page for viewing
+         * information about an ontology.
+         */
         .module('projectTab', [])
+        /**
+         * @ngdoc directive
+         * @name projectTab.directive:projectTab
+         * @scope
+         * @restrict E
+         *
+         * @description
+         * `projectTab` is a directive that creates a page containing information about the current
+         * {@link ontologyState.service:ontologyStateService selected ontology}. The display includes a
+         * {@link selectedDetails.directive:selectedDetails}, an
+         * {@link ontologyPropertiesBlock.directive:ontologyPropertiesBlock}, an
+         * {@link importsBlock.directive:importsBlock}, and a {@link previewBlock.directive:previewBlock}. The
+         * directive is replaced by the contents of its template.
+         */
         .directive('projectTab', projectTab);
 
-        projectTab.$inject = ['ontologyStateService', 'ontologyManagerService'];
-
-        function projectTab(ontologyStateService, ontologyManagerService) {
+        function projectTab() {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/projectTab/projectTab.html',
                 scope: {},
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    dvm.sm = ontologyStateService;
-                    dvm.om = ontologyManagerService;
-                }
+                templateUrl: 'modules/ontology-editor/directives/projectTab/projectTab.html'
             }
         }
 })();

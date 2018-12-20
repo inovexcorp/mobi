@@ -1,0 +1,53 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="request-record-select h-100">
+    <form class="record-search-form">
+        <div class="input-group">
+            <input class="form-control" type="text" ng-model="dvm.config.searchText" placeholder="Search records..."/>
+            <span class="input-group-btn">
+                <button class="btn btn-primary" type="submit" ng-click="dvm.setInitialRecords()">Search</button>
+            </span>
+        </div>
+    </form>
+    <div class="records">
+        <div ng-repeat="chunk in dvm.records" class="row">
+            <div ng-repeat="record in chunk track by record['@id']" class="card-container record col-6">
+                <md-card class="card" ng-click="dvm.selectRecord(record)" ng-class="{'selected': record['@id'] === dvm.state.requestConfig.recordId}">
+                    <md-card-title>
+                        <md-card-title-text>
+                            <span class="md-headline text">{{dvm.util.getDctermsValue(record, 'title')}}</span>
+                            <span class="md-subhead text-muted text"><small>{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small></span>
+                        </md-card-title-text>
+                    </md-card-title>
+                    <md-card-content>
+                        <p class="overview">{{dvm.util.getDctermsValue(record, 'description') || 'No description'}}</p>
+                    </md-card-content>
+                </md-card>
+            </div>
+        </div>
+    </div>
+    <div class="paging-container clearfix">
+        <paging-details class="float-left" total-size="dvm.totalSize" page-index="dvm.config.pageIndex" limit="dvm.config.limit"></paging-details>
+        <pagination total="dvm.totalSize" limit="dvm.config.limit" current-page="dvm.currentPage" get-page="dvm.setRecords()"></pagination>
+    </div>
+</div>

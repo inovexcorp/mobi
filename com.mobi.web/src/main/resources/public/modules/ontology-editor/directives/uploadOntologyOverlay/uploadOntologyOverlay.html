@@ -20,16 +20,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="upload-ontology-overlay overlay">
-    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
-        <h6>Upload Ontology<span ng-if="dvm.total > 1"> ({{dvm.index + 1}} of {{dvm.total}})</span></h6>
-        <text-input ng-model="dvm.title" input-name="title" required="true" display-text="'Title'"></text-input>
+<div class="modal-header">
+    <h3>Upload Ontology<span ng-if="dvm.total > 1"> ({{dvm.index + 1}} of {{dvm.total}})</span></h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+    <form name="dvm.form" novalidate autocomplete="off">
+        <text-input ng-model="dvm.title" input-name="title" required="true" display-text="'Title'" is-focus-me="true"></text-input>
         <text-area ng-model="dvm.description" input-name="description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <keyword-select ng-model="dvm.keywords"></keyword-select>
-        <div class="btn-container clearfix">
-            <button type="button" class="btn btn-primary pull-right" ng-click="dvm.submitAll()" ng-disabled="dvm.form.$invalid">Submit All</button>
-            <button type="button" class="btn btn-primary pull-right" ng-click="dvm.submit()" ng-disabled="dvm.form.$invalid">Submit</button>
-            <button type="button" class="btn btn-default pull-right" ng-click="dvm.cancel()">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button type="button" class="btn btn-primary" ng-click="dvm.submit()" ng-disabled="dvm.form.$invalid">Submit</button>
+    <button type="button" class="btn btn-primary" ng-click="dvm.submitAll()" ng-disabled="dvm.form.$invalid">Submit All</button>
 </div>

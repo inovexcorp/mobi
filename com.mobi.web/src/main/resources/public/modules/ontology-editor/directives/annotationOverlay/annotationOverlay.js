@@ -24,7 +24,37 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name annotationOverlay
+         *
+         * @description
+         * The `annotationOverlay` module only provides the `annotationOverlay` directive which creates content
+         * for a modal to add or edit an annotation on an entity.
+         */
         .module('annotationOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name annotationOverlay.directive:annotationOverlay
+         * @scope
+         * @restrict E
+         * @requires propertyManager.service:propertyManagerService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires util.service:utilService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires prefixes.service:prefixes
+         *
+         * @description
+         * `annotationOverlay` is a directive that creates content for a modal that adds or edits an annotation on the
+         * {@link ontologyState.service:ontologyStateService selected entity}. The form in the modal contains a
+         * `ui-select` for the annotation property, a {@link textArea.directive:textArea} for the annotation value, and
+         * a {@link languageSelect.directive:languageSelect}. If the annotation is owl:deprecated, the `textArea` and
+         * `languageSelect` are replaced by {@link radioButton.directive:radioButton radio buttons} for the boolean
+         * value. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
+         */
         .directive('annotationOverlay', annotationOverlay);
 
         annotationOverlay.$inject = ['propertyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];
@@ -32,11 +62,13 @@
         function annotationOverlay(propertyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/annotationOverlay/annotationOverlay.html',
-                scope: {},
+                scope: {
+                    close: '&',
+                    dismiss: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.pm = propertyManagerService;
@@ -46,13 +78,7 @@
                     dvm.annotations = _.keys(dvm.os.listItem.annotations.iris);
 
                     function createJson(value, type, language) {
-                        var valueObj = {'@value': value};
-                        if (type) {
-                            _.set(valueObj, '@type', type);
-                        }
-                        if (language) {
-                            _.set(valueObj, '@language', language);
-                        }
+                        var valueObj = dvm.pm.createValueObj(value, type, language);
                         return dvm.util.createJson(dvm.os.listItem.selected['@id'], dvm.os.annotationSelect, valueObj);
                     }
 
@@ -69,23 +95,48 @@
                             dvm.os.annotationLanguage = 'en';
                         }
                     }
+                    dvm.submit = function() {
+                        if (dvm.os.editingAnnotation) {
+                            dvm.editAnnotation();
+                        } else {
+                            dvm.addAnnotation();
+                        }
+                    }
+                    dvm.isDisabled = function() {
+                        var isDisabled = dvm.annotationForm.$invalid || dvm.os.annotationValue === ''
+                        if (!dvm.os.editingAnnotation) {
+                            isDisabled = isDisabled || dvm.os.annotationSelect === undefined;
+                        }
+                        return isDisabled;
+                    }
                     dvm.addAnnotation = function() {
-                        dvm.pm.add(dvm.os.listItem.selected, dvm.os.annotationSelect, dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage);
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage));
-                        dvm.os.showAnnotationOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
-                        dvm.ontoUtils.updateLabel();
+                        var added = dvm.pm.addValue(dvm.os.listItem.selected, dvm.os.annotationSelect, dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage);
+                        if (added) {
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage));
+                            dvm.ontoUtils.saveCurrentChanges();
+                            dvm.ontoUtils.updateLabel();
+                        } else {
+                            dvm.util.createWarningToast('Duplicate property values not allowed');
+                        }
+                        $scope.close();
                     }
                     dvm.editAnnotation = function() {
-                        var oldObj = _.get(dvm.os.listItem.selected, "['" + dvm.os.annotationSelect + "']['" + dvm.os.annotationIndex + "']");
-                        dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, createJson(_.get(oldObj, '@value'), _.get(oldObj, '@type'), _.get(oldObj, '@language')));
-                        dvm.pm.edit(dvm.os.listItem.selected, dvm.os.annotationSelect, dvm.os.annotationValue, dvm.os.annotationIndex, dvm.os.annotationType, dvm.os.annotationLanguage);
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage));
-                        dvm.os.showAnnotationOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
-                        dvm.ontoUtils.updateLabel();
+                        var oldObj = angular.copy(_.get(dvm.os.listItem.selected, "['" + dvm.os.annotationSelect + "']['" + dvm.os.annotationIndex + "']"));
+                        var edited = dvm.pm.editValue(dvm.os.listItem.selected, dvm.os.annotationSelect, dvm.os.annotationIndex, dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage);
+                        if (edited) {
+                            dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, createJson(_.get(oldObj, '@value'), _.get(oldObj, '@type'), _.get(oldObj, '@language')));
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage));
+                            dvm.ontoUtils.saveCurrentChanges();
+                            dvm.ontoUtils.updateLabel();
+                        } else {
+                            dvm.util.createWarningToast('Duplicate property values not allowed');
+                        }
+                        $scope.close();
                     }
-                }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
+                    }
+                }]
             }
         }
 })();

@@ -48,19 +48,19 @@ describe('Datasets Ontology Picker directive', function() {
                         'http://mobi.com/ontologies/catalog#VersionedRecord',
                         'http://mobi.com/ontologies/ontology-editor#OntologyRecord',
                         'http://mobi.com/ontologies/catalog#VersionedRDFRecord'],
-                'catalog:branch': [{ '@id': 'ontology1Branch' }],
-                'catalog:catalog': [{ '@id': 'http://mobi.com/catalog-local' }],
-                'catalog:masterBranch': [{ '@id': 'ontology1Branch' }],
-                'ontEdit:ontologyIRI': [{ '@id': 'ontology1' }],
-                'dcterms:description': [{ '@value': '' }],
-                'dcterms:issued': [{
-                        '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
+                [prefixes.catalog + 'branch']: [{ '@id': 'ontology1Branch' }],
+                [prefixes.catalog + 'catalog']: [{ '@id': 'http://mobi.com/catalog-local' }],
+                [prefixes.catalog + 'masterBranch']: [{ '@id': 'ontology1Branch' }],
+                [prefixes.ontEdit + 'ontologyIRI']: [{ '@id': 'ontology1' }],
+                [prefixes.dcterms + 'description']: [{ '@value': '' }],
+                [prefixes.dcterms + 'issued']: [{
+                        '@type': prefixes.xsd + 'dateTime',
                         '@value': '2017-07-12T10:28:15-04:00' }],
-                'dcterms:modified': [{
-                        '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
+                [prefixes.dcterms + 'modified']: [{
+                        '@type': prefixes.xsd + 'dateTime',
                         '@value': '2017-07-12T10:28:15-04:00' }],
-                'dcterms:publisher': [{ '@id': 'http://mobi.com/users/user1' }],
-                'dcterms:title': [{ '@value': 'Ontology 1' }]
+                [prefixes.dcterms + 'publisher']: [{ '@id': 'http://mobi.com/users/user1' }],
+                [prefixes.dcterms + 'title']: [{ '@value': 'Ontology 1' }]
         };
         this.ontology2Record = {
                 '@id': 'ontology2Record',
@@ -69,23 +69,23 @@ describe('Datasets Ontology Picker directive', function() {
                         'http://mobi.com/ontologies/catalog#VersionedRecord',
                         'http://mobi.com/ontologies/ontology-editor#OntologyRecord',
                         'http://mobi.com/ontologies/catalog#VersionedRDFRecord'],
-                'catalog:branch': [{ '@id': 'ontology2Branch' }],
-                'catalog:catalog': [{ '@id': 'http://mobi.com/catalog-local' }],
-                'catalog:masterBranch': [{ '@id': 'ontology2Branch' }],
-                'ontEdit:ontologyIRI': [{ '@id': 'ontology2' }],
-                'dcterms:description': [{ '@value': '' }],
-                'dcterms:issued': [{
+                [prefixes.catalog + 'branch']: [{ '@id': 'ontology2Branch' }],
+                [prefixes.catalog + 'catalog']: [{ '@id': 'http://mobi.com/catalog-local' }],
+                [prefixes.catalog + 'masterBranch']: [{ '@id': 'ontology2Branch' }],
+                [prefixes.ontEdit + 'ontologyIRI']: [{ '@id': 'ontology2' }],
+                [prefixes.dcterms + 'description']: [{ '@value': '' }],
+                [prefixes.dcterms + 'issued']: [{
                         '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
                         '@value': '2017-07-12T10:28:15-04:00' }],
-                'dcterms:modified': [{
+                [prefixes.dcterms + 'modified']: [{
                         '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
                         '@value': '2017-07-12T10:28:15-04:00' }],
-                'dcterms:publisher': [{ '@id': 'http://mobi.com/users/user1' }],
-                'dcterms:title': [{ '@value': 'Ontology 2' }]
+                [prefixes.dcterms + 'publisher']: [{ '@id': 'http://mobi.com/users/user1' }],
+                [prefixes.dcterms + 'title']: [{ '@value': 'Ontology 2' }]
         };
 
         catalogManagerSvc.localCatalog = {'@id': 'http://mobi.com/catalog-local'};
-        this.headers = { 'x-total-count': 2, link: '' };
+        this.headers = { 'x-total-count': 2 };
         this.response = {
             data: [this.ontology1Record, this.ontology2Record],
             headers: jasmine.createSpy('headers').and.returnValue(this.headers)
@@ -123,33 +123,34 @@ describe('Datasets Ontology Picker directive', function() {
         });
     });
     describe('controller methods', function() {
-        describe('should get a list of ontologies', function() {
+        describe('should set the list of ontologies', function() {
             it('unless an error occurs', function() {
                 catalogManagerSvc.getRecords.and.returnValue($q.reject('Error Message'));
-                this.controller.getOntologies();
+                this.controller.setOntologies();
                 scope.$apply();
                 expect(this.controller.ontologySearchConfig.pageIndex).toBe(0);
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogManagerSvc.localCatalog['@id'], this.controller.ontologySearchConfig);
                 expect(this.controller.ontologies).toEqual([]);
                 expect(this.controller.totalSize).toEqual(0);
-                expect(this.controller.links).toEqual({next: '', prev: ''});
-                expect(utilSvc.parseLinks.calls.count()).toEqual(1);
                 expect(this.controller.error).toBe('Error Message');
             });
             it('successfully', function() {
-                utilSvc.parseLinks.and.returnValue({prev: 'prev', next: 'next'});
-                this.controller.getOntologies();
+                this.controller.setOntologies();
                 scope.$apply();
                 expect(this.controller.ontologySearchConfig.pageIndex).toBe(0);
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogManagerSvc.localCatalog['@id'], this.controller.ontologySearchConfig);
                 expect(this.controller.ontologies).toEqual(this.response.data);
                 expect(this.response.headers).toHaveBeenCalled();
                 expect(this.controller.totalSize).toBe(this.headers['x-total-count']);
-                expect(utilSvc.parseLinks.calls.count()).toEqual(2);
-                expect(this.controller.links.prev).toBe('prev');
-                expect(this.controller.links.next).toBe('next');
                 expect(this.controller.error).toBe('');
             });
+        });
+        it('should set the initial list of ontologies', function() {
+            spyOn(this.controller, 'setOntologies');
+            this.controller.currentPage = 10;
+            this.controller.setInitialOntologies();
+            expect(this.controller.currentPage).toEqual(1);
+            expect(this.controller.setOntologies).toHaveBeenCalled();
         });
         it('should test whether an ontology is selected', function() {
             expect(this.controller.isSelected('id')).toBe(false);
@@ -210,12 +211,12 @@ describe('Datasets Ontology Picker directive', function() {
             expect(this.element.querySelectorAll('.selected-ontologies span').length).toBe(this.controller.selectedOntologies.length + 1);
         });
     });
-    it('should call getOntologies when the search button is clicked', function() {
+    it('should call setInitialOntologies when the search button is clicked', function() {
         scope.$digest();
-        spyOn(this.controller, 'getOntologies');
+        spyOn(this.controller, 'setInitialOntologies');
         var searchButton = angular.element(this.element.querySelectorAll('.ontologies-search-bar button')[0]);
         searchButton.triggerHandler('click');
-        expect(this.controller.getOntologies).toHaveBeenCalled();
+        expect(this.controller.setInitialOntologies).toHaveBeenCalled();
     });
     it('should select an ontology when clicked', function() {
         this.controller.ontologies = [{}];

@@ -31,14 +31,11 @@ import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.config.delimited.MappingRecordConfig;
 import com.mobi.etl.api.delimited.MappingManager;
 import com.mobi.etl.api.delimited.MappingWrapper;
@@ -60,8 +57,12 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.jaxb.Links;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,6 +83,7 @@ import javax.ws.rs.core.UriInfo;
 public class MappingRestImpl implements MappingRest {
 
     private MappingManager manager;
+    private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
     private VersioningManager versioningManager;
     private ValueFactory vf;
@@ -94,6 +96,11 @@ public class MappingRestImpl implements MappingRest {
     @Reference
     void setManager(MappingManager manager) {
         this.manager = manager;
+    }
+
+    @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
     }
 
     @Reference
@@ -190,7 +197,7 @@ public class MappingRestImpl implements MappingRest {
             if (keywords != null) {
                 builder.keywords(keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet()));
             }
-            IRI catalogId = catalogManager.getLocalCatalogIRI();
+            IRI catalogId = configProvider.getLocalCatalogIRI();
             MappingRecord record = manager.createMappingRecord(builder.build());
             catalogManager.addRecord(catalogId, record);
             Resource branchId = record.getMasterBranch_resource().orElseThrow(() ->

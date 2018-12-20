@@ -24,5 +24,9 @@
     'use strict';
 
     angular
-        .module('home', ['moduleBox']);
+        .module('home', [
+            'activityCard',
+            'activityTitle',
+            'quickActionGrid'
+        ]);
 })();

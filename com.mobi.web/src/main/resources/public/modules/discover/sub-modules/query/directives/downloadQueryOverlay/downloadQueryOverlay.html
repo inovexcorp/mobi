@@ -20,22 +20,25 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="download-query-overlay overlay sm">
-    <form class="content" name="dvm.form">
-        <h6>Download Results</h6>
-        <text-input ng-model="dvm.fileName" display-text="'File Name'" required="true" input-name="'fileName'" ng-class="{'has-error': dvm.form.fileName.$invalid}"></text-input>
+<div class="modal-header">
+    <h3>Download Results</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+    <form name="dvm.form">
+        <text-input ng-model="dvm.fileName" display-text="'File Name'" required="true" input-name="'fileName'" is-invalid="dvm.form.fileName.$invalid"></text-input>
         <div class="form-group">
             <custom-label>File Type</custom-label>
             <select class="form-control" ng-model="dvm.fileType" required>
                 <option value="csv">CSV</option>
                 <option value="tsv">TSV</option>
-                <option value="xls">Excel (2007)</option>
-                <option value="xlsx">Excel (97-2003)</option>
+                <option value="xlsx">Excel (2007)</option>
+                <option value="xls">Excel (97-2003)</option>
             </select>
         </div>
-        <div class="btn-container clearfix">
-            <button ng-click="dvm.download()" class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid">Download</button>
-            <button ng-click="dvm.cancel()" class="btn btn-default pull-right">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button ng-click="dvm.cancel()" class="btn">Cancel</button>
+    <button ng-click="dvm.download()" class="btn btn-primary" ng-disabled="dvm.form.$invalid">Submit</button>
 </div>

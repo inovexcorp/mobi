@@ -20,11 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="mapping-list-block col-xs-4 full-height">
+<div class="mapping-list-block col-4 h-100">
     <block>
         <block-header>
             <span>Mappings</span>
-            <button class="btn btn-link pull-right" ng-click="dvm.createMapping()">
+            <button class="btn btn-link float-right" ng-click="dvm.createMapping()">
                 <i class="fa fa-plus"></i>Create Mapping
             </button>
         </block-header>
@@ -37,18 +37,9 @@
             </ul>
         </block-content>
         <block-footer class="centered">
-            <button class="btn btn-link" ng-click="dvm.state.displayDeleteMappingConfirm = true" ng-disabled="!dvm.state.mapping">
+            <button class="btn btn-link" ng-click="dvm.confirmDeleteMapping()" ng-disabled="!dvm.state.mapping">
                 <i class="fa fa-trash"></i>Delete Mapping
             </button>
         </block-footer>
     </block>
-    <confirmation-overlay ng-if="dvm.state.displayDeleteMappingConfirm"
-        class="delete-mapping"
-        header-text="'Delete ' + dvm.state.mapping.record.title"
-        confirm-click="dvm.deleteMapping()"
-        cancel-click="dvm.state.displayDeleteMappingConfirm = false"
-        confirm-text="'Yes'"
-        cancel-text="'No'">
-        Are you sure you want to delete <strong>{{dvm.state.mapping.record.title}}</strong>?
-    </confirmation-overlay>
 </div>

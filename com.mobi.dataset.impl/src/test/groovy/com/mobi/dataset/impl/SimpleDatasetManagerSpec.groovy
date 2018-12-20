@@ -29,6 +29,7 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReference
 
 import com.mobi.catalog.api.CatalogManager
 import com.mobi.catalog.api.PaginatedSearchResults
+import com.mobi.catalog.config.CatalogConfigProvider
 import com.mobi.dataset.api.builder.DatasetRecordConfig
 import com.mobi.dataset.api.builder.OntologyIdentifier
 import com.mobi.dataset.ontology.dataset.Dataset
@@ -44,10 +45,10 @@ import com.mobi.repository.api.RepositoryConnection
 import com.mobi.repository.api.RepositoryManager
 import com.mobi.repository.base.RepositoryResult
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper
-import org.openrdf.repository.sail.SailRepository
-import org.openrdf.rio.RDFFormat
-import org.openrdf.rio.Rio
-import org.openrdf.sail.memory.MemoryStore
+import org.eclipse.rdf4j.repository.sail.SailRepository
+import org.eclipse.rdf4j.rio.RDFFormat
+import org.eclipse.rdf4j.rio.Rio
+import org.eclipse.rdf4j.sail.memory.MemoryStore
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -63,6 +64,7 @@ class SimpleDatasetManagerSpec extends Specification {
     def dsRecFactory = getRequiredOrmFactory(DatasetRecord.class)
 
     // Mocks
+    def configProviderMock = Mock(CatalogConfigProvider)
     def catalogManagerMock = Mock(CatalogManager)
     def repositoryMock = Mock(Repository)
     def connMock = Mock(RepositoryConnection)
@@ -177,8 +179,8 @@ class SimpleDatasetManagerSpec extends Specification {
         // Set Services
         injectOrmFactoryReferencesIntoService(service)
 
+        service.setConfigProvider(configProviderMock)
         service.setCatalogManager(catalogManagerMock)
-        service.setRepository(repositoryMock)
         service.setValueFactory(vf)
         service.setRepoManager(repoManagerMock)
 
@@ -186,8 +188,8 @@ class SimpleDatasetManagerSpec extends Specification {
         repositoryMock.getConnection() >> connMock
         connMock.getStatements(*_) >> resultsMock
 
-        catalogManagerMock.getLocalCatalogIRI() >> localCatalog
-        
+        configProviderMock.getLocalCatalogIRI() >> localCatalog
+
         repoManagerMock.getRepository("system") >> Optional.of(repositoryMock)
         repoManagerMock.getRepository("test") >> Optional.of(testRepo)
         
@@ -200,7 +202,7 @@ class SimpleDatasetManagerSpec extends Specification {
         if (systemConn != null) systemConn.close()
         systemRepo.shutDown()
         if (testConn != null) testConn.close()
-        systemRepo.shutDown()
+        testRepo.shutDown()
     }
 
     def "getDatasetRecord(dataset, repo) returns the correct DatasetRecord when the dataset exists"() {
@@ -219,6 +221,7 @@ class SimpleDatasetManagerSpec extends Specification {
                 vf.createStatement(recordIri, repoPred, vf.createLiteral(repo))
         ]
         1 * catalogManagerMock.getRecord(!null, recordIri, !null) >> Optional.of(record)
+        configProviderMock.getRepository() >> repositoryMock
 
         when:
         def results = service.getDatasetRecord(datasetIri, repo)
@@ -236,6 +239,7 @@ class SimpleDatasetManagerSpec extends Specification {
         def datasetIri = vf.createIRI("http://mobi.com/dataset/test")
 
         resultsMock.hasNext() >> false
+        configProviderMock.getRepository() >> repositoryMock
 
         when:
         def results = service.getDatasetRecord(datasetIri, repo)
@@ -261,6 +265,7 @@ class SimpleDatasetManagerSpec extends Specification {
                 vf.createStatement(recordIri, repoPred, vf.createLiteral(repo))
         ]
         1 * catalogManagerMock.getRecord(!null, recordIri, !null) >> Optional.of(record)
+        configProviderMock.getRepository() >> repositoryMock
 
         when:
         def results = service.getDatasetRecord(datasetIri, repo)
@@ -335,7 +340,7 @@ class SimpleDatasetManagerSpec extends Specification {
 
     def "getDatasets() returns an empty set when there are no datasets in that repository"() {
         setup:
-        service.setRepository(systemRepo)
+        configProviderMock.getRepository() >> systemRepo
         systemConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-records.trig"), "", RDFFormat.TRIG)))
 
         expect:
@@ -344,7 +349,7 @@ class SimpleDatasetManagerSpec extends Specification {
 
     def "getDatasets() returns an empty set when there are no datasets in the local catalog in that repository, but there are other datasets in that repository"() {
         setup:
-        service.setRepository(systemRepo)
+        configProviderMock.getRepository() >> systemRepo
         systemConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-catalog-records.trig"), "", RDFFormat.TRIG)))
 
         expect:
@@ -353,7 +358,7 @@ class SimpleDatasetManagerSpec extends Specification {
 
     def "getDatasets() returns a set with #size elements in the #repo repo"() {
         setup:
-        service.setRepository(systemRepo)
+        configProviderMock.getRepository() >> systemRepo
         systemConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
         testConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
 
@@ -547,6 +552,7 @@ class SimpleDatasetManagerSpec extends Specification {
         def datasetIRI = vf.createIRI("http://test.com/dataset1")
 
         resultsMock.hasNext() >> false
+        configProviderMock.getRepository() >> repositoryMock
 
         when:
         service.deleteDataset(datasetIRI, repo)
@@ -560,7 +566,7 @@ class SimpleDatasetManagerSpec extends Specification {
         def repo = "system"
         resultsMock.hasNext() >> true
         resultsMock.next() >> vf.createStatement(recordIRI, datasetPred, datasetIRI)
-
+        configProviderMock.getRepository() >> repositoryMock
 
         when:
         def result = service.deleteDataset(datasetIRI, repo)
@@ -738,6 +744,7 @@ class SimpleDatasetManagerSpec extends Specification {
         def datasetIRI = datasetsInFile[1]
         def recordIRI = vf.createIRI("http://test.com/record1")
         mockRetrieveRecord(datasetIRI, repo, recordIRI)
+        configProviderMock.getRepository() >> repositoryMock
 
         when:
         def dsConn = service.getConnection(datasetIRI, repo)
@@ -753,6 +760,7 @@ class SimpleDatasetManagerSpec extends Specification {
         def datasetIRI = vf.createIRI("http://test.com/dataset1")
 
         resultsMock.hasNext() >> false
+        configProviderMock.getRepository() >> repositoryMock
 
         when:
         service.getConnection(datasetIRI, repo)
@@ -780,7 +788,7 @@ class SimpleDatasetManagerSpec extends Specification {
         record.setDataset(dataset)
         record.setRepository(repo)
 
-        service.setRepository(systemRepo)
+        configProviderMock.getRepository() >> systemRepo
 
         systemConn.add(Values.mobiModel(
                 Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))

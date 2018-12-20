@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.11.19-SNAPSHOT</version>
+        <version>1.14.42-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -56,6 +56,21 @@
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>prov.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>security.policy.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>security.policy.api.xacml</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>persistence.utils</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -105,11 +120,30 @@
                                     <outputPackage>com.mobi.catalog.api.ontologies.mcat</outputPackage>
                                     <ontologyName>MCAT</ontologyName>
                                 </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/mergeRequests.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.catalog.api.ontologies.mergerequests</outputPackage>
+                                    <ontologyName>MergeRequests</ontologyName>
+                                </ontology>
                             </generates>
                             <references>
                                 <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/mcat.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.catalog.api.ontologies.mcat</outputPackage>
+                                    <ontologyName>MCAT</ontologyName>
+                                </ontology>
+                                <ontology>
                                     <ontologyFile>${project.basedir}/../com.mobi.rdf.orm.ontologies/src/main/resources/prov-o.ttl</ontologyFile>
                                     <outputPackage>com.mobi.ontologies.provo</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../com.mobi.jaas.api/src/main/resources/mobi_user_management.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.jaas.api.ontologies.usermanagement</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../com.mobi.security.policy.api/src/main/resources/mobi_policy.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.security.policy.api.ontologies.policy</outputPackage>
+                                    <ontologyName>Policy</ontologyName>
                                 </ontology>
                             </references>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>

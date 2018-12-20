@@ -27,113 +27,19 @@
         .module('mergeTab', [])
         .directive('mergeTab', mergeTab);
 
-        mergeTab.$inject = ['$q', 'utilService', 'ontologyStateService', 'catalogManagerService', 'prefixes'];
+        mergeTab.$inject = ['ontologyStateService'];
 
-        function mergeTab($q, utilService, ontologyStateService, catalogManagerService, prefixes) {
+        function mergeTab(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/mergeTab/mergeTab.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: function() {
                     var dvm = this;
-                    var cm = catalogManagerService;
-                    var catalogId = _.get(cm.localCatalog, '@id', '');
-
                     dvm.os = ontologyStateService;
-                    dvm.util = utilService;
-                    dvm.resolutions = {
-                        additions: [],
-                        deletions: []
-                    };
-                    dvm.branch = {};
-                    dvm.branchTitle = '';
-                    dvm.error = '';
-                    dvm.targetId = undefined;
-                    dvm.isUserBranch = false;
-                    dvm.checkbox = false;
-                    dvm.conflicts = [];
-
-                    dvm.allResolved = function() {
-                        return !_.some(dvm.conflicts, {resolved: false});
-                    }
-                    dvm.attemptMerge = function() {
-                        cm.getBranchConflicts(dvm.branch['@id'], dvm.targetId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
-                            .then(conflicts => {
-                                if (_.isEmpty(conflicts)) {
-                                    dvm.merge();
-                                } else {
-                                    _.forEach(conflicts, conflict => {
-                                        conflict.resolved = false;
-                                        var obj = _.find(dvm.conflicts, {iri: conflict.iri});
-                                        if (_.isEmpty(obj)) {
-                                            dvm.conflicts.push(conflict);
-                                        } else {
-                                            _.merge(obj, conflict);
-                                        }
-                                    });
-                                }
-                            }, onError);
-                    }
-                    dvm.mergeWithResolutions = function() {
-                        _.forEach(dvm.conflicts, conflict => {
-                            if (conflict.resolved === 'left') {
-                                addToResolutions(conflict.right);
-                            } else if (conflict.resolved === 'right') {
-                                addToResolutions(conflict.left);
-                            }
-                        });
-                        dvm.merge();
-                    }
-                    dvm.merge = function() {
-                        var sourceId = angular.copy(dvm.branch['@id']);
-                        cm.mergeBranches(sourceId, dvm.targetId, dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.resolutions)
-                            .then(commitId => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.targetId, commitId), $q.reject)
-                            .then(() => {
-                                if (dvm.checkbox) {
-                                    cm.deleteRecordBranch(sourceId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
-                                        .then(() => {
-                                            dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, sourceId);
-                                            onSuccess();
-                                        }, onError);
-                                } else {
-                                    onSuccess();
-                                }
-                            }, onError);
-                    }
-                    dvm.getTargetTitle = function() {
-                        var targetBranch = _.find(dvm.os.listItem.branches, branch => branch['@id'] === dvm.targetId);
-                        return dvm.util.getDctermsValue(targetBranch, 'title');
-                    }
-
-                    function onSuccess() {
-                        dvm.util.createSuccessToast('Your merge was successful.');
-                        dvm.os.listItem.merge = false;
-                    }
-                    function onError(errorMessage) {
-                        dvm.error = errorMessage;
-                    }
-                    function setupVariables() {
-                        dvm.branch = _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
-                        dvm.branchTitle = dvm.util.getDctermsValue(dvm.branch, 'title');
-                        if (_.includes(dvm.branch['@type'], prefixes.catalog + 'UserBranch')) {
-                            dvm.targetId = _.get(dvm.branch, "['" + prefixes.catalog + "createdFrom'][0]['@id']", '');
-                            dvm.isUserBranch = true;
-                            dvm.checkbox = true;
-                        } else {
-                            dvm.targetId = undefined;
-                            dvm.isUserBranch = false;
-                            dvm.checkbox = false;
-                        }
-                    }
-                    function addToResolutions(notSelected) {
-                        dvm.resolutions.additions = _.concat(dvm.resolutions.additions, notSelected.deletions);
-                        dvm.resolutions.deletions = _.concat(dvm.resolutions.deletions, notSelected.additions);
-                    }
-
-                    setupVariables();
-                }]
+                }
             }
         }
 })();

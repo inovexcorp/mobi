@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Create Concept Overlay directive', function() {
-    var $compile, scope, $q, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRI, ontoUtils;
+    var $compile, scope, $q, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRI, ontoUtils, propertyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -36,8 +36,9 @@ describe('Create Concept Overlay directive', function() {
         mockPrefixes();
         mockUtil();
         mockOntologyUtilsManager();
+        mockPropertyManager();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _splitIRIFilter_, _ontologyUtilsManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _splitIRIFilter_, _ontologyUtilsManagerService_, _propertyManagerService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -46,12 +47,16 @@ describe('Create Concept Overlay directive', function() {
             prefixes = _prefixes_;
             splitIRI = _splitIRIFilter_;
             ontoUtils = _ontologyUtilsManagerService_;
+            propertyManagerSvc = _propertyManagerService_;
         });
 
         this.iri = 'iri#';
         ontologyStateSvc.getDefaultPrefix.and.returnValue(this.iri);
         ontologyManagerSvc.getConceptSchemeIRIs.and.returnValue(['scheme1']);
-        this.element = $compile(angular.element('<create-concept-overlay></create-concept-overlay>'))(scope);
+
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<create-concept-overlay close="close()" dismiss="dismiss()"></create-concept-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('createConceptOverlay');
     });
@@ -65,6 +70,7 @@ describe('Create Concept Overlay directive', function() {
         prefixes = null;
         splitIRI = null;
         ontoUtils = null;
+        propertyManagerSvc = null;
         this.element.remove();
     });
 
@@ -76,14 +82,12 @@ describe('Create Concept Overlay directive', function() {
         expect(this.controller.schemeIRIs).toEqual(['scheme1']);
         expect(ontologyManagerSvc.getConceptSchemeIRIs).toHaveBeenCalledWith(jasmine.any(Array), ontologyStateSvc.listItem.derivedConceptSchemes);
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('create-concept-overlay')).toBe(true);
-            expect(this.element.hasClass('overlay')).toBe(true);
-        });
-        it('with a .content', function() {
-            expect(this.element.querySelectorAll('.content').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('CREATE-CONCEPT-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
         });
         it('with a form', function() {
             expect(this.element.find('form').length).toBe(1);
@@ -93,9 +97,6 @@ describe('Create Concept Overlay directive', function() {
         });
         it('with a custom-label', function() {
             expect(this.element.find('custom-label').length).toBe(2);
-        });
-        it('with a .btn-container', function() {
-            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
         });
         it('with an advanced-language-select', function() {
             expect(this.element.find('advanced-language-select').length).toBe(1);
@@ -115,13 +116,13 @@ describe('Create Concept Overlay directive', function() {
             expect(this.element.find('ui-select').length).toBe(0);
         });
         it('with buttons to create and cancel', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Create']).toContain(angular.element(buttons[0]).text().trim());
-            expect(['Cancel', 'Create']).toContain(angular.element(buttons[1]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
         it('depending on the form validity', function() {
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.form.$invalid = false;
@@ -134,7 +135,7 @@ describe('Create Concept Overlay directive', function() {
 
             var disabled = this.element.querySelectorAll('[disabled]');
             expect(disabled.length).toBe(1);
-            expect(angular.element(disabled[0]).text()).toBe('Create');
+            expect(angular.element(disabled[0]).text()).toBe('Submit');
         });
     });
     describe('controller methods', function() {
@@ -163,27 +164,16 @@ describe('Create Concept Overlay directive', function() {
         });
         it('should create a concept', function() {
             ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
-            this.schemes = {
-                scheme1: {'@id': 'scheme1', mobi: {}},
-                scheme2: {'@id': 'scheme2', mobi: {}}
-            };
-            this.schemes.scheme1[prefixes.skos + 'hasTopConcept'] = [{'@id': 'test'}];
-            this.controller.selectedSchemes = _.values(this.schemes);
-            var self = this;
-            ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, schemeId) {
-                return _.get(self.schemes, schemeId);
-            });
+            this.scheme = {'@id': 'scheme', mobi: {}};
+            this.controller.selectedSchemes = [this.scheme];
+            ontologyStateSvc.getEntityByRecordId.and.returnValue(this.scheme);
             this.controller.concept = {'@id': 'concept'};
-            var json = {};
-            json[prefixes.skos + 'hasTopConcept'] = [{'@id': 'concept'}];
+            var json = {'@id': this.scheme['@id'], [prefixes.skos + 'hasTopConcept']: [{'@id': 'concept'}]};
+            propertyManagerSvc.addId.and.returnValue(true);
             this.controller.create();
-            expect(this.schemes.scheme1[prefixes.skos + 'hasTopConcept'].length).toBe(2);
-            expect(this.schemes.scheme2[prefixes.skos + 'hasTopConcept'].length).toBe(1);
-            this.controller.selectedSchemes.forEach(function(scheme) {
-                expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, 'concept', ontologyStateSvc.listItem.conceptSchemes.index, scheme['@id']);
-                json['@id'] = scheme['@id'];
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, json);
-            }, this);
+            expect(propertyManagerSvc.addId).toHaveBeenCalledWith(this.scheme, prefixes.skos + 'hasTopConcept', this.controller.concept['@id']);
+            expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, 'concept', ontologyStateSvc.listItem.conceptSchemes.index, this.scheme['@id']);
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, json);
             expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
             expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{prop: 'entity'}]);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.concept, this.controller.language);
@@ -191,9 +181,8 @@ describe('Create Concept Overlay directive', function() {
             expect(ontoUtils.addConcept).toHaveBeenCalledWith(this.controller.concept);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.concept);
             expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.concept);
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.concept['@id']);
-            expect(ontologyStateSvc.showCreateConceptOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+            expect(scope.close).toHaveBeenCalled();
         });
         it('should set the list of schemes', function() {
             ontoUtils.getSelectList.and.returnValue(['scheme']);
@@ -201,16 +190,21 @@ describe('Create Concept Overlay directive', function() {
             expect(this.controller.schemes).toEqual(['scheme']);
             expect(ontoUtils.getSelectList).toHaveBeenCalledWith(this.controller.schemeIRIs, 'search');
         });
+        it('should cancel the overlay', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
     });
     it('should call create when the button is clicked', function() {
         spyOn(this.controller, 'create');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.create).toHaveBeenCalled();
     });
-    it('should set the correct state when the cancel button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+    it('should call cancel when the button is clicked', function() {
+        spyOn(this.controller, 'cancel');
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
-        expect(ontologyStateSvc.showCreateConceptOverlay).toBe(false);
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
 });

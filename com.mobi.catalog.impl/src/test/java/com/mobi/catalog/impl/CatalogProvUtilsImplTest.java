@@ -24,14 +24,15 @@ package com.mobi.catalog.impl;
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
@@ -58,6 +59,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @RunWith(PowerMockRunner.class)
@@ -86,7 +88,7 @@ public class CatalogProvUtilsImplTest extends OrmEnabledTestCase {
     private ProvenanceService provenanceService;
 
     @Mock
-    private CatalogManager catalogManager;
+    private CatalogConfigProvider config;
 
     @Mock
     private RepositoryConnection connProv;
@@ -101,10 +103,11 @@ public class CatalogProvUtilsImplTest extends OrmEnabledTestCase {
         createActivity = createActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/create"));
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
         entity = entityFactory.createNew(VALUE_FACTORY.createIRI(recordIri));
+        entity.addProperty(VALUE_FACTORY.createLiteral(OffsetDateTime.now()), VALUE_FACTORY.createIRI(Entity.generatedAtTime_IRI));
         user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/user"));
 
         when(mobi.getServerIdentifier()).thenReturn(UUID.randomUUID());
-        when(catalogManager.getRepositoryId()).thenReturn("system");
+        when(config.getRepositoryId()).thenReturn("system");
 
         IRI recordIRI = VALUE_FACTORY.createIRI(recordIri);
 
@@ -121,7 +124,7 @@ public class CatalogProvUtilsImplTest extends OrmEnabledTestCase {
         utils.setVf(VALUE_FACTORY);
         utils.setMobi(mobi);
         utils.setProvenanceService(provenanceService);
-        utils.setCatalogManager(catalogManager);
+        utils.setConfig(config);
         utils.setModelFactory(MODEL_FACTORY);
     }
 
@@ -177,6 +180,7 @@ public class CatalogProvUtilsImplTest extends OrmEnabledTestCase {
         assertEquals(1, deleteActivity.getInvalidated().size());
         Entity resultEntity = deleteActivity.getInvalidated().iterator().next();
         assertEquals(entity.getResource(), resultEntity.getResource());
+        assertTrue(resultEntity.getModel().contains(resultEntity.getResource(), VALUE_FACTORY.createIRI(Entity.generatedAtTime_IRI), null));
         assertTrue(resultEntity.getModel().contains(resultEntity.getResource(), VALUE_FACTORY.createIRI(predAtLocation), VALUE_FACTORY.createLiteral("system")));
     }
 
@@ -187,6 +191,29 @@ public class CatalogProvUtilsImplTest extends OrmEnabledTestCase {
         when(provenanceService.createActivity(any(ActivityConfig.class))).thenReturn(activity1);
 
         utils.startDeleteActivity(user, VALUE_FACTORY.createIRI(recordIri));
+    }
+
+    @Test
+    public void startDeleteActivityWithNoEntityTest() {
+        // Setup:
+        when(provenanceService.createActivity(any(ActivityConfig.class))).thenReturn(deleteActivity);
+        Entity newEntity = entityFactory.createNew(VALUE_FACTORY.createIRI(recordIri));
+        newEntity.addProperty(VALUE_FACTORY.createLiteral("system"), VALUE_FACTORY.createIRI(predAtLocation));
+        deleteActivity.addInvalidated(newEntity);
+        deleteActivity.getModel().addAll(newEntity.getModel());
+        when(RepositoryResults.asModel(resultEntity, MODEL_FACTORY)).thenReturn(MODEL_FACTORY.createModel());
+
+        DeleteActivity result = utils.startDeleteActivity(user, VALUE_FACTORY.createIRI(recordIri));
+        verify(provenanceService).createActivity(any(ActivityConfig.class));
+        verify(provenanceService).addActivity(any(DeleteActivity.class));
+        verify(mobi).getServerIdentifier();
+        assertTrue(result.getModel().contains(deleteActivity.getResource(), VALUE_FACTORY.createIRI(Activity.startedAtTime_IRI), null));
+        assertTrue(result.getModel().contains(deleteActivity.getResource(), VALUE_FACTORY.createIRI(predAtLocation), VALUE_FACTORY.createLiteral(mobi.getServerIdentifier().toString())));
+        assertEquals(1, deleteActivity.getInvalidated().size());
+        Entity resultEntity = deleteActivity.getInvalidated().iterator().next();
+        assertEquals(newEntity.getResource(), resultEntity.getResource());
+        assertFalse(resultEntity.getModel().contains(resultEntity.getResource(), VALUE_FACTORY.createIRI(Entity.generatedAtTime_IRI), null));
+        assertTrue(resultEntity.getModel().contains(resultEntity.getResource(), VALUE_FACTORY.createIRI(predAtLocation), VALUE_FACTORY.createLiteral("system")));
     }
 
     @Test

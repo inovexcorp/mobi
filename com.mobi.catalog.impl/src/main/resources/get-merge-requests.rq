@@ -1,0 +1,16 @@
+PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX mq: <http://mobi.com/ontologies/merge-requests#>
+
+SELECT DISTINCT ?requestId
+WHERE {
+    ?requestId a mq:MergeRequest ;
+    OPTIONAL { ?requestId mq:onRecord ?onRecord }
+    OPTIONAL { ?requestId mq:sourceBranch ?sourceBranch }
+    OPTIONAL { ?requestId mq:assignee ?assignee }
+    OPTIONAL { ?requestId mq:targetBranch ?targetBranch }
+    OPTIONAL { ?requestId mq:sourceCommit ?sourceCommit }
+    OPTIONAL { ?requestId mq:targetCommit ?targetCommit }
+    OPTIONAL { ?requestId mq:removeSource ?removeSource }
+
+    %FILTERS%
+}

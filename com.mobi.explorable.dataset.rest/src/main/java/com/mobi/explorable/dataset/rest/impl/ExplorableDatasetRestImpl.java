@@ -30,14 +30,13 @@ import static com.mobi.rest.util.RestUtils.modelToSkolemizedJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.explorable.dataset.rest.ExplorableDatasetRest;
-import net.sf.json.JSONArray;
-import org.apache.commons.io.IOUtils;
 import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.exception.MobiException;
+import com.mobi.explorable.dataset.rest.ExplorableDatasetRest;
 import com.mobi.explorable.dataset.rest.jaxb.ClassDetails;
 import com.mobi.explorable.dataset.rest.jaxb.InstanceDetails;
 import com.mobi.explorable.dataset.rest.jaxb.PropertyDetails;
@@ -68,13 +67,18 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.Thing;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.base.RepositoryResult;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
-import org.openrdf.model.vocabulary.OWL;
-import org.openrdf.model.vocabulary.RDF;
-import org.openrdf.model.vocabulary.RDFS;
+import net.sf.json.JSONArray;
+import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +91,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -97,6 +100,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private final Logger log = LoggerFactory.getLogger(ExplorableDatasetRestImpl.class);
 
     private DatasetManager datasetManager;
+    private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
     private ValueFactory factory;
     private ModelFactory modelFactory;
@@ -104,10 +108,12 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private OntologyManager ontologyManager;
     private OntologyRecordFactory ontologyRecordFactory;
     private BNodeService bNodeService;
+    private RepositoryManager repositoryManager;
 
     private static final String GET_CLASSES_TYPES;
     private static final String GET_CLASSES_DETAILS;
     private static final String GET_CLASSES_INSTANCES;
+    private static final String GET_ALL_CLASS_INSTANCES;
     private static final String GET_REIFIED_STATEMENTS;
     private static final String COUNT_BINDING = "c";
     private static final String TYPE_BINDING = "type";
@@ -148,6 +154,14 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             throw new MobiException(e);
         }
         try {
+            GET_ALL_CLASS_INSTANCES = IOUtils.toString(
+                    ExplorableDatasetRestImpl.class.getResourceAsStream("/get-all-class-instances.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+        try {
             GET_REIFIED_STATEMENTS = IOUtils.toString(
                     ExplorableDatasetRestImpl.class.getResourceAsStream("/get-reified-statements.rq"),
                     "UTF-8"
@@ -165,6 +179,11 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     @Reference
     public void setFactory(ValueFactory factory) {
         this.factory = factory;
+    }
+
+    @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
     }
 
     @Reference
@@ -197,6 +216,11 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         this.bNodeService = bNodeService;
     }
 
+    @Reference
+    public void setRepositoryManager(RepositoryManager repositoryManager) {
+        this.repositoryManager = repositoryManager;
+    }
+
     @Override
     public Response getClassDetails(String recordIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
@@ -215,14 +239,22 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
 
     @Override
     public Response getInstanceDetails(UriInfo uriInfo, String recordIRI, String classIRI, int offset, int limit,
-                                       boolean asc) {
+                                       boolean asc, boolean infer) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(classIRI, "The Class IRI is required.");
         Resource datasetRecordRsr = factory.createIRI(recordIRI);
         try {
-            TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_INSTANCES, CLASS_BINDING,
-                    factory.createIRI(classIRI));
-            List<InstanceDetails> instances = getInstanceDetailsFromQueryResults(results);
+            final List<InstanceDetails> instances = new ArrayList<>();
+            if (infer) {
+                String classes = getInferredClasses(datasetRecordRsr, factory.createIRI(classIRI));
+                String query = String.format(GET_ALL_CLASS_INSTANCES, classes);
+                TupleQueryResult results = getQueryResults(datasetRecordRsr, query, "", null);
+                instances.addAll(getInstanceDetailsFromQueryResults(results));
+            } else {
+                TupleQueryResult results = getQueryResults(datasetRecordRsr, GET_CLASSES_INSTANCES, CLASS_BINDING,
+                        factory.createIRI(classIRI));
+                instances.addAll(getInstanceDetailsFromQueryResults(results));
+            }
             Comparator<InstanceDetails> comparator = Comparator.comparing(InstanceDetails::getTitle);
             return createPagedResponse(uriInfo, instances, comparator, asc, limit, offset);
         } catch (MobiException e) {
@@ -332,6 +364,35 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Gets all of the inferred classes of the type specified contained within any of the Ontologies associated with the
+     * Dataset in a format needed for the VALUES input in the query.
+     *
+     * @param recordId The ID of the DatasetRecord.
+     * @param classIRI The ID of the class to get the inferred classes of.
+     * @return A Set containing the list of inferred classes.
+     */
+    private String getInferredClasses(Resource recordId, IRI classIRI) {
+        DatasetRecord record = datasetManager.getDatasetRecord(recordId).orElseThrow(() ->
+                ErrorUtils.sendError("The Dataset Record could not be found.", Response.Status.BAD_REQUEST));
+        Repository repo = repositoryManager.createMemoryRepository();
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Model recordModel = record.getModel();
+            conn.begin();
+            record.getOntology().forEach(value -> getOntology(recordModel, value).ifPresent(ontology ->
+                    ontology.getImportsClosure().forEach(ont -> conn.add(ont.asModel(modelFactory)))));
+            conn.commit();
+            StringBuilder builder = new StringBuilder();
+            builder.append(" <" + classIRI.stringValue() + "> ");
+            ontologyManager.getSubClassesFor(classIRI, conn).forEach(r ->
+                    builder.append("<" + Bindings.requiredResource(r, "s").stringValue() + "> "));
+            return builder.toString();
+        } finally {
+            repo.shutDown();
         }
     }
 
@@ -577,8 +638,8 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             if (ontologyRecordIRIOpt.isPresent() && compiledResourceOpt.isPresent()) {
                 Model compiledResource = compiledResourceOpt.get();
                 IRI ontologyRecordIRI = ontologyRecordIRIOpt.get();
-                Optional<OntologyRecord> ontologyRecordOpt = catalogManager.getRecord(catalogManager
-                                .getLocalCatalogIRI(), ontologyRecordIRI, ontologyRecordFactory);
+                Optional<OntologyRecord> ontologyRecordOpt = catalogManager.getRecord(
+                        configProvider.getLocalCatalogIRI(), ontologyRecordIRI, ontologyRecordFactory);
                 if (!ontologyRecordOpt.isPresent()) {
                     log.warn("OntologyRecord " + ontologyRecordIRI + " could not be found");
                 }
@@ -670,26 +731,44 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         record.getOntology().forEach(value -> getOntology(recordModel, value).ifPresent(ontology -> {
             if (ontology.containsClass(classId)) {
                 Set<CardinalityRestriction> restrictions = ontology.getCardinalityProperties(classId);
-                details.addAll(ontology.getAllClassDataProperties(classId).stream()
+                ontology.getAllClassDataProperties(classId).stream()
                         .map(dataProperty -> createPropertyDetails(dataProperty.getIRI(),
                                 ontology.getDataPropertyRange(dataProperty), "Data", restrictions))
-                        .collect(Collectors.toSet()));
-                details.addAll(ontology.getAllClassObjectProperties(classId).stream()
+                        .forEach(detail -> updateDetails(details, detail));
+                ontology.getAllClassObjectProperties(classId).stream()
                         .map(objectProperty -> createPropertyDetails(objectProperty.getIRI(),
                                 ontology.getObjectPropertyRange(objectProperty), "Object", restrictions))
-                        .collect(Collectors.toSet()));
+                        .forEach(detail -> updateDetails(details, detail));
             } else {
-                details.addAll(ontology.getAllNoDomainDataProperties().stream()
+                ontology.getAllNoDomainDataProperties().stream()
                         .map(dataProperty -> createPropertyDetails(dataProperty.getIRI(),
                                 ontology.getDataPropertyRange(dataProperty), "Data"))
-                        .collect(Collectors.toSet()));
-                details.addAll(ontology.getAllNoDomainObjectProperties().stream()
+                        .forEach(detail -> updateDetails(details, detail));
+                ontology.getAllNoDomainObjectProperties().stream()
                         .map(objectProperty -> createPropertyDetails(objectProperty.getIRI(),
                                 ontology.getObjectPropertyRange(objectProperty), "Object"))
-                        .collect(Collectors.toSet()));
+                        .forEach(detail -> updateDetails(details, detail));
             }
         }));
         return details;
+    }
+
+    /**
+     * Updates the details list if the property has already been found before.
+     *
+     * @param details the list of details to update.
+     * @param detail  the new detail that should be added to the list.
+     */
+    private void updateDetails(List<PropertyDetails> details, PropertyDetails detail) {
+        int index = details.indexOf(detail);
+        if (index != -1) {
+            PropertyDetails found = details.get(index);
+            Set<String> range = found.getRange();
+            range.addAll(detail.getRange());
+            found.setRange(range);
+        } else {
+            details.add(detail);
+        }
     }
 
     /**

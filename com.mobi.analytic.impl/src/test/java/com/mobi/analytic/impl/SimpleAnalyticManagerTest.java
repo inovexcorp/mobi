@@ -43,6 +43,7 @@ import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
@@ -53,15 +54,15 @@ import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
-import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
 import java.util.Collections;
@@ -81,6 +82,9 @@ public class SimpleAnalyticManagerTest extends OrmEnabledTestCase {
     private final IRI CONFIG_IRI = VALUE_FACTORY.createIRI("https://mobi.com/test/configs#1");
     private final Literal NEW_LITERAL = VALUE_FACTORY.createLiteral("new");
     private final IRI TITLE_IRI = VALUE_FACTORY.createIRI(_Thing.title_IRI);
+
+    @Mock
+    private CatalogConfigProvider configProvider;
 
     @Mock
     private CatalogManager catalogManager;
@@ -109,20 +113,24 @@ public class SimpleAnalyticManagerTest extends OrmEnabledTestCase {
         config.setProperty(NEW_LITERAL, TITLE_IRI);
 
         MockitoAnnotations.initMocks(this);
-        when(catalogManager.getLocalCatalogIRI()).thenReturn(CATALOG_IRI);
+        when(configProvider.getRepository()).thenReturn(repository);
+        when(configProvider.getLocalCatalogIRI()).thenReturn(CATALOG_IRI);
+
         when(catalogManager.findRecord(eq(CATALOG_IRI), any(PaginatedSearchParams.class))).thenReturn(results);
         when(catalogManager.getRecord(any(IRI.class), any(Resource.class), eq(analyticRecordFactory))).thenReturn(Optional.of(record));
         when(catalogManager.createRecord(any(AnalyticRecordConfig.class), eq(analyticRecordFactory))).thenReturn(record);
+
         when(results.getPage()).thenReturn(Collections.singletonList(record));
         when(results.getPageNumber()).thenReturn(1);
         when(results.getTotalSize()).thenReturn(7);
         when(results.getPageSize()).thenReturn(10);
+
         when(baseService.create(anyString())).thenReturn(config);
         when(baseService.getTypeIRI()).thenReturn(Configuration.TYPE);
 
         manager = new SimpleAnalyticManager();
         injectOrmFactoryReferencesIntoService(manager);
-        manager.setRepository(repository);
+        manager.setConfigProvider(configProvider);
         manager.setCatalogManager(catalogManager);
         manager.setCatalogUtils(catalogUtils);
         manager.setValueFactory(VALUE_FACTORY);
@@ -148,7 +156,7 @@ public class SimpleAnalyticManagerTest extends OrmEnabledTestCase {
     @Test
     public void testGetAnalyticRecord() {
         assertEquals(manager.getAnalyticRecord(RECORD_IRI), Optional.of(record));
-        verify(catalogManager).getLocalCatalogIRI();
+        verify(configProvider).getLocalCatalogIRI();
         verify(catalogManager).getRecord(CATALOG_IRI, RECORD_IRI, analyticRecordFactory);
     }
 
@@ -161,7 +169,7 @@ public class SimpleAnalyticManagerTest extends OrmEnabledTestCase {
 
         assertEquals(manager.createAnalytic(config), record);
         verify(catalogManager).createRecord(config, analyticRecordFactory);
-        verify(catalogManager).getLocalCatalogIRI();
+        verify(configProvider).getLocalCatalogIRI();
         verify(catalogManager).addRecord(CATALOG_IRI, record);
     }
 
@@ -188,7 +196,7 @@ public class SimpleAnalyticManagerTest extends OrmEnabledTestCase {
         record.setHasConfig(config);
 
         assertTrue(manager.getConfigurationByAnalyticRecord(RECORD_IRI, configurationFactory).isPresent());
-        verify(catalogManager).getLocalCatalogIRI();
+        verify(configProvider).getLocalCatalogIRI();
         verify(catalogManager).getRecord(CATALOG_IRI, RECORD_IRI, analyticRecordFactory);
     }
 

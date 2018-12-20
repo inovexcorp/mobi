@@ -38,16 +38,22 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.axiom.Axiom;
 import com.mobi.ontology.core.api.classexpression.OClass;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
+import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
+import com.mobi.ontology.core.utils.MobiOntologyException;
+import com.mobi.persistence.utils.api.BNodeService;
+import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.core.impl.sesame.SimpleIRI;
+import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
-import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -58,6 +64,7 @@ import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -67,10 +74,12 @@ import java.util.Set;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
-public class SimpleOntologyTest {
+public class SimpleOntologyTest extends OrmEnabledTestCase {
     private ValueFactory vf = SimpleValueFactory.getInstance();
-    private File restrictionFile;
+    private InputStream restrictionInputStream;
+    private InputStream hasDoctypeInputStream;
     private File testFile;
+    private IRI ontologyIRI;
 
     @Mock
     private OntologyId ontologyIdMock;
@@ -85,19 +94,17 @@ public class SimpleOntologyTest {
     private BNodeService bNodeService;
 
     @Mock
-    private IRI ontologyIRI;
-
-    @Mock
     private IRI versionIRI;
 
     @Before
     public void setUp() throws Exception {
-        restrictionFile = Paths.get(getClass().getResource("/restriction-test-ontology.ttl").toURI()).toFile();
+        restrictionInputStream = getClass().getResourceAsStream("/restriction-test-ontology.ttl");
+        hasDoctypeInputStream = getClass().getResourceAsStream("/hasDoctype.owl");
         testFile = Paths.get(getClass().getResource("/test.owl").toURI()).toFile();
 
         MockitoAnnotations.initMocks(this);
 
-        when(ontologyIRI.stringValue()).thenReturn("http://test.com/ontology1");
+        ontologyIRI = VALUE_FACTORY.createIRI("http://test.com/ontology1");
         when(versionIRI.stringValue()).thenReturn("http://test.com/ontology1/1.0.0");
 
         mockStatic(SimpleOntologyValues.class);
@@ -110,16 +117,14 @@ public class SimpleOntologyTest {
 
         when(ontologyIdMock.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
         when(ontologyIdMock.getVersionIRI()).thenReturn(Optional.of(versionIRI));
+        when(ontologyIdMock.getOntologyIdentifier()).thenReturn(ontologyIRI);
 
         when(ontologyManager.createOntologyId(any(IRI.class), any(IRI.class))).thenReturn(ontologyIdMock);
         when(ontologyManager.createOntologyId(any(IRI.class))).thenReturn(ontologyIdMock);
+        when(ontologyManager.createOntologyId()).thenReturn(ontologyIdMock);
         when(ontologyManager.getOntologyRecordResource(any(IRI.class))).thenReturn(Optional.empty());
-    }
-
-    @Test
-    public void testGetOntologyIdReturnsAnEqualObject() throws Exception {
-        Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
-        assertEquals(ontologyIdMock, ontology.getOntologyId());
+        when(transformer.sesameModel(any(Model.class))).thenReturn(new LinkedHashModel());
+        when(transformer.sesameResource(any(Resource.class))).thenReturn(new SimpleIRI("http://test.com/ontology1"));
     }
 
     @Test
@@ -130,11 +135,22 @@ public class SimpleOntologyTest {
         assertEquals(versionIRI, ontology.getOntologyId().getVersionIRI().get());
     }
 
-    @Test
-    public void testFileConstructor() throws Exception {
-        Ontology ontology = new SimpleOntology(testFile, ontologyManager, transformer, bNodeService, true);
-        assertEquals(ontologyIRI, ontology.getOntologyId().getOntologyIRI().get());
-        assertEquals(versionIRI, ontology.getOntologyId().getVersionIRI().get());
+    @Test (expected = MobiOntologyException.class)
+    public void testStreamConstructorEmpty() throws Exception {
+        InputStream stream =  new ByteArrayInputStream(new byte[0]);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
+    }
+
+    @Test (expected = MobiOntologyException.class)
+    public void testStreamConstructorNoFormatMatch() throws Exception {
+        String noMatch = "This is not a valid ontology file.";
+        InputStream stream =  new ByteArrayInputStream(noMatch.getBytes());
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
+    }
+
+    @Test (expected = MobiOntologyException.class)
+    public void testStreamConstructorXMLDoctype() throws Exception {
+        Ontology ontology = new SimpleOntology(hasDoctypeInputStream, ontologyManager, transformer, bNodeService, true);
     }
 
     @Test
@@ -142,19 +158,10 @@ public class SimpleOntologyTest {
         InputStream stream1 = new FileInputStream(testFile);
         InputStream stream2 = new FileInputStream(testFile);
 
-        Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
-        Ontology ontology2 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
-
-        Ontology ontology3 = new SimpleOntology(testFile, ontologyManager, transformer, bNodeService, true);
-        Ontology ontology4 = new SimpleOntology(testFile, ontologyManager, transformer, bNodeService, true);
-
-        Ontology ontology5 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, true);
-        Ontology ontology6 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, true);
 
         assertEquals(ontology1, ontology2);
-        assertEquals(ontology3, ontology4);
-        assertEquals(ontology3, ontology5);
-        assertEquals(ontology5, ontology6);
     }
 
     @Test
@@ -162,13 +169,10 @@ public class SimpleOntologyTest {
         InputStream stream1 = new FileInputStream(testFile);
         InputStream stream2 = this.getClass().getResourceAsStream("/travel.owl");
 
-        Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
-        Ontology ontology2 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, true);
-        Ontology ontology3 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, true);
 
         assertNotEquals(ontology1, ontology2);
-        assertNotEquals(ontology1, ontology3);
-        assertNotEquals(ontology2, ontology3);
     }
 
     @Test
@@ -177,24 +181,16 @@ public class SimpleOntologyTest {
         InputStream stream1 = new FileInputStream(testFile);
         InputStream stream2 = new FileInputStream(testFile);
 
-        Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
-        Ontology ontology2 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
-
-        Ontology ontology3 = new SimpleOntology(testFile, ontologyManager, transformer, bNodeService, true);
-        Ontology ontology4 = new SimpleOntology(testFile, ontologyManager, transformer, bNodeService, true);
-
-        Ontology ontology5 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, true);
-        Ontology ontology6 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, true);
 
         assertEquals(ontology1.hashCode(), ontology2.hashCode());
-        assertEquals(ontology3.hashCode(), ontology4.hashCode());
-        assertEquals(ontology3.hashCode(), ontology5.hashCode());
-        assertEquals(ontology5.hashCode(), ontology6.hashCode());
     }
 
     @Test
     public void annotationsAreEmptyForEmptyOntology() throws Exception {
-        Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
+        Model emptyModel = MODEL_FACTORY.createModel();
+        Ontology ontology = new SimpleOntology(emptyModel, ontologyManager, transformer, bNodeService);
         Set<Annotation> annotations = ontology.getOntologyAnnotations();
         assertTrue(annotations.size() == 0);
     }
@@ -217,7 +213,8 @@ public class SimpleOntologyTest {
 
     @Test
     public void axiomsAreEmptyForEmptyOntology() throws Exception {
-        Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
+        Model emptyModel = MODEL_FACTORY.createModel();
+        Ontology ontology = new SimpleOntology(emptyModel, ontologyManager, transformer, bNodeService);
         Set<Axiom> axioms = ontology.getAxioms();
         assertTrue(axioms.size() == 0);
     }
@@ -240,32 +237,32 @@ public class SimpleOntologyTest {
     
     @Test
     public void missingDirectImportTest() throws Exception {
-        File file = Paths.get(getClass().getResource("/protegeSample.owl").toURI()).toFile();
+        InputStream file = getClass().getResourceAsStream("/protegeSample.owl");
         Ontology ontology = new SimpleOntology(file, ontologyManager, transformer, bNodeService, true);
         assertEquals(5, ontology.getUnloadableImportIRIs().size());
     }
 
     @Test
     public void getCardinalityPropertiesTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionFile, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, true);
         assertEquals(0, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Woman")).size());
     }
 
     @Test
     public void getCardinalityPropertiesOfSubClassTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionFile, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, true);
         assertEquals(1, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Parent")).size());
     }
 
     @Test
     public void getCardinalityPropertiesOfEquivalentClassTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionFile, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, true);
         assertEquals(1, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Person")).size());
     }
 
     @Test
     public void getCardinalityPropertiesOfEquivalentClassAndSubClassTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionFile, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, true);
         assertEquals(2, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Man")).size());
     }
 

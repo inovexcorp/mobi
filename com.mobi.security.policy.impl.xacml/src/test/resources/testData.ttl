@@ -1,0 +1,3 @@
+<http://mobi.com/users/UserX> <http://mobi.com/ontologies/user/management#hasUserRole> <http://mobi.com/roles/admin> .
+
+<http://mobi.com/groups/admin-group> <http://xmlns.com/foaf/0.1/member> <http://mobi.com/users/UserY> .

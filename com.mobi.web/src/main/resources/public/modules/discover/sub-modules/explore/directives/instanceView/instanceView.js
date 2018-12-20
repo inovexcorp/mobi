@@ -40,6 +40,8 @@
          * @restrict E
          * @requires discoverState.service:discoverStateService
          * @requires util.service:utilService
+         * @requires exploreUtils.service:exploreUtilsService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * HTML contents in the instance view page which shows the complete list of properites
@@ -74,6 +76,10 @@
                             return _.omit(reification, ['@id', '@type', prefixes.rdf + 'subject', prefixes.rdf + 'predicate', prefixes.rdf + 'object']);
                         }
                         return reification;
+                    }
+                    dvm.edit = function() {
+                        dvm.ds.explore.editing = true;
+                        dvm.ds.explore.instance.original = angular.copy(dvm.ds.explore.instance.entity);
                     }
 
                     function getEntity() {

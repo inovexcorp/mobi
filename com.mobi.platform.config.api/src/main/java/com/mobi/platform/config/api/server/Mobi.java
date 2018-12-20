@@ -32,8 +32,15 @@ public interface Mobi {
 
     /**
      *
-     * @return A unique, deterministic ID for this Mobi server
+     * @return A unique, deterministic ID for this Mobi server.
      */
     UUID getServerIdentifier();
+
+    /**
+     *
+     * @return The configured host name for the server if present. If no host name is configured or if the host name is
+     * not a valid URL with protocol, returns an empty string.
+     */
+    String getHostName();
 
 }

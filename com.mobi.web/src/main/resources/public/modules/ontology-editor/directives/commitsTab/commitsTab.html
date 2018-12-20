@@ -20,15 +20,29 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="commits-tab row">
-    <div class="col-xs-8 col-xs-offset-2">
-        <block>
-            <block-header>
-                <h4>Commits</h4>
-            </block-header>
-            <block-content class="table-container">
-                <commit-history-table commit-id="dvm.os.listItem.ontologyRecord.commitId" branch="dvm.getBranch()" record-id="dvm.os.listItem.ontologyRecord.recordId" graph></commit-history-table>
-            </block-content>
-        </block>
+<div class="commits-tab h-100 row m-0">
+    <div class="col-8 offset-2 d-flex flex-column p-2">
+        <div class="section-header">
+            <h5>Commits</h5>
+        </div>
+        <div class="flex-1 vertical-scroll d-flex">
+            <commit-history-table class="flex-1" commit-id="dvm.os.listItem.ontologyRecord.commitId" head-title="dvm.getHeadTitle()" commit-data="dvm.commits" graph></commit-history-table>
+            <div class="view-table" ng-if="dvm.commits.length">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="commit in dvm.commits track by commit.id">
+                            <td class="p-0 align-middle">
+                                <button type="button" class="btn btn-flat-primary remove-min-width" ng-click="dvm.openOntologyAtCommit(commit)" ng-disabled="dvm.os.hasChanges(dvm.os.listItem) || dvm.os.isCommittable(dvm.os.listItem)">View</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>

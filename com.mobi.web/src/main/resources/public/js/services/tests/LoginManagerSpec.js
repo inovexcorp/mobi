@@ -21,12 +21,10 @@
  * #L%
  */
 describe('Login Manager service', function() {
-    var loginManagerSvc, $httpBackend, state, scope, $q, analyticManagerSvc, analyticStateSvc, catalogManagerSvc, catalogStateSvc, datasetManagerSvc, datasetStateSvc, delimitedManagerSvc, discoverStateSvc, mapperStateSvc, ontologyManagerSvc, ontologyStateSvc, sparqlManagerSvc, stateManagerSvc, userManagerSvc, userStateSvc;
+    var loginManagerSvc, $httpBackend, state, scope, $q, catalogManagerSvc, catalogStateSvc, datasetManagerSvc, datasetStateSvc, delimitedManagerSvc, discoverStateSvc, mapperStateSvc, mergeRequestsStateSvc, ontologyManagerSvc, ontologyStateSvc, sparqlManagerSvc, stateManagerSvc, userManagerSvc, userStateSvc;
 
     beforeEach(function() {
         module('loginManager');
-        mockAnalyticManager();
-        mockAnalyticState();
         mockCatalogManager();
         mockCatalogState();
         mockDatasetManager();
@@ -34,6 +32,7 @@ describe('Login Manager service', function() {
         mockDelimitedManager();
         mockDiscoverState();
         mockMapperState();
+        mockMergeRequestsState();
         mockOntologyManager();
         mockOntologyState();
         mockSparqlManager();
@@ -48,14 +47,12 @@ describe('Login Manager service', function() {
             });
         });
 
-        inject(function(loginManagerService, _$httpBackend_, _$state_, _$rootScope_, _$q_, _analyticManagerService_, _analyticStateService_, _catalogManagerService_, _catalogStateService_, _datasetManagerService_, _datasetStateService_, _delimitedManagerService_, _discoverStateService_, _mapperStateService_, _ontologyManagerService_, _ontologyStateService_, _sparqlManagerService_, _stateManagerService_, _userManagerService_, _userStateService_) {
+        inject(function(loginManagerService, _$httpBackend_, _$state_, _$rootScope_, _$q_, _catalogManagerService_, _catalogStateService_, _datasetManagerService_, _datasetStateService_, _delimitedManagerService_, _discoverStateService_, _mapperStateService_, _mergeRequestsStateService_, _ontologyManagerService_, _ontologyStateService_, _sparqlManagerService_, _stateManagerService_, _userManagerService_, _userStateService_) {
             loginManagerSvc = loginManagerService;
             $httpBackend = _$httpBackend_;
             state = _$state_;
             scope = _$rootScope_;
             $q = _$q_;
-            analyticManagerSvc = _analyticManagerService_;
-            analyticStateSvc = _analyticStateService_;
             catalogManagerSvc = _catalogManagerService_;
             catalogStateSvc = _catalogStateService_;
             datasetManagerSvc = _datasetManagerService_;
@@ -63,6 +60,7 @@ describe('Login Manager service', function() {
             delimitedManagerSvc = _delimitedManagerService_;
             discoverStateSvc = _discoverStateService_;
             mapperStateSvc = _mapperStateService_;
+            mergeRequestsStateSvc = _mergeRequestsStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             sparqlManagerSvc = _sparqlManagerService_;
@@ -78,8 +76,6 @@ describe('Login Manager service', function() {
         state = null;
         scope = null;
         $q = null;
-        analyticManagerSvc = null;
-        analyticStateSvc = null;
         catalogManagerSvc = null;
         catalogStateSvc = null;
         datasetManagerSvc = null;
@@ -87,6 +83,7 @@ describe('Login Manager service', function() {
         delimitedManagerSvc = null;
         discoverStateSvc = null;
         mapperStateSvc = null;
+        mergeRequestsStateSvc = null;
         ontologyManagerSvc = null;
         ontologyStateSvc = null;
         sparqlManagerSvc = null;
@@ -133,6 +130,7 @@ describe('Login Manager service', function() {
             flushAndVerify($httpBackend);
             expect(state.go).not.toHaveBeenCalled();
             expect(loginManagerSvc.currentUser).toBeFalsy();
+            expect(loginManagerSvc.currentUserIRI).toBeFalsy();
         });
         it('unless the account is anonymous', function() {
             $httpBackend.expectGET('/mobirest/user/login' + createQueryString(this.params)).respond(200, {scope: 'self anon'});
@@ -145,9 +143,14 @@ describe('Login Manager service', function() {
             flushAndVerify($httpBackend);
             expect(state.go).not.toHaveBeenCalled();
             expect(loginManagerSvc.currentUser).toBeFalsy();
+            expect(loginManagerSvc.currentUserIRI).toBeFalsy();
         });
         it('if everything was passed correctly', function() {
             var params = this.params;
+            var user = {
+                iri: 'userIRI'
+            }
+            userManagerSvc.getUser.and.returnValue($q.when(user));
             $httpBackend.expectGET('/mobirest/user/login' + createQueryString(params)).respond(200, {sub: params.username});
             loginManagerSvc.login(params.username, params.password)
                 .then(function(response) {
@@ -158,24 +161,26 @@ describe('Login Manager service', function() {
             flushAndVerify($httpBackend);
             expect(state.go).toHaveBeenCalledWith('root.home');
             expect(loginManagerSvc.currentUser).toBe(params.username);
+            expect(loginManagerSvc.currentUserIRI).toBe(user.iri);
         });
     });
     it('should log a user out', function() {
         $httpBackend.expectGET('/mobirest/user/logout').respond(200, {});
         loginManagerSvc.logout();
         flushAndVerify($httpBackend);
-        expect(analyticStateSvc.reset).toHaveBeenCalled();
         expect(catalogStateSvc.reset).toHaveBeenCalled();
         expect(datasetStateSvc.reset).toHaveBeenCalled();
         expect(delimitedManagerSvc.reset).toHaveBeenCalled();
         expect(discoverStateSvc.reset).toHaveBeenCalled();
         expect(mapperStateSvc.initialize).toHaveBeenCalled();
         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+        expect(mergeRequestsStateSvc.reset).toHaveBeenCalled();
         expect(ontologyManagerSvc.reset).toHaveBeenCalled();
         expect(ontologyStateSvc.reset).toHaveBeenCalled();
         expect(sparqlManagerSvc.reset).toHaveBeenCalled();
         expect(userStateSvc.reset).toHaveBeenCalled();
         expect(loginManagerSvc.currentUser).toBe('');
+        expect(loginManagerSvc.currentUserIRI).toBe('');
         expect(state.go).toHaveBeenCalledWith('login');
     });
     describe('should get the current login', function() {
@@ -221,6 +226,7 @@ describe('Login Manager service', function() {
                 });
             scope.$apply();
             expect(loginManagerSvc.currentUser).toBe('');
+            expect(loginManagerSvc.currentUserIRI).toBe('');
             expect(state.go).toHaveBeenCalledWith('login');
         });
         it('unless no one is logged in', function() {
@@ -233,20 +239,27 @@ describe('Login Manager service', function() {
                 });
             scope.$apply();
             expect(loginManagerSvc.currentUser).toBe('');
+            expect(loginManagerSvc.currentUserIRI).toBe('');
             expect(state.go).toHaveBeenCalledWith('login');
         });
         it('if a user is logged in', function() {
+            var user = {
+                iri: 'userIRI'
+            }
             spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.resolve({sub: 'user'}));
+            userManagerSvc.getUser.and.returnValue($q.when(user));
             loginManagerSvc.isAuthenticated()
                 .then(_.noop, function(response) {
                     fail('Promise should have resolved');
                 });
             scope.$apply();
             expect(loginManagerSvc.currentUser).toBe('user');
+            expect(loginManagerSvc.currentUserIRI).toBe('userIRI');
             expect(catalogManagerSvc.initialize).toHaveBeenCalled();
             expect(catalogStateSvc.initialize).toHaveBeenCalled();
             expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
             expect(ontologyStateSvc.initialize).toHaveBeenCalled();
+            expect(mergeRequestsStateSvc.initialize).toHaveBeenCalled();
             expect(userManagerSvc.initialize).toHaveBeenCalled();
             expect(stateManagerSvc.initialize).toHaveBeenCalled();
             expect(datasetManagerSvc.initialize).toHaveBeenCalled();

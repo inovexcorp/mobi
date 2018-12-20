@@ -37,10 +37,6 @@
         /**
          * @ngdoc service
          * @name sparqlManager.service:sparqlManagerService
-         * @requires $http
-         * @requires $q
-         * @requires $window
-         * @requires $httpParamSerializer
          * @requires util.service:utilService
          * @requires httpService.service:httpService
          *
@@ -50,9 +46,9 @@
          */
         .service('sparqlManagerService', sparqlManagerService);
 
-        sparqlManagerService.$inject = ['$http', '$q', '$window', '$httpParamSerializer', 'utilService', 'httpService', 'REST_PREFIX'];
+        sparqlManagerService.$inject = ['$http', '$q', '$httpParamSerializer', 'utilService', 'httpService', 'REST_PREFIX'];
 
-        function sparqlManagerService($http, $q, $window, $httpParamSerializer, utilService, httpService, REST_PREFIX) {
+        function sparqlManagerService($http, $q, $httpParamSerializer, utilService, httpService, REST_PREFIX) {
             var prefix = REST_PREFIX + 'sparql';
             var self = this;
             var util = utilService;
@@ -136,10 +132,11 @@
              * @type {number}
              *
              * @description
-             * The current page of {@link sparqlManager.service:sparqlManagerService#data results} to be
-             * displayed in the {@link sparqlResultTable.directive:sparqlResultTable SPARQL result table}.
+             * The 1 based index that indicates the current page of
+             * {@link sparqlManager.service:sparqlManagerService#data results} to be displayed in the
+             * {@link sparqlResultTable.directive:sparqlResultTable SPARQL result table}.
              */
-            self.currentPage = 0;
+            self.currentPage = 1;
             /**
              * @ngdoc property
              * @name links
@@ -202,7 +199,7 @@
                 self.data = undefined;
                 self.errorMessage = '';
                 self.infoMessage = 'Please submit a query to see results here.';
-                self.currentPage = 0;
+                self.currentPage = 1;
                 self.links = {
                     next: '',
                     prev: ''
@@ -296,7 +293,12 @@
                 if (self.datasetRecordIRI) {
                     paramsObj.dataset = self.datasetRecordIRI;
                 }
-                $window.location = prefix + '?' + $httpParamSerializer(paramsObj);
+                util.startDownload(prefix + '?' + $httpParamSerializer(paramsObj));
+            }
+            self.initialQueryRdf = function() {
+                self.currentPage = 1;
+                self.data = undefined;
+                self.queryRdf();
             }
             /**
              * @ngdoc method
@@ -311,8 +313,6 @@
              * and sets the results to {@link sparqlManager.service:sparqlManagerService#data data}.
              */
             self.queryRdf = function() {
-                self.currentPage = 0;
-                self.data = undefined;
                 self.errorMessage = '';
                 self.errorDetails = '';
                 self.infoMessage = '';
@@ -322,7 +322,7 @@
                     params: {
                         query: prefixes + self.queryString,
                         limit: self.limit,
-                        offset: self.currentPage * self.limit
+                        offset: (self.currentPage - 1) * self.limit
                     }
                 };
                 if (self.datasetRecordIRI) {
@@ -330,21 +330,6 @@
                 }
                 $http.get(prefix + '/page', config)
                     .then(onSuccess, response => self.errorMessage = getMessage(response));
-            }
-            /**
-             * @ngdoc method
-             * @name setResults
-             * @methodOf sparqlManager.service:sparqlManagerService
-             *
-             * @description
-             * Sets the results of a SPARQL query to the appropriate state variables using the passed HTTP
-             * response containing the results.
-             *
-             * @param {Object} response A HTTP response object containing paginated SPARQL query results
-             */
-            self.setResults = function(url) {
-                util.getResultsPage(url, response => $q.reject(getMessage(response)))
-                    .then(onSuccess, errorMessage => self.errorMessage = errorMessage);
             }
 
             function onSuccess(response) {

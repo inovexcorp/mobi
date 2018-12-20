@@ -25,18 +25,18 @@ package com.mobi.catalog.impl;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
 import com.mobi.catalog.api.builder.RecordConfig;
+import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
@@ -61,7 +61,9 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
-import com.mobi.catalog.config.CatalogConfig;
+import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.catalog.util.SearchResults;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -70,8 +72,8 @@ import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.RepositoryResults;
+import com.mobi.persistence.utils.Statements;
 import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.Binding;
 import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
@@ -81,7 +83,7 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.repository.api.Repository;
+import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
@@ -99,45 +101,46 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @Component(
-        configurationPolicy = ConfigurationPolicy.require,
-        designateFactory = CatalogConfig.class,
         name = SimpleCatalogManager.COMPONENT_NAME
 )
 public class SimpleCatalogManager implements CatalogManager {
 
     static final String COMPONENT_NAME = "com.mobi.catalog.api.CatalogManager";
     private static final Logger log = LoggerFactory.getLogger(SimpleCatalogManager.class);
-    private Repository repository;
     private ValueFactory vf;
     private ModelFactory mf;
+    private CatalogConfigProvider configProvider;
     private CatalogUtilsService utils;
+    private MergeRequestManager mergeRequestManager;
     private CatalogFactory catalogFactory;
     private RecordFactory recordFactory;
     private DistributionFactory distributionFactory;
     private BranchFactory branchFactory;
     private InProgressCommitFactory inProgressCommitFactory;
     private CommitFactory commitFactory;
+    private OrmFactoryRegistry factoryRegistry;
     private RevisionFactory revisionFactory;
     private VersionedRDFRecordFactory versionedRDFRecordFactory;
     private VersionedRecordFactory versionedRecordFactory;
     private UnversionedRecordFactory unversionedRecordFactory;
     private VersionFactory versionFactory;
     private TagFactory tagFactory;
-    private com.mobi.rdf.api.Resource distributedCatalogIRI;
-    private com.mobi.rdf.api.Resource localCatalogIRI;
     private Map<com.mobi.rdf.api.Resource, String> sortingOptions = new HashMap<>();
 
-    public SimpleCatalogManager() {
+    /**
+     * A map of the available RecordServices. The string is get typeIRI for the individual RecordService.
+     */
+    private Map<Class, RecordService> recordServices = new HashMap<>();
+
+    private <T extends Record> RecordService<T> getRecordService(Class<T> clazz) {
+        return recordServices.get(clazz);
     }
 
-    @Reference(name = "repository")
-    void setRepository(Repository repository) {
-        this.repository = repository;
+    public SimpleCatalogManager() {
     }
 
     @Reference
@@ -146,13 +149,23 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Reference
+    void setModelFactory(ModelFactory modelFactory) {
+        mf = modelFactory;
+    }
+
+    @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
+    }
+
+    @Reference
     void setUtils(CatalogUtilsService utils) {
         this.utils = utils;
     }
 
     @Reference
-    void setModelFactory(ModelFactory modelFactory) {
-        mf = modelFactory;
+    void setMergeRequestManager(MergeRequestManager mergeRequestManager) {
+        this.mergeRequestManager = mergeRequestManager;
     }
 
     @Reference
@@ -215,11 +228,24 @@ public class SimpleCatalogManager implements CatalogManager {
         this.tagFactory = tagFactory;
     }
 
+    @Reference
+    void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
+        this.factoryRegistry = factoryRegistry;
+    }
+
+    @Reference(type = '*', dynamic = true)
+    void addRecordService(RecordService<? extends Record> recordService) {
+        recordServices.put(recordService.getType(), recordService);
+    }
+
+    void removeRecordService(RecordService<? extends Record> recordService) {
+        recordServices.remove(recordService.getType());
+    }
+
     private static final String PROV_AT_TIME = "http://www.w3.org/ns/prov#atTime";
 
     private static final String FIND_RECORDS_QUERY;
     private static final String COUNT_RECORDS_QUERY;
-    private static final String GET_NEW_LATEST_VERSION;
     private static final String RECORD_BINDING = "record";
     private static final String CATALOG_BINDING = "catalog";
     private static final String RECORD_COUNT_BINDING = "record_count";
@@ -236,73 +262,38 @@ public class SimpleCatalogManager implements CatalogManager {
                     SimpleCatalogManager.class.getResourceAsStream("/count-records.rq"),
                     "UTF-8"
             );
-            GET_NEW_LATEST_VERSION = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/get-new-latest-version.rq"),
-                    "UTF-8"
-            );
         } catch (IOException e) {
             throw new MobiException(e);
         }
     }
 
     @Activate
-    protected void start(Map<String, Object> props) {
-        CatalogConfig config = Configurable.createConfigurable(CatalogConfig.class, props);
-        distributedCatalogIRI = vf.createIRI(config.iri() + "-distributed");
-        localCatalogIRI = vf.createIRI(config.iri() + "-local");
+    protected void start() {
         createSortingOptions();
-
-        try (RepositoryConnection conn = repository.getConnection()) {
-            IRI typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
-            if (!conn.contains(distributedCatalogIRI, typeIRI, vf.createIRI(Catalog.TYPE))) {
-                log.debug("Initializing the distributed Mobi Catalog.");
-                addCatalogToRepo(distributedCatalogIRI, config.title() + " (Distributed)", config.description(), conn);
-            }
-
-            if (!conn.contains(localCatalogIRI, typeIRI, vf.createIRI(Catalog.TYPE))) {
-                log.debug("Initializing the local Mobi Catalog.");
-                addCatalogToRepo(localCatalogIRI, config.title() + " (Local)", config.description(), conn);
-            }
-        }
     }
 
     @Modified
-    protected void modified(Map<String, Object> props) {
-        start(props);
-    }
-
-    @Override
-    public String getRepositoryId() {
-        return repository.getConfig().id();
-    }
-
-    @Override
-    public IRI getDistributedCatalogIRI() {
-        return (IRI) distributedCatalogIRI;
-    }
-
-    @Override
-    public IRI getLocalCatalogIRI() {
-        return (IRI) localCatalogIRI;
+    protected void modified() {
+        start();
     }
 
     @Override
     public Catalog getDistributedCatalog() {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            return utils.getExpectedObject(distributedCatalogIRI, catalogFactory, conn);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return utils.getExpectedObject(configProvider.getDistributedCatalogIRI(), catalogFactory, conn);
         }
     }
 
     @Override
     public Catalog getLocalCatalog() {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            return utils.getExpectedObject(localCatalogIRI, catalogFactory, conn);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return utils.getExpectedObject(configProvider.getLocalCatalogIRI(), catalogFactory, conn);
         }
     }
 
     @Override
     public PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Optional<Resource> typeParam = searchParams.getTypeFilter();
             Optional<String> searchTextParam = searchParams.getSearchText();
 
@@ -337,7 +328,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
             StringBuilder querySuffix = new StringBuilder("\nORDER BY ");
             Resource sortByParam = searchParams.getSortBy().orElse(vf.createIRI(_Thing.modified_IRI));
-            StringBuilder binding = new StringBuilder("");
+            StringBuilder binding = new StringBuilder();
             if (sortByParam.equals(vf.createIRI(_Thing.title_IRI))) {
                 binding.append("lcase(?").append(sortingOptions.getOrDefault(sortByParam, "modified")).append(")");
             } else {
@@ -383,12 +374,22 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Set<Resource> getRecordIds(Resource catalogId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateResource(catalogId, vf.createIRI(Catalog.TYPE), conn);
             Set<Resource> results = new HashSet<>();
             conn.getStatements(null, vf.createIRI(Record.catalog_IRI), catalogId)
                     .forEach(statement -> results.add(statement.getSubject()));
             return results;
+        }
+    }
+
+    @Override
+    public <T extends Record> T createRecord(User user, RecordOperationConfig config, Class<T> recordClass) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            RecordService<T> recordService = Optional.ofNullable(getRecordService(recordClass))
+                    .orElseThrow(() -> new IllegalArgumentException("Service for factory " + recordClass.toString()
+                            + " is unavailable or doesn't exist."));
+            return recordService.create(user, config, conn);
         }
     }
 
@@ -402,7 +403,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Record> void addRecord(Resource catalogId, T record) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             if (conn.containsContext(record.getResource())) {
                 throw utils.throwAlreadyExists(record.getResource(), recordFactory);
             }
@@ -420,7 +421,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Record> void updateRecord(Resource catalogId, T newRecord) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateRecord(catalogId, newRecord.getResource(), recordFactory.getTypeIRI(), conn);
             conn.begin();
             utils.updateObject(newRecord, conn);
@@ -430,8 +431,8 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Record> T removeRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory) {
-        T record = null;
-        try (RepositoryConnection conn = repository.getConnection()) {
+        T record;
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateResource(catalogId, catalogFactory.getTypeIRI(), conn);
 
             record = utils.optObject(recordId, factory, conn).orElseThrow(()
@@ -460,8 +461,21 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public <T extends Record> T deleteRecord(User user, Resource recordId, Class<T> recordClass) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            OrmFactory<? extends Record> serviceType = getFactory(recordId, conn, true);
+            if (!serviceType.getType().equals(recordClass)) {
+                throw new IllegalArgumentException("Service for factory " + recordClass
+                        + " is unavailable or doesn't exist.");
+            }
+            RecordService<T> service = getRecordService(recordClass);
+            return service.delete(recordId, user, conn);
+        }
+    }
+
+    @Override
     public <T extends Record> Optional<T> getRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateResource(catalogId, catalogFactory.getTypeIRI(), conn);
             return utils.optObject(recordId, factory, conn).flatMap(record -> {
                 Resource catalog = record.getCatalog_resource().orElseThrow(() ->
@@ -473,7 +487,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Set<Distribution> getUnversionedDistributions(Resource catalogId, Resource unversionedRecordId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             UnversionedRecord record = utils.getRecord(catalogId, unversionedRecordId, unversionedRecordFactory, conn);
             return record.getUnversionedDistribution_resource().stream()
                     .map(resource -> utils.getExpectedObject(resource, distributionFactory, conn))
@@ -508,8 +522,9 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void addUnversionedDistribution(Resource catalogId, Resource unversionedRecordId, Distribution distribution) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+    public void addUnversionedDistribution(Resource catalogId, Resource unversionedRecordId,
+                                           Distribution distribution) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             UnversionedRecord record = utils.getRecord(catalogId, unversionedRecordId, unversionedRecordFactory, conn);
             if (conn.containsContext(distribution.getResource())) {
                 throw utils.throwAlreadyExists(distribution.getResource(), distributionFactory);
@@ -529,7 +544,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public void updateUnversionedDistribution(Resource catalogId, Resource unversionedRecordId,
                                               Distribution newDistribution) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateUnversionedDistribution(catalogId, unversionedRecordId, newDistribution.getResource(), conn);
             conn.begin();
             utils.updateObject(newDistribution, conn);
@@ -540,11 +555,11 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public void removeUnversionedDistribution(Resource catalogId, Resource unversionedRecordId,
                                               Resource distributionId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Distribution distribution = utils.getUnversionedDistribution(catalogId, unversionedRecordId, distributionId,
                     conn);
             conn.begin();
-            removeObjectWithRelationship(distribution.getResource(), unversionedRecordId,
+            utils.removeObjectWithRelationship(distribution.getResource(), unversionedRecordId,
                     UnversionedRecord.unversionedDistribution_IRI, conn);
             conn.commit();
         }
@@ -553,7 +568,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Optional<Distribution> getUnversionedDistribution(Resource catalogId, Resource unversionedRecordId,
                                                              Resource distributionId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             UnversionedRecord record = utils.getRecord(catalogId, unversionedRecordId, unversionedRecordFactory, conn);
             if (!record.getUnversionedDistribution_resource().contains(distributionId)) {
                 return Optional.empty();
@@ -564,7 +579,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Set<Version> getVersions(Resource catalogId, Resource versionedRecordId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             VersionedRecord record = utils.getRecord(catalogId, versionedRecordId, versionedRecordFactory, conn);
             return record.getVersion_resource().stream()
                     .map(resource -> utils.getExpectedObject(resource, versionFactory, conn))
@@ -589,7 +604,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Version> void addVersion(Resource catalogId, Resource versionedRecordId, T version) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             VersionedRecord record = utils.getRecord(catalogId, versionedRecordId, versionedRecordFactory, conn);
             if (conn.containsContext(version.getResource())) {
                 throw utils.throwAlreadyExists(version.getResource(), versionFactory);
@@ -609,7 +624,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Version> void updateVersion(Resource catalogId, Resource versionedRecordId, T newVersion) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateVersion(catalogId, versionedRecordId, newVersion.getResource(), conn);
             conn.begin();
             utils.updateObject(newVersion, conn);
@@ -619,40 +634,18 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public void removeVersion(Resource catalogId, Resource versionedRecordId, Resource versionId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Version version = utils.getVersion(catalogId, versionedRecordId, versionId, versionFactory, conn);
             conn.begin();
-            removeVersion(versionedRecordId, version, conn);
+            utils.removeVersion(versionedRecordId, version, conn);
             conn.commit();
         }
-    }
-
-    private void removeVersion(Resource recordId, Version version, RepositoryConnection conn) {
-        removeObjectWithRelationship(version.getResource(), recordId, VersionedRecord.version_IRI, conn);
-        IRI latestVersionIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
-        if (conn.contains(recordId, latestVersionIRI, version.getResource(), recordId)) {
-            conn.remove(recordId, latestVersionIRI, version.getResource(), recordId);
-            TupleQuery query = conn.prepareTupleQuery(GET_NEW_LATEST_VERSION);
-            query.setBinding(RECORD_BINDING, recordId);
-            TupleQueryResult result = query.evaluate();
-
-            Optional<Binding> binding;
-            if (result.hasNext() && (binding = result.next().getBinding("version")).isPresent()) {
-                conn.add(recordId, latestVersionIRI, binding.get().getValue(), recordId);
-            }
-        }
-        version.getVersionedDistribution_resource().forEach(resource -> utils.remove(resource, conn));
-    }
-
-    private void removeVersion(Resource recordId, Resource versionId, RepositoryConnection conn) {
-        Version version = utils.getObject(versionId, versionFactory, conn);
-        removeVersion(recordId, version, conn);
     }
 
     @Override
     public <T extends Version> Optional<T> getVersion(Resource catalogId, Resource versionedRecordId,
                                                       Resource versionId, OrmFactory<T> factory) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             VersionedRecord record = utils.getRecord(catalogId, versionedRecordId, versionedRecordFactory, conn);
             if (!record.getVersion_resource().contains(versionId)) {
                 return Optional.empty();
@@ -664,7 +657,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public <T extends Version> Optional<T> getLatestVersion(Resource catalogId, Resource versionedRecordId,
                                                             OrmFactory<T> factory) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             VersionedRecord record = utils.getRecord(catalogId, versionedRecordId, versionedRecordFactory, conn);
             return record.getLatestVersion_resource().flatMap(resource ->
                     Optional.of(utils.getExpectedObject(resource, factory, conn)));
@@ -673,7 +666,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Commit getTaggedCommit(Resource catalogId, Resource versionedRecordId, Resource versionId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateVersion(catalogId, versionedRecordId, versionId, conn);
             Tag tag = utils.getExpectedObject(versionId, tagFactory, conn);
             Resource commitId = tag.getCommit_resource().orElseThrow(() ->
@@ -685,7 +678,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Set<Distribution> getVersionedDistributions(Resource catalogId, Resource versionedRecordId,
                                                        Resource versionId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Version version = utils.getVersion(catalogId, versionedRecordId, versionId, versionFactory, conn);
             return version.getVersionedDistribution_resource().stream()
                     .map(resource -> utils.getExpectedObject(resource, distributionFactory, conn))
@@ -693,11 +686,10 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
-
     @Override
     public void addVersionedDistribution(Resource catalogId, Resource versionedRecordId, Resource versionId,
                                          Distribution distribution) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Version version = utils.getVersion(catalogId, versionedRecordId, versionId, versionFactory, conn);
             if (conn.containsContext(distribution.getResource())) {
                 throw utils.throwAlreadyExists(distribution.getResource(), distributionFactory);
@@ -717,7 +709,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public void updateVersionedDistribution(Resource catalogId, Resource versionedRecordId, Resource versionId,
                                             Distribution newDistribution) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateVersionedDistribution(catalogId, versionedRecordId, versionId, newDistribution.getResource(),
                     conn);
             conn.begin();
@@ -729,21 +721,20 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public void removeVersionedDistribution(Resource catalogId, Resource versionedRecordId, Resource versionId,
                                             Resource distributionId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Distribution distribution = utils.getVersionedDistribution(catalogId, versionedRecordId, versionId,
                     distributionId, conn);
             conn.begin();
-            removeObjectWithRelationship(distribution.getResource(), versionId, Version.versionedDistribution_IRI,
+            utils.removeObjectWithRelationship(distribution.getResource(), versionId, Version.versionedDistribution_IRI,
                     conn);
             conn.commit();
         }
     }
 
-
     @Override
     public Optional<Distribution> getVersionedDistribution(Resource catalogId, Resource recordId, Resource versionId,
                                                            Resource distributionId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Version version = utils.getVersion(catalogId, recordId, versionId, versionFactory, conn);
             if (!version.getVersionedDistribution_resource().contains(distributionId)) {
                 return Optional.empty();
@@ -754,7 +745,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Set<Branch> getBranches(Resource catalogId, Resource versionedRDFRecordId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory,
                     conn);
             return record.getBranch_resource().stream()
@@ -780,7 +771,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Branch> void addBranch(Resource catalogId, Resource versionedRDFRecordId, T branch) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory,
                     conn);
             if (conn.containsContext(branch.getResource())) {
@@ -800,7 +791,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public void addMasterBranch(Resource catalogId, Resource versionedRDFRecordId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory,
                     conn);
             conn.begin();
@@ -826,7 +817,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Branch> void updateBranch(Resource catalogId, Resource versionedRDFRecordId, T newBranch) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
             utils.validateBranch(catalogId, versionedRDFRecordId, newBranch.getResource(), conn);
             if (conn.contains(null, masterBranchIRI, newBranch.getResource())) {
@@ -841,7 +832,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public void updateHead(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Resource commitId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
             conn.begin();
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
@@ -852,64 +843,25 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void removeBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+    public List<Resource> removeBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
             IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
             if (conn.contains(versionedRDFRecordId, masterBranchIRI, branchId, versionedRDFRecordId)) {
                 throw new IllegalStateException("Branch " + branchId + " is the master Branch and cannot be removed.");
             }
             conn.begin();
-            removeBranch(versionedRDFRecordId, branch, conn);
+            List<Resource> deletedCommits = utils.removeBranch(versionedRDFRecordId, branch, conn);
+            mergeRequestManager.cleanMergeRequests(versionedRDFRecordId, branchId, conn);
             conn.commit();
+            return deletedCommits;
         }
-    }
-
-    private void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn) {
-        removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
-        Optional<Resource> headCommit = branch.getHead_resource();
-        if (headCommit.isPresent()) {
-            List<Resource> chain = utils.getCommitChain(headCommit.get(), false, conn);
-            IRI commitIRI = vf.createIRI(Tag.commit_IRI);
-            Set<Resource> deltaIRIs = new HashSet<>();
-            for (Resource commitId : chain) {
-                if (!commitIsReferenced(commitId, conn)) {
-                    // Get Additions/Deletions Graphs
-                    Revision revision = utils.getRevision(commitId, conn);
-                    revision.getAdditions().ifPresent(deltaIRIs::add);
-                    revision.getDeletions().ifPresent(deltaIRIs::add);
-                    revision.getGraphRevision().forEach(graphRevision -> {
-                        graphRevision.getAdditions().ifPresent(deltaIRIs::add);
-                        graphRevision.getDeletions().ifPresent(deltaIRIs::add);
-                    });
-
-                    // Remove Commit
-                    utils.remove(commitId, conn);
-
-                    // Remove Tags Referencing this Commit
-                    Set<Resource> tags = RepositoryResults.asModel(conn.getStatements(null, commitIRI, commitId), mf)
-                            .subjects();
-                    tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId, VersionedRecord.version_IRI,
-                            conn));
-                } else {
-                    break;
-                }
-            }
-            deltaIRIs.forEach(resource -> utils.remove(resource, conn));
-        } else {
-            log.warn("The HEAD Commit was not set on the Branch.");
-        }
-    }
-
-    private void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn) {
-        Branch branch = utils.getObject(branchId, branchFactory, conn);
-        removeBranch(recordId, branch, conn);
     }
 
     @Override
     public <T extends Branch> Optional<T> getBranch(Resource catalogId, Resource versionedRDFRecordId,
                                                     Resource branchId, OrmFactory<T> factory) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory,
                     conn);
             if (!record.getBranch_resource().contains(branchId)) {
@@ -921,7 +873,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Branch getMasterBranch(Resource catalogId, Resource versionedRDFRecordId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory,
                     conn);
             Resource branchId = record.getMasterBranch_resource().orElseThrow(() ->
@@ -999,7 +951,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public void updateInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, Resource commitId,
                                        @Nullable Model additions, @Nullable Model deletions) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateInProgressCommit(catalogId, versionedRDFRecordId, commitId, conn);
             conn.begin();
             utils.updateCommit(commitId, additions, deletions, conn);
@@ -1010,7 +962,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public void updateInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, User user,
                                        @Nullable Model additions, @Nullable Model deletions) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
             InProgressCommit commit = utils.getInProgressCommit(versionedRDFRecordId, user.getResource(), conn);
             conn.begin();
@@ -1022,7 +974,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public void addInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
                                     InProgressCommit inProgressCommit) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource userIRI = (Resource) inProgressCommit.getProperty(vf.createIRI(Activity.wasAssociatedWith_IRI))
                     .orElseThrow(() -> new IllegalArgumentException("User not set on InProgressCommit "
                             + inProgressCommit.getResource()));
@@ -1041,14 +993,26 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public Optional<Commit> getCommit(Resource commitId) {
+        long start = System.currentTimeMillis();
+        Optional<Commit> rtn;
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            rtn = utils.optObject(commitId, commitFactory, conn);
+        } finally {
+            log.trace("getCommit took {}ms", System.currentTimeMillis() - start);
+        }
+        return rtn;
+    }
+
+    @Override
     public Optional<Commit> getCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
                                       Resource commitId) {
         long start = System.currentTimeMillis();
         Optional<Commit> rtn = Optional.empty();
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateBranch(catalogId, versionedRDFRecordId, branchId, conn);
             if (utils.commitInBranch(branchId, commitId, conn)) {
-                rtn =  Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
+                rtn = Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
             }
         } finally {
             log.trace("getCommit took {}ms", System.currentTimeMillis() - start);
@@ -1058,7 +1022,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Commit getHeadCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateBranch(catalogId, versionedRDFRecordId, branchId, conn);
             Branch branch = utils.getExpectedObject(branchId, branchFactory, conn);
             Resource head = utils.getHeadCommitIRI(branch);
@@ -1069,7 +1033,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Optional<InProgressCommit> getInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
                                                           User user) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
             return utils.getInProgressCommitIRI(versionedRDFRecordId, user.getResource(), conn).flatMap(resource ->
                     Optional.of(utils.getExpectedObject(resource, inProgressCommitFactory, conn)));
@@ -1079,7 +1043,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Optional<InProgressCommit> getInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
                                                           Resource inProgressCommitId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
             return utils.optObject(inProgressCommitId, inProgressCommitFactory, conn).flatMap(inProgressCommit -> {
                 Resource onRecord = inProgressCommit.getOnVersionedRDFRecord_resource().orElseThrow(() ->
@@ -1091,14 +1055,14 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Revision getRevision(Resource commitId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return utils.getRevision(commitId, conn);
         }
     }
 
     @Override
     public Difference getRevisionChanges(Resource commitId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return utils.getRevisionChanges(commitId, conn);
         }
     }
@@ -1106,7 +1070,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Difference getCommitDifference(Resource commitId) {
         long start = System.currentTimeMillis();
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
             return utils.getCommitDifference(commitId, conn);
         } finally {
@@ -1117,7 +1081,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public void removeInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
                                        Resource inProgressCommitId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             InProgressCommit commit = utils.getInProgressCommit(catalogId, versionedRDFRecordId, inProgressCommitId,
                     conn);
             conn.begin();
@@ -1128,7 +1092,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public void removeInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, User user) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
             InProgressCommit commit = utils.getInProgressCommit(versionedRDFRecordId, user.getResource(), conn);
             conn.begin();
@@ -1140,7 +1104,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Model applyInProgressCommit(Resource inProgressCommitId, Model entity) {
         long start = System.currentTimeMillis();
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateResource(inProgressCommitId, inProgressCommitFactory.getTypeIRI(), conn);
             return utils.applyDifference(entity, utils.getCommitDifference(inProgressCommitId, conn));
         } finally {
@@ -1150,7 +1114,7 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public List<Commit> getCommitChain(Resource commitId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
             return utils.getCommitChain(commitId, false, conn).stream()
                     .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
@@ -1159,8 +1123,19 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public List<Commit> getCommitChain(Resource commitId, Resource targetId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            utils.validateResource(targetId, commitFactory.getTypeIRI(), conn);
+            return utils.getDifferenceChain(commitId, targetId, conn).stream()
+                    .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Override
     public List<Commit> getCommitChain(Resource catalogId, Resource versionedRDFRecordId, Resource branchId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
             Resource head = utils.getHeadCommitIRI(branch);
             return utils.getCommitChain(head, false, conn).stream()
@@ -1170,8 +1145,24 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public List<Commit> getCommitChain(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
+                                       final Resource targetBranchId) {
+        try (final RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Branch sourceBranch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
+            Resource sourceHead = utils.getHeadCommitIRI(sourceBranch);
+
+            Branch targetBranch = utils.getBranch(catalogId, versionedRDFRecordId, targetBranchId, branchFactory, conn);
+            Resource targetHead = utils.getHeadCommitIRI(targetBranch);
+
+            return utils.getDifferenceChain(sourceHead, targetHead, conn).stream()
+                    .map(res -> utils.getExpectedObject(res, commitFactory, conn))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Override
     public Model getCompiledResource(Resource commitId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
             return utils.getCompiledResource(commitId, conn);
         }
@@ -1179,96 +1170,25 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Model getCompiledResource(Resource versionedRDFRecordId, Resource branchId, Resource commitId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            utils.validateCommitPath(localCatalogIRI, versionedRDFRecordId, branchId, commitId, conn);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateCommitPath(configProvider.getLocalCatalogIRI(), versionedRDFRecordId, branchId, commitId,
+                    conn);
             return utils.getCompiledResource(commitId, conn);
         }
     }
 
     @Override
     public Difference getDifference(Resource sourceCommitId, Resource targetCommitId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            utils.validateResource(sourceCommitId, commitFactory.getTypeIRI(), conn);
-            utils.validateResource(targetCommitId, commitFactory.getTypeIRI(), conn);
-            List<Resource> sourceCommits = utils.getCommitChain(sourceCommitId, true, conn);
-            List<Resource> targetCommits = utils.getCommitChain(targetCommitId, true, conn);
-            List<Resource> commonCommits = new ArrayList<>(sourceCommits);
-            commonCommits.retainAll(targetCommits);
-            if (commonCommits.size() == 0) {
-                throw new IllegalArgumentException("No common parent between Commit " + sourceCommitId + " and "
-                        + targetCommitId);
-            }
-            sourceCommits.removeAll(commonCommits);
-            return utils.getCommitDifference(sourceCommits, conn);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return utils.getCommitDifference(utils.getDifferenceChain(sourceCommitId, targetCommitId, conn, true),
+                    conn);
         }
     }
 
     @Override
     public Set<Conflict> getConflicts(Resource leftId, Resource rightId) {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            utils.validateResource(leftId, commitFactory.getTypeIRI(), conn);
-            utils.validateResource(rightId, commitFactory.getTypeIRI(), conn);
-
-            List<Resource> leftCommits = utils.getCommitChain(leftId, true, conn);
-            List<Resource> rightCommits = utils.getCommitChain(rightId, true, conn);
-            List<Resource> commonCommits = new ArrayList<>(leftCommits);
-            commonCommits.retainAll(rightCommits);
-            if (commonCommits.size() == 0) {
-                throw new IllegalArgumentException("No common parent between Commit " + leftId + " and " + rightId);
-            }
-            Resource originalEnd = commonCommits.get(commonCommits.size() - 1);
-            leftCommits.removeAll(commonCommits);
-            rightCommits.removeAll(commonCommits);
-
-            Difference leftDiff = utils.getCommitDifference(leftCommits, conn);
-            Difference rightDiff = utils.getCommitDifference(rightCommits, conn);
-
-            Model left = leftDiff.getAdditions();
-            Model right = rightDiff.getAdditions();
-            Model leftDeletions = leftDiff.getDeletions();
-            Model rightDeletions = rightDiff.getDeletions();
-
-            removeDuplicates(left, right);
-            removeDuplicates(leftDeletions, rightDeletions);
-
-            Set<Conflict> result = new HashSet<>();
-            Model original = utils.getCompiledResource(originalEnd, conn);
-            IRI rdfType = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
-
-            leftDeletions.forEach(statement -> {
-                Resource subject = statement.getSubject();
-                IRI predicate = statement.getPredicate();
-                if (predicate.equals(rdfType) || right.contains(subject, predicate, null)) {
-                    result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
-                            rightDeletions));
-                    Stream.of(left, right, rightDeletions).forEach(item ->
-                            item.remove(subject, predicate, null));
-                }
-            });
-
-            rightDeletions.forEach(statement -> {
-                Resource subject = statement.getSubject();
-                IRI predicate = statement.getPredicate();
-                if (predicate.equals(rdfType) || left.contains(subject, predicate, null)) {
-                    result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
-                            rightDeletions));
-                    Stream.of(left, leftDeletions, right).forEach(item ->
-                            item.remove(subject, predicate, null));
-                }
-            });
-
-            left.forEach(statement -> {
-                Resource subject = statement.getSubject();
-                IRI predicate = statement.getPredicate();
-                if (right.contains(subject, predicate, null)) {
-                    result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
-                            rightDeletions));
-                    Stream.of(leftDeletions, right, rightDeletions).forEach(item ->
-                            item.remove(subject, predicate, null));
-                }
-            });
-
-            return result;
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return utils.getConflicts(leftId, rightId, conn);
         }
     }
 
@@ -1291,65 +1211,55 @@ public class SimpleCatalogManager implements CatalogManager {
                 .deletions(originalCopy)
                 .build();
     }
-       
-    /**
-     * Creates a conflict using the provided parameters as the data to construct it.
-     *
-     * @param subject        The Resource identifying the conflicted statement's subject.
-     * @param predicate      The IRI identifying the conflicted statement's predicate.
-     * @param original       The Model of the original item.
-     * @param left           The Model of the left item being compared.
-     * @param leftDeletions  The Model of the deleted statements from the left Model.
-     * @param right          The Model of the right item being compared.
-     * @param rightDeletions The Model of the deleted statements from the right Model.
-     * @return A Conflict created using all of the provided data.
-     */
-    private Conflict createConflict(Resource subject, IRI predicate, Model original, Model left, Model leftDeletions,
-                                    Model right, Model rightDeletions) {
-        IRI rdfType = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
-        Difference.Builder leftDifference = new Difference.Builder();
-        Difference.Builder rightDifference = new Difference.Builder();
-        if (predicate.equals(rdfType)) {
-            leftDifference
-                    .additions(mf.createModel(left).filter(subject, null, null))
-                    .deletions(mf.createModel(leftDeletions).filter(subject, null, null));
-            rightDifference
-                    .additions(mf.createModel(right).filter(subject, null, null))
-                    .deletions(mf.createModel(rightDeletions).filter(subject, null, null));
-        } else {
-            leftDifference
-                    .additions(mf.createModel(left).filter(subject, predicate, null))
-                    .deletions(mf.createModel(leftDeletions).filter(subject, predicate, null));
-            rightDifference
-                    .additions(mf.createModel(right).filter(subject, predicate, null))
-                    .deletions(mf.createModel(rightDeletions).filter(subject, predicate, null));
-        }
 
-        return new Conflict.Builder(mf.createModel(original).filter(subject, predicate, null),
-                vf.createIRI(subject.stringValue()))
-                .leftDifference(leftDifference.build())
-                .rightDifference(rightDifference.build())
-                .build();
+    @Override
+    public void export(Resource recordIRI, RecordOperationConfig config) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            OrmFactory<? extends Record> factory = getFactory(recordIRI, conn, false);
+            RecordService<? extends Record> service = getRecordService(factory.getType());
+            service.export(recordIRI, config, conn);
+        }
+    }
+
+    @Override
+    public void export(List<Resource> recordIRIs, RecordOperationConfig config) {
+        recordIRIs.forEach(iri -> export(iri, config));
     }
 
     /**
-     * Adds the model for a Catalog to the repository which contains the provided metadata using the provided Resource
-     * as the context.
+     * Takes a recordId and returns the factory for that record. If a factory for that particular record is not
+     * registered, it returns the most specific factory available if the flag is set to false.
      *
-     * @param catalogId   The Resource identifying the Catalog you wish you create.
-     * @param title       The title text.
-     * @param description The description text.
+     * @param recordId The record IRI
+     * @param exactOnly A flag to indicate whether to do an exact match with the record type. If false, will allow
+     *                  closest match to be returned
+     * @return the record factory of a given recordId
      */
-    private void addCatalogToRepo(Resource catalogId, String title, String description, RepositoryConnection conn) {
-        OffsetDateTime now = OffsetDateTime.now();
+    private OrmFactory<? extends Record> getFactory(Resource recordId, RepositoryConnection conn, boolean exactOnly) {
+        List<Resource> types = RepositoryResults.asList(
+                conn.getStatements(recordId, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
+                .stream()
+                .map(Statements::objectResource)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
 
-        Catalog catalog = catalogFactory.createNew(catalogId);
-        catalog.setProperty(vf.createLiteral(title), vf.createIRI(_Thing.title_IRI));
-        catalog.setProperty(vf.createLiteral(description), vf.createIRI(_Thing.description_IRI));
-        catalog.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
-        catalog.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
+        List<OrmFactory<? extends Record>> classType = factoryRegistry.getSortedFactoriesOfType(Record.class).stream()
+                .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
+                .collect(Collectors.toList());
 
-        conn.add(catalog.getModel(), catalogId);
+        if (exactOnly && classType.size() > 0) {
+            if (recordServices.keySet().contains(classType.get(0).getType())) {
+                return classType.get(0);
+            }
+        } else {
+            for (OrmFactory<? extends Record> factory : classType) {
+                if (recordServices.keySet().contains(factory.getType())) {
+                    return factory;
+                }
+            }
+        }
+        throw new IllegalArgumentException("No known record services for this record type.");
     }
 
     /**
@@ -1392,12 +1302,6 @@ public class SimpleCatalogManager implements CatalogManager {
         return record;
     }
 
-    private void removeObjectWithRelationship(Resource objectId, Resource removeFromId, String predicate,
-                                              RepositoryConnection conn) {
-        utils.remove(objectId, conn);
-        conn.remove(removeFromId, vf.createIRI(predicate), objectId, removeFromId);
-    }
-
     /**
      * Removes the UnversionedRecord created from the provided Record along with all associated Distributions.
      *
@@ -1422,7 +1326,7 @@ public class SimpleCatalogManager implements CatalogManager {
         versionedRecordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRecord -> {
                     versionedRecord.getVersion_resource()
-                            .forEach(resource -> removeVersion(versionedRecord.getResource(), resource, conn));
+                            .forEach(resource -> utils.removeVersion(versionedRecord.getResource(), resource, conn));
                     utils.removeObject(versionedRecord, conn);
                 });
     }
@@ -1437,35 +1341,16 @@ public class SimpleCatalogManager implements CatalogManager {
     private void removeVersionedRDFRecord(Record record, RepositoryConnection conn) {
         versionedRDFRecordFactory.getExisting(record.getResource(), record.getModel())
                 .ifPresent(versionedRDFRecord -> {
+                    mergeRequestManager.deleteMergeRequestsWithRecordId(versionedRDFRecord.getResource(), conn);
                     versionedRDFRecord.getVersion_resource()
-                            .forEach(resource -> removeVersion(versionedRDFRecord.getResource(), resource, conn));
+                            .forEach(resource -> utils.removeVersion(versionedRDFRecord.getResource(), resource, conn));
                     conn.remove(versionedRDFRecord.getResource(), vf.createIRI(VersionedRDFRecord.masterBranch_IRI),
                             null, versionedRDFRecord.getResource());
+                    List<Resource> deletedCommits = new ArrayList<>();
                     versionedRDFRecord.getBranch_resource()
-                            .forEach(resource -> removeBranch(versionedRDFRecord.getResource(), resource, conn));
+                            .forEach(resource -> utils.removeBranch(versionedRDFRecord.getResource(), resource,
+                                    deletedCommits, conn));
                     utils.removeObject(versionedRDFRecord, conn);
                 });
-    }
-
-    private boolean commitIsReferenced(Resource commitId, RepositoryConnection conn) {
-        IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
-        IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
-        IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
-        return Stream.of(headCommitIRI, baseCommitIRI, auxiliaryCommitIRI)
-                .map(iri -> conn.contains(null, iri, commitId))
-                .reduce(false, (iri1, iri2) -> iri1 || iri2);
-    }
-
-    /**
-     * Removes the duplicate Statements in the supplied Models.
-     *
-     * @param left  First Model
-     * @param right Second Model
-     */
-    private void removeDuplicates(Model left, Model right) {
-        Model duplicates = mf.createModel(left);
-        duplicates.retainAll(right);
-        left.removeAll(duplicates);
-        right.removeAll(duplicates);
     }
 }

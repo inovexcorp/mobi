@@ -14,10 +14,11 @@ import com.mobi.ontology.core.api.propertyexpression.DataProperty
 import com.mobi.rdf.api.Model
 import com.mobi.rdf.core.utils.Values
 import com.mobi.vocabularies.xsd.XSD
-import org.openrdf.rio.RDFFormat
-import org.openrdf.rio.Rio
+import org.eclipse.rdf4j.rio.RDFFormat
+import org.eclipse.rdf4j.rio.Rio
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
+
 /*-
  * #%L
  * com.mobi.etl.delimited

@@ -20,83 +20,86 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('New Instance Property Overlay directive', function() {
-    var $compile, scope, discoverStateSvc, util;
+describe('New Instance Property Overlay component', function() {
+    var $compile, scope, exploreUtils, util;
 
     beforeEach(function() {
         module('templates');
         module('newInstancePropertyOverlay');
-        mockDiscoverState();
+        mockExploreUtils();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _discoverStateService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _exploreUtilsService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            discoverStateSvc = _discoverStateService_;
+            exploreUtils = _exploreUtilsService_;
             util = _utilService_;
         });
 
-        scope.onCancel = jasmine.createSpy('onCancel');
-        scope.onSubmit = jasmine.createSpy('onSubmit');
-        scope.getProperties = jasmine.createSpy('getProperties');
-        this.element = $compile(angular.element('<new-instance-property-overlay on-cancel="onCancel()" on-submit="onSubmit()" get-properties="getProperties()"></new-instance-property-overlay>'))(scope);
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        scope.resolve = {properties: [{}], instance: {}};
+        this.element = $compile(angular.element('<new-instance-property-overlay close="close($value)" dismiss="dismiss()" resolve="resolve"></new-instance-property-overlay>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('newInstancePropertyOverlay');
     });
 
     afterEach(function() {
         $compile = null;
         scope = null;
-        discoverStateSvc = null;
+        exploreUtils = null;
         util = null;
         this.element.remove();
     });
 
     describe('controller bound variables', function() {
-        beforeEach(function() {
-            this.isolatedScope = this.element.isolateScope();
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
         });
-        it('onCancel should be called in parent scope when invoked', function() {
-            this.isolatedScope.onCancel();
-            expect(scope.onCancel).toHaveBeenCalled();
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
         });
-        it('onSubmit should be called in parent scope when invoked', function() {
-            this.isolatedScope.onSubmit();
-            expect(scope.onSubmit).toHaveBeenCalled();
-        });
-        it('getProperties should be called in parent scope when invoked', function() {
-            this.isolatedScope.getProperties();
-            expect(scope.getProperties).toHaveBeenCalled();
+        it('resolve is one way bound', function() {
+            this.controller.resolve = {};
+            scope.$digest();
+            expect(scope.resolve).toEqual({properties: [{}], instance: {}});
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('new-instance-property-overlay')).toBe(true);
-            expect(this.element.hasClass('overlay')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('NEW-INSTANCE-PROPERTY-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
-        it('for a form', function() {
-            expect(this.element.find('form').length).toBe(1);
+        ['form', 'h3', 'p', 'md-autocomplete'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toEqual(1);
+            });
         });
-        it('for a h6', function() {
-            expect(this.element.find('h6').length).toBe(1);
+        it('with buttons to cancel and submit', function() {
+            var buttons = this.element.querySelectorAll('.modal-footer button');
+            expect(buttons.length).toEqual(2);
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
-        it('for a .main', function() {
-            expect(this.element.querySelectorAll('.main').length).toBe(1);
+    });
+    describe('controller methods', function() {
+        it('should cancel the overlay', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
         });
-        it('for a p', function() {
-            expect(this.element.find('p').length).toBe(1);
+        it('should get the list of properties', function() {
+            exploreUtils.getNewProperties.and.returnValue([{}]);
+            expect(this.controller.getProperties()).toEqual([{}]);
+            expect(exploreUtils.getNewProperties).toHaveBeenCalledWith(this.controller.resolve.properties, this.controller.resolve.instance, this.controller.propertyIRI);
         });
-        it('for md-autocomplete', function() {
-            expect(this.element.find('md-autocomplete').length).toBe(1);
-        });
-        it('for a .btn-container.clearfix', function() {
-            expect(this.element.querySelectorAll('.btn-container.clearfix').length).toBe(1);
-        });
-        it('for a .btn.btn-primary', function() {
-            expect(this.element.querySelectorAll('.btn.btn-primary').length).toBe(1);
-        });
-        it('for a .btn.btn-default', function() {
-            expect(this.element.querySelectorAll('.btn.btn-default').length).toBe(1);
+        it('should submit the modal adding the property to the instance', function() {
+            this.controller.submit();
+            expect(this.controller.resolve.instance[this.controller.propertyIRI]).toEqual([]);
+            expect(scope.close).toHaveBeenCalledWith(this.controller.propertyIRI);
         });
     });
 });

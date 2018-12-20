@@ -1,0 +1,38 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.request-branch-select {
+    display: flex;
+    flex-direction: column;
+
+    .form-container {
+        text-align: center;
+
+        .branch-select-form {
+            .form-control-static {
+                padding: 0;
+            }
+            .ui-select-toggle {
+                width: 100%;
+            }
+            input.ui-select-search {
+                width: 100% !important;
+
+                &.ng-hide {
+                    display: block !important;
+                    visibility: hidden;
+                    height: 0;
+                    border: 0;
+                    padding: 0;
+                }
+            }
+            .select-branch {
+                margin: 0 5px;
+            }
+        }
+    }
+    .commit-difference-tabset {
+        flex: 1;
+        margin-top: 20px;
+    }
+}

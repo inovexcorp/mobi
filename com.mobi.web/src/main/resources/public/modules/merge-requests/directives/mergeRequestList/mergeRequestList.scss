@@ -1,0 +1,61 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.merge-request-list {
+    display: flex;
+    flex-direction: column;
+
+    .search-container {
+        text-align: center;
+        padding-bottom: 15px;
+
+        button {
+            display: inline-block;
+        }
+    }
+    block {
+        flex: 1;
+    }
+
+    .request {
+        border-bottom: 1px solid var(--light);
+        display: flex;
+        flex-direction: row;
+        cursor: pointer;
+
+        h3 {
+            margin: 0;
+            @include textOverflow;
+        }
+        .details {
+            flex: 1;
+            min-width: 0;
+        }
+        .action-container {
+            display: flex;
+            align-items: center;
+
+            .action {
+                text-decoration: none;
+
+                &:hover {
+                    color: var(--grey) !important;
+                }
+            }
+        }
+        .request-assignees {
+            .assignees {
+                li {
+                    display: inline;
+
+                    &:after {
+                        content: ', ';
+                    }
+                    &.last:after {
+                        content: '';
+                    }
+                }
+            }
+        }
+    }
+}

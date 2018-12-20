@@ -29,31 +29,37 @@
          * @name instanceForm
          *
          * @description
-         * The `instanceForm` module only provides the `instanceForm` directive which creates
-         * the instance form.
+         * The `instanceForm` module only provides the `instanceForm` directive which creates a form for
+         * editing an instance within a dataset.
          */
         .module('instanceForm', [])
         /**
          * @ngdoc directive
-         * @name instanceEditor.directive:instanceEditor
+         * @name instanceForm.directive:instanceForm
          * @scope
          * @restrict E
-         * @requires $q
          * @requires discoverState.service:discoverStateService
          * @requires util.service:utilService
          * @requires explore.service:exploreService
          * @requires prefixes.service:prefixes
          * @requires exploreUtils.service:exploreUtilsService
+         * @requires modal.service:modalService
          *
          * @description
-         * HTML contents in the instance view page which shows the complete list of properites
-         * associated with the instance in an editable format.
+         * `instanceForm` is a directive that creates a form with the complete list of properites associated with the
+         * {@link discoverState.service:discoverStateService selected instance} in an editable format. Also provides a
+         * way to {@link editIriOverlay.directive:editIriOverlay edit the instance IRI} after acknowledging the danger.
+         * If there are requierd properties not set on the instance, the provided `isValid` variable is set to false.
+         * The directive is replaced by the contents of its template.
+         *
+         * @param {string} header The configurable header for the form
+         * @param {boolean} isValid Whether all the required properties for the instance are set
          */
         .directive('instanceForm', instanceForm);
 
-        instanceForm.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'prefixes', 'REGEX', 'exploreUtilsService'];
+        instanceForm.$inject = ['$q', '$filter', 'discoverStateService', 'utilService', 'exploreService', 'prefixes', 'REGEX', 'exploreUtilsService', 'modalService'];
 
-        function instanceForm($q, discoverStateService, utilService, exploreService, prefixes, REGEX, exploreUtilsService) {
+        function instanceForm($q, $filter, discoverStateService, utilService, exploreService, prefixes, REGEX, exploreUtilsService, modalService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceForm/instanceForm.html',
@@ -91,15 +97,23 @@
                     dvm.showPropertyValueOverlay = false;
                     dvm.changed = [];
                     dvm.missingProperties = [];
-                    dvm.propertyIRI = '';
-                    dvm.index = 0;
                     dvm.instance = dvm.ds.getInstance();
                     dvm.eu = exploreUtilsService;
 
+                    dvm.newInstanceProperty = function() {
+                        modalService.openModal('newInstancePropertyOverlay', {properties: dvm.properties, instance: dvm.instance}, dvm.addToChanged);
+                    }
+                    dvm.showIriConfirm = function() {
+                        modalService.openConfirmModal('<p>Changing this IRI might break relationships within the dataset. Are you sure you want to continue?</p>', dvm.showIriOverlay);
+                    }
+                    dvm.showIriOverlay = function() {
+                        var split = $filter('splitIRI')(dvm.instance['@id']);
+                        modalService.openModal('editIriOverlay', {iriBegin: split.begin, iriThen: split.then, iriEnd: split.end}, dvm.setIRI);
+                    }
                     dvm.getOptions = function(propertyIRI) {
                         var range = dvm.eu.getRange(propertyIRI, dvm.properties);
                         if (range) {
-                            return es.getClassInstanceDetails(dvm.ds.explore.recordId, range, {offset: 0}, true)
+                            return es.getClassInstanceDetails(dvm.ds.explore.recordId, range, {offset: 0, infer: true}, true)
                                 .then(response => {
                                     var options = _.filter(response.data, item => !_.some(dvm.instance[propertyIRI], {'@id': item.instanceIRI}));
                                     if (dvm.searchText[propertyIRI]) {
@@ -113,33 +127,19 @@
                         }
                         return $q.when([]);
                     }
-
                     dvm.addToChanged = function(propertyIRI) {
                         dvm.changed = _.uniq(_.concat(dvm.changed, [propertyIRI]));
                         dvm.missingProperties = dvm.getMissingProperties();
                     }
-
                     dvm.isChanged = function(propertyIRI) {
                         return _.includes(dvm.changed, propertyIRI);
                     }
-
-                    dvm.setIRI = function(begin, then, end) {
-                        dvm.instance['@id'] = begin + then + end;
+                    dvm.setIRI = function(iriObj) {
+                        dvm.instance['@id'] = iriObj.iriBegin + iriObj.iriThen + iriObj.iriEnd;
                     }
-
-                    dvm.addNewProperty = function(property) {
-                        dvm.instance[property] = [];
-                        dvm.addToChanged(property);
-                        dvm.showOverlay = false;
-                    }
-
                     dvm.onSelect = function(text, propertyIRI, index) {
-                        dvm.fullText = text;
-                        dvm.propertyIRI = propertyIRI;
-                        dvm.index = index;
-                        dvm.showPropertyValueOverlay = true;
+                        modalService.openModal('propertyValueOverlay', {iri: propertyIRI, index: index, text, properties: dvm.reificationProperties}, dvm.addToChanged, 'lg');
                     }
-
                     dvm.getMissingProperties = function() {
                         var missing = [];
                         _.forEach(dvm.properties, property => {
@@ -157,7 +157,6 @@
                         dvm.isValid = !missing.length;
                         return missing;
                     }
-
                     dvm.getRestrictionText = function(propertyIRI) {
                         var details = _.find(dvm.properties, {propertyIRI});
                         var results = [];
@@ -172,7 +171,6 @@
                         });
                         return results.length ? ('[' + _.join(results, ', ') + ']') : '';
                     }
-
                     dvm.cleanUpReification = function($chip, propertyIRI) {
                         var object = angular.copy($chip);
                         _.remove(dvm.ds.explore.instance.entity, {
@@ -180,7 +178,6 @@
                             [prefixes.rdf + 'object']: [object]
                         });
                     }
-
                     dvm.transformChip = function(item) {
                         dvm.ds.explore.instance.objectMap[item.instanceIRI] = item.title;
                         return dvm.eu.createIdObj(item.instanceIRI)

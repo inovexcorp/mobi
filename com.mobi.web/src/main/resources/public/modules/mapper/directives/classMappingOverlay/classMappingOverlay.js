@@ -29,53 +29,51 @@
          * @name classMappingOverlay
          *
          * @description
-         * The `classMappingOverlay` module only provides the `classMappingOverlay` directive which creates
-         * an overlay with functionality to create a class mapping in the current
-         * {@link mapperState.service:mapperStateService#mapping mapping}.
+         * The `classMappingOverlay` module only provides the `classMappingOverlay` component which creates
+         * creates content for a modal to add a ClassMapping to a mapping.
          */
         .module('classMappingOverlay', [])
         /**
          * @ngdoc directive
-         * @name classMappingOverlay.directive:classMappingOverlay
-         * @scope
-         * @restrict E
+         * @name classMappingOverlay.component:classMappingOverlay
          * @requires mappingManager.service:mappingManagerService
          * @requires mapperState.service:mapperStateService
          *
          * @description
-         * `classMappingOverlay` is a directive that creates an overlay with functionality to create a class
-         * mapping in the current {@link mapperState.service:mapperStateService#mapping mapping} and a preview of
-         * the selected class. You can only create a class mapping for a class that does not already have a class
-         * mapping in the mapping. The directive is replaced by the contents of its template.
+         * `classMappingOverlay` is a component that creates content for a modal that creates a ClassMapping in the
+         * current {@link mapperState.service:mapperStateService#mapping mapping} and a preview of
+         * the selected class. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
          */
-        .directive('classMappingOverlay', classMappingOverlay);
+        .component('classMappingOverlay', {
+            bindings: {
+                close: '&',
+                dismiss: '&'
+            },
+            controllerAs: 'dvm',
+            controller: ['mapperStateService', 'mappingManagerService', ClassMappingOverlayController],
+            templateUrl: 'modules/mapper/directives/classMappingOverlay/classMappingOverlay.html'
+        });
 
-        classMappingOverlay.$inject = ['mapperStateService', 'mappingManagerService'];
+        function ClassMappingOverlayController(mapperStateService, mappingManagerService) {
+            var dvm = this;
+            var mm = mappingManagerService;
+            dvm.state = mapperStateService;
+            dvm.selectedClass = undefined;
 
-        function classMappingOverlay(mapperStateService, mappingManagerService) {
-            return {
-                restrict: 'E',
-                controllerAs: 'dvm',
-                replace: true,
-                scope: {},
-                controller: function() {
-                    var dvm = this;
-                    var mm = mappingManagerService;
-                    dvm.state = mapperStateService;
-                    dvm.selectedClass = undefined;
-
-                    dvm.addClass = function() {
-                        var classMapping = dvm.state.addClassMapping(dvm.selectedClass);
-                        dvm.state.setAvailableProps(classMapping['@id']);
-                        dvm.state.resetEdit();
-                        dvm.state.selectedClassMappingId = classMapping['@id'];
-                        dvm.state.displayClassMappingOverlay = false;
-                    }
-                    dvm.cancel = function() {
-                        dvm.state.displayClassMappingOverlay = false;
-                    }
-                },
-                templateUrl: 'modules/mapper/directives/classMappingOverlay/classMappingOverlay.html'
+            dvm.addClass = function() {
+                var classMapping = dvm.state.addClassMapping(dvm.selectedClass);
+                if (!dvm.state.hasPropsSet(dvm.selectedClass.classObj['@id'])) {
+                    dvm.state.setProps(dvm.selectedClass.classObj['@id']);
+                }
+                dvm.state.resetEdit();
+                dvm.state.selectedClassMappingId = classMapping['@id'];
+                dvm.close();
+            }
+            dvm.cancel = function() {
+                dvm.dismiss();
             }
         }
 })();

@@ -86,7 +86,7 @@ describe('Everything Tree directive', function() {
             expect(this.element.hasClass('tree')).toBe(true);
             expect(this.element.hasClass('everything-tree')).toBe(true);
             expect(this.element.hasClass('hierarchy-tree')).toBe(true);
-            expect(this.element.hasClass('full-height')).toBe(true);
+            expect(this.element.hasClass('h-100')).toBe(true);
         });
         it('based on .repeater-container', function() {
             expect(this.element.querySelectorAll('.repeater-container').length).toBe(1);

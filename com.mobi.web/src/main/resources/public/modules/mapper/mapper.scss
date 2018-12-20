@@ -2,6 +2,6 @@
 @import "./src/main/resources/public/css/variables";
 
 .mapper {
-    background-color: $gray-lighter;
+    background-color: var(--light);
     height: 100%;
 }

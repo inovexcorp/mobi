@@ -103,7 +103,7 @@ public class MobiOntologyFactory implements OWLOntologyFactory {
                 MobiOntologyIRIMapper.standardProtocol));
         Model ontologyModel = ontologyManager.getOntologyModel(SimpleOntologyValues.mobiIRI(recordId));
         RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
-        org.openrdf.model.Model sesameModel = sesameTransformer.sesameModel(ontologyModel);
+        org.eclipse.rdf4j.model.Model sesameModel = sesameTransformer.sesameModel(ontologyModel);
         OWLDocumentFormat format = parser.parse(new RioMemoryTripleSource(sesameModel), ont, config);
         handler.setOntologyFormat(ont, format);
         LOG.debug("Loaded imported Ontology: {}", ont.getOntologyID().toString());

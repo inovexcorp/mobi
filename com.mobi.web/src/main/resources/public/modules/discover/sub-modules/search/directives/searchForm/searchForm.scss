@@ -38,7 +38,6 @@
         }
     }
     .strike {
-        color: $gray-light;
         font-weight: bold;
         margin-bottom: 15px;
         overflow:hidden;
@@ -46,7 +45,7 @@
         white-space: nowrap;
 
         &:after {
-            background: $gray-light;
+            background: var(--light-dark);
             content: '';
             height: 1px;
             margin-left: 10px;
@@ -69,9 +68,12 @@
         .header-wrapper .property-label {
             margin: 7px 0;
         }
+        md-list-item {
+            width: 100%;
+        }
     }
     md-list {
-        border: 1px solid $gray-custom;
+        border: 1px solid var(--light);
         min-height: 250px;
         padding: 0;
 
@@ -83,7 +85,7 @@
             }
         }
         md-list-item:hover {
-            background: $gray-custom;
+            background: var(--light);
         }
         .fa {
             font-size: 1.5em;
@@ -93,7 +95,7 @@
 
 .search-form-searchbox {
     border: none;
-    border-bottom: 1px solid $gray-light;
+    border-bottom: 1px solid var(--light-dark);
     outline: none;
     height: 100%;
     width: 100%;

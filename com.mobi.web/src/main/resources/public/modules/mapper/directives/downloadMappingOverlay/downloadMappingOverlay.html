@@ -20,17 +20,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="download-mapping-overlay overlay">
-    <form class="content" name="dvm.downloadForm">
-        <h6>Download {{dvm.state.mapping.record.title}}</h6>
+<div class="modal-header">
+    <h3 class="break-word">Download {{dvm.state.mapping.record.title}}</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+    <form name="dvm.downloadForm">
         <div class="form-group">
           <custom-label>Serialization</custom-label>
           <mapper-serialization-select format="dvm.downloadFormat" required></mapper-serialization-select>
         </div>
-
-        <div class="btn-container clearfix">
-            <button ng-click="dvm.download()" class="btn btn-primary pull-right" ng-disabled="dvm.downloadForm.$invalid">Download</button>
-            <button ng-click="dvm.cancel()" class="btn btn-default pull-right">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button ng-click="dvm.cancel()" class="btn">Cancel</button>
+    <button ng-click="dvm.download()" class="btn btn-primary" ng-disabled="dvm.downloadForm.$invalid">Submit</button>
 </div>

@@ -43,9 +43,10 @@
          *
          * @description
          * `userManagementTabset` is a directive which creates a {@link tabset.directive:tabset tabset} with different
-         * pages depending on whether the {@link usersPage.directive:usersPage users} or
-         * {@link groupsPage.directive:groupsPage groups} of Mobi should be shown. The directive is replaced by the
-         * contents of its template.
+         * pages depending on whether the {@link usersPage.directive:usersPage users},
+         * {@link groupsPage.directive:groupsPage groups}, or
+         * {@link permissionsPage.directive:permissionsPage permissions} of Mobi should be shown. The directive is
+         * replaced by the contents of its template.
          */
         .directive('userManagementTabset', userManagementTabset);
 

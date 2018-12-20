@@ -271,8 +271,10 @@
              * @methodOf datasetManager.service:datasetManagerService
              *
              * @description
-             * Populates the 'datasetRecords' with results from the 'getDatasetRecords' method. If that method results in an error,
-             * an error toast will be displayed.
+             * Populates the 'datasetRecords' with results from the 'getDatasetRecords' method. If that method results
+             * in an error, an error toast will be displayed. Returns a promise.
+             *
+             * @return {Promise} A Promise that indicates the function has completed.
              */
             self.initialize = function() {
                 var paginatedConfig = {
@@ -280,7 +282,7 @@
                         field: prefixes.dcterms + 'title'
                     }
                 }
-                self.getDatasetRecords(paginatedConfig)
+                return self.getDatasetRecords(paginatedConfig)
                     .then(response => {
                         self.datasetRecords = response.data;
                     }, util.createErrorToast);

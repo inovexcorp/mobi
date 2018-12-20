@@ -55,7 +55,7 @@ describe('Discover State Service', function() {
         };
         discoverStateSvc.resetPagedInstanceDetails();
         expect(discoverStateSvc.explore.instanceDetails).toEqual({
-            currentPage: 0,
+            currentPage: 1,
             data: [],
             limit: 99,
             links: {
@@ -188,10 +188,11 @@ describe('Discover State Service', function() {
                 changed: [],
                 entity: [{}],
                 metadata: {},
-                objectMap: {}
+                objectMap: {},
+                original: []
             },
             instanceDetails: {
-                currentPage: 0,
+                currentPage: 1,
                 data: [],
                 limit: 99,
                 links: {

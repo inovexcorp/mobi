@@ -27,17 +27,18 @@ import com.mobi.persistence.utils.api.RDFHandler;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Statement;
 import com.mobi.repository.exception.RepositoryException;
-import org.openrdf.rio.RDFHandlerException;
+import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.slf4j.Logger;
 
 public class BatchExporter implements RDFHandler {
 
-    private org.openrdf.rio.RDFHandler delegate;
+    private org.eclipse.rdf4j.rio.RDFHandler delegate;
     private SesameTransformer transformer;
     private long count = 0;
     private long batchSize = 10000;
     private Logger logger = null;
     private boolean printToSystem = false;
+    private boolean active = false;
 
     /**
      * Creates a new BatchExporter that will log exported statements. Wraps a Sesame RDFHandler and performs conversion
@@ -46,18 +47,20 @@ public class BatchExporter implements RDFHandler {
      * @param delegate The Sesame RDFHandler to wrap
      * @param transformer A SesameTransformer for converting statements
      */
-    public BatchExporter(SesameTransformer transformer, org.openrdf.rio.RDFHandler delegate) {
+    public BatchExporter(SesameTransformer transformer, org.eclipse.rdf4j.rio.RDFHandler delegate) {
         this.transformer = transformer;
         this.delegate = delegate;
     }
 
     @Override
     public void startRDF() throws com.mobi.persistence.utils.exception.RDFHandlerException {
+        active = true;
         delegate.startRDF();
     }
 
     @Override
     public void endRDF() throws RDFHandlerException {
+        active = false;
         delegate.endRDF();
         if (logger != null) {
             logger.debug("Operation complete. " + count + " statements exported.");
@@ -120,5 +123,14 @@ public class BatchExporter implements RDFHandler {
      */
     public long getFinalCount() {
         return count;
+    }
+
+    /**
+     * Returns whether or not the export transaction is currently active.
+     *
+     * @return boolean True if transaction is active; false otherwise
+     */
+    public boolean isActive() {
+        return active;
     }
 }

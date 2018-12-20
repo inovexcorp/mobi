@@ -23,15 +23,17 @@
 <div class="instance-block">
     <block>
         <block-header>
-            <breadcrumbs class="pull-left" items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
-            <button ng-disabled="dvm.ds.explore.classDeprecated" class="btn btn-link pull-right create-button" ng-click="dvm.create()"><i class="fa fa-plus"></i>Create {{dvm.getClassName()}}{{dvm.ds.explore.classDeprecated ? ' [Deprecated]' : ''}}</button>
+            <breadcrumbs class="float-left" items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
+            <button ng-disabled="dvm.ds.explore.classDeprecated" class="btn btn-link float-right create-button" ng-click="dvm.create()"><i class="fa fa-plus"></i>Create {{dvm.getClassName()}}{{dvm.ds.explore.classDeprecated ? ' [Deprecated]' : ''}}</button>
         </block-header>
         <block-content>
             <instance-cards></instance-cards>
         </block-content>
         <block-footer>
-            <paging-details class="pull-left" total-size="dvm.ds.explore.instanceDetails.total" page-index="dvm.ds.explore.instanceDetails.currentPage" limit="dvm.ds.explore.instanceDetails.limit"></paging-details>
-            <pagination class="pull-right" links="dvm.ds.explore.instanceDetails.links" current-page="dvm.ds.explore.instanceDetails.currentPage" get-page="dvm.getPage(direction)"></pagination>
+            <div class="paging-container clearfix">
+                <paging-details class="float-left" total-size="dvm.ds.explore.instanceDetails.total" page-index="dvm.ds.explore.instanceDetails.currentPage - 1" limit="dvm.ds.explore.instanceDetails.limit"></paging-details>
+                <pagination class="float-right" total="dvm.ds.explore.instanceDetails.total" limit="dvm.ds.explore.instanceDetails.limit" current-page="dvm.ds.explore.instanceDetails.currentPage" get-page="dvm.setPage()"></pagination>
+            </div>
         </block-footer>
     </block>
 </div>

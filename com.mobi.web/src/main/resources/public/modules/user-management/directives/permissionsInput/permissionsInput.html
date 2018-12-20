@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="permissions-input">
-    <h4>Role</h4>
-    <checkbox ng-model="roles.admin" display-text="'Admin'" is-disabled-when="isDisabledWhen" change-event="onChange()"></checkbox>
+<div class="permissions-input form-group">
+    <custom-label>Role</custom-label>
+    <checkbox ng-model="roles.admin" display-text="'Admin'" is-disabled="isDisabledWhen" change-event="onChange()"></checkbox>
 </div>

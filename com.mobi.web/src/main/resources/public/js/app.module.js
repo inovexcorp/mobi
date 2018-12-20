@@ -43,6 +43,7 @@
 
             /* Custom Filters */
             'beautify',
+            'branchesToDisplay',
             'camelCase',
             'escapeHTML',
             'inArray',
@@ -55,43 +56,58 @@
             'uniqueKey',
 
             /* Custom Directives */
+            'actionMenu',
+            'actionMenuItem',
             'aDisabled',
             'block',
             'blockContent',
             'blockFooter',
             'blockHeader',
             'blockSearch',
+            'branchSelect',
             'breadcrumbs',
             'checkbox',
             'circleButton',
             'circleButtonStack',
             'clickAnywhereButHere',
+            'clickToCopy',
             'commitChangesDisplay',
+            'commitDifferenceTabset',
             'commitHistoryTable',
             'commitInfoOverlay',
-            'confirmationOverlay',
-            'customHeader',
+            'confirmModal',
             'customLabel',
+            'disableAnimate',
             'dragFile',
             'dragMe',
             'dropOnMe',
+            'editIriOverlay',
             'emailInput',
             'entityDates',
             'entityDescription',
             'errorDisplay',
             'fileInput',
             'focusMe',
+            'iriSelect',
             'infoMessage',
             'keywordSelect',
+            'languageSelect',
+            'markdownEditor',
+            'materialTab',
+            'materialTabset',
             'pagination',
+            'paging',
             'pagingDetails',
             'passwordConfirmInput',
             'radioButton',
+            'rdfVisualization',
             'recordKeywords',
+            'resolveConflictsForm',
+            'searchBar',
+            'sidebar',
             'spinner',
             'statementContainer',
             'statementDisplay',
-            'staticIri',
             'stepProgressBar',
             'tab',
             'tabset',
@@ -99,42 +115,46 @@
             'textArea',
             'textInput',
             'uniqueValue',
+            'userAccessControls',
             'valueDisplay',
 
             /* Custom Modules */
-            'analytics',
-            'activityLog',
             'catalog',
             'datasets',
             'discover',
             'home',
             'login',
             'mapper',
-            'nav',
+            'merge-requests',
             'ontology-editor',
             'settings',
             'user-management',
             'webtop',
 
             /* Custom Services */
-            'analyticManager',
-            'analyticState',
             'catalogManager',
             'catalogState',
             'datasetManager',
             'datasetState',
             'delimitedManager',
             'discoverState',
+            'd3Transformer',
             'httpService',
             'loginManager',
             'manchesterConverter',
             'mapperState',
             'mappingManager',
+            'mergeRequestManager',
+            'mergeRequestsState',
+            'modal',
             'ontologyManager',
             'ontologyState',
+            'policyEnforcement',
+            'policyManager',
             'prefixes',
             'propertyManager',
             'provManager',
+            'recordPermissionsManager',
             'settingsManager',
             'sparqlManager',
             'stateManager',
@@ -147,6 +167,8 @@
         .constant('Snap', window.Snap)
         .constant('antlr', window.antlr)
         .constant('sparqljs', window.sparqljs)
+        .constant('d3', window.d3)
+        .constant('showdown', window.showdown)
         .constant('REGEX', {
             'IRI': /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$/i,
             'LOCALNAME': /^[a-zA-Z0-9._\-]+$/,
@@ -168,16 +190,19 @@
             // We have to invoke the service at least once
         });
 
-        beforeUnload.$inject = ['$window', 'ontologyManagerService', 'ontologyStateService', 'mapperStateService'];
+        beforeUnload.$inject = ['$window', '$rootScope', 'ontologyStateService', 'mapperStateService'];
 
-        function beforeUnload($window, ontologyManagerService, ontologyStateService, mapperStateService) {
+        function beforeUnload($window, $rootScope, ontologyStateService, mapperStateService) {
             $window.onbeforeunload = function(e) {
-                var ontologyHasChanges = _.some(ontologyManagerService.list, listItem => {
-                    return ontologyStateService.hasChanges(_.get(listItem, 'recordId'));
-                });
-                var mappingHasChanges = mapperStateService.isMappingChanged();
-                if (ontologyHasChanges || mappingHasChanges) {
-                    return true;
+                if ($rootScope.isDownloading) {
+                    $rootScope.isDownloading = false;
+                    return undefined;
+                } else {
+                    var ontologyHasChanges = _.some(ontologyStateService.list, ontologyStateService.hasChanges);
+                    var mappingHasChanges = mapperStateService.isMappingChanged();
+                    if (ontologyHasChanges || mappingHasChanges) {
+                        return true;
+                    }
                 }
             }
         }
@@ -232,12 +257,46 @@
         }
 
         function theming($mdThemingProvider) {
-            var bootstrapBlue = $mdThemingProvider.extendPalette('blue', {
-                500: '#337ab7'
+            var primary = $mdThemingProvider.definePalette('mobiPrimary', {
+                '50': 'E6E8F3',
+                '100': 'C1C5E2',
+                '200': '989FCF',
+                '300': '6E79BC',
+                '400': '4F5CAD',
+                '500': '303F9F',
+                '600': '2B3997',
+                '700': '24318D',
+                '800': '1E2983',
+                '900': '131B72',
+                'A100': 'A8AEFF',
+                'A200': '757EFF',
+                'A400': '424FFF',
+                'A700': '2937FF',
+                'contrastDefaultColor': 'light',
+                'contrastDarkColors': ['50', '100', '200', '300', '400', 'A100'],
+                'contrastLightColors': undefined
             });
-            $mdThemingProvider.definePalette('bootstrapBlue', bootstrapBlue);
+            var secondary = $mdThemingProvider.definePalette('mobiSecondary', {
+                '50': 'E8EAF6',
+                '100': 'C5CBE9',
+                '200': '9FA8DA',
+                '300': '7985CB',
+                '400': '5C6BC0',
+                '500': '3F51B5',
+                '600': '394AAE',
+                '700': '3140A5',
+                '800': '29379D',
+                '900': '1B278D',
+                'A100': 'C6CBFF',
+                'A200': '939DFF',
+                'A400': '606EFF',
+                'A700': '4757FF',
+                'contrastDefaultColor': 'light',
+                'contrastDarkColors': ['50', '100', '200', '300', '400', 'A100'],
+                'contrastLightColors': undefined
+            });
             $mdThemingProvider.theme('default')
-                .primaryPalette('bootstrapBlue')
-                .accentPalette('light-blue');
+                .primaryPalette('mobiPrimary')
+                .accentPalette('mobiSecondary');
         }
 })();

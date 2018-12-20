@@ -24,16 +24,39 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name ontologyUtilsManager
+         *
+         * @description
+         * The `ontologyUtilsManager` module only provides the `ontologyUtilsManagerService` service which
+         * contains various utility methods used throughout the Ontology Editor.
+         */
         .module('ontologyUtilsManager', [])
+        /**
+         * @ngdoc service
+         * @name ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires updateRefs.service:updateRefsService
+         * @requires propertyManager.service:propertyManagerService
+         * @requires prefixes.service:prefixes
+         * @requires util.service:utilService
+         *
+         * @description
+         * `ontologyUtilsManagerService` is a service which contains various utility methods used throughout the Ontology
+         * Editor for actions such as deleting specific types of entities and creating displays for the frontend.
+         */
         .service('ontologyUtilsManagerService', ontologyUtilsManagerService);
 
-        ontologyUtilsManagerService.$inject = ['$q', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'prefixes', 'utilService'];
+        ontologyUtilsManagerService.$inject = ['$q', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'propertyManagerService', 'prefixes', 'utilService'];
 
-        function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateService, updateRefsService, prefixes, utilService) {
+        function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateService, updateRefsService, propertyManagerService, prefixes, utilService) {
             var self = this;
             var om = ontologyManagerService;
             var os = ontologyStateService;
             var ur = updateRefsService;
+            var pm = propertyManagerService;
             var util = utilService;
 
             var broaderRelations = [
@@ -138,9 +161,9 @@
                 } else if (isVocabPropAndEntity(relationshipIRI, narrowerRelations, self.containsDerivedConcept) && shouldUpdateVocabHierarchy(targetEntity, narrowerRelations, broaderRelations, relationshipIRI, self.containsDerivedConcept)) {
                     deleteFromConceptHierarchy(targetEntity['@id'], os.listItem.selected['@id']);
                 } else if (isVocabPropAndEntity(relationshipIRI, conceptToScheme, self.containsDerivedConcept) && shouldUpdateVocabHierarchy(targetEntity, conceptToScheme, schemeToConcept, relationshipIRI, self.containsDerivedConceptScheme)) {
-                    deleteFromSchemeHierarchy(os.listItem.selected['@id']);
+                    deleteFromSchemeHierarchy(os.listItem.selected['@id'], targetEntity['@id']);
                 } else if (isVocabPropAndEntity(relationshipIRI, schemeToConcept, self.containsDerivedConceptScheme) && shouldUpdateVocabHierarchy(targetEntity, schemeToConcept, conceptToScheme, relationshipIRI, self.containsDerivedConcept)) {
-                    deleteFromSchemeHierarchy(targetEntity['@id']);
+                    deleteFromSchemeHierarchy(targetEntity['@id'], os.listItem.selected['@id']);
                 }
             }
 
@@ -190,7 +213,7 @@
                         ur.remove(os.listItem.ontology, entityIRI);
                         os.unSelectItem();
                         if (updateEverythingTree) {
-                            os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                            os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
                         }
                         return self.saveCurrentChanges();
                     }, errorMessage => {
@@ -308,7 +331,7 @@
                         if (activeKey !== 'project' && activeKey !== 'individuals' && entityIRI) {
                             os.setEntityUsages(entityIRI);
                         }
-                        os.listItem.isSaved = os.isCommittable(os.listItem.ontologyRecord.recordId);
+                        os.listItem.isSaved = os.isCommittable(os.listItem);
                         return $q.when();
                     }, errorMessage => {
                         util.createErrorToast(errorMessage);
@@ -323,13 +346,13 @@
                     os.listItem.index[os.listItem.selected['@id']].label = newLabel;
                     if (om.isClass(os.listItem.selected)) {
                         os.listItem.classes.flat = os.flattenHierarchy(os.listItem.classes.hierarchy, os.listItem.ontologyRecord.recordId);
-                        os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                        os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
                     } else if (om.isDataTypeProperty(os.listItem.selected)) {
                         os.listItem.dataProperties.flat = os.flattenHierarchy(os.listItem.dataProperties.hierarchy, os.listItem.ontologyRecord.recordId);
-                        os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                        os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
                     } else if (om.isObjectProperty(os.listItem.selected)) {
                         os.listItem.objectProperties.flat = os.flattenHierarchy(os.listItem.objectProperties.hierarchy, os.listItem.ontologyRecord.recordId);
-                        os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
+                        os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
                     } else if (om.isAnnotation(os.listItem.selected)) {
                         os.listItem.annotations.flat = os.flattenHierarchy(os.listItem.annotations.hierarchy, os.listItem.ontologyRecord.recordId);
                     } else if (om.isConcept(os.listItem.selected, os.listItem.derivedConcepts)) {
@@ -395,6 +418,80 @@
                 return array;
             }
 
+            /**
+             * @ngdoc method
+             * @name getRemovePropOverlayMessage
+             * @methodOf ontologyUtilsManager.service:ontologyUtilsManagerService
+             *
+             * @description
+             * Creates an HTML string of the body of a {@link confirmModal.directive:confirmModal} for confirming the
+             * deletion of the specified property value on the current
+             * {@link ontologyState.service:ontologyStateService selected entity}.
+             *
+             * @param {string} key The IRI of a property on the current entity
+             * @param {number} index The index of the specific property value being deleted
+             * @return {string} A string with HTML for the body of a `confirmModal`
+             */
+            self.getRemovePropOverlayMessage = function(key, index) {
+                return '<p>Are you sure you want to remove:<br><strong>' + key + '</strong></p><p>with value:<br><strong>' + self.getPropValueDisplay(key, index) + '</strong></p><p>from:<br><strong>' + os.listItem.selected['@id'] + '</strong>?</p>';
+            }
+            /**
+             * @ngdoc method
+             * @name getPropValueDisplay
+             * @methodOf ontologyUtilsManager.service:ontologyUtilsManagerService
+             *
+             * @description
+             * Creates a display of the specified property value on the current
+             * {@link ontologyState.service:ontologyStateService selected entity} based on whether it is a
+             * data property value, object property value, or blank node.
+             *
+             * @param {string} key The IRI of a property on the current entity
+             * @param {number} index The index of a specific property value
+             * @return {string} A string a display of the property value
+             */
+            self.getPropValueDisplay = function(key, index) {
+                return _.get(os.listItem.selected[key], '[' + index + ']["@value"]')
+                    || _.truncate(self.getBlankNodeValue(_.get(os.listItem.selected[key], '[' + index + ']["@id"]')), {length: 150})
+                    || _.get(os.listItem.selected[key], '[' + index + ']["@id"]');
+            }
+            /**
+             * @ngdoc method
+             * @name removeProperty
+             * @methodOf ontologyUtilsManager.service:ontologyUtilsManagerService
+             *
+             * @description
+             * Removes the specified property value on the current
+             * {@link ontologyState.service:ontologyStateService selected entity}, updating the InProgressCommit,
+             * everything hierarchy, and property hierarchy.
+             *
+             * @param {string} key The IRI of a property on the current entity
+             * @param {number} index The index of a specific property value
+             * @return {Promise} A Promise that resolves with the JSON-LD value object that was removed
+             */
+            self.removeProperty = function(key, index) {
+                var axiomObject = os.listItem.selected[key][index];
+                var json = {
+                    '@id': os.listItem.selected['@id'],
+                    [key]: [angular.copy(axiomObject)]
+                };
+                os.addToDeletions(os.listItem.ontologyRecord.recordId, json);
+                if (om.isBlankNodeId(axiomObject['@id'])) {
+                    var removed = os.removeEntity(os.listItem, axiomObject['@id']);
+                    _.forEach(removed, entity => os.addToDeletions(os.listItem.ontologyRecord.recordId, entity));
+                }
+                pm.remove(os.listItem.selected, key, index);
+                if (prefixes.rdfs + 'domain' === key && !om.isBlankNodeId(axiomObject['@id'])) {
+                    os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
+                } else if (prefixes.rdfs + 'range' === key) {
+                    os.updatePropertyIcon(os.listItem.selected);
+                }
+                return self.saveCurrentChanges()
+                    .then(() => {
+                        self.updateLabel();
+                        return axiomObject;
+                    });
+            }
+
             function containsProperty(entity, properties, value) {
                 return _.some(properties, property => _.some(_.get(entity, property), {'@id': value}));
             }
@@ -423,8 +520,9 @@
                 os.deleteEntityFromParentInHierarchy(os.listItem.concepts.hierarchy, entityIRI, parentIRI, os.listItem.concepts.index);
                 commonDeleteFromVocabHierarchy('concepts');
             }
-            function deleteFromSchemeHierarchy(entityIRI) {
-                os.deleteEntityFromHierarchy(os.listItem.conceptSchemes.hierarchy, entityIRI, os.listItem.conceptSchemes.index);
+            function deleteFromSchemeHierarchy(entityIRI, parentIRI) {
+                os.deleteEntityFromParentInHierarchy(os.listItem.conceptSchemes.hierarchy, entityIRI, parentIRI, os.listItem.conceptSchemes.index);
+                _.remove(os.listItem.conceptSchemes.hierarchy, {entityIRI});
                 if (_.get(os.listItem, 'editorTabStates.schemes.entityIRI') === entityIRI) {
                     _.unset(os.listItem, 'editorTabStates.schemes.entityIRI');
                 }
@@ -445,11 +543,11 @@
             function removeIndividual(entityIRI) {
                 delete _.get(os.listItem, 'individuals.iris')[entityIRI];
                 var indivTypes = os.listItem.selected['@type'];
-                var indivAndClasses = _.get(os.listItem, 'classesAndIndividuals');
+                var indivAndClasses = _.get(os.listItem, 'classesAndIndividuals', {});
 
                 _.forEach(indivTypes, type => {
                     if (type !== prefixes.owl + 'NamedIndividual') {
-                        var parentAndIndivs = indivAndClasses[type];
+                        var parentAndIndivs = _.get(indivAndClasses, "['" + type + "']", []);
                         if (parentAndIndivs.length) {
                             _.remove(parentAndIndivs, item => item === entityIRI);
                             if (!parentAndIndivs.length) {

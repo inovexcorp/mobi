@@ -23,15 +23,14 @@ package com.mobi.repository.impl.sesame.query;
  * #L%
  */
 
-import com.mobi.query.exception.QueryEvaluationException;
 import com.mobi.query.api.BooleanQuery;
 import com.mobi.query.exception.QueryEvaluationException;
 
 public class SesameBooleanQuery extends SesameOperation implements BooleanQuery {
 
-    private org.openrdf.query.BooleanQuery sesameBooleanQuery;
+    private org.eclipse.rdf4j.query.BooleanQuery sesameBooleanQuery;
 
-    public SesameBooleanQuery(org.openrdf.query.BooleanQuery sesameBooleanQuery) {
+    public SesameBooleanQuery(org.eclipse.rdf4j.query.BooleanQuery sesameBooleanQuery) {
         super(sesameBooleanQuery);
         this.sesameBooleanQuery = sesameBooleanQuery;
     }
@@ -40,7 +39,7 @@ public class SesameBooleanQuery extends SesameOperation implements BooleanQuery 
     public boolean evaluate() throws QueryEvaluationException {
         try {
             return sesameBooleanQuery.evaluate();
-        } catch (org.openrdf.query.QueryEvaluationException e) {
+        } catch (org.eclipse.rdf4j.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }
     }

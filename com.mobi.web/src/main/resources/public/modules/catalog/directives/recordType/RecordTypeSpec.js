@@ -69,7 +69,8 @@ describe('Record Type directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('record-type')).toBe(true);
-            expect(this.element.hasClass('label')).toBe(true);
+            expect(this.element.hasClass('badge')).toBe(true);
+            expect(this.element.hasClass('badge-pill')).toBe(true);
         });
         it('with the correct background color depending on the record type', function() {
             spyOn(this.controller, 'getColor').and.returnValue('white');

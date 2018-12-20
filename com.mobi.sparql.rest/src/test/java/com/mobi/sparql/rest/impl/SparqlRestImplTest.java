@@ -23,46 +23,6 @@ package com.mobi.sparql.rest.impl;
  * #L%
  */
 
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import com.mobi.rest.util.MobiRestTestNg;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.apache.commons.io.IOUtils;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
-import com.mobi.dataset.api.DatasetConnection;
-import com.mobi.dataset.api.DatasetManager;
-import com.mobi.exception.MobiException;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.api.RepositoryManager;
-import com.mobi.rest.util.RestUtils;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.sail.memory.MemoryStore;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import static com.mobi.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
@@ -72,7 +32,46 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+
+import com.mobi.dataset.api.DatasetConnection;
+import com.mobi.dataset.api.DatasetManager;
+import com.mobi.exception.MobiException;
+import com.mobi.persistence.utils.ResourceUtils;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
+import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.RepositoryManager;
+import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.rest.util.MobiRestTestNg;
+import com.mobi.rest.util.RestUtils;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 
 public class SparqlRestImplTest extends MobiRestTestNg {
     private SparqlRestImpl rest;
@@ -117,7 +116,7 @@ public class SparqlRestImplTest extends MobiRestTestNg {
         rest.setValueFactory(vf);
 
         DATASET_ID = "http://example.com/datasets/0";
-        ALL_QUERY = RestUtils.encode(IOUtils.toString(getClass().getClassLoader().getResourceAsStream("all_query.rq")));
+        ALL_QUERY = ResourceUtils.encode(IOUtils.toString(getClass().getClassLoader().getResourceAsStream("all_query.rq")));
 
         return new ResourceConfig()
                 .register(rest)
@@ -189,11 +188,11 @@ public class SparqlRestImplTest extends MobiRestTestNg {
 
     @Test
     public void queryWithInvalidQueryTest() {
-        Response response = target().path("sparql").queryParam("query", RestUtils.encode("+"))
+        Response response = target().path("sparql").queryParam("query", ResourceUtils.encode("+"))
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(response.getStatus(), 400);
 
-        response = target().path("sparql").queryParam("query", RestUtils.encode("+")).queryParam("dataset", DATASET_ID)
+        response = target().path("sparql").queryParam("query", ResourceUtils.encode("+")).queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(response.getStatus(), 400);
     }
@@ -276,13 +275,13 @@ public class SparqlRestImplTest extends MobiRestTestNg {
 
     @Test
     public void downloadQueryWithInvalidQueryTest() {
-        Response response = target().path("sparql").queryParam("query", RestUtils.encode("+"))
+        Response response = target().path("sparql").queryParam("query", ResourceUtils.encode("+"))
                 .queryParam("fileType", "csv").request().get();
         assertEquals(response.getStatus(), 400);
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
         assertTrue(result.containsKey("details"));
 
-        response = target().path("sparql").queryParam("query", RestUtils.encode("+")).queryParam("dataset", DATASET_ID)
+        response = target().path("sparql").queryParam("query", ResourceUtils.encode("+")).queryParam("dataset", DATASET_ID)
                 .queryParam("fileType", "csv").request().get();
         assertEquals(response.getStatus(), 400);
         result = JSONObject.fromObject(response.readEntity(String.class));
@@ -388,12 +387,12 @@ public class SparqlRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getPagedResultsWithInvalidQueryTest() {
-        Response response = target().path("sparql/page").queryParam("query", encode("+")).request().get();
+        Response response = target().path("sparql/page").queryParam("query", ResourceUtils.encode("+")).request().get();
         assertEquals(response.getStatus(), 400);
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
         assertTrue(result.containsKey("details"));
 
-        response = target().path("sparql/page").queryParam("query", encode("+")).queryParam("dataset", DATASET_ID)
+        response = target().path("sparql/page").queryParam("query", ResourceUtils.encode("+")).queryParam("dataset", DATASET_ID)
                 .request().get();
         assertEquals(response.getStatus(), 400);
         result = JSONObject.fromObject(response.readEntity(String.class));

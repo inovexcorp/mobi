@@ -21,19 +21,17 @@
  * #L%
  */
 describe('Concept Hierarchy Block directive', function() {
-    var $compile, scope, ontologyStateSvc, ontologyUtilsManagerSvc;
+    var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('conceptHierarchyBlock');
         mockOntologyState();
-        mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
         });
 
         this.element = $compile(angular.element('<concept-hierarchy-block></concept-hierarchy-block>'))(scope);
@@ -45,7 +43,6 @@ describe('Concept Hierarchy Block directive', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        ontologyUtilsManagerSvc = null;
         this.element.remove();
     });
 
@@ -54,66 +51,14 @@ describe('Concept Hierarchy Block directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('concept-hierarchy-block')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
-        });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(1);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
-        });
-        it('with a hierarchy-tree', function() {
+        it('depending on whether the tree is empty', function() {
+            expect(this.element.find('info-message').length).toEqual(1);
+            expect(this.element.find('hierarchy-tree').length).toBe(0);
+
+            ontologyStateSvc.listItem.concepts.flat = [{}];
+            scope.$digest();
+            expect(this.element.find('info-message').length).toEqual(0);
             expect(this.element.find('hierarchy-tree').length).toBe(1);
         });
-        it('with a block-footer', function() {
-            expect(this.element.find('block-footer').length).toBe(1);
-        });
-        it('with a button to delete a concept', function() {
-            var button = this.element.querySelectorAll('block-footer button');
-            expect(button.length).toBe(1);
-            expect(angular.element(button[0]).text()).toContain('Delete Concept');
-        });
-        it('depending on whether a delete should be confirmed', function() {
-            expect(this.element.find('confirmation-overlay').length).toBe(0);
-
-            this.controller.showDeleteConfirmation = true;
-            scope.$digest();
-
-            expect(this.element.find('confirmation-overlay').length).toBe(1);
-        });
-        it('depending on whether a concept is being created', function() {
-            expect(this.element.find('create-concept-overlay').length).toBe(0);
-
-            ontologyStateSvc.showCreateConceptOverlay = true;
-            scope.$digest();
-            expect(this.element.find('create-concept-overlay').length).toBe(1);
-        });
-        it('based on whether something is selected', function() {
-            var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
-            expect(button.attr('disabled')).toBeFalsy();
-
-            ontologyStateSvc.listItem.selected = undefined;
-            scope.$digest();
-            expect(button.attr('disabled')).toBeTruthy();
-        });
-    });
-    describe('controller methods', function() {
-        it('should delete a concept', function() {
-            this.controller.showDeleteConfirmation = true;
-            this.controller.deleteEntity();
-            expect(ontologyUtilsManagerSvc.deleteConcept).toHaveBeenCalled();
-            expect(this.controller.showDeleteConfirmation).toBe(false);
-        });
-    });
-    it('should set the correct state when the create concept link is clicked', function() {
-        var link = angular.element(this.element.querySelectorAll('block-header a')[0]);
-        link.triggerHandler('click');
-        expect(ontologyStateSvc.showCreateConceptOverlay).toBe(true);
-    });
-    it('should set the correct state when the delete concept button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
-        button.triggerHandler('click');
-        expect(this.controller.showDeleteConfirmation).toBe(true);
     });
 });

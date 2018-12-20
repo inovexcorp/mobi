@@ -29,8 +29,9 @@ describe('Record Block directive', function() {
         mockCatalogManager();
         mockCatalogState();
         mockUtil();
+        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _catalogStateService_, _utilService_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _catalogStateService_, _utilService_, _prefixes_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
@@ -45,6 +46,14 @@ describe('Record Block directive', function() {
         catalogManagerSvc.isVersionedRDFRecord.and.returnValue(true);
         catalogManagerSvc.getRecord.and.returnValue($q.when(this.record));
         this.element = $compile(angular.element('<record-block></record-block>'))(scope);
+        this.headers = {
+            'x-total-count': 2,
+        };
+        this.response = {
+            data: [],
+            headers: jasmine.createSpy('headers').and.returnValue(this.headers)
+        };
+        catalogManagerSvc.getRecordBranches.and.returnValue($q.when(this.response));
         scope.$digest();
         this.controller = this.element.controller('recordBlock');
     });
@@ -75,60 +84,37 @@ describe('Record Block directive', function() {
             scope.$digest();
             this.controller = this.element.controller('recordBlock');
             expect(this.controller.record).toEqual({});
-            expect(catalogStateSvc.resetPagination).toHaveBeenCalled();
             expect(catalogStateSvc.catalogs.local.openedPath).toEqual([]);
         });
     });
     describe('controller methods', function() {
-        describe('should change the sort', function() {
+        describe('should load more branches', function() {
             beforeEach(function() {
-                catalogManagerSvc.getRecordBranches.calls.reset();
-                catalogStateSvc.setPagination.calls.reset();
+                this.controller.record = this.record;
+                this.expectedPaginationConfig = {
+                    pageIndex: 0,
+                    limit: catalogStateSvc.catalogs.local.branches.limit + 10,
+                    sortOption: undefined
+                };
             });
-            it('unless the record is not a VersionedRDFRecord', function() {
-                catalogManagerSvc.isVersionedRDFRecord.and.returnValue(false);
-                this.controller.changeSort();
-                expect(catalogManagerSvc.getRecordBranches).not.toHaveBeenCalled();
+            it('unless an error occurs', function() {
+                catalogManagerSvc.getRecordBranches.and.returnValue($q.reject('Error Message'));
+                this.controller.loadMore();
+                scope.$apply()
+                expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(this.controller.record['@id'], catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
             });
-            describe('if the record is a VersionedRDFRecord', function() {
-                beforeEach(function() {
-                    catalogManagerSvc.isVersionedRDFRecord.and.returnValue(true);
-                    this.controller.record = this.record;
-                    this.expectedPaginationConfig = {
-                        pageIndex: 0,
-                        limit: catalogStateSvc.catalogs.local.branches.limit,
-                        sortOption: catalogStateSvc.catalogs.local.branches.sortOption,
-                    };
-                });
-                it('unless an error occurs', function() {
-                    catalogManagerSvc.getRecordBranches.and.returnValue($q.reject('Error Message'));
-                    this.controller.changeSort();
-                    scope.$apply();
-                    expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(this.controller.record['@id'], catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
-                    expect(catalogStateSvc.currentPage).toBe(0);
-                    expect(catalogStateSvc.setPagination).not.toHaveBeenCalled();
-                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
-                });
-                it('succesfully', function() {
-                    this.controller.changeSort();
-                    scope.$apply();
-                    expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(this.controller.record['@id'], catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
-                    expect(catalogStateSvc.currentPage).toBe(0);
-                    expect(catalogStateSvc.setPagination).toHaveBeenCalled();
-                    expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
-                });
+            it('successfully', function() {
+                this.controller.loadMore();
+                expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(this.controller.record['@id'], catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
+                expect(this.controller.limit).toBe(20);
             });
-        });
-        it('should open a branch', function() {
-            this.controller.openBranch({});
-            expect(catalogStateSvc.resetPagination).toHaveBeenCalled();
-            expect(catalogStateSvc.catalogs.local.openedPath).toContain({});
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('record-block')).toBe(true);
-            expect(this.element.hasClass('col-xs-12')).toBe(true);
+            expect(this.element.hasClass('col')).toBe(true);
         });
         it('with a block', function() {
             expect(this.element.find('block').length).toBe(1);
@@ -159,36 +145,31 @@ describe('Record Block directive', function() {
         });
         it('depending on whether the record is a VersionedRDFRecord', function() {
             expect(this.element.querySelectorAll('.branches-container').length).toBe(1);
-            expect(this.element.find('block-footer').length).toBe(1);
-            expect(this.element.find('pagination-header').length).toBe(1);
 
             catalogManagerSvc.isVersionedRDFRecord.and.returnValue(false);
             scope.$digest();
             expect(this.element.querySelectorAll('.branches-container').length).toBe(0);
-            expect(this.element.find('block-footer').length).toBe(0);
-            expect(this.element.find('pagination-header').length).toBe(0);
         });
         it('depending on how many branches the record has', function() {
             catalogManagerSvc.isVersionedRDFRecord.and.returnValue(true);
+            catalogStateSvc.results = [{}, {}];
+            scope.$digest();
+            var branches = this.element.querySelectorAll('.expansion-panel');
+            expect(branches.length).toBe(catalogStateSvc.results.length);
+            expect(this.element.querySelectorAll('.load-button').length).toBe(0);
             catalogStateSvc.results = [{}];
             scope.$digest();
-            var branches = this.element.querySelectorAll('.branches-list button.branch');
-            expect(branches.length).toBe(catalogStateSvc.results.length);
-            for (var i = 0; i < branches.length; i++) {
-                var branch = angular.element(branches[i]);
-                expect(branch.find('entity-dates').length).toBe(1);
-                expect(branch.find('entity-description').length).toBe(1);
-            }
+            expect(this.element.querySelectorAll('.load-button').length).toBe(1);
         });
     });
-    it('should call openBranch when a branch button is clicked', function() {
+    it('should load more branches when the load more button is clicked', function() {
         catalogStateSvc.results = [{}];
-        spyOn(this.controller, 'openBranch');
+        spyOn(this.controller, 'loadMore');
         catalogManagerSvc.isVersionedRDFRecord.and.returnValue(true);
         scope.$digest();
 
-        var button = angular.element(this.element.querySelectorAll('.branches-list button.branch')[0]);
+        var button = angular.element(this.element.querySelectorAll('.load-button')[0]);
         button.triggerHandler('click');
-        expect(this.controller.openBranch).toHaveBeenCalledWith(catalogStateSvc.results[0]);
+        expect(this.controller.loadMore).toHaveBeenCalled();
     });
 });

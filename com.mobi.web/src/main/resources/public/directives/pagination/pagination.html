@@ -21,17 +21,5 @@
   #L%
   -->
 <div class="page-nav">
-     <ul ng-if="links" class="pagination">
-         <li ng-if="links.prev">
-             <a aria-label="Previous" ng-click="getPage({direction: 'prev'})">
-                 <span aria-hidden="true">&laquo;</span>
-             </a>
-         </li>
-         <li class="active"><a>{{currentPage + 1}}</a></li>
-         <li ng-if="links.next">
-             <a aria-label="Next" ng-click="getPage({direction: 'next'})">
-                 <span aria-hidden="true">&raquo;</span>
-             </a>
-         </li>
-     </ul>
+     <ul class="justify-content-center" uib-pagination total-items="dvm.total" ng-model="dvm.currentPage" previous-text="&lsaquo;" next-text="&rsaquo;" max-size="1" items-per-page="dvm.limit" ng-change="dvm.changePage()"></ul>
  </div>

@@ -20,22 +20,25 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="ontology-download-overlay overlay sm">
-    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
-        <h6>Download Ontology</h6>
+<div class="modal-header">
+    <h3>Download Ontology</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+    <form name="dvm.form" novalidate autocomplete="off">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <custom-label>Serialization</custom-label>
         <serialization-select ng-model="dvm.serialization"></serialization-select>
-        <div ng-class="{'has-error': dvm.form.fileName.$error.pattern}" class="form-group">
+        <div class="form-group">
             <label class="control-label">File Name</label>
-            <input class="form-control" name="fileName" ng-model="dvm.fileName" ng-pattern="dvm.fileNamePattern" required />
-            <p ng-messages="dvm.form.fileName.$error" class="error-display">
+            <input class="form-control" name="fileName" ng-model="dvm.fileName" ng-pattern="dvm.fileNamePattern" ng-class="{'is-invalid': dvm.form.fileName.$error.pattern}" required />
+            <p ng-messages="dvm.form.fileName.$error" class="invalid-feedback">
                 <ng-message when="pattern">File names may only contain alphanumeric characters, ., -, and _.</ng-message>
             </p>
         </div>
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-disabled="!dvm.serialization || dvm.form.$invalid" ng-click="dvm.download()">Download</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.os.showDownloadOverlay = false">Cancel</button>
-        </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-disabled="!dvm.serialization || dvm.form.$invalid" ng-click="dvm.download()">Submit</button>
 </div>

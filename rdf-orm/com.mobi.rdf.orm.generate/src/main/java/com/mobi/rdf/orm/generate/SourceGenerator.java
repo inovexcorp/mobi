@@ -25,7 +25,17 @@ package com.mobi.rdf.orm.generate;
 
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.rdf.api.Literal;
+import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.Value;
+import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.AbstractOrmFactory;
+import com.mobi.rdf.orm.OrmException;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.Thing;
+import com.mobi.rdf.orm.conversion.ValueConverter;
+import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
+import com.mobi.rdf.orm.generate.ontology.MOBI;
+import com.mobi.rdf.orm.impl.ThingImpl;
 import com.sun.codemodel.ClassType;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
@@ -44,25 +54,15 @@ import com.sun.codemodel.JOp;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 import org.apache.commons.lang3.StringUtils;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.orm.OrmException;
-import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.Thing;
-import com.mobi.rdf.orm.conversion.ValueConverter;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.generate.ontology.MOBI;
-import com.mobi.rdf.orm.impl.ThingImpl;
-import org.openrdf.model.IRI;
-import org.openrdf.model.Model;
-import org.openrdf.model.Resource;
-import org.openrdf.model.impl.LinkedHashModel;
-import org.openrdf.model.impl.SimpleValueFactory;
-import org.openrdf.model.vocabulary.OWL;
-import org.openrdf.model.vocabulary.RDF;
-import org.openrdf.model.vocabulary.RDFS;
-import org.openrdf.model.vocabulary.XMLSchema;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.eclipse.rdf4j.model.vocabulary.XMLSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,7 +142,7 @@ public class SourceGenerator {
         checkingModel.filter(null, OWL.IMPORTS, null).stream().forEach(stmt -> {
             boolean contains = false;
             for (ReferenceOntology refOnt : referenceOntologies) {
-                Optional<org.openrdf.model.Resource> resource = refOnt.getOntologyModel().filter(null, RDF.TYPE, OWL.ONTOLOGY).stream().filter(ontStmt -> ontStmt.getSubject().equals(stmt.getObject())).map(ontStmt -> ontStmt.getSubject()).findFirst();
+                Optional<org.eclipse.rdf4j.model.Resource> resource = refOnt.getOntologyModel().filter(null, RDF.TYPE, OWL.ONTOLOGY).stream().filter(ontStmt -> ontStmt.getSubject().equals(stmt.getObject())).map(ontStmt -> ontStmt.getSubject()).findFirst();
                 if (resource.isPresent()) {
                     contains = true;
                     break;
@@ -258,9 +258,9 @@ public class SourceGenerator {
                 getExisting.annotate(Override.class);
 
                 /*
-                  * The conditional here is basically going to filter the model for the rdf:type of the
-                  * thing we're looking for, and will return whether or not the resulting submodel is empty.
-                  *
+                 * The conditional here is basically going to filter the model for the rdf:type of the
+                 * thing we're looking for, and will return whether or not the resulting submodel is empty.
+                 *
                  */
                 final JInvocation conditional = JExpr.ref("model").invoke("filter")
                         .arg(JExpr.ref("resource"))
@@ -273,9 +273,9 @@ public class SourceGenerator {
                 final JInvocation emptyOptional = codeModel.ref(Optional.class).staticInvoke("empty");
 
                 /*
-                  * If the condition is false, meaning there is a matching rdf:type statement.  Then
-                  * we will create an Optional.of a new instance of our target Thing class using the
-                  * model we're referencing.
+                 * If the condition is false, meaning there is a matching rdf:type statement.  Then
+                 * we will create an Optional.of a new instance of our target Thing class using the
+                 * model we're referencing.
                  */
                 final JInvocation realOptional = codeModel.ref(Optional.class).staticInvoke("of")
                         .arg(JExpr._new(clazz)
@@ -364,10 +364,10 @@ public class SourceGenerator {
         interfaces.forEach((classIri, interfaceClass) -> {
             if (classIri != null) {
                 try {
-                /*
-                 * Define the implementation class, wire it to the correct
-                 * interface and extend Thing.
-                 */
+                    /*
+                     * Define the implementation class, wire it to the correct
+                     * interface and extend Thing.
+                     */
                     final JDefinedClass impl = codeModel._class(JMod.PUBLIC,
                             packageName + "." + interfaceClass.name() + "Impl", ClassType.CLASS);
                     interfaceImplMap.put(interfaceClass, impl);
@@ -416,6 +416,10 @@ public class SourceGenerator {
                 // Else it's a remover for a non functional field.
                 else if (interfaceMethod.name().startsWith("remove")) {
                     generateFieldAdderRemoverForImpl(impl, interfaceMethod, interfaceClass, false);
+                }
+                // Else it's a clearer for a property
+                else if (interfaceMethod.name().startsWith("clear")) {
+                    generateFieldClearerForImpl(impl, interfaceMethod, interfaceClass);
                 }
                 // Else it's a property IRI getter.
                 else if (interfaceMethod.name().startsWith(PROPERTY_IRI_GETTER_PREFIX)) {
@@ -524,6 +528,21 @@ public class SourceGenerator {
         }
     }
 
+    private void generateFieldClearerForImpl(final JDefinedClass impl, final JMethod interfaceMethod,
+                                             final JDefinedClass interfaceClass) {
+        final JMethod method = impl.method(JMod.PUBLIC, interfaceMethod.type(), interfaceMethod.name());
+        method.annotate(Override.class);
+        method.body()._return(JExpr.invoke("clearProperty")
+                .arg(JExpr.ref("valueFactory")
+                        .invoke("createIRI")
+                        .arg(interfaceClass.staticRef(classMethodIriMap.get(interfaceClass).get(interfaceMethod)))));
+
+
+
+
+
+    }
+
     private void generateImplConstructors(final JDefinedClass impl, final JDefinedClass interfaceClazz) {
         final JMethod constructor = impl.constructor(JMod.PUBLIC);
         constructor.body().invoke("super")
@@ -599,6 +618,11 @@ public class SourceGenerator {
                         methodIriMap.put(
                                 generateSetterMethodForInterface(clazz, iri, name, fieldName, propertyIri, setterType),
                                 clazz.fields().get(fieldName + "_IRI"));
+
+                        // Clearer method.
+                        methodIriMap.put(generateClearerMethodForInterface(clazz, iri, name, fieldName, propertyIri),
+                                clazz.fields().get(fieldName + "_IRI"));
+
                     } else {
                         // TODO - handle the type is undefined... Work with it
                         // as a Value?
@@ -607,6 +631,15 @@ public class SourceGenerator {
             });
             classMethodIriMap.put(clazz, methodIriMap);
         });
+    }
+
+    private JMethod generateClearerMethodForInterface(final JDefinedClass clazz, final IRI interfaceIri,
+                                                      final String name, final String fieldName, final IRI propertyIri) {
+        final JMethod method = clazz.method(JMod.PUBLIC, boolean.class, generateMethodName("clear", name));
+        final JDocComment comment = method.javadoc();
+        comment.add("Clear the " + fieldName + " property from this instance of a " + interfaceIri + ".");
+        comment.addReturn().add("Whether or not data was removed for this property/instance");
+        return method;
     }
 
     private JMethod generateGetterMethodForInterface(final JDefinedClass clazz, final IRI interfaceIri,
@@ -660,7 +693,7 @@ public class SourceGenerator {
      * @return The JClass representing the type of parameter the property specifies
      */
     private JClass identifyType(final IRI property) {
-        final Set<org.openrdf.model.Value> objects = this.metaModel.filter(property, RDFS.RANGE, null).objects();
+        final Set<org.eclipse.rdf4j.model.Value> objects = this.metaModel.filter(property, RDFS.RANGE, null).objects();
         if (objects.size() == 1) {
             final IRI rangeIri = (IRI) objects.iterator().next();
             //TODO - think about moving the searching through our ontology and references to the end of this logic.
@@ -745,7 +778,7 @@ public class SourceGenerator {
         interfaces.forEach((iri, clazz) -> {
             if (iri != null) {
                 model.filter(iri, RDFS.SUBCLASSOF, null).forEach(stmt -> {
-                    org.openrdf.model.Value value = stmt.getObject();
+                    org.eclipse.rdf4j.model.Value value = stmt.getObject();
                     if (value instanceof IRI) {
                         final IRI extending = (IRI) stmt.getObject();
                         if (!extending.equals(OWL.THING)) {
@@ -769,7 +802,7 @@ public class SourceGenerator {
                                 });
                             }
                         }
-                    } else if (value instanceof org.openrdf.model.Resource) {
+                    } else if (value instanceof org.eclipse.rdf4j.model.Resource) {
                         // TODO - handle blank nodes somehow
                         LOG.warn("Blank nodes remain unhandled");
                     } else {
@@ -938,11 +971,21 @@ public class SourceGenerator {
      * ontology
      */
     private Collection<IRI> identifyClasses() {
-        final Model submodel = this.model.filter(null, RDF.TYPE, OWL.CLASS);
-        classIris = new ArrayList<>(submodel.size());
-        submodel.stream()
-                .filter(statement -> statement.getSubject() instanceof IRI)
-                .forEach(statement -> classIris.add((IRI) statement.getSubject()));
+        final Model owlClasses = this.model.filter(null, RDF.TYPE, OWL.CLASS);
+        final Model rdfsClasses = this.model.filter(null, RDF.TYPE, RDFS.CLASS);
+        classIris = new HashSet<>(owlClasses.size() + rdfsClasses.size());
+
+        owlClasses.stream()
+                .map(org.eclipse.rdf4j.model.Statement::getSubject)
+                .filter(subject -> subject instanceof IRI)
+                .map(subject -> (IRI) subject)
+                .forEach(classIris::add);
+
+        rdfsClasses.stream()
+                .map(org.eclipse.rdf4j.model.Statement::getSubject)
+                .filter(subject -> subject instanceof IRI)
+                .map(subject -> (IRI) subject)
+                .forEach(classIris::add);
         return classIris;
     }
 

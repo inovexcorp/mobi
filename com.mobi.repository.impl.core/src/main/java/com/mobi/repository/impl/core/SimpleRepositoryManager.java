@@ -25,13 +25,12 @@ package com.mobi.repository.impl.core;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import com.mobi.repository.api.DelegatingRepository;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.sail.memory.MemoryStore;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
 
 import java.util.HashMap;
 import java.util.Map;

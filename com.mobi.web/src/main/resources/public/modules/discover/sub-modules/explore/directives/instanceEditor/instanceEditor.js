@@ -42,6 +42,7 @@
          * @requires discoverState.service:discoverStateService
          * @requires util.service:utilService
          * @requires explore.service:exploreService
+         * @requires exploreUtils.service:exploreUtilsService
          *
          * @description
          * HTML contents in the instance view page which shows the complete list of properites
@@ -64,14 +65,13 @@
                     var eu = exploreUtilsService;
                     dvm.ds = discoverStateService;
                     dvm.util = utilService;
-                    dvm.original = angular.copy(dvm.ds.explore.instance.entity);
                     dvm.isValid = true;
 
                     dvm.save = function() {
                         dvm.ds.explore.instance.entity = eu.removeEmptyPropertiesFromArray(dvm.ds.explore.instance.entity);
                         var instance = dvm.ds.getInstance();
                         es.updateInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.metadata.instanceIRI, dvm.ds.explore.instance.entity)
-                            .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset: dvm.ds.explore.instanceDetails.currentPage * dvm.ds.explore.instanceDetails.limit, limit: dvm.ds.explore.instanceDetails.limit}), $q.reject)
+                            .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset: (dvm.ds.explore.instanceDetails.currentPage - 1) * dvm.ds.explore.instanceDetails.limit, limit: dvm.ds.explore.instanceDetails.limit}), $q.reject)
                             .then(response => {
                                 dvm.ds.explore.instanceDetails.data = response.data;
                                 dvm.ds.explore.instance.metadata = _.find(response.data, {instanceIRI: instance['@id']});
@@ -81,7 +81,7 @@
                     }
 
                     dvm.cancel = function() {
-                        dvm.ds.explore.instance.entity = dvm.original;
+                        dvm.ds.explore.instance.entity = dvm.ds.explore.instance.original;
                         dvm.ds.explore.editing = false;
                     }
                 }

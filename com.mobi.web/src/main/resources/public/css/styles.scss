@@ -1,6 +1,103 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
+// Fixes for AngularJS Material
+md-backdrop.md-select-backdrop {
+    z-index: 1999;
+}
+.md-select-menu-container {
+    z-index: 2000;
+}
+.md-button {
+    text-transform: none;
+}
+
+// Fixes for Material Bootstrap
+.ui-select-bootstrap > .ui-select-choices,
+.ui-select-bootstrap > .ui-select-no-choice {
+    display: initial;
+    background-color: #fff;
+    box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14),
+                0 3px 14px 3px rgba(0, 0, 0, 0.12),
+                0 4px 15px 0 rgba(0, 0, 0, 0.2);
+}
+
+.ui-select-bootstrap > .ui-select-choices::before,
+.ui-select-bootstrap > .ui-select-no-choice::before {
+    display: none;
+}
+
+.btn, .nav-tabs .nav-link {
+    text-transform: none;
+}
+
+.ui-select-match.btn-default-focus {
+    outline-offset: 0;
+    background-color: transparent;
+    color: initial;
+    outline: 0;
+    box-shadow: none;
+    border-color: transparent;
+
+    .ui-select-toggle.form-control {
+        border-color: var(--secondary);
+        box-shadow: inset 0 -2px 0 -1px var(--secondary);
+        outline: 0;
+    }
+}
+
+.ui-select-toggle.form-control {
+    display: inline-block;
+}
+
+.ui-select-bootstrap .ui-select-choices-row.active > span {
+    background-color: var(--primary);
+}
+
+a:not([href]):not([tabindex]) {
+    color: var(--primary);
+}
+
+select.form-control, .custom-select {
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.ui-select-bootstrap .ui-select-match-item {
+    background: rgb(224,224,224);
+    color: rgb(66,66,66);
+    -webkit-appearance: none !important;
+    box-shadow: none;
+    border-radius: 16px;
+
+    &:hover, &:focus {
+        color: initial;
+    }
+}
+
+.dropdown-item {
+    font-size: 0.875rem;
+}
+
+.ui-select-toggle.form-control {
+    background-image: url('data:image/svg+xml;charset=utf8,%3Csvg fill="%23000000" fill-opacity="0.54" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M7 10l5 5 5-5z"/%3E%3Cpath d="M0 0h24v24H0z" fill="none"/%3E%3C/svg%3E');
+    background-position: 100% 50%;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 1.5em;
+
+    &[disabled="disabled"] {
+        border-style: dotted;
+        color: rgba(0,0,0,.38);
+        opacity: 1;
+
+        &:hover, &:focus {
+            border-color: rgba(0,0,0,.42);
+            box-shadow: none;
+        }
+    }
+}
+
 /* General page spacing */
 body {
     bottom: 0;
@@ -10,18 +107,26 @@ body {
     right: 0;
     top: 0;
     overflow-x: hidden;
+    overflow-y: hidden;
 
     /* Overall design styles */
     .blue-bar {
         height: 48px;
-        background-color: $highlight-blue;
+        background-color: var(--primary);
     }
 
     .white-bar {
         background-color: #fff;
-        box-shadow: 5px 5px 5px 0px $gray-light;
+        box-shadow: 5px 5px 5px 0px var(--light-dark);
         height: 52px;
         text-align: center;
+    }
+    .app-container {
+        padding: 0;
+        width: calc(100% - #{$sidebar-open-width});
+    }
+    &.collapsed-nav .app-container {
+        max-width: calc(100% - #{$sidebar-closed-width});
     }
 
     /* All <a> tags have the pointer cursor */
@@ -39,38 +144,6 @@ body {
 
     .field-name {
         font-weight: bold;
-    }
-
-    /* Error message font */
-    .error-display {
-        color: $error-color;
-        font-weight: bold;
-    }
-
-    .info-message {
-        font-weight: bold;
-    }
-
-    .has-error {
-        /* Error label font */
-        .control-label,
-        .control-label small {
-            color: #f00;
-        }
-
-        /* Error message input border */
-        .form-control {
-            border-color: #f00;
-
-            &:focus {
-                border-color: #e00;
-            }
-        }
-
-        /* Error message spacing when below form inputs */
-        .error-display {
-            margin: 5px 0 0;
-        }
     }
 
     /* view container spacing with extra on the bottom for the icon buttons */
@@ -91,15 +164,9 @@ ul {
     padding: 0;
 }
 
-/* standard box style and height */
-.boxed {
-    border: 1px solid $gray-dark;
-    height: 100%;
-    overflow-y: auto;
-}
-
 /* Overlay styles */
-.overlay {
+.overlay,
+.scrollable-overlay {
     background-color: rgba(0,0,0,.5);
     bottom: 0;
     left: 0;
@@ -160,32 +227,65 @@ ul {
     }
 
     /* overlay content styles */
-    .content {
-        background: #fff;
-        border: 1px solid #fff;
+    .content .main {
+        margin-bottom: 15px;
+        word-wrap: break-word;
+    }
+}
+
+.scrollable-overlay {
+    display: flex;
+
+    .content-wrapper {
         border-radius: 5px;
-        left: 0;
-        margin: 100px auto 0;
-        padding: 10px;
-        position: absolute;
-        right: 0;
+        display: flex;
+        flex-direction: column;
+        margin: 100px auto;
+        position: relative;
         width: 500px;
 
-        /* header text style */
-        h6, h1 {
-            background-color: $highlight-blue;
+        > h6, > h1 {
+            background-color: var(--primary);
+            border: 1px solid #fff;
+            border-bottom: 0;
             border-top-left-radius: 5px;
             border-top-right-radius: 5px;
             color: #fff;
             font-size: 1.05em;
-            margin: -10px -10px 10px;
+            margin: 0;
             padding: 10px;
         }
 
-        .main {
-            margin-bottom: 15px;
-            word-wrap: break-word;
+        .content {
+            background: #fff;
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+            overflow-y: auto;
+            padding: 10px;
         }
+    }
+}
+
+.overlay .content {
+    background: #fff;
+    border: 1px solid #fff;
+    border-radius: 5px;
+    left: 0;
+    margin: 100px auto 0;
+    padding: 10px;
+    position: absolute;
+    right: 0;
+    width: 500px;
+
+    /* header text style */
+    h6, h1 {
+        background-color: var(--primary);
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+        color: #fff;
+        font-size: 1.05em;
+        margin: -10px -10px 10px;
+        padding: 10px;
     }
 }
 
@@ -205,10 +305,6 @@ ul {
             margin-left: 10px;
         }
     }
-}
-
-.md-button {
-    text-transform: none;
 }
 
 .checkbox input {
@@ -232,9 +328,10 @@ ul {
 
     /* Anchor inherits the color of parent and fills container completely */
     a {
-        color: inherit;
+        display: inline-block;
+        color: inherit !important;
         cursor: pointer;
-        display: flex;
+        min-width: 100%;
         padding: 3px 4px;
         text-decoration: none;
 
@@ -242,13 +339,8 @@ ul {
         &.active,
         &.active .unsaved-icon,
         &.unsaved:hover .unsaved-icon {
-            background-color: $brand-primary;
-            color: #fff;
-        }
-
-        > span {
-            flex: 1;
-            @include textOverflow;
+            background-color: var(--primary);
+            color: #fff !important;
         }
 
         > .fa.fa-fw {
@@ -271,46 +363,12 @@ ul {
     }
 
     /* General styles for the ul elements */
-    ul,
     .repeater-container {
-        /* Padding to match the width of the icons */
-        ul,
-        .creator {
-            border-left: 1px solid $gray-lighter;
-            margin-left: 1.28571429em;
-        }
-
         /* The list items which contain an anchor for all of the items in the tree */
-        li,
         .tree-item {
-            width: 100%;
-
-            &.invalid .fa-check:before {
-                content: "\f071";
-            }
-
-            /* Class identifying that it contains a <ul> element */
-            &.container {
-                margin: 0;
-                padding: 0;
-            }
-
-            &.invalid a {
-                .unsaved-icon {
-                    color: $brand-danger;
-                }
-
-                &.active .unsaved-icon {
-                    color: #fff;
-                }
-            }
+            white-space: nowrap;
         }
     }
-}
-
-/* makes the height of the containers 100% so scrolling works as expected */
-.full-height {
-    height: 100%;
 }
 
 /* table with inputs */
@@ -355,15 +413,6 @@ ul {
     }
 }
 
-/* section title */
-.section-header {
-    background: $brand-primary;
-    color: #fff;
-    font-size: 16px;
-    margin: 0;
-    padding: 6px 15px 10px;
-}
-
 /* static form display spacing */
 .form-control-static {
     min-height: auto;
@@ -372,22 +421,6 @@ ul {
 
 .ui-select-multiple.ui-select-bootstrap {
     padding: 3px;
-
-    &.open {
-        border-color: #66afe9;
-        outline: 0;
-        -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6);
-                box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6);
-    }
-
-    input.ui-select-search {
-        margin: 2px 0 1px;
-        padding: 0 9px;
-    }
-
-    .ui-select-match-item {
-        margin-bottom: 2px;
-    }
 
     &[disabled] input.ui-select-search {
         display: initial !important;
@@ -442,7 +475,7 @@ ul {
     }
 
     .display-text {
-        background-color: $gray;
+        background-color: var(--dark-light);
         box-shadow: 0 0 2px rgba(0,0,0,.14), 0 2px 4px rgba(0,0,0,.28);
         color: #fff;
         display: none;
@@ -450,73 +483,6 @@ ul {
         position: absolute;
         right: 72px;
         top: 13px;
-    }
-}
-
-.nav li {
-    color: #fff;
-    display: inline-block;
-
-    button {
-        background: transparent;
-        border: 0;
-        outline: 0;
-    }
-
-    /* Styles the icon itself */
-    a,
-    button {
-        color: inherit;
-        cursor: pointer;
-        display: inline-block;
-        padding: 6px;
-        text-decoration: none;
-
-        &.disabled,
-        &[disabled] {
-            color: $gray-light;
-        }
-
-        /* Changes the color of the icons as you hover over them. */
-        &:not(.disabled):not([disabled]):hover {
-            color: $brand-info;
-        }
-
-        .fa,
-        .create-icon .identifier {
-            font-size: 1.5em;
-        }
-
-        /* The words that appear next to the icon */
-        .name {
-            display: none;
-            line-height: 2em;
-            padding-left: 10px;
-            vertical-align: top;
-        }
-
-        .create-icon {
-            display: inline-block;
-            position: relative;
-
-            .identifier {
-                display: inline-block;
-                font-weight: bold;
-                text-align: left;
-                padding-left: 3px;
-
-                &.narrow {
-                    padding-left: 7px;
-                }
-            }
-
-            .fa {
-                font-size: .75em;
-                position: absolute;
-                right: 2px;
-                top: 0;
-            }
-        }
     }
 }
 
@@ -544,11 +510,6 @@ ul {
     text-align: center;
 }
 
-body.collapsed-nav {
-    .main-page {
-        margin-left: 50px;
-    }
-}
 body {
     .main-page {
         height: 100%;
@@ -558,7 +519,41 @@ body {
     }
 }
 
+.paging-container {
+    .paging-details {
+        padding-top: 15px;
+    }
+}
+.modal-header h3 {
+    margin-bottom: 0;
+}
+
+.task-list-item input[type="checkbox"]{
+    margin-left: 0 !important;
+}
+
+.markdown ul {
+    list-style: initial;
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
+
 /* Helper Classes */
 .padding {
-    padding: 15px;
+    padding: 10px;
+}
+.remove-min-width {
+    min-width: 0;
+}
+.vertical-scroll {
+    overflow-y: auto;
+}
+.horizontal-scroll {
+    overflow-x: auto;
+}
+.flex-1 {
+    flex: 1;
+}
+.break-word {
+    word-break: break-word;
 }

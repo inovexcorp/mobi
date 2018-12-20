@@ -20,18 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="association-block">
-    <block>
-        <block-header>Class-Property Associations</block-header>
-        <block-content>
-            <everything-tree></everything-tree>
-        </block-content>
-        <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.sm.listItem.selected || dvm.sm.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Entity</span></button>
-        </block-footer>
-    </block>
-    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Entity'" confirm-click="dvm.deleteEntity()"
-                          cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
-        <p>Are you sure that you want to delete <strong>{{dvm.sm.listItem.selected['@id']}}</strong>?</p>
-    </confirmation-overlay>
+<div class="association-block py-1">
+    <info-message ng-if="!dvm.os.listItem.flatEverythingTree.length">(No entities defined)</info-message>
+    <everything-tree ng-if="dvm.os.listItem.flatEverythingTree.length"></everything-tree>
 </div>

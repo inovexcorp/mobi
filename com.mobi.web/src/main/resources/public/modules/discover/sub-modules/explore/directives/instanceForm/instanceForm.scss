@@ -3,32 +3,25 @@
 
 .instance-form.row {
     margin: 0;
-    
+
     .changed {
-        color: $brand-primary;
-        
+        color: var(--primary);
+
         &:after {
             content: '*';
         }
     }
-    
     md-checkbox {
         margin: 0;
     }
-    
     .md-chips .md-chip-input-container {
         width: 100%;
-        
+
         input {
             width: 100%;
         }
-        
         md-autocomplete md-autocomplete-wrap {
             width: 100%;
         }
-    }
-    
-    .overlay {
-        z-index: 10;
     }
 }

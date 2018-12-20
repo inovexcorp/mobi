@@ -23,7 +23,7 @@ package com.mobi.platform.config.rest.impl;
  * #L%
  */
 
-import static com.mobi.rest.util.RestUtils.encode;
+import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Matchers.anyString;
@@ -37,29 +37,29 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import com.mobi.exception.MobiException;
+import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.platform.config.api.state.StateManager;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import com.mobi.rdf.core.utils.Values;
 import com.mobi.rest.util.MobiRestTestNg;
+import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.UsernameTestFilter;
+import com.mobi.web.security.util.AuthenticationProps;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.utils.Values;
-import com.mobi.rest.util.RestUtils;
-import com.mobi.web.security.util.AuthenticationProps;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.openrdf.model.vocabulary.DCTERMS;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -99,8 +99,8 @@ public class StateRestImplTest extends MobiRestTestNg {
 
         MockitoAnnotations.initMocks(this);
 
-        when(transformer.mobiModel(any(org.openrdf.model.Model.class)))
-                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
+        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
+                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
         when(transformer.sesameModel(any(Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
         when(transformer.sesameStatement(any(Statement.class)))

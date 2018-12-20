@@ -2,8 +2,8 @@ package com.mobi.rdf.core.impl.sesame
 
 import com.mobi.persistence.utils.LiteralUtils
 import com.mobi.rdf.api.ValueFactory
-import org.openrdf.model.vocabulary.RDF
-import org.openrdf.model.vocabulary.XMLSchema
+import org.eclipse.rdf4j.model.vocabulary.RDF
+import org.eclipse.rdf4j.model.vocabulary.XMLSchema
 import spock.lang.Shared
 import spock.lang.Specification
 

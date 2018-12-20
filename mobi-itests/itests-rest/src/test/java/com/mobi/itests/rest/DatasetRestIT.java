@@ -26,11 +26,13 @@ package com.mobi.itests.rest;
 import static com.mobi.itests.rest.utils.RestITUtils.authenticateUser;
 import static com.mobi.itests.rest.utils.RestITUtils.baseUrl;
 import static com.mobi.itests.rest.utils.RestITUtils.createHttpClient;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.itests.support.KarafTestSupport;
+import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.Statements;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
@@ -39,7 +41,6 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
-import com.mobi.rest.util.RestUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -103,7 +104,7 @@ public class DatasetRestIT extends KarafTestSupport {
         // Create Dataset to upload data into
         HttpEntity datasetEntity = createDatasetFormData("Test Dataset");
         try (CloseableHttpResponse response = createDataset(createHttpClient(), datasetEntity)) {
-            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
+            assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
             recordId = vf.createIRI(EntityUtils.toString(response.getEntity()));
 
             // Assert setup of DatasetRecord, Dataset, and system default named graph
@@ -128,7 +129,7 @@ public class DatasetRestIT extends KarafTestSupport {
         // Upload Data to Dataset
         HttpEntity dataEntity = createUploadFormData(DATA_FILE);
         try (CloseableHttpResponse response = uploadFile(createHttpClient(), recordId, dataEntity)) {
-            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
+            assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 
             // Assert data in system default named graph
             try (RepositoryConnection conn = repo.getConnection()) {
@@ -164,7 +165,7 @@ public class DatasetRestIT extends KarafTestSupport {
     private CloseableHttpResponse uploadFile(CloseableHttpClient client, Resource datasetId, HttpEntity entity)
             throws IOException, GeneralSecurityException {
         authenticateUser(context);
-        HttpPost post = new HttpPost(baseUrl + "/datasets/" + RestUtils.encode(datasetId.stringValue()) + "/data");
+        HttpPost post = new HttpPost(baseUrl + "/datasets/" + ResourceUtils.encode(datasetId.stringValue()) + "/data");
         post.setEntity(entity);
         return client.execute(post, context);
     }

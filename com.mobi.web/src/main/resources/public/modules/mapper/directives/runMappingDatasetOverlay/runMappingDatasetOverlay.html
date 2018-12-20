@@ -1,0 +1,46 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="modal-header">
+    <h3>Run Mapping into Dataset</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+    <form name="dvm.form">
+        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
+        <div class="form-group">
+            <custom-label>Dataset</custom-label>
+            <ui-select ng-model="dvm.datasetRecordIRI" ng-disabled="dvm.datasetRecords.length === 0">
+                <ui-select-match placeholder="Select a Dataset">
+                    <span title="{{$select.selected['@id']}}">{{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
+                </ui-select-match>
+                <ui-select-choices repeat="record['@id'] as record in dvm.datasetRecords | filter:$select.search">
+                    <div title="{{record['@id']}}" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:$select.search | trusted"></div>
+                </ui-select-choices>
+            </ui-select>
+        </div>
+    </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-click="dvm.run()" ng-disabled="dvm.form.$invalid || !dvm.datasetRecordIRI">Submit</button>
+</div>

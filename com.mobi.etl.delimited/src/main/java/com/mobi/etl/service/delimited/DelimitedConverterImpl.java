@@ -26,16 +26,6 @@ package com.mobi.etl.service.delimited;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.google.common.base.CharMatcher;
-import com.opencsv.CSVReader;
-import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.FormulaEvaluator;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
 import com.mobi.etl.api.config.delimited.ExcelConfig;
 import com.mobi.etl.api.config.delimited.SVConfig;
 import com.mobi.etl.api.delimited.DelimitedConverter;
@@ -52,10 +42,20 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.CharsetUtils;
 import com.mobi.vocabularies.xsd.XSD;
+import com.opencsv.CSVReader;
+import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -188,7 +188,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             for (Row row : sheet) {
                 // If headers exist or the row is before the offset point, skip the row
                 if ((containsHeaders && row.getRowNum() == 0) || row.getRowNum() - (containsHeaders ? 1 : 0) < offset
-                        || (limit.isPresent() && row.getRowNum() >= limit.get() + offset)) {
+                        || (limit.isPresent() && row.getRowNum() >= limit.get() + offset) || row.getLastCellNum() < 0) {
                     lastRowNumber++;
                     continue;
                 }
@@ -290,6 +290,8 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         cm.getDataProperty().forEach(dataMapping -> {
             // Default datatype is xsd:string
             final IRI[] datatype = {valueFactory.createIRI(XSD.STRING)};
+            Optional<Value> datatypeOpt = dataMapping.getDatatypeSpec();
+            Optional<Value> languageOpt = dataMapping.getLanguageSpec();
             int columnIndex = dataMapping.getColumnIndex().iterator().next();
             com.mobi.rdf.api.Resource prop = dataMapping.getHasProperty_resource().iterator().next();
 
@@ -298,16 +300,26 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 // If the value is not empty
                 if (!StringUtils.isEmpty(nextLine[columnIndex])) {
                     // Determine the datatype for the data property range
-                    sourceOntologies.stream()
-                            .filter(ontology -> ontology.getDataProperty((IRI) prop).isPresent())
-                            .findFirst()
-                            .ifPresent(ontology -> {
-                                DataProperty dataProperty = ontology.getDataProperty((IRI) prop).get();
-                                ontology.getDataPropertyRange(dataProperty).stream()
-                                        .findFirst()
-                                        .ifPresent(resource -> datatype[0] = (IRI) resource);
-                            });
-                    Literal literal = valueFactory.createLiteral(nextLine[columnIndex], datatype[0]);
+                    Literal literal;
+                    if (languageOpt.isPresent()) {
+                        datatype[0] = valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString");
+                        literal = valueFactory.createLiteral(nextLine[columnIndex], languageOpt.get().stringValue());
+                    } else {
+                        if (datatypeOpt.isPresent()) {
+                            datatype[0] = valueFactory.createIRI(datatypeOpt.get().stringValue());
+                        } else {
+                            sourceOntologies.stream()
+                                    .filter(ontology -> ontology.getDataProperty((IRI) prop).isPresent())
+                                    .findFirst()
+                                    .ifPresent(ontology -> {
+                                        DataProperty dataProperty = ontology.getDataProperty((IRI) prop).get();
+                                        ontology.getDataPropertyRange(dataProperty).stream()
+                                                .findFirst()
+                                                .ifPresent(resource -> datatype[0] = (IRI) resource);
+                                    });
+                        }
+                        literal = valueFactory.createLiteral(nextLine[columnIndex], datatype[0]);
+                    }
                     // Only add literal if valid with the datatype
                     if (isValidValue(literal, datatype[0])) {
                         convertedRDF.add(classInstance, (IRI) prop, literal);
@@ -395,7 +407,8 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             }
         }
         mat.appendTail(result);
-        return Optional.of(result.toString());
+        String resultStr = result.toString();
+        return resultStr.isEmpty() ? Optional.empty() : Optional.of(resultStr);
     }
 
     /**
@@ -482,6 +495,9 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                     return true;
                 case XSD.ANYURI:
                     valueFactory.createIRI(literal.stringValue());
+                    return true;
+                case "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString":
+                    literal.getLanguage().get();
                     return true;
                 default:
                     return true;

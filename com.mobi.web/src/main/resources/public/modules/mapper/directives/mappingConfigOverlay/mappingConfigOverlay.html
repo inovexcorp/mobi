@@ -20,58 +20,65 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="mapping-config-overlay overlay xlg">
-    <form class="content" name="dvm.configForm">
-        <h6>{{dvm.state.mapping.record.title}} Configuration</h6>
+<div class="modal-header">
+    <h3 class="break-word">{{dvm.state.mapping.record.title}} Configuration</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+    <form name="dvm.configForm">
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
         <error-display ng-if="dvm.recordsErrorMessage">{{dvm.recordsErrorMessage}}</error-display>
-        <div class="row">
-            <div class="col-xs-6 ontology-select-container">
-                <div class="form-group">
-                    <custom-label>Ontology</custom-label>
-                    <div class="input-group record-search-bar">
-                        <input type="text" class="form-control" name="record-search" ng-model="dvm.recordsConfig.searchText" placeholder="Search for...">
-                        <span class="input-group-btn">
-                            <button class="btn btn-primary" type="submit" ng-click="dvm.getRecords()">Search</button>
-                        </span>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-6 ontology-select-container">
+                    <div class="form-group">
+                        <custom-label>Ontology</custom-label>
+                        <div class="input-group record-search-bar">
+                            <input type="text" class="form-control" name="record-search" ng-model="dvm.recordsConfig.searchText" placeholder="Search for...">
+                            <span class="input-group-btn">
+                                <button class="btn btn-primary" type="submit" ng-click="dvm.setInitialRecords()">Search</button>
+                            </span>
+                        </div>
+                        <div class="ontology-records-list list-group">
+                            <button class="list-group-item" ng-repeat="record in dvm.records track by record['@id']" ng-class="{'active': dvm.selectedRecord['@id'] === record['@id']}" ng-click="dvm.selectOntology(record)">
+                                <span>{{dvm.util.getDctermsValue(record, 'title')}}</span>
+                            </button>
+                        </div>
+                        <div class="paging-container">
+                            <paging-details total-size="dvm.totalSize" page-index="dvm.recordsConfig.pageIndex" limit="dvm.recordsConfig.limit"></paging-details>
+                            <pagination total="dvm.totalSize" limit="dvm.recordsConfig.limit" current-page="dvm.currentPage" get-page="dvm.setRecords()"></pagination>
+                        </div>
                     </div>
-                    <div class="ontology-records-list list-group">
-                        <button class="list-group-item" ng-repeat="record in dvm.records track by record['@id']" ng-class="{'active': dvm.selectedRecord['@id'] === record['@id']}" ng-click="dvm.selectOntology(record)">
-                            <span>{{dvm.util.getDctermsValue(record, 'title')}}</span>
-                        </button>
+                    <div class="form-group">
+                        <custom-label>Version</custom-label>
+                        <select class="version-select form-control" placeholder="Select a version" ng-model="dvm.selectedVersion" ng-change="dvm.selectVersion()" ng-disabled="!dvm.selectedOntologyState">
+                            <option value="latest">Latest</option>
+                            <option ng-if="dvm.selectedOntologyState.saved" value="saved">Saved</option>
+                        </select>
                     </div>
-                    <paging-details total-size="dvm.totalSize" page-index="dvm.recordsConfig.pageIndex" limit="dvm.recordsConfig.limit"></paging-details>
-                    <pagination links="dvm.links" current-page="dvm.recordsConfig.pageIndex" get-page="dvm.getRecordPage(direction)"></pagination>
                 </div>
-                <div class="form-group">
-                    <custom-label>Version</custom-label>
-                    <select class="version-select form-control" placeholder="Select a version" ng-model="dvm.selectedVersion" ng-change="dvm.selectVersion()" ng-disabled="!dvm.selectedOntologyState">
-                        <option value="latest">Latest</option>
-                        <option ng-if="dvm.selectedOntologyState.saved" value="saved">Saved</option>
-                    </select>
+                <div class="col-6 preview-display">
+                    <div class="ontology-record-info" ng-if="dvm.selectedRecord">
+                        <h3>{{dvm.util.getDctermsValue(dvm.selectedRecord, 'title')}}</h3>
+                        <entity-dates entity="dvm.selectedRecord"></entity-dates>
+                        <entity-description entity="dvm.selectedRecord"></entity-description>
+                        <record-keywords record="dvm.selectedRecord"></record-keywords>
+                        <div class="classes-list">
+                            <span class="field-name">Classes:</span>
+                            <ul>
+                                <li ng-repeat="class in dvm.classes track by $index" title="{{class.classObj['@id']}}">
+                                    {{dvm.om.getEntityName(class.classObj)}}
+                                    <span class="text-muted" ng-if="dvm.om.isDeprecated(class.classObj)">(Deprecated)</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="col-xs-6 preview-display">
-                <div class="ontology-record-info" ng-if="dvm.selectedRecord">
-                    <h3>{{dvm.util.getDctermsValue(dvm.selectedRecord, 'title')}}</h3>
-                    <entity-dates entity="dvm.selectedRecord"></entity-dates>
-                    <entity-description entity="dvm.selectedRecord"></entity-description>
-                    <record-keywords record="dvm.selectedRecord"></record-keywords>
-                    <div class="classes-list">
-                        <span class="field-name">Classes:</span>
-                        <ul>
-                            <li ng-repeat="class in dvm.classes track by $index" title="{{class.classObj['@id']}}">
-                                {{dvm.om.getEntityName(class.classObj)}}
-                                <span class="text-muted" ng-if="dvm.om.isDeprecated(class.classObj)">(Deprecated)</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-click="dvm.set()" ng-disabled="!dvm.selectedOntologyState">Set</button>
-            <button class="btn btn-default pull-right" ng-click="dvm.cancel()">Cancel</button>
         </div>
     </form>
+</div>
+<div class="modal-footer">
+    <button class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button class="btn btn-primary" ng-click="dvm.set()" ng-disabled="!dvm.selectedOntologyState">Submit</button>
 </div>

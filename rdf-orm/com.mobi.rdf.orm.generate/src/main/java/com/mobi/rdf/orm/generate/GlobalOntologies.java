@@ -23,9 +23,9 @@ package com.mobi.rdf.orm.generate;
  * #L%
  */
 
-import org.openrdf.model.Model;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 
 import java.io.IOException;
 import java.util.List;

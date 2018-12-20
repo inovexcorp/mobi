@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Saved Changes Tab directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, utilSvc, catalogManagerSvc, prefixes;
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, utilSvc, catalogManagerSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -29,19 +29,20 @@ describe('Saved Changes Tab directive', function() {
         mockOntologyState();
         mockUtil();
         mockCatalogManager();
+        mockOntologyManager()
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _utilService_, _catalogManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _utilService_, _catalogManagerService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
+            ontologyManagerSvc = _ontologyManagerService_;
             utilSvc = _utilService_;
             catalogManagerSvc = _catalogManagerService_;
             prefixes = _prefixes_;
         });
 
-        this.catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
         ontologyStateSvc.listItem.inProgressCommit = {additions: [], deletions: []};
         this.element = $compile(angular.element('<saved-changes-tab></saved-changes-tab>'))(scope);
         scope.$digest();
@@ -65,17 +66,11 @@ describe('Saved Changes Tab directive', function() {
             expect(this.element.hasClass('saved-changes-tab')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
-        });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(0);
+        it('with a .has-changes', function() {
+            expect(this.element.querySelectorAll('.has-changes').length).toBe(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
             scope.$digest();
-            expect(this.element.find('block-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.has-changes').length).toBe(1);
         });
         it('with a .btn-container', function() {
             expect(this.element.querySelectorAll('.btn-container').length).toBe(0);
@@ -89,11 +84,11 @@ describe('Saved Changes Tab directive', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('.btn-container .btn').length).toBe(1);
         });
-        it('with .property-values', function() {
-            expect(this.element.querySelectorAll('.property-values').length).toBe(0);
+        it('with .list-group', function() {
+            expect(this.element.querySelectorAll('.list-group').length).toBe(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': 'id'}];
             scope.$apply();
-            expect(this.element.querySelectorAll('.property-values').length).toBe(1);
+            expect(this.element.querySelectorAll('.list-group').length).toBe(1);
         });
         it('with statement-display dependent on how many additions/deletions there are', function() {
             expect(this.element.find('statement-display').length).toBe(0);
@@ -104,24 +99,55 @@ describe('Saved Changes Tab directive', function() {
             expect(this.element.find('statement-display').length).toBe(2);
         });
         it('depending on whether the list item is up to date', function() {
-            expect(this.element.querySelectorAll('block-content .text-center info-message').length).toBe(1);
-            expect(this.element.querySelectorAll('block-content .text-center error-display').length).toBe(0);
+            expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(1);
+            expect(this.element.querySelectorAll('.changes .text-center error-display').length).toBe(0);
 
             ontologyStateSvc.listItem.upToDate = false;
             scope.$digest();
-            expect(this.element.querySelectorAll('block-content .text-center info-message').length).toBe(0);
-            expect(this.element.querySelectorAll('block-content .text-center error-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(0);
+            expect(this.element.querySelectorAll('.no-changes error-display').length).toBe(1);
 
             ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
             scope.$digest();
-            expect(this.element.querySelectorAll('block-header error-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.changes-info error-display').length).toBe(1);
 
             ontologyStateSvc.listItem.upToDate = true;
             scope.$digest();
-            expect(this.element.querySelectorAll('block-header error-display').length).toBe(0);
+            expect(this.element.querySelectorAll('.changes-info error-display').length).toBe(0);
+        });
+        it('depending on whether the branch is a user branch', function() {
+            expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(1);
+            expect(this.element.querySelectorAll('.no-changes error-display').length).toBe(0);
+
+            ontologyStateSvc.listItem.userBranch = true;
+            ontologyStateSvc.listItem.createdFromExists = true;
+            scope.$digest();
+
+            expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(0);
+            expect(this.element.querySelectorAll('.no-changes error-display').length).toBe(1);
+
+            ontologyStateSvc.listItem.createdFromExists = true;
+            scope.$digest();
+
+            expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(0);
+            expect(this.element.querySelectorAll('.no-changes error-display').length).toBe(1);
+        });
+        it('depending on whether the list item is committable', function() {
+            ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
+            scope.$digest();
+            var button = angular.element(this.element.querySelectorAll('button.btn-danger')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+
+            ontologyStateSvc.isCommittable.and.returnValue(true);
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
         });
     });
     describe('controller methods', function() {
+        beforeEach(function() {
+            this.commitId = 'commitId';
+            this.catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
+        });
         it('should go to a specific entity', function() {
             var event = {
                 stopPropagation: jasmine.createSpy('stopPropagation')
@@ -132,7 +158,6 @@ describe('Saved Changes Tab directive', function() {
         });
         describe('should update the selected ontology', function() {
             beforeEach(function() {
-                this.commitId = 'commit';
                 catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({commit: {'@id': this.commitId}}));
             });
             it('unless an error occurs', function() {
@@ -186,187 +211,211 @@ describe('Saved Changes Tab directive', function() {
                 expect(this.controller.error).toBe('error');
             });
         });
-        /*describe('setChecked should set the checked variable to the provided value for all items in the list', function() {
-            beforeEach(function() {
-                this.controller.list = [{
-                    id: 'id',
-                    additions: [{
-                        p: prefixes.rdf + 'type',
-                        o: prefixes.owl + 'Class'
-                    }, {
-                        p: 'predicate',
-                        o: 'object'
-                    }],
-                    deletions: [{
-                        p: 'predicate',
-                        o: 'object'
-                    }]
-                }];
-            });
-            it('and not set disabled if not on the list item', function() {
-                this.controller.setChecked(true);
-                expect(this.controller.list[0].additions[0].checked).toBe(true);
-                expect(this.controller.list[0].additions[0].disabled).toBeUndefined();
-                expect(this.controller.list[0].additions[1].checked).toBe(true);
-                expect(this.controller.list[0].additions[1].disabled).toBeUndefined();
-                expect(this.controller.list[0].deletions[0].checked).toBe(true);
-                expect(this.controller.list[0].deletions[0].disabled).toBeUndefined();
-            });
-            it('and set disabled if on the list item', function() {
-                this.controller.list[0].disableAll = true;
-                this.controller.setChecked(true);
-                expect(this.controller.list[0].additions[0].checked).toBe(true);
-                expect(this.controller.list[0].additions[0].disabled).toBeUndefined();
-                expect(this.controller.list[0].additions[1].checked).toBe(true);
-                expect(this.controller.list[0].additions[1].disabled).toBe(true);
-                expect(this.controller.list[0].deletions[0].checked).toBe(true);
-                expect(this.controller.list[0].deletions[0].disabled).toBe(true);
-            });
-        });
-        describe('onAdditionCheck', function() {
-            beforeEach(function() {
-                this.controller.list = [{
-                    id: 'id',
-                    additions: [{
-                        p: prefixes.rdf + 'type',
-                        o: prefixes.owl + 'Class'
-                    }, {
-                        p: 'predicate',
-                        o: 'object'
-                    }]
-                }];
-            });
-            it('checks nothing if predicate is not the typeIRI', function() {
-                this.controller.onAdditionCheck('id', 'not-typeIRI', 'object', true);
-                expect(this.controller.list[0].additions[1].checked).toBeUndefined();
-                expect(this.controller.list[0].additions[1].disabled).toBeUndefined();
-            });
-            it('checks nothing if object is not in the types array', function() {
-                this.controller.onAdditionCheck('id', prefixes.rdf + 'type', 'object', true);
-                expect(this.controller.list[0].additions[1].checked).toBeUndefined();
-                expect(this.controller.list[0].additions[1].disabled).toBeUndefined();
-            });
-            it('checks all others if object is in the types array and predicate is the typeIRI', function() {
-                this.controller.onAdditionCheck('id', prefixes.rdf + 'type', prefixes.owl + 'Class', true);
-                expect(this.controller.list[0].additions[1].checked).toBe(true);
-                expect(this.controller.list[0].additions[1].disabled).toBe(true);
-            });
-        });
-        describe('onDeletionCheck', function() {
-            beforeEach(function() {
-                this.controller.list = [{
-                    id: 'id',
-                    deletions: [{
-                        p: prefixes.rdf + 'type',
-                        o: prefixes.owl + 'Class'
-                    }, {
-                        p: 'predicate',
-                        o: 'object'
-                    }]
-                }];
-            });
-            it('checks and disables the typeIRI statement if the statement is checked and is not a typeIRI', function() {
-                this.controller.onDeletionCheck('id', 'predicate', prefixes.owl + 'Class', true);
-                expect(this.controller.list[0].deletions[0].checked).toBe(true);
-                expect(this.controller.list[0].deletions[0].disabled).toBe(true);
-            });
-            it('checks and disables the typeIRI statement if the statement is checked and is a typeIRI not in the types array', function() {
-                this.controller.onDeletionCheck('id', prefixes.rdf + 'type', prefixes.owl + 'FunctionalProperty', true);
-                expect(this.controller.list[0].deletions[0].checked).toBe(true);
-                expect(this.controller.list[0].deletions[0].disabled).toBe(true);
-            });
-            it('enables the typeIRI statement if the statement is not checked and is not a typeIRI', function() {
-                this.controller.onDeletionCheck('id', 'predicate', prefixes.owl + 'Class', false);
-                expect(this.controller.list[0].deletions[0].checked).toBeUndefined();
-                expect(this.controller.list[0].deletions[0].disabled).toBe(false);
-            });
-            it('enables the typeIRI statement if the statement is not checked and is not a typeIRI', function() {
-                this.controller.onDeletionCheck('id', prefixes.rdf + 'type', prefixes.owl + 'FunctionalProperty', false);
-                expect(this.controller.list[0].deletions[0].checked).toBeUndefined();
-                expect(this.controller.list[0].deletions[0].disabled).toBe(false);
-            });
-            it('does nothing if the statement is a typeIRI in the types array', function() {
-                this.controller.onDeletionCheck('id', prefixes.rdf + 'type', prefixes.owl + 'Class', false);
-                expect(this.controller.list[0].deletions[0].checked).toBeUndefined();
-                expect(this.controller.list[0].deletions[0].disabled).toBeUndefined();
-            });
-        });
-        describe('removeChecked should delete all of the checked statements', function() {
-            var saveDeferred;
-            beforeEach(function() {
-                saveDeferred = $q.defer();
-                ontologyStateSvc.saveChanges.and.returnValue(saveDeferred.promise);
-            });
-            describe('when saveChanges resolves', function() {
-                var afterDeferred;
-                beforeEach(function() {
-                    saveDeferred.resolve();
-                    afterDeferred = $q.defer();
-                    ontologyStateSvc.afterSave.and.returnValue(afterDeferred.promise);
-                });
-                describe('and afterSave resolves', function() {
-                    var updateDeferred;
-                    beforeEach(function() {
-                        afterDeferred.resolve();
-                        updateDeferred = $q.defer();
-                        ontologyStateSvc.updateOntology.and.returnValue(updateDeferred.promise);
-                    });
-                    it('and updateOntology resolves', function() {
-                        updateDeferred.resolve();
-                        this.controller.removeChecked();
-                        scope.$apply();
-                        expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                        expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
-                        expect(utilSvc.createSuccessToast).toHaveBeenCalledWith('Checked changes removed');
-                    });
-                    it('and updateOntology rejects', function() {
-                        updateDeferred.reject('error');
-                        this.controller.removeChecked();
-                        scope.$apply();
-                        expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                        expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
-                        expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
-                    });
-                });
-                it('and afterSave rejects', function() {
-                    afterDeferred.reject('error');
-                    this.controller.removeChecked();
-                    scope.$apply();
-                    expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                    expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
-                });
-            });
-            it('when saveChanges rejects', function() {
-                saveDeferred.reject('error');
-                this.controller.removeChecked();
-                scope.$apply();
-                expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
-            });
-        });
-        it('getTotalChecked should return the correct number', function() {
-            this.controller.list = [{
-                id: 'id1',
-                additions: [{checked: true}, {}],
-                deletions: [{checked: false}, {checked: true}]
-            }];
-            expect(this.controller.getTotalChecked()).toBe(2);
-        });*/
         it('orderByIRI should call the correct method', function() {
             utilSvc.getBeautifulIRI.and.returnValue('iri');
             expect(this.controller.orderByIRI({id: 'id'})).toBe('iri');
             expect(utilSvc.getBeautifulIRI).toHaveBeenCalledWith('id');
+        });
+
+        describe('restoreBranchWithUserBranch calls the correct method', function() {
+            beforeEach(function() {
+                this.recordId = 'recordId';
+
+                this.newBranchId = 'newBranchId';
+                this.userBranchId = 'userBranchId';
+                this.otherUserBranchId = 'otherUserBranchId';
+                this.createdFromId = 'createdFromId';
+
+                this.branchTitle = 'branchA';
+                this.branchDescription = 'branchDescription';
+
+                this.newBranch = {
+                    '@id': this.newBranchId,
+                    [prefixes.catalog + 'head']: [{'@id': this.commitId}],
+                    [prefixes.dcterms + 'title']: [{'@value': this.branchTitle}],
+                    [prefixes.dcterms + 'description']: [{'@value': this.branchDescription}]
+                };
+
+                this.userBranch = {
+                    '@id': this.userBranchId,
+                    '@type': [prefixes.catalog + 'UserBranch'],
+                    [prefixes.catalog + 'head']: [{'@id': this.commitId}],
+                    [prefixes.catalog + 'createdFrom']: [{'@id': this.createdFromId}],
+                    [prefixes.dcterms + 'title']: [{'@value': this.branchTitle}],
+                    [prefixes.dcterms + 'description']: [{'@value': this.branchDescription}]
+                };
+
+                this.otherUserBranch = {
+                    '@id': this.otherUserBranchId,
+                    '@type': [prefixes.catalog + 'UserBranch'],
+                    [prefixes.catalog + 'head']: [{'@id': this.commitId}],
+                    [prefixes.catalog + 'createdFrom']: [{'@id': this.createdFromId}],
+                    [prefixes.dcterms + 'title']: [{'@value': this.branchTitle}],
+                    [prefixes.dcterms + 'description']: [{'@value': this.branchDescription}]
+                };
+
+                ontologyStateSvc.listItem.ontologyRecord.branchId = this.userBranchId;
+                ontologyStateSvc.listItem.ontologyRecord.recordId = this.recordId;
+                ontologyStateSvc.listItem.ontologyRecord.commitId = this.commitId;
+                ontologyStateSvc.listItem.branches.push(this.userBranch);
+                ontologyStateSvc.listItem.branches.push(this.otherUserBranch);
+
+                this.branchConfig = {
+                    title: this.branchTitle,
+                    description: this.branchDescription
+                };
+
+                utilSvc.getPropertyId.and.callFake((branch, prop) => {
+                    if (prop === prefixes.catalog + 'createdFrom') {
+                        return this.createdFromId;
+                    } else if (prop === prefixes.catalog + 'head') {
+                       return this.commitId;
+                   }
+                });
+
+                utilSvc.getDctermsValue.and.callFake((branch, prop) => {
+                    if (prop === 'title') {
+                        return this.branchTitle;
+                    } else if (prop === 'description') {
+                        return this.branchDescription;
+                    }
+                });
+            });
+            describe('when createRecordBranch is resolved', function() {
+                beforeEach(function() {
+                    catalogManagerSvc.createRecordBranch.and.returnValue($q.when(this.newBranchId));
+                });
+                describe('and when getRecordBranch is resolved', function() {
+                    beforeEach(function() {
+                        catalogManagerSvc.getRecordBranch.and.returnValue($q.when(this.newBranch));
+                    });
+                    describe('and when updateOntologyState is resolved', function() {
+                        beforeEach(function() {
+                            ontologyStateSvc.updateOntologyState.and.returnValue($q.when());
+                            catalogManagerSvc.isUserBranch.and.callFake(branchToCheck => branchToCheck['@id'] === this.otherUserBranchId);
+                        });
+                        it('and when deleteOntologyBranch is resolved', function() {
+                            ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.when());
+                            ontologyStateSvc.listItem.ontologyRecord.branchId = this.newBranchId;
+                            _.remove(ontologyStateSvc.listItem.branches, branch => branch['@id'] === this.userBranchId);
+                            this.controller.restoreBranchWithUserBranch();
+                            scope.$digest();
+                            expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
+                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
+                            expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId, commitId: this.commitId, branchId: this.newBranchId});
+                            expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.newBranchId);
+                            expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.otherUserBranchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.otherUserBranch);
+                        });
+                        it('when rejected', function() {
+                            ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.reject('error'));
+                            this.controller.restoreBranchWithUserBranch();
+                            scope.$apply();
+                            expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+                        });
+                    });
+                    it('and when updateOntologyState is rejected', function() {
+                        ontologyStateSvc.updateOntologyState.and.returnValue($q.reject('error'));
+                        this.controller.restoreBranchWithUserBranch();
+                        scope.$digest();
+                        expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
+                        expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
+                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId, commitId: this.commitId, branchId: this.newBranchId});
+                        expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+                    });
+                });
+                it('and when getRecordBranch is rejected', function() {
+                    catalogManagerSvc.getRecordBranch.and.returnValue($q.reject('error'));
+                    this.controller.restoreBranchWithUserBranch();
+                    scope.$digest();
+                    expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
+                    expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
+                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+                });
+            });
+            it('when createRecordBranch is rejected', function() {
+                catalogManagerSvc.createRecordBranch.and.returnValue($q.reject(this.error));
+                this.controller.restoreBranchWithUserBranch();
+                scope.$digest();
+                expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
+                expect(this.controller.error).toBe(this.error);
+            });
+        });
+        describe('mergeUserBranch calls the correct methods', function() {
+            beforeEach(function() {
+                this.source = {'@id': 'source'};
+                this.target = {'@id': 'target'};
+                ontologyStateSvc.listItem.branches = [this.source, this.target];
+                utilSvc.getPropertyId.and.returnValue(this.target['@id']);
+            });
+            describe('when checkConflicts is resolved', function() {
+                it('and when merge is resolved', function() {
+                    this.controller.mergeUserBranch();
+                    scope.$apply();
+                    expect(ontologyStateSvc.listItem.merge.target).toEqual(this.target);
+                    expect(ontologyStateSvc.listItem.merge.checkbox).toEqual(true);
+                    expect(ontologyStateSvc.listItem.merge.active).toEqual(false);
+                    expect(ontologyStateSvc.checkConflicts).toHaveBeenCalled();
+                    expect(ontologyStateSvc.merge).toHaveBeenCalled();
+                    expect(ontologyStateSvc.cancelMerge).toHaveBeenCalled();
+                    expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalled();
+                    expect(utilSvc.createSuccessToast).toHaveBeenCalled();
+                    expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                });
+                it('and when merge is rejected', function() {
+                    ontologyStateSvc.merge.and.returnValue($q.reject('Error'));
+                    this.controller.mergeUserBranch();
+                    scope.$apply();
+                    expect(ontologyStateSvc.listItem.merge.target).toEqual(this.target);
+                    expect(ontologyStateSvc.listItem.merge.checkbox).toEqual(true);
+                    expect(ontologyStateSvc.listItem.merge.active).toEqual(false);
+                    expect(ontologyStateSvc.checkConflicts).toHaveBeenCalled();
+                    expect(ontologyStateSvc.merge).toHaveBeenCalled();
+                    expect(ontologyStateSvc.cancelMerge).toHaveBeenCalled();
+                    expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
+                    expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
+                    expect(utilSvc.createErrorToast).toHaveBeenCalled();
+                });
+            });
+            it('when checkConflicts is rejected', function() {
+                ontologyStateSvc.checkConflicts.and.returnValue($q.reject('Error'));
+                this.controller.mergeUserBranch();
+                scope.$apply();
+                expect(ontologyStateSvc.listItem.merge.target).toEqual(this.target);
+                expect(ontologyStateSvc.listItem.merge.checkbox).toEqual(true);
+                expect(ontologyStateSvc.listItem.merge.active).toEqual(true);
+                expect(ontologyStateSvc.checkConflicts).toHaveBeenCalled();
+                expect(ontologyStateSvc.merge).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.cancelMerge).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
+                expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
+                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+            });
         });
     });
     it('should call update when the link is clicked', function() {
         ontologyStateSvc.listItem.upToDate = false;
         scope.$digest();
         spyOn(this.controller, 'update');
-        var link = angular.element(this.element.querySelectorAll('block-content .text-center error-display a')[0]);
+        var link = angular.element(this.element.querySelectorAll('.no-changes error-display a')[0]);
         link.triggerHandler('click');
         expect(this.controller.update).toHaveBeenCalled();
+    });
+    it('should call mergeUserBranch when the link is clicked', function() {
+        ontologyStateSvc.listItem.userBranch = true;
+        ontologyStateSvc.listItem.createdFromExists = true;
+        scope.$digest();
+        spyOn(this.controller, 'mergeUserBranch');
+        var link = angular.element(this.element.querySelectorAll('.no-changes error-display a')[0]);
+        link.triggerHandler('click');
+        expect(this.controller.mergeUserBranch).toHaveBeenCalled();
+    });
+    it('should call restoreBranchWithUserBranch when the link is clicked', function() {
+        ontologyStateSvc.listItem.userBranch = true;
+        ontologyStateSvc.listItem.createdFromExists = false;
+        scope.$digest();
+        spyOn(this.controller, 'restoreBranchWithUserBranch');
+        var link = angular.element(this.element.querySelectorAll('.no-changes error-display a')[0]);
+        link.triggerHandler('click');
+        expect(this.controller.restoreBranchWithUserBranch).toHaveBeenCalled();
     });
 });

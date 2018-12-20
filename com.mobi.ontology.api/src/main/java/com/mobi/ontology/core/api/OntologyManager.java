@@ -23,59 +23,18 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
 import com.mobi.ontology.core.utils.MobiOntologyCreationException;
-import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
 public interface OntologyManager {
-
-    /**
-     * Creates a new OntologyRecord using the provided OntologyRecordConfig.
-     *
-     * @param config the configuration to use when creating the OntologyRecord
-     * @return a OntologyRecord
-     */
-    OntologyRecord createOntologyRecord(OntologyRecordConfig config);
-
-    /**
-     * Creates a new Ontology Object using the provided OntologyId.
-     *
-     * @param ontologyId the ontology id for the Ontology you want to create.
-     * @return an Ontology with the desired recordId.
-     * @throws MobiOntologyCreationException - if the ontology can't be created.
-     */
-    Ontology createOntology(OntologyId ontologyId);
-
-    /**
-     * Creates a new Ontology Object using the provided File.
-     *
-     * @param file the File that contains the data to make up the Ontology.
-     * @param resolveImports Whether or not imports should be resolved when creating this ontology
-     * @return an Ontology created with the provided File.
-     * @throws MobiOntologyCreationException - if the ontology can't be created.
-     * @throws FileNotFoundException            - if the file path is invalid.
-     */
-    Ontology createOntology(File file, boolean resolveImports) throws FileNotFoundException;
-
-    /**
-     * Creates a new Ontology Object using the provided IRI.
-     *
-     * @param iri the IRI of the Ontology you want to create.
-     * @return an Ontology resolved from the provided IRI.
-     * @throws MobiOntologyCreationException - if the ontology can't be created.
-     */
-    Ontology createOntology(IRI iri);
 
     /**
      * Creates a new Ontology Object using the provided InputStream.
@@ -86,16 +45,6 @@ public interface OntologyManager {
      * @throws MobiOntologyCreationException - if the ontology can't be created.
      */
     Ontology createOntology(InputStream inputStream, boolean resolveImports);
-
-    /**
-     * Creates a new Ontology Object using the provided JSON-LD String.
-     *
-     * @param json the JSON-LD of the ontology you want to create.
-     * @param resolveImports Whether or not imports should be resolved when creating this ontology
-     * @return an Ontology created with the provided JSON-LD String.
-     * @throws MobiOntologyCreationException - if the ontology can't be created.
-     */
-    Ontology createOntology(String json, boolean resolveImports);
 
     /**
      * Creates a new Ontology Object using the provided Model.
@@ -166,14 +115,15 @@ public interface OntologyManager {
                                         @Nonnull Resource commitId);
 
     /**
-     * Deletes the OntologyRecord and all associated Catalog elements with the given recordId, and returns true if
-     * successfully removed.
+     * Retrieves an Ontology using a record id and the id of a commit on a branch in that record.
      *
-     * @param recordId the record id for the OntologyRecord you want to delete.
-     * @return The OntologyRecord that was deleted.
-     * @throws IllegalArgumentException - the OntologyRecord can't be retrieved.
+     * @param recordId the record id for the OntologyRecord you want to retrieve.
+     * @param commitId the commit id for the Commit you want to retrieve.
+     * @return an Optional of the Ontology if found, otherwise Optional.empty().
+     * @throws MobiOntologyCreationException - the ontology can't be created.
+     * @throws IllegalArgumentException - the record cannot be found.
      */
-    OntologyRecord deleteOntology(@Nonnull Resource recordId);
+    Optional<Ontology> retrieveOntologyByCommit(@Nonnull Resource recordId, @Nonnull Resource commitId);
 
     /**
      * Deletes a branch associated with an OntologyRecord.
@@ -267,7 +217,6 @@ public interface OntologyManager {
      * {@link RepositoryConnection}. It will provide <em>all</em> properties that can be traced back to the provided
      * property IRI, even if nested.
      *
-     * @param ontology The {@link Ontology} you wish to query.
      * @param iri      The {@link IRI} of the property for which you want the list of subproperties.
      * @param conn     the {@link RepositoryConnection} to run the query on.
      * @return a {@link TupleQueryResult} with the query results.
@@ -425,6 +374,26 @@ public interface OntologyManager {
     TupleQueryResult getSearchResults(String searchText, RepositoryConnection conn);
 
     /**
+     * Searches the provided ontology & its import closures using the provided Sparql query.
+     *
+     * @param ontology   the Ontology you wish to query.
+     * @param queryString the Sparql query string you want to execute.
+     * @param includeImports include data from ontology imports when querying
+     * @return a Tuple Set with the query results.
+     */
+    TupleQueryResult getTupleQueryResults(Ontology ontology, String queryString, boolean includeImports);
+
+    /**
+     * Searches the provided ontology & its import closures using the provided Sparql query.
+     *
+     * @param ontology   the Ontology you wish to query.
+     * @param queryString the Sparql query string you want to execute.
+     * @param includeImports include data from ontology imports when querying
+     * @return a model with the query results.
+     */
+    Model getGraphQueryResults(Ontology ontology, String queryString, boolean includeImports);
+
+    /**
      * Gets the compiled resource of the head Commit on the master Branch for the OntologyRecord specified by the
      * provided Resource.
      *
@@ -432,4 +401,14 @@ public interface OntologyManager {
      * @return a Model containing the Ontology Statements.
      */
     Model getOntologyModel(Resource recordId);
+
+    /**
+     * Gets the compiled resource of the head Commit on the master Branch for the OntologyRecord specified by the
+     * provided Resource.
+     *
+     * @param recordId the record id for the OntologyRecord you want to get the Model for.
+     * @param branchId the branch id for the OntologyRecord you want to get the Model for.
+     * @return a Model containing the Ontology Statements.
+     */
+    Model getOntologyModel(Resource recordId, Resource branchId);
 }

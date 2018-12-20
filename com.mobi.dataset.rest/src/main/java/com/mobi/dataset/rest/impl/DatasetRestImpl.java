@@ -35,6 +35,7 @@ import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.api.builder.DatasetRecordConfig;
 import com.mobi.dataset.api.builder.OntologyIdentifier;
@@ -58,11 +59,11 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
 import net.sf.json.JSONArray;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParseException;
+import org.eclipse.rdf4j.rio.Rio;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFParseException;
-import org.openrdf.rio.Rio;
 
 import java.io.InputStream;
 import java.util.Collections;
@@ -76,6 +77,7 @@ import javax.ws.rs.core.UriInfo;
 public class DatasetRestImpl implements DatasetRest {
     private DatasetManager manager;
     private EngineManager engineManager;
+    private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
     private SesameTransformer transformer;
     private BNodeService bNodeService;
@@ -92,6 +94,11 @@ public class DatasetRestImpl implements DatasetRest {
     @Reference
     void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
+    }
+
+    @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
     }
 
     @Reference
@@ -288,7 +295,7 @@ public class DatasetRestImpl implements DatasetRest {
     }
 
     private OntologyIdentifier getOntologyIdentifier(Resource recordId) {
-        Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
+        Branch masterBranch = catalogManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId);
         Resource commitId = masterBranch.getHead_resource().orElseThrow(() ->
                 ErrorUtils.sendError("Branch " + masterBranch.getResource() + " has no head Commit set.",
                         Response.Status.INTERNAL_SERVER_ERROR));

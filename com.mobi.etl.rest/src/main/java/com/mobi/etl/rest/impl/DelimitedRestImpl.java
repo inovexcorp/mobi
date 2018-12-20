@@ -23,17 +23,56 @@ package com.mobi.etl.rest.impl;
  * #L%
  */
 
-import static java.nio.file.FileVisitResult.CONTINUE;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
+import static java.nio.file.FileVisitResult.CONTINUE;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
+import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.ontologies.mcat.Modify;
+import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.ontology.dataset.Dataset;
+import com.mobi.dataset.ontology.dataset.DatasetRecord;
+import com.mobi.etl.api.config.delimited.ExcelConfig;
+import com.mobi.etl.api.config.delimited.SVConfig;
+import com.mobi.etl.api.delimited.DelimitedConverter;
+import com.mobi.etl.api.delimited.MappingManager;
+import com.mobi.etl.api.delimited.MappingWrapper;
 import com.mobi.etl.rest.DelimitedRest;
+import com.mobi.exception.MobiException;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontologies.owl.Ontology;
+import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
+import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.RepositoryManager;
+import com.mobi.repository.base.RepositoryResult;
+import com.mobi.repository.exception.RepositoryException;
+import com.mobi.rest.security.annotations.ActionAttributes;
+import com.mobi.rest.security.annotations.ActionId;
+import com.mobi.rest.security.annotations.AttributeValue;
+import com.mobi.rest.security.annotations.ResourceId;
+import com.mobi.rest.security.annotations.ValueType;
+import com.mobi.rest.util.CharsetUtils;
+import com.mobi.rest.util.ErrorUtils;
 import com.opencsv.CSVReader;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.FilenameUtils;
@@ -45,27 +84,6 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import com.mobi.dataset.api.DatasetManager;
-import com.mobi.dataset.ontology.dataset.Dataset;
-import com.mobi.dataset.ontology.dataset.DatasetRecord;
-import com.mobi.etl.api.config.delimited.ExcelConfig;
-import com.mobi.etl.api.config.delimited.SVConfig;
-import com.mobi.etl.api.delimited.DelimitedConverter;
-import com.mobi.etl.api.delimited.MappingManager;
-import com.mobi.etl.api.delimited.MappingWrapper;
-import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.base.RepositoryResult;
-import com.mobi.repository.exception.RepositoryException;
-import com.mobi.rest.util.CharsetUtils;
-import com.mobi.rest.util.ErrorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,9 +106,11 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
@@ -101,6 +121,12 @@ public class DelimitedRestImpl implements DelimitedRest {
     private ValueFactory vf;
     private DatasetManager datasetManager;
     private RepositoryManager repositoryManager;
+    private CatalogConfigProvider configProvider;
+    private CatalogManager catalogManager;
+    private OntologyRecordFactory ontologyRecordFactory;
+    private OntologyManager ontologyManager;
+    private VersioningManager versioningManager;
+    private EngineManager engineManager;
 
     private final Logger logger = LoggerFactory.getLogger(DelimitedRestImpl.class);
     private SesameTransformer transformer;
@@ -137,6 +163,36 @@ public class DelimitedRestImpl implements DelimitedRest {
     @Reference
     protected void setRepositoryManager(RepositoryManager repositoryManager) {
         this.repositoryManager = repositoryManager;
+    }
+
+    @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
+    }
+
+    @Reference
+    void setCatalogManager(CatalogManager catalogManager) {
+        this.catalogManager = catalogManager;
+    }
+
+    @Reference
+    void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
+        this.ontologyRecordFactory = ontologyRecordFactory;
+    }
+
+    @Reference
+    void setOntologyManager(OntologyManager ontologyManager) {
+        this.ontologyManager = ontologyManager;
+    }
+
+    @Reference
+    void setVersioningManager(VersioningManager versioningManager) {
+        this.versioningManager = versioningManager;
+    }
+
+    @Reference
+    void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
     }
 
     @Activate
@@ -261,6 +317,72 @@ public class DelimitedRestImpl implements DelimitedRest {
         removeTempFile(fileName);
 
         return Response.ok().build();
+    }
+
+    @Override
+    @ActionId(value = Modify.TYPE)
+    @ActionAttributes(
+            @AttributeValue(type = ValueType.QUERY, id = OntologyRecord.branch_IRI, value = "branchIRI")
+    )
+    @ResourceId(type = ValueType.QUERY, value = "ontologyRecordIRI")
+    public Response etlFileOntology(ContainerRequestContext context, String fileName, String mappingRecordIRI,
+                                    String ontologyRecordIRI, String branchIRI, boolean update, boolean containsHeaders,
+                                    String separator) {
+        checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
+        checkStringParam(ontologyRecordIRI, "Must provide the IRI of an ontology record");
+        checkStringParam(branchIRI, "Must provide the IRI of an ontology branch");
+
+        User user = getActiveUser(context, engineManager);
+
+        OntologyRecord record = catalogManager.getRecord(configProvider.getLocalCatalogIRI(),
+                vf.createIRI(ontologyRecordIRI), ontologyRecordFactory).orElseThrow(() ->
+                ErrorUtils.sendError("OntologyRecord " + ontologyRecordIRI + " does not exist",
+                        Response.Status.BAD_REQUEST));
+
+        // Convert the data
+        Model mappingData = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
+                separator, false);
+
+        Resource branchId = vf.createIRI(branchIRI);
+        IRI recordIRI = vf.createIRI(ontologyRecordIRI);
+        Model ontologyData =  ontologyManager.getOntologyModel(recordIRI, branchId);
+
+        Response response;
+        if (update) {
+            Iterator<Statement> ontologyObjectIterator = ontologyData.filter(null,
+                    vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Ontology.TYPE)).iterator();
+            if (ontologyObjectIterator.hasNext()) {
+                mappingData.addAll(ontologyData.filter(ontologyObjectIterator.next().getSubject(), null, null));
+            } else {
+                logger.info("OntologyRecord " + ontologyRecordIRI + " does not have an ontology object. Continuing"
+                        + " with mapping update.");
+            }
+
+            Difference diff = catalogManager.getDiff(ontologyData, mappingData);
+            if (!diff.getAdditions().isEmpty() || !diff.getDeletions().isEmpty()) {
+                versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), branchId, user,
+                        "Mapping data from " + mappingRecordIRI, diff.getAdditions(), diff.getDeletions());
+                response = Response.ok().build();
+            } else {
+                response = Response.status(204).entity("No commit was submitted. No differences detected between "
+                        + "mapping result data and ontology.").build();
+            }
+        } else {
+            mappingData.removeAll(ontologyData);
+
+            if (!mappingData.isEmpty()) {
+                versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), branchId, user,
+                        "Mapping data from " + mappingRecordIRI, mappingData, null);
+                response = Response.ok().build();
+            } else {
+                response = Response.status(204).entity("No commit was submitted, commit was empty due to duplicates")
+                        .build();
+            }
+        }
+        // Remove temp file
+        removeTempFile(fileName);
+
+        return response;
     }
 
     /**
@@ -496,8 +618,14 @@ public class DelimitedRestImpl implements DelimitedRest {
      */
     private Model getUploadedMapping(String mappingRecordIRI) {
         // Collect uploaded mapping model
-        MappingWrapper mapping = mappingManager.retrieveMapping(vf.createIRI(mappingRecordIRI)).orElseThrow(() ->
-                ErrorUtils.sendError("Mapping " + mappingRecordIRI + " does not exist", Response.Status.BAD_REQUEST));
+        Optional<MappingWrapper> mappingOpt = Optional.empty();
+        try {
+            mappingOpt = mappingManager.retrieveMapping(vf.createIRI(mappingRecordIRI));
+        } catch (IllegalArgumentException e) {
+            ErrorUtils.sendError("Mapping " + mappingRecordIRI + " does not exist", Response.Status.BAD_REQUEST);
+        }
+        MappingWrapper mapping = mappingOpt.orElseThrow(() ->
+                ErrorUtils.sendError("Mapping " + mappingRecordIRI + " could not be retrieved", Response.Status.BAD_REQUEST));
         return mapping.getModel();
     }
 

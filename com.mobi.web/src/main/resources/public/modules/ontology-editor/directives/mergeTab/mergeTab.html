@@ -20,24 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="merge-tab">
-    <div class="actions">
-        <span class="header active">Merge Branches</span>
-    </div>
-    <div class="row row-container">
-        <div class="col-xs-12">
-            <block>
-                <block-content class="padding">
-                    <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-                    <merge-form ng-if="!dvm.conflicts.length" branch-title="dvm.branchTitle" is-user-branch="dvm.isUserBranch" target-id="dvm.targetId" remove-branch="dvm.checkbox"></merge-form>
-                    <resolve-conflicts-form ng-if="dvm.conflicts.length" branch-title="dvm.branchTitle" target-title="dvm.getTargetTitle()" conflicts="dvm.conflicts" resolutions="dvm.resolutions"></resolve-conflicts-form>
-                </block-content>
-                <block-footer>
-                    <button ng-if="!dvm.conflicts.length" class="btn btn-primary pull-right btn-merge" ng-click="dvm.attemptMerge()" ng-disabled="!dvm.targetId">Submit</button>
-                    <button ng-if="dvm.conflicts.length" class="btn btn-primary pull-right btn-resolution" ng-click="dvm.mergeWithResolutions()" ng-disabled="!dvm.allResolved()">Submit with Resolutions</button>
-                    <button class="btn btn-default pull-right" ng-click="dvm.os.listItem.merge = false">Cancel</button>
-                </block-footer>
-            </block>
-        </div>
+<div class="merge-tab row m-0 h-100">
+    <div class="col p-3">
+        <merge-block class="h-100" ng-if="!dvm.os.listItem.merge.conflicts.length"></merge-block>
+        <resolve-conflicts-block class="h-100" ng-if="dvm.os.listItem.merge.conflicts.length"></resolve-conflicts-block>
     </div>
 </div>

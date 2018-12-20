@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.11.19-SNAPSHOT</version>
+        <version>1.14.42-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -64,8 +64,12 @@
             <artifactId>commons-lang3</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-runtime-osgi</artifactId>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.rdf4j</groupId>
+            <artifactId>rdf4j-runtime-osgi</artifactId>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
@@ -124,6 +128,35 @@
                 </configuration>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/prod_id.txt</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/prod_id.txt</exclude>
+                </excludes>
+            </resource>
+        </resources>
     </build>
 
+    <profiles>
+        <profile>
+            <id>default-product-id</id>
+            <activation>
+                <property>
+                    <name>!productId</name>
+                </property>
+            </activation>
+            <properties>
+                <productId></productId>
+            </properties>
+        </profile>
+    </profiles>
 </project>

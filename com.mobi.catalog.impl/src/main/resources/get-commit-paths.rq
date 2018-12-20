@@ -1,0 +1,23 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+
+select ?parent (group_concat(distinct ?pathItem) as ?path) (group_concat(distinct ?mid) as ?connectPath)
+where {
+    {
+        # Collect all commits in the chain with auxiliary commits
+    	?start (mcat:baseCommit|mcat:auxiliaryCommit)* ?parent .
+    	?parent mcat:auxiliaryCommit ?y .
+
+        # For each auxiliary commit, collect the path
+    	?y mcat:baseCommit* ?pathItem .
+
+        # Find the path from the start to the commit with the auxiliary commit
+    	?start (mcat:baseCommit|mcat:auxiliaryCommit)* ?mid .
+    	?mid (mcat:baseCommit|mcat:auxiliaryCommit)* ?parent .
+    }
+    UNION
+    {
+        # Create a result for the base path from the start
+        bind(?start as ?y)
+        ?y mcat:baseCommit* ?pathItem .
+    }
+} group by ?y ?parent

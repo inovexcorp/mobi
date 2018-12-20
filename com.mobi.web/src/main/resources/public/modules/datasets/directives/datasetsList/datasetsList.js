@@ -43,6 +43,7 @@
          * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
          * @requires prefixes.service:prefixes
+         * @requires modal.service:modalService
          *
          * @description
          * `datasetsList` is a directive which creates a Bootstrap row containing a {@link block.directive:block block}
@@ -54,9 +55,9 @@
          */
         .directive('datasetsList', datasetsList);
 
-        datasetsList.$inject = ['datasetManagerService', 'datasetStateService', 'catalogManagerService', 'utilService', 'prefixes', '$q'];
+        datasetsList.$inject = ['$q', 'datasetManagerService', 'datasetStateService', 'catalogManagerService', 'utilService', 'prefixes', 'modalService'];
 
-        function datasetsList(datasetManagerService, datasetStateService, catalogManagerService, utilService, prefixes, $q) {
+        function datasetsList($q, datasetManagerService, datasetStateService, catalogManagerService, utilService, prefixes, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -72,10 +73,8 @@
                     dvm.state = datasetStateService;
                     dvm.util = utilService;
                     dvm.prefixes = prefixes;
-                    dvm.error = '';
-                    dvm.showDeleteConfirm = false;
-                    dvm.showClearConfirm = false;
                     dvm.cachedOntologyIds = [];
+                    dvm.currentPage = dvm.state.paginationConfig.pageIndex + 1;
 
                     dvm.getIdentifiedOntologyIds = function(dataset) {
                         return _.map(dataset.identifiers, identifier => identifier[prefixes.dataset + 'linksToRecord'][0]['@id']);
@@ -99,50 +98,39 @@
                         }
                     }
                     dvm.getPage = function(direction) {
-                        dvm.state.paginationConfig.pageIndex = dvm.state.paginationConfig.pageIndex + (direction === 'prev' ? -1 : 1);
-                        dvm.state.setResults(dvm.state.links[direction]);
+                        dvm.state.paginationConfig.pageIndex = dvm.currentPage - 1;
+                        dvm.state.setResults();
                     }
-                    dvm.delete = function() {
-                        dm.deleteDatasetRecord(dvm.state.selectedDataset.record['@id'])
+                    dvm.delete = function(dataset) {
+                        dm.deleteDatasetRecord(dataset.record['@id'])
                             .then(() => {
                                 dvm.util.createSuccessToast('Dataset successfully deleted');
-                                dvm.showDeleteConfirm = false;
-                                dvm.error = '';
-                                dvm.state.selectedDataset = undefined;
                                 if (dvm.state.results.length === 1 && dvm.state.paginationConfig.pageIndex > 0) {
                                     dvm.state.paginationConfig.pageIndex -= 1;
                                 }
                                 dvm.state.setResults();
                                 dvm.state.submittedSearch = !!dvm.state.paginationConfig.searchText;
-                            }, onError);
+                            }, dvm.util.createErrorToast);
                     }
-                    dvm.clear = function() {
-                        dm.clearDatasetRecord(dvm.state.selectedDataset.record['@id'])
+                    dvm.clear = function(dataset) {
+                        dm.clearDatasetRecord(dataset.record['@id'])
                             .then(() => {
                                 dvm.util.createSuccessToast('Dataset successfully cleared');
-                                dvm.showClearConfirm = false;
-                                dvm.error = '';
-                            }, onError);
+                            }, dvm.util.createErrorToast);
                     }
                     dvm.showUploadData = function(dataset) {
                         dvm.state.selectedDataset = dataset;
-                        dvm.state.showUploadOverlay = true;
+                        modalService.openModal('uploadDataOverlay');
                     }
                     dvm.showEdit = function(dataset) {
                         dvm.state.selectedDataset = dataset;
-                        dvm.state.showEditOverlay = true;
+                        modalService.openModal('editDatasetOverlay');
                     }
                     dvm.showClear = function(dataset) {
-                        dvm.state.selectedDataset = dataset;
-                        dvm.showClearConfirm = true;
+                        modalService.openConfirmModal('<p>Are you sure that you want to clear <strong>' + dvm.util.getDctermsValue(dataset.record, 'title') + '</strong>?</p>', () => dvm.clear(dataset));
                     }
                     dvm.showDelete = function(dataset) {
-                        dvm.state.selectedDataset = dataset;
-                        dvm.showDeleteConfirm = true;
-                    }
-
-                    function onError(errorMessage) {
-                        dvm.error = errorMessage;
+                        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.util.getDctermsValue(dataset.record, 'title') + '</strong>?</p>', () => dvm.delete(dataset));
                     }
                 }
             }

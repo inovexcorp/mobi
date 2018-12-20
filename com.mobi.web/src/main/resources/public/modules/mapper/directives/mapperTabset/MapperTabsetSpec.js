@@ -48,10 +48,6 @@ describe('Mapper Tabset directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('mapper-tabset')).toBe(true);
-            expect(this.element.querySelectorAll('.mapper-page-content').length).toBe(1);
-        });
-        it('with a .blue-bar', function() {
-            expect(this.element.querySelectorAll('.blue-bar').length).toBe(1);
         });
         describe('if the step', function() {
             it('is selecting a mapping', function() {

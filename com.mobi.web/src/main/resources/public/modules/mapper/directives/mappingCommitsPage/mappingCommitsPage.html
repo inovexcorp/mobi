@@ -21,14 +21,13 @@
   #L%
   -->
 <div class="mapping-commits-page row">
-    <div class="col-xs-8 col-xs-offset-2">
+    <div class="col-8 offset-2">
         <block>
             <block-header>
                 <h4>Commits</h4>
             </block-header>
             <block-content class="table-container">
-                <p class="padding" ng-if="dvm.state.newMapping">No commits have been made yet.</p>
-                <commit-history-table ng-if="!dvm.state.newMapping" commit-id="dvm.util.getPropertyId(state.mapping.branch, dvm.prefixes.catalog + 'head')" branch="dvm.state.mapping.branch" record-id="dvm.state.mapping.record.id" graph></commit-history-table>
+                <commit-history-table commit-id="dvm.util.getPropertyId(dvm.state.mapping.branch, dvm.prefixes.catalog + 'head')" head-title="dvm.util.getDctermsValue(dvm.state.mapping.branch, 'title')" graph></commit-history-table>
             </block-content>
         </block>
     </div>

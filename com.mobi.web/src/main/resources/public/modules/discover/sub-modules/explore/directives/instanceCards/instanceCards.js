@@ -42,6 +42,7 @@
          * @requires discoverState.service:discoverStateService
          * @requires explore.service:exploreService
          * @requires util.service:utilService
+         * @requires modal.service:modalService
          *
          * @description
          * `instanceCards` is a directive that creates a div which contains a 3 column grid used to display the
@@ -50,9 +51,9 @@
          */
         .directive('instanceCards', instanceCards);
 
-        instanceCards.$inject = ['$q', 'discoverStateService', 'exploreService', 'exploreUtilsService', 'utilService']
+        instanceCards.$inject = ['$q', 'discoverStateService', 'exploreService', 'exploreUtilsService', 'utilService', 'modalService']
 
-        function instanceCards($q, discoverStateService, exploreService, exploreUtilsService, utilService) {
+        function instanceCards($q, discoverStateService, exploreService, exploreUtilsService, utilService, modalService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceCards/instanceCards.html',
@@ -67,7 +68,6 @@
                     var eu = exploreUtilsService;
                     dvm.chunks = getChunks(ds.explore.instanceDetails.data);
                     dvm.classTitle = _.last(ds.explore.breadcrumbs);
-                    dvm.selectedItem = undefined;
                     dvm.showDeleteOverlay = false;
 
                     dvm.view = function(item) {
@@ -86,8 +86,8 @@
                             }, util.createErrorToast);
                     }
 
-                    dvm.delete = function() {
-                        es.deleteInstance(ds.explore.recordId, dvm.selectedItem.instanceIRI)
+                    dvm.delete = function(item) {
+                        es.deleteInstance(ds.explore.recordId, item.instanceIRI)
                             .then(() => {
                                 util.createSuccessToast('Instance was successfully deleted.');
                                 ds.explore.instanceDetails.total--;
@@ -97,7 +97,7 @@
                                 if (ds.explore.instanceDetails.data.length === 1) {
                                     ds.explore.instanceDetails.currentPage--;
                                 }
-                                var offset = ds.explore.instanceDetails.currentPage * ds.explore.instanceDetails.limit;
+                                var offset = (ds.explore.instanceDetails.currentPage - 1) * ds.explore.instanceDetails.limit;
                                 return es.getClassInstanceDetails(ds.explore.recordId, ds.explore.classId, {offset, limit: ds.explore.instanceDetails.limit});
                             }, $q.reject)
                             .then(response => {
@@ -109,13 +109,11 @@
                                     ds.explore.instanceDetails.data = resultsObject.data;
                                     ds.explore.instanceDetails.links = resultsObject.links;
                                 }
-                                dvm.showDeleteOverlay = false;
-                            }, errorMessage => dvm.error = errorMessage);
+                            }, util.createErrorToast);
                     }
 
-                    dvm.showOverlay = function(item) {
-                        dvm.selectedItem = item;
-                        dvm.showDeleteOverlay = true;
+                    dvm.confirmDelete = function(item) {
+                        modalService.openConfirmModal('<p>Are you sure you want to delete <strong>' + item.title + '</strong>?</p>', () => dvm.delete(item));
                     }
 
                     $scope.$watch(() => ds.explore.instanceDetails.data, newValue => {

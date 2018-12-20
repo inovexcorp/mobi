@@ -37,10 +37,9 @@
         /**
          * @ngdoc service
          * @name catalogManager.service:catalogManagerService
-         * @requires $http
-         * @requires $q
+         * @requires httpService.service:httpService
          * @requires prefixes.service:prefixes
-         * @requires ontologyManager.service:ontologyManagerService
+         * @requires util.service:utilService
          *
          * @description
          * `catalogManagerService` is a service that provides access to the Mobi catalog REST
@@ -49,12 +48,13 @@
          */
         .service('catalogManagerService', catalogManagerService);
 
-        catalogManagerService.$inject = ['$window', '$http', 'httpService', '$q', 'prefixes', 'utilService', 'REST_PREFIX'];
+        catalogManagerService.$inject = ['$http', '$httpParamSerializer', 'httpService', '$q', 'prefixes', 'utilService', 'REST_PREFIX'];
 
-        function catalogManagerService($window, $http, httpService, $q, prefixes, utilService, REST_PREFIX) {
+        function catalogManagerService($http, $httpParamSerializer, httpService, $q, prefixes, utilService, REST_PREFIX) {
             var self = this,
                 util = utilService,
-                prefix = REST_PREFIX + 'catalogs';
+                prefix = REST_PREFIX + 'catalogs',
+                commitsPrefix = REST_PREFIX + 'commits';
 
             /**
              * @ngdoc property
@@ -571,26 +571,36 @@
              *
              * @description
              * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/versions endpoint with the passed
-             * Catalog and Record ids, metadata, and associated Commit id and creates a new Tag for the identified
-             * Record. Returns a Promise with the IRI of the new Tag if successful or rejects with an error message.
+             * Catalog and Record ids, and metadata and creates a new Tag for the identified Record. Returns a Promise
+             * with the IRI of the new Tag if successful or rejects with an error message.
              *
              * @param {string} recordId The id of the Record to create the Tag for
              * @param {string} catalogId The id of the Catalog the Record should be a part of
-             * @param {Object} versionConfig A configuration object containing metadata for the new Version
-             * @param {string} versionConfig.title The required title of the new Version
-             * @param {string} versionConfig.description The optional description of the new Version
+             * @param {Object} tagConfig A configuration object containing metadata for the new Tag
+             * @param {string} tagConfig.title The required title of the new Tag
+             * @param {string} tagConfig.description The optional description of the new Tag
+             * @param {string} tagConfig.iri The IRI for the new Tag
+             * @param {string} tagConfig.commit The IRI of the Commit for the new Tag
              * @param {string} commitId The id of the Commit to associate with the new Tag
              * @return {Promise} A promise the resolves to the IRI of the new Tag or is rejected with an error
              * message
              */
-            self.createRecordTag = function(recordId, catalogId, versionConfig, commitId) {
-                versionConfig.type = prefixes.catalog + 'Tag';
-                return createVersion(recordId, catalogId, versionConfig)
-                    .then(iri => self.getRecordVersion(iri, recordId, catalogId), $q.reject)
-                    .then(version => {
-                        version[prefixes.catalog + 'commit'] = [{'@id': commitId}];
-                        return self.updateRecordVersion(version['@id'], recordId, catalogId, version);
-                    }, $q.reject)
+            self.createRecordTag = function(recordId, catalogId, tagConfig) {
+                var fd = new FormData(),
+                    config = {
+                        transformRequest: _.identity,
+                        headers: {
+                            'Content-Type': undefined
+                        }
+                    };
+                fd.append('iri', tagConfig.iri);
+                fd.append('title', tagConfig.title);
+                fd.append('commit', tagConfig.commitId);
+                if (_.has(tagConfig, 'description')) {
+                    fd.append('description', tagConfig.description);
+                }
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/tags', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -973,6 +983,76 @@
 
             /**
              * @ngdoc method
+             * @name getCommit
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/commits/{commitId} endpoint with the passed Commit id.
+             *
+             * @param {string} commitId The id of the Commit to retrieve
+             * @param {string} [format='jsonld'] format The RDF format to return the Commit additions and deletions in
+             * @return {Promise} A promise that resolves with the Commit or rejects with an error message
+             */
+            self.getCommit = function(commitId, format = 'jsonld') {
+                var config = {
+                    params: { format }
+                };
+
+                return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId), config)
+                    .then(response => response.data, util.rejectError);
+            }
+
+            /**
+             * @ngdoc method
+             * @name getCommitHistory
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/commits/{commitId}/history endpoint with the passed Commit id.
+             * 
+             * @param {string} commitId - The commit id of the commit which should be the most recent commit in the 
+             *      history.
+             * @param {string} targetId - The commit id of the commit which should be the oldest commit in 
+             *      the history.
+             * @param {string} [id=''] The identifier for this request
+             * @return {Promise} A promise that resolves with the list of Commits or rejects with an error message
+             */
+            self.getCommitHistory = function(commitId, targetId, id = '') {
+                var config = {
+                    params: { targetId }
+                };
+
+                var url = commitsPrefix + '/' + encodeURIComponent(commitId) + '/history';
+                var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+
+                return promise.then(response => response.data, util.rejectError);
+            }
+
+            /**
+             * @ngdoc method
+             * @name getDifference
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/commits/{commitId}/difference endpoint with the passed Commit ids and returns the 
+             * Difference between the source and target Commit chains.
+             * 
+             * @param {string} commitId The commit id of the commit whose chain will be merged in to the target.
+             * @param {string} targetId The commit id of the commit to receive the source commits.
+             * @param {string} [format='jsonld'] format The RDF format to return the Difference in
+             * @return {Promise} A promise that resolves with the Difference of the two resulting Commit chains or 
+             *      rejects with an error message
+             */
+            self.getDifference = function(commitId, targetId, format='jsonld') {
+                var config = {
+                    params: { targetId, format }
+                };
+                return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference', config)
+                    .then(response => response.data, util.rejectError);
+            }
+
+            /**
+             * @ngdoc method
              * @name getBranchCommits
              * @methodOf catalogManager.service:catalogManagerService
              *
@@ -983,10 +1063,16 @@
              * @param {string} branchId The id of the Branch to retrieve the Commits of
              * @param {string} recordId The id of the Record with the specified Branch
              * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @param {string} targetId The id of the target Branch to retrieve commits that are between that and the
+             *      branchId
              * @return {Promise} A promise that resolves with the list of Branch Commits or rejects with an error message
              */
-            self.getBranchCommits = function(branchId, recordId, catalogId) {
-                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits')
+            self.getBranchCommits = function(branchId, recordId, catalogId, targetId) {
+                var config = {
+                    params: { targetId }
+                };
+
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits', config)
                     .then(response => response.data, util.rejectError);
             }
 
@@ -1194,7 +1280,12 @@
              * @param {String} format The RDF format to return the compiled resource in
              */
             self.downloadResource = function(commitId, branchId, recordId, catalogId, applyInProgressCommit, format = 'jsonld', fileName = 'resource') {
-                $window.location = prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=' + applyInProgressCommit + '&format=' + format + '&fileName=' + fileName;
+                var params = $httpParamSerializer({
+                    applyInProgressCommit: !!applyInProgressCommit,
+                    format: format || 'jsonld',
+                    fileName: fileName || 'resource'
+                });
+                util.startDownload(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?' + params);
             }
 
             /**
@@ -1363,6 +1454,21 @@
 
             /**
              * @ngdoc method
+             * @name isUserBranch
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Tests whether the passed entity is a user branch or not.
+             *
+             * @param {Object} entity A JSON-LD object
+             * @return {boolean} True if the entity contains the UserBranch type; false otherwise
+             */
+            self.isUserBranch = function(entity) {
+                return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'UserBranch');
+            }
+
+            /**
+             * @ngdoc method
              * @name isVersion
              * @methodOf catalogManager.service:catalogManagerService
              *
@@ -1376,6 +1482,36 @@
                 return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Version');
             }
 
+            /**
+             * @ngdoc method
+             * @name isTag
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Tests whether the passed entity is a Tag or not.
+             *
+             * @param {Object} entity A JSON-LD object
+             * @return {boolean} True if the entity contains the Tag type; false otherwise
+             */
+            self.isTag = function(entity) {
+                return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Tag');
+            }
+
+            /**
+             * @ngdoc method
+             * @name isCommit
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Tests whether the passed entity is a Commit or not.
+             *
+             * @param {Object} entity A JSON-LD object
+             * @return {boolean} True if the entity contains the Commit type; false otherwise
+             */
+            self.isCommit = function(entity) {
+                return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Commit');
+            }
+
             function createVersion(recordId, catalogId, versionConfig) {
                 var fd = new FormData(),
                     config = {
@@ -1385,7 +1521,7 @@
                         }
                     };
                 fd.append('title', versionConfig.title);
-                fd.append('type', versionConfig.versionType);
+                fd.append('type', versionConfig.type);
                 if (_.has(versionConfig, 'description')) {
                     fd.append('description', versionConfig.description);
                 }

@@ -42,6 +42,8 @@
          * @requires discoverState.service:discoverStateService
          * @requires util.service:utilService
          * @requires explore.service:exploreService
+         * @requires exploreUtils.service:exploreUtilsService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * HTML contents in the instance view page which shows the complete list of properites
@@ -72,7 +74,7 @@
                         es.createInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.entity)
                             .then(() => {
                                 dvm.ds.explore.instanceDetails.total++;
-                                var offset = dvm.ds.explore.instanceDetails.currentPage * dvm.ds.explore.instanceDetails.limit;
+                                var offset = (dvm.ds.explore.instanceDetails.currentPage - 1) * dvm.ds.explore.instanceDetails.limit;
                                 return es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset, limit: dvm.ds.explore.instanceDetails.limit});
                             }, $q.reject)
                             .then(response => {

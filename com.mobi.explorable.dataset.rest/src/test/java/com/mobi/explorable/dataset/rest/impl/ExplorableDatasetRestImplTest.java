@@ -27,8 +27,10 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
-import static com.mobi.rest.util.RestUtils.encode;
+import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,6 +39,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.api.builder.OntologyIdentifier;
@@ -60,18 +63,21 @@ import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.RepositoryManager;
+import com.mobi.repository.impl.core.SimpleRepositoryManager;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import com.mobi.rest.util.MobiRestTestNg;
+import com.mobi.repository.impl.sesame.query.TestQueryResult;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
-import org.openrdf.sail.memory.MemoryStore;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -126,6 +132,9 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
     private DatasetManager datasetManager;
 
     @Mock
+    private CatalogConfigProvider configProvider;
+
+    @Mock
     private CatalogManager catalogManager;
 
     @Mock
@@ -152,6 +161,8 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
     @Override
     protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
+
+        RepositoryManager repoManager = new SimpleRepositoryManager();
 
         vf = getValueFactory();
         mf = getModelFactory();
@@ -188,12 +199,16 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         dataProperties.add(dataProperty);
         objectProperties.add(objectProperty);
 
+        when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
+
         when(dataProperty.getIRI()).thenReturn(dataPropertyId);
         when(objectProperty.getIRI()).thenReturn(objectPropertyId);
-        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
+        when(ontologyManager.retrieveOntology(ontologyRecordId, vf.createIRI(branchId), vf.createIRI(commitId))).thenReturn(Optional.of(ontology));
+        when(ontologyManager.getSubClassesFor(any(IRI.class), any(RepositoryConnection.class))).thenAnswer(i -> new TestQueryResult(Collections.singletonList("s"), Collections.singletonList(CLASS_ID_STR_2), 1, vf));
 
         rest = new ExplorableDatasetRestImpl();
         injectOrmFactoryReferencesIntoService(rest);
+        rest.setConfigProvider(configProvider);
         rest.setCatalogManager(catalogManager);
         rest.setDatasetManager(datasetManager);
         rest.setFactory(vf);
@@ -201,6 +216,7 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         rest.setModelFactory(mf);
         rest.setOntologyManager(ontologyManager);
         rest.setBNodeService(bNodeService);
+        rest.setRepositoryManager(repoManager);
 
         return new ResourceConfig().register(rest);
     }
@@ -212,12 +228,11 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.of(record));
         when(datasetManager.getConnection(recordId)).thenReturn(datasetConnection);
 
-        when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogId);
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(compiledModel);
         when(catalogManager.getRecord(catalogId, ontologyRecordId, ontologyRecordFactory)).thenReturn(Optional.empty());
 
-        when(sesameTransformer.mobiModel(any(org.openrdf.model.Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
-        when(sesameTransformer.mobiIRI(any(org.openrdf.model.IRI.class))).thenAnswer(i -> Values.mobiIRI(i.getArgumentAt(0, org.openrdf.model.IRI.class)));
+        when(sesameTransformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
+        when(sesameTransformer.mobiIRI(any(org.eclipse.rdf4j.model.IRI.class))).thenAnswer(i -> Values.mobiIRI(i.getArgumentAt(0, org.eclipse.rdf4j.model.IRI.class)));
         when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
         when(sesameTransformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
 
@@ -438,6 +453,28 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
     }
 
     @Test
+    public void getInstanceDetailsWithInferTest() {
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/instance-details").queryParam("infer", true).request().get();
+        assertEquals(response.getStatus(), 200);
+        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(responseArray.size(), 17);
+        assertEquals(response.getHeaders().get("X-Total-Count").get(0), "17");
+        verify(datasetManager).getDatasetRecord(recordId);
+        verify(ontologyManager).getSubClassesFor(eq(classId), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void getInstanceDetailsWithInferWithEmptyRecordTest() {
+        //Setup:
+        when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.empty());
+
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/instance-details").queryParam("infer", true).request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
     public void getClassPropertyDetailsTest() throws Exception {
         //Setup:
         JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
@@ -472,7 +509,7 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
     }
 
     @Test
-    public void getClassPropertyDetailsWhenNoPropertiesTest() throws Exception {
+    public void getClassPropertyDetailsWhenNoPropertiesTest() {
         //Setup:
         when(ontology.getAllNoDomainObjectProperties()).thenReturn(Collections.EMPTY_SET);
         when(ontology.getAllNoDomainDataProperties()).thenReturn(Collections.EMPTY_SET);
@@ -492,6 +529,42 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/property-details").request().get();
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getClassPropertyDetailsWithSamePropertyIRI() throws Exception {
+        //Setup:
+        String ontologyId = "https://mobi.com/ontologies/1";
+        String branchId = "https://mobi.com/branches/1";
+        String commitId = "https://mobi.com/commits/1";
+        OntologyIdentifier identifier = new OntologyIdentifier(ontologyId, branchId, commitId, vf, mf);
+        Set<Value> nodes = record.getOntology();
+        nodes.add(identifier.getNode());
+        record.setOntology(nodes);
+        record.getModel().addAll(identifier.getStatements());
+        Ontology ontology2 = mock(Ontology.class);
+        when(ontology2.containsClass(any(IRI.class))).thenReturn(true);
+        when(ontology2.getAllClassDataProperties(classId)).thenReturn(dataProperties);
+        when(ontology2.getAllClassObjectProperties(classId)).thenReturn(objectProperties);
+        when(ontology2.getDataPropertyRange(dataProperty)).thenReturn(Collections.EMPTY_SET);
+        when(ontology2.getObjectPropertyRange(objectProperty)).thenReturn(Collections.EMPTY_SET);
+        when(ontologyManager.retrieveOntology(vf.createIRI(ontologyId), vf.createIRI(branchId), vf.createIRI(commitId))).thenReturn(Optional.of(ontology2));
+        JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
+                .getResourceAsStream("/expected-class-property-details.json")));
+
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/property-details").request().get();
+        assertEquals(response.getStatus(), 200);
+        JSONArray details = JSONArray.fromObject(response.readEntity(String.class));
+        verify(ontology, times(0)).getAllNoDomainDataProperties();
+        verify(ontology, times(0)).getAllNoDomainObjectProperties();
+        verify(ontology2, times(0)).getAllNoDomainDataProperties();
+        verify(ontology2, times(0)).getAllNoDomainObjectProperties();
+        verify(ontology).getAllClassDataProperties(any(IRI.class));
+        verify(ontology).getAllClassObjectProperties(any(IRI.class));
+        verify(ontology2).getAllClassDataProperties(any(IRI.class));
+        verify(ontology2).getAllClassObjectProperties(any(IRI.class));
+        assertEquals(details, expected);
     }
 
     @Test

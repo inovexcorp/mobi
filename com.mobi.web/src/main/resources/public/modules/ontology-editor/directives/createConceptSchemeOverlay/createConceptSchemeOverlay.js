@@ -24,7 +24,37 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name createConceptSchemeOverlay
+         *
+         * @description
+         * The `createConceptSchemeOverlay` module only provides the `createConceptSchemeOverlay` directive which
+         * creates content for a modal to add a concept scheme to an ontology/vocabulary.
+         */
         .module('createConceptSchemeOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name createConceptSchemeOverlay.directive:createConceptSchemeOverlay
+         * @scope
+         * @restrict E
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires prefixes.service:prefixes
+         * @requires util.service:utilService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         *
+         * @description
+         * `createConceptSchemeOverlay` is a directive that creates content for a modal that creates a concept scheme
+         * in the current {@link ontologyState.service:ontologyStateService selected ontology/vocabulary}. The form in
+         * the modal contains a text input for the concept scheme name (which populates the
+         * {@link staticIri.directive:staticIri IRI}),
+         * an {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a `ui-select` for the top concepts.
+         * Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         *
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
+         */
         .directive('createConceptSchemeOverlay', createConceptSchemeOverlay);
 
         createConceptSchemeOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'utilService', 'ontologyUtilsManagerService'];
@@ -32,11 +62,13 @@
         function createConceptSchemeOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/createConceptSchemeOverlay/createConceptSchemeOverlay.html',
-                scope: {},
+                scope: {
+                    close: '&',
+                    dismiss: '&'
+                },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefixes = prefixes;
@@ -61,37 +93,43 @@
                                 dvm.scheme[prefixes.dcterms + 'title'][0]['@value'], 'class');
                         }
                     }
-
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.scheme['@id'] = iriBegin + iriThen + iriEnd;
                         dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
-
                     dvm.create = function() {
                         if (dvm.selectedConcepts.length) {
                             dvm.scheme[prefixes.skos + 'hasTopConcept'] = dvm.selectedConcepts;
-                            _.forEach(dvm.selectedConcepts, concept => {
-                                dvm.os.addEntityToHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, concept['@id'], dvm.os.listItem.conceptSchemes.index, dvm.scheme['@id']);
-                            });
                         }
                         dvm.ontoUtils.addLanguageToNewEntity(dvm.scheme, dvm.language);
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.scheme);
                         // update relevant lists
-                        dvm.ontoUtils.addConceptScheme(dvm.scheme);
+                        var hierarchy = _.get(dvm.os.listItem, 'conceptSchemes.hierarchy');
+                        var index = _.get(dvm.os.listItem, 'conceptSchemes.index');
+                        hierarchy.push({'entityIRI': dvm.scheme['@id']});
+                        // Add top concepts to hierarchy if they exist
+                        _.forEach(dvm.selectedConcepts, concept => {
+                            dvm.os.addEntityToHierarchy(hierarchy, concept['@id'], index, dvm.scheme['@id']);
+                        });
+                        dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                        // Update additions
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.scheme);
+                        // Update individual hierarchy
                         dvm.ontoUtils.addIndividual(dvm.scheme);
-                        // select the new concept
-                        dvm.os.selectItem(_.get(dvm.scheme, '@id'));
-                        // hide the overlay
-                        dvm.os.showCreateConceptSchemeOverlay = false;
+                        // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
+                        // hide the overlay
+                        $scope.close();
                     }
                     dvm.getConcepts = function(searchText) {
                         dvm.concepts = dvm.ontoUtils.getSelectList(dvm.conceptIRIs, searchText);
                     }
-                }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
+                    }
+                }]
             }
         }
 })();

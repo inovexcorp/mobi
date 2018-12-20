@@ -21,23 +21,20 @@
  * #L%
  */
 describe('Commit Overlay directive', function() {
-    var $compile, scope, $q, catalogManagerSvc, stateManagerSvc, ontologyStateSvc;
+    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('commitOverlay');
         mockOntologyState();
         mockCatalogManager();
-        mockStateManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _stateManagerService_,
-            _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
-            stateManagerSvc = _stateManagerService_;
             ontologyStateSvc = _ontologyStateService_;
         });
 
@@ -46,7 +43,9 @@ describe('Commit Overlay directive', function() {
         this.branchId = 'branchId';
         this.branch = {'@id': this.branchId};
 
-        this.element = $compile(angular.element('<commit-overlay></commit-overlay>'))(scope);
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<commit-overlay close="close()" dismiss="dismiss()"></commit-overlay>'))(scope);
         scope.$digest();
         ontologyStateSvc.listItem.upToDate = true;
         this.controller = this.element.controller('commitOverlay');
@@ -57,15 +56,16 @@ describe('Commit Overlay directive', function() {
         scope = null;
         $q = null;
         catalogManagerSvc = null;
-        stateManagerSvc = null;
         ontologyStateSvc = null;
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('commit-overlay')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('COMMIT-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with a form', function() {
             expect(this.element.find('form').length).toBe(1);
@@ -76,20 +76,11 @@ describe('Commit Overlay directive', function() {
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
         });
-        it('depending on whether the selected item is up to date', function() {
-            expect(this.element.find('info-message').length).toBe(0);
-            ontologyStateSvc.listItem.upToDate = false;
-            scope.$digest();
-            expect(this.element.find('info-message').length).toBe(1);
-        });
         it('with a text-area', function() {
             expect(this.element.find('text-area').length).toBe(1);
         });
-        it('with a .btn-container', function() {
-            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
-        });
         it('depending on the form validity', function() {
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             this.controller.form.$invalid = false;
@@ -97,7 +88,7 @@ describe('Commit Overlay directive', function() {
             expect(button.attr('disabled')).toBeFalsy();
         });
         it('with buttons to submit and cancel', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
@@ -116,27 +107,26 @@ describe('Commit Overlay directive', function() {
                     it('and when updateOntologyState is resolved', function() {
                         ontologyStateSvc.listItem.inProgressCommit.additions = ['test'];
                         ontologyStateSvc.listItem.inProgressCommit.deletions = ['test'];
-                        stateManagerSvc.updateOntologyState.and.returnValue($q.when(''));
+                        ontologyStateSvc.updateOntologyState.and.returnValue($q.when(''));
                         this.controller.commit();
                         scope.$digest();
                         expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(
                             ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId,
                             this.controller.comment);
-                        expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                            ontologyStateSvc.listItem.ontologyRecord.branchId, this.commitId);
+                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId,
+                            commitId: this.commitId, branchId: ontologyStateSvc.listItem.ontologyRecord.branchId});
                         expect(ontologyStateSvc.listItem.ontologyRecord.commitId).toEqual(this.commitId);
                         expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
-                        expect(ontologyStateSvc.showCommitOverlay).toBe(false);
+                        expect(scope.close).toHaveBeenCalled();
                     });
                     it('and when updateOntologyState is rejected', function() {
-                        stateManagerSvc.updateOntologyState.and.returnValue($q.reject('error'));
+                        ontologyStateSvc.updateOntologyState.and.returnValue($q.reject('error'));
                         this.controller.commit();
                         scope.$digest();
                         expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(
                             ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId,
                             this.controller.comment);
-                        expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                            ontologyStateSvc.listItem.ontologyRecord.branchId, this.commitId);
+                        expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId, commitId: this.commitId, branchId: ontologyStateSvc.listItem.ontologyRecord.branchId});
                         expect(this.controller.error).toEqual('error');
                     });
                 });
@@ -146,7 +136,7 @@ describe('Commit Overlay directive', function() {
                     scope.$digest();
                     expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.branchId,
                         ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.controller.comment);
-                    expect(stateManagerSvc.updateOntologyState).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.updateOntologyState).not.toHaveBeenCalled();
                     expect(this.controller.error).toEqual('error');
                 });
             });
@@ -171,7 +161,7 @@ describe('Commit Overlay directive', function() {
                                 ontologyStateSvc.listItem.inProgressCommit.deletions = ['test'];
                                 oldBranchId = ontologyStateSvc.listItem.ontologyRecord.branchId;
                                 oldCommitId = ontologyStateSvc.listItem.ontologyRecord.commitId;
-                                stateManagerSvc.updateOntologyState.and.returnValue($q.when(''));
+                                ontologyStateSvc.updateOntologyState.and.returnValue($q.when(''));
                                 this.controller.commit();
                                 scope.$digest();
                                 expect(catalogManagerSvc.createRecordUserBranch).toHaveBeenCalledWith(ontologyStateSvc
@@ -185,14 +175,14 @@ describe('Commit Overlay directive', function() {
                                 expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(
                                     ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId,
                                     this.controller.comment);
-                                expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                                    ontologyStateSvc.listItem.ontologyRecord.branchId, this.commitId);
+                                expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId, commitId: this.commitId, branchId: ontologyStateSvc.listItem.ontologyRecord.branchId});
                                 expect(ontologyStateSvc.listItem.ontologyRecord.commitId).toEqual(this.commitId);
+                                expect(ontologyStateSvc.listItem.userBranch).toEqual(true);
                                 expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
-                                expect(ontologyStateSvc.showCommitOverlay).toBe(false);
+                                expect(scope.close).toHaveBeenCalled();
                             });
                             it('and when updateOntologyState is rejected', function() {
-                                stateManagerSvc.updateOntologyState.and.returnValue($q.reject('error'));
+                                ontologyStateSvc.updateOntologyState.and.returnValue($q.reject('error'));
                                 oldBranchId = ontologyStateSvc.listItem.ontologyRecord.branchId;
                                 oldCommitId = ontologyStateSvc.listItem.ontologyRecord.commitId;
                                 this.controller.commit();
@@ -208,8 +198,7 @@ describe('Commit Overlay directive', function() {
                                 expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(
                                     ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId,
                                     this.controller.comment);
-                                expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                                    ontologyStateSvc.listItem.ontologyRecord.branchId, this.commitId);
+                                expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId, commitId: this.commitId, branchId: ontologyStateSvc.listItem.ontologyRecord.branchId});
                                 expect(this.controller.error).toEqual('error');
                             });
                         });
@@ -229,7 +218,7 @@ describe('Commit Overlay directive', function() {
                             expect(ontologyStateSvc.listItem.ontologyRecord.branchId).toEqual(this.branchId);
                             expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.branchId,
                                 ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.controller.comment);
-                            expect(stateManagerSvc.updateOntologyState).not.toHaveBeenCalled();
+                            expect(ontologyStateSvc.updateOntologyState).not.toHaveBeenCalled();
                             expect(this.controller.error).toEqual('error');
                         });
                     });
@@ -257,16 +246,21 @@ describe('Commit Overlay directive', function() {
                 });
             });
         });
+        it('should cancel the overlay', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
     });
     it('should call commit when the submit button is clicked', function() {
         spyOn(this.controller, 'commit');
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.commit).toHaveBeenCalled();
     });
-    it('should set the correct state when the cancel button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+    it('should call cancel when the button is clicked', function() {
+        spyOn(this.controller, 'cancel');
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
-        expect(ontologyStateSvc.showCommitOverlay).toBe(false);
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
 });

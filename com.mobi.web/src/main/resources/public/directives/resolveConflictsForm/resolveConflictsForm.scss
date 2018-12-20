@@ -1,0 +1,36 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.resolve-conflicts-form {
+    .conflict-list-item {
+        .fa {
+            padding-right: 8px;
+        }
+        > span:hover {
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    }
+    .flex-container {
+        .conflict {
+            cursor: pointer;
+
+            .card {
+                &:hover,
+                &.active {
+                    box-shadow: 0 0 20px 10px var(--light-dark);
+                    opacity: 1;
+                }
+                &.not-selected {
+                    opacity: .5;
+                }
+            }
+            .prop-value-container:hover {
+                background-color: initial;
+            }
+            .statement-display {
+                background-color: initial;
+            }
+        }
+    }
+}

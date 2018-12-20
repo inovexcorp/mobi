@@ -37,13 +37,13 @@ import java.util.Optional;
 
 public class SimpleLiteral implements Literal {
 
-    private static final org.openrdf.model.ValueFactory SESAME_VF = org.openrdf.model.impl.SimpleValueFactory.getInstance();
+    private static final org.eclipse.rdf4j.model.ValueFactory SESAME_VF = org.eclipse.rdf4j.model.impl.SimpleValueFactory.getInstance();
     private static final ValueFactory MOBI_VF = SimpleValueFactory.getInstance();
     private static final long serialVersionUID = -3684229464632745297L;
     private static final String INF = "INF";
     private static final String NEG_INF = "-INF";
 
-    private org.openrdf.model.Literal sesameLiteral;
+    private org.eclipse.rdf4j.model.Literal sesameLiteral;
 
     protected SimpleLiteral() {}
 

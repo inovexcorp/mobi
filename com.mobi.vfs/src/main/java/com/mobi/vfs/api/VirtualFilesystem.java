@@ -23,6 +23,7 @@ package com.mobi.vfs.api;
  * #L%
  */
 
+import java.io.InputStream;
 import java.net.URI;
 import java.time.temporal.TemporalUnit;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +32,22 @@ import java.util.concurrent.TimeUnit;
  * This service provides a hook to abstract the file system away from service implementations.
  */
 public interface VirtualFilesystem {
+
+    /**
+     * Takes an {@link InputStream}, hashes using xxHash 64-bit implementation, and returns a string value of the hash.
+     *
+     * @param inputStream The {@link InputStream} to hash
+     * @return A string representation of the hash
+     */
+    String contentHashFilePath(InputStream inputStream) throws VirtualFilesystemException;
+
+    /**
+     * Takes a byte array, hashes using xxHash 64-bit implementation, and returns a string value of the hash.
+     *
+     * @param fileBytes The byte array to hash
+     * @return A string representation of the hash
+     */
+    String contentHashFilePath(byte[] fileBytes) throws VirtualFilesystemException;
 
     /**
      * Resolve a virtual file representation based upon the provided URI.
@@ -49,6 +66,34 @@ public interface VirtualFilesystem {
      * @throws VirtualFilesystemException If there is an issue resolving the virtual file abstraction
      */
     VirtualFile resolveVirtualFile(String uri) throws VirtualFilesystemException;
+
+    /**
+     * Resolves a virtual file representation based on a hash generated from the contents of a file. Uses the provided
+     * directory as a prefix for the file. If a file with the provided contents does not exist, method will create the
+     * file and write the provided bytes to it. The string directory may be the absolute path to use from root
+     * (/Users/user/mobi-distribution/data/policies/) or it may be a directory structure to be resolved using the
+     * default relative directory (policies/).
+     *
+     * @param inputStream The content of a file to hash and resolve to a file
+     * @param directory The directory to prefix the filename with
+     * @return The {@link VirtualFile} representation of the file
+     * @throws VirtualFilesystemException If there is an issue resolving the virtual file abstraction
+     */
+    VirtualFile resolveVirtualFile(InputStream inputStream, String directory) throws VirtualFilesystemException;
+
+    /**
+     * Resolves a virtual file representation based on a hash generated from the contents of a file. Uses the provided
+     * directory as a prefix for the file. If a file with the provided contents does not exist, method will create the
+     * file and write the provided bytes to it. The string directory may be the absolute path to use from root
+     * (/Users/user/mobi-distribution/data/policies/) or it may be a directory structure to be resolved using the
+     * default relative directory (policies/).
+     *
+     * @param fileBytes The content of a file to hash and resolve to a file
+     * @param directory The directory to prefix the filename with
+     * @return The {@link VirtualFile} representation of the file
+     * @throws VirtualFilesystemException If there is an issue resolving the virtual file abstraction
+     */
+    VirtualFile resolveVirtualFile(byte[] fileBytes, String directory) throws VirtualFilesystemException;
 
     /**
      * Create a temporary virtual file.  This file will be transient, meaning it will be removed upon system shutdown,
@@ -112,4 +157,19 @@ public interface VirtualFilesystem {
                                                     TemporalUnit timeToLiveUnit,
                                                     long createDuration, TimeUnit createTimeUnit) throws VirtualFilesystemException;
 
+    /**
+     * Gets the {@link VirtualFile} used as the baseFile to resolve relative file paths.
+     *
+     * @return The {@link VirtualFile} baseFile
+     * @throws VirtualFilesystemException If there is an issue resolving the baseFile
+     */
+    VirtualFile getBaseFile() throws VirtualFilesystemException;
+
+    /**
+     * Gets the String representation of the baseFile path used to resolve relative file paths.
+     *
+     * @return The String baseFile path
+     * @throws VirtualFilesystemException If there is an issue resolving the baseFile
+     */
+    String getBaseFilePath() throws VirtualFilesystemException;
 }

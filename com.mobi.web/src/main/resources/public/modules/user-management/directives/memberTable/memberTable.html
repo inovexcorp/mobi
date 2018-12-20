@@ -20,12 +20,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<table class="member-table table table-condensed" click-anywhere-but-here="dvm.addingMember = false">
+<table class="member-table table table-sm" click-anywhere-but-here="dvm.addingMember = false">
     <tr ng-repeat="user in dvm.getMembers() track by user.username" class="member">
-        <td ng-if="dvm.state.displayCreateGroupOverlay" class="username">{{user.username}}</td>
-        <td ng-if="!dvm.state.displayCreateGroupOverlay" class="username"><a ng-click="dvm.goToUser(user)">{{user.username}}</a></td>
+        <td ng-if="!dvm.linkToUser" class="username align-middle">{{user.username}}</td>
+        <td ng-if="dvm.linkToUser" class="username align-middle"><a ng-click="dvm.goToUser(user)">{{user.username}}</a></td>
       <td>
-        <span><button class="btn btn-link" ng-click="dvm.state.memberName = user.username; dvm.removeMember()" ng-disabled="user.username === dvm.lm.currentUser || !dvm.um.isAdmin(dvm.lm.currentUser)">
+        <span><button class="btn btn-link" ng-click="dvm.removeMember({member: user.username})" ng-disabled="user.username === dvm.lm.currentUser || !dvm.um.isAdmin(dvm.lm.currentUser)">
           <i class="fa fa-trash-o"></i>
         </button></span>
       </td>

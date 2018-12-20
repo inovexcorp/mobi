@@ -20,23 +20,28 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="properties-tab row">
-    <property-hierarchy-block class="col-xs-3"></property-hierarchy-block>
-    <div class="col-xs-9 editor">
-        <selected-details></selected-details>
-        <div class="row">
-            <div class="col-xs-7">
-                <div class="row vertical-half">
-                    <annotation-block class="col-xs-12"></annotation-block>
+<div class="properties-tab row h-100 m-0">
+    <property-hierarchy-block class="col-3 h-100"></property-hierarchy-block>
+    <div class="selected-property col-9 h-100 d-flex flex-column pt-2" ng-if="dvm.os.listItem.selected">
+        <div class="selected-header d-flex">
+            <selected-details class="flex-1"></selected-details>
+            <div>
+                <button ng-if="dvm.os.canModify()" class="btn btn-danger" ng-disabled=" dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()">Delete</button>
+            </div>
+        </div>
+        <div class="row flex-1">
+            <div class="col-7 vertical-scroll">
+                <div class="row py-2">
+                    <annotation-block class="col"></annotation-block>
                 </div>
-                <div ng-if="!dvm.om.isAnnotation(dvm.os.listItem.selected)" class="row vertical-half">
-                    <axiom-block class="col-xs-12"></axiom-block>
+                <div ng-if="!dvm.om.isAnnotation(dvm.os.listItem.selected)" class="row py-2">
+                    <axiom-block class="col"></axiom-block>
                 </div>
             </div>
-            <div class="col-xs-5 characteristics-usages-wrapper">
+            <div class="col-5 vertical-scroll characteristics-usages-wrapper">
                 <characteristics-row></characteristics-row>
-                <div class="row">
-                    <usages-block class="col-xs-12"></usages-block>
+                <div class="row py-2">
+                    <usages-block class="col"></usages-block>
                 </div>
             </div>
         </div>

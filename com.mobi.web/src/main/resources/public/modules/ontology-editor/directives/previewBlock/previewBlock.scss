@@ -2,34 +2,16 @@
 @import "./src/main/resources/public/css/variables";
 
 .preview-block {
-    .preview-content {
-        display: flex;
-        flex-direction: column;
+    .CodeMirror {
+        bottom: 0;
+        height: auto;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
 
-        .form-inline {
-            font-size: 0;
-            padding: 10px;
-
-            .btn {
-                margin-left: 10px;
-            }
-        }
-
-        .textarea-wrapper {
-            border-top: 1px solid $gray-lighter;
-            flex: 1;
-            min-height: 0;
-            overflow: hidden;
-            position: relative;
-
-            .CodeMirror {
-                bottom: 0;
-                height: auto;
-                left: 0;
-                position: absolute;
-                right: 0;
-                top: 0;
-            }
+        .CodeMirror-cursor {
+            display: none !important
         }
     }
 }

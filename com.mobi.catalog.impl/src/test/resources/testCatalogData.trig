@@ -15,6 +15,7 @@
 @prefix additions: <https://mobi.com/additions#> .
 @prefix deletions: <https://mobi.com/deletions#> .
 @prefix graphs: <http://mobi.com/test/graphs#> .
+@prefix mergereqs: <http://mobi.com/ontologies/merge-requests#> .
 
 GRAPH <http://mobi.com/test#empty> { }
 
@@ -126,6 +127,7 @@ GRAPH records:versioned-rdf-record {
         mcat:version versions:latest-tag ;
         mcat:latestVersion versions:latest-tag ;
         mcat:branch branches:user-branch ;
+        mcat:branch branches:no-head-branch ;
         mcat:branch branches:branch ;
         mcat:branch branches:master ;
         mcat:masterBranch branches:master .
@@ -199,7 +201,7 @@ GRAPH versions:tag {
 
 GRAPH versions:latest-tag {
     versions:latest-tag a mcat:Tag, mcat:Version ;
-        mcat:commit commits:conflict2 .
+        mcat:commit commits:commitA1 .
 }
 
 GRAPH branches:lone-branch {
@@ -209,11 +211,16 @@ GRAPH branches:lone-branch {
 
 GRAPH branches:branch {
     branches:branch a mcat:Branch ;
-        mcat:head commits:conflict2 .
+        mcat:head commits:commitA1 .
+}
+
+GRAPH branches:no-head-branch {
+    branches:no-head-branch a mcat:Branch .
 }
 
 GRAPH branches:user-branch {
-    branches:user-branch a mcat:Branch, mcat:UserBranch .
+    branches:user-branch a mcat:Branch, mcat:UserBranch ;
+        mcat:createdFrom branches:branch .
 }
 
 GRAPH branches:master {
@@ -243,6 +250,53 @@ GRAPH deletions:commit {
     <http://mobi.com/test/delete> dc:title "Delete" ;
 }
 
+GRAPH commits:commitA0 {
+    commits:commitA0 a mcat:Commit ;
+        dc:title "Commit A0" ;
+        prov:atTime "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:commitA0 .
+
+    revisions:commitA0 a mcat:Revision ;
+        mcat:additions additions:commitA0 ;
+        mcat:deletions deletions:commitA0 .
+}
+
+GRAPH additions:commitA0 {
+    <http://mobi.com/test/ontology> a owl:Ontology .
+}
+
+GRAPH commits:commitA1 {
+    commits:commitA1 a mcat:Commit ;
+        dc:title "Commit A1" ;
+        prov:atTime "2018-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:commitA0 ;
+        prov:generated revisions:commitA1 .
+
+    revisions:commitA1 a mcat:Revision ;
+        mcat:additions additions:commitA1 ;
+        mcat:deletions deletions:commitA1 .
+}
+
+GRAPH additions:commitA1 {
+    <http://mobi.com/test/class0> a owl:Class .
+}
+
+GRAPH commits:commitA2 {
+    commits:commitA2 a mcat:Commit ;
+        dc:title "Commit A2" ;
+        prov:atTime "2018-01-03T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:commitA0 ;
+        prov:generated revisions:commitA2 .
+
+    revisions:commitA2 a mcat:Revision ;
+        mcat:additions additions:commitA2 ;
+        mcat:deletions deletions:commitA2 .
+}
+
+GRAPH additions:commitA2 {
+    <http://mobi.com/test/ontology> dc:title "Ontology" .
+}
+
 GRAPH commits:commit-no-additions {
     commits:commit-no-additions a mcat:Commit ;
         dc:title "Commit" ;
@@ -267,7 +321,7 @@ GRAPH commits:in-progress-commit {
     commits:in-progress-commit a mcat:Commit, mcat:InProgressCommit ;
         dc:title "In Progress Commit" ;
         prov:generated revisions:in-progress-commit ;
-        prov:wasAssociatedWith users:taken ;
+        prov:wasAssociatedWith users:user2 ;
         mcat:onVersionedRDFRecord records:versioned-rdf-record .
 
     revisions:in-progress-commit a mcat:Revision ;
@@ -442,82 +496,153 @@ GRAPH additions:test5a {
     <http://mobi.com/test/class> a owl:Class .
 }
 
-# Conflict Scenario 1 - Class deletion (1 conflict)
+GRAPH commits:testLoner {
+    commits:testLoner a mcat:Commit ;
+        dc:title "Commit Test Loner" ;
+        prov:atTime "2017-12-05T09:14:34:00Z"^^xsd:dateTime ;
+        prov:generated revisions:testLoner .
 
-GRAPH commits:conflict0 {
-    commits:conflict0 a mcat:Commit ;
-        dc:title "Commit Conflict 0" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:generated revisions:conflict0 .
-
-    revisions:conflict0 a mcat:Revision ;
-        mcat:additions additions:conflict0 ;
-        mcat:deletions deletions:conflict0 .
+    revisions:testLoner a mcat:Revision ;
+        mcat:additions additions:testLoner ;
+        mcat:deletions deletions:testLoner .
 }
 
-GRAPH additions:conflict0 {
+GRAPH additions:testLoner {
+    <http://mobi.com/test/ontology> dc:title "Test Loner Title" .
+}
+
+GRAPH deletions:testLoner {
+}
+
+# Complex Commit History Deletion Test
+
+GRAPH records:complex-record {
+    records:complex-record a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
+        mcat:catalog catalogs:catalog-distributed ;
+        dc:title "Complex History Record" ;
+        dc:description "Description" ;
+        dc:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher muser:tester ;
+        mcat:branch branches:complex-branch ;
+        mcat:branch branches:complex-master ;
+        mcat:masterBranch branches:complex-master .
+}
+
+GRAPH branches:complex-master {
+    branches:complex-master a mcat:Branch ;
+        dc:title "Complex Master Branch" ;
+        dc:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        mcat:head commits:complex-b .
+}
+
+GRAPH branches:complex-branch {
+    branches:complex-branch a mcat:Branch ;
+        dc:title "Complex Branch" ;
+        dc:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        mcat:head commits:complex-a .
+}
+
+GRAPH commits:complex-a {
+    commits:complex-a a mcat:Commit ;
+        dc:title "Complex Commit A" ;
+        prov:atTime "2018-01-04T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:complex-c ;
+        mcat:auxiliaryCommit commits:complex-b ;
+        prov:generated revisions:complex-a .
+
+    revisions:complex-a a mcat:Revision ;
+        mcat:additions additions:complex-a ;
+        mcat:deletions deletions:complex-a .
+}
+
+GRAPH commits:complex-b {
+    commits:complex-b a mcat:Commit ;
+        dc:title "Complex Commit B" ;
+        prov:atTime "2018-01-03T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:complex-d ;
+        prov:generated revisions:complex-b .
+
+    revisions:complex-b a mcat:Revision ;
+        mcat:additions additions:complex-b ;
+        mcat:deletions deletions:complex-b .
+}
+
+GRAPH additions:complex-c {
+    <http://mobi.com/test/ClassB> a owl:Class .
+}
+
+GRAPH commits:complex-c {
+    commits:complex-c a mcat:Commit ;
+        dc:title "Complex Commit C" ;
+        prov:atTime "2018-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:complex-d ;
+        prov:generated revisions:complex-c .
+
+    revisions:complex-c a mcat:Revision ;
+        mcat:additions additions:complex-c ;
+        mcat:deletions deletions:complex-c .
+}
+
+GRAPH additions:complex-c {
+    <http://mobi.com/test/ClassA> a owl:Class .
+}
+
+GRAPH commits:complex-d {
+    commits:complex-d a mcat:Commit ;
+        dc:title "Complex Commit D" ;
+        prov:atTime "2018-01-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:complex-d .
+
+    revisions:complex-d a mcat:Revision ;
+        mcat:additions additions:complex-d ;
+        mcat:deletions deletions:complex-d .
+}
+
+GRAPH additions:complex-d {
     <http://mobi.com/test/ontology> a owl:Ontology .
-    <http://mobi.com/test/class0> a owl:Class .
 }
 
-GRAPH commits:conflict1 {
-    commits:conflict1 a mcat:Commit ;
-        dc:title "Commit Conflict 1" ;
-        prov:atTime "2016-03-01T00:01:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:conflict0 ;
-        prov:generated revisions:conflict1 .
+# Conflict Scenario 1 - Full deletion with Addition (1 conflict)
 
-    revisions:conflict1 a mcat:Revision ;
-        mcat:additions additions:conflict1 ;
-        mcat:deletions deletions:conflict1 .
-}
-
-GRAPH deletions:conflict1 {
-    <http://mobi.com/test/class0> a owl:Class .
-}
-
-GRAPH commits:conflict2 {
-    commits:conflict2 a mcat:Commit ;
-        dc:title "Commit Conflict 2" ;
-        prov:atTime "2016-03-01T00:02:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:conflict0 ;
-        prov:generated revisions:conflict2 .
-
-    revisions:conflict2 a mcat:Revision ;
-        mcat:additions additions:conflict2 ;
-        mcat:deletions deletions:conflict2 .
-}
-
-GRAPH additions:conflict2 {
-    <http://mobi.com/test/class1> a owl:Class .
-    <http://mobi.com/test/ontology> dc:title "New Title" .
-}
-
-# Conflict Scenario 2 - Both altered same title (1 conflict)
-
-GRAPH commits:conflict0-2 {
-    commits:conflict0-2 a mcat:Commit ;
-        dc:title "Commit Conflict 0-2" ;
+GRAPH commits:conflict1-0 {
+    commits:conflict1-0 a mcat:Commit ;
+        dc:title "Commit Conflict 1-0" ;
         prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:generated revisions:conflict0-2 .
+        prov:generated revisions:conflict1-0 .
 
-    revisions:conflict0-2 a mcat:Revision ;
-        mcat:additions additions:conflict0-2 ;
-        mcat:deletions deletions:conflict0-2 .
+    revisions:conflict1-0 a mcat:Revision ;
+        mcat:additions additions:conflict1-0 ;
+        mcat:deletions deletions:conflict1-0 .
 }
 
-GRAPH additions:conflict0-2 {
-    <http://mobi.com/test/ontology> a owl:Ontology ;
-        dc:title "Title" ;
-        dc:description "Description" .
-    <http://mobi.com/test/class0> a owl:Class .
+GRAPH additions:conflict1-0 {
+    <http://test.com#sub> dc:description "Description" .
+}
+
+GRAPH commits:conflict1-1 {
+    commits:conflict1-1 a mcat:Commit ;
+        dc:title "Commit Conflict 1-1" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict1-0 ;
+        prov:generated revisions:conflict1-1 .
+
+    revisions:conflict1-1 a mcat:Revision ;
+        mcat:additions additions:conflict1-1 ;
+        mcat:deletions deletions:conflict1-1 .
+}
+
+GRAPH deletions:conflict1-1 {
+    <http://test.com#sub> dc:description "Description" .
 }
 
 GRAPH commits:conflict1-2 {
     commits:conflict1-2 a mcat:Commit ;
         dc:title "Commit Conflict 1-2" ;
-        prov:atTime "2016-03-01T00:01:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:conflict0-2 ;
+        prov:atTime "2016-03-03T00:02:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict1-0 ;
         prov:generated revisions:conflict1-2 .
 
     revisions:conflict1-2 a mcat:Revision ;
@@ -526,18 +651,52 @@ GRAPH commits:conflict1-2 {
 }
 
 GRAPH additions:conflict1-2 {
-    <http://mobi.com/test/ontology> dc:title "New Title 1" .
+    <http://test.com#sub> a <http://test.com#Type> .
 }
 
-GRAPH deletions:conflict1-2 {
-    <http://mobi.com/test/ontology> dc:title "Title" .
+# Conflict Scenario 2 - Full Deletion with Modification (1 conflict)
+
+GRAPH commits:conflict2-0 {
+    commits:conflict2-0 a mcat:Commit ;
+        dc:title "Commit Conflict 2-0" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict2-0 .
+
+    revisions:conflict2-0 a mcat:Revision ;
+        mcat:additions additions:conflict2-0 ;
+        mcat:deletions deletions:conflict2-0 .
+}
+
+GRAPH additions:conflict2-0 {
+    <http://test.com#sub> a owl:Class ;
+        dc:title "Original" .
+}
+
+GRAPH commits:conflict2-1 {
+    commits:conflict2-1 a mcat:Commit ;
+        dc:title "Commit Conflict 2-1" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict2-0 ;
+        prov:generated revisions:conflict2-1 .
+
+    revisions:conflict2-1 a mcat:Revision ;
+        mcat:additions additions:conflict2-1 ;
+        mcat:deletions deletions:conflict2-1 .
+}
+
+GRAPH additions:conflict2-1 {
+    <http://test.com#sub> dc:title "Title" .
+}
+
+GRAPH deletions:conflict2-1 {
+    <http://test.com#sub> dc:title "Original" .
 }
 
 GRAPH commits:conflict2-2 {
     commits:conflict2-2 a mcat:Commit ;
         dc:title "Commit Conflict 2-2" ;
-        prov:atTime "2016-03-01T00:02:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:conflict0-2 ;
+        prov:atTime "2016-03-03T00:02:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict2-0 ;
         prov:generated revisions:conflict2-2 .
 
     revisions:conflict2-2 a mcat:Revision ;
@@ -545,188 +704,555 @@ GRAPH commits:conflict2-2 {
         mcat:deletions deletions:conflict2-2 .
 }
 
-GRAPH additions:conflict2-2 {
-    <http://mobi.com/test/ontology> dc:title "New Title 2" .
-}
-
 GRAPH deletions:conflict2-2 {
-    <http://mobi.com/test/ontology> dc:title "Title" .
+    <http://test.com#sub> a owl:Class ;
+        dc:title "Original" .
 }
 
-# Conflict Scenario 3 - Second chain has two commits which adds then removes something (no conflicts)
+# Conflict Scenario 3 - Same Property Altered (1 conflict)
 
-GRAPH commits:conflict0-3 {
-    commits:conflict0-3 a mcat:Commit ;
-        dc:title "Commit Conflict 0-3" ;
+GRAPH commits:conflict3-0 {
+    commits:conflict3-0 a mcat:Commit ;
+        dc:title "Commit Conflict 3-0" ;
         prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:generated revisions:conflict0-3 .
+        prov:generated revisions:conflict3-0 .
 
-    revisions:conflict0-3 a mcat:Revision ;
-        mcat:additions additions:conflict0-3 ;
-        mcat:deletions deletions:conflict0-3 .
+    revisions:conflict3-0 a mcat:Revision ;
+        mcat:additions additions:conflict3-0 ;
+        mcat:deletions deletions:conflict3-0 .
 }
 
-GRAPH additions:conflict0-3 {
-    <http://mobi.com/test/ontology> a owl:Ontology ;
-        dc:title "Title" ;
-        dc:description "Description" .
-    <http://mobi.com/test/class0> a owl:Class .
-}
-
-GRAPH commits:conflict1-3 {
-    commits:conflict1-3 a mcat:Commit ;
-        dc:title "Commit Conflict 1-3" ;
-        prov:atTime "2016-03-01T00:01:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:conflict0-3 ;
-        prov:generated revisions:conflict1-3 .
-
-    revisions:conflict1-3 a mcat:Revision ;
-        mcat:additions additions:conflict1-3 ;
-        mcat:deletions deletions:conflict1-3 .
-}
-
-GRAPH additions:conflict1-3 {
-    <http://mobi.com/test/ontology> dc:title "New Title" .
-}
-
-GRAPH commits:conflict2-3 {
-    commits:conflict2-3 a mcat:Commit ;
-        dc:title "Commit Conflict 2-3" ;
-        prov:atTime "2016-03-01T00:02:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:conflict0-3 ;
-        prov:generated revisions:conflict2-3 .
-
-    revisions:conflict2-3 a mcat:Revision ;
-        mcat:additions additions:conflict2-3 ;
-        mcat:deletions deletions:conflict2-3 .
-}
-
-GRAPH additions:conflict2-3 {
-    <http://mobi.com/test/ontology> dc:title "New Title" .
-}
-
-GRAPH commits:conflict3-3 {
-    commits:conflict3-3 a mcat:Commit ;
-        dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:03:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:conflict2-3 ;
-        prov:generated revisions:conflict3-3 .
-
-    revisions:conflict2-3 a mcat:Revision ;
-        mcat:additions additions:conflict3-3 ;
-        mcat:deletions deletions:conflict3-3 .
-}
-
-GRAPH deletions:conflict3-3 {
-    <http://mobi.com/test/ontology> dc:title "New Title" .
-}
-
-# Conflict Scenario 4 - Change a property on one branch (no conflicts)
-
-GRAPH commits:conflict0-4 {
-    commits:conflict0-4 a mcat:Commit ;
-        dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:generated revisions:conflict0-4 .
-
-    revisions:conflict0-4 a mcat:Revision ;
-        mcat:additions additions:conflict0-4 ;
-        mcat:deletions deletions:conflict0-4 .
-}
-
-GRAPH additions:conflict0-4 {
-    <http://mobi.com/test/ontology> a owl:Ontology ;
+GRAPH additions:conflict3-0 {
+    <http://test.com#sub> a owl:Class ;
         dc:title "Title" .
-    <http://mobi.com/test/class0> a owl:Class .
 }
 
-GRAPH commits:conflict1-4 {
-    commits:conflict1-4 a mcat:Commit ;
-        dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:01:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:conflict0-4 ;
-        prov:generated revisions:conflict1-4 .
+GRAPH commits:conflict3-1 {
+    commits:conflict3-1 a mcat:Commit ;
+        dc:title "Commit Conflict 3-1" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict3-0 ;
+        prov:generated revisions:conflict3-1 .
 
-    revisions:conflict1-4 a mcat:Revision ;
-        mcat:additions additions:conflict1-4 ;
-        mcat:deletions deletions:conflict1-4 .
+    revisions:conflict3-1 a mcat:Revision ;
+        mcat:additions additions:conflict3-1 ;
+        mcat:deletions deletions:conflict3-1 .
 }
 
-GRAPH additions:conflict1-4 {
-    <http://mobi.com/test/ontology> dc:description "Description" .
+GRAPH additions:conflict3-1 {
+    <http://test.com#sub> dc:title "New Title 1" .
 }
 
-GRAPH commits:conflict2-4 {
-    commits:conflict2-4 a mcat:Commit ;
-        dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:02:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:conflict0-4 ;
-        prov:generated revisions:conflict2-4 .
-
-    revisions:conflict2-4 a mcat:Revision ;
-        mcat:additions additions:conflict2-4 ;
-        mcat:deletions deletions:conflict2-4 .
+GRAPH deletions:conflict3-1 {
+    <http://test.com#sub> dc:title "Title" .
 }
 
-GRAPH additions:conflict2-4 {
-    <http://mobi.com/test/ontology> dc:title "New Title" .
+GRAPH commits:conflict3-2 {
+    commits:conflict3-2 a mcat:Commit ;
+        dc:title "Commit Conflict 3-2" ;
+        prov:atTime "2016-03-03T00:02:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict3-0 ;
+        prov:generated revisions:conflict3-2 .
+
+    revisions:conflict3-2 a mcat:Revision ;
+        mcat:additions additions:conflict3-2 ;
+        mcat:deletions deletions:conflict3-2 .
 }
 
-GRAPH deletions:conflict2-4 {
-    <http://mobi.com/test/ontology> dc:title "Title" .
+GRAPH additions:conflict3-2 {
+    <http://test.com#sub> dc:title "New Title 2" .
 }
 
-# Conflict Scenario 5 - One branch removes property while other adds another to it (1 conflict)
+GRAPH deletions:conflict3-2 {
+    <http://test.com#sub> dc:title "Title" .
+}
 
-GRAPH commits:conflict0-5 {
-    commits:conflict0-5 a mcat:Commit ;
-        dc:title "Commit" ;
+# Conflict Scenario 4 - Chain Adds and Removes Statement (no conflicts)
+
+GRAPH commits:conflict4-0 {
+    commits:conflict4-0 a mcat:Commit ;
+        dc:title "Commit Conflict 4-0" ;
         prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
-        prov:generated revisions:conflict0-5 .
+        prov:generated revisions:conflict4-0 .
 
-    revisions:conflict0-5 a mcat:Revision ;
-        mcat:additions additions:conflict0-5 ;
-        mcat:deletions deletions:conflict0-5 .
+    revisions:conflict4-0 a mcat:Revision ;
+        mcat:additions additions:conflict4-0 ;
+        mcat:deletions deletions:conflict4-0 .
 }
 
-GRAPH additions:conflict0-5 {
-    <http://mobi.com/test/ontology> a owl:Ontology ;
-        dc:title "Title" ;
-        dc:description "Description" .
-    <http://mobi.com/test/class0> a owl:Class .
+GRAPH additions:conflict4-0 {
+    <http://test.com#sub> a owl:Class .
 }
 
-GRAPH commits:conflict1-5 {
-    commits:conflict1-5 a mcat:Commit ;
-        dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:01:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:conflict0-5 ;
-        prov:generated revisions:conflict1-5 .
+GRAPH commits:conflict4-1 {
+    commits:conflict4-1 a mcat:Commit ;
+        dc:title "Commit Conflict 4-1" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict4-0 ;
+        prov:generated revisions:conflict4-1 .
 
-    revisions:conflict1-5 a mcat:Revision ;
-        mcat:additions additions:conflict1-5 ;
-        mcat:deletions deletions:conflict1-5 .
+    revisions:conflict4-1 a mcat:Revision ;
+        mcat:additions additions:conflict4-1 ;
+        mcat:deletions deletions:conflict4-1 .
 }
 
-GRAPH additions:conflict1-5 {
-    <http://mobi.com/test/ontology> dc:title "New Title" .
+GRAPH additions:conflict4-1 {
+    <http://test.com#sub> dc:title "New Title" .
 }
 
-GRAPH commits:conflict2-5 {
-    commits:conflict2-5 a mcat:Commit ;
-        dc:title "Commit" ;
-        prov:atTime "2016-03-01T00:02:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:conflict0-5 ;
-        prov:generated revisions:conflict2-5 .
+GRAPH commits:conflict4-2 {
+    commits:conflict4-2 a mcat:Commit ;
+        dc:title "Commit Conflict 4-2" ;
+        prov:atTime "2016-03-03T00:02:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict4-0 ;
+        prov:generated revisions:conflict4-2 .
 
-    revisions:conflict2-5 a mcat:Revision ;
-        mcat:additions additions:conflict2-5 ;
-        mcat:deletions deletions:conflict2-5 .
+    revisions:conflict4-2 a mcat:Revision ;
+        mcat:additions additions:conflict4-2 ;
+        mcat:deletions deletions:conflict4-2 .
 }
 
-GRAPH deletions:conflict2-5 {
-    <http://mobi.com/test/ontology> dc:title "Title" .
+GRAPH additions:conflict4-2 {
+    <http://test.com#sub> dc:title "New Title" .
 }
+
+GRAPH commits:conflict4-3 {
+    commits:conflict4-3 a mcat:Commit ;
+        dc:title "Commit Conflict 4-3" ;
+        prov:atTime "2016-03-04T00:03:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict4-2 ;
+        prov:generated revisions:conflict4-3 .
+
+    revisions:conflict4-3 a mcat:Revision ;
+        mcat:additions additions:conflict4-3 ;
+        mcat:deletions deletions:conflict4-3 .
+}
+
+GRAPH deletions:conflict4-3 {
+    <http://test.com#sub> dc:title "New Title" .
+}
+
+# Conflict Scenario 5 - Property Change on Single Branch (no conflicts)
+
+GRAPH commits:conflict5-0 {
+    commits:conflict5-0 a mcat:Commit ;
+        dc:title "Commit Conflict 5-0" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict5-0 .
+
+    revisions:conflict5-0 a mcat:Revision ;
+        mcat:additions additions:conflict5-0 ;
+        mcat:deletions deletions:conflict5-0 .
+}
+
+GRAPH additions:conflict5-0 {
+    <http://test.com#sub> dc:title "Title" .
+}
+
+GRAPH commits:conflict5-1 {
+    commits:conflict5-1 a mcat:Commit ;
+        dc:title "Commit Conflict 5-1" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict5-0 ;
+        prov:generated revisions:conflict5-1 .
+
+    revisions:conflict5-1 a mcat:Revision ;
+        mcat:additions additions:conflict5-1 ;
+        mcat:deletions deletions:conflict5-1 .
+}
+
+GRAPH additions:conflict5-1 {
+    <http://test.com#sub> dc:description "Description" .
+}
+
+GRAPH commits:conflict5-2 {
+    commits:conflict5-2 a mcat:Commit ;
+        dc:title "Commit Conflict 5-2" ;
+        prov:atTime "2016-03-03T00:02:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict5-0 ;
+        prov:generated revisions:conflict5-2 .
+
+    revisions:conflict5-2 a mcat:Revision ;
+        mcat:additions additions:conflict5-2 ;
+        mcat:deletions deletions:conflict5-2 .
+}
+
+GRAPH additions:conflict5-2 {
+    <http://test.com#sub> dc:title "New Title" .
+}
+
+GRAPH deletions:conflict5-2 {
+    <http://test.com#sub> dc:title "Title" .
+}
+
+# Conflict Scenario 6 - One Removes Other Adds To Property (no conflicts)
+
+GRAPH commits:conflict6-0 {
+    commits:conflict6-0 a mcat:Commit ;
+        dc:title "Commit Conflict 6-0" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict6-0 .
+
+    revisions:conflict6-0 a mcat:Revision ;
+        mcat:additions additions:conflict6-0 ;
+        mcat:deletions deletions:conflict6-0 .
+}
+
+GRAPH additions:conflict6-0 {
+    <http://test.com#sub> a owl:Class ;
+        dc:title "Title" .
+}
+
+GRAPH commits:conflict6-1 {
+    commits:conflict6-1 a mcat:Commit ;
+        dc:title "Commit Conflict 6-1" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict6-0 ;
+        prov:generated revisions:conflict6-1 .
+
+    revisions:conflict6-1 a mcat:Revision ;
+        mcat:additions additions:conflict6-1 ;
+        mcat:deletions deletions:conflict6-1 .
+}
+
+GRAPH additions:conflict6-1 {
+    <http://test.com#sub> dc:title "New Title" .
+}
+
+GRAPH commits:conflict6-2 {
+    commits:conflict6-2 a mcat:Commit ;
+        dc:title "Commit Conflict 6-2" ;
+        prov:atTime "2016-03-03T00:02:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict6-0 ;
+        prov:generated revisions:conflict6-2 .
+
+    revisions:conflict6-2 a mcat:Revision ;
+        mcat:additions additions:conflict6-2 ;
+        mcat:deletions deletions:conflict6-2 .
+}
+
+GRAPH deletions:conflict6-2 {
+    <http://test.com#sub> dc:title "Title" .
+}
+
+# Conflict Scenario 7 - Only One Commit (no conflicts)
+
+GRAPH commits:conflict7-0 {
+    commits:conflict7-0 a mcat:Commit ;
+        dc:title "Commit Conflict 7-0" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict7-0 .
+
+    revisions:conflict7-0 a mcat:Revision ;
+        mcat:additions additions:conflict7-0 ;
+        mcat:deletions deletions:conflict7-0 .
+}
+
+GRAPH additions:conflict7-0 {
+    <http://test.com#sub> dc:title "Title" .
+}
+
+GRAPH commits:conflict7-1 {
+    commits:conflict7-1 a mcat:Commit ;
+        dc:title "Commit Conflict 7-1" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict7-0 ;
+        prov:generated revisions:conflict7-1 .
+
+    revisions:conflict7-1 a mcat:Revision ;
+        mcat:additions additions:conflict7-1 ;
+        mcat:deletions deletions:conflict7-1 .
+}
+
+GRAPH additions:conflict7-1 {
+    <http://test.com#sub> dc:title "New Title" .
+}
+
+# Conflict Scenario 8 - Disconnected Nodes (no conflicts)
+
+GRAPH commits:conflict8-0 {
+    commits:conflict8-0 a mcat:Commit ;
+        dc:title "Commit Conflict 8-0" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict8-0 .
+
+    revisions:conflict8-0 a mcat:Revision ;
+        mcat:additions additions:conflict8-0 ;
+        mcat:deletions deletions:conflict8-0 .
+}
+
+GRAPH commits:conflict8-1 {
+    commits:conflict8-1 a mcat:Commit ;
+        dc:title "Commit Conflict 8-1" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict8-1 .
+
+    revisions:conflict8-1 a mcat:Revision ;
+        mcat:additions additions:conflict8-1 ;
+        mcat:deletions deletions:conflict8-1 .
+}
+
+# Conflict Scenario 9 - Disconnected Nodes Same Property Altered (1 conflict)
+
+GRAPH commits:conflict9-0 {
+    commits:conflict9-0 a mcat:Commit ;
+        dc:title "Commit Conflict 9-0" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict9-0 .
+
+    revisions:conflict9-0 a mcat:Revision ;
+        mcat:additions additions:conflict9-0 ;
+        mcat:deletions deletions:conflict9-0 .
+}
+
+GRAPH additions:conflict9-0 {
+    <http://test.com#sub> a owl:Class ;
+        dc:title "Title" .
+}
+
+GRAPH commits:conflict9-1 {
+    commits:conflict9-1 a mcat:Commit ;
+        dc:title "Commit Conflict 9-1" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict9-0 ;
+        prov:generated revisions:conflict9-1 .
+
+    revisions:conflict9-1 a mcat:Revision ;
+        mcat:additions additions:conflict9-1 ;
+        mcat:deletions deletions:conflict9-1 .
+}
+
+GRAPH additions:conflict9-1 {
+    <http://test.com#sub> dc:title "New Title 1" .
+}
+
+GRAPH deletions:conflict9-1 {
+    <http://test.com#sub> dc:title "Title" .
+}
+
+GRAPH commits:conflict9-2 {
+    commits:conflict9-2 a mcat:Commit ;
+        dc:title "Commit Conflict 9-2" ;
+        prov:atTime "2016-03-03T00:02:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict9-2 .
+
+    revisions:conflict9-2 a mcat:Revision ;
+        mcat:additions additions:conflict9-2 ;
+        mcat:deletions deletions:conflict9-2 .
+}
+
+GRAPH additions:conflict9-2 {
+    <http://test.com#sub> dc:title "New Title 2" .
+}
+
+GRAPH deletions:conflict9-2 {
+    <http://test.com#sub> dc:title "Title" .
+}
+
+# Conflict Scenario 10 - Disconnected Nodes Full Deletion With Addition (no conflicts)
+
+GRAPH commits:conflict10-0 {
+    commits:conflict10-0 a mcat:Commit ;
+        dc:title "Commit Conflict 10-0" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict10-0 .
+
+    revisions:conflict10-0 a mcat:Revision ;
+        mcat:additions additions:conflict10-0 ;
+        mcat:deletions deletions:conflict10-0 .
+}
+
+GRAPH additions:conflict10-0 {
+    <http://test.com#sub> dc:description "Description" .
+}
+
+GRAPH commits:conflict10-1 {
+    commits:conflict10-1 a mcat:Commit ;
+        dc:title "Commit Conflict 10-1" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict10-0 ;
+        prov:generated revisions:conflict10-1 .
+
+    revisions:conflict10-1 a mcat:Revision ;
+        mcat:additions additions:conflict10-1 ;
+        mcat:deletions deletions:conflict10-1 .
+}
+
+GRAPH deletions:conflict10-1 {
+    <http://test.com#sub> dc:description "Description" .
+}
+
+GRAPH commits:conflict10-2 {
+    commits:conflict10-2 a mcat:Commit ;
+        dc:title "Commit Conflict 10-2" ;
+        prov:atTime "2016-03-03T00:02:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict10-2 .
+
+    revisions:conflict10-2 a mcat:Revision ;
+        mcat:additions additions:conflict10-2 ;
+        mcat:deletions deletions:conflict10-2 .
+}
+
+GRAPH additions:conflict10-2 {
+    <http://test.com#sub> a <http://test.com#Type> .
+}
+
+# Conflict Scenario 11 - Disconnected Nodes Property Changes on Single Branch (no conflicts)
+
+GRAPH commits:conflict11-0 {
+    commits:conflict11-0 a mcat:Commit ;
+        dc:title "Commit Conflict 11-0" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict11-0 .
+
+    revisions:conflict11-0 a mcat:Revision ;
+        mcat:additions additions:conflict11-0 ;
+        mcat:deletions deletions:conflict11-0 .
+}
+
+GRAPH additions:conflict11-0 {
+    <http://test.com#sub> dc:title "Title" .
+}
+
+GRAPH commits:conflict11-1 {
+    commits:conflict11-1 a mcat:Commit ;
+        dc:title "Commit Conflict 11-1" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict11-0 ;
+        prov:generated revisions:conflict11-1 .
+
+    revisions:conflict11-1 a mcat:Revision ;
+        mcat:additions additions:conflict11-1 ;
+        mcat:deletions deletions:conflict11-1 .
+}
+
+GRAPH additions:conflict11-1 {
+    <http://test.com#sub> dc:description "Description" .
+}
+
+GRAPH commits:conflict11-2 {
+    commits:conflict11-2 a mcat:Commit ;
+        dc:title "Commit Conflict 11-2" ;
+        prov:atTime "2016-03-03T00:02:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict11-2 .
+
+    revisions:conflict11-2 a mcat:Revision ;
+        mcat:additions additions:conflict11-2 ;
+        mcat:deletions deletions:conflict11-2 .
+}
+
+GRAPH additions:conflict11-2 {
+    <http://test.com#sub> dc:title "New Title" .
+}
+
+GRAPH deletions:conflict11-2 {
+    <http://test.com#sub> dc:title "Title" .
+}
+
+# Conflict Scenario 12 - Disconnected Nodes One Removes Other Adds To Property (no conflicts)
+
+GRAPH commits:conflict12-0 {
+    commits:conflict12-0 a mcat:Commit ;
+        dc:title "Commit Conflict 12-0" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict12-0 .
+
+    revisions:conflict12-0 a mcat:Revision ;
+        mcat:additions additions:conflict12-0 ;
+        mcat:deletions deletions:conflict12-0 .
+}
+
+GRAPH additions:conflict12-0 {
+    <http://test.com#sub> a owl:Class ;
+        dc:title "Title" .
+}
+
+GRAPH commits:conflict12-1 {
+    commits:conflict12-1 a mcat:Commit ;
+        dc:title "Commit Conflict 12-1" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict12-0 ;
+        prov:generated revisions:conflict12-1 .
+
+    revisions:conflict12-1 a mcat:Revision ;
+        mcat:additions additions:conflict12-1 ;
+        mcat:deletions deletions:conflict12-1 .
+}
+
+GRAPH additions:conflict12-1 {
+    <http://test.com#sub> dc:title "New Title" .
+}
+
+GRAPH commits:conflict12-2 {
+    commits:conflict12-2 a mcat:Commit ;
+        dc:title "Commit Conflict 12-2" ;
+        prov:atTime "2016-03-03T00:02:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict12-2 .
+
+    revisions:conflict12-2 a mcat:Revision ;
+        mcat:additions additions:conflict12-2 ;
+        mcat:deletions deletions:conflict12-2 .
+}
+
+GRAPH deletions:conflict12-2 {
+    <http://test.com#sub> dc:title "Title" .
+}
+
+# Conflict Scenario 13 - Disconnected Nodes Full Deletion with Modification (no conflicts)
+
+GRAPH commits:conflict13-0 {
+    commits:conflict13-0 a mcat:Commit ;
+        dc:title "Commit Conflict 13-0" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict13-0 .
+
+    revisions:conflict13-0 a mcat:Revision ;
+        mcat:additions additions:conflict13-0 ;
+        mcat:deletions deletions:conflict13-0 .
+}
+
+GRAPH additions:conflict13-0 {
+    <http://test.com#sub> a owl:Class ;
+        dc:title "Original" .
+}
+
+GRAPH commits:conflict13-1 {
+    commits:conflict13-1 a mcat:Commit ;
+        dc:title "Commit Conflict 13-1" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:conflict13-0 ;
+        prov:generated revisions:conflict13-1 .
+
+    revisions:conflict13-1 a mcat:Revision ;
+        mcat:additions additions:conflict13-1 ;
+        mcat:deletions deletions:conflict13-1 .
+}
+
+GRAPH additions:conflict13-1 {
+    <http://test.com#sub> dc:title "Title" .
+}
+
+GRAPH deletions:conflict13-1 {
+    <http://test.com#sub> dc:title "Original" .
+}
+
+GRAPH commits:conflict13-2 {
+    commits:conflict13-2 a mcat:Commit ;
+        dc:title "Commit Conflict 13-2" ;
+        prov:atTime "2016-03-03T00:02:00Z"^^xsd:dateTime ;
+        prov:generated revisions:conflict13-2 .
+
+    revisions:conflict13-2 a mcat:Revision ;
+        mcat:additions additions:conflict13-2 ;
+        mcat:deletions deletions:conflict13-2 .
+}
+
+GRAPH deletions:conflict13-2 {
+    <http://test.com#sub> a owl:Class ;
+        dc:title "Original" .
+}
+
+# Difference testing
 
 GRAPH <http://mobi.com/test/diff1> {
     <http://mobi.com/test/ontology> a owl:Ontology ;
@@ -812,6 +1338,24 @@ GRAPH commits:quad-test1 {
         ] .
 }
 
+GRAPH commits:quad-test3 {
+    commits:quad-test3 a mcat:Commit ;
+        dc:title "Quad Test 3" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:quad-test1 ;
+        prov:generated revisions:revision3 .
+
+    revisions:revision3 a mcat:Revision ;
+        mcat:additions additions:quad-test3 ;
+        mcat:deletions deletions:quad-test3 ;
+        mcat:graphRevision [
+            a mcat:GraphRevision ;
+            mcat:revisionedGraph graphs:quad-graph3 ;
+            mcat:additions additions:quad-test3%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph3 ;
+            mcat:deletions deletions:quad-test3%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph3
+        ] .
+}
+
 GRAPH additions:quad-test1 {
     <http://mobi.com/test/object1> dc:title "Test 1 Title" .
 }
@@ -893,4 +1437,34 @@ GRAPH additions:quad-in-progress-commit%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%
 
 GRAPH deletions:quad-in-progress-commit%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1 {
     <http://mobi.com/test/delete> dc:title "Delete" ;
+}
+
+# MergeRequests
+
+GRAPH mergereqs:mergereq {
+    mergereqs:mergereq a owl:Thing, mergereqs:MergeRequest ;
+        dc:title "MergeRequest Title" ;
+        dc:description "MergeRequest Description" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-10T00:00:00Z"^^xsd:dateTime ;
+        mergereqs:assignee muser:tester ;
+        mergereqs:onRecord records:versioned-rdf-record ;
+        mergereqs:sourceBranch branches:branch ;
+        mergereqs:targetBranch branches:master ;
+        mergereqs:removeSource "false"^^xsd:boolean ;
+        dc:creator muser:tester .
+}
+
+GRAPH mergereqs:mergereq2 {
+    mergereqs:mergereq2 a owl:Thing, mergereqs:MergeRequest ;
+        dc:title "MergeRequest Title" ;
+        dc:description "MergeRequest Description" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-10T00:00:00Z"^^xsd:dateTime ;
+        mergereqs:assignee muser:tester ;
+        mergereqs:onRecord records:versioned-rdf-record ;
+        mergereqs:sourceBranch branches:master ;
+        mergereqs:targetBranch branches:branch ;
+        mergereqs:removeSource "true"^^xsd:boolean ;
+        dc:creator muser:tester .
 }

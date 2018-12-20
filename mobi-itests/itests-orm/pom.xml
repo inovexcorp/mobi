@@ -15,7 +15,7 @@
 	<parent>
 		<artifactId>mobi-itests</artifactId>
 		<groupId>com.mobi</groupId>
-		<version>1.11.19-SNAPSHOT</version>
+		<version>1.14.42-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
@@ -79,7 +79,7 @@
                                     <ontologyName>InheritTest</ontologyName>
                                 </ontology>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/test/resources/ontologies/provo.owl</ontologyFile>
+                                    <ontologyFile>${project.basedir}/src/test/resources/ontologies/provo.ttl</ontologyFile>
                                     <outputPackage>org.provo</outputPackage>
                                     <ontologyName>ProvO</ontologyName>
                                 </ontology>

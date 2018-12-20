@@ -30,7 +30,7 @@
          *
          * @description
          * The `relationshipOverlay` module only provides the `relationshipOverlay` directive which creates
-         * the relationship overlay within the ontology editor.
+         * content for a modal to add a relationship to a concept in an ontology.
          */
         .module('relationshipOverlay', [])
         /**
@@ -42,13 +42,19 @@
          * @requires ontologyState.service:ontologyStateService
          * @requires util.service:utilService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires propertyManager.service:propertyManagerService
          *
          * @description
-         * HTML contents in the relationship overlay with provides the users with an overlay which can be used to add
-         * a SKOS relationship to the selected entity.
+         * `axiomOverlay` is a directive that creates content for a modal that adds a SKOS relationship to the
+         * {@link ontologyState.service:ontologyStateService selected concept}. The form in the modal contains a
+         * `ui-select` of the provided relationships and a `ui-select` of the appropriate values for the selected
+         * relationship (concepts or concept schemes). Meant to be used in conjunction with the
+         * {@link modalService.directive:modalService}.
          *
-         * @param {Object[]} relationshipList the list of relationships available to add to the selected entity
-         * @param {function=undefined} onSubmit the function to be called after a relationship is added
+         * @param {Object} resolve Information provided to the modal
+         * @param {Object[]} resolve.relationshipList The list of relationships available to add to the selected concept
+         * @param {Function} close A function that closes the modal
+         * @param {Function} dismiss A function that dismisses the modal
          */
         .directive('relationshipOverlay', relationshipOverlay);
 
@@ -57,14 +63,14 @@
         function relationshipOverlay(ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
-                replace: true,
                 templateUrl: 'modules/ontology-editor/directives/relationshipOverlay/relationshipOverlay.html',
                 scope: {
-                    relationshipList: '<',
-                    onSubmit: '&?'
+                    resolve: '<',
+                    close: '&',
+                    dismiss: '&'
                 },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var pm = propertyManagerService;
                     var om = ontologyManagerService;
@@ -72,17 +78,26 @@
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.array = [];
-                    dvm.conceptList = om.getConceptIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConcepts);
-                    dvm.schemeList = om.getConceptSchemeIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConceptSchemes);
+                    dvm.conceptList = _.without(om.getConceptIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConcepts), dvm.os.listItem.selected['@id']);
+                    dvm.schemeList = _.without(om.getConceptSchemeIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConceptSchemes), dvm.os.listItem.selected['@id']);
                     dvm.values = [];
 
                     dvm.addRelationship = function() {
-                        dvm.os.listItem.selected[dvm.relationship] = _.union(_.get(dvm.os.listItem.selected, dvm.relationship, []), dvm.values);
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [dvm.relationship]: dvm.values});
-                        dvm.os.showRelationshipOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
+                        var addedValues = _.filter(dvm.values, value => pm.addId(dvm.os.listItem.selected, dvm.relationship, value));
+                        if (addedValues.length !== dvm.values.length) {
+                            dvm.util.createWarningToast('Duplicate property values not allowed');
+                        }
+                        if (addedValues.length) {
+                            var addedValueObjs = _.map(addedValues, value => ({'@id': value}));
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [dvm.relationship]: addedValueObjs});
+                            dvm.ontoUtils.saveCurrentChanges()
+                                .then(() => {
+                                    $scope.close({$value: {relationship: dvm.relationship, values: addedValueObjs}})
+                                });
+                        } else {
+                            $scope.close();
+                        }
                     }
-
                     dvm.getValues = function(searchText) {
                         var isSchemeRelationship = _.includes(pm.conceptSchemeRelationshipList, dvm.relationship);
                         var isSemanticRelation = _.includes(dvm.os.listItem.derivedSemanticRelations, dvm.relationship);
@@ -98,7 +113,10 @@
 
                         dvm.array = dvm.ontoUtils.getSelectList(list, searchText);
                     }
-                }
+                    dvm.cancel = function() {
+                        $scope.dismiss();
+                    }
+                }]
             }
         }
 })();

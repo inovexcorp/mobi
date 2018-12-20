@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Edit Group Info Overlay directive', function() {
+describe('Edit Group Info Overlay component', function() {
     var $compile, scope, $q, userManagerSvc, userStateSvc;
 
     beforeEach(function() {
@@ -38,7 +38,9 @@ describe('Edit Group Info Overlay directive', function() {
         });
 
         userStateSvc.selectedGroup = {title: 'group'};
-        this.element = $compile(angular.element('<edit-group-info-overlay></edit-group-info-overlay>'))(scope);
+        scope.close = jasmine.createSpy('close');
+        scope.dismiss = jasmine.createSpy('dismiss');
+        this.element = $compile(angular.element('<edit-group-info-overlay close="close()" dismiss="dismiss()"></edit-group-info-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('editGroupInfoOverlay');
     });
@@ -52,10 +54,19 @@ describe('Edit Group Info Overlay directive', function() {
         this.element.remove();
     });
 
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
+    });
     describe('controller methods', function() {
         describe('should save changes to the group information', function() {
             beforeEach(function() {
-                userStateSvc.displayEditGroupInfoOverlay = true;
                 userManagerSvc.groups = [userStateSvc.selectedGroup];
             });
             it('unless an error occurs', function() {
@@ -64,7 +75,7 @@ describe('Edit Group Info Overlay directive', function() {
                 scope.$apply();
                 expect(userManagerSvc.updateGroup).toHaveBeenCalledWith(userStateSvc.selectedGroup.title, this.controller.newGroup);
                 expect(this.controller.errorMessage).toBe('Error message');
-                expect(userStateSvc.displayEditGroupInfoOverlay).toBe(true);
+                expect(scope.close).not.toHaveBeenCalled();
             });
             it('successfully', function() {
                 var selectedGroup = userStateSvc.selectedGroup;
@@ -72,21 +83,29 @@ describe('Edit Group Info Overlay directive', function() {
                 scope.$apply();
                 expect(userManagerSvc.updateGroup).toHaveBeenCalledWith(selectedGroup.title, this.controller.newGroup);
                 expect(this.controller.errorMessage).toBe('');
-                expect(userStateSvc.displayEditGroupInfoOverlay).toBe(false);
                 expect(userStateSvc.selectedGroup).toEqual(this.controller.newGroup);
+                expect(scope.close).toHaveBeenCalled();
             });
         });
-    });
-    describe('replaces the element with the correct html', function() {
-        it('for wrapping containers', function() {
-            expect(this.element.hasClass('edit-group-info-overlay')).toBe(true);
-            expect(this.element.querySelectorAll('form.content').length).toBe(1);
+        it('should cancel the overlay', function() {
+            this.controller.cancel();
+            expect(scope.dismiss).toHaveBeenCalled();
         });
-        it('with a text area', function() {
-            expect(this.element.find('text-area').length).toBe(1);
+    });
+    describe('contains the correct html', function() {
+        it('for wrapping containers', function() {
+            expect(this.element.prop('tagName')).toEqual('EDIT-GROUP-INFO-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
+        });
+        ['form', 'text-area'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
         });
         it('depending on the form validity', function() {
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
             this.controller.form.$invalid = true;
@@ -100,20 +119,21 @@ describe('Edit Group Info Overlay directive', function() {
             expect(this.element.find('error-display').length).toBe(1);
         });
         it('with buttons to cancel and set', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+            var buttons = this.element.querySelectorAll('.modal-footer button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Set']).toContain(angular.element(buttons[0]).text().trim());
-            expect(['Cancel', 'Set']).toContain(angular.element(buttons[1]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
     it('should set the correct state when the cancel button is clicked', function() {
-        var cancelButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        spyOn(this.controller, 'cancel');
+        var cancelButton = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         cancelButton.triggerHandler('click');
-        expect(userStateSvc.displayEditGroupInfoOverlay).toBe(false);
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
     it('should call set when the button is clicked', function() {
         spyOn(this.controller, 'set');
-        var setButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var setButton = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         setButton.triggerHandler('click');
         expect(this.controller.set).toHaveBeenCalled();
     });

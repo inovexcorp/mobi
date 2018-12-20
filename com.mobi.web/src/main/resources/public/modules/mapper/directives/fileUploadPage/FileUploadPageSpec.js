@@ -21,7 +21,7 @@
  * #L%
  */
 describe('File Upload Page directive', function() {
-    var $compile, scope, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, utilSvc;
+    var $compile, scope, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, utilSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -30,14 +30,16 @@ describe('File Upload Page directive', function() {
         mockMapperState();
         mockDelimitedManager();
         mockUtil();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _utilService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mapperStateSvc = _mapperStateService_;
             mappingManagerSvc = _mappingManagerService_;
             delimitedManagerSvc = _delimitedManagerService_;
             utilSvc = _utilService_;
+            modalSvc = _modalService_;
         });
 
         mapperStateSvc.mapping = {record: {id: ''}, jsonld: []};
@@ -53,10 +55,23 @@ describe('File Upload Page directive', function() {
         mapperStateSvc = null;
         delimitedManagerSvc = null;
         utilSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
     describe('controller methods', function() {
+        it('should open the runMappingDownloadOverlay', function() {
+            this.controller.runMappingDownload();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('runMappingDownloadOverlay', {}, undefined, 'sm');
+        });
+        it('should open the runMappingDatasetOverlay', function() {
+            this.controller.runMappingDataset();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('runMappingDatasetOverlay', {}, undefined, 'sm');
+        });
+        it('should open the runMappingOntologyOverlay', function() {
+            this.controller.runMappingOntology();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('runMappingOntologyOverlay');
+        });
         it('should get the name of a data mapping', function() {
             mapperStateSvc.mapping.jsonld = [{'@id': 'dataMapping'}];
             mappingManagerSvc.findClassWithDataMapping.and.returnValue({'@id': 'classMapping'});
@@ -76,17 +91,17 @@ describe('File Upload Page directive', function() {
                 mapperStateSvc.newMapping = true;
                 this.controller.edit();
                 expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
-                expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
+                expect(mapperStateSvc.setProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
-                expect(mapperStateSvc.displayMappingConfigOverlay).toBe(true);
+                expect(modalSvc.openModal).toHaveBeenCalledWith('mappingConfigOverlay', {}, undefined, 'lg');
             });
             it('if a saved mapping is being edited', function() {
                 mapperStateSvc.newMapping = false;
                 this.controller.edit();
                 expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
-                expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
+                expect(mapperStateSvc.setProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
-                expect(mapperStateSvc.displayMappingConfigOverlay).not.toBe(true);
+                expect(modalSvc.openModal).not.toHaveBeenCalled();
             });
         });
         it('should set the correct state for canceling', function() {
@@ -100,8 +115,8 @@ describe('File Upload Page directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('file-upload-page')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-5').length).toBe(1);
-            expect(this.element.querySelectorAll('.col-xs-7').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-5').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-7').length).toBe(1);
         });
         it('with a mapping title', function() {
             expect(this.element.find('mapping-title').length).toBe(1);
@@ -113,12 +128,12 @@ describe('File Upload Page directive', function() {
             expect(this.element.find('file-upload-form').length).toBe(1);
         });
         it('with a button for canceling', function() {
-            var button = angular.element(this.element.querySelectorAll('.col-xs-5 block-footer button.btn-default')[0]);
+            var button = angular.element(this.element.querySelectorAll('.col-5 block-footer button:not(.btn-primary)')[0]);
             expect(button.text().trim()).toBe('Cancel');
         });
         it('depending on whether a file has been selected and there are invalid properties', function() {
             scope.$digest();
-            var continueButton = angular.element(this.element.querySelectorAll('.col-xs-5 block-footer button.btn-primary')[0]);
+            var continueButton = angular.element(this.element.querySelectorAll('.col-5 block-footer button.btn-primary')[0]);
             expect(continueButton.attr('disabled')).toBeTruthy();
 
             delimitedManagerSvc.dataRows = [];
@@ -130,11 +145,12 @@ describe('File Upload Page directive', function() {
             expect(continueButton.attr('disabled')).toBeTruthy();
         });
         it('depending on whether a mapping is being edited', function() {
-            var continueButton = angular.element(this.element.querySelectorAll('.col-xs-5 block-footer button.btn-primary')[0]);
-            expect(continueButton.text().trim()).toBe('Run');
+            var runMapping = angular.element(this.element.querySelectorAll('.run-btn'));
+            expect(runMapping.text().trim()).toBe('Run Mapping');
 
             mapperStateSvc.editMapping = true;
             scope.$digest();
+            var continueButton = angular.element(this.element.querySelectorAll('.continue-btn'));
             expect(continueButton.text().trim()).toBe('Continue');
         });
         it('depending on whether there are invalid columns', function() {
@@ -152,24 +168,34 @@ describe('File Upload Page directive', function() {
     });
     it('should call cancel when the cancel button is clicked', function() {
         spyOn(this.controller, 'cancel');
-        var cancelButton = angular.element(this.element.querySelectorAll('block-footer button.btn-default')[0]);
+        var cancelButton = angular.element(this.element.querySelectorAll('block-footer button:not(.btn-primary)')[0]);
         cancelButton.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });
-    describe('should call the correct function when clicking the continue button ', function() {
-        beforeEach(function() {
-            this.continueButton = angular.element(this.element.querySelectorAll('block-footer button.btn-primary')[0]);
-        });
-        it('if a mapping is being edited', function() {
-            spyOn(this.controller, 'edit');
-            mapperStateSvc.editMapping = true;
-            this.continueButton.triggerHandler('click');
-            expect(this.controller.edit).toHaveBeenCalled();
-        });
-        it('if a mapping is not being edited', function() {
-            mapperStateSvc.editMapping = false;
-            this.continueButton.triggerHandler('click');
-            expect(mapperStateSvc.displayRunMappingOverlay).toBe(true);
-        });
+    it('should call edit when clicking the continue button ', function() {
+        mapperStateSvc.editMapping = true;
+        scope.$digest();
+        this.continueButton = angular.element(this.element.querySelectorAll('.continue-btn'));
+        spyOn(this.controller, 'edit');
+        this.continueButton.triggerHandler('click');
+        expect(this.controller.edit).toHaveBeenCalled();
+    });
+    it('should call runMappingDownload when the clicked', function() {
+        spyOn(this.controller, 'runMappingDownload');
+        var button = angular.element(this.element.querySelectorAll('.dropdown-menu button')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.runMappingDownload).toHaveBeenCalled();
+    });
+    it('should call runMappingDataset when the button is clicked', function() {
+        spyOn(this.controller, 'runMappingDataset');
+        var button = angular.element(this.element.querySelectorAll('.dropdown-menu button')[1]);
+        button.triggerHandler('click');
+        expect(this.controller.runMappingDataset).toHaveBeenCalled();
+    });
+    it('should call runMappingOntology when the button clicked', function() {
+        spyOn(this.controller, 'runMappingOntology');
+        var button = angular.element(this.element.querySelectorAll('.dropdown-menu button')[2]);
+        button.triggerHandler('click');
+        expect(this.controller.runMappingOntology).toHaveBeenCalled();
     });
 });

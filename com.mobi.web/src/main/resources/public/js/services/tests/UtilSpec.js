@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Util service', function() {
-    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, uuid, $filter, $httpBackend, $q, scope, regex, httpSvc;
+    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, uuid, $filter, $httpBackend, $q, scope, regex, httpSvc, windowSvc;
 
     beforeEach(function() {
         module('util');
@@ -36,9 +36,12 @@ describe('Util service', function() {
             $provide.service('uuid', function() {
                 this.v4 = jasmine.createSpy('v4').and.returnValue('');
             });
+            $provide.service('$window', function() {
+                this.location = '';
+            });
         });
 
-        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_, _uuid_, _$filter_, _$httpBackend_, _$q_, _$rootScope_, _REGEX_, _httpService_) {
+        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_, _uuid_, _$filter_, _$httpBackend_, _$q_, _$rootScope_, _REGEX_, _httpService_, _$window_) {
             utilSvc = utilService;
             prefixes = _prefixes_;
             toastr = _toastr_;
@@ -51,6 +54,7 @@ describe('Util service', function() {
             uuid = _uuid_;
             regex = _REGEX_;
             httpSvc = _httpService_;
+            windowSvc = _$window_;
         });
 
         this.properties = [
@@ -81,6 +85,7 @@ describe('Util service', function() {
         scope = null;
         regex = null;
         httpSvc = null;
+        windowSvc = null;
     });
 
     describe('should get the beautified version of an IRI', function() {
@@ -153,6 +158,16 @@ describe('Util service', function() {
         utilSvc.removePropertyValue(entity, prop, other['@value']);
         expect(_.has(entity, prop)).toEqual(false);
     });
+    it('should replace a property value from an entity', function() {
+        var prop = 'property';
+        var value = {'@value': 'value'};
+        var other = {'@value': 'other'};
+        var entity = {'property': [value]};
+
+        utilSvc.replacePropertyValue(entity, prop, value['@value'], other['@value']);
+        expect(entity[prop]).toContain(other);
+        expect(entity[prop]).not.toContain(value);
+    });
     describe('should get a property id value from an entity', function() {
         it('if it contains the property', function() {
             var entity = {'property': [{'@id': 'id'}]};
@@ -195,6 +210,16 @@ describe('Util service', function() {
         utilSvc.removePropertyId(entity, prop, other['@id']);
         expect(_.has(entity, prop)).toEqual(false);
     });
+    it('should replace a property id value from an entity', function() {
+        var prop = 'property';
+        var value = {'@id': 'id'};
+        var other = {'@id': 'other'};
+        var entity = {'property': [value]};
+
+        utilSvc.replacePropertyId(entity, prop, value['@id'], other['@id']);
+        expect(entity[prop]).toContain(other);
+        expect(entity[prop]).not.toContain(value);
+    });
     describe('should get a dcterms property value from an entity', function() {
         it('if it contains the property', function() {
             var prop = 'prop';
@@ -213,6 +238,19 @@ describe('Util service', function() {
         var expected = {};
         expected[prefixes.dcterms + prop] = [{'@value': value}];
         utilSvc.setDctermsValue(entity, prop, value);
+        expect(entity).toEqual(expected);
+    });
+    it('should update a dcterms property value for an entity', function() {
+        var prop = 'prop';
+        var value = 'value';
+        var newValue = 'newValue';
+        var entity = {};
+        var expected = {};
+        expected[prefixes.dcterms + prop] = [{'@value': value}];
+        utilSvc.setDctermsValue(entity, prop, value);
+        expect(entity).toEqual(expected);
+        expected[prefixes.dcterms + prop] = [{'@value': newValue}];
+        utilSvc.updateDctermsValue(entity, prop, newValue);
         expect(entity).toEqual(expected);
     });
     describe('should get a dcterms property id value from an entity', function() {
@@ -239,6 +277,20 @@ describe('Util service', function() {
     it('should create an error toast', function() {
         utilSvc.createErrorToast('Text');
         expect(toastr.error).toHaveBeenCalledWith('Text', 'Error', {timeOut: 3000});
+    });
+    it('should create a success toast', function() {
+        utilSvc.createSuccessToast('Text');
+        expect(toastr.success).toHaveBeenCalledWith('Text', 'Success', {timeOut: 3000});
+    });
+    describe('should create a warning toast', function() {
+        it('with provided config', function() {
+            utilSvc.createWarningToast('Text', {timeOut: 10000});
+            expect(toastr.warning).toHaveBeenCalledWith('Text', 'Warning', {timeOut: 10000});
+        });
+        it('with default config', function() {
+            utilSvc.createWarningToast('Text');
+            expect(toastr.warning).toHaveBeenCalledWith('Text', 'Warning', {timeOut: 3000});
+        });
     });
     it('should get the namespace of an iri', function() {
         var result = utilSvc.getIRINamespace('iri');
@@ -467,5 +519,10 @@ describe('Util service', function() {
             expect(utilSvc.getPattern(this.properties[id])).toBe(regex.INTEGER);
         }, this);
         expect(utilSvc.getPattern(this.properties[9])).toBe(regex.ANYTHING);
+    });
+    it('should start a download at the provided URL', function() {
+        utilSvc.startDownload('url');
+        expect(scope.isDownloading).toEqual(true);
+        expect(windowSvc.location).toEqual('url');
     });
 });

@@ -20,14 +20,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<form class="rdf-preview-form full-height">
+<form class="rdf-preview-form h-100">
     <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
 
     <div class="form-group">
         <custom-label>Serialization</custom-label>
         <div class="select-container">
             <mapper-serialization-select format="dvm.serializeFormat" required></mapper-serialization-select>
-            <button class="btn btn-default" ng-click="dvm.generatePreview()">Refresh</button>
+            <button class="btn" ng-click="dvm.generatePreview()">Refresh</button>
         </div>
     </div>
     <div class="codemirror-wrapper">

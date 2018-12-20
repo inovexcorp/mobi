@@ -38,14 +38,12 @@
             'editMappingPage',
             'fileUploadPage',
             'fileUploadForm',
-            'invalidOntologyOverlay',
             'iriTemplateOverlay',
             'mapperSerializationSelect',
             'mapperTabset',
             'mappingCommitsPage',
             'mappingConfigOverlay',
             'mappingListBlock',
-            'mappingOverlays',
             'mappingPreview',
             'mappingSelectPage',
             'mappingTitle',
@@ -54,6 +52,8 @@
             'propPreview',
             'propSelect',
             'rdfPreviewForm',
-            'runMappingOverlay'
+            'runMappingDatasetOverlay',
+            'runMappingDownloadOverlay',
+            'runMappingOntologyOverlay'
         ]);
 })();

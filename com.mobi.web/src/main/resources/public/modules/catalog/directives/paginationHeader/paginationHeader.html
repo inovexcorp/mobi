@@ -21,6 +21,6 @@
   #L%
   -->
 <div class="pagination-header">
-    <paging-details total-size="dvm.state.totalSize" page-index="dvm.state.currentPage" limit="dvm.state.getCurrentCatalog()[listKey].limit"></paging-details>
+    <paging-details total-size="dvm.state.totalSize" page-index="dvm.state.currentPage - 1" limit="dvm.state.getCurrentCatalog()[listKey].limit"></paging-details>
     <sort-options list-key="listKey" change-sort="changeSort()"></sort-options>
 </div>

@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Selected Details directive', function() {
-    var $compile, scope, ontologyStateSvc, ontologyManagerService, $filter, $q, ontoUtils, manchesterConverterSvc;
+    var $compile, scope, $q, $filter, ontologyStateSvc, ontologyManagerSvc, ontoUtils, manchesterConverterSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -31,19 +31,23 @@ describe('Selected Details directive', function() {
         injectPrefixationFilter();
         mockOntologyUtilsManager();
         mockManchesterConverter();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _$filter_, _ontologyUtilsManagerService_, _manchesterConverterService_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _$filter_, _ontologyStateService_, _ontologyManagerService_, _ontologyUtilsManagerService_, _manchesterConverterService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyStateSvc = _ontologyStateService_;
-            ontologyManagerService = _ontologyManagerService_;
-            manchesterConverterSvc = _manchesterConverterService_;
-            $filter = _$filter_;
-            ontoUtils = _ontologyUtilsManagerService_;
             $q = _$q_;
+            $filter = _$filter_;
+            ontologyStateSvc = _ontologyStateService_;
+            ontologyManagerSvc = _ontologyManagerService_;
+            manchesterConverterSvc = _manchesterConverterService_;
+            ontoUtils = _ontologyUtilsManagerService_;
+            modalSvc = _modalService_;
         });
 
-        this.element = $compile(angular.element('<selected-details></selected-details>'))(scope);
+        ontologyStateSvc.canModify.and.returnValue(true);
+        scope.readOnly = false;
+        this.element = $compile(angular.element('<selected-details read-only="readOnly"></selected-details>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('selectedDetails');
     });
@@ -51,15 +55,23 @@ describe('Selected Details directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        ontologyStateSvc = null;
-        ontologyManagerService = null;
-        $filter = null;
         $q = null;
+        $filter = null;
+        ontologyStateSvc = null;
+        ontologyManagerSvc = null;
         ontoUtils = null;
         manchesterConverterSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
+    describe('controller bound variable', function() {
+        it('readOnly is one way bound', function() {
+            this.controller.readOnly = true;
+            scope.$digest();
+            expect(scope.readOnly).toEqual(false);
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
@@ -74,8 +86,33 @@ describe('Selected Details directive', function() {
             expect(this.element.find('div').length).toBe(0);
             expect(this.element.find('static-iri').length).toBe(0);
         });
+        it('depending on whether the selected entity has types', function() {
+            expect(this.element.querySelectorAll('.type-wrapper').length).toEqual(0);
+            ontologyStateSvc.listItem.selected['@type'] = ['test'];
+            scope.$digest();
+            expect(this.element.querySelectorAll('.type-wrapper').length).toEqual(1);
+        });
+        it('depending on whether the details should be read only', function() {
+            ontologyManagerSvc.isIndividual.and.returnValue(true);
+            ontologyStateSvc.listItem.selected['@type'] = ['test'];
+            scope.$digest();
+            expect(this.element.find('static-iri').length).toBe(1);
+            expect(this.element.find('a').length).toBe(1);
+            scope.readOnly = true;
+            scope.$digest();
+            expect(this.element.find('static-iri').length).toBe(1);
+            expect(this.element.find('a').length).toBe(0);
+        });
+        it('depending on whether the entity is an individual', function() {
+            ontologyManagerSvc.isIndividual.and.returnValue(false);
+            ontologyStateSvc.listItem.selected['@type'] = ['test'];
+            scope.$digest();
+            expect(this.element.find('a').length).toBe(0);
+            ontologyManagerSvc.isIndividual.and.returnValue(true);
+            scope.$digest();
+            expect(this.element.find('a').length).toBe(1);
+        });
     });
-
     describe('controller methods', function() {
         describe('getTypes functions properly', function() {
             it('when @type is empty', function() {
@@ -88,7 +125,7 @@ describe('Selected Details directive', function() {
                 expect(this.controller.getTypes()).toEqual(expected);
             });
             it('when @type has blank node items', function() {
-                ontologyManagerService.isBlankNodeId.and.returnValue(true);
+                ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
                 ontologyStateSvc.listItem.selected = {'@type': ['test', 'test2']};
                 this.controller.getTypes();
                 expect(manchesterConverterSvc.jsonldToManchester).toHaveBeenCalledWith(jasmine.any(String), ontologyStateSvc.listItem.ontology);
@@ -111,6 +148,10 @@ describe('Selected Details directive', function() {
                 expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
                 expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
             });
+        });
+        it('should open the individual types modal', function() {
+            this.controller.showTypesOverlay();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('individualTypesModal');
         });
     });
 });

@@ -21,28 +21,19 @@
  * #L%
  */
 describe('State Manager service', function() {
-    var $httpBackend, stateManagerSvc, $q, scope, uuidSvc, $httpParamSerializer, prefixes, util;
+    var $httpBackend, stateManagerSvc, $q, scope, $httpParamSerializer, util;
 
     beforeEach(function() {
         module('stateManager');
-        mockPrefixes();
         mockUtil();
         injectRestPathConstant();
 
-        module(function($provide) {
-            $provide.service('uuid', function() {
-                this.v4 = jasmine.createSpy('v4').and.returnValue('');
-            });
-        });
-
-        inject(function(stateManagerService, _$httpBackend_, _$q_, _$rootScope_, _uuid_, _$httpParamSerializer_, _prefixes_, _utilService_) {
-            $httpBackend = _$httpBackend_;
+        inject(function(stateManagerService, _$httpBackend_, _$q_, _$rootScope_, _$httpParamSerializer_, _utilService_) {
             stateManagerSvc = stateManagerService;
+            $httpBackend = _$httpBackend_;
             $q = _$q_;
             scope = _$rootScope_;
-            uuidSvc = _uuid_;
             $httpParamSerializer = _$httpParamSerializer_;
-            prefixes = _prefixes_;
             util = _utilService_;
         });
 
@@ -54,24 +45,31 @@ describe('State Manager service', function() {
         this.application = 'app';
         this.subjects = ['subject1', 'subject2'];
         this.states = ['state1', 'state2'];
-        this.recordId = 'recordId';
-        this.branchId = 'branchId';
-        this.commitId = 'commitId';
-        this.ontologyState = {};
-        this.ontologyState[prefixes.ontologyState + 'record'] = [{'@id': this.recordId}];
     });
 
     afterEach(function() {
-        $httpBackend = null;
         stateManagerSvc = null;
+        $httpBackend = null;
         $q = null;
         scope = null;
-        uuidSvc = null;
         $httpParamSerializer = null;
-        prefixes = null;
         util = null;
     });
 
+    describe('initialize calls the correct method and sets the correct value', function() {
+        it('when resolved', function() {
+            spyOn(stateManagerSvc, 'getStates').and.returnValue($q.when(this.states));
+            stateManagerSvc.initialize();
+            scope.$apply();
+            expect(stateManagerSvc.states).toEqual(this.states);
+        });
+        it('when rejected', function() {
+            spyOn(stateManagerSvc, 'getStates').and.returnValue($q.reject(''));
+            stateManagerSvc.initialize();
+            scope.$apply();
+            expect(util.createErrorToast).toHaveBeenCalledWith('Problem getting states');
+        });
+    });
     describe('getStates', function() {
         it('without parameters', function() {
             $httpBackend.whenGET('/mobirest/states?').respond(200, this.states);
@@ -131,7 +129,7 @@ describe('State Manager service', function() {
             stateManagerSvc.createState(this.state);
             flushAndVerify($httpBackend);
             expect(stateManagerSvc.states.length).toBe(1);
-            expect(stateManagerSvc.states[0]).toEqual({id: this.stateId, model: [this.state]});
+            expect(stateManagerSvc.states[0]).toEqual({id: this.stateId, model: this.state});
         });
         it('with application', function() {
             var self = this;
@@ -143,7 +141,7 @@ describe('State Manager service', function() {
             stateManagerSvc.createState(this.state, this.application);
             flushAndVerify($httpBackend);
             expect(stateManagerSvc.states.length).toBe(1);
-            expect(stateManagerSvc.states[0]).toEqual({id: this.stateId, model: [this.state]});
+            expect(stateManagerSvc.states[0]).toEqual({id: this.stateId, model: this.state});
         });
     });
     it('getState hits the correct endpoint', function() {
@@ -164,7 +162,7 @@ describe('State Manager service', function() {
         stateManagerSvc.updateState(this.stateId, this.state);
         flushAndVerify($httpBackend);
         expect(stateManagerSvc.states.length).toBe(1);
-        expect(stateManagerSvc.states[0]).toEqual({id: this.stateId, model: [this.state]});
+        expect(stateManagerSvc.states[0]).toEqual({id: this.stateId, model: this.state});
     });
     it('deleteState hits the correct endpoint', function() {
         stateManagerSvc.states = [{id: this.stateId, model: 'old-model'}];
@@ -172,54 +170,5 @@ describe('State Manager service', function() {
         stateManagerSvc.deleteState(this.stateId);
         flushAndVerify($httpBackend);
         expect(stateManagerSvc.states.length).toBe(0);
-    });
-    describe('initialize calls the correct method and sets the correct value', function() {
-        it('when resolved', function() {
-            spyOn(stateManagerSvc, 'getStates').and.returnValue($q.when(this.states));
-            stateManagerSvc.initialize();
-            scope.$apply();
-            expect(stateManagerSvc.states).toEqual(this.states);
-        });
-        it('when rejected', function() {
-            spyOn(stateManagerSvc, 'getStates').and.returnValue($q.reject(''));
-            stateManagerSvc.initialize();
-            scope.$apply();
-            expect(util.createErrorToast).toHaveBeenCalledWith('Problem getting states');
-        });
-    });
-    it('createOntologyState calls the correct method', function() {
-        spyOn(stateManagerSvc, 'createState');
-        stateManagerSvc.createOntologyState(this.recordId, this.branchId, this.commitId);
-        expect(uuidSvc.v4).toHaveBeenCalled();
-        expect(stateManagerSvc.createState).toHaveBeenCalledWith(jasmine.any(Object), 'ontology-editor');
-    });
-    describe('getOntologyStateByRecordId', function() {
-        it('when state is not present', function() {
-            var result = stateManagerSvc.getOntologyStateByRecordId(this.recordId);
-            expect(result).toEqual(undefined);
-        });
-        it('when state is present', function() {
-            stateManagerSvc.states = [{id: this.stateId, model: [this.ontologyState]}];
-            var result = stateManagerSvc.getOntologyStateByRecordId(this.recordId);
-            expect(result).toEqual({id: this.stateId, model: [this.ontologyState]});
-        });
-    });
-    it('updateOntologyState calls the correct method', function() {
-        spyOn(stateManagerSvc, 'updateState');
-        spyOn(stateManagerSvc, 'getOntologyStateByRecordId').and.returnValue({
-            id: this.stateId,
-            model: this.ontologyState
-        });
-        stateManagerSvc.updateOntologyState(this.recordId, this.branchId, this.commitId);
-        expect(stateManagerSvc.updateState).toHaveBeenCalledWith(this.stateId, jasmine.any(Object));
-    });
-    it('deleteOntologyState calls the correct method', function() {
-        spyOn(stateManagerSvc, 'deleteState');
-        spyOn(stateManagerSvc, 'getOntologyStateByRecordId').and.returnValue({
-            id: this.stateId,
-            model: this.ontologyState
-        });
-        stateManagerSvc.deleteOntologyState(this.recordId);
-        expect(stateManagerSvc.deleteState).toHaveBeenCalledWith(this.stateId);
     });
 });

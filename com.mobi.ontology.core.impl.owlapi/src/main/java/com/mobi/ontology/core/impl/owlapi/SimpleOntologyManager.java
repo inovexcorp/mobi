@@ -26,14 +26,14 @@ package com.mobi.ontology.core.impl.owlapi;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.builder.OntologyRecordConfig;
-import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
@@ -55,8 +55,6 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
@@ -72,8 +70,10 @@ public class SimpleOntologyManager implements OntologyManager {
     private ValueFactory valueFactory;
     private SesameTransformer sesameTransformer;
     private ModelFactory modelFactory;
-    private CatalogManager catalogManager;
     private OntologyRecordFactory ontologyRecordFactory;
+    private CatalogConfigProvider configProvider;
+    private CatalogManager catalogManager;
+    private CatalogUtilsService utilsService;
     private RepositoryManager repositoryManager;
     private BranchFactory branchFactory;
     private OntologyCache ontologyCache;
@@ -178,13 +178,23 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Reference
-    public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
+    void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
         this.ontologyRecordFactory = ontologyRecordFactory;
+    }
+
+    @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
     }
 
     @Reference
     public void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
+    }
+
+    @Reference
+    void setUtilsService(CatalogUtilsService utilsService) {
+        this.utilsService = utilsService;
     }
 
     @Reference
@@ -208,35 +218,8 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public OntologyRecord createOntologyRecord(OntologyRecordConfig config) {
-        OntologyRecord record = catalogManager.createRecord(config, ontologyRecordFactory);
-        config.getOntologyIRI().ifPresent(record::setOntologyIRI);
-        return record;
-    }
-
-    @Override
-    public Ontology createOntology(OntologyId ontologyId) {
-        return new SimpleOntology(ontologyId, this, sesameTransformer, bNodeService);
-    }
-
-    @Override
-    public Ontology createOntology(File file, boolean resolveImports) throws FileNotFoundException {
-        return new SimpleOntology(file, this, sesameTransformer, bNodeService, resolveImports);
-    }
-
-    @Override
-    public Ontology createOntology(IRI iri) {
-        return new SimpleOntology(iri, this, sesameTransformer, bNodeService);
-    }
-
-    @Override
     public Ontology createOntology(InputStream inputStream, boolean resolveImports) {
         return new SimpleOntology(inputStream, this, sesameTransformer, bNodeService, resolveImports);
-    }
-
-    @Override
-    public Ontology createOntology(String json, boolean resolveImports) {
-        return new SimpleOntology(json, this, sesameTransformer, bNodeService, resolveImports);
     }
 
     @Override
@@ -246,12 +229,10 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public boolean ontologyIriExists(Resource ontologyIRI) {
-        Repository repo = repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
-                new IllegalStateException("Catalog Repository unavailable"));
-        try (RepositoryConnection conn = repo.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(FIND_ONTOLOGY);
             query.setBinding(ONTOLOGY_IRI, ontologyIRI);
-            query.setBinding(CATALOG, catalogManager.getLocalCatalogIRI());
+            query.setBinding(CATALOG, configProvider.getLocalCatalogIRI());
             TupleQueryResult result = query.evaluate();
             return result.hasNext();
         }
@@ -259,12 +240,10 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Optional<Resource> getOntologyRecordResource(@Nonnull Resource ontologyIRI) {
-        Repository repo = repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
-                new IllegalStateException("Catalog Repository unavailable"));
-        try (RepositoryConnection conn = repo.getConnection()) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(FIND_ONTOLOGY);
             query.setBinding(ONTOLOGY_IRI, ontologyIRI);
-            query.setBinding(CATALOG, catalogManager.getLocalCatalogIRI());
+            query.setBinding(CATALOG, configProvider.getLocalCatalogIRI());
             TupleQueryResult result = query.evaluate();
             if (!result.hasNext()) {
                 return Optional.empty();
@@ -293,8 +272,8 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId) {
         long start = getStartTime();
-        Optional<Ontology> result = catalogManager.getBranch(catalogManager.getLocalCatalogIRI(), recordId, branchId,
-                branchFactory).flatMap(branch -> getOntology(recordId, branch.getResource(), getHeadOfBranch(branch)));
+        Optional<Ontology> result = catalogManager.getBranch(configProvider.getLocalCatalogIRI(), recordId, branchId,
+                branchFactory).flatMap(branch -> getOntology(recordId, getHeadOfBranch(branch)));
         logTrace("retrieveOntology(recordId, branchId)", start);
         return result;
     }
@@ -306,14 +285,16 @@ public class SimpleOntologyManager implements OntologyManager {
         long start = getStartTime();
 
         Optional<Cache<String, Ontology>> optCache = ontologyCache.getOntologyCache();
-        String key = ontologyCache.generateKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
+        String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
 
         if (optCache.isPresent() && optCache.get().containsKey(key)) {
-            if (log.isTraceEnabled()) log.trace("cache hit");
+            if (log.isTraceEnabled()) {
+                log.trace("cache hit");
+            }
             result = Optional.ofNullable(optCache.get().get(key));
         } else {
-            result = catalogManager.getCommit(catalogManager.getLocalCatalogIRI(), recordId, branchId, commitId)
-                    .flatMap(commit -> getOntology(recordId, branchId, commitId));
+            result = catalogManager.getCommit(configProvider.getLocalCatalogIRI(), recordId, branchId, commitId)
+                    .flatMap(commit -> getOntology(recordId, commitId));
         }
 
         logTrace("retrieveOntology(recordId, branchId, commitId)", start);
@@ -321,23 +302,22 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public OntologyRecord deleteOntology(@Nonnull Resource recordId) {
-        long start = getStartTime();
-
-        OntologyRecord record = catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory);
-
-        ontologyCache.clearCache(recordId, null);
-        record.getOntologyIRI().ifPresent(ontologyCache::clearCacheImports);
-
-        logTrace("deleteOntology(recordId)", start);
-        return record;
+    public Optional<Ontology> retrieveOntologyByCommit(@Nonnull Resource recordId, @Nonnull Resource commitId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utilsService.validateRecord(configProvider.getLocalCatalogIRI(), recordId,
+                    ontologyRecordFactory.getTypeIRI(), conn);
+            if (utilsService.commitInRecord(recordId, commitId, conn)) {
+                return getOntology(recordId, commitId);
+            }
+            return Optional.empty();
+        }
     }
 
     @Override
     public void deleteOntologyBranch(@Nonnull Resource recordId, @Nonnull Resource branchId) {
         long start = getStartTime();
-        catalogManager.removeBranch(catalogManager.getLocalCatalogIRI(), recordId, branchId);
-        ontologyCache.clearCache(recordId, branchId);
+        catalogManager.removeBranch(configProvider.getLocalCatalogIRI(), recordId, branchId).forEach(resource ->
+                ontologyCache.removeFromCache(recordId.stringValue(), resource.stringValue()));
         logTrace("deleteOntologyBranch(recordId, branchId)", start);
     }
 
@@ -363,7 +343,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getSubClassesOf(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_SUB_CLASSES_OF, null, "getSubClassesOf(ontology)");
+        return runQueryOnOntology(ontology, GET_SUB_CLASSES_OF, null, "getSubClassesOf(ontology)", true);
     }
 
     @Override
@@ -374,7 +354,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public TupleQueryResult getSubClassesFor(Ontology ontology, IRI iri) {
         return runQueryOnOntology(ontology, String.format(GET_CLASSES_FOR, iri.stringValue()), null,
-                "getSubClassesFor(ontology, iri)");
+                "getSubClassesFor(ontology, iri)", true);
     }
 
     @Override
@@ -386,7 +366,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public TupleQueryResult getSubPropertiesFor(Ontology ontology, IRI iri) {
         return runQueryOnOntology(ontology, String.format(GET_PROPERTIES_FOR, iri.stringValue()), null,
-                "getSubPropertiesFor(ontology, iri)");
+                "getSubPropertiesFor(ontology, iri)", true);
     }
 
     @Override
@@ -398,7 +378,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF, null,
-                "getSubDatatypePropertiesOf(ontology)");
+                "getSubDatatypePropertiesOf(ontology)", true);
     }
 
     @Override
@@ -409,7 +389,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public TupleQueryResult getSubAnnotationPropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_ANNOTATION_PROPERTIES_OF, null,
-                "getSubAnnotationPropertiesOf(ontology)");
+                "getSubAnnotationPropertiesOf(ontology)", true);
     }
 
     @Override
@@ -419,7 +399,8 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getSubObjectPropertiesOf(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(ontology)");
+        return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(ontology)",
+                true);
     }
 
     @Override
@@ -429,7 +410,8 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getClassesWithIndividuals(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(ontology)");
+        return runQueryOnOntology(ontology, GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(ontology)",
+                true);
     }
 
     @Override
@@ -442,7 +424,7 @@ public class SimpleOntologyManager implements OntologyManager {
         return runQueryOnOntology(ontology, SELECT_ENTITY_USAGES, tupleQuery -> {
             tupleQuery.setBinding(ENTITY_BINDING, entity);
             return tupleQuery;
-        }, "getEntityUsages(ontology, entity)");
+        }, "getEntityUsages(ontology, entity)", true);
     }
 
     @Override
@@ -481,7 +463,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getConceptRelationships(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_CONCEPT_RELATIONSHIPS, null, "getConceptRelationships(ontology)");
+        return runQueryOnOntology(ontology, GET_CONCEPT_RELATIONSHIPS, null, "getConceptRelationships(ontology)", true);
     }
 
     @Override
@@ -492,7 +474,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public TupleQueryResult getConceptSchemeRelationships(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_CONCEPT_SCHEME_RELATIONSHIPS, null,
-                "getConceptSchemeRelationships(ontology)");
+                "getConceptSchemeRelationships(ontology)", true);
     }
 
     @Override
@@ -506,7 +488,7 @@ public class SimpleOntologyManager implements OntologyManager {
         return runQueryOnOntology(ontology, GET_SEARCH_RESULTS, tupleQuery -> {
             tupleQuery.setBinding(SEARCH_TEXT, valueFactory.createLiteral(searchText.toLowerCase()));
             return tupleQuery;
-        }, "getSearchResults(ontology, searchText)");
+        }, "getSearchResults(ontology, searchText)", true);
     }
 
     @Override
@@ -518,15 +500,33 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public TupleQueryResult getTupleQueryResults(Ontology ontology, String queryString, boolean includeImports) {
+        return runQueryOnOntology(ontology, queryString, null,
+                "getTupleQueryResults(ontology, queryString)", includeImports);
+    }
+
+    @Override
+    public Model getGraphQueryResults(Ontology ontology, String queryString, boolean includeImports) {
+        return runGraphQueryOnOntology(ontology, queryString, null,
+                "getGraphQueryResults(ontology, queryString)", includeImports);
+    }
+
+    @Override
     public Model getOntologyModel(Resource recordId) {
         return catalogManager.getCompiledResource(getHeadOfBranch(getMasterBranch(recordId)));
     }
 
-    private Optional<Ontology> getOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
-                                           @Nonnull Resource commitId) {
+    @Override
+    public Model getOntologyModel(Resource recordId, Resource branchId) {
+        Branch branch = catalogManager.getBranch(configProvider.getLocalCatalogIRI(), recordId, branchId, branchFactory)
+                .get();
+        return catalogManager.getCompiledResource(recordId, branchId, getHeadOfBranch(branch));
+    }
+
+    private Optional<Ontology> getOntology(@Nonnull Resource recordId, @Nonnull Resource commitId) {
         Optional<Ontology> result;
         Optional<Cache<String, Ontology>> optCache = ontologyCache.getOntologyCache();
-        String key = ontologyCache.generateKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
+        String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
 
         if (optCache.isPresent() && optCache.get().containsKey(key)) {
             log.trace("cache hit");
@@ -567,14 +567,11 @@ public class SimpleOntologyManager implements OntologyManager {
      */
     private TupleQueryResult runQueryOnOntology(Ontology ontology, String queryString,
                                                 @Nullable Function<TupleQuery, TupleQuery> addBinding,
-                                                String methodName) {
+                                                String methodName, boolean includeImports) {
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
-            Set<Ontology> importedOntologies = ontology.getImportsClosure();
-            conn.begin();
-            importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
-            conn.commit();
+            addOntologyData(ontology, conn, includeImports);
             return runQueryOnOntology(queryString, addBinding, methodName, conn);
         } finally {
             repo.shutDown();
@@ -605,13 +602,70 @@ public class SimpleOntologyManager implements OntologyManager {
         }
     }
 
+    /**
+     * Executes the provided Graph query on the provided Ontology.
+     *
+     * @param ontology    the ontology to query on.
+     * @param queryString the query string that you wish to run.
+     * @param addBinding  the binding to add to the query, if needed.
+     * @param methodName  the name of the method to provide more accurate logging messages.
+     * @return the results of the query as a model.
+     */
+    private Model runGraphQueryOnOntology(Ontology ontology, String queryString,
+                                          @Nullable Function<GraphQuery, GraphQuery> addBinding,
+                                          String methodName, boolean includeImports) {
+        Repository repo = repositoryManager.createMemoryRepository();
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            addOntologyData(ontology, conn, includeImports);
+            return runGraphQueryOnOntology(queryString, addBinding, methodName, conn);
+        } finally {
+            repo.shutDown();
+        }
+    }
+
+    /**
+     * Executes the provided Graph query on the provided RepositoryConnection.
+     *
+     * @param queryString the query string that you wish to run.
+     * @param addBinding  the binding to add to the query, if needed.
+     * @param methodName  the name of the method to provide more accurate logging messages.
+     * @param conn        the {@link RepositoryConnection} to run the query against.
+     * @return the results of the query as a model.
+     */
+    private Model runGraphQueryOnOntology(String queryString,
+                                          @Nullable Function<GraphQuery, GraphQuery> addBinding,
+                                          String methodName, RepositoryConnection conn) {
+        long start = getStartTime();
+        try {
+            GraphQuery query = conn.prepareGraphQuery(queryString);
+            if (addBinding != null) {
+                query = addBinding.apply(query);
+            }
+            return QueryResults.asModel(query.evaluate(), modelFactory);
+        } finally {
+            logTrace(methodName, start);
+        }
+    }
+
+    private void addOntologyData(Ontology ontology, RepositoryConnection conn, boolean includeImports) {
+        if (includeImports) {
+            Set<Ontology> importedOntologies = ontology.getImportsClosure();
+            conn.begin();
+            importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
+            conn.commit();
+        } else {
+            conn.add(ontology.asModel(modelFactory));
+        }
+    }
+
     private Optional<Ontology> retrieveOntologyWithRecordId(Resource recordId) {
         Branch masterBranch = getMasterBranch(recordId);
-        return getOntology(recordId, masterBranch.getResource(), getHeadOfBranch(masterBranch));
+        return getOntology(recordId, getHeadOfBranch(masterBranch));
     }
 
     private Branch getMasterBranch(Resource recordId) {
-        return catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
+        return catalogManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId);
     }
 
     private long getStartTime() {

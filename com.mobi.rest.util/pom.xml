@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.11.19-SNAPSHOT</version>
+        <version>1.14.42-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -80,6 +80,12 @@
             <artifactId>persistence.utils</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>repository.impl.core</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -94,6 +100,7 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
                             com.mobi.rest.util,
+                            com.mobi.rest.util.compress,
                             com.mobi.rest.util.logging,
                             com.mobi.rest.util.jaxb
                         </Export-Package>

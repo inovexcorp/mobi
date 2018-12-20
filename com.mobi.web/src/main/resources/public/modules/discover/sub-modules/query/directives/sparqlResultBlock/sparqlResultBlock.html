@@ -21,7 +21,6 @@
   #L%
   -->
 <div class="sparql-result-block">
-    <download-query-overlay ng-if="dvm.sparql.displayDownloadOverlay"></download-query-overlay>
     <block>
         <block-content>
             <sparql-result-table ng-if="dvm.sparql.data" bindings="dvm.sparql.bindings" data="dvm.sparql.data"></sparql-result-table>
@@ -30,9 +29,9 @@
             <info-message ng-if="dvm.sparql.infoMessage" class="message">{{dvm.sparql.infoMessage}}</info-message>
         </block-content>
         <block-footer ng-if="dvm.sparql.data" class="footer-relative">
-            <button class="btn btn-default download-button" ng-click="dvm.sparql.displayDownloadOverlay = true"><i class="fa fa-download"></i></button>
-            <paging-details total-size="dvm.sparql.totalSize" page-index="dvm.sparql.currentPage" limit="dvm.sparql.limit"></paging-details>
-            <pagination links="dvm.sparql.links" current-page="dvm.sparql.currentPage" get-page="dvm.getPage(direction)"></pagination>
+            <button class="btn download-button remove-min-width" ng-click="dvm.downloadQuery()"><i class="fa fa-download"></i></button>
+            <paging-details total-size="dvm.sparql.totalSize" page-index="dvm.sparql.currentPage - 1" limit="dvm.sparql.limit"></paging-details>
+            <pagination total="dvm.sparql.totalSize" limit="dvm.sparql.limit" current-page="dvm.sparql.currentPage" get-page="dvm.sparql.queryRdf()"></pagination>
         </block-footer>
     </block>
 </div>

@@ -42,8 +42,18 @@
          * @requires $state
          * @requires catalogManager.service:catalogManagerService
          * @requires catalogState.service:catalogStateService
+         * @requires datasetManager.service:datasetManagerService
+         * @requires datasetState.service:datasetStateService
+         * @requires delimitedManager.service:delimitedManangerService
+         * @requires discoverState.service:discoverStateService
+         * @requires mapperState.service:mapperStateService
+         * @requires mergeRequestsState.service:mergeRequestsStateService
          * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires sparqlManager.service:sparqlManagerService
+         * @requires stateManager.service:stateManagerService
          * @requires userManager.service:userManagerService
+         * @requires userState.service:userStateService
          *
          * @description
          * `loginManagerService` is a service that provides access to the Mobi login REST
@@ -52,8 +62,6 @@
         .service('loginManagerService', loginManagerService);
 
         loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
-            'analyticManagerService',
-            'analyticStateService',
             'catalogManagerService',
             'catalogStateService',
             'datasetManagerService',
@@ -61,6 +69,7 @@
             'delimitedManagerService',
             'discoverStateService',
             'mapperStateService',
+            'mergeRequestsStateService',
             'ontologyManagerService',
             'ontologyStateService',
             'sparqlManagerService',
@@ -69,7 +78,7 @@
             'userStateService'
         ];
 
-    function loginManagerService($q, $http, $state, REST_PREFIX, analyticManagerService, analyticStateService, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, ontologyManagerService, ontologyStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService) {
+    function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService) {
             var self = this,
                 anon = 'self anon',
                 prefix = REST_PREFIX + 'user/',
@@ -82,9 +91,20 @@
              * @type {string}
              *
              * @description
-             * `currentUser` holds the username of the user that is currenlty logged into Mobi.
+             * `currentUser` holds the username of the user that is currently logged into Mobi.
              */
             self.currentUser = '';
+
+            /**
+             * @ngdoc property
+             * @name currentUserIRI
+             * @propertyOf loginManager.service:loginManagerService
+             * @type {string}
+             *
+             * @description
+             * `currentUserIRI` holds the IRI of the user that is currenlty logged into Mobi.
+             */
+            self.currentUserIRI = '';
 
             /**
              * @ngdoc method
@@ -114,6 +134,9 @@
                     .then(response => {
                         if (response.status === 200 && response.data.scope !== anon) {
                             self.currentUser = response.data.sub;
+                            userManagerService.getUser(self.currentUser).then(user => {
+                                self.currentUserIRI = user.iri;
+                            });
                             $state.go('root.home');
                             deferred.resolve(true);
                         } else {
@@ -140,19 +163,20 @@
              * is current. Navigates back to the login page.
              */
             self.logout = function() {
-                analyticStateService.reset();
                 catalogStateService.reset();
                 datasetStateService.reset();
                 delimitedManagerService.reset();
                 discoverStateService.reset();
                 mapperStateService.initialize();
                 mapperStateService.resetEdit();
+                mergeRequestsStateService.reset();
                 ontologyManagerService.reset();
                 ontologyStateService.reset();
                 sparqlManagerService.reset();
                 $http.get(prefix + 'logout')
                     .then(response => {
                         self.currentUser = '';
+                        self.currentUserIRI = '';
                         userStateService.reset();
                     });
                 $state.go('login');
@@ -165,10 +189,14 @@
              *
              * @description
              * Test whether a user is currently logged in and if not, navigates to the log in page. If a user
-             * is logged in, intitializes the {@link catalogManager.service:catalogManagerService catalogManagerService},
-             * {@link catalogState.service:catalogStateService catalogStateService},
-             * {@link ontologyManager.service:ontologyManagerService ontologyManagerService},
-             * and the {@link userManager.service:userManagerService userManagerService}. Returns
+             * is logged in, intitializes the {@link catalogManager.service:catalogManagerService},
+             * {@link catalogState.service:catalogStateService},
+             * {@link mergeRequestsState.service:mergeRequestsStateService},
+             * {@link ontologyManager.service:ontologyManagerService},
+             * {@link ontologyState.service:ontologyStateService},
+             * {@link datasetManager.service:datasetManagerService},
+             * {@link stateManager.service:stateManagerService},
+             * and the {@link userManager.service:userManagerService}. Returns
              * a Promise with whether or not a user is logged in.
              *
              * @return {Promise} A Promise that resolves if a user is logged in and rejects with the HTTP
@@ -177,28 +205,37 @@
             self.isAuthenticated = function() {
                 var handleError = function(data) {
                     self.currentUser = '';
+                    self.currentUserIRI = '';
                     $state.go('login');
                     return $q.reject(data);
                 };
                 return self.getCurrentLogin().then(data => {
-                    if (data.scope !== anon) {
-                        self.currentUser = data.sub;
-                        if (!weGood) {
+                    if (data.scope === anon) {
+                        return $q.reject(data);
+                    }
+                    self.currentUser = data.sub;
+                    var promises = [
+                        stateManagerService.initialize(),
+                        userManagerService.getUser(self.currentUser).then(user => {
+                            self.currentUserIRI = user.iri;
+                        })
+                    ];
+                    if (!weGood) {
+                        promises = promises.concat([
                             catalogManagerService.initialize().then(() => {
                                 catalogStateService.initialize();
+                                mergeRequestsStateService.initialize();
                                 ontologyManagerService.initialize();
                                 ontologyStateService.initialize();
-                            });
-                            userManagerService.initialize();
-                            datasetManagerService.initialize();
-                            analyticManagerService.initialize();
-                            weGood = true;
-                        }
-                        stateManagerService.initialize();
-                        return $q.when();
-                    } else {
-                        return handleError(data);
+                            }),
+                            userManagerService.initialize(),
+                            datasetManagerService.initialize()
+                        ]);
                     }
+                    return $q.all(promises);
+                }, $q.reject)
+                .then(() => {
+                    weGood = true;
                 }, handleError);
             };
 

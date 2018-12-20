@@ -20,17 +20,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="property-filter-overlay overlay">
-    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
-        <h6>Add New Property</h6>
-        <div class="main">
-            <div class="path"><span ng-repeat-start="part in dvm.path" class="text">{{dvm.om.getEntityName(part.property)}}</span><span ng-repeat-end ng-if="!$last" class="arrow">&gt;</span></div>
-            <property-selector property="dvm.property" range="dvm.range" keys="dvm.keys"></property-selector>
-            <filter-selector ng-if="dvm.showFilter" begin="dvm.begin" end="dvm.end" filter-type="dvm.filterType" regex="dvm.regex" value="dvm.value" range="dvm.range" boolean="dvm.boolean"></filter-selector>
-        </div>
-        <div class="btn-container clearfix">
-            <button ng-if="dvm.path.length" type="submit" class="btn btn-primary pull-right" ng-disabled="!dvm.submittable()" ng-click="dvm.submit()">Submit</button>
-            <button type="button" class="btn btn-default pull-right" ng-click="dvm.closeOverlay()">Cancel</button>
-        </div>
+<div class="modal-header">
+    <h3>Add New Property</h3>
+    <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
+</div>
+<div class="modal-body">
+    <form name="dvm.form" novalidate autocomplete="off">
+        <div class="path mb-3"><span ng-repeat-start="part in dvm.path" class="text">{{dvm.om.getEntityName(part.property)}}</span><span ng-repeat-end ng-if="!$last" class="arrow">&gt;</span></div>
+        <property-selector property="dvm.property" range="dvm.range" keys="dvm.keys" range-change-event="dvm.propertySelected()"></property-selector>
+        <filter-selector ng-if="dvm.showFilter" begin="dvm.begin" end="dvm.end" filter-type="dvm.filterType" regex="dvm.regex" value="dvm.value" range="dvm.range" boolean="dvm.boolean"></filter-selector>
     </form>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn" ng-click="dvm.cancel()">Cancel</button>
+    <button ng-if="dvm.path.length" type="submit" class="btn btn-primary" ng-disabled="!dvm.submittable()" ng-click="dvm.submit()">Submit</button>
 </div>

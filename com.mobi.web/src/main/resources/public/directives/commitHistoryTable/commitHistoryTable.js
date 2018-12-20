@@ -30,7 +30,7 @@
          *
          * @description
          * The `commitHistoryTable` module only provides the `commitHistoryTable` directive which creates
-         * a table and optionally a graph of the head commit of a branch.
+         * a table of commits and optionally a graph of the commit network.
          */
         .module('commitHistoryTable', [])
         /**
@@ -41,33 +41,36 @@
          * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
          * @requires userManager.service:userManagerService
+         * @requires modal.service:modalService
          *
          * @description
-         * `commitHistoryTable` is a directive that creates a table containing the commit chain of the head commit of
-         * the branch identified by the passed record id amd branch JSON-LD object. Can optionally also display a SVG
-         * graph generated using Snap.svg showing the network the commits. Clicking on a commit id or its corresponding
-         * circle in the graph will open up a {@link commitInfoOverlay.directive:commitInfoOverlay commit info overlay}.
-         * The directive is replaced by the content of the template.
+         * `commitHistoryTable` is a directive that creates a table containing the commit chain of the provided commit.
+         * Can optionally also display a SVG graph generated using Snap.svg showing the network of the commits along
+         * with an optional title for the top commit. Clicking on a commit id or its corresponding circle in the graph
+         * will open up a {@link commitInfoOverlay.directive:commitInfoOverlay commit info overlay}. Can optionally
+         * provide a variable to bind the retrieved commits to. The directive is replaced by the content of the template.
          *
-         * @param {string} recordId The IRI string of a record in the local catalog
-         * @param {string} branch The JSON-LD object of a branch
-         * @param {string=''} commitId The IRI string of the head commit of the Branch to be used when determining whether
-         * the table should be updated.
+         * @param {string} commitId The IRI string of a commit in the local catalog
+         * @param {string} headTitle The title to put on the top commit
+         * @param {string} [targetId=''] targetId limits the commits displayed to only go as far back as this specified
+         *      commit.
+         * @param {Object[]} commitData A variable to bind the retrieved commits to
          */
         .directive('commitHistoryTable', commitHistoryTable);
 
-        commitHistoryTable.$inject = ['catalogManagerService', 'utilService', 'userManagerService', 'Snap', 'chroma'];
+        commitHistoryTable.$inject = ['httpService', 'catalogManagerService', 'utilService', 'userManagerService', 'modalService', 'Snap', 'chroma'];
 
-        function commitHistoryTable(catalogManagerService, utilService, userManagerService, Snap, chroma) {
+        function commitHistoryTable(httpService, catalogManagerService, utilService, userManagerService, modalService, Snap, chroma) {
             return {
                 restrict: 'E',
                 replace: true,
                 transclude: true,
                 scope: {},
                 bindToController: {
-                    recordId: '<',
-                    branch: '<',
-                    commitId: '<?'
+                    commitId: '<',
+                    headTitle: '<?',
+                    targetId: '<?',
+                    commitData: '=?'
                 },
                 templateUrl: 'directives/commitHistoryTable/commitHistoryTable.html',
                 link: function(scope, el, attrs, ctrl) {
@@ -78,7 +81,6 @@
                     var dvm = this;
                     var titleWidth = 75;
                     var cm = catalogManagerService;
-                    var catalogId = _.get(cm.localCatalog, '@id', '');
                     var snap = Snap('.commit-graph');
                     var graphCommits = [];
                     var cols = [];
@@ -89,47 +91,52 @@
 
                     dvm.util = utilService;
                     dvm.um = userManagerService;
-                    dvm.showOverlay = false;
                     dvm.error = '';
                     dvm.commit = undefined;
                     dvm.additions = [];
                     dvm.deletions = [];
                     dvm.commits = [];
                     dvm.circleRadius = 5;
-                    dvm.circleSpacing = 50;
+                    dvm.circleSpacing = 48;
                     dvm.columnSpacing = 25;
                     dvm.deltaX = 5 + dvm.circleRadius;
-                    dvm.deltaY = 37;
+                    dvm.deltaY = 56;
+                    dvm.id = 'commit-history-table';
 
-                    $scope.$watchGroup(['dvm.branch', 'dvm.recordId', 'dvm.commitId'], newValues => dvm.getCommits());
+                    $scope.$watchGroup(['dvm.headTitle', 'dvm.commitId', 'dvm.targetId'], () => dvm.getCommits());
 
                     dvm.openCommitOverlay = function(commitId) {
-                        cm.getBranchCommit(commitId, dvm.branch['@id'], dvm.recordId, catalogId)
-                            .then(commit => {
-                                dvm.commit = _.find(dvm.commits, {id: commitId});
-                                dvm.additions = commit.additions;
-                                dvm.deletions = commit.deletions;
-                                dvm.showOverlay = true;
+                        cm.getCommit(commitId)
+                            .then(response => {
+                                modalService.openModal('commitInfoOverlay', {
+                                    commit: _.find(dvm.commits, {id: commitId}),
+                                    additions: response.additions,
+                                    deletions: response.deletions
+                                }, undefined, 'lg');
                             }, errorMessage => dvm.error = errorMessage);
                     }
                     dvm.getCommits = function() {
-                        if (dvm.branch) {
-                            cm.getBranchCommits(dvm.branch['@id'], dvm.recordId, catalogId)
-                                .then(commits => {
-                                    dvm.commits = commits;
-                                    dvm.error = '';
-                                    if ($scope.graph) {
-                                        dvm.drawGraph();
-                                    }
-                                }, errorMessage => {
-                                    dvm.error = errorMessage;
-                                    dvm.commits = [];
-                                    if ($scope.graph) {
-                                        dvm.reset();
-                                    }
-                                });
+                        if (dvm.commitId) {
+                            httpService.cancel(dvm.id);
+                            var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId, dvm.id);
+                            promise.then(commits => {
+                                dvm.commitData = commits;
+                                dvm.commits = commits;
+                                dvm.error = '';
+                                if ($scope.graph) {
+                                    dvm.drawGraph();
+                                }
+                            }, errorMessage => {
+                                dvm.error = errorMessage;
+                                dvm.commits = [];
+                                dvm.commitData = [];
+                                if ($scope.graph) {
+                                    dvm.reset();
+                                }
+                            });
                         } else {
                             dvm.commits = [];
+                            dvm.commitData = [];
                             if ($scope.graph) {
                                 dvm.reset();
                             }
@@ -154,7 +161,9 @@
                             colorIdx++;
                             c.circle.attr({fill: color});
                             cols.push({x: 0, commits: [c.commit.id], color: color});
-                            drawBranchTitle(c.circle);
+                            if (dvm.headTitle) {
+                                drawHeadTitle(c.circle);
+                            }
                             recurse(c);
                             // Update deltaX based on how many columns there are or the minimum width
                             dvm.deltaX = _.max([dvm.deltaX + xI * dvm.columnSpacing, titleWidth + 10 + dvm.circleRadius]);
@@ -191,6 +200,10 @@
                         wrapper = undefined;
                         dvm.deltaX = 5 + dvm.circleRadius;
                     }
+
+                    $scope.$on('$destroy', function() {
+                        httpService.cancel(dvm.id);
+                    });
 
                     function recurse(c) {
                         // Find the column this commit belongs to and the ids of its base and auxiliary commits
@@ -286,7 +299,7 @@
                         });
                         wrapper.add(path);
                     }
-                    function drawBranchTitle(circle) {
+                    function drawHeadTitle(circle) {
                         var cx = circle.asPX('cx'),
                             cy = circle.asPX('cy'),
                             r = circle.asPX('r');
@@ -298,7 +311,7 @@
                         triangle.attr({
                             'fill-opacity': '0.5'
                         });
-                        var displayText = dvm.util.getDctermsValue(dvm.branch, 'title');
+                        var displayText = dvm.headTitle;
                         var title = Snap.parse('<title>' + displayText + '</title>');
                         var text = snap.text(rect.asPX('x') + (rect.asPX('width'))/2, rect.asPX('y') + (rect.asPX('height')/2), displayText);
                         text.attr({

@@ -22,8 +22,8 @@
  */
 package com.mobi.repository.impl.sesame.query
 
-import org.openrdf.query.BindingSet
-import org.openrdf.query.TupleQueryResult
+import org.eclipse.rdf4j.query.BindingSet
+import org.eclipse.rdf4j.query.TupleQueryResult
 import spock.lang.Specification
 
 class SesameTupleQueryResultSpec extends Specification{

@@ -23,7 +23,6 @@ package com.mobi.repository.impl.sesame.query;
  * #L%
  */
 
-import com.mobi.query.exception.QueryEvaluationException;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.BindingSet;
 import com.mobi.query.exception.QueryEvaluationException;
@@ -32,9 +31,9 @@ import java.util.List;
 
 public class SesameTupleQueryResult extends TupleQueryResult {
 
-    private org.openrdf.query.TupleQueryResult tupleQueryResult;
+    private org.eclipse.rdf4j.query.TupleQueryResult tupleQueryResult;
 
-    public SesameTupleQueryResult(org.openrdf.query.TupleQueryResult tupleQueryResult) {
+    public SesameTupleQueryResult(org.eclipse.rdf4j.query.TupleQueryResult tupleQueryResult) {
         this.tupleQueryResult = tupleQueryResult;
     }
 
@@ -42,7 +41,7 @@ public class SesameTupleQueryResult extends TupleQueryResult {
     public List<String> getBindingNames() throws QueryEvaluationException {
         try {
             return tupleQueryResult.getBindingNames();
-        } catch (org.openrdf.query.QueryEvaluationException e) {
+        } catch (org.eclipse.rdf4j.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }
     }
@@ -51,7 +50,7 @@ public class SesameTupleQueryResult extends TupleQueryResult {
     public void close() throws QueryEvaluationException {
         try {
             tupleQueryResult.close();
-        } catch (org.openrdf.query.QueryEvaluationException e) {
+        } catch (org.eclipse.rdf4j.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }
     }
@@ -60,7 +59,7 @@ public class SesameTupleQueryResult extends TupleQueryResult {
     public boolean hasNext() throws QueryEvaluationException {
         try {
             return tupleQueryResult.hasNext();
-        } catch (org.openrdf.query.QueryEvaluationException e) {
+        } catch (org.eclipse.rdf4j.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }
     }
@@ -69,7 +68,7 @@ public class SesameTupleQueryResult extends TupleQueryResult {
     public BindingSet next() throws QueryEvaluationException {
         try {
             return new SesameBindingSet(tupleQueryResult.next());
-        } catch (org.openrdf.query.QueryEvaluationException e) {
+        } catch (org.eclipse.rdf4j.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }
     }

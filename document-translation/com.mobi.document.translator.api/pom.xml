@@ -28,7 +28,7 @@
     <parent>
         <artifactId>document-translation</artifactId>
         <groupId>com.mobi</groupId>
-        <version>1.11.13-SNAPSHOT</version>
+        <version>1.14.42-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -54,29 +54,20 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-expression</artifactId>
-            <version>5.0.2.RELEASE</version>
+            <groupId>com.mobi</groupId>
+            <artifactId>rdf.orm.ontologies</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.servicemix.bundles</groupId>
+            <artifactId>org.apache.servicemix.bundles.spring-expression</artifactId>
+            <version>5.0.2.RELEASE_1</version>
         </dependency>
 
         <!-- Test dependencies -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.spockframework</groupId>
-            <artifactId>spock-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>rdf.impl.sesame</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
+            <artifactId>rdf-orm-test</artifactId>
         </dependency>
     </dependencies>
 
@@ -89,14 +80,15 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>Mobi Semantic Translation API</Bundle-Name>
+                        <Bundle-Name>Mobi Document Translator API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.semantic.translator,
-                            com.mobi.semantic.translator.expression,
-                            com.mobi.semantic.translator.ontology,
-                            com.mobi.semantic.translator.stack
+                            com.mobi.document.translator,
+                            com.mobi.document.translator.expression,
+                            com.mobi.document.translator.ontology,
+                            com.mobi.document.translator.stack
                         </Export-Package>
+                        <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
@@ -119,10 +111,16 @@
                                     <ontologyFile>
                                         ${project.basedir}/src/main/resources/ontologies/semantic-translation-ont.trig
                                     </ontologyFile>
-                                    <outputPackage>com.mobi.semantic.translator.ontology</outputPackage>
+                                    <outputPackage>com.mobi.document.translator.ontology</outputPackage>
                                     <ontologyName>SemanticTranslation</ontologyName>
                                 </ontology>
                             </generates>
+                            <references>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../../com.mobi.rdf.orm.ontologies/src/main/resources/owl.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.ontologies.owl</outputPackage>
+                                </ontology>
+                            </references>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>
                         </configuration>
                     </execution>

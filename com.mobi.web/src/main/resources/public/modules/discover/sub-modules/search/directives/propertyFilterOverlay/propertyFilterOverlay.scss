@@ -1,12 +1,9 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.property-filter-overlay {
-    z-index: 10;
-
+property-filter-overlay {
     .path {
-        border-bottom: 1px solid $gray-light;
-        margin: -10px -10px 10px -10px;
+        border-bottom: 1px solid var(--light-dark);
         min-height: 33px;
         padding: 8px 10px;
 

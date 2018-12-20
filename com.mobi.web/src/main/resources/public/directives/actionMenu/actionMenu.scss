@@ -1,0 +1,13 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.action-menu {
+    .dropdown-toggle {
+        min-width: unset;
+
+        &::after,
+        &::before {
+            display: none;
+        }
+    }
+}

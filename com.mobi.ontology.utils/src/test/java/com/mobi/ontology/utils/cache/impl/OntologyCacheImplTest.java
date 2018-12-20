@@ -26,21 +26,20 @@ package com.mobi.ontology.utils.cache.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.junit.Before;
-import org.junit.Test;
 import com.mobi.cache.api.CacheManager;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -54,7 +53,6 @@ public class OntologyCacheImplTest {
     private ValueFactory vf = SimpleValueFactory.getInstance();
 
     private Resource recordId = vf.createIRI("http://test.com/record");
-    private Resource branchId = vf.createIRI("http://test.com/branch");
     private IRI ontologyIRI = vf.createIRI("http://test.com/ontology");
     private String key;
 
@@ -82,7 +80,7 @@ public class OntologyCacheImplTest {
         service = new OntologyCacheImpl();
         service.setCacheManager(cacheManager);
 
-        key = service.generateKey(recordId.stringValue(), branchId.stringValue(), null);
+        key = service.generateKey(recordId.stringValue(), null);
         when(cache.iterator()).thenReturn(it);
         when(it.hasNext()).thenReturn(true, false);
         when(it.next()).thenReturn(entry);
@@ -92,10 +90,9 @@ public class OntologyCacheImplTest {
 
     @Test
     public void generateKeyTest() throws Exception {
-        assertEquals("test&test&test", service.generateKey("test", "test", "test"));
-        assertEquals("test&test&null", service.generateKey("test", "test", null));
-        assertEquals("test&null&null", service.generateKey("test", null, null));
-        assertEquals("null&null&null", service.generateKey(null, null, null));
+        assertEquals("test&test", service.generateKey("test", "test"));
+        assertEquals("test&null", service.generateKey("test", null));
+        assertEquals("null&null", service.generateKey(null, null));
     }
 
     @Test
@@ -110,21 +107,15 @@ public class OntologyCacheImplTest {
     }
 
     @Test
-    public void clearCacheWithBothIdsAndHitTest() throws Exception {
-        service.clearCache(recordId, branchId);
+    public void clearCacheAndHitTest() throws Exception {
+        service.clearCache(recordId);
         verify(cache).remove(key);
     }
 
     @Test
-    public void clearCacheWithBothIdsAndMissTest() throws Exception {
-        service.clearCache(recordId, vf.createIRI("http://test.com/missing"));
+    public void clearCacheAndMissTest() throws Exception {
+        service.clearCache(vf.createIRI("http://test.com/missing"));
         verify(cache, times(0)).remove(anyString());
-    }
-
-    @Test
-    public void clearCacheWithOnlyRecordTest() throws Exception {
-        service.clearCache(recordId, null);
-        verify(cache).remove(key);
     }
 
     @Test
@@ -142,16 +133,16 @@ public class OntologyCacheImplTest {
     @Test
     public void removeFromCacheTest() throws Exception {
         when(cache.containsKey(anyString())).thenReturn(true);
-        service.removeFromCache("test", "test", "test");
-        verify(cache).containsKey("test&test&test");
-        verify(cache).remove("test&test&test");
+        service.removeFromCache("test", "test");
+        verify(cache).containsKey("test&test");
+        verify(cache).remove("test&test");
     }
 
     @Test
     public void removeFromCacheWhenNotContained() throws Exception {
         when(cache.containsKey(anyString())).thenReturn(false);
-        service.removeFromCache("test", "test", "test");
-        verify(cache).containsKey("test&test&test");
-        verify(cache, times(0)).remove("test&test&test");
+        service.removeFromCache("test", "test");
+        verify(cache).containsKey("test&test");
+        verify(cache, times(0)).remove("test&test");
     }
 }

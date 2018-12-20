@@ -30,6 +30,7 @@ import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.config.delimited.MappingRecordConfig;
 import com.mobi.etl.api.delimited.MappingId;
 import com.mobi.etl.api.delimited.MappingManager;
@@ -48,8 +49,8 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -65,6 +66,7 @@ import javax.annotation.Nonnull;
 @Component
 public class SimpleMappingManager implements MappingManager {
     private ValueFactory vf;
+    private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
     private MappingRecordFactory mappingRecordFactory;
     private MappingFactory mappingFactory;
@@ -76,6 +78,11 @@ public class SimpleMappingManager implements MappingManager {
     @Reference
     protected void setValueFactory(final ValueFactory vf) {
         this.vf = vf;
+    }
+
+    @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
     }
 
     @Reference
@@ -154,20 +161,20 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public PaginatedSearchResults<MappingRecord> getMappingRecords(MappingPaginatedSearchParams searchParams) {
-        PaginatedSearchResults<Record> results = catalogManager.findRecord(catalogManager.getLocalCatalogIRI(),
+        PaginatedSearchResults<Record> results = catalogManager.findRecord(configProvider.getLocalCatalogIRI(),
                 searchParams.build());
         return new MappingRecordSearchResults(results, mappingRecordFactory);
     }
 
     @Override
     public Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId) {
-        Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
+        Branch masterBranch = catalogManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId);
         return Optional.of(getWrapperFromModel(catalogManager.getCompiledResource(getHeadOfBranch(masterBranch))));
     }
 
     @Override
     public Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId, @Nonnull Resource branchId) {
-        Commit commit = catalogManager.getHeadCommit(catalogManager.getLocalCatalogIRI(), recordId, branchId);
+        Commit commit = catalogManager.getHeadCommit(configProvider.getLocalCatalogIRI(), recordId, branchId);
         return Optional.of(getWrapperFromModel(catalogManager.getCompiledResource(commit.getResource())));
     }
 
@@ -180,7 +187,7 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public MappingRecord deleteMapping(@Nonnull Resource recordId) throws MobiException {
-        return catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), recordId, mappingRecordFactory);
+        return catalogManager.removeRecord(configProvider.getLocalCatalogIRI(), recordId, mappingRecordFactory);
     }
 
     private Resource getHeadOfBranch(Branch branch) {

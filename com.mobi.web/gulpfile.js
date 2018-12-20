@@ -36,7 +36,6 @@ var src = './src/main/resources/public/',
 var jsFiles = function(prefix) {
         return [
             prefix + 'js/vendor/manchestersyntax.js',
-            prefix + 'js/services/responseObj.js',
             prefix + 'js/services/prefixes.js',
             prefix + 'js/filters/!(*Spec).js',
             prefix + 'js/services/!(*Spec).js',
@@ -51,14 +50,17 @@ var jsFiles = function(prefix) {
     nodeJsFiles = function(prefix) {
         return [
             prefix + 'lodash/**/lodash.min.js',
-            prefix + 'codemirror/' + (prefix === nodeDir ? 'lib' : '**') + '/codemirror.js',
-            prefix + 'codemirror/**/sparql.js',
-            prefix + 'codemirror/**/turtle.js',
-            prefix + 'codemirror/**/xml.js',
-            prefix + 'codemirror/**/javascript.js',
-            prefix + 'codemirror/**/matchbrackets.js',
+            prefix + 'codemirror-minified/**/codemirror.js',
             prefix + 'codemirror-no-newlines/**/no-newlines.js',
+            prefix + 'codemirror-minified/**/sparql.js',
+            prefix + 'codemirror-minified/**/turtle.js',
+            prefix + 'codemirror-minified/**/xml.js',
+            prefix + 'codemirror-minified/**/javascript.js',
+            prefix + 'codemirror-minified/**/matchbrackets.js',
             prefix + 'angular/**/angular.min.js',
+            prefix + 'jquery/**/jquery.min.js',
+            prefix + 'popper.js/' + (prefix.includes(dest) ? '**' : 'dist/umd') + '/popper.min.js',
+            prefix + 'bootstrap/' + (prefix.includes(dest) ? '**' : 'dist/js') + '/bootstrap.min.js',
             prefix + 'angular-mocks/**/angular-mocks.js',
             prefix + 'angular-animate/**/angular-animate.js',
             prefix + 'angular-ui-router/**/angular-ui-router.min.js',
@@ -66,8 +68,7 @@ var jsFiles = function(prefix) {
             prefix + 'angular-cookies/**/angular-cookies.min.js',
             prefix + 'angular-ui-codemirror/**/ui-codemirror.js',
             prefix + 'angular-messages/**/angular-messages.min.js',
-            prefix + 'angular-ui-bootstrap/**/ui-bootstrap.js',
-            prefix + 'angular-ui-bootstrap/**/ui-bootstrap-tpls.js',
+            prefix + 'ui-bootstrap4/**/ui-bootstrap-tpls.js',
             prefix + 'ui-select/**/select.min.js',
             prefix + 'handsontable/**/handsontable.full.js',
             prefix + 'ng-handsontable/**/ngHandsontable.min.js',
@@ -78,7 +79,9 @@ var jsFiles = function(prefix) {
             prefix + 'clipboard/**/clipboard.min.js',
             prefix + 'ngclipboard/**/ngclipboard.min.js',
             prefix + 'angular-aria/angular-aria.min.js',
-            prefix + 'angular-material/angular-material.min.js'
+            prefix + 'daemonite-material/**/material.js',
+            prefix + 'angular-material/angular-material.min.js',
+            prefix + 'showdown/**/showdown.min.js'
         ]
     },
     styleFiles = function(prefix, suffix) {
@@ -91,10 +94,9 @@ var jsFiles = function(prefix) {
     nodeStyleFiles = function(prefix) {
         return [
             prefix + 'angular-material/angular-material.min.css',
-            prefix + 'bootstrap/**/bootstrap.min.css',
             prefix + 'font-awesome/**/font-awesome.min.css',
             prefix + 'ui-select/**/select.min.css',
-            prefix + 'codemirror/**/codemirror.css',
+            prefix + 'codemirror-minified/**/codemirror.css',
             prefix + 'handsontable/**/handsontable.full.css',
             prefix + 'angular-toastr/**/angular-toastr.min.css'
         ]
@@ -108,18 +110,11 @@ var jsFiles = function(prefix) {
     bundledFiles = [
         dest + 'js/manchester.js',
         dest + 'js/sparql.js'
+    ],
+    minifiedFiles = [
+        dest + '**/vendor.js',
+        dest + '**/main.min.js'
     ];
-
-// Method to chunk array
-var createGroupedArray = function(arr, chunkSize) {
-    var groups = [], i;
-    for (i = 0; i < arr.length; i += chunkSize) {
-        groups.push(arr.slice(i, i + chunkSize));
-    }
-    return groups;
-}
-
-var tests = createGroupedArray(glob.sync(spec), 50);
 
 //Method to run jasmine tests
 var runKarma = function(vendorFiles, testFiles, isBuild, done) {
@@ -127,7 +122,15 @@ var runKarma = function(vendorFiles, testFiles, isBuild, done) {
     new Karma({
         configFile: configFile,
         files: vendorFiles.concat(['./target/templates.js', './src/test/js/Shared.js']).concat(testFiles)
-    }, done).start();
+    }, function(processExitCode) {
+        if (processExitCode === 0 || processExitCode === null || typeof processExitCode === 'undefined') {
+            done();
+        } else {
+            var err = new Error('ERROR: Karma Server exited with code "' + processExitCode + '"');
+            done(err);
+        }
+        process.exit(processExitCode);
+    }).start();
 }
 
 // Inject method for minified and unminified
@@ -150,31 +153,7 @@ gulp.task('cacheTemplates', function() {
 
 // Run jasmine tests in PhantomJS with minified source files
 gulp.task('test-minified', ['cacheTemplates'], function(done) {
-    return runKarma([dest + '**/*.js'], spec, true, done);
-});
-
-gulp.task('test-minified-1', ['cacheTemplates'], function(done) {
-    return runKarma([dest + '**/*.js'], tests[0], true, done);
-});
-
-gulp.task('test-minified-2', ['test-minified-1'], function(done) {
-    return runKarma([dest + '**/*.js'], tests[1], true, done);
-});
-
-gulp.task('test-minified-3', ['test-minified-2'], function(done) {
-    return runKarma([dest + '**/*.js'], tests[2], true, done);
-});
-
-gulp.task('test-minified-4', ['test-minified-3'], function(done) {
-    return runKarma([dest + '**/*.js'], tests[3], true, done);
-});
-
-gulp.task('test-minified-5', ['test-minified-4'], function(done) {
-    return runKarma([dest + '**/*.js'], tests[4], true, done);
-});
-
-gulp.task('test-minified-6', ['test-minified-5'], function(done) {
-    return runKarma([dest + '**/*.js'], tests[5], true, done);
+    return runKarma(minifiedFiles, spec, true, done);
 });
 
 // Run jasmine tests in PhantomJS with unminified source files
@@ -182,49 +161,31 @@ gulp.task('test-unminified', ['cacheTemplates'], function(done) {
     return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), spec, true, done);
 });
 
-gulp.task('test-unminified-1', ['cacheTemplates'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), tests[0], true, done);
-});
-
-gulp.task('test-unminified-2', ['test-unminified-1'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), tests[1], true, done);
-});
-
-gulp.task('test-unminified-3', ['test-unminified-2'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), tests[2], true, done);
-});
-
-gulp.task('test-unminified-4', ['test-unminified-3'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), tests[3], true, done);
-});
-
-gulp.task('test-unminified-5', ['test-unminified-4'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), tests[4], true, done);
-});
-
-gulp.task('test-unminified-6', ['test-unminified-5'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), tests[5], true, done);
-});
-
 // Launch TDD environment for jasmine tests in Chrome
 gulp.task('tdd', ['cacheTemplates'], function(done) {
     return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(src)), spec, false, done);
 });
 
-// Concatenate and minifies JS Files
+// Concatenate and minifies JS Files and bundles files
 gulp.task('minify-scripts', ['antlr4', 'sparqljs'], function() {
-    var nodeFiles = gulp.src(nodeJsFiles(nodeDir));
     var customFiles = gulp.src(jsFiles(src))
         .pipe(babel({
             presets: ['es2015']
         }));
     var bundledFileStream = gulp.src(bundledFiles)
 
-    return queue({ objectMode: true }, nodeFiles, customFiles, bundledFileStream)
+    return queue({ objectMode: true }, bundledFileStream, customFiles)
         .pipe(concat('main.js'))
         .pipe(ngAnnotate())
         .pipe(rename({suffix: '.min'}))
         .pipe(uglify())
+        .pipe(gulp.dest(dest + 'js'));
+});
+
+// Concatenates and minifies vendor JS files
+gulp.task('minify-vendor-scripts', function() {
+    return gulp.src(nodeJsFiles(nodeDir))
+        .pipe(concat('vendor.js'))
         .pipe(gulp.dest(dest + 'js'));
 });
 
@@ -240,9 +201,9 @@ gulp.task('minify-css', function() {
 });
 
 // Injects minified CSS and JS files
-gulp.task('inject-minified', ['minify-scripts', 'minify-css', 'html'], function() {
-    return injectFiles([dest + '**/*.js', dest + '**/*.css']);
-});
+gulp.task('inject-minified', ['minify-scripts', 'minify-vendor-scripts', 'minify-css', 'html', 'filtered-html'], function() {
+    return injectFiles(minifiedFiles.concat([dest + '**/*.css']));
+});;
 
 // Compresses images
 gulp.task('images', function() {
@@ -259,10 +220,16 @@ gulp.task('images', function() {
 
 // Moves all of the html files to build folder
 gulp.task('html', function() {
-    return gulp.src(src + '**/*.html')
+    return gulp.src(src + '**/!(sidebar).html')
         .pipe(strip.html({ignore: /<!-- inject:css -->|<!-- inject:js -->|<!-- endinject -->/g}))
         .pipe(gulp.dest(dest));
 });
+
+gulp.task('filtered-html', function() {
+    return gulp.src(src + 'directives/sidebar/sidebar.html')
+        .pipe(strip.html({ignore: /<!-- inject:css -->|<!-- inject:js -->|<!-- endinject -->/g}))
+        .pipe(gulp.dest('./target/filtered-resources'));
+})
 
 // Creates Antlr4 bundle file
 gulp.task('antlr4', function() {
@@ -323,7 +290,7 @@ gulp.task('change-to-css', function() {
 });
 
 // Injects un-minified CSS and JS files
-gulp.task('inject-unminified', ['antlr4', 'sparqljs', 'move-custom-js', 'html', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
+gulp.task('inject-unminified', ['antlr4', 'sparqljs', 'move-custom-js', 'html', 'filtered-html', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
     var allJsFiles = nodeJsFiles(dest + 'js/').concat(bundledFiles).concat(jsFiles(dest)),
         allStyleFiles = nodeStyleFiles(dest + 'css/').concat(styleFiles(dest, 'css')),
         allFiles = allJsFiles.concat(allStyleFiles);

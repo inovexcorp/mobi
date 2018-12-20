@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology Properties Block directive', function() {
-    var $compile, scope, ontologyStateSvc, propertyManagerSvc;
+    var $compile, scope, ontologyStateSvc, propertyManagerSvc, ontoUtils, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -30,12 +30,15 @@ describe('Ontology Properties Block directive', function() {
         mockOntologyState();
         mockPropertyManager();
         mockOntologyUtilsManager();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _ontologyUtilsManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             propertyManagerSvc = _propertyManagerService_;
+            ontoUtils = _ontologyUtilsManagerService_;
+            modalSvc = _modalService_;
         });
 
         ontologyStateSvc.listItem.selected = {
@@ -52,6 +55,8 @@ describe('Ontology Properties Block directive', function() {
         scope = null;
         ontologyStateSvc = null;
         propertyManagerSvc = null;
+        ontoUtils = null;
+        modalSvc = null;
         this.element.remove();
     });
 
@@ -61,14 +66,8 @@ describe('Ontology Properties Block directive', function() {
             expect(this.element.hasClass('ontology-properties-block')).toBe(true);
             expect(this.element.hasClass('annotation-block')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
-        });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(1);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
+        it('with a .section-header', function() {
+            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
         it('depending on how many ontology properties there are', function() {
             expect(this.element.find('property-values').length).toBe(2);
@@ -76,15 +75,15 @@ describe('Ontology Properties Block directive', function() {
             scope.$digest();
             expect(this.element.find('property-values').length).toBe(0);
         });
-        it('depending on whether an ontology property is being deleted', function() {
-            this.controller.showRemoveOverlay = true;
+        it('with a link to add an ontology property when the user can modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
-            expect(this.element.find('remove-property-overlay').length).toBe(1);
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
         });
-        it('depending on whether an ontology property is being shown', function() {
-            ontologyStateSvc.showOntologyPropertyOverlay = true;
+        it('with no link to add an ontology property when the user cannot modify branch', function() {
+            ontologyStateSvc.canModify.and.returnValue(false);
             scope.$digest();
-            expect(this.element.find('ontology-property-overlay').length).toBe(1);
+            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
         });
     });
     describe('controller methods', function() {
@@ -94,14 +93,14 @@ describe('Ontology Properties Block directive', function() {
             expect(ontologyStateSvc.ontologyProperty).toBeUndefined();
             expect(ontologyStateSvc.ontologyPropertyValue).toBe('');
             expect(ontologyStateSvc.ontologyPropertyIRI).toBe('');
-            expect(ontologyStateSvc.ontologyPropertyLanguage).toBe('en');
-            expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(true);
+            expect(ontologyStateSvc.ontologyPropertyType).toBeUndefined();
+            expect(ontologyStateSvc.ontologyPropertyLanguage).toBe('');
+            expect(modalSvc.openModal).toHaveBeenCalledWith('ontologyPropertyOverlay');
         });
         it('should set the correct manager values when opening the Remove Ontology Property Overlay', function() {
             this.controller.openRemoveOverlay('key', 1);
-            expect(this.controller.key).toBe('key');
-            expect(this.controller.index).toBe(1);
-            expect(this.controller.showRemoveOverlay).toBe(true);
+            expect(ontoUtils.getRemovePropOverlayMessage).toHaveBeenCalledWith('key', 1);
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith('', jasmine.any(Function));
         });
         it('should set the correct manager values when editing an ontology property', function() {
             var propertyIRI = 'prop1';
@@ -114,14 +113,17 @@ describe('Ontology Properties Block directive', function() {
             expect(ontologyStateSvc.ontologyProperty).toEqual(propertyIRI);
             expect(ontologyStateSvc.ontologyPropertyValue).toBe('value');
             expect(ontologyStateSvc.ontologyPropertyIRI).toBe('id');
+            expect(ontologyStateSvc.ontologyPropertyType).toBe('type');
             expect(ontologyStateSvc.ontologyPropertyIndex).toBe(0);
             expect(ontologyStateSvc.ontologyPropertyLanguage).toBe('lang');
-            expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(true);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('ontologyPropertyOverlay');
         });
     });
     it('should call openAddOverlay when the link is clicked', function() {
+        ontologyStateSvc.canModify.and.returnValue(true);
+        scope.$digest();
         spyOn(this.controller, 'openAddOverlay');
-        var link = angular.element(this.element.querySelectorAll('block-header a')[0]);
+        var link = angular.element(this.element.querySelectorAll('.section-header a')[0]);
         link.triggerHandler('click');
         expect(this.controller.openAddOverlay).toHaveBeenCalled();
     });

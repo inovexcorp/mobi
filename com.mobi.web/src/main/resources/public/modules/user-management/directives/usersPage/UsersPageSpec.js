@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Users Page directive', function() {
-    var $compile, scope, $q, userStateSvc, userManagerSvc, loginManagerSvc, utilSvc;
+    var $compile, scope, $q, userStateSvc, userManagerSvc, loginManagerSvc, utilSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -30,8 +30,9 @@ describe('Users Page directive', function() {
         mockUserManager();
         mockLoginManager();
         mockUtil();
+        mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _userStateService_, _userManagerService_, _loginManagerService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _userStateService_, _userManagerService_, _loginManagerService_, _utilService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
@@ -39,6 +40,7 @@ describe('Users Page directive', function() {
             userManagerSvc = _userManagerService_;
             loginManagerSvc = _loginManagerService_;
             utilSvc = _utilService_;
+            modalSvc = _modalService_;
         });
 
         this.element = $compile(angular.element('<users-page></users-page>'))(scope);
@@ -54,25 +56,47 @@ describe('Users Page directive', function() {
         userManagerSvc = null;
         loginManagerSvc = null;
         utilSvc = null;
+        modalSvc = null;
         this.element.remove();
     });
 
     describe('controller methods', function() {
-        it('should set the correct state for creating a user', function() {
+        it('should open a modal for creating a user', function() {
             this.controller.createUser();
-            expect(userStateSvc.displayCreateUserOverlay).toBe(true);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('createUserOverlay');
         });
-        it('should set the correct state for deleting a user', function() {
-            this.controller.deleteUser();
-            expect(userStateSvc.displayDeleteUserConfirm).toBe(true);
+        it('should open a modal for deleting a user', function() {
+            userStateSvc.selectedUser = {username: 'test'};
+            this.controller.confirmDeleteUser();
+            expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('Are you sure you want to remove'), this.controller.deleteUser);
         });
-        it('should set the correct state for changing a user profile', function() {
+        it('should open a modal for changing a user profile', function() {
             this.controller.editProfile();
-            expect(userStateSvc.displayEditUserProfileOverlay).toBe(true);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('editUserProfileOverlay');
         });
-        it('should set the correct state for reseting a user password', function() {
+        it('should open a modal for reseting a user password', function() {
             this.controller.resetPassword();
-            expect(userStateSvc.displayResetPasswordOverlay).toBe(true);
+            expect(modalSvc.openModal).toHaveBeenCalledWith('resetPasswordOverlay');
+        });
+        describe('should delete a user', function() {
+            beforeEach(function() {
+                this.user = userStateSvc.selectedUser = {username: 'user'};
+            });
+            it('unless an error occurs', function() {
+                userManagerSvc.deleteUser.and.returnValue($q.reject('Error message'));
+                this.controller.deleteUser();
+                scope.$apply();
+                expect(userManagerSvc.deleteUser).toHaveBeenCalledWith(this.user.username);
+                expect(userStateSvc.selectedUser).toEqual(this.user);
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
+            });
+            it('successfully', function() {
+                this.controller.deleteUser();
+                scope.$apply();
+                expect(userManagerSvc.deleteUser).toHaveBeenCalledWith(this.user.username);
+                expect(userStateSvc.selectedUser).toBeUndefined();
+                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+            });
         });
         describe('should correctly update the admin status of a user', function() {
             beforeEach(function() {
@@ -112,54 +136,54 @@ describe('Users Page directive', function() {
         it('should set the correct state for opening a group', function() {
             var group = {title: 'group'};
             this.controller.goToGroup(group);
-            expect(userStateSvc.showGroups).toBe(true);
-            expect(userStateSvc.showUsers).toBe(false);
+            expect(userStateSvc.showGroups).toEqual(true);
+            expect(userStateSvc.showUsers).toEqual(false);
             expect(userStateSvc.selectedGroup).toEqual(group);
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('users-page')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-xs-4').length).toBe(1);
-            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
+            expect(this.element.hasClass('users-page')).toEqual(true);
+            expect(this.element.hasClass('row')).toEqual(true);
+            expect(this.element.querySelectorAll('.col-4').length).toEqual(1);
+            expect(this.element.querySelectorAll('.col-8').length).toEqual(1);
         });
         it('with blocks', function() {
-            expect(this.element.find('block').length).toBe(5);
+            expect(this.element.find('block').length).toEqual(5);
         });
         it('with a users list', function() {
-            expect(this.element.find('users-list').length).toBe(1);
+            expect(this.element.find('users-list').length).toEqual(1);
         });
         it('with a block search header for the users list', function() {
-            expect(this.element.querySelectorAll('.col-xs-4 block-search').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-4 block-search').length).toEqual(1);
         });
         it('with buttons for creating a user and deleting a user', function() {
-            var createButton = this.element.querySelectorAll('.col-xs-4 block-header button.btn-link')[0];
+            var createButton = this.element.querySelectorAll('.col-4 block-header button.btn-link')[0];
             expect(createButton).toBeDefined();
             expect(angular.element(createButton).text().trim()).toContain('Create');
 
-            var deleteButton = this.element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0];
+            var deleteButton = this.element.querySelectorAll('.col-4 block-footer button.btn-link')[0];
             expect(deleteButton).toBeDefined();
             expect(angular.element(deleteButton).text().trim()).toContain('Delete');
         });
         it('depending on whether a user is selected', function() {
             userManagerSvc.isAdmin.and.returnValue(true);
             scope.$digest();
-            var deleteButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);
-            var passwordButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-content button')[0]);
-            var editProfileButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header button')[0]);
-            expect(this.element.querySelectorAll('.col-xs-8 .user-profile').length).toBe(0);
-            expect(this.element.querySelectorAll('.col-xs-6 .user-groups-list').length).toBe(0);
-            expect(this.element.find('permissions-input').length).toBe(0);
+            var deleteButton = angular.element(this.element.querySelectorAll('.col-4 block-footer button.btn-link')[0]);
+            var passwordButton = angular.element(this.element.querySelectorAll('.col-8 block-content button')[0]);
+            var editProfileButton = angular.element(this.element.querySelectorAll('.col-8 block-header button')[0]);
+            expect(this.element.querySelectorAll('.col-8 .user-profile').length).toEqual(0);
+            expect(this.element.querySelectorAll('.col-6 .user-groups-list').length).toEqual(0);
+            expect(this.element.find('permissions-input').length).toEqual(0);
             expect(deleteButton.attr('disabled')).toBeTruthy();
             expect(passwordButton.attr('disabled')).toBeTruthy();
             expect(editProfileButton.attr('disabled')).toBeTruthy();
 
             userStateSvc.selectedUser = {username: 'user'};
             scope.$digest();
-            expect(this.element.querySelectorAll('.col-xs-8 .user-profile').length).toBe(1);
-            expect(this.element.find('permissions-input').length).toBe(1);
-            expect(this.element.querySelectorAll('.col-xs-6 .user-groups-list').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-8 .user-profile').length).toEqual(1);
+            expect(this.element.find('permissions-input').length).toEqual(1);
+            expect(this.element.querySelectorAll('.col-6 .user-groups-list').length).toEqual(1);
             expect(deleteButton.attr('disabled')).toBeFalsy();
             expect(passwordButton.attr('disabled')).toBeFalsy();
             expect(editProfileButton.attr('disabled')).toBeFalsy();
@@ -168,10 +192,10 @@ describe('Users Page directive', function() {
             userStateSvc.selectedUser = {username: 'user'};
             userManagerSvc.isAdmin.and.returnValue(false);
             scope.$digest();
-            var deleteButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);
-            var createButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-header button.btn-link')[0]);
-            var passwordButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-content button')[0]);
-            var editProfileButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header button')[0]);
+            var deleteButton = angular.element(this.element.querySelectorAll('.col-4 block-footer button.btn-link')[0]);
+            var createButton = angular.element(this.element.querySelectorAll('.col-4 block-header button.btn-link')[0]);
+            var passwordButton = angular.element(this.element.querySelectorAll('.col-8 block-content button')[0]);
+            var editProfileButton = angular.element(this.element.querySelectorAll('.col-8 block-header button')[0]);
             expect(deleteButton.attr('disabled')).toBeTruthy();
             expect(createButton.attr('disabled')).toBeTruthy();
             expect(passwordButton.attr('disabled')).toBeTruthy();
@@ -189,7 +213,7 @@ describe('Users Page directive', function() {
             userStateSvc.selectedUser = {username: 'user'};
             loginManagerSvc.currentUser = userStateSvc.selectedUser.username;
             scope.$digest();
-            var deleteButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);
+            var deleteButton = angular.element(this.element.querySelectorAll('.col-4 block-footer button.btn-link')[0]);
             expect(deleteButton.attr('disabled')).toBeTruthy();
 
             loginManagerSvc.currentUser = '';
@@ -200,36 +224,36 @@ describe('Users Page directive', function() {
             userStateSvc.selectedUser = {username: 'user'};
             spyOn(this.controller, 'getUserGroups').and.returnValue([{title: 'group', roles: []}]);
             scope.$digest();
-            expect(this.element.querySelectorAll('.col-xs-6 .user-groups-list li').length).toBe(1);
-            expect(this.element.querySelectorAll('.col-xs-6 .user-groups-list li.no-groups').length).toBe(0);
+            expect(this.element.querySelectorAll('.col-6 .user-groups-list li').length).toEqual(1);
+            expect(this.element.querySelectorAll('.col-6 .user-groups-list li.no-groups').length).toEqual(0);
 
             this.controller.getUserGroups.and.returnValue([]);
             scope.$digest();
-            expect(this.element.querySelectorAll('.col-xs-6 .user-groups-list li').length).toBe(1);
-            expect(this.element.querySelectorAll('.col-xs-6 .user-groups-list li.no-groups').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-6 .user-groups-list li').length).toEqual(1);
+            expect(this.element.querySelectorAll('.col-6 .user-groups-list li.no-groups').length).toEqual(1);
         });
     });
     it('should call createGroup when the button is clicked', function() {
         spyOn(this.controller, 'createUser');
-        var createButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-header button.btn-link')[0]);
+        var createButton = angular.element(this.element.querySelectorAll('.col-4 block-header button.btn-link')[0]);
         createButton.triggerHandler('click');
         expect(this.controller.createUser).toHaveBeenCalled();
     });
     it('should call editProfile when the button is clicked', function() {
         spyOn(this.controller, 'editProfile');
-        var editProfileButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header button')[0]);
+        var editProfileButton = angular.element(this.element.querySelectorAll('.col-8 block-header button')[0]);
         editProfileButton.triggerHandler('click');
         expect(this.controller.editProfile).toHaveBeenCalled();
     });
-    it('should call deleteGroup when the button is clicked', function() {
-        spyOn(this.controller, 'deleteUser');
-        var deleteButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);
+    it('should call confirmDeleteUser when the button is clicked', function() {
+        spyOn(this.controller, 'confirmDeleteUser');
+        var deleteButton = angular.element(this.element.querySelectorAll('.col-4 block-footer button.btn-link')[0]);
         deleteButton.triggerHandler('click');
-        expect(this.controller.deleteUser).toHaveBeenCalled();
+        expect(this.controller.confirmDeleteUser).toHaveBeenCalled();
     });
     it('should call resetPassword when the button is clicked', function() {
         spyOn(this.controller, 'resetPassword');
-        var passwordButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-content button')[0]);
+        var passwordButton = angular.element(this.element.querySelectorAll('.col-8 block-content button')[0]);
         passwordButton.triggerHandler('click');
         expect(this.controller.resetPassword).toHaveBeenCalled();
     });

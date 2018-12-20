@@ -1,7 +1,7 @@
 package com.mobi.rdf.core.impl.sesame
 
 import com.mobi.rdf.api.Statement
-import org.openrdf.model.impl.LinkedHashModel
+import org.eclipse.rdf4j.model.impl.LinkedHashModel
 import spock.lang.Specification
 
 class SimpleNamedGraphSpec extends Specification {

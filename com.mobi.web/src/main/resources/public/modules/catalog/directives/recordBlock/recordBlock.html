@@ -20,13 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="record-block col-xs-12">
+<div class="record-block col">
     <block>
         <block-header>
             <catalog-breadcrumb></catalog-breadcrumb>
-            <h3 class="entity-title">{{dvm.util.getDctermsValue(dvm.record, 'title')}}</h3>
         </block-header>
         <block-content class="padding">
+            <h3 class="entity-title">{{dvm.util.getDctermsValue(dvm.record, 'title')}}</h3>
             <record-types record="dvm.record"></record-types>
             <entity-dates entity="dvm.record"></entity-dates>
             <entity-publisher entity="dvm.record"></entity-publisher>
@@ -34,20 +34,29 @@
             <record-keywords record="dvm.record"></record-keywords>
 
             <div ng-if="dvm.cm.isVersionedRDFRecord(dvm.record)" class="branches-container">
-                <span class="field-name">Branches:</span>
-                <pagination-header list-key="'branches'" change-sort="dvm.changeSort()"></pagination-header>
-                <div class="branches-list list-group">
-                    <button ng-repeat="branch in dvm.state.results" class="branch list-group-item" ng-click="dvm.openBranch(branch)">
-                        <h3>{{dvm.util.getDctermsValue(branch, 'title')}}</h3>
-                        <entity-dates entity="branch"></entity-dates>
-                        <entity-publisher entity="branch"></entity-publisher>
-                        <entity-description entity="branch" limited></entity-description>
-                    </button>
+                <div class="field-name">Branches</div>
+                <div class="branches-list" id="branches_list_{{$id}}">
+                    <div class="expansion-panel" ng-repeat="branch in dvm.state.results">
+                        <div ng-click="dvm.showPanel(branch)" aria-controls="branch_collapse_{{$id}}" aria-expanded="false" class="expansion-panel-toggler collapsed" data-target="#branch_collapse_{{$id}}" data-toggle="collapse" id="heading_{{$id}}" role="button">
+                            <div>
+                                <div>{{dvm.util.getDctermsValue(branch, 'title')}}</div>
+                                <div class="small text-muted"><entity-publisher class="d-inline-block" entity="branch"></entity-publisher> &#8226; Updated {{dvm.util.getDate(dvm.util.getDctermsValue(branch, 'modified'), 'short')}}</div>
+                            </div>
+                            <div class="expansion-panel-icon ml-3 text-black-secondary">
+                                <i class="collapsed-show material-icons">keyboard_arrow_down</i>
+                                <i class="collapsed-hide material-icons">keyboard_arrow_up</i>
+                            </div>
+                        </div>
+                        <div aria-labelledby="heading_{{$id}}" class="collapse" data-parent="#branches_list_{{$parent.$id}}" id="branch_collapse_{{$id}}">
+                            <div class="expansion-panel-body">
+                                <span>{{dvm.util.getDctermsValue(branch, 'description')}}</span>
+                                <commit-history-table ng-if="branch.show" head-title="dvm.util.getDctermsValue(branch, 'title')" commit-id="dvm.util.getPropertyId(branch, dvm.prefixes.catalog + 'head')" graph></commit-history-table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+            <button class="load-button btn" ng-if="dvm.totalSize > dvm.state.results.length" ng-click="dvm.loadMore()">Load More</button>
         </block-content>
-        <block-footer ng-if="dvm.cm.isVersionedRDFRecord(dvm.record)">
-            <catalog-pagination></catalog-pagination>
-        </block-footer>
     </block>
 </div>

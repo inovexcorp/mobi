@@ -26,26 +26,24 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
-import com.mobi.catalog.api.ontologies.mcat.GraphRevision;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
@@ -55,6 +53,11 @@ import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
+import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.record.config.OperationConfig;
+import com.mobi.catalog.api.record.config.RecordCreateSettings;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
@@ -69,8 +72,11 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -78,17 +84,12 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
-import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -112,7 +113,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
     private OrmFactory<UserBranch> userBranchFactory = getRequiredOrmFactory(UserBranch.class);
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
-    private OrmFactory<GraphRevision> graphRevisionFactory = getRequiredOrmFactory(GraphRevision.class);
 
     private IRI distributedCatalogId;
     private IRI localCatalogId;
@@ -132,7 +132,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private final IRI LATEST_VERSION_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#latest-version");
     private final IRI VERSION_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#version");
     private final IRI TAG_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#tag");
-    private final IRI LATEST_TAG_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#latest-tag");
     private final IRI MASTER_BRANCH_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#master");
     private final IRI BRANCH_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch");
     private final IRI USER_BRANCH_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#user-branch");
@@ -140,38 +139,52 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private final IRI IN_PROGRESS_COMMIT_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#in-progress-commit");
 
     private static final String COMMITS = "http://mobi.com/test/commits#";
-    private static final String ADDITIONS = "https://mobi.com/additions#";
-    private static final String DELETIONS = "https://mobi.com/deletions#";
-    private static final String REVISIONS = "http://mobi.com/test/revisions#";
-    private static final String BRANCHES = "http://mobi.com/test/branches#";
     private static final String RECORDS = "http://mobi.com/test/records#";
-    private static final String GRAPHS = "http://mobi.com/test/graphs#";
 
-    private static final int TOTAL_SIZE = 8;
+    private static final int TOTAL_SIZE = 9;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
     @Mock
+    private CatalogConfigProvider configProvider;
+
+    @Mock
     private CatalogUtilsService utilsService;
+
+    @Mock
+    private RecordService<Record> recordService;
+
+    @Mock
+    private RecordService<VersionedRDFRecord> versionedRDFRecordService;
+
+    @Mock
+    private RecordService<VersionedRecord> versionedRecordService;
+
+    @Mock
+    private RecordService<UnversionedRecord> unversionedRecordService;
+
+    @Mock
+    private MergeRequestManager mergeRequestManager;
+
+    @Mock
+    private Conflict conflict;
 
     @Before
     public void setUp() throws Exception {
-        SesameRepositoryWrapper repositoryWrapper = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        Map<String, Object> repoProps = new HashMap<>();
-        repoProps.put("id", "system");
-        RepositoryConfig config = Configurable.createConfigurable(RepositoryConfig.class, repoProps);
-        repositoryWrapper.setConfig(config);
-        repo = repositoryWrapper;
+        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
         MockitoAnnotations.initMocks(this);
-        manager = new SimpleCatalogManager();
-        injectOrmFactoryReferencesIntoService(manager);
-        manager.setRepository(repo);
-        manager.setValueFactory(VALUE_FACTORY);
-        manager.setModelFactory(MODEL_FACTORY);
-        manager.setUtils(utilsService);
+
+        when(recordService.getTypeIRI()).thenReturn(Record.TYPE);
+        when(versionedRDFRecordService.getTypeIRI()).thenReturn(VersionedRDFRecord.TYPE);
+        when(versionedRecordService.getTypeIRI()).thenReturn(VersionedRecord.TYPE);
+        when(unversionedRecordService.getTypeIRI()).thenReturn(UnversionedRecord.TYPE);
+        when(recordService.getType()).thenReturn(Record.class);
+        when(versionedRDFRecordService.getType()).thenReturn(VersionedRDFRecord.class);
+        when(versionedRecordService.getType()).thenReturn(VersionedRecord.class);
+        when(unversionedRecordService.getType()).thenReturn(UnversionedRecord.class);
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
@@ -179,15 +192,27 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
             conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
         }
 
-        Map<String, Object> props = new HashMap<>();
-        props.put("title", "Mobi Test Catalog");
-        props.put("description", "This is a test catalog");
-        props.put("iri", "http://mobi.com/test/catalogs#catalog");
-
-        manager.start(props);
-
         distributedCatalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-distributed");
         localCatalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-local");
+
+        Record testRecord = recordFactory.createNew(RECORD_IRI);
+        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        testRecord.setCatalog(catalogFactory.createNew(localCatalogId));
+
+        VersionedRDFRecord testVersionedRDFRecord = versionedRDFRecordFactory.createNew(RECORD_IRI);
+        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        testRecord.setCatalog(catalogFactory.createNew(localCatalogId));
+
+        testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        testRecord.setCatalog(catalogFactory.createNew(localCatalogId));
+
+        when(configProvider.getRepository()).thenReturn(repo);
+        when(configProvider.getLocalCatalogIRI()).thenReturn(localCatalogId);
+        when(configProvider.getDistributedCatalogIRI()).thenReturn(distributedCatalogId);
+
+        when(recordService.create(any(User.class), any(RecordOperationConfig.class), any(RepositoryConnection.class))).thenReturn(testRecord);
+
+        when(versionedRDFRecordService.create(any(User.class), any(RecordOperationConfig.class), any(RepositoryConnection.class))).thenReturn(testVersionedRDFRecord);
 
         when(utilsService.getExpectedObject(any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
                 i.getArgumentAt(1, OrmFactory.class).createNew(i.getArgumentAt(0, Resource.class)));
@@ -205,28 +230,26 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
                 inProgressCommitFactory.createNew(i.getArgumentAt(2, Resource.class)));
         when(utilsService.throwAlreadyExists(any(Resource.class), any(OrmFactory.class))).thenReturn(new IllegalArgumentException());
         when(utilsService.throwThingNotFound(any(Resource.class), any(OrmFactory.class))).thenReturn(new IllegalStateException());
+
+        manager = new SimpleCatalogManager();
+        injectOrmFactoryReferencesIntoService(manager);
+        manager.setConfigProvider(configProvider);
+        manager.setValueFactory(VALUE_FACTORY);
+        manager.setModelFactory(MODEL_FACTORY);
+        manager.setUtils(utilsService);
+        manager.addRecordService(versionedRDFRecordService);
+        manager.addRecordService(recordService);
+        manager.addRecordService(versionedRecordService);
+        manager.addRecordService(unversionedRecordService);
+        manager.setMergeRequestManager(mergeRequestManager);
+
+        manager.start();
+        manager.setFactoryRegistry(ORM_FACTORY_REGISTRY);
     }
 
     @After
     public void tearDown() throws Exception {
         repo.shutDown();
-    }
-
-    @Test
-    public void testGetRepositoryId() throws Exception {
-        assertEquals("system", manager.getRepositoryId());
-    }
-
-    @Test
-    public void testGetDistributedCatalogIRI() throws Exception {
-        IRI iri = manager.getDistributedCatalogIRI();
-        assertEquals(distributedCatalogId, iri);
-    }
-
-    @Test
-    public void testGetLocalCatalogIRI() throws Exception {
-        IRI iri = manager.getLocalCatalogIRI();
-        assertEquals(localCatalogId, iri);
     }
 
     /* getDistributedCatalog */
@@ -323,10 +346,10 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // then
         verify(utilsService, atLeastOnce()).getRecord(eq(distributedCatalogId), any(Resource.class), eq(recordFactory), any(RepositoryConnection.class));
         assertEquals(RECORD_IRI, resources1.getPage().iterator().next().getResource());
-        assertEquals(VALUE_FACTORY.createIRI(RECORDS + "quad-versioned-rdf-record"), resources2.getPage().iterator().next().getResource());
+        assertEquals(VALUE_FACTORY.createIRI(RECORDS + "complex-record"), resources2.getPage().iterator().next().getResource());
         assertEquals(UNVERSIONED_RECORD_IRI, resources3.getPage().iterator().next().getResource());
-        assertEquals(VERSIONED_RECORD_IRI, resources4.getPage().iterator().next().getResource());
-        assertEquals(VALUE_FACTORY.createIRI(RECORDS + "quad-versioned-rdf-record"), resources5.getPage().iterator().next().getResource());
+        assertEquals(VALUE_FACTORY.createIRI(RECORDS + "complex-record"), resources4.getPage().iterator().next().getResource());
+        assertEquals(VALUE_FACTORY.createIRI(RECORDS + "complex-record"), resources5.getPage().iterator().next().getResource());
         assertEquals(resources6.getPage().iterator().next().getResource().stringValue(), "http://mobi.com/test/records#versioned-record-missing-version");
     }
 
@@ -350,7 +373,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // Setup:
         Repository repo2 = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo2.initialize();
-        manager.setRepository(repo2);
+        when(configProvider.getRepository()).thenReturn(repo2);
         int limit = 1;
         int offset = 0;
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
@@ -394,8 +417,8 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
         // then
         assertTrue(true);
-        assertEquals(5, versionedRecords.getPage().size());
-        assertEquals(5, versionedRecords.getTotalSize());
+        assertEquals(6, versionedRecords.getPage().size());
+        assertEquals(6, versionedRecords.getTotalSize());
         assertEquals(2, unversionedRecords.getPage().size());
         assertEquals(2, unversionedRecords.getTotalSize());
         assertEquals(TOTAL_SIZE, fullRecords.getPage().size());
@@ -423,6 +446,87 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         assertTrue(results.contains(UNVERSIONED_RECORD_IRI));
         assertTrue(results.contains(VERSIONED_RECORD_IRI));
         assertTrue(results.contains(VERSIONED_RDF_RECORD_IRI));
+    }
+
+    /* createRecord */
+
+    @Test
+    public void testCreateRecord() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        User user = userFactory.createNew(USER_IRI);
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, localCatalogId.stringValue());
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+
+        manager.createRecord(user, config, Record.class);
+
+        verify(recordService).create(any(User.class), any(RecordOperationConfig.class),
+                any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testCreateVersionedRDFRecord() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        User user = userFactory.createNew(USER_IRI);
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, localCatalogId.stringValue());
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+
+        manager.createRecord(user, config, VersionedRDFRecord.class);
+
+        verify(versionedRDFRecordService).create(any(User.class), any(RecordOperationConfig.class),
+                any(RepositoryConnection.class));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void testCreateNoRecordService() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        User user = userFactory.createNew(USER_IRI);
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, localCatalogId.stringValue());
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        manager.removeRecordService(versionedRecordService);
+
+        manager.createRecord(user, config, VersionedRecord.class);
+    }
+
+    @Test (expected = NullPointerException.class)
+    public void testCreateRecordNullFactory() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        User user = userFactory.createNew(USER_IRI);
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, localCatalogId.stringValue());
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+
+        manager.createRecord(user, config, null);
     }
 
     /* addRecord */
@@ -581,13 +685,11 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         Distribution dist = distributionFactory.createNew(DISTRIBUTION_IRI);
         version.setVersionedDistribution(Collections.singleton(dist));
         doReturn(Optional.of(record)).when(utilsService).optObject(eq(VERSIONED_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-        doReturn(version).when(utilsService).getObject(eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
 
         Record result = manager.removeRecord(distributedCatalogId, VERSIONED_RECORD_IRI, versionedRecordFactory);
         assertEquals(record, result);
-        verify(utilsService).getObject(eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
-        verify(utilsService).remove(eq(VERSION_IRI), any(RepositoryConnection.class));
-        verify(utilsService).remove(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
+        verify(utilsService).removeVersion(eq(record.getResource()), any(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService).removeObject(any(VersionedRDFRecord.class), any(RepositoryConnection.class));
     }
 
     @Test
@@ -604,16 +706,62 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         record.setBranch(Collections.singleton(branch));
         record.setMasterBranch(branch);
         doReturn(Optional.of(record)).when(utilsService).optObject(eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        doReturn(tag).when(utilsService).getObject(eq(TAG_IRI), eq(versionFactory), any(RepositoryConnection.class));
-        doReturn(branch).when(utilsService).getObject(eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
 
         Record result = manager.removeRecord(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, versionedRDFRecordFactory);
         assertEquals(record, result);
-        verify(utilsService).getObject(eq(TAG_IRI), eq(versionFactory), any(RepositoryConnection.class));
-        verify(utilsService).remove(eq(TAG_IRI), any(RepositoryConnection.class));
-        verify(utilsService).remove(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
-        verify(utilsService).getObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        verify(utilsService).remove(eq(MASTER_BRANCH_IRI), any(RepositoryConnection.class));
+        verify(mergeRequestManager).deleteMergeRequestsWithRecordId(eq(VERSIONED_RDF_RECORD_IRI), any(RepositoryConnection.class));
+        verify(utilsService).removeVersion(eq(record.getResource()), any(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService).removeBranch(eq(record.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
+        verify(utilsService).removeObject(any(VersionedRDFRecord.class), any(RepositoryConnection.class));
+    }
+
+    /* deleteRecord() */
+
+    @Test
+    public void testDeleteRecord() {
+        User user = userFactory.createNew(USER_IRI);
+        manager.deleteRecord(user, RECORD_IRI, Record.class);
+
+        verify(recordService).delete(eq(RECORD_IRI), eq(user), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testDeleteVersionedRecord() {
+        User user = userFactory.createNew(USER_IRI);
+        manager.deleteRecord(user, VERSIONED_RECORD_IRI, VersionedRecord.class);
+
+        verify(versionedRecordService).delete(eq(VERSIONED_RECORD_IRI), eq(user), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testDeleteUnversionedRecord() {
+        User user = userFactory.createNew(USER_IRI);
+        manager.deleteRecord(user, UNVERSIONED_RECORD_IRI, UnversionedRecord.class);
+
+        verify(unversionedRecordService).delete(eq(UNVERSIONED_RECORD_IRI), eq(user), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testDeleteVersionedRDFRecord() {
+        User user = userFactory.createNew(USER_IRI);
+        manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI, VersionedRDFRecord.class);
+
+        verify(versionedRDFRecordService).delete(eq(VERSIONED_RDF_RECORD_IRI), eq(user), any(RepositoryConnection.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testDeleteVersionedRDFRecordMissingService() {
+        manager.removeRecordService(versionedRDFRecordService);
+        User user = userFactory.createNew(USER_IRI);
+
+        manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI, VersionedRDFRecord.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testDeleteClassServiceMismatch() {
+        User user = userFactory.createNew(USER_IRI);
+
+        manager.deleteRecord(user, VERSIONED_RDF_RECORD_IRI, VersionedRecord.class);
     }
 
     /* getRecord */
@@ -764,8 +912,8 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
             manager.removeUnversionedDistribution(distributedCatalogId, UNVERSIONED_RECORD_IRI, DISTRIBUTION_IRI);
             verify(utilsService).getUnversionedDistribution(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
-            assertFalse(conn.getStatements(UNVERSIONED_RECORD_IRI, distributionIRI, DISTRIBUTION_IRI, UNVERSIONED_RECORD_IRI).hasNext());
+            verify(utilsService).removeObjectWithRelationship(eq(DISTRIBUTION_IRI), eq(UNVERSIONED_RECORD_IRI),
+                    eq(UnversionedRecord.unversionedDistribution_IRI), any(RepositoryConnection.class));
         }
     }
 
@@ -893,10 +1041,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
             manager.removeVersion(distributedCatalogId, VERSIONED_RECORD_IRI, LATEST_VERSION_IRI);
             verify(utilsService).getVersion(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(LATEST_VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(LATEST_VERSION_IRI), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
-            assertTrue(conn.getStatements(VERSIONED_RECORD_IRI, latestIRI, VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RECORD_IRI, versionIRI, LATEST_VERSION_IRI, VERSIONED_RECORD_IRI).hasNext());
+            verify(utilsService).removeVersion(eq(VERSIONED_RECORD_IRI), eq(version), any(RepositoryConnection.class));
         }
     }
 
@@ -1073,8 +1218,8 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
             manager.removeVersionedDistribution(distributedCatalogId, VERSIONED_RECORD_IRI, VERSION_IRI, DISTRIBUTION_IRI);
             verify(utilsService).getVersionedDistribution(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VERSION_IRI), eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
-            assertFalse(conn.getStatements(VERSION_IRI, distributionIRI, DISTRIBUTION_IRI, VERSION_IRI).hasNext());
+            verify(utilsService).removeObjectWithRelationship(eq(DISTRIBUTION_IRI), eq(VERSION_IRI),
+                    eq(Version.versionedDistribution_IRI), any(RepositoryConnection.class));
         }
     }
 
@@ -1227,122 +1372,10 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveBranch() throws Exception {
-        // Setup:
-        Resource commitIdToRemove = VALUE_FACTORY.createIRI(COMMITS + "conflict2");
-        IRI additionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "conflict2");
-        IRI deletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "conflict2");
-        Resource revisionToRemove = VALUE_FACTORY.createIRI(REVISIONS + "conflict2");
-        Resource commitIdToKeep = VALUE_FACTORY.createIRI(COMMITS + "conflict0");
-        Resource additionsToKeep = VALUE_FACTORY.createIRI(ADDITIONS + "conflict0");
-        Resource deletionsToKeep = VALUE_FACTORY.createIRI(DELETIONS + "conflict0");
-
-        Branch branch = branchFactory.createNew(BRANCH_IRI);
-        branch.setHead(commitFactory.createNew(commitIdToRemove));
-        doReturn(branch).when(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-
-        doReturn(Stream.of(commitIdToRemove, commitIdToKeep).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(commitIdToRemove), eq(false), any(RepositoryConnection.class));
-
-        Revision revision = revisionFactory.createNew(revisionToRemove);
-        revision.setAdditions(additionsToRemove);
-        revision.setDeletions(deletionsToRemove);
-        doReturn(revision).when(utilsService).getRevision(eq(commitIdToRemove), any(RepositoryConnection.class));
-
-        IRI headIRI = VALUE_FACTORY.createIRI(Branch.head_IRI);
-        IRI versionIRI = VALUE_FACTORY.createIRI(VersionedRecord.version_IRI);
-        IRI branchIRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
-        try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, versionIRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            // Remove the head statement so that commit logic works
-            conn.remove(BRANCH_IRI, headIRI, null);
-
-            manager.removeBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, BRANCH_IRI);
-            verify(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-            verify(utilsService).getCommitChain(eq(commitIdToRemove), eq(false), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(BRANCH_IRI), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(commitIdToRemove), any(RepositoryConnection.class));
-            verify(utilsService, times(0)).remove(eq(commitIdToKeep), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(additionsToRemove), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(deletionsToRemove), any(RepositoryConnection.class));
-            verify(utilsService, times(0)).remove(eq(additionsToKeep), any(RepositoryConnection.class));
-            verify(utilsService, times(0)).remove(eq(deletionsToKeep), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(LATEST_TAG_IRI), any(RepositoryConnection.class));
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, versionIRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-        }
-    }
-
-    @Test
-    public void testRemoveBranchWithQuads() throws Exception {
-        // TODO: This does not test if a chain of commits is properly removed. Requires real utilsService.
-        // Setup:
-        IRI record = VALUE_FACTORY.createIRI(RECORDS + "quad-versioned-rdf-record");
-        IRI branchToRemove = VALUE_FACTORY.createIRI(BRANCHES + "quad-branch");
-        Resource commit0 = VALUE_FACTORY.createIRI(COMMITS + "quad-test0");
-        Resource commit1 = VALUE_FACTORY.createIRI(COMMITS + "quad-test1");
-        Resource commit2 = VALUE_FACTORY.createIRI(COMMITS + "quad-test2");
-        IRI additionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "quad-test2");
-        IRI deletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "quad-test2");
-        IRI graphAdditionsToRemove = VALUE_FACTORY.createIRI(ADDITIONS + "quad-test2%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1");
-        IRI graphDeletionsToRemove = VALUE_FACTORY.createIRI(DELETIONS + "quad-test2%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1");
-        Resource revisionToRemove = VALUE_FACTORY.createIRI(REVISIONS + "quad-test2");
-
-        Branch branch = branchFactory.createNew(branchToRemove);
-        branch.setHead(commitFactory.createNew(commit2));
-        doReturn(branch).when(utilsService).getBranch(eq(distributedCatalogId), eq(record), eq(branchToRemove), eq(branchFactory), any(RepositoryConnection.class));
-
-        doReturn(Stream.of(commit2, commit1, commit0).collect(Collectors.toList()))
-                .when(utilsService).getCommitChain(eq(commit2), eq(false), any(RepositoryConnection.class));
-
-        GraphRevision graphRevision = graphRevisionFactory.createNew(VALUE_FACTORY.createBNode());
-        graphRevision.setRevisionedGraph(VALUE_FACTORY.createIRI(GRAPHS + "quad-graph1"));
-        graphRevision.setAdditions(graphAdditionsToRemove);
-        graphRevision.setDeletions(graphDeletionsToRemove);
-
-        Set<GraphRevision> graphRevisions = new HashSet<>();
-        graphRevisions.add(graphRevision);
-
-        Revision revision = revisionFactory.createNew(revisionToRemove, graphRevision.getModel());
-        revision.setAdditions(additionsToRemove);
-        revision.setDeletions(deletionsToRemove);
-        revision.setGraphRevision(graphRevisions);
-
-        doReturn(revision).when(utilsService).getRevision(eq(commit2), any(RepositoryConnection.class));
-
-        IRI headIRI = VALUE_FACTORY.createIRI(Branch.head_IRI);
-        IRI branchIRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
-        try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(record, branchIRI, branchToRemove, record).hasNext());
-            // Remove the head statement so that commit logic works
-            conn.remove(branchToRemove, headIRI, null);
-
-            manager.removeBranch(distributedCatalogId, record, branchToRemove);
-            verify(utilsService).getBranch(eq(distributedCatalogId), eq(record), eq(branchToRemove), eq(branchFactory), any(RepositoryConnection.class));
-            verify(utilsService).getCommitChain(eq(commit2), eq(false), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(branchToRemove), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(commit2), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(additionsToRemove), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(deletionsToRemove), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(graphAdditionsToRemove), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(graphDeletionsToRemove), any(RepositoryConnection.class));
-            assertFalse(conn.getStatements(record, branchIRI, branchToRemove, record).hasNext());
-        }
-    }
-
-    @Test
-    public void testRemoveBranchWithNoHead() {
-        // Setup:
-        Branch branch = branchFactory.createNew(BRANCH_IRI);
-        doReturn(branch).when(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        IRI branchIRI = VALUE_FACTORY.createIRI(VersionedRDFRecord.branch_IRI);
-        try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-
-            manager.removeBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, BRANCH_IRI);
-            verify(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-            verify(utilsService).remove(eq(BRANCH_IRI), any(RepositoryConnection.class));
-            assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
-        }
+        manager.removeBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, BRANCH_IRI);
+        verify(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+        verify(utilsService).removeBranch(eq(VERSIONED_RDF_RECORD_IRI), any(Branch.class), any(RepositoryConnection.class));
+        verify(mergeRequestManager).cleanMergeRequests(eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), any(RepositoryConnection.class));
     }
 
     @Test
@@ -1611,6 +1644,19 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testGetCommit() throws Exception {
+        // Setup:
+        Resource commitId = VALUE_FACTORY.createIRI(COMMITS + "test0");
+        Commit commit = commitFactory.createNew(commitId);
+        doReturn(Optional.of(commit)).when(utilsService).optObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
+
+        Optional<Commit> result = manager.getCommit(commitId);
+        verify(utilsService).optObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
+        assertTrue(result.isPresent());
+        assertEquals(commit, result.get());
+    }
+
+    @Test
     public void testGetCommitThatIsTheHead() throws Exception {
         // Setup:
         Resource commitId = VALUE_FACTORY.createIRI(COMMITS + "test4a");
@@ -1853,16 +1899,12 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
                 .deletions(MODEL_FACTORY.createModel())
                 .build();
         doReturn(sourceDiff).when(utilsService).getCommitDifference(eq(Collections.singletonList(sourceId)), any(RepositoryConnection.class));
-        doReturn(Stream.of(targetId, sourceId).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(sourceId), any(Boolean.class), any(RepositoryConnection.class));
-        doReturn(Collections.singletonList(targetId)).when(utilsService).getCommitChain(eq(targetId), any(Boolean.class), any(RepositoryConnection.class));
+        doReturn(Collections.singletonList(sourceId)).when(utilsService).getDifferenceChain(eq(sourceId), eq(targetId), any(RepositoryConnection.class), anyBoolean());
 
         Difference diff = manager.getDifference(sourceId, targetId);
         assertEquals(sourceDiff, diff);
-        verify(utilsService).validateResource(eq(sourceId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).validateResource(eq(targetId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(sourceId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(targetId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitDifference(eq(Collections.singletonList(sourceId)), any(RepositoryConnection.class));
+        verify(utilsService).getDifferenceChain(eq(sourceId), eq(targetId), any(RepositoryConnection.class), eq(true));
     }
 
     @Test
@@ -1870,286 +1912,32 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         // Setup
         Resource sourceId = VALUE_FACTORY.createIRI(COMMITS + "test4a");
         Resource targetId = VALUE_FACTORY.createIRI(COMMITS + "test1");
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("No common parent between Commit " + sourceId + " and " + targetId);
 
-        manager.getDifference(sourceId, targetId);
+        Difference sourceDiff = new Difference.Builder()
+                .additions(MODEL_FACTORY.createModel())
+                .deletions(MODEL_FACTORY.createModel())
+                .build();
+
+        doReturn(sourceDiff).when(utilsService).getCommitDifference(eq(Collections.singletonList(sourceId)), any(RepositoryConnection.class));
+        doReturn(Collections.singletonList(sourceId)).when(utilsService).getDifferenceChain(eq(sourceId), eq(targetId), any(RepositoryConnection.class), anyBoolean());
+
+        Difference diff = manager.getDifference(sourceId, targetId);
+        assertEquals(sourceDiff, diff);
     }
 
     /* getConflicts */
 
     @Test
-    public void testGetConflictsClassDeletion() throws Exception {
+    public void testGetConflicts() throws Exception {
         // Setup:
-        // Class deletion
-        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
-        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1");
-        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2");
-
-        Model leftModel = MODEL_FACTORY.createModel();
-        leftModel.add(sub, typeIRI, VALUE_FACTORY.createIRI("http://test.com#Type"));
-        Difference leftDiff = new Difference.Builder()
-                .additions(MODEL_FACTORY.createModel())
-                .deletions(leftModel)
-                .build();
-
-        Model rightModel = MODEL_FACTORY.createModel();
-        rightModel.add(sub, typeIRI, VALUE_FACTORY.createIRI("http://test.com#Type"));
-        Difference rightDiff = new Difference.Builder()
-                .additions(rightModel)
-                .deletions(MODEL_FACTORY.createModel())
-                .build();
-
-        Model originalModel = MODEL_FACTORY.createModel();
-        originalModel.add(sub, descriptionIRI, VALUE_FACTORY.createLiteral("Description"));
-        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
+        Resource leftId = VALUE_FACTORY.createIRI("urn:left");
+        Resource rightId = VALUE_FACTORY.createIRI("urn:right");
+        Set<Conflict> set = Collections.singleton(conflict);
+        when(utilsService.getConflicts(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(set);
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
-        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
-        assertEquals(1, result.size());
-        result.forEach(conflict -> {
-            assertEquals(0, conflict.getOriginal().size());
-            Difference left = conflict.getLeftDifference();
-            Difference right = conflict.getRightDifference();
-            assertEquals(0, left.getAdditions().size());
-            assertEquals(1, right.getAdditions().size());
-            assertEquals(0, right.getDeletions().size());
-            assertEquals(1, left.getDeletions().size());
-            Stream.of(left.getDeletions(), conflict.getOriginal()).forEach(model -> model.forEach(statement -> {
-                assertEquals(sub, statement.getSubject());
-                assertEquals(typeIRI, statement.getPredicate());
-            }));
-        });
-    }
-
-    @Test
-    public void testGetConflictsSamePropertyAltered() throws Exception {
-        // Setup:
-        // Both altered same title
-        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
-        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-2");
-        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-2");
-
-        Model leftAdds = MODEL_FACTORY.createModel();
-        Model leftDels = MODEL_FACTORY.createModel();
-        leftAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Left"));
-        leftDels.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
-        Difference leftDiff = new Difference.Builder()
-                .additions(leftAdds)
-                .deletions(leftDels)
-                .build();
-
-        Model rightAdds = MODEL_FACTORY.createModel();
-        Model rightDels = MODEL_FACTORY.createModel();
-        rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Right"));
-        rightDels.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
-        Difference rightDiff = new Difference.Builder()
-                .additions(rightAdds)
-                .deletions(rightDels)
-                .build();
-
-        Model originalModel = MODEL_FACTORY.createModel();
-        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
-        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
-
-        doReturn(Collections.singletonList(leftDiff)).when(utilsService).getCommitChain(eq(leftId), eq(false), any(RepositoryConnection.class));
-        doReturn(Collections.singletonList(rightDiff)).when(utilsService).getCommitChain(eq(rightId), eq(false), any(RepositoryConnection.class));
-
-        Set<Conflict> result = manager.getConflicts(leftId, rightId);
-        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
-        assertEquals(1, result.size());
-        result.forEach(conflict -> {
-            assertEquals(1, conflict.getOriginal().size());
-            Difference left = conflict.getLeftDifference();
-            Difference right = conflict.getRightDifference();
-            assertEquals(1, left.getAdditions().size());
-            assertEquals(1, right.getAdditions().size());
-            assertEquals(0, right.getDeletions().size());
-            assertEquals(0, left.getDeletions().size());
-            Stream.of(conflict.getOriginal(), left.getAdditions(), right.getAdditions()).forEach(model -> model.forEach(statement -> {
-                assertEquals(sub, statement.getSubject());
-                assertEquals(titleIRI, statement.getPredicate());
-            }));
-        });
-    }
-
-    @Test
-    public void testGetConflictsChainAddsAndRemovesStatement() throws Exception {
-        // Setup:
-        // Second chain has two commits which adds then removes something
-        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
-        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-3");
-        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict3-3");
-
-        Difference leftDiff = new Difference.Builder()
-                .additions(MODEL_FACTORY.createModel())
-                .deletions(MODEL_FACTORY.createModel())
-                .build();
-
-        Model rightAdds = MODEL_FACTORY.createModel();
-        rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Right"));
-        Difference rightDiff = new Difference.Builder()
-                .additions(rightAdds)
-                .deletions(MODEL_FACTORY.createModel())
-                .build();
-
-        Model originalModel = MODEL_FACTORY.createModel();
-        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
-        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
-
-        Set<Conflict> result = manager.getConflicts(leftId, rightId);
-        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
-        assertEquals(0, result.size());
-    }
-
-    @Test
-    public void testGetConflictsPropertyChangeOnSingleBranch() throws Exception {
-        // Setup:
-        // Change a property on one branch
-        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
-        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-4");
-        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-4");
-
-        Model leftAdds = MODEL_FACTORY.createModel();
-        leftAdds.add(sub, descriptionIRI, VALUE_FACTORY.createLiteral("Description"));
-        Difference leftDiff = new Difference.Builder()
-                .additions(leftAdds)
-                .deletions(MODEL_FACTORY.createModel())
-                .build();
-
-        Model rightAdds = MODEL_FACTORY.createModel();
-        Model rightDels = MODEL_FACTORY.createModel();
-        rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Right"));
-        rightDels.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
-        Difference rightDiff = new Difference.Builder()
-                .additions(rightAdds)
-                .deletions(rightDels)
-                .build();
-
-        Model originalModel = MODEL_FACTORY.createModel();
-        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
-        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
-
-        Set<Conflict> result = manager.getConflicts(leftId, rightId);
-        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
-        assertEquals(0, result.size());
-    }
-
-    @Test
-    public void testGetConflictsOneRemovesOtherAddsToProperty() throws Exception {
-        // Setup:
-        // One branch removes property while other adds another to it
-        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
-        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-5");
-        Resource rightId = VALUE_FACTORY.createIRI(COMMITS + "conflict2-5");
-
-        Model leftAdds = MODEL_FACTORY.createModel();
-        leftAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Left"));
-        Difference leftDiff = new Difference.Builder()
-                .additions(leftAdds)
-                .deletions(MODEL_FACTORY.createModel())
-                .build();
-
-        Model rightAdds = MODEL_FACTORY.createModel();
-        Model rightDels = MODEL_FACTORY.createModel();
-        rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title Right"));
-        rightDels.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
-        Difference rightDiff = new Difference.Builder()
-                .additions(rightAdds)
-                .deletions(rightDels)
-                .build();
-
-        Model originalModel = MODEL_FACTORY.createModel();
-        originalModel.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Title"));
-        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
-
-        Set<Conflict> result = manager.getConflicts(leftId, rightId);
-        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
-        assertEquals(1, result.size());
-        result.forEach(conflict -> {
-            assertEquals(1, conflict.getOriginal().size());
-            Difference left = conflict.getLeftDifference();
-            Difference right = conflict.getRightDifference();
-            assertEquals(1, left.getAdditions().size());
-            assertEquals(1, right.getAdditions().size());
-            assertEquals(1, right.getDeletions().size());
-            assertEquals(0, left.getDeletions().size());
-            Stream.of(conflict.getOriginal(), left.getAdditions(), right.getDeletions())
-                    .forEach(model -> model.forEach(statement -> {
-                        assertEquals(sub, statement.getSubject());
-                        assertEquals(titleIRI, statement.getPredicate());
-                    }));
-        });
-    }
-
-    @Test
-    public void testGetConflictsWithOnlyOneCommit() throws Exception {
-        // Setup:
-        IRI sub = VALUE_FACTORY.createIRI("http://test.com#sub");
-        Resource leftId = VALUE_FACTORY.createIRI(COMMITS + "conflict1-4");
-
-        Model leftAdds = MODEL_FACTORY.createModel();
-        leftAdds.add(sub, descriptionIRI, VALUE_FACTORY.createLiteral("Title Left"));
-        Difference leftDiff = new Difference.Builder()
-                .additions(leftAdds)
-                .deletions(MODEL_FACTORY.createModel())
-                .build();
-
-        Model rightAdds = MODEL_FACTORY.createModel();
-        rightAdds.add(sub, titleIRI, VALUE_FACTORY.createLiteral("Description"));
-        Difference rightDiff = new Difference.Builder()
-                .additions(rightAdds)
-                .deletions(MODEL_FACTORY.createModel())
-                .build();
-
-        setUpConflictTest(leftId, COMMIT_IRI, leftDiff, rightDiff, leftAdds);
-        doReturn(Stream.of(COMMIT_IRI).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(COMMIT_IRI), eq(true), any(RepositoryConnection.class));
-
-        Set<Conflict> result = manager.getConflicts(leftId, COMMIT_IRI);
-        verify(utilsService, atLeastOnce()).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService, atLeastOnce()).validateResource(eq(COMMIT_IRI), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService).getCommitChain(eq(COMMIT_IRI), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
-        assertEquals(0, result.size());
-    }
-
-    @Test
-    public void testGetConflictsDisconnectedNodes() throws Exception {
-        // Setup:
-        IRI commitId = VALUE_FACTORY.createIRI(COMMITS + "new");
-        doReturn(Collections.singletonList(COMMIT_IRI)).when(utilsService).getCommitChain(eq(COMMIT_IRI), eq(true), any(RepositoryConnection.class));
-        doReturn(Collections.singletonList(commitId)).when(utilsService).getCommitChain(eq(commitId), eq(true), any(RepositoryConnection.class));
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("No common parent between Commit " + commitId + " and " + COMMIT_IRI);
-
-        manager.getConflicts(commitId, COMMIT_IRI);
+        verify(utilsService).getConflicts(eq(leftId), eq(rightId), any(RepositoryConnection.class));
+        assertEquals(result, set);
     }
 
     /* getDiff */
@@ -2212,19 +2000,60 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         }
     }
 
-    private void setUpConflictTest(Resource leftId, Resource rightId, Difference leftDiff, Difference rightDiff, Model originalModel) {
-        doReturn(Stream.of(leftId, COMMIT_IRI).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
-        doReturn(Stream.of(rightId, COMMIT_IRI).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        doAnswer(i -> {
-            List<Resource> commits = i.getArgumentAt(0, List.class);
-            if (commits.isEmpty() || commits.get(0).equals(rightId)) {
-                return rightDiff;
-            } else if (commits.get(0).equals(leftId)) {
-                return leftDiff;
-            } else {
-                return MODEL_FACTORY.createModel();
-            }
-        }).when(utilsService).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
-        doReturn(originalModel).when(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
+    /* export() */
+
+    @Test
+    public void testExportNonExistingRecord() {
+        RecordOperationConfig config = new OperationConfig();
+        String expected = "No known record services for this record type.";
+        IRI nonRecord = VALUE_FACTORY.createIRI("http://mobi.com/test/records#random");
+        try{
+            manager.export(nonRecord, config);
+        }catch(Exception e){
+            assertEquals(e.getMessage(), expected);
+        }
+    }
+
+    @Test
+    public void testExportRecordWithoutList() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        manager.export(RECORD_IRI, config);
+        verify(recordService).export(eq(RECORD_IRI), any(OperationConfig.class), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testExportVersionedRecordWithoutList() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        manager.export(VERSIONED_RECORD_IRI, config);
+        verify(versionedRecordService).export(eq(VERSIONED_RECORD_IRI), any(OperationConfig.class),
+                any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testExportUnversionedRecordWithoutList() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        manager.export(UNVERSIONED_RECORD_IRI, config);
+        verify(unversionedRecordService).export(eq(UNVERSIONED_RECORD_IRI), any(OperationConfig.class),
+                any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testExportVersionedRDFRecordWithoutList() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        manager.export(VERSIONED_RDF_RECORD_IRI, config);
+        verify(versionedRDFRecordService).export(eq(VERSIONED_RDF_RECORD_IRI), any(OperationConfig.class),
+                any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testExportWithList() throws Exception {
+        RecordOperationConfig config = new OperationConfig();
+        List<Resource> exportList = new ArrayList<>();
+        exportList.add(RECORD_IRI);
+        exportList.add(VERSIONED_RECORD_IRI);
+        manager.export(exportList, config);
+        verify(recordService).export(eq(RECORD_IRI),  any(OperationConfig.class), any(RepositoryConnection.class));
+        verify(versionedRecordService).export(eq(VERSIONED_RECORD_IRI),  any(OperationConfig.class),
+                any(RepositoryConnection.class));
     }
 }

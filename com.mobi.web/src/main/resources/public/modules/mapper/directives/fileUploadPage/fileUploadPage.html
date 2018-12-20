@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="file-upload-page row">
-    <div class="col-xs-5 form-block full-height">
+    <div class="col-5 form-block h-100">
         <mapping-title></mapping-title>
         <block>
             <block-header>
@@ -31,22 +31,30 @@
                 <file-upload-form></file-upload-form>
                 <mapping-preview ng-if="!dvm.state.editMapping"></mapping-preview>
                 <div ng-if="dvm.state.editMapping && dvm.state.invalidProps.length" class="invalid-props">
-                    <h3 class="error-display">Missing Columns</h3>
+                    <h3 class="text-danger">Missing Columns</h3>
                     <ul>
                         <li ng-repeat="columnObj in dvm.state.invalidProps">
                             Column {{columnObj.index}} - {{dvm.getDataMappingName(columnObj['@id'])}}
                         </li>
                     </ul>
-                    <p class="help-block">Click continue to fix the mapping.</p>
+                    <p class="form-text">Click continue to fix the mapping.</p>
                 </div>
             </block-content>
             <block-footer>
-                <button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
-                <button class="btn btn-primary pull-right" ng-click="dvm.state.editMapping ? dvm.edit() : dvm.state.displayRunMappingOverlay = true" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)">{{dvm.state.editMapping ? 'Continue' : 'Run'}}</button>
+                <button class="btn float-left" ng-click="dvm.cancel()">Cancel</button>
+                <button ng-if="dvm.state.editMapping" class="btn btn-primary float-right continue-btn" ng-click="dvm.edit()" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)">Continue</button>
+                <div ng-if="!dvm.state.editMapping" class="btn-group dropup float-right">
+                    <button type="button" class="btn btn-primary dropdown-toggle run-btn" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Run Mapping</button>
+                    <div class="dropdown-menu">
+                        <button class="dropdown-item run-download" type="button" ng-click="dvm.runMappingDownload()">Download</button>
+                        <button class="dropdown-item run-dataset" type="button" ng-click="dvm.runMappingDataset()">Upload to Dataset</button>
+                        <button class="dropdown-item run-ontology" type="button" ng-click="dvm.runMappingOntology()">Commit to Ontology</button>
+                    </div>
+                </div>
             </block-footer>
         </block>
     </div>
-    <div class="col-xs-7 full-height">
+    <div class="col-7 h-100">
         <block>
             <block-content>
                 <preview-data-grid></preview-data-grid>

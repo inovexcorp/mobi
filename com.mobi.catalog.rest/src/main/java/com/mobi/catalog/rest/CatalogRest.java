@@ -371,6 +371,35 @@ public interface CatalogRest {
                            @FormDataParam("title") String title,
                            @FormDataParam("description") String description);
 
+    /**
+     * Creates a Tag for the identified VersionedRecord on the identified Commit using the passed form data and stores
+     * it in the repository. Requires the IRI for the Tag and the IRI of the Commit to attach it to. This Tag will
+     * become the latest Version for the identified VersionedRecord. Returns a Response with the IRI of the new Tag.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param title The required title for the new Tag.
+     * @param description The optional description for the new Tag.
+     * @param iri The required IRI for the new Tag. Must be unique in the repository.
+     * @param commitId The required String representing the Commit ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @return A Response with the IRI string of the created Tag.
+     */
+    @POST
+    @Path("{catalogId}/records/{recordId}/tags")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @RolesAllowed("user")
+    @ApiOperation("Creates a Tag for the identified VersionedRecord.")
+    Response createTag(@Context ContainerRequestContext context,
+                       @PathParam("catalogId") String catalogId,
+                       @PathParam("recordId") String recordId,
+                       @FormDataParam("title") String title,
+                       @FormDataParam("description") String description,
+                       @FormDataParam("iri") String iri,
+                       @FormDataParam("commit") String commitId);
 
     /**
      * Gets the latest Version of a VersionedRecord identified by the provided IDs.
@@ -757,7 +786,8 @@ public interface CatalogRest {
 
     /**
      * Gets a list of Commits associated with the Branch identified by the provided IDs which represents the Commit
-     * chain for that Branch. If a limit is passed which is greater than zero, will paginated the results.
+     * chain for that Branch. If a limit is passed which is greater than zero, will paginate the results. If a
+     * targetId is passed, then only commits between the HEAD commits of the branchId and targetId will be returned.
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
@@ -765,6 +795,8 @@ public interface CatalogRest {
      *                 String begins with "_:".
      * @param branchId The String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
+     * @param targetId The String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
      * @param offset An optional offset for the results.
      * @param limit An optional limit for the results.
      * @return A list of Commits for the identified Branch which represents the Commit chain.
@@ -778,6 +810,7 @@ public interface CatalogRest {
                             @PathParam("catalogId") String catalogId,
                             @PathParam("recordId") String recordId,
                             @PathParam("branchId") String branchId,
+                            @QueryParam("targetId") String targetId,
                             @QueryParam("offset") int offset,
                             @QueryParam("limit") int limit);
 

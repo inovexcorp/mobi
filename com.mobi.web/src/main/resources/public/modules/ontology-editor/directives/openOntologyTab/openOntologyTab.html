@@ -20,47 +20,64 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="open-ontology-tab">
-    <div class="actions">
-        <form class="form-inline">
-            <div class="form-group">
-                <input type="text" class="form-control" placeholder="Filter by text" ng-model="dvm.filterText" ng-keyup="dvm.begin = 0" />
+<div class="open-ontology-tab row m-0 h-100" drag-file="dvm.os.uploadFiles" on-drop="dvm.showUploadOntologyOverlay()">
+    <div class="col-10 offset-1 d-flex flex-column">
+        <div class="actions d-flex p-2">
+            <form class="flex-1 pr-3">
+                <search-bar ng-model="dvm.filterText" submit-event="dvm.search()"></search-bar>
+            </form>
+            <div class="btn-container">
+                <button type="button" class="btn btn-primary ml-1" ng-click="dvm.newOntology()">New Ontology</button>
+                <button type="button" class="btn btn-primary ml-1" onclick="document.getElementById('open_ontology-file-input').click()">Upload Ontology</button>
+                <file-input id="open_ontology-file-input" class="hide" ng-model="dvm.os.uploadFiles" multiple on-change="dvm.showUploadOntologyOverlay()" accept=".ttl,.xml,.jsonld,.rdf,.trig,.json,.n3,.nq,.nt,.owl"></file-input>
             </div>
-            <button type="button" class="btn btn-primary" ng-click="dvm.os.showNewTab = true">New Ontology</button>
-            <button type="button" class="btn btn-primary" ng-click="dvm.os.showUploadTab = true">Upload Ontology</button>
-        </form>
-    </div>
-    <div class="list row">
-        <div class="col-xs-8 col-xs-offset-2">
-            <block>
-                <block-content class="open-ontology-content">
-                    <div class="ontologies">
-                        <div class="ontology" ng-click="dvm.open(record)" ng-repeat="record in dvm.filteredList | limitTo:dvm.limit:dvm.begin">
-                            <div class="details">
-                                <h2 class="header" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></h2>
-                                <small class="ontology-iri text-muted">{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small>
-                                <p class="description" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
-                            </div>
-                            <div class="action-container">
-                                <a ng-click="dvm.showDeleteConfirmationOverlay(record); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
-                            </div>
-                        </div>
-                        <info-message ng-if="!dvm.filteredList.length && dvm.filterText">No ontologies match your filtered text.</info-message>
-                        <info-message ng-if="!dvm.filteredList.length && !dvm.filterText">Create or upload an ontology to get started.</info-message>
-                    </div>
-                </block-content>
-                <block-footer>
-                    <div class="paging-container clearfix">
-                        <paging-details total-size="dvm.filteredList.length" page-index="dvm.begin / dvm.limit" limit="dvm.limit"></paging-details>
-                        <pagination links="{'prev': dvm.begin !== 0, 'next': (dvm.begin + dvm.limit) < dvm.filteredList.length}" current-page="dvm.begin / dvm.limit" get-page="dvm.getPage(direction)"></pagination>
-                    </div>
-                </block-footer>
-            </block>
         </div>
+        <div class="ontologies flex-1 vertical-scroll" targeted-spinner="dvm.id">
+            <div class="list-group list-group-flush">
+                <div class="list-group-item list-group-item-action" ng-repeat="record in dvm.filteredList" disable-animate>
+                    <div class="ontology-info d-flex">
+                        <div class="details flex-1 remove-min-width" ng-click="dvm.open(record)">
+                            <div class="header align-items-center d-flex">
+                                <h3 class="text-truncate"><span ng-if="dvm.isOpened(record)" class="text-muted">(Open)</span> <span ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></span></h3>
+                                <small class="pl-2 ontology-iri text-muted flex-1 text-truncate">{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small>
+                            </div>
+                            <p class="description m-0" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
+                        </div>
+                        <div>
+                            <action-menu>
+                                <action-menu-item icon="'fa-lock'" display-text="'Manage'" ng-show="record.userCanManage" ng-click="record.showAccessControls = !record.showAccessControls"></action-menu-item>
+                                <action-menu-item icon="'fa-trash-o'" display-text="'Delete'" ng-click="dvm.showDeleteConfirmationOverlay(record)"></action-menu-item>
+                            </action-menu>
+                        </div>
+                    </div>
+                    <div ng-if="record.userCanManage && record.showAccessControls" class="access-controls d-flex flex-column">
+                        <div class="d-flex align-items-center">
+                            <span class="record-action">View Record</span>
+                            <a class="users btn-sm ml-auto"><i ng-click="dvm.showAccessOverlay(record, 'urn:read', $event)" class="fa fa-lg fa-fw fa-users"></i></a>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="record-action">Delete Record</span>
+                            <a class="users btn-sm ml-auto"><i ng-click="dvm.showAccessOverlay(record, 'urn:delete', $event)" class="fa fa-lg fa-fw fa-users"></i></a>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="record-action">Manage Record</span>
+                            <a class="users btn-sm ml-auto"><i ng-click="dvm.showAccessOverlay(record, 'urn:update', $event)" class="fa fa-lg fa-fw fa-users"></i></a>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="record-action">Modify Record</span>
+                            <a class="users btn-sm ml-auto"><i ng-click="dvm.showAccessOverlay(record, 'urn:modify', $event)" class="fa fa-lg fa-fw fa-users"></i></a>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="record-action">Modify Master Branch</span>
+                            <a class="users btn-sm ml-auto"><i ng-click="dvm.showAccessOverlay(record, 'urn:modifyMaster', $event)" class="fa fa-lg fa-fw fa-users"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <info-message ng-if="!dvm.filteredList.length && dvm.filterText">No ontologies match your filtered text.</info-message>
+            <info-message ng-if="!dvm.filteredList.length && !dvm.filterText">Create or upload an ontology to get started.</info-message>
+        </div>
+        <paging total="dvm.totalSize" limit="dvm.limit" current-page="dvm.currentPage" change-event="dvm.getPageOntologyRecords()"></paging>
     </div>
-    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Ontology'" confirm-click="dvm.deleteOntology()" cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
-        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-        <error-display ng-if="dvm.mappingErrorMessage">{{dvm.mappingErrorMessage}}</error-display>
-        <p>Are you sure that you want to delete <strong>{{dvm.recordTitle}}</strong>?</p>
-    </confirmation-overlay>
+    <upload-snackbar show-snackbar="dvm.showSnackbar"></upload-snackbar>
 </div>

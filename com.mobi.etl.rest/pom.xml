@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.11.19-SNAPSHOT</version>
+        <version>1.14.42-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -49,6 +49,11 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
+            <artifactId>rest.security</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
             <artifactId>etl.api</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -63,13 +68,17 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>ontology.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
-            <version>3.5</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
@@ -93,6 +102,10 @@
         </dependency>
 
         <!-- Test dependencies -->
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>rdf-orm-test</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.test-framework.providers</groupId>
             <artifactId>jersey-test-framework-provider-jdk-http</artifactId>

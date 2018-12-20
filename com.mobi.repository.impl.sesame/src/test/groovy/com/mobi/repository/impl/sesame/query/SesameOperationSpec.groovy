@@ -22,13 +22,12 @@
  */
 package com.mobi.repository.impl.sesame.query
 
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
 import com.mobi.query.api.BindingSet
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
 import com.mobi.repository.api.RepositoryConnection
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper
-import org.openrdf.repository.sail.SailRepository
-import org.openrdf.sail.memory.MemoryStore
+import org.eclipse.rdf4j.repository.sail.SailRepository
+import org.eclipse.rdf4j.sail.memory.MemoryStore
 import spock.lang.Specification
 
 class SesameOperationSpec extends Specification{

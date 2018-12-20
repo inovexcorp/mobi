@@ -20,43 +20,49 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="search-tab row">
-    <div class="col-xs-4">
-        <block>
-            <block-header>Search</block-header>
-            <block-search ng-model="dvm.os.listItem.editorTabStates.search.searchText" keyup-event="dvm.onKeyup($event)" clear-event="dvm.onClear()"></block-search>
-            <block-content class="padding" targeted-spinner="dvm.id">
-                <error-display ng-if="dvm.os.listItem.editorTabStates.search.errorMessage">{{dvm.os.listItem.editorTabStates.search.errorMessage}}</error-display>
-                <info-message ng-if="dvm.os.listItem.editorTabStates.search.infoMessage">{{dvm.os.listItem.editorTabStates.search.infoMessage}}</info-message>
-                <div class="result" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.results track by key">
-                    <div class="result-header text-muted" ng-click="isClosed = !isClosed"><strong title="{{key}}">{{key | prefixation}}</strong><i class="fa fa-fw pull-right" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i></div>
-                    <ul class="tree" ng-if="!isClosed">
-                        <tree-item ng-repeat="item in value track by item"
-                                   current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, item)"
-                                   is-active="dvm.os.getActiveEntityIRI() === item"
-                                   on-click="dvm.os.selectItem(item, false)"
-                                   ng-dblclick="dvm.os.goTo(item)"></tree-item>
-                    </ul>
-                </div>
-            </block-content>
-        </block>
+<div class="search-tab row m-0">
+    <div class="col-4 d-flex flex-column pt-2">
+        <div class="search pb-1">
+            <search-bar ng-model="dvm.os.listItem.editorTabStates.search.searchText" submit-event="dvm.onKeyup()"></search-bar>
+        </div>
+        <div class="flex-1 vertical-scroll" targeted-spinner="dvm.id">
+            <error-display ng-if="dvm.os.listItem.editorTabStates.search.errorMessage">{{dvm.os.listItem.editorTabStates.search.errorMessage}}</error-display>
+            <info-message ng-if="dvm.os.listItem.editorTabStates.search.infoMessage">{{dvm.os.listItem.editorTabStates.search.infoMessage}}</info-message>
+            <div class="result" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.results track by key">
+                <div class="result-header text-muted d-flex" ng-click="isClosed = !isClosed"><strong class="d-inline-block text-truncate flex-1" title="{{key}}">{{key | prefixation}}</strong><i class="fa fa-fw float-right" ng-class="{'fa-chevron-up': isClosed, 'fa-chevron-down': !isClosed}"></i></div>
+                <ul class="tree" ng-if="!isClosed">
+                    <tree-item ng-repeat="item in value track by item"
+                               current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, item)"
+                               is-active="dvm.os.getActiveEntityIRI() === item"
+                               on-click="dvm.os.selectItem(item, false)"
+                               ng-dblclick="dvm.os.goTo(item)"></tree-item>
+                </ul>
+            </div>
+        </div>
     </div>
-    <div class="col-xs-8">
-        <block>
-            <block-header>Properties</block-header>
-            <block-content>
-                <div class="property-values" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.selected track by key">
-                    <h5 ng-click="isClosed = !isClosed" class="clearfix">
-                        <p class="text"><span ng-bind-html="dvm.os.getEntityNameByIndex(key, dvm.os.listItem) | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span> <small>&lt;<span ng-bind-html="key | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span>&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
-                    </h5>
-                    <div class="value-container" ng-repeat="item in value" ng-hide="isClosed">
-                        <span class="value-display-wrapper">
-                            <span ng-if="::dvm.ontoUtils.isLinkable(item['@id'])" class="value-display"><span ng-bind-html="dvm.ontoUtils.getLabelForIRI(item['@id']) | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span> <small>&lt;<a ng-click="dvm.os.goTo(item['@id'])" ng-bind-html="item['@id'] | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></a>&gt;</small></span>
-                            <span ng-if="::!dvm.ontoUtils.isLinkable(item['@id'])" class="value-display" ng-bind-html="(dvm.ontoUtils.getBlankNodeValue(item['@id']) || item['@id'] || item['@value']) | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"><small ng-if="item['@type']" class="text-muted type-display">[type: <span ng-bind-html="item['@type'] | prefixation | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span>]</small></span>
-                        </span>
-                    </div>
+    <div class="entity-IRI col-8 d-flex flex-column pt-2" ng-if="dvm.os.listItem.editorTabStates.search.entityIRI">
+        <div class="flex-1 vertical-scroll">
+            <div class="d-flex">
+                <selected-details class="flex-1 remove-min-width" read-only="true"></selected-details>
+                <div>
+                    <button class="btn btn-primary" ng-click="dvm.os.goTo(dvm.os.listItem.editorTabStates.search.entityIRI)">Go To</button>
                 </div>
-            </block-content>
-        </block>
+            </div>
+            <div class="property-values mt-3" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.selected track by key">
+                <div class="prop-header d-flex align-items-center clearfix">
+                    <p class="text text-truncate m-0" title="{{key}}"><span ng-bind-html="dvm.os.getEntityNameByIndex(key, dvm.os.listItem) | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span></p>
+                    <small class="ml-1 text-muted text-truncate flex-1">&lt;<span ng-bind-html="key | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span>&gt;</small>
+                </div>
+                <div class="prop-value-container p-1 ml-3 mt-1" ng-repeat="item in value">
+                    <span class="value-display-wrapper">
+                        <span ng-if="::dvm.ontoUtils.isLinkable(item['@id'])" class="value-display"><span ng-bind-html="dvm.ontoUtils.getLabelForIRI(item['@id']) | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span> <small>&lt;<a ng-click="dvm.os.goTo(item['@id'])" ng-bind-html="item['@id'] | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></a>&gt;</small></span>
+                        <span ng-if="::!dvm.ontoUtils.isLinkable(item['@id'])" class="value-display"><span ng-bind-html="(dvm.ontoUtils.getBlankNodeValue(item['@id']) || item['@id'] || item['@value']) | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span>
+                            <small ng-if="item['@type']" class="text-muted type-display">[type: <span ng-bind-html="item['@type'] | prefixation | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span>]</small>
+                            <small ng-if="item['@language']" class="text-muted type-display">[language: <span ng-bind-html="item['@language'] | prefixation | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span>]</small>
+                        </span>
+                    </span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

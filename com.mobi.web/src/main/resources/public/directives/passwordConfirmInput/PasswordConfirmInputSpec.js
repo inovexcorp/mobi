@@ -72,25 +72,25 @@ describe('Password Confirm Input directive', function() {
             expect(this.element.querySelectorAll('.form-group').length).toBe(2);
         });
         it('with the correct classes based on the password field validity', function() {
-            var passwordGroup = angular.element(this.element.querySelectorAll('.password')[0]);
-            expect(passwordGroup.hasClass('has-error')).toBe(false);
+            var passwordInput = angular.element(this.element.querySelectorAll('.password input')[0]);
+            expect(passwordInput.hasClass('is-invalid')).toBe(false);
 
             this.isolatedScope.form.password.$setDirty();
             this.isolatedScope.required = true;
             scope.$digest();
-            expect(passwordGroup.hasClass('has-error')).toBe(true);
+            expect(passwordInput.hasClass('is-invalid')).toBe(true);
         });
         it('with the correct classes based on the confirm password field validity', function() {
-            var passwordGroup = angular.element(this.element.querySelectorAll('.password')[0]);
-            var confirmGroup = angular.element(this.element.querySelectorAll('.confirm-password')[0]);
-            expect(passwordGroup.hasClass('has-error')).toBe(false);
-            expect(confirmGroup.hasClass('has-error')).toBe(false);
+            var passwordInput = angular.element(this.element.querySelectorAll('.password input')[0]);
+            var confirmInput = angular.element(this.element.querySelectorAll('.confirm-password input')[0]);
+            expect(passwordInput.hasClass('is-invalid')).toBe(false);
+            expect(confirmInput.hasClass('is-invalid')).toBe(false);
 
             this.isolatedScope.form.confirmPassword.$setDirty();
             this.isolatedScope.required = true;
             scope.$digest();
-            expect(passwordGroup.hasClass('has-error')).toBe(true);
-            expect(confirmGroup.hasClass('has-error')).toBe(true);
+            expect(passwordInput.hasClass('is-invalid')).toBe(true);
+            expect(confirmInput.hasClass('is-invalid')).toBe(true);
         });
         it('depending on the required value', function() {
             var passwordInput = angular.element(this.element.querySelectorAll('.password input')[0]);

@@ -21,14 +21,15 @@
   #L%
   -->
 <div class="instance-form row">
-    <div class="col-xs-8 col-xs-offset-2">
+    <div class="col-8 offset-2">
         <h2>{{header}}</h2>
         <div ng-repeat="missing in dvm.missingProperties track by $index">
             <error-display>{{missing}}</error-display>
         </div>
-        <static-iri iri="dvm.instance['@id']" on-edit="dvm.setIRI(iriBegin, iriThen, iriEnd)">
-            <info-message>Changing this IRI might break relationships within the dataset.</info-message>
-        </static-iri>
+        <div class="instance-iri">
+            <strong class="text-muted" click-to-copy="dvm.instance['@id']">{{dvm.instance['@id']}}</strong>
+            <a ng-click="dvm.showIriConfirm()"><i class="fa fa-pencil"></i></a>
+        </div>
         <form name="dvm.form" autocomplete="off">
             <div class="form-group" ng-repeat="(key, value) in dvm.instance track by $index" ng-if="key !== '@id' && key !== '@type'">
                 <custom-label ng-class="{'changed': dvm.isChanged(key)}">{{dvm.util.getBeautifulIRI(key)}} {{dvm.getRestrictionText(key)}}</custom-label>
@@ -48,9 +49,7 @@
             </div>
         </form>
         <div class="btn-container clearfix">
-            <button type="button" ng-disabled="!dvm.eu.getNewProperties(dvm.properties, dvm.instance).length" ng-click="dvm.showOverlay = true" class="btn btn-link pull-left"><i class="fa fa-plus fa-fw"></i>Add New Property</button>
+            <button type="button" ng-disabled="!dvm.eu.getNewProperties(dvm.properties, dvm.instance).length" ng-click="dvm.newInstanceProperty()" class="btn btn-link float-left"><i class="fa fa-plus fa-fw"></i>Add New Property</button>
         </div>
     </div>
-    <new-instance-property-overlay ng-if="dvm.showOverlay" on-cancel="dvm.showOverlay = false" on-submit="dvm.addNewProperty(propertyIRI)" get-properties="dvm.eu.getNewProperties(dvm.properties, dvm.instance, text)"></new-instance-property-overlay>
-    <property-value-overlay ng-if="dvm.showPropertyValueOverlay" close-overlay="dvm.showPropertyValueOverlay = false" on-submit="dvm.addToChanged(dvm.propertyIRI)" iri="dvm.propertyIRI" index="dvm.index" text="dvm.fullText" properties="dvm.reificationProperties"></property-value-overlay>
 </div>

@@ -1,0 +1,43 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="iri-select form-group">
+    <custom-label muted-text="dvm.mutedText">{{dvm.displayText}}</custom-label>
+    <!-- Multi Select -->
+    <ui-select ng-if="dvm.multiSelect" multiple ng-model="dvm.bindModel" on-select="dvm.onChange()" on-remove="dvm.onChange()" ng-disabled="dvm.isDisabledWhen" ng-required="dvm.isRequiredWhen">
+        <ui-select-match placeholder="{{'Select ' + displayText}}">
+            <span title="{{$item}}">{{dvm.util.getBeautifulIRI($item)}}</span>
+        </ui-select-match>
+        <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.getOntologyIri" repeat="iri in dvm.values">
+            <div title="{{iri}}" ng-bind-html="dvm.util.getBeautifulIRI(iri) | highlight:$select.search | trusted"></div>
+        </ui-select-choices>
+    </ui-select>
+    <!-- Single Select -->
+    <ui-select ng-if="!dvm.multiSelect" ng-model="dvm.bindModel" on-select="dvm.onChange()" on-remove="dvm.onChange()" ng-disabled="dvm.isDisabledWhen" ng-required="dvm.isRequiredWhen">
+        <ui-select-match placeholder="{{'Select ' + displayText}}">
+            <span title="{{$select.selected}}">{{dvm.util.getBeautifulIRI($select.selected)}}</span>
+        </ui-select-match>
+        <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.getOntologyIri" repeat="iri in dvm.values">
+            <div title="{{iri}}" ng-bind-html="dvm.util.getBeautifulIRI(iri) | highlight:$select.search | trusted"></div>
+        </ui-select-choices>
+    </ui-select>
+</div>

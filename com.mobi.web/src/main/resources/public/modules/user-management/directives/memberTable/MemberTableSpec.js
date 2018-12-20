@@ -47,7 +47,8 @@ describe('Member Table directive', function() {
         scope.members = ['user1'];
         scope.removeMember = jasmine.createSpy('removeMember');
         scope.addMember = jasmine.createSpy('addMember');
-        this.element = $compile(angular.element('<member-table members="members" remove-member="removeMember()" add-member="addMember()"></member-table>'))(scope);
+        scope.linkToUser = false;
+        this.element = $compile(angular.element('<member-table members="members" remove-member="removeMember(member)" add-member="addMember(member)" link-to-user="linkToUser"></member-table>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('memberTable');
     });
@@ -75,6 +76,11 @@ describe('Member Table directive', function() {
             this.controller.addMember();
             expect(scope.addMember).toHaveBeenCalled();
         });
+        it('linkToUser should be one way bound', function() {
+            this.controller.linkToUser = true;
+            scope.$digest();
+            expect(scope.linkToUser).toEqual(false);
+        });
     });
     describe('controller methods', function() {
         it('should get the list of group members', function() {
@@ -95,10 +101,9 @@ describe('Member Table directive', function() {
             var username = 'user';
             this.controller.selectedUser = {username: username};
             this.controller.onSelect();
-            expect(userStateSvc.memberName).toBe(username);
+            expect(scope.addMember).toHaveBeenCalledWith(username);
             expect(this.controller.selectedUser).toBe(undefined);
             expect(this.controller.addingMember).toBe(false);
-            expect(scope.addMember).toHaveBeenCalled();
         })
     });
     describe('replaces the element with the correct html', function() {
@@ -154,24 +159,20 @@ describe('Member Table directive', function() {
             expect(removeButton.attr('disabled')).toBeFalsy();
             expect(this.element.querySelectorAll('.add-member').length).toBe(1);
         });
-        it('depending on whether the create group overlay is displayed', function() {
-            userStateSvc.displayCreateGroupOverlay = true;
-            scope.$digest();
-            users = this.element.querySelectorAll('.member-table > tbody > tr > td.username > a');
+        it('depending on users should be linked to', function() {
+            var users = this.element.querySelectorAll('.member-table > tbody > tr > td.username > a');
             expect(users.length).toEqual(0);
-        });
-        it('depending on whether the create group overlay is not displayed', function() {
-            userStateSvc.displayCreateGroupOverlay = false;
+
+            scope.linkToUser = true;
             scope.$digest();
-            users = this.element.querySelectorAll('.member-table > tbody > tr > td.username > a');
-            expect(users.length).toBeGreaterThan(0);
+            var users = this.element.querySelectorAll('.member-table > tbody > tr > td.username > a');
+            expect(users.length).toEqual(1);
         });
     });
     it('should set the correct state and call removeMember when a delete button is clicked', function() {
         var removeButton = angular.element(this.element.querySelectorAll('.member td:last-child button')[0]);
         removeButton.triggerHandler('click');
-        expect(userStateSvc.memberName).toBe(scope.members[0]);
-        expect(scope.removeMember).toHaveBeenCalled();
+        expect(scope.removeMember).toHaveBeenCalledWith(scope.members[0]);
     });
     it('should set the correct state and call removeMember when a delete button is clicked', function() {
         userManagerSvc.isAdmin.and.returnValue(true);

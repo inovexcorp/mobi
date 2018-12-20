@@ -5,19 +5,10 @@ import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory
 import com.mobi.rdf.core.utils.Values
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter
 import com.mobi.rdf.orm.conversion.impl.*
 import com.mobi.rdf.orm.impl.ThingFactory
-import org.openrdf.rio.RDFFormat
-import org.openrdf.rio.Rio
+import org.eclipse.rdf4j.rio.RDFFormat
+import org.eclipse.rdf4j.rio.Rio
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
 

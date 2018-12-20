@@ -34,7 +34,7 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
-import org.openrdf.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -97,6 +97,7 @@ public class GroupProvider implements MessageBodyWriter<Group>, MessageBodyReade
         JSONObject object = new JSONObject();
         Optional<Value> titleOpt = group.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue()));
         Optional<Value> descriptionOpt = group.getProperty(factory.createIRI(DCTERMS.DESCRIPTION.stringValue()));
+        object.put("iri", group.getResource().stringValue());
         object.put("title", titleOpt.isPresent() ? titleOpt.get().stringValue() : "");
         object.put("description", descriptionOpt.isPresent() ? descriptionOpt.get().stringValue() : "");
         

@@ -2,35 +2,10 @@
 @import "./src/main/resources/public/css/variables";
 
 .saved-changes-tab {
-    .block {
-        .block-header {
-            border: 0;
-        }
-
-        .block-content .property-values {
-            &:first-child {
-                margin-top: 0;
-            }
-
-            .value-container {
-                &:hover {
-                    background-color: #fff;
-                }
-
-                .checkbox {
-                    margin: 0;
-
-                    label {
-                        margin: 0;
-                        padding: 0;
-
-                        input {
-                            margin: 0;
-                            position: relative;
-                        }
-                    }
-                }
-            }
-        }
+    .prop-value-container:hover {
+        background-color: inherit;
+    }
+    .expansion-panel-header {
+        word-break: break-word;
     }
 }

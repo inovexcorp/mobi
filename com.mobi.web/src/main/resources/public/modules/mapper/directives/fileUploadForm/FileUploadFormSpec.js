@@ -73,6 +73,7 @@ describe('File Upload Form directive', function() {
             });
             describe('if a file has been selected', function() {
                 beforeEach(function() {
+                    this.controller.fileName = 'No file selected';
                     this.controller.fileObj = {};
                 });
                 it('unless an error occurs', function() {
@@ -80,6 +81,7 @@ describe('File Upload Form directive', function() {
                     this.controller.upload();
                     scope.$apply();
                     expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(this.controller.fileObj);
+                    expect(this.controller.fileName).toEqual('No file selected');
                     expect(delimitedManagerSvc.previewFile).not.toHaveBeenCalled();
                     expect(mapperStateSvc.setInvalidProps).not.toHaveBeenCalled();
                     expect(this.controller.errorMessage).toBe('Error message');
@@ -88,9 +90,11 @@ describe('File Upload Form directive', function() {
                 });
                 it('successfully', function() {
                     delimitedManagerSvc.upload.and.returnValue($q.when('File Name'));
+                    this.controller.fileObj = {name: 'File Name'};
                     this.controller.upload();
                     scope.$apply();
                     expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(this.controller.fileObj);
+                    expect(this.controller.fileName).toEqual('File Name');
                     expect(delimitedManagerSvc.fileName).not.toBe('');
                     expect(this.controller.errorMessage).toBe('');
                     expect(delimitedManagerSvc.previewFile).toHaveBeenCalledWith(50);
@@ -103,8 +107,17 @@ describe('File Upload Form directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('file-upload-form')).toBe(true);
         });
+        it('with a button', function() {
+            expect(this.element.find('button').length).toBe(1);
+        });
+        it('with a span', function() {
+            expect(this.element.find('span').length).toBe(1);
+        });
         it('with a file input', function() {
             expect(this.element.find('file-input').length).toBe(1);
+        });
+        it('with a checkbox', function() {
+            expect(this.element.find('checkbox').length).toBe(1);
         });
         it('depending on the type of file', function() {
             this.controller.fileObj = {name: 'test.csv'};

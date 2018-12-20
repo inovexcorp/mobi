@@ -24,12 +24,38 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name datatypePropertyBlock
+         *
+         * @description
+         * The `datatypePropertyBlock` module only provides the `datatypePropertyBlock` directive which creates a
+         * section for displaying the data properties on an individual.
+         */
         .module('datatypePropertyBlock', [])
+        /**
+         * @ngdoc directive
+         * @name datatypePropertyBlock.directive:datatypePropertyBlock
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires prefixes.service:prefixes
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires modal.service:modalService
+         *
+         * @description
+         * `datatypePropertyBlock` is a directive that creates a section that displays the data properties on the
+         * {@link ontologyState.service:ontologyStateService selected individual} using
+         * {@link propertyValues.directive:propertyValues}. The section header contains a button for adding a data
+         * property. The directive houses the methods for opening the modal for
+         * {@link datatypePropertyOverlay.directive:datatypePropertyOverlay editing, adding}, and removing data property
+         * values. The directive is replaced by the contents of its template.
+         */
         .directive('datatypePropertyBlock', datatypePropertyBlock);
 
-        datatypePropertyBlock.$inject = ['ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
+        datatypePropertyBlock.$inject = ['ontologyStateService', 'prefixes', 'ontologyUtilsManagerService', 'modalService'];
 
-        function datatypePropertyBlock(ontologyStateService, prefixes, ontologyUtilsManagerService) {
+        function datatypePropertyBlock(ontologyStateService, prefixes, ontologyUtilsManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -46,12 +72,11 @@
                         dvm.os.editingProperty = false;
                         dvm.os.propertySelect = undefined;
                         dvm.os.propertyValue = '';
-                        dvm.os.propertyType = undefined;
+                        dvm.os.propertyType = prefixes.xsd + 'string';
                         dvm.os.propertyIndex = 0;
                         dvm.os.propertyLanguage = 'en';
-                        dvm.os.showDataPropertyOverlay = true;
+                        modalService.openModal('datatypePropertyOverlay');
                     }
-
                     dvm.editDataProp = function(property, index) {
                         var propertyObj = dvm.os.listItem.selected[property][index];
                         dvm.os.editingProperty = true;
@@ -60,13 +85,12 @@
                         dvm.os.propertyIndex = index;
                         dvm.os.propertyLanguage = _.get(propertyObj, '@language');
                         dvm.os.propertyType = dvm.os.propertyLanguage ? prefixes.rdf + 'langString' : _.get(propertyObj, '@type');
-                        dvm.os.showDataPropertyOverlay = true;
+                        modalService.openModal('datatypePropertyOverlay');
                     }
-
                     dvm.showRemovePropertyOverlay = function(key, index) {
-                        dvm.key = key;
-                        dvm.index = index;
-                        dvm.showRemoveOverlay = true;
+                        modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
+                            dvm.ontoUtils.removeProperty(key, index);
+                        });
                     }
                 }
             }

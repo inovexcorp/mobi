@@ -9,6 +9,13 @@
                     <hashtype>md5</hashtype>
                 </bitrate>
             </version>
+            <version id="2.37">
+                <bitrate thirtytwobit="true" sixtyfourbit="true">
+                    <filelocation>https://chromedriver.storage.googleapis.com/2.37/chromedriver_win32.zip</filelocation>
+                    <hash>00c991baa1e51abf6d582aedae91291f</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+            </version>
         </driver>
         <driver id="marionette">
             <version id="0.19.0">
@@ -39,6 +46,13 @@
                     <hashtype>md5</hashtype>
                 </bitrate>
             </version>
+            <version id="2.37">
+                <bitrate sixtyfourbit="true">
+                    <filelocation>https://chromedriver.storage.googleapis.com/2.37/chromedriver_linux64.zip</filelocation>
+                    <hash>f4fbbf50eaec2b9c9e21536e39b9999e</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+            </version>
         </driver>
         <driver id="marionette">
             <version id="0.19.0">
@@ -61,6 +75,13 @@
                 <bitrate sixtyfourbit="true">
                     <filelocation>https://chromedriver.storage.googleapis.com/2.33/chromedriver_mac64.zip</filelocation>
                     <hash>3d520b8ede8e9deb8c9a2efe2aec5f35</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+            </version>
+            <version id="2.37">
+                <bitrate sixtyfourbit="true">
+                    <filelocation>https://chromedriver.storage.googleapis.com/2.37/chromedriver_mac64.zip</filelocation>
+                    <hash>5e68436af99f9348d67127e5ab8d5eed</hash>
                     <hashtype>md5</hashtype>
                 </bitrate>
             </version>

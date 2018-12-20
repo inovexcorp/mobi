@@ -83,8 +83,8 @@ describe('Instance View directive', function() {
         it('with a breadcrumbs', function() {
             expect(this.element.find('breadcrumbs').length).toBe(1);
         });
-        it('with a .pull-right.edit-button', function() {
-            expect(this.element.querySelectorAll('.pull-right.edit-button').length).toBe(1);
+        it('with a .float-right.edit-button', function() {
+            expect(this.element.querySelectorAll('.float-right.edit-button').length).toBe(1);
         });
         it('with a block-content', function() {
             expect(this.element.find('block-content').length).toBe(1);
@@ -92,8 +92,8 @@ describe('Instance View directive', function() {
         it('with a .row', function() {
             expect(this.element.querySelectorAll('.row').length).toBe(1);
         });
-        it('with a .col-xs-8.col-xs-offset-2', function() {
-            expect(this.element.querySelectorAll('.col-xs-8.col-xs-offset-2').length).toBe(1);
+        it('with a .col-8.offset-2', function() {
+            expect(this.element.querySelectorAll('.col-8.offset-2').length).toBe(1);
         });
         it('with a h2', function() {
             expect(this.element.find('h2').length).toBe(1);
@@ -175,11 +175,18 @@ describe('Instance View directive', function() {
             expect(this.controller.getReification('', {})).toBeUndefined();
             expect(exploreUtilsSvc.getReification).toHaveBeenCalledWith(discoverStateSvc.explore.instance.entity, discoverStateSvc.explore.instance.metadata.instanceIRI, '', {});
         });
+        it('edit sets the correct state', function() {
+            discoverStateSvc.explore.editing = false;
+            discoverStateSvc.explore.instance.original = [];
+            this.controller.edit();
+            expect(discoverStateSvc.explore.editing).toBe(true);
+            expect(discoverStateSvc.explore.instance.original).toEqual(discoverStateSvc.explore.instance.entity);
+        });
     });
-    it('should set the variable correctly when edit button is clicked', function() {
-        discoverStateSvc.explore.editing = false;
-        var button = angular.element(this.element.querySelectorAll('.pull-right.edit-button')[0]);
+    it('should call edit when the edit button is clicked', function() {
+        spyOn(this.controller, 'edit');
+        var button = angular.element(this.element.querySelectorAll('.float-right.edit-button')[0]);
         button.triggerHandler('click');
-        expect(discoverStateSvc.explore.editing).toBe(true);
+        expect(this.controller.edit).toHaveBeenCalled();
     });
 });

@@ -12,7 +12,8 @@ To build the Mobi source code, you must have the following software and tools in
 | ----------- | -------- | -------------- |
 | Java        | 8        | http://www.oracle.com/technetwork/java/javase/downloads/index.html  |
 | Maven       | 3.1+      | https://maven.apache.org/download.cgi  |
-| Node.js     | 6.*      | https://nodejs.org/en/download/  |
+| Node.js     | 6+      | https://nodejs.org/en/download/  |
+| Google Chrome | 59+ | https://www.google.com/chrome/ |
 
 Clone the Mobi project from git and navigate to that directory on your machine. Run the following command to build the source:
 

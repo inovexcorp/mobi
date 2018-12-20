@@ -4,8 +4,8 @@
 .edit-mapping-page {
 	.edit-tabs {
 		> .tabset-headings a {
-			background-color: $gray-light;
-			
+			background-color: var(--grey);
+
 			&.active {
 				background-color: #fff;
 			}
@@ -15,7 +15,7 @@
 		}
 
 		.block-footer button {
-			margin-left: 5px;
+			margin-left: 0px;
 
 			&:first-child {
 				margin-left: 0;

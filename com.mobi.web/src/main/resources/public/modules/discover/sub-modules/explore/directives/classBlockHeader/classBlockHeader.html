@@ -21,11 +21,10 @@
   #L%
   -->
 <form class="class-block-header">
-    <div class="form-group pull-left">
+    <div class="form-group float-left">
         <custom-label>Dataset</custom-label>
         <dataset-select ng-model="dvm.ds.explore.recordId" on-select="dvm.onSelect()"></dataset-select>
     </div>
-    <button ng-disabled="!dvm.ds.explore.recordId" class="btn btn-primary" ng-click="dvm.onSelect()"><i class="fa fa-refresh"></i></button>
-    <button ng-disabled="!dvm.ds.explore.recordId" class="btn btn-link pull-right create-button" ng-click="dvm.showCreate()"><i class="fa fa-plus"></i>Create Instance</button>
-    <new-instance-class-overlay ng-if="dvm.showNewInstanceOverlay" classes="dvm.datasetClasses" on-submit="dvm.create(clazz)" on-cancel="dvm.showCancel()"></new-instance-class-overlay>
+    <button ng-disabled="!dvm.ds.explore.recordId" class="btn btn-primary remove-min-width" ng-click="dvm.onSelect()"><i class="fa fa-refresh"></i></button>
+    <button ng-disabled="!dvm.ds.explore.recordId" class="btn btn-link float-right create-button" ng-click="dvm.showCreate()"><i class="fa fa-plus"></i>Create Instance</button>
 </form>

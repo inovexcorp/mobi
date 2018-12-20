@@ -90,7 +90,9 @@ public interface OrmFactoryRegistry {
 
     /**
      * A sorted {@link List} of OrmFactories of types that extend the passed type including the {@link OrmFactory} of
-     * the type itself. The list is sorted so that factories of subclass types are first.
+     * the type itself. The list is sorted by the number of parent types of the factory type. NOTE: The result may not
+     * by what is expected for all class structures. For example, a class that subclasses 10 different classes will
+     * be before a class that has a "subclass chain" of 5 classes.
      *
      * @param type The {@link Class} of the {@link Thing} whose factory you want to find.
      * @param <T> A {@link Class} that extends {@link Thing}.
@@ -100,8 +102,9 @@ public interface OrmFactoryRegistry {
 
     /**
      * A sorted {@link List} of OrmFactories of types that extend the type identified by the passed class IRI string
-     * including the {@link OrmFactory} of the type itself. The list is sorted so that factories of subclass types are
-     * first.
+     * including the {@link OrmFactory} of the type itself. The list is sorted by the number of parent types of the
+     * factory type. NOTE: The result may not by what is expected for all class structures. For example, a class that
+     * subclasses 10 different classes will be before a class that has a "subclass chain" of 5 classes.
      *
      * @param typeIRI An IRI string of a class
      * @return A sorted {@link List} of OrmFactories of types that extend the type identified by the passed IRI string

@@ -1,11 +1,18 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
 .hierarchy-tree.tree {
-    padding: 0 0 0 10px;
-    
+    display: inline-block;
+    min-width: 100%;
+
     .repeater-container {
-        overflow: auto;
-        
+        overflow-x: auto;
+
         .tree-item-wrapper {
             padding-right: 10px;
+        }
+        .tree-item {
+            height: 26px;
         }
     }
 }
