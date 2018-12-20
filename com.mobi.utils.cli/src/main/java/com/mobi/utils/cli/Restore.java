@@ -153,7 +153,7 @@ public class Restore implements Action {
             System.out.println(msg);
             return null;
         }
-        Pattern versionPattern = Pattern.compile("[0-9]+\\.[0-9]+");
+        Pattern versionPattern = Pattern.compile("([0-9]+\\.[0-9]+)");
         Matcher matcher = versionPattern.matcher(fullBackupVer);
         if (!matcher.find()) {
             String msg = "Mobi version in manifest must match regex pattern [0-9]+\\\\.[0-9]+";
@@ -218,7 +218,7 @@ public class Restore implements Action {
         for (String service : services) {
             ServiceReference<?>[] refs = bundleContext.getAllServiceReferences(null, service);
             int count = 0;
-            while (refs == null || count > 2) {
+            while (refs == null && count < 2) {
                 TimeUnit.SECONDS.sleep(5);
                 refs = bundleContext.getAllServiceReferences(null, service);
                 count++;
