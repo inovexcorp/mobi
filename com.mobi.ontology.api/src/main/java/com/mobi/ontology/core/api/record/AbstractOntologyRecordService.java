@@ -62,9 +62,9 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
                           RepositoryConnection conn) {
         T record = createRecordObject(config, issued, modified);
         Branch masterBranch = createMasterBranch(record);
-        Ontology ontology = createOntology(config);
         try {
             semaphore.acquire();
+            Ontology ontology = createOntology(config);
             setOntologyToRecord(record, ontology);
             conn.begin();
             addRecord(record, masterBranch, conn);

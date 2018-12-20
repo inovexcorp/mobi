@@ -22,7 +22,7 @@ package com.mobi.security.policy.rest.impl;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 import static com.mobi.web.security.util.AuthenticationProps.ANON_USER;
 
 import aQute.bnd.annotation.component.Component;
@@ -105,7 +105,7 @@ public class PolicyEnforcementRestImpl implements PolicyEnforcementRest {
                     actionId, actionAttrs);
 
             log.debug(request.toString());
-            com.mobi.security.policy.api.Response response = pdp.evaluate(request);
+            com.mobi.security.policy.api.Response response = pdp.evaluate(request, vf.createIRI(POLICY_PERMIT_OVERRIDES));
             log.debug(response.toString());
             log.debug(String.format("Request Evaluated. %dms", System.currentTimeMillis() - start));
 

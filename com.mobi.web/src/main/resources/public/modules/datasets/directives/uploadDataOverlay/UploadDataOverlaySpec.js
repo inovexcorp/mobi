@@ -79,17 +79,21 @@ describe('Upload Data Overlay component', function() {
         describe('should upload data to a dataset', function() {
             it('unless an error occurs', function() {
                 datasetManagerSvc.uploadData.and.returnValue($q.reject('Error Message'));
-                this.controller.upload();
+                this.controller.submit();
                 scope.$apply();
                 expect(datasetManagerSvc.uploadData).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], this.controller.fileObj, this.controller.uploadId);
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
                 expect(scope.close).not.toHaveBeenCalled();
             });
             it('successfully', function() {
-                this.controller.upload();
+                this.controller.fileObj = {name: 'File Name'};
+                this.controller.fileName = 'No File Selected';
+                this.controller.update();
+                this.controller.submit();
                 expect(this.controller.importing).toEqual(true);
                 scope.$apply();
                 expect(datasetManagerSvc.uploadData).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], this.controller.fileObj, this.controller.uploadId);
+                expect(this.controller.fileName).toEqual('File Name');
                 expect(this.controller.importing).toEqual(false);
                 expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
@@ -107,6 +111,12 @@ describe('Upload Data Overlay component', function() {
             expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
+        });
+        it('with a button', function() {
+            expect(this.element.find('button').length).toBe(4);
+        });
+        it('with a span', function() {
+            expect(this.element.find('span').length).toBe(2);
         });
         ['form', 'file-input'].forEach(test => {
             it('with a ' + test, function() {
@@ -141,10 +151,10 @@ describe('Upload Data Overlay component', function() {
         });
     });
     it('should call upload when the Submit button is clicked', function() {
-        spyOn(this.controller, 'upload');
+        spyOn(this.controller, 'submit');
         var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
         button.triggerHandler('click');
-        expect(this.controller.upload).toHaveBeenCalled();
+        expect(this.controller.submit).toHaveBeenCalled();
     });
     it('should call cancel when the button is clicked', function() {
         spyOn(this.controller, 'cancel');
