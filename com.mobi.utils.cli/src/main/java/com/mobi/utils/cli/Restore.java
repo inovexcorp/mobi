@@ -58,12 +58,15 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -150,7 +153,15 @@ public class Restore implements Action {
             System.out.println(msg);
             return null;
         }
-        String backupVersion = fullBackupVer.substring(0, 4);
+        Pattern versionPattern = Pattern.compile("[0-9]+\\.[0-9]+");
+        Matcher matcher = versionPattern.matcher(fullBackupVer);
+        if (!matcher.find()) {
+            String msg = "Mobi version in manifest must match regex pattern [0-9]+\\\\.[0-9]+";
+            LOGGER.error(msg);
+            System.out.println(msg);
+            return null;
+        }
+        String backupVersion = matcher.group(1);
         if (!mobiVersions.contains(backupVersion)) {
             String msg = "A valid version of Mobi is required (" + String.join(".*, ", mobiVersions) + ").";
             LOGGER.error(msg);
@@ -182,19 +193,22 @@ public class Restore implements Action {
         List<String> whitelistedFiles = IOUtils.readLines(getClass().getResourceAsStream("/configWhitelist.txt"),
                 "UTF-8");
 
-        for (String whitelistedFile : whitelistedFiles) {
-            Files.copy(Paths.get(RESTORE_PATH + File.separator + "configurations"
-                    + File.separator + whitelistedFile), Paths.get(System.getProperty("karaf.etc") + File.separator
-                    + whitelistedFile), StandardCopyOption.REPLACE_EXISTING);
-        }
-
         File configDir = new File(RESTORE_PATH + File.separator + "configurations");
         File[] repoFiles = configDir.listFiles((d, name) -> name.contains("com.mobi.service.repository"));
         if (repoFiles != null && repoFiles.length != 0) {
             for (File repoFile : repoFiles) {
-                Files.copy(Paths.get(RESTORE_PATH + File.separator + "configurations" + File.separator
-                        + repoFile.getName()), Paths.get(System.getProperty("karaf.etc") + File.separator
-                        + repoFile.getName()), StandardCopyOption.REPLACE_EXISTING);
+                whitelistedFiles.add(repoFile.getName());
+            }
+        }
+
+        for (String whitelistedFile : whitelistedFiles) {
+            Path backupConfig = Paths.get(RESTORE_PATH + File.separator + "configurations" + File.separator
+                    + whitelistedFile);
+            if (Files.exists(backupConfig)) {
+                Files.copy(backupConfig, Paths.get(System.getProperty("karaf.etc") + File.separator
+                        + whitelistedFile), StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                LOGGER.info("Whitelisted file " + whitelistedFile + " does not exist in backup zip");
             }
         }
 
@@ -203,12 +217,14 @@ public class Restore implements Action {
                 "UTF-8");
         for (String service : services) {
             ServiceReference<?>[] refs = bundleContext.getAllServiceReferences(null, service);
-            if (refs == null) {
+            int count = 0;
+            while (refs == null || count > 2) {
                 TimeUnit.SECONDS.sleep(5);
                 refs = bundleContext.getAllServiceReferences(null, service);
-                if (refs == null) {
-                    System.out.println("Could not find service " + service);
-                }
+                count++;
+            }
+            if (refs == null) {
+                System.out.println("Could not find service " + service);
             }
         }
     }
@@ -229,8 +245,9 @@ public class Restore implements Action {
     private void restoreRepositories(JSONObject manifest, String backupVersion) throws IOException {
         // Clear populated repositories
         repositoryManager.getAllRepositories().forEach((repoID, repo) -> {
-            RepositoryConnection connection = repo.getConnection();
-            connection.clear();
+            try (RepositoryConnection connection = repo.getConnection()) {
+                connection.clear();
+            }
         });
 
         // Populate Repositories
@@ -261,7 +278,7 @@ public class Restore implements Action {
         }
         LOGGER.trace("Removed PolicyFile statements");
 
-        if (backupVersion != mobiVersions.get(2)) {
+        if (mobiVersions.indexOf(backupVersion) < 2) {
             // Clear ontology editor state
             statements = conn.getStatements(null,
                     vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), vf.createIRI(State.TYPE)).iterator();
@@ -276,31 +293,29 @@ public class Restore implements Action {
     private void unzipFile(String filePath, String destination) throws IOException {
         File destDir = new File(destination);
         byte[] buffer = new byte[1024];
-        ZipInputStream zis = new ZipInputStream(new FileInputStream(filePath));
-        ZipEntry zipEntry = zis.getNextEntry();
-        while (zipEntry != null) {
-            File newFile = newFile(destDir, zipEntry);
-            if (!newFile.getParentFile().exists()) {
-                newFile.getParentFile().mkdirs();
-            }
-            FileOutputStream fos = new FileOutputStream(newFile);
-            int len;
-            while ((len = zis.read(buffer)) > 0) {
-                fos.write(buffer, 0, len);
-            }
-            fos.close();
-            zipEntry = zis.getNextEntry();
-
-            if (newFile.getAbsolutePath().endsWith("configurations.zip")
-                    || newFile.getAbsolutePath().endsWith("policies.zip")) {
-                unzipFile(newFile.getAbsolutePath(), newFile.getParentFile().getAbsolutePath() + File.separator
-                        + FilenameUtils.removeExtension(newFile.getName()));
-            } else if (newFile.getAbsolutePath().endsWith(".zip")) {
-                unzipFile(newFile.getAbsolutePath(), newFile.getParentFile().getAbsolutePath());
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(filePath))) {
+            ZipEntry zipEntry = zis.getNextEntry();
+            while (zipEntry != null) {
+                File newFile = newFile(destDir, zipEntry);
+                if (!newFile.getParentFile().exists()) {
+                    newFile.getParentFile().mkdirs();
+                }
+                try (FileOutputStream fos = new FileOutputStream(newFile)) {
+                    int len;
+                    while ((len = zis.read(buffer)) > 0) {
+                        fos.write(buffer, 0, len);
+                    }
+                    zipEntry = zis.getNextEntry();
+                }
+                if (newFile.getAbsolutePath().endsWith("configurations.zip")
+                        || newFile.getAbsolutePath().endsWith("policies.zip")) {
+                    unzipFile(newFile.getAbsolutePath(), newFile.getParentFile().getAbsolutePath() + File.separator
+                            + FilenameUtils.removeExtension(newFile.getName()));
+                } else if (newFile.getAbsolutePath().endsWith(".zip")) {
+                    unzipFile(newFile.getAbsolutePath(), newFile.getParentFile().getAbsolutePath());
+                }
             }
         }
-        zis.closeEntry();
-        zis.close();
     }
 
     private File newFile(File destinationDir, ZipEntry zipEntry) throws IOException {
