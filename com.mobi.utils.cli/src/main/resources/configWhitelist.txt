@@ -1,0 +1,15 @@
+com.mobi.catalog.config.CatalogConfigProvider.cfg
+com.mobi.email.api.EmailService.cfg
+com.mobi.etl.api.workflows.WorkflowManager.cfg
+com.mobi.jaas.engines.RdfEngine.cfg
+com.mobi.jaas.realm.MobiRealm.cfg
+com.mobi.ontology.utils.cache.OntologyCacheConfiguration.cfg
+com.mobi.platform.config.application-mappingtool.cfg
+com.mobi.platform.config.application-ontologyeditor.cfg
+com.mobi.platform.config.application-sparqleditor.cfg
+com.mobi.platform.config.state.StateManager.cfg
+com.mobi.platform.server.cfg
+com.mobi.security.policy.api.cache.PolicyCacheConfiguration.cfg
+com.mobi.security.policy.api.xacml.XACMLPolicyManager.cfg
+com.mobi.vfs.basic-system.cfg
+emailTemplate.html
