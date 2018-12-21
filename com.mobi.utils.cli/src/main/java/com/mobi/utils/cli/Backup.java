@@ -172,7 +172,7 @@ public class Backup implements Action {
 
     private File getOutputFile(OffsetDateTime date) throws Exception {
         if (filePath == null) {
-            return File.createTempFile(date.format(DateTimeFormatter.BASIC_ISO_DATE), ".zip", new File("."));
+            return File.createTempFile(date.format(DateTimeFormatter.BASIC_ISO_DATE), ".zip", getKarafHome());
         } else {
             return new File(filePath);
         }
@@ -222,5 +222,13 @@ public class Backup implements Action {
             throw new IllegalStateException("karaf.etc is not set");
         }
         return new File(karafEtc);
+    }
+
+    private File getKarafHome() {
+        String karafHome = System.getProperty("karaf.home");
+        if (karafHome == null) {
+            throw new IllegalStateException("karaf.home is not set");
+        }
+        return new File(karafHome);
     }
 }

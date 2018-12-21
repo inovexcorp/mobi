@@ -42,8 +42,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.Completion;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.apache.karaf.shell.support.completers.FileCompleter;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -120,6 +122,7 @@ public class Restore implements Action {
 
     // Command Parameters
     @Argument(name = "BackupFile", description = "The Mobi backup to restore", required = true)
+    @Completion(FileCompleter.class)
     private String backupFilePath = null;
 
     // Implementation
