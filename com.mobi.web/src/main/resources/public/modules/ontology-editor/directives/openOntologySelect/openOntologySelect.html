@@ -23,7 +23,7 @@
 <div class="open-ontology-select">
     <ui-select ng-model="dvm.selected" ng-disabled="dvm.os.hasChanges(dvm.listItem) || dvm.os.isCommittable(dvm.listItem)" on-select="dvm.changeEntity($item)">
         <ui-select-match placeholder="Open at...">
-            <span>{{dvm.getType($select.selected)}}: {{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
+            <span class="text-truncate">{{dvm.getType($select.selected)}}: {{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
         </ui-select-match>
         <ui-select-choices repeat="entity in dvm.selectList | branchesToDisplay | filter:$select.search" group-by="dvm.getGroupTitle">
             <div class="entity-display" ng-init="title = dvm.util.getDctermsValue(entity, 'title')" ng-class="{'master': title === 'MASTER', 'active': entity['@id'] === dvm.selected['@id']}">

@@ -501,6 +501,7 @@ describe('Open Ontology Select component', function() {
                 expect(catalogManagerSvc.deleteRecordVersion).toHaveBeenCalledWith(this.tagId, this.recordId, this.catalogId);
                 expect(this.controller.listItem.tags).not.toContain(this.tag);
                 expect(this.controller.selectList).not.toContain(this.tag);
+                expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalledWith(scope.listItem);
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
             it('when deleteRecordVersion is rejected', function() {

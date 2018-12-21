@@ -175,6 +175,7 @@
                     .then(() => {
                         _.remove(dvm.listItem.tags, {'@id': tag['@id']});
                         setSelectList();
+                        dvm.os.resetStateTabs(dvm.listItem);
                     }, dvm.util.createErrorToast)
             }
             dvm.submit = function(branch) {
