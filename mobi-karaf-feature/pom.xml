@@ -352,6 +352,11 @@
             <artifactId>email.impl</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>utils.cli</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
