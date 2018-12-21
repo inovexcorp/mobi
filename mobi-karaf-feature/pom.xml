@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.14.43</version>
+        <version>1.14.44</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -350,6 +350,11 @@
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>email.impl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>utils.cli</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

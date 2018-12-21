@@ -25,7 +25,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>root</artifactId>
-    <version>1.14.43</version>
+    <version>1.14.44</version>
 
     <packaging>pom</packaging>
 
@@ -108,6 +108,7 @@
         <module>com.mobi.security.policy.rest</module>
         <module>com.mobi.email.api</module>
         <module>com.mobi.email.impl</module>
+        <module>com.mobi.utils.cli</module>
     </modules>
 
     <properties>
