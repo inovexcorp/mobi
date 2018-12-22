@@ -89,7 +89,7 @@
             function runMapping(id) {
                 state.mapping.record.id = id;
                 dm.mapAndDownload(id, dvm.format, dvm.fileName);
-                dvm.util.createSuccessToast('Successfully ran Mapping');
+                dvm.util.createSuccessToast('Successfully ran mapping');
                 reset();
             }
             function reset() {

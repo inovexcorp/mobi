@@ -98,7 +98,7 @@
                 state.initialize();
                 state.resetEdit();
                 dm.reset();
-                dvm.util.createSuccessToast('Successfully ran Mapping');
+                dvm.util.createSuccessToast('Successfully ran mapping');
                 dvm.close();
             }
         }

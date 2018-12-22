@@ -417,6 +417,7 @@ describe('Open Ontology Select component', function() {
                             expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
                             expect(utilSvc.createWarningToast).toHaveBeenCalledWith(jasmine.stringMatching('Commit'));
                             expect(this.controller.changeEntity).toHaveBeenCalledWith({'@id': 'master', '@type': [prefixes.catalog + 'Branch']});
+                            expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalledWith(scope.listItem);
                         });
                     });
                     describe('and a tag is checked out', function() {

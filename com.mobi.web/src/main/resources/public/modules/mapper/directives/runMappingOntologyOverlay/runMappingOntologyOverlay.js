@@ -165,7 +165,7 @@
                     }
                 }
                 if (!toast) {
-                    dvm.util.createSuccessToast('Successfully ran Mapping');
+                    dvm.util.createSuccessToast('Successfully ran mapping');
                 }
             }
         }

@@ -168,12 +168,20 @@
                                 });
                         }
                         setSelectList();
+                        dvm.os.resetStateTabs(dvm.listItem);
                     }, dvm.util.createErrorToast);
             }
             dvm.deleteTag = function(tag) {
                 dvm.cm.deleteRecordVersion(tag['@id'], dvm.listItem.ontologyRecord.recordId, catalogId)
                     .then(() => {
                         _.remove(dvm.listItem.tags, {'@id': tag['@id']});
+                        if (!dvm.os.isStateTag(dvm.currentState)) {
+                            dvm.cm.getCommit(dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'commit'))
+                                .then(_.noop, error => {
+                                    dvm.util.createWarningToast((dvm.os.isStateTag(dvm.currentState) ? 'Tag' : 'Commit') + ' no longer exists. Opening MASTER');
+                                    dvm.changeEntity({'@id': dvm.listItem.masterBranchIRI, '@type': [prefixes.catalog + 'Branch']});
+                                });
+                        }
                         setSelectList();
                         dvm.os.resetStateTabs(dvm.listItem);
                     }, dvm.util.createErrorToast)
