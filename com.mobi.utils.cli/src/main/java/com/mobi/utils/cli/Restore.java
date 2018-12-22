@@ -263,8 +263,11 @@ public class Restore implements Action {
 
         for (Object key : repos.keySet()) {
             String repoName = key.toString();
+            String repoPath = repos.optString(key.toString());
+            String repoDirectoryPath = repoPath.substring(0, repoPath.lastIndexOf(repoName + ".zip"));
             builder.repository(repoName);
-            File repoFile = new File(RESTORE_PATH + File.separator + "repos" + File.separator + repoName + ".trig");
+            File repoFile = new File(RESTORE_PATH + File.separator + repoDirectoryPath + File.separator
+                    + repoName + ".trig");
             importService.importFile(builder.build(), repoFile);
             LOGGER.trace("Data successfully loaded to " + repoName + " repository.");
             System.out.println("Data successfully loaded to " + repoName + " repository.");
@@ -300,6 +303,11 @@ public class Restore implements Action {
             ZipEntry zipEntry = zis.getNextEntry();
             while (zipEntry != null) {
                 File newFile = newFile(destDir, zipEntry);
+                if (zipEntry.isDirectory()) {
+                    newFile.mkdirs();
+                    zipEntry = zis.getNextEntry();
+                    continue;
+                }
                 if (!newFile.getParentFile().exists()) {
                     newFile.getParentFile().mkdirs();
                 }
