@@ -23,50 +23,37 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name recordTypes
-         * @requires catalogManager
-         *
-         * @description
-         * The `recordTypes` module only provides the `recordTypes` directive which creates a div with
-         * a collection of {@link recordType.directive:recordType recordTypes} for the sorted and filtered
-         * passed record's type IRI strings.
-         */
-        .module('recordTypes', [])
-        /**
-         * @ngdoc directive
-         * @name recordTypes.directive:recordTypes
-         * @scope
-         * @restrict E
-         * @requires catalogManager.service:catalogManagerService
-         *
-         * @description
-         * `recordTypes` is a directive that creates a div with a {@link recordType.directive:recordType recordType}
-         * for each of the passed record's "@type" values. The types are filtered based on whether they are in the list
-         * of record types in the {@link catalogManager.service:catalogMangerService catalogManagerService} and sorted
-         * alphabetically. The directive is replaced with the content of the template.
-         *
-         * @param {Object} record The JSON-LD object representing the record
-         */
-        .directive('recordTypes', recordTypes);
+    /**
+     * @ngdoc directive
+     * @name recordTypes.directive:recordTypes
+     * @scope
+     * @restrict E
+     * @requires catalogManager.service:catalogManagerService
+     *
+     * @description
+     * `recordTypes` is a directive that creates a div with a {@link recordType.directive:recordType recordType}
+     * for each of the passed record's "@type" values. The types are filtered based on whether they are in the list
+     * of record types in the {@link catalogManager.service:catalogMangerService catalogManagerService} and sorted
+     * alphabetically. The directive is replaced with the content of the template.
+     *
+     * @param {Object} record The JSON-LD object representing the record
+     */
+    const recordTypesComponent = {
+        templateUrl: 'modules/catalog/directives/recordTypes/recordTypes.html',
+        bindings: {
+            record: '<'
+        },
+        controllerAs: 'dvm',
+        controller: recordTypesComponentCtrl
+    };
 
-        recordTypes.$inject = ['catalogManagerService'];
+    recordTypesComponentCtrl.$inject = ['catalogManagerService'];
 
-        function recordTypes(catalogManagerService) {
-            return {
-                restrict: 'E',
-                controllerAs: 'dvm',
-                replace: true,
-                scope: {
-                    record: '<'
-                },
-                controller: function() {
-                    var dvm = this;
-                    dvm.cm = catalogManagerService;
-                },
-                templateUrl: 'modules/catalog/directives/recordTypes/recordTypes.html'
-            }
-        }
+    function recordTypesComponentCtrl(catalogManagerService) {
+        var dvm = this;
+        dvm.cm = catalogManagerService;
+    }
+
+    angular.module('catalog')
+        .component('recordTypes', recordTypesComponent);
 })();

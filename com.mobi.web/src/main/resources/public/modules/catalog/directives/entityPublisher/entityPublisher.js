@@ -23,58 +23,45 @@
 (function () {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name entityPublisher
-         *
-         * @description
-         * The `entityPublisher` module only provides the `entityPublisher` directive which creates
-         * a div with the username of the user who published an entity.
-         */
-        .module('entityPublisher', [])
-        /**
-         * @ngdoc directive
-         * @name entityPublisher.directive:entityPublisher
-         * @scope
-         * @restrict E
-         * @requires userManager.service:userManagerService
-         * @requires utilService.service:utilService
-         *
-         * @description
-         * `entityPublisher` is a directive which creates a div with a display of a JSON-LD object's
-         * dcterms:publisher property value. Retrieves the username of the publisher using the
-         * {@link userManager.service:userManagerService userManagerService}. The directive is replaced
-         * by the contents of its template.
-         *
-         * @param {Object} entity A JSON-LD object
-         */
-        .directive('entityPublisher', entityPublisher);
+    /**
+     * @ngdoc component
+     * @name entityPublisher.component:entityPublisher
+     * @requires userManager.service:userManagerService
+     * @requires utilService.service:utilService
+     *
+     * @description
+     * `entityPublisher` is a component which creates a div with a display of a JSON-LD object's
+     * dcterms:publisher property value. Retrieves the username of the publisher using the
+     * {@link userManager.service:userManagerService userManagerService}. The directive is replaced
+     * by the contents of its template.
+     *
+     * @param {Object} entity A JSON-LD object
+     */
+    const entityPublisherComponent = {
+        templateUrl: 'modules/catalog/directives/entityPublisher/entityPublisher.html',
+        bindings: {
+            entity: '<'
+        },
+        controllerAs: 'dvm',
+        controller: entityPublisherComponentCtrl
+    };
 
-    entityPublisher.$inject = ['userManagerService', 'utilService'];
+    entityPublisherComponentCtrl.$inject = ['userManagerService', 'utilService'];
 
-    function entityPublisher(userManagerService, utilService) {
-        return {
-            restrict: 'E',
-            replace: true,
-            controllerAs: 'dvm',
-            scope: {
-                entity: '<'
-            },
-            controller: ['$scope', function($scope) {
-                var dvm = this;
-                var util = utilService;
-                var um = userManagerService;
+    function entityPublisherComponentCtrl(userManagerService, utilService) {
+        var dvm = this;
+        var util = utilService;
+        var um = userManagerService;
 
-                dvm.getUsername = function() {
-                    var iri = util.getDctermsId($scope.entity, 'publisher');
-                    if (iri) {
-                        return _.get(_.find(um.users, {iri}), 'username', '(None)');
-                    }
-                    return '(None)';
-                }
-            }],
-            templateUrl: 'modules/catalog/directives/entityPublisher/entityPublisher.html'
-        };
+        dvm.getUsername = function() {
+            var iri = util.getDctermsId(dvm.entity, 'publisher');
+            if (iri) {
+                return _.get(_.find(um.users, {iri}), 'username', '(None)');
+            }
+            return '(None)';
+        }
     }
+
+    angular.module('catalog')
+        .component('entityPublisher', entityPublisherComponent);
 })();

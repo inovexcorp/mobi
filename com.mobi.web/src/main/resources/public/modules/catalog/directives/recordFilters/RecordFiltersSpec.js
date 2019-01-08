@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Record Type component', function() {
+describe('Record Filters component', function() {
     var $compile, scope, catalogManagerSvc;
 
     beforeEach(function() {
@@ -28,7 +28,6 @@ describe('Record Type component', function() {
         module('catalog');
         mockCatalogManager();
         injectSplitIRIFilter();
-        injectChromaConstant();
 
         inject(function(_$compile_, _$rootScope_, _catalogManagerService_) {
             $compile = _$compile_;
@@ -36,11 +35,13 @@ describe('Record Type component', function() {
             catalogManagerSvc = _catalogManagerService_;
         });
 
-        catalogManagerSvc.recordTypes = ['type'];
-        scope.type = '';
-        this.element = $compile(angular.element('<record-type type="type"></record-type>'))(scope);
+        catalogManagerSvc.recordTypes = ['test1', 'test2'];
+
+        scope.recordType = '';
+        scope.changeFilter = jasmine.createSpy('changeFilter');
+        this.element = $compile(angular.element('<record-filters record-type="recordType" change-filter="changeFilter(recordType)"></record-filters>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('recordType');
+        this.controller = this.element.controller('recordFilters');
     });
 
     afterEach(function() {
@@ -51,28 +52,31 @@ describe('Record Type component', function() {
     });
 
     describe('controller bound variable', function() {
-        it('type should be one way bound', function() {
-            this.controller.type = 'test';
+        it('recordType is one way bound', function() {
+            this.controller.recordType = 'test';
             scope.$digest();
-            expect(scope.type).toEqual('');
+            expect(scope.recordType).toEqual('');
+        });
+        it('changeFilter is called in the parent scope', function() {
+            this.controller.changeFilter({recordType: 'test'});
+            scope.$digest();
+            expect(scope.changeFilter).toHaveBeenCalledWith('test');
         });
     });
     describe('controller methods', function() {
-        it('should get the color for a type', function() {
-            var result = this.controller.getColor('type');
-            expect(typeof result).toBe('string');
+        it('should filter records', function() {
+            this.controller.recordType = 'test';
+            this.controller.filter();
+            expect(scope.changeFilter).toHaveBeenCalledWith('test');
         });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('RECORD-TYPE');
-            expect(this.element.querySelectorAll('.badge.badge-pill').length).toEqual(1);
+            expect(this.element.prop('tagName')).toEqual('RECORD-FILTERS');
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
         });
-        it('with the correct background color depending on the record type', function() {
-            var badge = angular.element(this.element.querySelectorAll('.badge')[0]);
-            spyOn(this.controller, 'getColor').and.returnValue('white');
-            scope.$digest();
-            expect(badge.css('background-color')).toBe('white');
+        it('depending on the number of sort options', function() {
+            expect(this.element.find('option').length).toBe(catalogManagerSvc.recordTypes.length + 1);
         });
     });
 });

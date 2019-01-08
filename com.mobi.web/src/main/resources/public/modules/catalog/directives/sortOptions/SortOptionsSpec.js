@@ -20,60 +20,63 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Sort Options directive', function() {
-    var $compile, scope, catalogManagerSvc, catalogStateSvc;
+describe('Sort Options component', function() {
+    var $compile, scope, catalogManagerSvc;
 
     beforeEach(function() {
         module('templates');
-        module('sortOptions');
+        module('catalog');
         mockCatalogManager();
-        mockCatalogState();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _catalogStateService_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
-            catalogStateSvc = _catalogStateService_;
         });
 
-        catalogStateSvc.getCurrentCatalog.and.returnValue(catalogStateSvc.catalogs.local);
         catalogManagerSvc.sortOptions = [{label: 'test'}];
-        scope.listKey = '';
+        scope.sortOption = undefined;
         scope.changeSort = jasmine.createSpy('changeSort');
-        this.element = $compile(angular.element('<sort-options list-key="listKey" change-sort="changeSort()"></sort-options>'))(scope);
+        this.element = $compile(angular.element('<sort-options sort-option="sortOption" change-sort="changeSort(sortOption)"></sort-options>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('sortOptions');
     });
 
     afterEach(function() {
         $compile = null;
         scope = null;
         catalogManagerSvc = null;
-        catalogStateSvc = null;
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
-        beforeEach(function() {
-            this.isolatedScope = this.element.isolateScope();
-        });
-        it('listKey should be one way bound', function() {
-            this.isolatedScope.listKey = 'test';
+    describe('controller bound variable', function() {
+        it('sortOption should be one way bound', function() {
+            this.controller.sortOption = {};
             scope.$digest();
-            expect(scope.listKey).toBe('');
+            expect(scope.sortOption).toEqual(undefined);
         });
         it('changeSort should be called in parent scope when invoked', function() {
-            this.isolatedScope.changeSort();
-            expect(scope.changeSort).toHaveBeenCalled();
+            this.controller.changeSort({sortOption: {}});
+            expect(scope.changeSort).toHaveBeenCalledWith({});
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('controller methods', function() {
+        it('should sort records', function() {
+            this.controller.sortOption = catalogManagerSvc.sortOptions[0];
+            this.controller.sort();
+            expect(scope.changeSort).toHaveBeenCalledWith(catalogManagerSvc.sortOptions[0]);
+        });
+    });
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('sort-options')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('SORT-OPTIONS');
+            expect(this.element.querySelectorAll('.sort-options').length).toEqual(1);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
         });
         it('with a select', function() {
             expect(this.element.find('select').length).toBe(1);
         });
-        it('depending on how many sort options there are', function() {
+        it('depending on the number of sort options', function() {
             var labels = _.map(catalogManagerSvc.sortOptions, 'label');
             var options = this.element.find('option');
             expect(options.length).toBe(labels.length + 1);
@@ -83,12 +86,6 @@ describe('Sort Options directive', function() {
                     expect(labels).toContain(option.text());
                 }
             }
-        });
-        it('depending on whether a sort option has been selected for the identified list', function() {
-            scope.listKey = 'records';
-            catalogStateSvc.catalogs.local.records.sortOption = catalogManagerSvc.sortOptions[0];
-            scope.$digest();
-            expect(angular.element(this.element.querySelectorAll('option[selected]')).text()).toBe(catalogManagerSvc.sortOptions[0].label);
         });
     });
 });

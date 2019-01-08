@@ -23,57 +23,45 @@
 (function () {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name sortOptions
-         *
-         * @description
-         * The `sortOptions` module only provides the `sortOptions` directive which creates
-         * a div with a select for sorting by
-         * {@link catalogManager.service:catalogManagerService#recordTypes record types} for
-         * the specified paginated list in the current
-         * {@link catalogState.service:catalogStateService#catalogs catalog}.
-         */
-        .module('sortOptions', [])
-        /**
-         * @ngdoc directive
-         * @name sortOptions.directive:sortOptions
-         * @scope
-         * @restrict E
-         * @requires catalogState.service:cataStateService
-         * @requires catalogManager.service:catalogManagerService
-         *
-         * @description
-         * `sortOptions` is a directive which creates a div with a select containing all
-         * {@link catalogManager.service:catalogManagerService#recordTypes record types} to set the sort
-         * option for the list determined by the passed `listKey` in the current
-         * {@link catalogState.service:catalogStateService#catalogs catalog}. An optional function can be
-         * passed in to be called when the value changes. The directive is replaced by the contents of its
-         * template.
-         *
-         * @param {string} listKey The key for the state for the paginated ist to set the sort option of
-         * @param {Function=undefined} changeSort The function to call when the sort option value changes
-         */
-        .directive('sortOptions', sortOptions);
+    /**
+     * @ngdoc directive
+     * @name sortOptions.directive:sortOptions
+     * @scope
+     * @restrict E
+     * @requires catalogState.service:cataStateService
+     * @requires catalogManager.service:catalogManagerService
+     *
+     * @description
+     * `sortOptions` is a directive which creates a div with a select containing all
+     * {@link catalogManager.service:catalogManagerService#recordTypes record types} to set the sort
+     * option for the list determined by the passed `listKey` in the current
+     * {@link catalogState.service:catalogStateService#catalogs catalog}. An optional function can be
+     * passed in to be called when the value changes. The directive is replaced by the contents of its
+     * template.
+     *
+     * @param {string} listKey The key for the state for the paginated ist to set the sort option of
+     * @param {Function=undefined} changeSort The function to call when the sort option value changes
+     */
+    const sortOptionsComponent = {
+        templateUrl: 'modules/catalog/directives/sortOptions/sortOptions.html',
+        bindings: {
+            sortOption: '<',
+            changeSort: '&'
+        },
+        controllerAs: 'dvm',
+        controller: sortOptionsComponentCtrl
+    };
 
-    sortOptions.$inject = ['catalogStateService', 'catalogManagerService'];
+    sortOptionsComponentCtrl.$inject = ['catalogManagerService'];
 
-    function sortOptions(catalogStateService, catalogManagerService) {
-        return {
-            restrict: 'E',
-            replace: true,
-            controllerAs: 'dvm',
-            scope: {
-                listKey: '<',
-                changeSort: '&'
-            },
-            controller: function() {
-                var dvm = this;
-                dvm.state = catalogStateService;
-                dvm.cm = catalogManagerService;
-            },
-            templateUrl: 'modules/catalog/directives/sortOptions/sortOptions.html'
-        };
+    function sortOptionsComponentCtrl(catalogManagerService) {
+        var dvm = this;
+        dvm.cm = catalogManagerService;
+
+        dvm.sort = function() {
+            dvm.changeSort({sortOption: dvm.sortOption});
+        }
     }
+    angular.module('catalog')
+        .component('sortOptions', sortOptionsComponent);
 })();

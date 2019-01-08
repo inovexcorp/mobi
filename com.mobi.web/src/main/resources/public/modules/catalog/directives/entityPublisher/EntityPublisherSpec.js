@@ -20,14 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Entity Publisher directive', function() {
+describe('Entity Publisher component', function() {
     var $compile, scope, userManagerSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
-        module('entityPublisher');
-        mockUtil();
+        module('catalog');
         mockUserManager();
+        mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _userManagerService_, _utilService_) {
             $compile = _$compile_;
@@ -50,12 +50,9 @@ describe('Entity Publisher directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
-        beforeEach(function() {
-            this.isolatedScope = this.element.isolateScope();
-        });
+    describe('controller bound variable', function() {
         it('entity should be one way bound', function() {
-            this.isolatedScope.entity = {a: 'b'};
+            this.controller.entity = {a: 'b'};
             scope.$digest();
             expect(scope.entity).toEqual({});
         });
@@ -80,9 +77,9 @@ describe('Entity Publisher directive', function() {
             });
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('entity-publisher')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('ENTITY-PUBLISHER');
             expect(this.element.querySelectorAll('.field-name').length).toBe(1);
         });
         it('with the entity publisher username', function() {

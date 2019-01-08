@@ -20,6 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+function mockComponent(moduleName, componentName) {
+    module(moduleName, function($provide) {
+        $provide.factory(componentName + 'Directive', function() { return {}; });
+    });
+}
+  
 function createQueryString(obj) {
     var queryString = '';
     var keys = Object.keys(obj);
@@ -957,46 +963,16 @@ function mockCatalogManager() {
 function mockCatalogState() {
     module(function($provide) {
         $provide.service('catalogStateService', function() {
-            this.catalogs = {
-                local: {
-                    show: false,
-                    catalog: {},
-                    openedPath: [],
-                    records: {
-                        recordType: '',
-                        sortOption: {},
-                        searchText: '',
-                        limit: 10
-                    },
-                    branches: {
-                        sortOption: {},
-                        limit: 10
-                    }
-                },
-                distributed: {
-                    show: false,
-                    catalog: {},
-                    openedPath: [],
-                    records: {
-                        recordType: '',
-                        sortOption: {},
-                        searchText: '',
-                        limit: 10
-                    }
-                }
-            };
-            this.currentPage = 1;
-            this.links = {
-                prev: '',
-                next: ''
-            };
-            this.totalSize = 0;
-            this.results = [];
+            this.selectedRecord = undefined;
+            this.totalRecordSize = 0;
+            this.currentRecordPage = 1;
+            this.recordLimit = 10;
+            this.recordSortOption = undefined;
+            this.recordFilterType = '';
+            this.recordSearchText = '';
+            this.recordIcons = {};
             this.initialize = jasmine.createSpy('initialize');
-            this.reset = jasmine.createSpy('reset');
-            this.resetPagination = jasmine.createSpy('resetPagination');
-            this.setPagination = jasmine.createSpy('setPagination');
-            this.getCurrentCatalog = jasmine.createSpy('getCurrentCatalog').and.returnValue({});
+            this.getRecordIcon = jasmine.createSpy('getRecordIcon').and.returnValue('');
         });
     });
 }

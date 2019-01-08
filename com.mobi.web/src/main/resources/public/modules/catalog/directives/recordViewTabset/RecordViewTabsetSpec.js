@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,53 +20,50 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Record Types component', function() {
-    var $compile, scope, catalogManagerSvc, inArray;
+describe('Record View Tabset component', function() {
+    var $compile, scope, catalogManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('catalog');
-        mockComponent('catalog', 'recordType');
+        mockComponent('catalog', 'branchList');
         mockCatalogManager();
-        injectInArrayFilter();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _inArrayFilter_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
-            inArray = _inArrayFilter_;
         });
 
+        catalogManagerSvc.isVersionedRDFRecord.and.returnValue(true);
+
         scope.record = {};
-        this.element = $compile(angular.element('<record-types record="record"></record-types>'))(scope);
+        this.element = $compile(angular.element('<record-view-tabset record="record"></record-view-tabset>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('recordTypes');
+        this.controller = this.element.controller('recordViewTabset');
     });
 
     afterEach(function() {
         $compile = null;
         scope = null;
         catalogManagerSvc = null;
-        inArray = null;
         this.element.remove();
     });
 
-    describe('controller bound variable', function() {
-        it('record should be one way bound', function() {
-            this.controller.record = {'@type': []};
-            scope.$digest();
-            expect(scope.record).toEqual({});
+    describe('should initialize', function() {
+        it('with whether the record is a versioned RDF record', function() {
+            expect(catalogManagerSvc.isVersionedRDFRecord).toHaveBeenCalledWith(scope.record);
+            expect(this.controller.isVersionedRDFRecord).toEqual(true);
         });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('RECORD-TYPES');
+            expect(this.element.prop('tagName')).toBe('RECORD-VIEW-TABSET');
         });
-        it('depending on how many types the record has', function() {
-            scope.record['@type'] = ['type0'];
-            scope.$digest();
-            expect(inArray).toHaveBeenCalledWith(scope.record['@type'], catalogManagerSvc.recordTypes);
-            expect(this.element.find('record-type').length).toBe(scope.record['@type'].length);
+        ['material-tabset', 'material-tab', 'branch-list'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
         });
     });
 });

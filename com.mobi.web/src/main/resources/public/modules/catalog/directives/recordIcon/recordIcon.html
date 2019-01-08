@@ -4,7 +4,7 @@
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -20,6 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="sort-options form-group">
-    <select class="order-select form-control" ng-options="option as option.label for option in dvm.cm.sortOptions" ng-model="dvm.sortOption" ng-change="dvm.sort()"></select>
-</div>
+<span class="record-icon fa-stack">
+    <i class="fa fa-square fa-stack-2x"></i>
+    <i class="fa {{dvm.icon}} fa-inverse fa-stack-1x"></i>
+</span>

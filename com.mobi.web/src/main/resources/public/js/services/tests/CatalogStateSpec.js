@@ -21,89 +21,43 @@
  * #L%
  */
 describe('Catalog State service', function() {
-    var $httpBackend, catalogStateSvc, catalogManagerSvc, utilSvc;
+    var catalogStateSvc, catalogManagerSvc, prefixes;
 
     beforeEach(function() {
         module('catalogState');
         mockCatalogManager();
-        mockUtil();
+        mockPrefixes();
 
-        inject(function(catalogStateService, _catalogManagerService_, _utilService_) {
+        inject(function(catalogStateService, _catalogManagerService_, _prefixes_) {
             catalogStateSvc = catalogStateService;
             catalogManagerSvc = _catalogManagerService_;
-            utilSvc = _utilService_;
+            prefixes = _prefixes_;
         });
     });
 
     afterEach(function () {
-        $httpBackend = null;
         catalogStateSvc = null;
         catalogManagerSvc = null;
-        utilSvc = null;
+        prefixes = null;
     });
 
     it('should initialize catalogs state', function() {
         catalogManagerSvc.sortOptions = [{}];
-        catalogManagerSvc.localCatalog = {};
-        catalogManagerSvc.distributedCatalog = {};
         catalogStateSvc.initialize();
-        expect(catalogStateSvc.catalogs.local.catalog).toBe(catalogManagerSvc.localCatalog);
-        expect(catalogStateSvc.catalogs.local.openedPath).toEqual([catalogManagerSvc.localCatalog]);
-        expect(catalogStateSvc.catalogs.distributed.catalog).toBe(catalogManagerSvc.distributedCatalog);
-        expect(catalogStateSvc.catalogs.distributed.openedPath).toEqual([catalogManagerSvc.distributedCatalog]);
-        _.forEach(_.filter(catalogStateSvc.catalogs.local, function(val) {
-            return _.has(val, 'sortOption');
-        }), function(obj) {
-            expect(obj.sortOption).toBe(catalogManagerSvc.sortOptions[0]);
+        expect(catalogStateSvc.recordSortOption).toBe(catalogManagerSvc.sortOptions[0]);
+    });
+    describe('should retrieve the icon class for a record', function() {
+        it('if the record is an OntologyRecord', function() {
+            expect(catalogStateSvc.getRecordIcon({'@type': [prefixes.ontologyEditor + 'OntologyRecord']})).toEqual('fa-sitemap');
         });
-    });
-    it('should reset all state variables', function() {
-        spyOn(catalogStateSvc, 'resetPagination');
-        catalogStateSvc.reset();
-        expect(catalogStateSvc.resetPagination).toHaveBeenCalled();
-    });
-    it('should reset all pagination related state variables', function() {
-        catalogStateSvc.resetPagination();
-        expect(catalogStateSvc.currentPage).toBe(0);
-        expect(catalogStateSvc.totalSize).toBe(0);
-        expect(catalogStateSvc.links).toEqual({next: '', prev: ''});
-        expect(catalogStateSvc.results).toEqual([]);
-    });
-    describe('should set the pagination variables based on a response', function() {
-        beforeEach(function() {
-            this.headers = {
-                'x-total-count': 0
-            };
-            this.response = {
-                data: [],
-                headers: jasmine.createSpy('headers').and.returnValue(this.headers)
-            };
+        it('if the record is a MappingRecord', function() {
+            expect(catalogStateSvc.getRecordIcon({'@type': [prefixes.delim + 'MappingRecord']})).toEqual('fa-map');
         });
-        it('if it has links', function() {
-            var nextLink = 'http://example.com/next';
-            var prevLink = 'http://example.com/prev';
-            this.headers.link = '<' + nextLink + '>; rel=\"next\", <' + prevLink + '>; rel=\"prev\"';
-            utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
-            catalogStateSvc.setPagination(this.response);
-            expect(catalogStateSvc.results).toEqual(this.response.data);
-            expect(catalogStateSvc.totalSize).toEqual(this.headers['x-total-count']);
-            expect(catalogStateSvc.links.next).toBe(nextLink);
-            expect(catalogStateSvc.links.prev).toBe(prevLink);
+        it('if the record is a DatasetRecord', function() {
+            expect(catalogStateSvc.getRecordIcon({'@type': [prefixes.dataset + 'DatasetRecord']})).toEqual('fa-database');
         });
-        it('if it does not have links', function() {
-            catalogStateSvc.setPagination(this.response);
-            expect(catalogStateSvc.results).toEqual(this.response.data);
-            expect(catalogStateSvc.totalSize).toEqual(this.headers['x-total-count']);
-            expect(catalogStateSvc.links.next).toBe('');
-            expect(catalogStateSvc.links.prev).toBe('');
+        it('if the record is not a specified type', function() {
+            expect(catalogStateSvc.getRecordIcon({})).toEqual('fa-book');
         });
-    });
-    it('should retrieve the current catalog state object', function() {
-        catalogStateSvc.catalogs.local.show = true;
-        expect(catalogStateSvc.getCurrentCatalog()).toBe(catalogStateSvc.catalogs.local);
-
-        catalogStateSvc.catalogs.local.show = false;
-        catalogStateSvc.catalogs.distributed.show = true;
-        expect(catalogStateSvc.getCurrentCatalog()).toBe(catalogStateSvc.catalogs.distributed);
-    });
+    })
 });

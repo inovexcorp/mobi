@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,53 +20,57 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Record Types component', function() {
-    var $compile, scope, catalogManagerSvc, inArray;
+describe('Record Icon component', function() {
+    var $compile, scope, catalogStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('catalog');
-        mockComponent('catalog', 'recordType');
-        mockCatalogManager();
-        injectInArrayFilter();
+        mockCatalogState();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _inArrayFilter_) {
+        inject(function(_$compile_, _$rootScope_, _catalogStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            catalogManagerSvc = _catalogManagerService_;
-            inArray = _inArrayFilter_;
+            catalogStateSvc = _catalogStateService_;
         });
 
+        catalogStateSvc.getRecordIcon.and.returnValue('fa-book');
+
         scope.record = {};
-        this.element = $compile(angular.element('<record-types record="record"></record-types>'))(scope);
+        this.element = $compile(angular.element('<record-icon record="record"></record-icon>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('recordTypes');
+        this.controller = this.element.controller('recordIcon');
     });
 
     afterEach(function() {
         $compile = null;
         scope = null;
-        catalogManagerSvc = null;
-        inArray = null;
+        catalogStateSvc = null;
         this.element.remove();
     });
 
+    describe('should initialize', function() {
+        it('with the icon of the record', function() {
+            expect(catalogStateSvc.getRecordIcon).toHaveBeenCalledWith(scope.record);
+            expect(this.controller.icon).toEqual('fa-book');
+        });
+    });
     describe('controller bound variable', function() {
-        it('record should be one way bound', function() {
-            this.controller.record = {'@type': []};
+        it('record is one way bound', function() {
+            this.controller.record = {test: true};
             scope.$digest();
             expect(scope.record).toEqual({});
         });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('RECORD-TYPES');
+            expect(this.element.prop('tagName')).toBe('RECORD-ICON');
         });
-        it('depending on how many types the record has', function() {
-            scope.record['@type'] = ['type0'];
-            scope.$digest();
-            expect(inArray).toHaveBeenCalledWith(scope.record['@type'], catalogManagerSvc.recordTypes);
-            expect(this.element.find('record-type').length).toBe(scope.record['@type'].length);
+        it('with a square icon', function() {
+            expect(this.element.querySelectorAll('.fa-square').length).toBe(1);
+        });
+        it('with an icon for the record', function() {
+            expect(this.element.querySelectorAll('.fa-book').length).toBe(1);
         });
     });
 });

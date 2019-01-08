@@ -21,5 +21,5 @@
   #L%
   -->
 <div class="record-types">
-    <record-type ng-repeat="type in record['@type'] | inArray:dvm.cm.recordTypes | orderBy" type="type"></record-type>
+    <record-type ng-repeat="type in dvm.record['@type'] | inArray:dvm.cm.recordTypes | orderBy" type="type"></record-type>
 </div>

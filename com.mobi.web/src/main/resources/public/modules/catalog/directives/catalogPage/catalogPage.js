@@ -24,29 +24,28 @@
     'use strict';
 
     /**
-     * @ngdoc overview
-     * @name catalogPage
+     * @ngdoc component
+     * @name catalogPage.component:catalogPage
+     * @requires  catalogState.service:catalogStateService
      *
      * @description
-     * The `catalogPage` module only provides the `catalogPage` component which creates the main
-     * {@link tabset.directive:tabset tabset} for the catalog module.
+     * `catalogPage` is a component which creates the main page of the Catalog module. The component contains different
+     * content depending on whether a catalog Record has been selected.
      */
-    angular
-        .module('catalog', [
-            /* Custom Components */
-            // 'branchList',
-            // 'catalogPage',
-            // 'entityDates',
-            // 'entityDescription',
-            // 'entityPublisher',
-            // 'recordFilters',
-            // 'recordIcon',
-            // 'recordSearch',
-            // 'recordsView',
-            // 'recordType',
-            // 'recordTypes',
-            // 'recordView',
-            // 'recordViewTabset',
-            // 'sortOptions'
-        ]);
+    const catalogPageComponent = {
+        templateUrl: 'modules/catalog/directives/catalogPage/catalogPage.html',
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: catalogPageComponentCtrl
+    };
+
+    catalogPageComponentCtrl.$inject = ['catalogStateService'];
+
+    function catalogPageComponentCtrl(catalogStateService) {
+        var dvm = this;
+        dvm.state = catalogStateService;
+    }
+
+    angular.module('catalog')
+        .component('catalogPage', catalogPageComponent);
 })();

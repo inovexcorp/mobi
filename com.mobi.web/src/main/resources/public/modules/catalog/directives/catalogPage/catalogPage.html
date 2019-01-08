@@ -20,6 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="sort-options form-group">
-    <select class="order-select form-control" ng-options="option as option.label for option in dvm.cm.sortOptions" ng-model="dvm.sortOption" ng-change="dvm.sort()"></select>
+<div class="catalog-page h-100 container-fluid">
+    <records-view ng-if="!dvm.state.selectedRecord"></records-view>
+    <record-view ng-if="dvm.state.selectedRecord"></record-view>
 </div>

@@ -20,6 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="sort-options form-group">
-    <select class="order-select form-control" ng-options="option as option.label for option in dvm.cm.sortOptions" ng-model="dvm.sortOption" ng-change="dvm.sort()"></select>
+<div class="record-search input-group">
+    <input type="text" class="form-control" placeholder="Search for..." ng-model="dvm.searchText" />
+    <span class="input-group-btn">
+        <button class="btn btn-primary" type="submit" ng-click="dvm.submitSearch()">Search</button>
+    </span>
 </div>
