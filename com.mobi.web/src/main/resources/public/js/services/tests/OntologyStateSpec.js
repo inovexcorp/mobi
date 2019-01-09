@@ -1812,7 +1812,7 @@ describe('Ontology State Service', function() {
                 spyOn(ontologyStateSvc, 'deleteOntologyBranch').and.returnValue($q.when());
             });
             it('and when getRecordVersions is resolved', function() {
-                catalogManagerSvc.getRecordVersions.and.returnValue($q.when([this.tag, {}]));
+                catalogManagerSvc.getRecordVersions.and.returnValue($q.when({data: [this.tag, {}]}));
                 ontologyStateSvc.removeBranch(this.recordId, this.branchId)
                     .then(_.noop, () => fail('Promise should have resolved'));
                 scope.$apply();
