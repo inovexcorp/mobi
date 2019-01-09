@@ -25,15 +25,14 @@
 
     /**
      * @ngdoc component
-     * @name entityPublisher.component:entityPublisher
+     * @name catalog.component:entityPublisher
      * @requires userManager.service:userManagerService
      * @requires utilService.service:utilService
      *
      * @description
-     * `entityPublisher` is a component which creates a div with a display of a JSON-LD object's
-     * dcterms:publisher property value. Retrieves the username of the publisher using the
-     * {@link userManager.service:userManagerService userManagerService}. The directive is replaced
-     * by the contents of its template.
+     * `entityPublisher` is a component which creates a div with a display of a JSON-LD object's dcterms:publisher
+     * property value. Retrieves the username of the publisher using the
+     * {@link userManager.service:userManagerService userManagerService}.
      *
      * @param {Object} entity A JSON-LD object
      */

@@ -25,28 +25,10 @@
 
     /**
      * @ngdoc overview
-     * @name catalogPage
+     * @name catalog
      *
      * @description
-     * The `catalogPage` module only provides the `catalogPage` component which creates the main
-     * {@link tabset.directive:tabset tabset} for the catalog module.
+     * The `catalog` module provides components that make up the Catalog module in the Mobi application.
      */
-    angular
-        .module('catalog', [
-            /* Custom Components */
-            // 'branchList',
-            // 'catalogPage',
-            // 'entityDates',
-            // 'entityDescription',
-            // 'entityPublisher',
-            // 'recordFilters',
-            // 'recordIcon',
-            // 'recordSearch',
-            // 'recordsView',
-            // 'recordType',
-            // 'recordTypes',
-            // 'recordView',
-            // 'recordViewTabset',
-            // 'sortOptions'
-        ]);
+    angular.module('catalog', []);
 })();

@@ -23,6 +23,18 @@
 (function() {
     'use strict';
 
+    /**
+     * @ngdoc component
+     * @name catalog.component:recordViewTabset
+     * @requires catalogManager.service:catalogManagerService
+     *
+     * @description
+     * `recordViewTabset` is a component which creates a {@link materialTabset.directive:materialTabset} with tabs
+     * displaying information about the provided catalog Record. If the Record is a VersionedRDFRecord, a tab with a
+     * {@link catalog.component:branchList} will be shown.
+     * 
+     * @param {Object} record A JSON-LD object for a catalog Record
+     */
     const recordViewTabsetComponent = {
         templateUrl: 'modules/catalog/directives/recordViewTabset/recordViewTabset.html',
         bindings: {

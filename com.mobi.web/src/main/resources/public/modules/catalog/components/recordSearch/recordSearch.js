@@ -25,17 +25,17 @@
 
     /**
      * @ngdoc component
-     * @name recordSearch.component:recordSearch
+     * @name catalog.component:recordSearch
      * @requires catalogManager.service:catalogManagerService
      *
      * @description
-     * `recordSearch` is a component which creates a Bootstrap `row` with a
-     * {@link catalogManager.service:catalogManagerService#recordTypes record type} filter select, a
-     * {@link catalogState.service:catalogStateService search text} input, and a submit button. A
-     * submission of this form will affect the
-     * {@link catalogState.service:catalogStateService#results list of records} shown in a
-     * {@link resultsBlock.directive:resultsBlock resultsBlock} and navigate back to the current
-     * {@link catalogState.service:catalogStateService#catalogs catalog}.
+     * `recordSearch` is a component which creates a Bootstrap `input-group` with a text input for searching through
+     * catalog Records and a submit button. The `searchText` will be the value of the input, but is one way bound. The
+     * `search` function is expected to update the `searchText` binding and will be run when the button is clicked.
+     * 
+     * @param {Function} search A function that expects a parameter called `searchText` and will be called when the
+     * "Search" button is clicked. This function should update the `searchText` binding.
+     * @param {string} searchText The value of the text input.
      */
     const recordSearchComponent = {
         templateUrl: 'modules/catalog/directives/recordSearch/recordSearch.html',

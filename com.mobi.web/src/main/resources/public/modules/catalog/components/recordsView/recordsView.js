@@ -31,13 +31,16 @@
      * @requires utilService.service:utilService
      *
      * @description
-     * `recordsView` is a component which creates a div with a {@link block.directive:block block}
-     * containing a paginated list of records in the current
-     * {@link catalogState.service:catalogStateService#catalogs catalog}. The paginated list includes a
-     * {@link paginationHeader.directive:paginationHeader paginationHeader} and a
-     * {@link catalogPagination.directive:catalogPagination catalogPagination}. Clicking a record in the
-     * list will add it to the current catalog's `openedPath`. The directive is replaced by the contents
-     * of its template.
+     * `recordsView` is a component which creates a div with a Bootstrap `row` containing a
+     * {@link block.directive:block} with a list of the Records in the Mobi instance. The list can be sorted using a
+     * {@link catalog.component:sortOptions}, searched using a {@link catalog.component:recordSearch}, and filtered
+     * using a {@link catalog.component:recordFilters}. The list is also {@link paging.directive:paging paginated}.
+     * Each Record is displayed with its title, {@link catalog.component:recordTypes types},
+     * {@link entityDates.directive:entityDates issued and modified dates},
+     * {@link catalog.component:entityPublisher publisher},
+     * {@link entityDescription.directive:entityDescription description}, and
+     * {@link recordKeywords.directive:recordKeywords keywords}. Clicking a Record in the list will select it in the
+     * {@link catalogState.service:catalogStateService}.
      */
     const recordsViewComponent = {
         templateUrl: 'modules/catalog/directives/recordsView/recordsView.html',

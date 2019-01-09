@@ -25,7 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name recordIcon.component:recordIcon
+     * @name catalog.component:recordIcon
      * @requires catalogState.service:catalogStateService
      *
      * @description

@@ -25,17 +25,18 @@
 
     /**
      * @ngdoc component
-     * @name recordFilters.component:recordFilters
+     * @name catalog.component:recordFilters
      * @requires catalogManager.service:catalogManagerService
      *
      * @description
-     * `recordFilters` is a component which creates a Bootstrap `row` with a
-     * {@link catalogManager.service:catalogManagerService#recordTypes record type} filter select, a
-     * {@link catalogState.service:catalogStateService search text} input, and a submit button. A
-     * submission of this form will affect the
-     * {@link catalogState.service:catalogStateService#results list of records} shown in a
-     * {@link resultsBlock.directive:resultsBlock resultsBlock} and navigate back to the current
-     * {@link catalogState.service:catalogStateService#catalogs catalog}.
+     * `recordFilters` is a component which creates a Bootstrap `form-group` with a
+     * {@link catalogManager.service:catalogManagerService record type} filter select. The `recordType` will be the
+     * value of the select, but is one way bound. The `changeFilter` function is expected to update the `recordType`
+     * binding.
+     * 
+     * @param {Function} changeFilter A function that expects a parameter called `recordType` and will be called when
+     * the value of the select is changed. This function should update the `recordType` binding.
+     * @param {string} recordType The value of the select. Should be a catalog Record type string.
      */
     const recordFiltersComponent = {
         templateUrl: 'modules/catalog/directives/recordFilters/recordFilters.html',

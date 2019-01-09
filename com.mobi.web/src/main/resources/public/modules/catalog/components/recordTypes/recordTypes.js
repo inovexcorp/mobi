@@ -24,19 +24,16 @@
     'use strict';
 
     /**
-     * @ngdoc directive
-     * @name recordTypes.directive:recordTypes
-     * @scope
-     * @restrict E
+     * @ngdoc component
+     * @name catalog.component:recordTypes
      * @requires catalogManager.service:catalogManagerService
      *
      * @description
-     * `recordTypes` is a directive that creates a div with a {@link recordType.directive:recordType recordType}
-     * for each of the passed record's "@type" values. The types are filtered based on whether they are in the list
-     * of record types in the {@link catalogManager.service:catalogMangerService catalogManagerService} and sorted
-     * alphabetically. The directive is replaced with the content of the template.
+     * `recordTypes` is a directive that creates a div with a {@link catalog.component:recordType recordType}
+     * for each of the passed catalog Record's "@type" values. The types are filtered based on whether they are in the
+     * list of record types in the {@link catalogManager.service:catalogMangerService} and sorted alphabetically.
      *
-     * @param {Object} record The JSON-LD object representing the record
+     * @param {Object} record A JSON-LD object representing a catalog Record
      */
     const recordTypesComponent = {
         templateUrl: 'modules/catalog/directives/recordTypes/recordTypes.html',

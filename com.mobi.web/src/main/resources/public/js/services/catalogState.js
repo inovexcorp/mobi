@@ -30,7 +30,7 @@
          *
          * @description
          * The `catalogState` module only provides the `catalogStateService` service which contains various variables to
-         * hold the state of the {@link catalogPage.component:catalogPage} and utility functions to update those
+         * hold the state of the {@link catalog.component:catalogPage} and utility functions to update those
          * variables.
          */
         .module('catalogState', [])
@@ -42,7 +42,7 @@
          *
          * @description
          * `catalogStateService` is a service which contains various variables to hold the state of the
-         * {@link catalogPage.component:catalogPage} and utility functions to update those variables.
+         * {@link catalog.component:catalogPage} and utility functions to update those variables.
          */
         .service('catalogStateService', catalogStateService);
 

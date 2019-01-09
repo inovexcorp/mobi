@@ -25,14 +25,13 @@
 
     /**
      * @ngdoc component
-     * @name recordType.component:recordType
+     * @name catalog.component:recordType
      * @requires catalogManager.service:catalogManagerService
      * @requires chroma
      *
      * @description
-     * `recordType` is a directive that creates a span with the Bootstrap 'label'
-     * class with different background colors for different record type IRIs. The
-     * directive is replaced with the content of the template.
+     * `recordType` is a directive that creates a span with the Bootstrap `label` class with different background colors
+     * for different record type IRIs.
      *
      * @param {string} type The record type IRI for record
      */

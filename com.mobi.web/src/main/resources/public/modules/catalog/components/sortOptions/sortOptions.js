@@ -24,23 +24,19 @@
     'use strict';
 
     /**
-     * @ngdoc directive
-     * @name sortOptions.directive:sortOptions
-     * @scope
-     * @restrict E
-     * @requires catalogState.service:cataStateService
+     * @ngdoc component
+     * @name catalog.component:sortOptions
      * @requires catalogManager.service:catalogManagerService
      *
      * @description
-     * `sortOptions` is a directive which creates a div with a select containing all
-     * {@link catalogManager.service:catalogManagerService#recordTypes record types} to set the sort
-     * option for the list determined by the passed `listKey` in the current
-     * {@link catalogState.service:catalogStateService#catalogs catalog}. An optional function can be
-     * passed in to be called when the value changes. The directive is replaced by the contents of its
-     * template.
+     * `sortOptions` is a component which creates a Bootstrap `form-group` with a select containing all sort options
+     * from the {@link catalogManager.service:catalogManagerService}. The `sortOption` will be the value of the select,
+     * but is one way bound. The `changeSort` function is expected to update the `sortOption` binding.
      *
-     * @param {string} listKey The key for the state for the paginated ist to set the sort option of
-     * @param {Function=undefined} changeSort The function to call when the sort option value changes
+     * @param {Function} changeSort A function that expects a parameter called `sortOption` and will be called when
+     * the value of the select is changed. This function should update the `sortOption` binding.
+     * @param {Object} sortOption A value from the `sortOptions` array in the
+     * {@link catalogManager.service:catalogManagerService}
      */
     const sortOptionsComponent = {
         templateUrl: 'modules/catalog/directives/sortOptions/sortOptions.html',

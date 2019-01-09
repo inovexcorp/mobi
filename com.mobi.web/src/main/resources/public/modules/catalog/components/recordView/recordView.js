@@ -25,24 +25,21 @@
 
     /**
      * @ngdoc component
-     * @name recordView.component:recordView
+     * @name catalog.component:recordView
      * @requires catalogState.service:cataStateService
      * @requires catalogManager.service:catalogManagerService
      * @requires utilService.service:utilService
      * @requires prefixes.service:prefixes
+     * @requires userManager.service:userManagerService
      *
      * @description
-     * `recordView` is a component which creates a div with a {@link block.directive:block block}
-     * containing all information about the currently opened record in the current
-     * {@link catalogState.service:catalogStateService#catalogs catalog}. This record is retrieved from the
-     * current catalog's opened path. Information displayed includes the
-     * record's title, {@link recordTypes.directive:recordTypes types}, issued and modified
-     * {@link entityDates.directive:entityDates dates},
-     * {@link entityDescription.directive:entityDescription description}, and
-     * {@link recordKeywords.directive:recordKeywords keywords}. If the record is a `VersionedRdfRecord`, an
-     * infinite scrolled list of branches is loaded 10 at a time. Clicking on a branch will expand the expansion
-     * panel, providing the branch description and a {@link commitHistoryTable.directive:commitHistoryTable}. The
-     * directive is replaced by the contents of its template.
+     * `recordView` is a component which creates a div with a Bootstrap `row` containing columns displaying different
+     * information about the currently {@link catalogState.service:catalogStateService selected catalog Record}. The
+     * first column just contains a button to go back to the {@link catalog.component:catalogPage}. The second column
+     * contains a display of the Record's title, description, and {@link catalog.component:recordIcon icon} along with a
+     * {@link catalog.component:recordViewTabset}. The third column contains the Record's publisher, modified date,
+     * issued date, and keywords. On initialization of the component, it will re-retrieve the Record to ensure that it
+     * still exists.
      */
     const recordViewComponent = {
         templateUrl: 'modules/catalog/directives/recordView/recordView.html',
