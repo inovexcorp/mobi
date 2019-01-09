@@ -1247,8 +1247,8 @@
                     _.remove(listItem.branches, {'@id': branchId});
                     return cm.getRecordVersions(recordId, catalogId);
                 }, $q.reject)
-                .then(versions => {
-                    listItem.tags = _.filter(versions, version => _.includes(_.get(version, '@type'), prefixes.catalog + 'Tag'));
+                .then(response => {
+                    listItem.tags = _.filter(response.data, version => _.includes(_.get(version, '@type'), prefixes.catalog + 'Tag'));
                 }, $q.reject);
             }
             self.afterSave = function() {
