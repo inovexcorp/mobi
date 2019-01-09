@@ -417,6 +417,7 @@ describe('Open Ontology Select component', function() {
                             expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
                             expect(utilSvc.createWarningToast).toHaveBeenCalledWith(jasmine.stringMatching('Commit'));
                             expect(this.controller.changeEntity).toHaveBeenCalledWith({'@id': 'master', '@type': [prefixes.catalog + 'Branch']});
+                            expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalledWith(scope.listItem);
                         });
                     });
                     describe('and a tag is checked out', function() {
@@ -501,6 +502,7 @@ describe('Open Ontology Select component', function() {
                 expect(catalogManagerSvc.deleteRecordVersion).toHaveBeenCalledWith(this.tagId, this.recordId, this.catalogId);
                 expect(this.controller.listItem.tags).not.toContain(this.tag);
                 expect(this.controller.selectList).not.toContain(this.tag);
+                expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalledWith(scope.listItem);
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
             it('when deleteRecordVersion is rejected', function() {

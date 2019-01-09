@@ -150,16 +150,22 @@
             }
             function testOntology(ontologyRecord) {
                 var item = _.find(os.list, {ontologyRecord: {recordId: ontologyRecord['@id']}});
+                var toast = false;
                 if (item) {
                     if (_.get(item, 'ontologyRecord.branchId') === dvm.branchId) {
                         item.upToDate = false;
                         if (item.merge.active) {
                             dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor for ' + dvm.util.getDctermsValue(ontologyRecord, 'title') + ' that is out of date. Please reopen the merge form.', {timeOut: 5000});
+                            toast = true;
                         }
                     }
                     if (item.merge.active && _.get(item.merge.target, '@id') === dvm.branchId) {
                         dvm.util.createWarningToast('You have a merge in progress in the Ontology Editor for ' + dvm.util.getDctermsValue(ontologyRecord, 'title') + ' that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
+                        toast = true;
                     }
+                }
+                if (!toast) {
+                    dvm.util.createSuccessToast('Successfully ran mapping');
                 }
             }
         }
