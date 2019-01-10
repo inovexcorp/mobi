@@ -20,9 +20,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="record-filters form-group">
-    <select class="form-control" ng-model="dvm.recordType" ng-change="dvm.filter()">
-        <option value="">Filter</option>
-        <option ng-repeat="type in dvm.cm.recordTypes" value="{{type}}">{{(type | splitIRI).end}}</option>
-    </select>
+<div class="record-filters">
+    <div class="filter-container">
+        <h5 class="record-filter-header text-muted d-flex justify-content-between" ng-click="dvm.hide = !dvm.hide" data-toggle="collapse" data-target="#filter_options_{{$id}}" aria-expanded="true" aria-controls="filter_options_{{$id}}">
+            <span>Record Type</span>
+            <span><i class="material-icons">{{dvm.hide ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}}</i></span>
+        </h5>
+        <div class="filter-options collapse" id="filter_options_{{$id}}">
+            <div class="filter-option my-2" ng-repeat="filter in dvm.recordTypes">
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="filter-checkbox_{{$id}}" ng-model="filter.checked" ng-change="dvm.filter(filter)">
+                    <label class="custom-control-label" for="filter-checkbox_{{$id}}">{{(filter.value | splitIRI).end}}</label>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

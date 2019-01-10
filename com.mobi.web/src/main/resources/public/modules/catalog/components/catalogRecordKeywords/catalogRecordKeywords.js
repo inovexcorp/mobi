@@ -20,37 +20,43 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
+(function () {
     'use strict';
 
     /**
      * @ngdoc component
-     * @name catalog.component:recordTypes
-     * @requires catalogManager.service:catalogManagerService
+     * @name catalog.component:catalogRecordKeywords
      *
      * @description
-     * `recordTypes` is a directive that creates a div with a {@link catalog.component:recordType recordType}
-     * for each of the passed catalog Record's "@type" values. The types are filtered based on whether they are in the
-     * list of record types in the {@link catalogManager.service:catalogMangerService} and sorted alphabetically.
-     *
-     * @param {Object} record A JSON-LD object representing a catalog Record
+     * `catalogRecordKeywords` is a component which creates a div with 
      */
-    const recordTypesComponent = {
-        templateUrl: 'modules/catalog/components/recordTypes/recordTypes.html',
+    const catalogRecordKeywordsComponent = {
+        templateUrl: 'modules/catalog/components/catalogRecordKeywords/catalogRecordKeywords.html',
         bindings: {
             record: '<'
         },
         controllerAs: 'dvm',
-        controller: recordTypesComponentCtrl
+        controller: catalogRecordKeywordsComponentCtrl
     };
 
-    recordTypesComponentCtrl.$inject = ['catalogManagerService'];
+    catalogRecordKeywordsComponentCtrl.$inject = ['prefixes'];
 
-    function recordTypesComponentCtrl(catalogManagerService) {
+    function catalogRecordKeywordsComponentCtrl(prefixes) {
         var dvm = this;
-        dvm.cm = catalogManagerService;
+        dvm.keywords = [];
+
+        dvm.$onInit = function() {
+            dvm.keywords = getKeywords();
+        }
+        dvm.$onChanges = function() {
+            dvm.keywords = getKeywords();
+        }
+
+        function getKeywords() {
+            return _.map(_.get(dvm.record, prefixes.catalog + 'keyword', []), '@value').sort();
+        }
     }
 
     angular.module('catalog')
-        .component('recordTypes', recordTypesComponent);
+        .component('catalogRecordKeywords', catalogRecordKeywordsComponent);
 })();

@@ -4,7 +4,7 @@
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -20,6 +20,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="record-types">
-    <record-type ng-repeat="type in dvm.record['@type'] | inArray:dvm.cm.recordTypes | orderBy" type="type"></record-type>
+<div class="card record-card" ng-click="dvm.clickCard()" ng-class="{'clickable': !!dvm.clickCard}">
+    <div class="card-body">
+        <h5 class="card-title">{{dvm.title}}</h5>
+        <h6 class="card-subtitle mb-2 text-muted"><record-icon record="dvm.record"></record-icon> <record-type record="dvm.record"></record-type> &bull; Updated {{dvm.modified}}</h6>
+        <p class="card-text record-description">{{dvm.description}}</p>
+        <catalog-record-keywords record="dvm.record"></catalog-record-keywords>
+    </div>
+    <div class="card-footer">
+        <entity-publisher entity="dvm.record" class="text-muted"></entity-publisher>
+    </div>
 </div>

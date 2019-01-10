@@ -74,6 +74,9 @@
             dvm.state.currentRecordPage = 1;
             dvm.setRecords(dvm.state.recordSearchText, recordType, dvm.state.recordSortOption);
         }
+        dvm.searchRecords = function() {
+            dvm.search(dvm.state.recordSearchText);
+        }
         dvm.search = function(searchText) {
             dvm.state.currentRecordPage = 1;
             dvm.setRecords(searchText, dvm.state.recordFilterType, dvm.state.recordSortOption);

@@ -38,21 +38,29 @@
     const recordTypeComponent = {
         templateUrl: 'modules/catalog/components/recordType/recordType.html',
         bindings: {
-            type: '<'
+            record: '<'
         },
         controllerAs: 'dvm',
         controller: recordTypeComponentCtrl
     };
 
-    recordTypeComponentCtrl.$inject = ['catalogManagerService', 'chroma'];
+    recordTypeComponentCtrl.$inject = ['catalogManagerService', 'utilService', 'prefixes'];
 
-    function recordTypeComponentCtrl(catalogManagerService, chroma) {
+    function recordTypeComponentCtrl(catalogManagerService, utilService, prefixes) {
         var dvm = this;
+        var util = utilService;
         var cm = catalogManagerService;
-        var colors = chroma.scale('Set1').colors(cm.recordTypes.length);
+        dvm.type = '';
 
-        dvm.getColor = function(type) {
-            return _.get(colors, cm.recordTypes.indexOf(type));
+        dvm.$onInit = function() {
+            dvm.type = getType();
+        }
+        dvm.$onChanges = function() {
+            dvm.type = getType();
+        }
+        function getType() {
+            var type = _.find(_.difference(cm.recordTypes, cm.coreRecordTypes), type => _.includes(_.get(dvm.record, '@type', []), type));
+            return util.getBeautifulIRI(type || prefixes.catalog + 'Record');
         }
     }
 

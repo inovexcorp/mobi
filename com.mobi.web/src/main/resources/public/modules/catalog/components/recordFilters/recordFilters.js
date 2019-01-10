@@ -53,9 +53,28 @@
     function recordFiltersComponentCtrl(catalogManagerService) {
         var dvm = this;
         dvm.cm = catalogManagerService;
+        dvm.hide = false;
+        dvm.recordTypes = [];
 
-        dvm.filter = function() {
-            dvm.changeFilter({recordType: dvm.recordType});
+        dvm.$onInit = function() {
+            dvm.recordTypes = _.map(dvm.cm.recordTypes, type => ({
+                value: type,
+                checked: type === dvm.recordType
+            }));
+        }
+        dvm.filter = function(filter) {
+            if (filter.checked) {
+                _.forEach(dvm.recordTypes, typeFilter => {
+                    if (typeFilter.value !== filter.value) {
+                        typeFilter.checked = false;
+                    }
+                });
+                dvm.changeFilter({recordType: filter.value});
+            } else {
+                if (dvm.recordType === filter.value) {
+                    dvm.changeFilter({recordType: ''});
+                }
+            }
         }
     }
 

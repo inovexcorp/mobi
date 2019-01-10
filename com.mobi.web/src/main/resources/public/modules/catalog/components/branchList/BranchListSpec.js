@@ -84,7 +84,7 @@ describe('Branch List component', function() {
             expect(this.controller.branches).toEqual(this.branches);
             expect(this.controller.totalSize).toEqual(this.totalSize);
         });
-    })
+    });
     describe('controller bound variable', function() {
         it('record is one way bound', function() {
             this.controller.record = {};

@@ -58,6 +58,21 @@
 
             /**
              * @ngdoc property
+             * @name coreRecordTypes
+             * @propertyOf catalogManager.service:catalogManagerService
+             * @type {string[]}
+             *
+             * @description
+             * `coreRecordTypes` contains a list of IRI strings of all the core types of Records defined by Mobi.
+             */
+            self.coreRecordTypes = [
+                prefixes.catalog + 'Record',
+                prefixes.catalog + 'UnversionedRecord',
+                prefixes.catalog + 'VersionedRecord',
+                prefixes.catalog + 'VersionedRDFRecord'
+            ];
+            /**
+             * @ngdoc property
              * @name sortOptions
              * @propertyOf catalogManager.service:catalogManagerService
              * @type {Object[]}
