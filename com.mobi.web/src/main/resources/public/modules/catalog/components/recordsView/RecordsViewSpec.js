@@ -101,52 +101,40 @@ describe('Records View component', function() {
             expect(this.controller.setRecords).toHaveBeenCalledWith('test', catalogStateSvc.recordFilterType, catalogStateSvc.recordSortOption);
         });
     });
-    // describe('contains the correct html', function() {
-    //     it('for wrapping containers', function() {
-    //         expect(this.element.hasClass('results-block')).toBe(true);
-    //     });
-    //     it('with a block', function() {
-    //         expect(this.element.find('block').length).toBe(1);
-    //     });
-    //     it('with a block-header', function() {
-    //         expect(this.element.find('block-header').length).toBe(1);
-    //     });
-    //     it('with a block-content', function() {
-    //         expect(this.element.find('block-content').length).toBe(1);
-    //     });
-    //     it('with a block-footer', function() {
-    //         expect(this.element.find('block-footer').length).toBe(1);
-    //     });
-    //     it('with a catalog-breadcrumb', function() {
-    //         expect(this.element.find('catalog-breadcrumb').length).toBe(1);
-    //     });
-    //     it('with a catalog-pagination', function() {
-    //         expect(this.element.find('catalog-pagination').length).toBe(1);
-    //     });
-    //     it('with a pagination-header', function() {
-    //         expect(this.element.find('pagination-header').length).toBe(1);
-    //     });
-    //     it('depending on how many records the current catalog has', function() {
-    //         catalogStateSvc.results = [{}];
-    //         scope.$digest();
-    //         var branches = this.element.querySelectorAll('.results-list button.record');
-    //         expect(branches.length).toBe(catalogStateSvc.results.length);
-    //         for (var i = 0; i < branches.length; i++) {
-    //             var branch = angular.element(branches[i]);
-    //             expect(branch.find('record-types').length).toBe(1);
-    //             expect(branch.find('entity-dates').length).toBe(1);
-    //             expect(branch.find('entity-description').length).toBe(1);
-    //             expect(branch.find('record-keywords').length).toBe(1);
-    //         }
-    //     });
-    // });
-    // it('should call openRecord when a record button is clicked', function() {
-    //     catalogStateSvc.results = [{}];
-    //     spyOn(this.controller, 'openRecord');
-    //     scope.$digest();
+    describe('contains the correct html', function() {
+        it('for wrapping containers', function() {
+            expect(this.element.prop('tagName')).toEqual('RECORDS-VIEW');
+            expect(this.element.querySelectorAll('.records-view.row').length).toEqual(1);
+            expect(this.element.querySelectorAll('.col-10').length).toEqual(1);
+        });
+        ['block', 'block-header', 'block-content', 'block-footer', 'paging', 'record-filters', 'record-search', 'sort-options'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
+        });
+        it('depending on how many records match the current query', function() {
+            expect(this.element.querySelectorAll('.results-list .record').length).toEqual(this.records.length);
+            expect(this.element.querySelectorAll('block-content info-message').length).toEqual(0);
 
-    //     var button = angular.element(this.element.querySelectorAll('.results-list button.record')[0]);
-    //     button.triggerHandler('click');
-    //     expect(this.controller.openRecord).toHaveBeenCalledWith(catalogStateSvc.results[0]);
-    // });
+            this.controller.records = [];
+            scope.$digest();
+            expect(this.element.querySelectorAll('.results-list .record').length).toEqual(0);
+            expect(this.element.querySelectorAll('block-content info-message').length).toEqual(1);
+        });
+        it('with the correct information for each record', function() {
+            var record = angular.element(this.element.querySelectorAll('.results-list .record')[0]);
+            expect(record.find('record-types').length).toEqual(1);
+            expect(record.find('h3').length).toEqual(1);
+            expect(record.find('entity-dates').length).toEqual(1);
+            expect(record.find('entity-publisher').length).toEqual(1);
+            expect(record.find('entity-description').length).toEqual(1);
+            expect(record.find('record-keywords').length).toEqual(1);
+        });
+    });
+    it('should call openRecord when a record button is clicked', function() {
+        spyOn(this.controller, 'openRecord');
+        var button = angular.element(this.element.querySelectorAll('.results-list button.record')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.openRecord).toHaveBeenCalledWith(this.records[0]);
+    });
 });
