@@ -38,7 +38,7 @@
      * @param {string} searchText The value of the text input.
      */
     const recordSearchComponent = {
-        templateUrl: 'modules/catalog/directives/recordSearch/recordSearch.html',
+        templateUrl: 'modules/catalog/components/recordSearch/recordSearch.html',
         bindings: {
             search: '&',
             searchText: '<',

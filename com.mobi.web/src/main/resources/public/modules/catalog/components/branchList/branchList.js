@@ -39,7 +39,7 @@
      * @param {Object} record A JSON-LD object for a catalog Record
      */
     const branchListComponent = {
-        templateUrl: 'modules/catalog/directives/branchList/branchList.html',
+        templateUrl: 'modules/catalog/components/branchList/branchList.html',
         bindings: {
             record: '<'
         },

@@ -33,7 +33,7 @@
      * content depending on whether a catalog Record has been selected.
      */
     const catalogPageComponent = {
-        templateUrl: 'modules/catalog/directives/catalogPage/catalogPage.html',
+        templateUrl: 'modules/catalog/components/catalogPage/catalogPage.html',
         bindings: {},
         controllerAs: 'dvm',
         controller: catalogPageComponentCtrl

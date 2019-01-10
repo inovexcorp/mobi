@@ -42,7 +42,7 @@
      * still exists.
      */
     const recordViewComponent = {
-        templateUrl: 'modules/catalog/directives/recordView/recordView.html',
+        templateUrl: 'modules/catalog/components/recordView/recordView.html',
         bindings: {},
         controllerAs: 'dvm',
         controller: recordViewComponentCtrl

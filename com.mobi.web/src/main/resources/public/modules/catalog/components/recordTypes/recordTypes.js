@@ -36,7 +36,7 @@
      * @param {Object} record A JSON-LD object representing a catalog Record
      */
     const recordTypesComponent = {
-        templateUrl: 'modules/catalog/directives/recordTypes/recordTypes.html',
+        templateUrl: 'modules/catalog/components/recordTypes/recordTypes.html',
         bindings: {
             record: '<'
         },

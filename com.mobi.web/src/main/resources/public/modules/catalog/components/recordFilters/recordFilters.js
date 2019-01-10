@@ -39,7 +39,7 @@
      * @param {string} recordType The value of the select. Should be a catalog Record type string.
      */
     const recordFiltersComponent = {
-        templateUrl: 'modules/catalog/directives/recordFilters/recordFilters.html',
+        templateUrl: 'modules/catalog/components/recordFilters/recordFilters.html',
         bindings: {
             changeFilter: '&',
             recordType: '<'

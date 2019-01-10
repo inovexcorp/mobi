@@ -36,7 +36,7 @@
      * @param {Object} record A JSON-LD object for a catalog Record
      */
     const recordViewTabsetComponent = {
-        templateUrl: 'modules/catalog/directives/recordViewTabset/recordViewTabset.html',
+        templateUrl: 'modules/catalog/components/recordViewTabset/recordViewTabset.html',
         bindings: {
             record: '<'
         },

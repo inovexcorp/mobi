@@ -36,7 +36,7 @@
      * @param {string} type The record type IRI for record
      */
     const recordTypeComponent = {
-        templateUrl: 'modules/catalog/directives/recordType/recordType.html',
+        templateUrl: 'modules/catalog/components/recordType/recordType.html',
         bindings: {
             type: '<'
         },
