@@ -27,10 +27,8 @@ describe('Records View component', function() {
         module('templates');
         module('catalog');
         mockComponent('catalog', 'recordFilters');
-        mockComponent('catalog', 'recordSearch');
+        mockComponent('catalog', 'recordCard');
         mockComponent('catalog', 'sortOptions');
-        mockComponent('catalog', 'recordTypes');
-        mockComponent('catalog', 'entityPublisher');
         mockCatalogManager();
         mockCatalogState();
         mockUtil();
@@ -95,6 +93,11 @@ describe('Records View component', function() {
             expect(this.controller.setRecords).toHaveBeenCalledWith(catalogStateSvc.recordSearchText, 'test', catalogStateSvc.recordSortOption);
         });
         it('should search for records', function() {
+            spyOn(this.controller, 'search');
+            this.controller.searchRecords();
+            expect(this.controller.search).toHaveBeenCalledWith(catalogStateSvc.recordSearchText);
+        });
+        it('should search for records with a provided search text', function() {
             spyOn(this.controller, 'setRecords');
             this.controller.search('test');
             expect(catalogStateSvc.currentRecordPage).toEqual(1);
@@ -105,36 +108,20 @@ describe('Records View component', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('RECORDS-VIEW');
             expect(this.element.querySelectorAll('.records-view.row').length).toEqual(1);
-            expect(this.element.querySelectorAll('.col-10').length).toEqual(1);
         });
-        ['block', 'block-header', 'block-content', 'block-footer', 'paging', 'record-filters', 'record-search', 'sort-options'].forEach(test => {
+        ['paging', 'record-filters', 'search-bar', 'sort-options'].forEach(test => {
             it('with a ' + test, function() {
                 expect(this.element.find(test).length).toBe(1);
             });
         });
         it('depending on how many records match the current query', function() {
-            expect(this.element.querySelectorAll('.results-list .record').length).toEqual(this.records.length);
-            expect(this.element.querySelectorAll('block-content info-message').length).toEqual(0);
+            expect(this.element.find('record-card').length).toEqual(this.records.length);
+            expect(this.element.find('info-message').length).toEqual(0);
 
             this.controller.records = [];
             scope.$digest();
-            expect(this.element.querySelectorAll('.results-list .record').length).toEqual(0);
-            expect(this.element.querySelectorAll('block-content info-message').length).toEqual(1);
+            expect(this.element.find('record-card').length).toEqual(0);
+            expect(this.element.find('info-message').length).toEqual(1);
         });
-        it('with the correct information for each record', function() {
-            var record = angular.element(this.element.querySelectorAll('.results-list .record')[0]);
-            expect(record.find('record-types').length).toEqual(1);
-            expect(record.find('h3').length).toEqual(1);
-            expect(record.find('entity-dates').length).toEqual(1);
-            expect(record.find('entity-publisher').length).toEqual(1);
-            expect(record.find('entity-description').length).toEqual(1);
-            expect(record.find('record-keywords').length).toEqual(1);
-        });
-    });
-    it('should call openRecord when a record button is clicked', function() {
-        spyOn(this.controller, 'openRecord');
-        var button = angular.element(this.element.querySelectorAll('.results-list button.record')[0]);
-        button.triggerHandler('click');
-        expect(this.controller.openRecord).toHaveBeenCalledWith(this.records[0]);
     });
 });

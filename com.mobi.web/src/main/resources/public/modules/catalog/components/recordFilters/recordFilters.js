@@ -29,14 +29,15 @@
      * @requires catalogManager.service:catalogManagerService
      *
      * @description
-     * `recordFilters` is a component which creates a Bootstrap `form-group` with a
-     * {@link catalogManager.service:catalogManagerService record type} filter select. The `recordType` will be the
-     * value of the select, but is one way bound. The `changeFilter` function is expected to update the `recordType`
-     * binding.
+     * `recordFilters` is a component which creates a div with collapsible containers for various filters that can be
+     * performed on catalog Records. Each filter option has a checkbox to indicate whether that filter is active. These
+     * filter categories currently only incldue {@link catalogManager.service:catalogManagerService record types}. The
+     * `recordType` will be the selectd record type filter, but is one way bound. The `changeFilter` function is
+     * expected to update the `recordType` binding.
      * 
      * @param {Function} changeFilter A function that expects a parameter called `recordType` and will be called when
      * the value of the select is changed. This function should update the `recordType` binding.
-     * @param {string} recordType The value of the select. Should be a catalog Record type string.
+     * @param {string} recordType The selected record type filter. Should be a catalog Record type string.
      */
     const recordFiltersComponent = {
         templateUrl: 'modules/catalog/components/recordFilters/recordFilters.html',

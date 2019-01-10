@@ -31,16 +31,12 @@
      * @requires utilService.service:utilService
      *
      * @description
-     * `recordsView` is a component which creates a div with a Bootstrap `row` containing a
-     * {@link block.directive:block} with a list of the Records in the Mobi instance. The list can be sorted using a
-     * {@link catalog.component:sortOptions}, searched using a {@link catalog.component:recordSearch}, and filtered
-     * using a {@link catalog.component:recordFilters}. The list is also {@link paging.directive:paging paginated}.
-     * Each Record is displayed with its title, {@link catalog.component:recordTypes types},
-     * {@link entityDates.directive:entityDates issued and modified dates},
-     * {@link catalog.component:entityPublisher publisher},
-     * {@link entityDescription.directive:entityDescription description}, and
-     * {@link recordKeywords.directive:recordKeywords keywords}. Clicking a Record in the list will select it in the
-     * {@link catalogState.service:catalogStateService}.
+     * `recordsView` is a component which creates a div with a Bootstrap `row` containing a list of Records in the Mobi
+     * instance. The list can be sorted using a {@link catalog.component:sortOptions}, searched using a
+     * {@link searchBar.component:searchBar}, and filtered using a {@link catalog.component:recordFilters}. The list is
+     * also {@link paging.directive:paging paginated}. Each Record is displayed using a
+     * {@link catalog.component:recordCard} that will select the Record it in the
+     * {@link catalogState.service:catalogStateService} when clicked.
      */
     const recordsViewComponent = {
         templateUrl: 'modules/catalog/components/recordsView/recordsView.html',

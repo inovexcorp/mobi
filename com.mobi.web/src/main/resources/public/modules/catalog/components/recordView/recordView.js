@@ -30,16 +30,16 @@
      * @requires catalogManager.service:catalogManagerService
      * @requires utilService.service:utilService
      * @requires prefixes.service:prefixes
-     * @requires userManager.service:userManagerService
      *
      * @description
      * `recordView` is a component which creates a div with a Bootstrap `row` containing columns displaying different
      * information about the currently {@link catalogState.service:catalogStateService selected catalog Record}. The
      * first column just contains a button to go back to the {@link catalog.component:catalogPage}. The second column
      * contains a display of the Record's title, description, and {@link catalog.component:recordIcon icon} along with a
-     * {@link catalog.component:recordViewTabset}. The third column contains the Record's publisher, modified date,
-     * issued date, and keywords. On initialization of the component, it will re-retrieve the Record to ensure that it
-     * still exists.
+     * {@link catalog.component:recordViewTabset}. The third column contains the Record's
+     * {@link catalog.component:entityPublisher publisher}, modified date, issued date, and
+     * {@link catalog.component:catalogRecordKeywords keywords}. On initialization of the component, it will re-retrieve
+     * the Record to ensure that it still exists.
      */
     const recordViewComponent = {
         templateUrl: 'modules/catalog/components/recordView/recordView.html',

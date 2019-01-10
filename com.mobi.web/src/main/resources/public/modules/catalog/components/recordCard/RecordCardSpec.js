@@ -1,3 +1,25 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
 describe('Record Card component', function() {
     var $compile, scope, utilSvc;
 
@@ -20,7 +42,8 @@ describe('Record Card component', function() {
         utilSvc.getDate.and.returnValue('date');
 
         scope.record = {};
-        this.element = $compile(angular.element('<record-card></record-card>'))(scope);
+        scope.clickCard = jasmine.createSpy('clickCard');
+        this.element = $compile(angular.element('<record-card record="record" click-card="clickCard()"></record-card>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('recordCard');
     });
@@ -32,6 +55,17 @@ describe('Record Card component', function() {
         this.element.remove();
     });
 
+    describe('controller bound variable', function() {
+        it('record should be one way bound', function() {
+            this.controller.record = {a: 'b'};
+            scope.$digest();
+            expect(scope.record).toEqual({});
+        });
+        it('clickCard is called in the parent scope', function() {
+            this.controller.clickCard();
+            expect(scope.clickCard).toHaveBeenCalled();
+        });
+    });
     describe('should initialize', function() {
         it('with a title, description, and modified date', function() {
             expect(this.controller.title).toEqual('title');
@@ -51,5 +85,10 @@ describe('Record Card component', function() {
                 expect(this.element.find(test).length).toBe(1);
             });
         });
+    });
+    it('should call clickCard when the card is clicked', function() {
+        var card = angular.element(this.element.querySelectorAll('.card')[0]);
+        card.triggerHandler('click');
+        expect(scope.clickCard).toHaveBeenCalled();
     });
 });

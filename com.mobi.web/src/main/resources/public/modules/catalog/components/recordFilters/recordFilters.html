@@ -26,8 +26,8 @@
             <span>Record Type</span>
             <span><i class="material-icons">{{dvm.hide ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}}</i></span>
         </h5>
-        <div class="filter-options collapse" id="filter_options_{{$id}}">
-            <div class="filter-option my-2" ng-repeat="filter in dvm.recordTypes">
+        <div class="filter-options collapse show" id="filter_options_{{$id}}">
+            <div class="filter-option my-2" ng-repeat="filter in dvm.recordTypes track by filter.value">
                 <div class="custom-control custom-checkbox">
                     <input type="checkbox" class="custom-control-input" id="filter-checkbox_{{$id}}" ng-model="filter.checked" ng-change="dvm.filter(filter)">
                     <label class="custom-control-label" for="filter-checkbox_{{$id}}">{{(filter.value | splitIRI).end}}</label>
