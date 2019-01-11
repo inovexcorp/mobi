@@ -59,6 +59,7 @@ import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
+import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.RDFParserRegistry;
 import org.eclipse.rdf4j.rio.Rio;
@@ -860,7 +861,7 @@ public class SimpleOntology implements Ontology {
                     parser.parse(markSupported, "");
                     LOG.debug("File is {} formatted.", format.getName());
                     break;
-                } catch (UnsupportedRDFormatException | OWLRuntimeException e) {
+                } catch (RDFParseException | UnsupportedRDFormatException | OWLRuntimeException e) {
                     markSupported.reset();
                     LOG.info("File is not {} formatted.", format.getName());
                 }
