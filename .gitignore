@@ -24,4 +24,5 @@ node_modules/
 */docs/
 dependency-reduced-pom.xml
 **/package-lock.json
+.vscode
 
