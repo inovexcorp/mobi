@@ -844,10 +844,10 @@ public class SimpleOntology implements Ontology {
                 OWLAPIRDFFormat.MANCHESTER_OWL, OWLAPIRDFFormat.OWL_FUNCTIONAL));
 
         Iterator<RDFFormat> rdfFormatIterator = formats.iterator();
-        InputStream markSupported = inputStream.markSupported() ? inputStream : new BufferedInputStream(inputStream);
+        InputStream ontologyData = inputStream.markSupported() ? inputStream : new BufferedInputStream(inputStream);
 
         try {
-            markSupported.mark(0);
+            ontologyData.mark(0);
 
             while (rdfFormatIterator.hasNext()) {
                 RDFFormat format = rdfFormatIterator.next();
@@ -855,23 +855,17 @@ public class SimpleOntology implements Ontology {
                     RDFParser parser = Rio.createParser(format);
                     StatementCollector collector = new StatementCollector(model);
                     parser.setRDFHandler(collector);
-                    if (format == RDFFormat.RDFXML || format == OWLAPIRDFFormat.OWL_XML) {
-                        parser.getParserConfig().set(XMLParserSettings.DISALLOW_DOCTYPE_DECL, false);
-                    }
-                    parser.parse(markSupported, "");
+                    parser.getParserConfig().set(XMLParserSettings.DISALLOW_DOCTYPE_DECL, false);
+                    parser.parse(ontologyData, "");
                     LOG.debug("File is {} formatted.", format.getName());
                     break;
                 } catch (RDFParseException | UnsupportedRDFormatException | OWLRuntimeException e) {
-                    markSupported.reset();
+                    ontologyData.reset();
                     LOG.info("File is not {} formatted.", format.getName());
                 }
             }
         } finally {
-            if (markSupported != null) {
-                IOUtils.closeQuietly(markSupported);
-            } else {
-                IOUtils.closeQuietly(inputStream);
-            }
+            IOUtils.closeQuietly(ontologyData);
         }
 
         if (model.isEmpty()) {
