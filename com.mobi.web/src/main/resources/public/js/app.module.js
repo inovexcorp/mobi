@@ -39,7 +39,6 @@
             'ui.codemirror',
             'ui.router',
             'ui.select',
-            'vs-repeat',
 
             /* Custom Filters */
             'beautify',
