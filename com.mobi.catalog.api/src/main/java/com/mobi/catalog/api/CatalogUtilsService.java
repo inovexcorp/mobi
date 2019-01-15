@@ -587,6 +587,18 @@ public interface CatalogUtilsService {
     List<Resource> getCommitChain(Resource commitId, boolean asc, RepositoryConnection conn);
 
     /**
+     * Gets a List which represents the commit chain from the initial commit to the specified commit in either
+     * ascending or descending date order.
+     *
+     * @param commitId The Resource identifying the Commit that you want to get the chain for.
+     * @param entityId The Resource identifying the Entity that you want to get the chain for.
+     * @param conn     The RepositoryConnection which will be queried for the Commits.
+     * @param asc      Whether or not the List should be ascending by date
+     * @return List of Resource ids for the requested Commits.
+     */
+    List<Resource> getCommitChain(Resource commitId, Resource entityId, boolean asc, RepositoryConnection conn);
+
+    /**
      * Gets the Model which represents the entity at the instance of theCommit identified by the first Resource in
      * the provided List using previous Commit data to construct it.
      *
@@ -644,6 +656,38 @@ public interface CatalogUtilsService {
      */
     List<Resource> getDifferenceChain(Resource sourceCommitId, Resource targetCommitId, RepositoryConnection conn,
                                       boolean asc);
+
+    /**
+     * Gets the commit chain between two commits, i.e. the list of commits between {@code sourceCommitId} and
+     * {@code targetCommitId} in descending order.
+     *
+     * @param sourceCommitId Source commit
+     * @param targetCommitId Target commit
+     * @param targetEntityId Target entity
+     * @param conn           Repo connection
+     * @return Commit chain between two commits
+     * @throws IllegalArgumentException Thrown if either Commit could not be found or the Commits have no common parent.
+     * @throws IllegalStateException    Thrown if a Commit in either chain does not have the additions/deletions set.
+     */
+    List<Resource> getDifferenceChain(Resource sourceCommitId, Resource targetCommitId, Resource targetEntityId,
+                                      RepositoryConnection conn);
+
+    /**
+     * Gets the commit chain between two commits, i.e. the list of commits between {@code sourceCommitId} and
+     * {@code targetCommitId} in the order specified.
+     *
+     * @param sourceCommitId Source commit
+     * @param targetCommitId Target commit
+     * @param targetEntityId Target entity
+     * @param conn           Repo connection
+     * @param asc            Sort in ascending order (earliest to latest).
+     * @return Commit chain between two commits
+     * @throws IllegalArgumentException Thrown if either Commit could not be found or the Commits have no common parent.
+     * @throws IllegalStateException    Thrown if a Commit in either chain does not have the additions/deletions set.
+     */
+    List<Resource> getDifferenceChain(Resource sourceCommitId, Resource targetCommitId, Resource targetEntityId,
+                                      RepositoryConnection conn, boolean asc);
+
 
     /**
      * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference. The

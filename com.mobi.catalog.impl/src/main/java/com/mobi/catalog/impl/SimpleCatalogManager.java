@@ -1161,6 +1161,29 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public List<Commit> getCommitEntityChain(Resource commitId, Resource entityId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            utils.validateResource(entityId, commitFactory.getTypeIRI(), conn);
+            return utils.getCommitChain(commitId, entityId, false, conn).stream()
+                    .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Override
+    public List<Commit> getCommitEntityChain(Resource commitId, Resource targetId, Resource entityId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            utils.validateResource(targetId, commitFactory.getTypeIRI(), conn);
+            utils.validateResource(entityId, commitFactory.getTypeIRI(), conn);
+            return utils.getDifferenceChain(commitId, targetId, entityId, conn).stream()
+                    .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Override
     public Model getCompiledResource(Resource commitId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);

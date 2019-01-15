@@ -110,7 +110,8 @@ public class CommitRestImpl implements CommitRest {
     }
 
     @Override
-    public Response getCommitHistory(UriInfo uriInfo, String commitId, String targetId, int offset, int limit) {
+    public Response getCommitHistory(UriInfo uriInfo, String commitId, String targetId, String entityId, int offset,
+                                     int limit) {
         long start = System.currentTimeMillis();
         try {
             LinksUtils.validateParams(limit, offset);
@@ -118,10 +119,15 @@ public class CommitRestImpl implements CommitRest {
             try {
                 final List<Commit> commits;
 
-                if (StringUtils.isBlank(targetId)) {
+                if (StringUtils.isBlank(entityId) && StringUtils.isBlank(targetId)) {
                     commits = catalogManager.getCommitChain(vf.createIRI(commitId));
-                } else {
+                } else if (StringUtils.isBlank(targetId) && StringUtils.isBlank(entityId)) {
                     commits = catalogManager.getCommitChain(vf.createIRI(commitId), vf.createIRI(targetId));
+                } else if (StringUtils.isBlank(targetId) && StringUtils.isNoneBlank(entityId)) {
+                    commits = catalogManager.getCommitEntityChain(vf.createIRI(commitId), vf.createIRI(entityId));
+                } else {
+                    commits = catalogManager.getCommitEntityChain(vf.createIRI(commitId), vf.createIRI(targetId),
+                            vf.createIRI(entityId));
                 }
 
                 Stream<Commit> result = commits.stream();

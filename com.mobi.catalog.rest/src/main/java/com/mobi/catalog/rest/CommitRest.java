@@ -69,6 +69,10 @@ public interface CommitRest {
      * @param uriInfo  The {@link UriInfo} of the request.
      * @param commitId {@link String} value of the {@link Commit} ID. NOTE: Assumes an {@link IRI} unless {@link String}
      *                 starts with "{@code _:}".
+     * @param targetId {@link String} value of the targetId {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
+     *                 {@link String} starts with "{@code _:}".
+     * @param entityId {@link String} value of the entityId {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
+     *                 {@link String} starts with "{@code _:}".
      * @param offset   An optional offset for the results.
      * @param limit    An optional limit for the results.
      * @return A {@link Response} containing a {@link List} of {@link Commit}s starting with the provided
@@ -82,6 +86,7 @@ public interface CommitRest {
     Response getCommitHistory(@Context UriInfo uriInfo,
                               @PathParam("commitId") String commitId,
                               @QueryParam("targetId") String targetId,
+                              @QueryParam("entityId") String entityId,
                               @QueryParam("offset") int offset,
                               @QueryParam("limit") int limit);
 
