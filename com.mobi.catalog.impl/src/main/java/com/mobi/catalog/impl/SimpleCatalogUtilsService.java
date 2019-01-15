@@ -79,6 +79,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1130,12 +1131,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
      * @param asc      Whether or not the iterator should be ascending by date
      * @return Iterator of Resource ids for the requested Commits.
      */
-    private Iterator<Resource> getCommitChainIterator(Resource commitId, Resource entityId, boolean asc, RepositoryConnection conn) {
+    private Iterator<Resource> getCommitChainIterator(Resource commitId, Resource entityId, boolean asc,
+                                                      RepositoryConnection conn) {
         TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_CHAIN);
         query.setBinding(COMMIT_BINDING, commitId);
         TupleQueryResult result = query.evaluate();
         LinkedList<Resource> commits = new LinkedList<>();
-        result.forEach(bindings -> commits.add(Bindings.requiredResource(entityId, bindings, PARENT_BINDING)));
+        result.forEach(bindings -> commits.add(Bindings.requiredResource(bindings, PARENT_BINDING)));
         commits.addFirst(commitId);
         return asc ? commits.descendingIterator() : commits.iterator();
     }

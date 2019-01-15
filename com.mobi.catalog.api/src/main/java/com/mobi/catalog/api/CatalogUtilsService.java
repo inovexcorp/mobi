@@ -688,7 +688,6 @@ public interface CatalogUtilsService {
     List<Resource> getDifferenceChain(Resource sourceCommitId, Resource targetCommitId, Resource targetEntityId,
                                       RepositoryConnection conn, boolean asc);
 
-
     /**
      * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference. The
      * statements contained in the returned Difference will have a context that matches the tracked quad. That is,
