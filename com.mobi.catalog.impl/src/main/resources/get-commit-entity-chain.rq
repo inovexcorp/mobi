@@ -1,0 +1,13 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?parent
+WHERE {
+    ?commit a mcat:Commit ;
+        (mcat:baseCommit | mcat:auxiliaryCommit)+ ?parent .
+
+    ?parent prov:atTime ?time .
+
+    FILTER(?commit pref:?entity)
+}
+ORDER BY DESC(?time)

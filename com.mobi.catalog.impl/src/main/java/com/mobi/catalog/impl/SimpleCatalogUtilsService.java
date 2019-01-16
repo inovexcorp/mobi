@@ -113,6 +113,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     private static final String GET_IN_PROGRESS_COMMIT;
     private static final String GET_COMMIT_CHAIN;
+    private static final String GET_COMMIT_ENTITY_CHAIN;
     private static final String GET_NEW_LATEST_VERSION;
     private static final String GET_COMMIT_PATHS;
     private static final String COMMIT_IN_RECORD;
@@ -120,6 +121,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private static final String PARENT_BINDING = "parent";
     private static final String RECORD_BINDING = "record";
     private static final String COMMIT_BINDING = "commit";
+    private static final String ENTITY_BINDING = "entity";
 
     static {
         try {
@@ -129,6 +131,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             );
             GET_COMMIT_CHAIN = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-chain.rq"),
+                    "UTF-8"
+            );
+            GET_COMMIT_ENTITY_CHAIN = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-entity-chain.rq"),
                     "UTF-8"
             );
             GET_NEW_LATEST_VERSION = IOUtils.toString(
@@ -1133,8 +1139,9 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
      */
     private Iterator<Resource> getCommitChainIterator(Resource commitId, Resource entityId, boolean asc,
                                                       RepositoryConnection conn) {
-        TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_CHAIN);
+        TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_ENTITY_CHAIN);
         query.setBinding(COMMIT_BINDING, commitId);
+        query.setBinding(ENTITY_BINDING, entityId);
         TupleQueryResult result = query.evaluate();
         LinkedList<Resource> commits = new LinkedList<>();
         result.forEach(bindings -> commits.add(Bindings.requiredResource(bindings, PARENT_BINDING)));
