@@ -7,26 +7,25 @@ mapping-config-overlay {
     }
 	.entity-dates .date {
 		display: block;
-	}
-    .page-nav {
-        float: right;
-
-        .pagination {
-            margin: 0;
-        }
     }
-    .paging-details {
-        float: left;
-    }
-    .ontology-records-list {
-        height: 100px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+    .ontologies {
+        max-height: 300px;
         overflow-y: auto;
 
-        .list-group-item {
-            outline: 0;
-            border-radius: 0;
+        .md-list-item-inner {
+            width: 100%;
+
+            .md-list-item-text {
+                width: calc(100% - 24px);
+
+                h4 {
+                    margin-bottom: 0;
+                    @include textOverflow;
+                }
+                p {
+                    @include textOverflow;
+                }
+            }
         }
     }
 }

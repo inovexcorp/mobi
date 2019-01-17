@@ -39,7 +39,8 @@
             </tab>
             <tab heading="'On Server'" active="dvm.tabs.server" on-click="dvm.clickTab('server')">
                 <error-display ng-if="dvm.serverError">{{dvm.serverError}}</error-display>
-                <div class="ontologies" targeted-spinner="dvm.spinnerId">
+                <search-bar ng-model="dvm.getOntologyConfig.searchText" submit-event="dvm.setOntologies()"></search-bar>
+                <div class="ontologies my-2" targeted-spinner="dvm.spinnerId">
                     <info-message ng-if="dvm.ontologies.length === 0" class="padding">No ontologies are available to import</info-message>
                     <md-list>
                         <md-list-item class="ontology" ng-repeat="ontology in dvm.ontologies track by ontology.recordId">
@@ -47,9 +48,14 @@
                                 <h4 class="header">{{ontology.title}}</h4>
                                 <p><small class="ontology-iri text-muted">{{ontology.ontologyIRI}}</small></p>
                             </div>
-                            <md-checkbox class="md-secondary" ng-model="ontology.selected" aria-label="Selected"></md-checkbox>
+                            <md-checkbox class="md-secondary" ng-model="ontology.selected" aria-label="Selected" ng-change="dvm.toggleOntology(ontology)"></md-checkbox>
                         </md-list-item>
                     </md-list>
+                </div>
+                <div class="selected-ontologies">
+                    <span class="field-name">Selected: </span>
+                    <span class="none-selected" ng-if="dvm.selectedOntologies.length === 0">(None)</span>
+                    <span class="selected-ontology" ng-repeat="ontology in dvm.selectedOntologies track by ontology.recordId">{{ontology.title}} <a ng-click="dvm.unselectOntology(ontology)" class="remove-ontology"><i class="fa fa-times"></i></a> </span>
                 </div>
             </tab>
         </tabset>
@@ -57,5 +63,5 @@
 </div>
 <div class="modal-footer">
     <button class="btn" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary" ng-disabled="dvm.form.$invalid || (dvm.tabs.server && !dvm.ontologyIsSelected())" ng-click="dvm.addImport()">Submit</button>
+    <button class="btn btn-primary" ng-disabled="dvm.form.$invalid || (dvm.tabs.server && !dvm.selectedOntologies.length)" ng-click="dvm.addImport()">Submit</button>
 </div>

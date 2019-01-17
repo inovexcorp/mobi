@@ -21,11 +21,12 @@
  * #L%
  */
 describe('Mapping Config Overlay component', function() {
-    var $compile, scope, $q, utilSvc, ontologyManagerSvc, mappingManagerSvc, mapperStateSvc, catalogManagerSvc, prefixes;
+    var $compile, scope, $q, httpSvc, utilSvc, ontologyManagerSvc, mappingManagerSvc, mapperStateSvc, catalogManagerSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('mappingConfigOverlay');
+        mockHttpService();
         mockUtil();
         mockOntologyManager();
         mockMappingManager();
@@ -35,9 +36,10 @@ describe('Mapping Config Overlay component', function() {
         injectHighlightFilter();
         injectTrustedFilter();
 
-        inject(function(_$compile_, _$rootScope_, _utilService_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _catalogManagerService_, _prefixes_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _httpService_, _utilService_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _catalogManagerService_, _prefixes_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            httpSvc = _httpService_;
             utilSvc = _utilService_;
             ontologyManagerSvc = _ontologyManagerService_;
             mapperStateSvc = _mapperStateService_;
@@ -47,15 +49,15 @@ describe('Mapping Config Overlay component', function() {
             $q = _$q_;
         });
 
+        this.catalogId = 'catalog';
         this.originalOntology = {id: 'original', entities: [{}]};
         this.importedOntology = {id: 'imported', ontology: []};
         this.originalClassObj = {'@id': 'original'};
         this.importedClassObj = {'@id': 'imported'};
         this.response = {
             data: [],
-            headers: jasmine.createSpy('headers')
         };
-        catalogManagerSvc.localCatalog = {'@id': ''};
+        catalogManagerSvc.localCatalog = {'@id': this.catalogId};
         catalogManagerSvc.getRecords.and.returnValue($q.when(this.response));
         mapperStateSvc.mapping = {jsonld: [], difference: {additions: [], deletions: []}};
     });
@@ -74,6 +76,7 @@ describe('Mapping Config Overlay component', function() {
         $compile = null;
         scope = null;
         $q = null;
+        httpSvc = null;
         utilSvc = null;
         ontologyManagerSvc = null;
         mappingManagerSvc = null;
@@ -90,27 +93,22 @@ describe('Mapping Config Overlay component', function() {
             var sortOption = {field: prefixes.dcterms + 'title', asc: true};
             catalogManagerSvc.sortOptions = [sortOption];
             this.compile();
-            expect(this.controller.recordsConfig.pageIndex).toBe(0);
+            expect(this.controller.recordsConfig.pageIndex).toEqual(0);
             expect(this.controller.recordsConfig.sortOption).toEqual(sortOption);
             expect(this.controller.recordsConfig.recordType).toEqual(prefixes.ontologyEditor + 'OntologyRecord');
-            expect(this.controller.recordsConfig.limit).toEqual(10);
+            expect(this.controller.recordsConfig.limit).toEqual(100);
             expect(this.controller.recordsConfig.searchText).toEqual('');
         });
         it('for the list of ontology records', function() {
-            var headers = {
-                'x-total-count': 10
-            };
-            this.response.headers.and.returnValue(headers);
             this.compile();
-            expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogManagerSvc.localCatalog['@id'], this.controller.recordsConfig);
-            expect(this.controller.records).toEqual(this.response.data);
-            expect(this.controller.totalSize).toEqual(headers['x-total-count']);
+            expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(this.catalogId, this.controller.recordsConfig, this.controller.spinnerId);
+            expect(this.controller.ontologies).toEqual(this.response.data);
         });
         it('if the mapping does not have an ontology set', function() {
             this.compile();
-            expect(this.controller.selectedRecord).toBeUndefined();
+            expect(this.controller.selectedOntology).toBeUndefined();
             expect(this.controller.ontologyStates).toEqual([]);
-            expect(this.controller.selectedVersion).toBe('latest');
+            expect(this.controller.selectedVersion).toEqual('latest');
             expect(this.controller.selectedOntologyState).toBeUndefined();
             expect(this.controller.classes).toEqual([]);
             expect(catalogManagerSvc.getRecordMasterBranch).not.toHaveBeenCalled();
@@ -118,7 +116,7 @@ describe('Mapping Config Overlay component', function() {
         });
         describe('if the mapping has a record set', function() {
             beforeEach(function() {
-                this.ontology = {'@id': ''};
+                this.ontology = {'@id': 'ont1'};
                 this.classObj = {'@id': 'class'};
                 mapperStateSvc.mapping.ontology = this.ontology;
                 mapperStateSvc.sourceOntologies = [{id: ''}];
@@ -131,7 +129,7 @@ describe('Mapping Config Overlay component', function() {
                     ontologies: mapperStateSvc.sourceOntologies,
                     classes: [{ontologyId: '', classObj: this.classObj}]
                 };
-                utilSvc.getDctermsValue.and.returnValue('');
+                utilSvc.getDctermsValue.and.returnValue('title');
                 utilSvc.getPropertyId.and.returnValue(this.expectedVersion.commitId);
                 mapperStateSvc.getClasses.and.returnValue(this.expectedVersion.classes);
                 mappingManagerSvc.getClassIdByMapping.and.returnValue(this.classObj['@id']);
@@ -141,23 +139,23 @@ describe('Mapping Config Overlay component', function() {
                 mappingManagerSvc.getSourceOntologyInfo.and.returnValue({commitId: this.expectedVersion.commitId});
                 this.expectedState.latest = this.expectedVersion;
                 this.compile();
-                expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.ontology['@id'], catalogManagerSvc.localCatalog['@id']);
+                expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.ontology['@id'], this.catalogId);
                 expect(utilSvc.getPropertyId).toHaveBeenCalledWith(jasmine.any(Object), prefixes.catalog + 'head');
                 expect(mappingManagerSvc.getSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
-                expect(this.controller.selectedRecord).toEqual(this.ontology);
+                expect(this.controller.selectedOntology).toEqual({recordId: this.ontology['@id'], ontologyIRI: jasmine.any(String), title: 'title', selected: true, jsonld: this.ontology});
                 expect(this.controller.ontologyStates).toContain(this.expectedState);
                 expect(this.controller.selectedOntologyState).toEqual(this.expectedState);
-                expect(this.controller.selectedVersion).toBe('latest');
+                expect(this.controller.selectedVersion).toEqual('latest');
                 expect(this.controller.classes).toEqual(this.expectedVersion.classes);
             });
             it('and changes have been commited to the ontology since it was set', function() {
                 mappingManagerSvc.getSourceOntologyInfo.and.returnValue({commitId: 'different'});
                 this.expectedState.saved = _.set(angular.copy(this.expectedVersion), 'commitId', 'different');
                 this.compile();
-                expect(this.controller.selectedRecord).toEqual(this.ontology);
+                expect(this.controller.selectedOntology).toEqual({recordId: this.ontology['@id'], ontologyIRI: jasmine.any(String), title: 'title', selected: true, jsonld: this.ontology});
                 expect(this.controller.ontologyStates).toContain(this.expectedState);
                 expect(this.controller.selectedOntologyState).toEqual(this.expectedState);
-                expect(this.controller.selectedVersion).toBe('saved');
+                expect(this.controller.selectedVersion).toEqual('saved');
                 expect(this.controller.classes).toEqual(this.expectedVersion.classes);
             });
         });
@@ -179,73 +177,71 @@ describe('Mapping Config Overlay component', function() {
         beforeEach(function() {
             this.compile();
         });
+        it('should get the ontology IRI of an OntologyRecord', function() {
+            utilSvc.getPropertyId.and.returnValue('ontology')
+            expect(this.controller.getOntologyIRI({})).toEqual('ontology');
+            expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.ontologyEditor + 'ontologyIRI');
+        });
         describe('should set the list of ontology records', function() {
             it('unless an error occurs', function() {
                 catalogManagerSvc.getRecords.and.returnValue($q.reject('Error message'));
-                this.controller.setRecords();
+                this.controller.setOntologies();
                 scope.$apply();
-                expect(this.controller.recordsConfig.pageIndex).toBe(0);
-                expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogManagerSvc.localCatalog['@id'], this.controller.recordsConfig);
-                expect(this.controller.recordsErrorMessage).toBe('Error retrieving ontologies');
+                expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.spinnerId);
+                expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(this.catalogId, this.controller.recordsConfig, this.controller.spinnerId);
+                expect(this.controller.recordsErrorMessage).toEqual('Error retrieving ontologies');
             });
             it('successfully', function() {
-                var headers = {
-                    'x-total-count': 10
-                };
-                this.response.headers.and.returnValue(headers);
-                var record = {'@id': 'record'};
-                this.controller.selectedRecord = angular.copy(record);
-                this.response.data.push(record);
-                this.controller.setRecords();
+                var record1 = {'@id': 'record1'};
+                var record2 = {'@id': 'record2'};
+                this.controller.selectedOntology = {recordId: record1['@id'], selected: true, jsonld: record1};
+                this.response.data = [record1, record2];
+                utilSvc.getDctermsValue.and.returnValue('title');
+                spyOn(this.controller, 'getOntologyIRI').and.returnValue('ontology');
+                this.controller.setOntologies();
                 scope.$apply();
-                expect(this.controller.recordsConfig.pageIndex).toBe(0);
-                expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogManagerSvc.localCatalog['@id'], this.controller.recordsConfig);
-                expect(this.controller.records).toEqual(this.response.data);
-                expect(this.controller.totalSize).toEqual(headers['x-total-count']);
-                expect(this.controller.selectedRecord).toBe(record);
-                expect(this.controller.recordsErrorMessage).toBe('');
+                expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.spinnerId);
+                expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(this.catalogId, this.controller.recordsConfig, this.controller.spinnerId);
+                expect(this.controller.ontologies).toEqual([
+                    {recordId: record1['@id'], ontologyIRI: 'ontology', title: 'title', selected: true, jsonld: record1},
+                    {recordId: record2['@id'], ontologyIRI: 'ontology', title: 'title', selected: false, jsonld: record2}
+                ]);
+                expect(this.controller.recordsErrorMessage).toEqual('');
             });
-        });
-        it('should set the initial list of ontology records', function() {
-            spyOn(this.controller, 'setRecords');
-            this.controller.currentPage = 10;
-            this.controller.setInitialRecords();
-            expect(this.controller.currentPage).toEqual(1);
-            expect(this.controller.setRecords).toHaveBeenCalled();
         });
         describe('should select an ontology', function() {
             beforeEach(function() {
-                this.record = {'@id': ''};
+                this.ontology = {recordId: 'ontology', jsonld: {'@id': ''}};
              });
             it('if it had been opened', function() {
                 var openedState = {
-                    recordId: this.record['@id'],
+                    recordId: this.ontology.recordId,
                     latest: {
                         classes: []
                     }
                 };
                 this.controller.ontologyStates.push(openedState);
-                this.controller.selectOntology(this.record);
-                expect(this.controller.selectedRecord).toBe(this.record);
-                expect(this.controller.selectedOntologyState).toBe(openedState);
-                expect(this.controller.selectedVersion).toBe('latest');
-                expect(this.controller.classes).toBe(openedState.latest.classes);
-                expect(this.controller.errorMessage).toBe('');
+                this.controller.selectOntology(this.ontology);
+                expect(this.controller.selectedOntology).toEqual(this.ontology);
+                expect(this.controller.selectedOntologyState).toEqual(openedState);
+                expect(this.controller.selectedVersion).toEqual('latest');
+                expect(this.controller.classes).toEqual(openedState.latest.classes);
+                expect(this.controller.errorMessage).toEqual('');
             });
             describe('if it had not been opened', function() {
                 it('unless an error occurs', function() {
                     catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.reject('Error message'));
-                    this.controller.selectOntology(this.record);
+                    this.controller.selectOntology(this.ontology);
                     scope.$apply();
-                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.record['@id'], catalogManagerSvc.localCatalog['@id']);
-                    expect(this.controller.errorMessage).toBe('Error retrieving ontology');
-                    expect(this.controller.selectedRecord).toBeUndefined();
+                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.ontology.recordId, this.catalogId);
+                    expect(this.controller.errorMessage).toEqual('Error retrieving ontology');
+                    expect(this.controller.selectedOntology).toBeUndefined();
                     expect(this.controller.selectedOntologyState).toBeUndefined();
                     expect(this.controller.classes).toEqual([]);
                 });
                 it('successfully', function() {
                     var expectedState = {
-                        recordId: this.record['@id'],
+                        recordId: this.ontology.recordId,
                         branchId: '',
                         latest: {
                             commitId: '',
@@ -259,18 +255,18 @@ describe('Mapping Config Overlay component', function() {
                     ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([this.importedOntology]));
                     catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.when({'@id': expectedState.branchId}));
                     this.selectedVersion = 'saved';
-                    this.controller.selectOntology(this.record);
+                    this.controller.selectOntology(this.ontology);
                     scope.$apply();
-                    expect(this.controller.selectedRecord).toBe(this.record);
-                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.record['@id'], catalogManagerSvc.localCatalog['@id']);
+                    expect(this.controller.selectedOntology).toEqual(this.ontology);
+                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.ontology.recordId, this.catalogId);
                     expect(utilSvc.getPropertyId).toHaveBeenCalledWith(jasmine.any(Object), prefixes.catalog + 'head');
                     expect(mappingManagerSvc.getOntology).toHaveBeenCalled();
                     expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(expectedState.recordId, expectedState.branchId, expectedState.latest.commitId);
                     expect(this.controller.ontologyStates).toContain(expectedState);
                     expect(this.controller.selectedOntologyState).toEqual(expectedState);
-                    expect(this.controller.selectedVersion).toBe('latest');
+                    expect(this.controller.selectedVersion).toEqual('latest');
                     expect(this.controller.classes).toEqual(expectedState.latest.classes);
-                    expect(this.controller.errorMessage).toBe('');
+                    expect(this.controller.errorMessage).toEqual('');
                 });
             });
         });
@@ -279,8 +275,8 @@ describe('Mapping Config Overlay component', function() {
                 var selectedOntologyState = this.controller.selectedOntologyState;
                 var classes = this.controller.classes;
                 this.controller.selectVersion();
-                expect(this.controller.selectedOntologyState).toBe(selectedOntologyState);
-                expect(this.controller.classes).toBe(classes);
+                expect(this.controller.selectedOntologyState).toEqual(selectedOntologyState);
+                expect(this.controller.classes).toEqual(classes);
             });
             describe('of the selected ontology', function() {
                 beforeEach(function() {
@@ -293,8 +289,8 @@ describe('Mapping Config Overlay component', function() {
                     this.controller.selectedOntologyState.latest = {classes: []};
                     this.controller.selectedVersion = 'latest';
                     this.controller.selectVersion();
-                    expect(this.controller.errorMessage).toBe('');
-                    expect(this.controller.classes).toBe(this.controller.selectedOntologyState.latest.classes);
+                    expect(this.controller.errorMessage).toEqual('');
+                    expect(this.controller.classes).toEqual(this.controller.selectedOntologyState.latest.classes);
                 });
                 describe('if the', function() {
                     beforeEach(function() {
@@ -311,8 +307,8 @@ describe('Mapping Config Overlay component', function() {
                             catalogManagerSvc.getRecordBranch.and.returnValue($q.reject('Error message'));
                             this.controller.selectVersion();
                             scope.$apply();
-                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(selectedOntologyState.branchId, selectedOntologyState.recordId, catalogManagerSvc.localCatalog['@id']);
-                            expect(this.controller.errorMessage).toBe('Error retrieving ontology');
+                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(selectedOntologyState.branchId, selectedOntologyState.recordId, this.catalogId);
+                            expect(this.controller.errorMessage).toEqual('Error retrieving ontology');
                             expect(this.controller.selectedRecord).toBeUndefined();
                             expect(this.controller.selectedOntologyState).toBeUndefined();
                             expect(this.controller.classes).toEqual([]);
@@ -327,13 +323,13 @@ describe('Mapping Config Overlay component', function() {
                             utilSvc.getPropertyId.and.returnValue(expectedVersion.commitId);
                             this.controller.selectVersion();
                             scope.$apply();
-                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.controller.selectedOntologyState.branchId, this.controller.selectedOntologyState.recordId, catalogManagerSvc.localCatalog['@id']);
+                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.controller.selectedOntologyState.branchId, this.controller.selectedOntologyState.recordId, this.catalogId);
                             expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.catalog + 'head');
                             expect(mappingManagerSvc.getOntology).toHaveBeenCalled();
                             expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.controller.selectedOntologyState.recordId, this.controller.selectedOntologyState.branchId, expectedVersion.commitId);
                             expect(this.controller.classes).toEqual(expectedVersion.classes);
                             expect(this.controller.selectedOntologyState.latest).toEqual(expectedVersion);
-                            expect(this.controller.errorMessage).toBe('');
+                            expect(this.controller.errorMessage).toEqual('');
                         });
                     });
                     describe('saved version has not been opened yet', function() {
@@ -352,7 +348,7 @@ describe('Mapping Config Overlay component', function() {
                             scope.$apply();
                             expect(mappingManagerSvc.getSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
                             expect(mappingManagerSvc.getOntology).toHaveBeenCalledWith(this.ontologyInfo);
-                            expect(this.controller.errorMessage).toBe('Error retrieving ontology');
+                            expect(this.controller.errorMessage).toEqual('Error retrieving ontology');
                             expect(this.controller.selectedRecord).toBeUndefined();
                             expect(this.controller.selectedOntologyState).toBeUndefined();
                             expect(this.controller.classes).toEqual([]);
@@ -370,7 +366,7 @@ describe('Mapping Config Overlay component', function() {
                             expect(ontologyManagerSvc.getImportedOntologies).toHaveBeenCalledWith(this.ontologyInfo.recordId, this.ontologyInfo.branchId, this.ontologyInfo.commitId);
                             expect(this.controller.classes).toEqual(expectedVersion.classes);
                             expect(this.controller.selectedOntologyState.saved).toEqual(expectedVersion);
-                            expect(this.controller.errorMessage).toBe('');
+                            expect(this.controller.errorMessage).toEqual('');
                         });
                     });
                 });
@@ -392,7 +388,7 @@ describe('Mapping Config Overlay component', function() {
                     }
                 };
                 this.controller.selectedVersion = 'latest';
-                this.controller.selectedRecord = {'@id': this.ontologyInfo.recordId};
+                this.controller.selectedOntology = {jsonld: {'@id': this.ontologyInfo.recordId}};
             });
             it('if it has not changed', function() {
                 mappingManagerSvc.getSourceOntologyInfo.and.returnValue(this.ontologyInfo);
@@ -422,7 +418,7 @@ describe('Mapping Config Overlay component', function() {
                     this.controller.set();
                     expect(mapperStateSvc.sourceOntologies).toEqual(this.controller.selectedOntologyState.latest.ontologies);
                     expect(mappingManagerSvc.setSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.ontologyInfo.recordId, this.ontologyInfo.branchId, this.ontologyInfo.commitId);
-                    expect(mapperStateSvc.mapping.ontology).toBe(this.controller.selectedRecord);
+                    expect(mapperStateSvc.mapping.ontology).toEqual(this.controller.selectedOntology.jsonld);
                     expect(mapperStateSvc.changeProp).toHaveBeenCalledWith('mapping', prefixes.delim + 'sourceRecord', this.ontologyInfo.recordId, this.oldOntologyInfo.recordId, true);
                     expect(mapperStateSvc.changeProp).toHaveBeenCalledWith('mapping', prefixes.delim + 'sourceBranch', this.ontologyInfo.branchId, this.oldOntologyInfo.branchId, true);
                     expect(mapperStateSvc.changeProp).toHaveBeenCalledWith('mapping', prefixes.delim + 'sourceCommit', this.ontologyInfo.commitId, this.oldOntologyInfo.commitId, true);
@@ -478,74 +474,62 @@ describe('Mapping Config Overlay component', function() {
             this.compile();
         });
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('MAPPING-CONFIG-OVERLAY');
+            expect(this.element.prop('tagName')).toEqual('MAPPING-CONFIG-OVERLAY');
             expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
-        ['.row', '.ontology-select-container', '.preview-display', '.ontology-records-list'].forEach(test => {
+        ['.row', '.ontology-select-container', '.preview-display', '.ontologies'].forEach(test => {
             it('with a '+ test, function() {
-                expect(this.element.querySelectorAll(test).length).toBe(1);
+                expect(this.element.querySelectorAll(test).length).toEqual(1);
             });
         });
-        ['paging-details', 'pagination'].forEach(test => {
+        ['md-list', 'search-bar'].forEach(test => {
             it('with a ' + test, function() {
-                expect(this.element.find(test).length).toBe(1);
+                expect(this.element.find(test).length).toEqual(1);
             });
         });
         it('depending on whether an error has occured', function() {
             this.controller = this.element.controller('mappingConfigOverlay');
-            expect(this.element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toEqual(0);
 
             this.controller.errorMessage = 'test';
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toEqual(1);
         });
         it('depending on whether an error has occured when retrieving the records', function() {
             this.controller = this.element.controller('mappingConfigOverlay');
-            expect(this.element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toEqual(0);
 
             this.controller.recordsErrorMessage = 'test';
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toEqual(1);
         });
         it('depending on how many ontology records there are', function() {
             this.controller = this.element.controller('mappingConfigOverlay');
-            this.controller.records = [{}];
+            this.controller.ontologies = [{}];
             scope.$digest();
-            expect(this.element.querySelectorAll('.ontology-records-list button').length).toBe(this.controller.records.length);
+            expect(this.element.find('md-list-item').length).toEqual(this.controller.ontologies.length);
         });
         it('depending on whether an ontology record has been selected', function() {
             var ontologyInfo = this.element.querySelectorAll('.ontology-record-info');
-            expect(ontologyInfo.length).toBe(0);
+            expect(ontologyInfo.length).toEqual(0);
 
-            this.controller = this.element.controller('mappingConfigOverlay');
-            this.controller.selectedRecord = {'@id': ''};
+            // this.controller = this.element.controller('mappingConfigOverlay');
+            this.controller.selectedOntology = {'@id': ''};
             scope.$digest();
             ontologyInfo = this.element.querySelectorAll('.ontology-record-info');
-            expect(ontologyInfo.length).toBe(1);
-        });
-        it('depending on which ontology record is selected', function() {
-            var record = {'@id': ''};
-            this.controller = this.element.controller('mappingConfigOverlay');
-            this.controller.records = [record];
-            scope.$digest();
-            var recordItem = angular.element(this.element.querySelectorAll('.ontology-records-list button')[0]);
-            expect(recordItem.hasClass('active')).toBe(false);
-
-            this.controller.selectedRecord = record;
-            scope.$digest();
-            expect(recordItem.hasClass('active')).toBe(true);
+            expect(ontologyInfo.length).toEqual(1);
         });
         it('depending on whether the selected ontology record has a saved version', function() {
             var options = this.element.querySelectorAll('.version-select option');
-            expect(options.length).toBe(1);
+            expect(options.length).toEqual(1);
 
-            this.controller = this.element.controller('mappingConfigOverlay');
+            // this.controller = this.element.controller('mappingConfigOverlay');
             this.controller.selectedOntologyState = {saved: {}};
             scope.$digest();
             options = this.element.querySelectorAll('.version-select option');
-            expect(options.length).toBe(2);
+            expect(options.length).toEqual(2);
         });
         it('depending on whether an ontology record state has been selected', function() {
             this.controller = this.element.controller('mappingConfigOverlay');
@@ -561,30 +545,12 @@ describe('Mapping Config Overlay component', function() {
         });
         it('with buttons to cancel and submit', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(2);
+            expect(buttons.length).toEqual(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
-    it('should class getRecords when the search button is clicked', function() {
-        this.compile();
-        spyOn(this.controller, 'setInitialRecords');
-
-        var searchButton = angular.element(this.element.querySelectorAll('.record-search-bar button')[0]);
-        searchButton.triggerHandler('click');
-        expect(this.controller.setInitialRecords).toHaveBeenCalled();
-    });
-    it('should select an ontology record when clicked', function() {
-        this.compile();
-        this.controller.records = [{}];
-        spyOn(this.controller, 'selectOntology');
-        scope.$digest();
-
-        var recordButton = angular.element(this.element.querySelectorAll('.ontology-records-list button')[0]);
-        recordButton.triggerHandler('click');
-        expect(this.controller.selectOntology).toHaveBeenCalled();
-    });
-    it('should call set when the button is clicked', function() {
+    it('should call set when the submit button is clicked', function() {
         this.compile();
         spyOn(this.controller, 'set');
 

@@ -25,4 +25,11 @@ imports-overlay {
             }
         }
     }
+    .remove-ontology {
+        color: var(-danger);
+
+        &:hover {
+            color: var(--danger-dark);
+        }
+    }
 }
