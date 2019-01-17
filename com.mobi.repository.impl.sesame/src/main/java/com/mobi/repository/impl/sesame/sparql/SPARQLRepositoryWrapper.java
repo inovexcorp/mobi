@@ -59,7 +59,13 @@ public class SPARQLRepositoryWrapper extends RepositoryWrapper {
         SPARQLRepositoryConfig config = Configurable.createConfigurable(SPARQLRepositoryConfig.class, props);
         this.repositoryID = config.id();
 
-        SPARQLRepository sesameSparqlStore = new SPARQLRepository(config.endpointUrl());
+        SPARQLRepository sesameSparqlStore;
+
+        if (config.updateEndpointUrl() != null) {
+            sesameSparqlStore = new SPARQLRepository(config.endpointUrl(), config.updateEndpointUrl());
+        } else {
+            sesameSparqlStore = new SPARQLRepository(config.endpointUrl());
+        }
 
         SesameRepositoryWrapper repo = new SesameRepositoryWrapper(sesameSparqlStore);
         repo.setConfig(config);

@@ -43,6 +43,7 @@ import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Completion;
+import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
@@ -124,6 +125,10 @@ public class Restore implements Action {
     @Argument(name = "BackupFile", description = "The Mobi backup to restore", required = true)
     @Completion(FileCompleter.class)
     private String backupFilePath = null;
+
+    @Option( name = "-b", aliases = "--batchSize", description = "The number representing the triple transaction size "
+            + "for importing.")
+    private long batchSize = 10000;
 
     // Implementation
     @Override
@@ -259,7 +264,7 @@ public class Restore implements Action {
                 .continueOnError(false)
                 .logOutput(true)
                 .printOutput(true)
-                .batchSize(10000);
+                .batchSize(batchSize);
 
         for (Object key : repos.keySet()) {
             String repoName = key.toString();
