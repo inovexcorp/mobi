@@ -39,10 +39,10 @@
                             <md-list>
                                 <md-list-item class="ontology" ng-repeat="ontology in dvm.ontologies track by ontology.recordId">
                                     <div class="md-list-item-text">
-                                        <h4 class="header">{{ontology.title}}</h4>
+                                        <h4 class="header" ng-bind-html="ontology.title | highlight:dvm.recordsConfig.searchText | trusted"></h4>
                                         <p><small class="ontology-iri text-muted">{{ontology.ontologyIRI}}</small></p>
                                     </div>
-                                    <md-checkbox class="md-secondary" ng-model="ontology.selected" aria-label="Selected" ng-change="dvm.toggleOntology(ontology)"></md-checkbox>
+                                    <md-checkbox class="md-primary" ng-model="ontology.selected" aria-label="Selected" ng-change="dvm.toggleOntology(ontology)"></md-checkbox>
                                 </md-list-item>
                             </md-list>
                         </div>

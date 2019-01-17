@@ -34,6 +34,8 @@ describe('Imports Overlay component', function() {
         mockCatalogManager();
         mockPropertyManager();
         injectRestPathConstant();
+        injectTrustedFilter();
+        injectHighlightFilter();
 
         inject(function(_$q_, _$compile_, _$rootScope_, _$httpBackend_, _ontologyStateService_, _httpService_, _utilService_, _prefixes_, _propertyManagerService_, _catalogManagerService_) {
             $q = _$q_;

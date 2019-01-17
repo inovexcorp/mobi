@@ -31,6 +31,8 @@ describe('Datasets Ontology Picker component', function() {
         mockCatalogManager();
         mockUtil();
         mockPrefixes();
+        injectTrustedFilter();
+        injectHighlightFilter();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _httpService_, _catalogManagerService_, _prefixes_, _utilService_) {
             $compile = _$compile_;
