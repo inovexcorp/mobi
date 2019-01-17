@@ -1,4 +1,4 @@
-package com.mobi.repository.impl.sesame.sparql;
+package com.mobi.repository.impl.sesame.http;
 
 /*-
  * #%L
@@ -34,10 +34,8 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.base.RepositoryWrapper;
 import com.mobi.repository.exception.RepositoryConfigException;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import com.mobi.repository.impl.sesame.http.HTTPRepositoryConfig;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.eclipse.rdf4j.repository.http.HTTPRepository;
-import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 
 import java.util.Map;
 
@@ -53,7 +51,7 @@ import java.util.Map;
 )
 public class HTTPRepositoryWrapper extends RepositoryWrapper {
 
-    protected static final String REPOSITORY_TYPE = "sparql";
+    protected static final String REPOSITORY_TYPE = "http";
     protected static final String NAME = "com.mobi.service.repository." + REPOSITORY_TYPE;
 
     @Override
@@ -61,7 +59,7 @@ public class HTTPRepositoryWrapper extends RepositoryWrapper {
         HTTPRepositoryConfig config = Configurable.createConfigurable(HTTPRepositoryConfig.class, props);
         this.repositoryID = config.id();
 
-        HTTPRepository sesameHttpStore = new HTTPRepository(config.serverUrl(), this.repositoryID);;
+        HTTPRepository sesameHttpStore = new HTTPRepository(config.serverUrl(), this.repositoryID);
 
         SesameRepositoryWrapper repo = new SesameRepositoryWrapper(sesameHttpStore);
         repo.setConfig(config);
@@ -72,11 +70,11 @@ public class HTTPRepositoryWrapper extends RepositoryWrapper {
     @Override
     public void validateConfig(Map<String, Object> props) {
         super.validateConfig(props);
-        SPARQLRepositoryConfig config = Configurable.createConfigurable(SPARQLRepositoryConfig.class, props);
+        HTTPRepositoryConfig config = Configurable.createConfigurable(HTTPRepositoryConfig.class, props);
 
         String[] schemes = {"http","https"};
         UrlValidator urlValidator = new UrlValidator(schemes);
-        if (!urlValidator.isValid(config.endpointUrl())) {
+        if (!urlValidator.isValid(config.serverUrl())) {
             throw new RepositoryConfigException(
                     new IllegalArgumentException("Repository serverUrl is not a valid URL.")
             );

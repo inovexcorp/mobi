@@ -20,24 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-package com.mobi.repository.impl.sesame.sparql
+package com.mobi.repository.impl.sesame.http
 
 import com.mobi.repository.exception.RepositoryConfigException
 import spock.lang.Specification
 
 
-class SPARQLRepositoryWrapperSpec extends Specification {
+class HTTPRepositoryWrapperSpec extends Specification {
 
     def "Invalid URLs throw an exception"() {
         setup:
         def props = [
                 id: "test",
                 title: "test repo",
-                endpointUrl: "urn:test",
-                updateEndpointUrl: "urn:test/statements"
+                serverUrl: "urn:test"
         ]
 
-        def service = new SPARQLRepositoryWrapper()
+        def service = new HTTPRepositoryWrapper()
 
         when:
         service.start(props)
@@ -51,11 +50,10 @@ class SPARQLRepositoryWrapperSpec extends Specification {
         def props = [
                 id: "test",
                 title: "test repo",
-                endpointUrl: "http://test.com/sparql",
-                updateEndpointUrl: "http://test.com/sparql/statements"
+                serverUrl: "http://test.com/server"
         ]
 
-        def service = new SPARQLRepositoryWrapper()
+        def service = new HTTPRepositoryWrapper()
 
         when:
         service.start(props)
