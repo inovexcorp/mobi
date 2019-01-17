@@ -64,7 +64,7 @@
                         <div class="classes-list">
                             <span class="field-name">Classes:</span>
                             <ul>
-                                <li ng-repeat="class in dvm.classes track by $index" title="{{class.classObj['@id']}}">
+                                <li ng-repeat="class in dvm.classes | limitTo:10 track by $index" title="{{class.classObj['@id']}}">
                                     {{dvm.om.getEntityName(class.classObj)}}
                                     <span class="text-muted" ng-if="dvm.om.isDeprecated(class.classObj)">(Deprecated)</span>
                                 </li>
