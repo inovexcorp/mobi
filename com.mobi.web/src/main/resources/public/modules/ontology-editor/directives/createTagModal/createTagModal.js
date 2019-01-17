@@ -83,11 +83,6 @@
                 commitId: dvm.os.listItem.ontologyRecord.commitId
             };
         }
-        var tagIRI = dvm.os.listItem.ontologyId
-        var endChar = dvm.os.listItem.ontologyId.slice(-1);
-        if (endChar != '/' && endChar != '#' && endChar != ':') {
-            tagIRI += '/';
-        }
 
         dvm.nameChanged = function() {
             if (!dvm.iriHasChanged) {
