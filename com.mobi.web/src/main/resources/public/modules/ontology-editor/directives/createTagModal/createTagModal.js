@@ -69,9 +69,14 @@
         dvm.iriPattern = REGEX.IRI;
         dvm.os = ontologyStateService;
         dvm.error = '';
+        var tagIRI = dvm.os.listItem.ontologyId
+        var endChar = dvm.os.listItem.ontologyId.slice(-1);
+        if (endChar != '/' && endChar != '#' && endChar != ':') {
+            tagIRI += '/';
+        }
 
         dvm.tagConfig = {
-            iri: dvm.os.listItem.ontologyId + '/' + $filter('date')(now, 'MM/dd/yyyy/'),
+            iri: tagIRI,
             title: '',
             commitId: dvm.os.listItem.ontologyRecord.commitId
         };
