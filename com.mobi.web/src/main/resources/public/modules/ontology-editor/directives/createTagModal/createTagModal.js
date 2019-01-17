@@ -69,17 +69,25 @@
         dvm.iriPattern = REGEX.IRI;
         dvm.os = ontologyStateService;
         dvm.error = '';
+        dvm.tagConfig = {};
+
+        dvm.$onInit = function() {
+            var tagIRI = dvm.os.listItem.ontologyId
+            var endChar = dvm.os.listItem.ontologyId.slice(-1);
+            if (endChar != '/' && endChar != '#' && endChar != ':') {
+                tagIRI += '/';
+            }
+            dvm.tagConfig = {
+                iri: tagIRI,
+                title: '',
+                commitId: dvm.os.listItem.ontologyRecord.commitId
+            };
+        }
         var tagIRI = dvm.os.listItem.ontologyId
         var endChar = dvm.os.listItem.ontologyId.slice(-1);
         if (endChar != '/' && endChar != '#' && endChar != ':') {
             tagIRI += '/';
         }
-
-        dvm.tagConfig = {
-            iri: tagIRI,
-            title: '',
-            commitId: dvm.os.listItem.ontologyRecord.commitId
-        };
 
         dvm.nameChanged = function() {
             if (!dvm.iriHasChanged) {
