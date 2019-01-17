@@ -364,4 +364,37 @@ public class CommitRestImplTest extends MobiRestTestNg {
                 .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
         assertEquals(response.getStatus(), 500);
     }
+
+    @Test
+    public void getCommitHistoryWithEntityNoTargetTest() {
+        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
+                .queryParam("entityId", encode(COMMIT_IRIS[0]))
+                .request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]));
+        try {
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertTrue(result.containsKey("additions"));
+            assertTrue(result.containsKey("deletions"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getCommitHistoryWithEntityAndTargetTest() {
+        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
+                .queryParam("targetId", encode(COMMIT_IRIS[0]))
+                .queryParam("entityId", encode(COMMIT_IRIS[0]))
+                .request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]), vf.createIRI(COMMIT_IRIS[0]));
+        try {
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertTrue(result.containsKey("additions"));
+            assertTrue(result.containsKey("deletions"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
 }

@@ -1145,7 +1145,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         TupleQueryResult result = query.evaluate();
         LinkedList<Resource> commits = new LinkedList<>();
         result.forEach(bindings -> commits.add(Bindings.requiredResource(bindings, PARENT_BINDING)));
-        commits.addFirst(commitId);
         return asc ? commits.descendingIterator() : commits.iterator();
     }
 

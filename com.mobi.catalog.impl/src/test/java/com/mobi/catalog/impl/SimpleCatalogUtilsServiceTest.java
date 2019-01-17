@@ -1929,7 +1929,7 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
                     VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1"),
                     VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0")).collect(Collectors.toList());
             Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3");
-            Resource entityId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3");
+            Resource entityId = VALUE_FACTORY.createIRI("");
 
             List<Resource> result = service.getCommitChain(commitId, entityId, false, conn);
             System.out.print(result);
