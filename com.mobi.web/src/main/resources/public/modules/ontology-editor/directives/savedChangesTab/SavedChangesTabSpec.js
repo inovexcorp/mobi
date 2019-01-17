@@ -294,19 +294,31 @@ describe('Saved Changes Tab directive', function() {
                             ontologyStateSvc.updateOntologyState.and.returnValue($q.when());
                             catalogManagerSvc.isUserBranch.and.callFake(branchToCheck => branchToCheck['@id'] === this.otherUserBranchId);
                         });
-                        it('and when deleteOntologyBranch is resolved', function() {
-                            ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.when());
-                            ontologyStateSvc.listItem.ontologyRecord.branchId = this.newBranchId;
-                            _.remove(ontologyStateSvc.listItem.branches, branch => branch['@id'] === this.userBranchId);
-                            this.controller.restoreBranchWithUserBranch();
-                            scope.$digest();
-                            expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
-                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
-                            expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId, commitId: this.commitId, branchId: this.newBranchId});
-                            expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.newBranchId);
-                            expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.otherUserBranchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.otherUserBranch);
+                        describe('and when deleteOntologyBranch is resolved', function() {
+                            beforeEach(() => {
+                                ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.when());
+                            });
+                            it('and when deleteOntologyBranchState is resolved', function() {
+                                ontologyStateSvc.deleteOntologyBranchState.and.returnValue($q.when());
+                                ontologyStateSvc.listItem.ontologyRecord.branchId = this.newBranchId;
+                                _.remove(ontologyStateSvc.listItem.branches, branch => branch['@id'] === this.userBranchId);
+                                this.controller.restoreBranchWithUserBranch();
+                                scope.$apply();
+                                expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
+                                expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
+                                expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId, commitId: this.commitId, branchId: this.newBranchId});
+                                expect(ontologyStateSvc.deleteOntologyBranchState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.newBranchId);
+                                expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.newBranchId);
+                                expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.otherUserBranchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.otherUserBranch);
+                            });
+                            it('and when deleteOntologyBranchState is rejected', function() {
+                                ontologyStateSvc.deleteOntologyBranchState.and.returnValue($q.reject('error'));
+                                this.controller.restoreBranchWithUserBranch();
+                                scope.$apply();
+                                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+                            });
                         });
-                        it('when rejected', function() {
+                        it('and when deleteOntologyBranch is rejected', function() {
                             ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.reject('error'));
                             this.controller.restoreBranchWithUserBranch();
                             scope.$apply();
@@ -316,7 +328,7 @@ describe('Saved Changes Tab directive', function() {
                     it('and when updateOntologyState is rejected', function() {
                         ontologyStateSvc.updateOntologyState.and.returnValue($q.reject('error'));
                         this.controller.restoreBranchWithUserBranch();
-                        scope.$digest();
+                        scope.$apply();
                         expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                         expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId, commitId: this.commitId, branchId: this.newBranchId});
@@ -326,7 +338,7 @@ describe('Saved Changes Tab directive', function() {
                 it('and when getRecordBranch is rejected', function() {
                     catalogManagerSvc.getRecordBranch.and.returnValue($q.reject('error'));
                     this.controller.restoreBranchWithUserBranch();
-                    scope.$digest();
+                    scope.$apply();
                     expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
                     expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.newBranchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
@@ -335,7 +347,7 @@ describe('Saved Changes Tab directive', function() {
             it('when createRecordBranch is rejected', function() {
                 catalogManagerSvc.createRecordBranch.and.returnValue($q.reject(this.error));
                 this.controller.restoreBranchWithUserBranch();
-                scope.$digest();
+                scope.$apply();
                 expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
                 expect(this.controller.error).toBe(this.error);
             });
