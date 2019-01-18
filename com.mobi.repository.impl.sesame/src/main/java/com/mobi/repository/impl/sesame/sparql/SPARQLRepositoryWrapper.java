@@ -79,10 +79,16 @@ public class SPARQLRepositoryWrapper extends RepositoryWrapper {
         SPARQLRepositoryConfig config = Configurable.createConfigurable(SPARQLRepositoryConfig.class, props);
 
         String[] schemes = {"http","https"};
-        UrlValidator urlValidator = new UrlValidator(schemes);
+        UrlValidator urlValidator = new UrlValidator(schemes, UrlValidator.ALLOW_LOCAL_URLS);
         if (!urlValidator.isValid(config.endpointUrl())) {
             throw new RepositoryConfigException(
-                    new IllegalArgumentException("Repository endpointUrl is not a valid URL.")
+                    new IllegalArgumentException("Repository endpointUrl is not a valid URL: " + config.endpointUrl())
+            );
+        }
+
+        if (config.updateEndpointUrl() != null && !urlValidator.isValid(config.updateEndpointUrl())) {
+            throw new RepositoryConfigException(
+                    new IllegalArgumentException("Repository updateEndpointUrl is not a valid URL: " + config.updateEndpointUrl())
             );
         }
     }
