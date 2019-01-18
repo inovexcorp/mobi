@@ -23,105 +23,114 @@
 (function() {
     'use strict';
 
+    /**
+     * @ngdoc component
+     * @name datasetsTabset.component:datasetsOntologyPicker
+     * @requires catalogManager.service:catalogManagerService
+     * @requires util.service:utilService
+     * @requires prefixes.service:prefixes
+     *
+     * @description
+     * `datasetsOntologyPicker` is a component which creates a searchable list for selecting ontologies along with an
+     * editable display of selected ontologies. The `selectedOntologies` bindings will determine which ontologies will
+     * display as selected, but is one way bound. The `selectOntology` function is expected to add an ontology to the
+     * `selectedOntologies` and the `unselectOntology` function is expected to remove an ontology from the
+     * `selectedOntologies`. Each selected ontology will have the following structure:
+     * ```
+     * {
+     *     recordId: '',
+     *     ontologyIRI: '',
+     *     title: '',
+     *     selected: false,
+     *     jsonld: {...}
+     * }
+     * ```
+     *
+     * @param {Object[]} selectedOntologies A list of objects representing the selected ontologies
+     * @param {Function} selectOntology A function that expects a parameter called `ontology` and will be called when an
+     * ontology's checkbox is checked in the list. This function should update the `selectedOntologies` binding.
+     * @param {Function} unselectOntology A function that expects a parameter called `ontology` and will be called when
+     * an ontology's checkbox is unchecked in the list or the remove button is clicked in the selected ontologies list.
+     * This function should update the `selectedOntologies` binding.
+     */
+    const datasetsOntologyPickerComponent = {
+        templateUrl: 'modules/datasets/directives/datasetsOntologyPicker/datasetsOntologyPicker.html',
+        bindings: {
+            selectedOntologies: '<',
+            selectOntology: '&',
+            unselectOntology: '&'
+        },
+        controllerAs: 'dvm',
+        controller: datasetsOntologyPickerComponentCtrl
+    };
+
+    datasetsOntologyPickerComponentCtrl.$inject = ['httpService', 'catalogManagerService', 'utilService', 'prefixes'];
+
+    function datasetsOntologyPickerComponentCtrl(httpService, catalogManagerService, utilService, prefixes) {
+        var dvm = this;
+        var cm = catalogManagerService;
+        var catalogId = '';
+        dvm.ontologies = [];
+        dvm.util = utilService;
+        dvm.spinnerId = 'datasets-ontology-picker';
+
+        dvm.ontologySearchConfig = {
+            pageIndex: 0,
+            sortOption: _.find(cm.sortOptions, {field: prefixes.dcterms + 'title', asc: true}),
+            recordType: prefixes.ontologyEditor + 'OntologyRecord',
+            limit: 100,
+            searchText: ''
+        };
+
+        dvm.$onInit = function() {
+            catalogId = _.get(cm.localCatalog, '@id');
+            dvm.setOntologies();
+        }
+        dvm.getOntologyIRI = function(record) {
+            return dvm.util.getPropertyId(record, prefixes.ontologyEditor + 'ontologyIRI');
+        }
+        dvm.setOntologies = function() {
+            httpService.cancel(dvm.spinnerId);
+            return cm.getRecords(catalogId, dvm.ontologySearchConfig, dvm.spinnerId)
+                .then(parseOntologyResults, onError);
+        }
+        dvm.toggleOntology = function(ontology) {
+            if (ontology.selected) {
+                dvm.selectOntology({ontology});
+            } else {
+                dvm.unselectOntology({ontology});
+            }
+        }
+        dvm.unselect = function(ontology) {
+            ontology.selected = false;
+            dvm.unselectOntology({ontology});
+        }
+
+        function onError(errorMessage) {
+            dvm.ontologies = [];
+            dvm.error = errorMessage;
+        }
+        function parseOntologyResults(response) {
+            dvm.error = '';
+            dvm.ontologies = _.map(response.data, record => ({
+                recordId: record['@id'],
+                ontologyIRI: dvm.getOntologyIRI(record),
+                title: dvm.util.getDctermsValue(record, 'title'),
+                selected: _.some(dvm.selectedOntologies, {recordId: record['@id']}),
+                jsonld: record
+            }));
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
          * @name datasetsOntologyPicker
          *
          * @description
-         * The `datasetsOntologyPicker` module only provides the `datasetsOntologyPicker` directive
-         * which creates a paged list for selecting ontologies.
+         * The `datasetsOntologyPicker` module only provides the `datasetsOntologyPicker` component which creates a
+         * paged list for selecting ontologies.
          */
         .module('datasetsOntologyPicker', [])
-        /**
-         * @ngdoc directive
-         * @name datasetsTabset.directive:datasetsOntologyPicker
-         * @scope
-         * @restrict E
-         * @requires catalogManager.service:catalogManagerService
-         * @requires datasetState.service:datasetStateService
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
-         *
-         * @description
-         * `datasetsOntologyPicker` is a directive which creates a searchable paged list for selecting ontologies along
-         * with an editable display of selected ontologies. All selected ontologies are set on the provided
-         * `selectedOntologies` variable. If an error occurs when retrieving ontologies, the error message is set on
-         * the provided `error` variable. The directive is replaced by the contents of its template.
-         *
-         * @param {string} error The error message that is set if retrieving ontologies fails
-         * @param {Object[]} The selected ontologies from the list
-         */
-        .directive('datasetsOntologyPicker', datasetsOntologyPicker);
-
-        datasetsOntologyPicker.$inject = ['catalogManagerService', 'datasetStateService', 'utilService', 'prefixes'];
-
-        function datasetsOntologyPicker(catalogManagerService, datasetStateService, utilService, prefixes) {
-            return {
-                restrict: 'E',
-                replace: true,
-                templateUrl: 'modules/datasets/directives/datasetsOntologyPicker/datasetsOntologyPicker.html',
-                scope: {},
-                bindToController: {
-                    error: '=',
-                    selectedOntologies: '='
-                },
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    var cm = catalogManagerService;
-                    var state = datasetStateService;
-                    dvm.ontologies = [];
-                    dvm.util = utilService;
-
-                    dvm.currentPage = 1;
-                    dvm.ontologySearchConfig = {
-                        pageIndex: 0,
-                        sortOption: _.find(cm.sortOptions, {field: prefixes.dcterms + 'title', asc: true}),
-                        recordType: prefixes.ontologyEditor + 'OntologyRecord',
-                        limit: 10,
-                        searchText: ''
-                    };
-                    dvm.totalSize = 0;
-
-                    dvm.setInitialOntologies = function() {
-                        dvm.currentPage = 1;
-                        return dvm.setOntologies();
-                    }
-                    dvm.setOntologies = function() {
-                        dvm.ontologySearchConfig.pageIndex = dvm.currentPage - 1;
-                        return cm.getRecords(cm.localCatalog['@id'], dvm.ontologySearchConfig)
-                            .then(parseOntologyResults, errorMessage => {
-                                dvm.ontologies = [];
-                                dvm.totalSize = 0;
-                                onError(errorMessage);
-                            });
-                    }
-                    dvm.isSelected = function(ontologyId) {
-                        return _.some(dvm.selectedOntologies, {'@id': ontologyId});
-                    }
-                    dvm.selectOntology = function(ontology) {
-                        if (!dvm.isSelected(ontology['@id'])) {
-                            dvm.selectedOntologies.push(ontology);
-                        }
-                    }
-                    dvm.unselectOntology = function(ontologyId) {
-                        _.remove(dvm.selectedOntologies, {'@id': ontologyId});
-                    }
-
-                    function onError(errorMessage) {
-                        dvm.error = errorMessage;
-                    }
-                    function parseOntologyResults(response) {
-                        dvm.ontologies = response.data;
-                        var headers = response.headers();
-                        dvm.totalSize = _.get(headers, 'x-total-count', 0);
-                        dvm.error = '';
-                    }
-
-                    // Begin Initialization...
-                    dvm.setInitialOntologies();
-                }
-            }
-        }
+        .component('datasetsOntologyPicker', datasetsOntologyPickerComponent);
 })();
