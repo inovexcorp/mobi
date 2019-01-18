@@ -94,28 +94,6 @@
             }
             /**
              * @ngdoc method
-             * @name getAllOntologyRecords
-             * @methodOf ontologyManager.service:ontologyManagerService
-             *
-             * @description
-             * Gets a list of all the OntologyRecords in the catalog by utilizing the `catalogManager`. Returns a
-             * promise with an array of the OntologyRecords.
-             *
-             * @param {Object} sortOption An object describing the order for the OntologyRecords.
-             * @returns {Promise} A promise with an array of the OntologyRecords.
-             */
-            self.getAllOntologyRecords = function(sortOption = _.find(cm.sortOptions, {label: 'Title (asc)'}), id = '') {
-                var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
-                var paginatedConfig = {
-                    pageIndex: 0,
-                    limit: 100,
-                    recordType: ontologyRecordType,
-                    sortOption
-                };
-                return cm.getRecords(catalogId, paginatedConfig, id).then(response => response.data, $q.reject);
-            }
-            /**
-             * @ngdoc method
              * @name uploadFile
              * @methodOf ontologyManager.service:ontologyManagerService
              *
