@@ -67,6 +67,8 @@ public class SPARQLRepositoryWrapper extends RepositoryWrapper {
             sesameSparqlStore = new SPARQLRepository(config.endpointUrl());
         }
 
+        sesameSparqlStore.enableQuadMode(true);
+
         SesameRepositoryWrapper repo = new SesameRepositoryWrapper(sesameSparqlStore);
         repo.setConfig(config);
 
@@ -88,7 +90,8 @@ public class SPARQLRepositoryWrapper extends RepositoryWrapper {
 
         if (config.updateEndpointUrl() != null && !urlValidator.isValid(config.updateEndpointUrl())) {
             throw new RepositoryConfigException(
-                    new IllegalArgumentException("Repository updateEndpointUrl is not a valid URL: " + config.updateEndpointUrl())
+                    new IllegalArgumentException("Repository updateEndpointUrl is not a valid URL: "
+                            + config.updateEndpointUrl())
             );
         }
     }
