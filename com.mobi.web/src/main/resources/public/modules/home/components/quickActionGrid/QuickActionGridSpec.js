@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Quick Action Grid directive', function() {
+describe('Quick Action Grid component', function() {
     var $compile, scope, $state, $window, ontologyStateSvc, discoverStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('quickActionGrid');
+        module('home');
         mockOntologyState();
         mockDiscoverState();
 
@@ -109,11 +109,12 @@ describe('Quick Action Grid directive', function() {
             expect($state.go).toHaveBeenCalledWith('root.mapper');
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('quick-action-grid')).toBe(true);
-            expect(this.element.hasClass('card')).toBe(true);
-            expect(this.element.querySelectorAll('.card-body').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('QUICK-ACTION-GRID');
+            expect(this.element.querySelectorAll('.quick-action-grid').length).toEqual(1);
+            expect(this.element.querySelectorAll('.card').length).toEqual(1);
+            expect(this.element.querySelectorAll('.card-body').length).toEqual(1);
         });
         it('depending on how many actions there are', function() {
             var rows = this.element.querySelectorAll('.card-body .row');

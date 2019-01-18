@@ -88,5 +88,5 @@ function activityCardComponentCtrl(provManagerService, utilService, prefixes, ht
     }
 }
 
-angular.module('catalog')
+angular.module('home')
     .component('activityCard', activityCardComponent);

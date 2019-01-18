@@ -33,7 +33,7 @@
  * of its template.
  */
 const quickActionGridComponent = {
-    templateUrl: 'modules/home/directives/quickActionGrid/quickActionGrid.html',
+    templateUrl: 'modules/home/components/quickActionGrid/quickActionGrid.html',
     bindings: {},
     controllerAs: 'dvm',
     controller: quickActionGridComponentCtrl
@@ -112,5 +112,5 @@ function quickActionGridComponentCtrl($window, $state, ontologyStateService, dis
     }
 }
 
-angular.module('catalog')
+angular.module('home')
     .component('quickActionGrid', quickActionGridComponent);

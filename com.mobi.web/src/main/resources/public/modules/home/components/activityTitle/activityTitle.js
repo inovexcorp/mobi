@@ -106,5 +106,5 @@ function activityTitleComponentCtrl(provManagerService, utilService, userManager
     }
 }
 
-angular.module('catalog')
+angular.module('home')
     .component('activityTitle', activityTitleComponent);

@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Activity Card directive', function() {
+describe('Activity Card component', function() {
     var $compile, scope, $q, provManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
-        module('activityCard');
+        module('home');
+        mockComponent('home', 'activityTitle');
         mockProvManager();
         mockUtil();
         mockPrefixes();
@@ -129,31 +130,32 @@ describe('Activity Card directive', function() {
             expect(utilSvc.getDate).toHaveBeenCalledWith('2017-01-01T00:00:00', 'short');
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         beforeEach(function() {
             this.compile();
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('activity-card')).toBe(true);
-            expect(this.element.hasClass('card')).toBe(true);
-            expect(this.element.querySelectorAll('.card-header').length).toBe(1);
-            expect(this.element.querySelectorAll('.card-body').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('ACTIVITY-CARD');
+            expect(this.element.querySelectorAll('.activity-card').length).toEqual(1);
+            expect(this.element.querySelectorAll('.card').length).toEqual(1);
+            expect(this.element.querySelectorAll('.card-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.card-body').length).toEqual(1);
         });
         it('with a .card-header-tabs', function() {
-            expect(this.element.querySelectorAll('.card-header-tabs').length).toBe(1);
+            expect(this.element.querySelectorAll('.card-header-tabs').length).toEqual(1);
         });
         it('with a .nav-item', function() {
-            expect(this.element.querySelectorAll('.card-header-tabs .nav-item').length).toBe(1);
+            expect(this.element.querySelectorAll('.card-header-tabs .nav-item').length).toEqual(1);
         });
         it('depending on how many activities there are', function() {
             scope.$apply();
-            expect(this.element.querySelectorAll('.activity').length).toBe(this.controller.activities.length);
-            expect(this.element.querySelectorAll('.btn').length).toBe(0);
+            expect(this.element.querySelectorAll('.activity').length).toEqual(this.controller.activities.length);
+            expect(this.element.querySelectorAll('.btn').length).toEqual(0);
 
             this.controller.totalSize = 10;
             scope.$digest();
-            expect(this.element.querySelectorAll('.activity').length).toBe(this.controller.activities.length);
-            expect(this.element.querySelectorAll('.btn').length).toBe(1);
+            expect(this.element.querySelectorAll('.activity').length).toEqual(this.controller.activities.length);
+            expect(this.element.querySelectorAll('.btn').length).toEqual(1);
         });
     });
 });

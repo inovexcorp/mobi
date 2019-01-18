@@ -1,7 +1,7 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.home {
+.home-page {
     .welcome-banner {
         overflow: hidden;
     }
@@ -17,5 +17,9 @@
     .image-overlay {
         opacity: 0.4;
         z-index: 9;
+    }
+    .activity-card,
+    .quick-action-grid {
+        height: 100%;
     }
 }

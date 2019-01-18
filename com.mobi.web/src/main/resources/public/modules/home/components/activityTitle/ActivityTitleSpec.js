@@ -20,21 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Activity Title directive', function() {
-    var $compile, scope, $q, provManagerSvc, userManagerSvc, utilSvc, prefixes;
+describe('Activity Title component', function() {
+    var $compile, scope, provManagerSvc, userManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
-        module('activityTitle');
+        module('home');
         mockProvManager();
         mockUtil();
         mockUserManager();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _provManagerService_, _userManagerService_, _utilService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _provManagerService_, _userManagerService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            $q = _$q_;
             provManagerSvc = _provManagerService_;
             userManagerSvc = _userManagerService_;
             utilSvc = _utilService_;
@@ -57,7 +56,6 @@ describe('Activity Title directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        $q = null;
         provManagerSvc = null;
         userManagerSvc = null;
         utilSvc = null;
@@ -84,7 +82,7 @@ describe('Activity Title directive', function() {
         describe('username', function() {
             it('if the activity does not have the wasAssociatedWith property', function() {
                 this.compile();
-                expect(this.controller.username).toBe('(None)');
+                expect(this.controller.username).toEqual('(None)');
             });
             describe('if the activity has the wasAssociatedWith property', function() {
                 beforeEach(function() {
@@ -93,12 +91,12 @@ describe('Activity Title directive', function() {
                 });
                 it('and the user was not found', function() {
                     this.compile();
-                    expect(this.controller.username).toBe('(None)');
+                    expect(this.controller.username).toEqual('(None)');
                 });
                 it('and the user was found', function() {
                     userManagerSvc.users = [{iri: this.iri, username: 'username'}];
                     this.compile();
-                    expect(this.controller.username).toBe('username');
+                    expect(this.controller.username).toEqual('username');
                 });
             });
         });
@@ -138,13 +136,13 @@ describe('Activity Title directive', function() {
             });
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         beforeEach(function() {
             this.compile();
         });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('activity-title')).toBe(true);
-            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.prop('tagName')).toEqual('ACTIVITY-TITLE');
+            expect(this.element.querySelectorAll('.activity-title').length).toEqual(1);
         });
         it('with the active word for the activity', function() {
             this.controller.word = 'word';
