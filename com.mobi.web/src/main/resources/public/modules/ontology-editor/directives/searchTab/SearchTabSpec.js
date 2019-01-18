@@ -187,6 +187,30 @@ describe('Search Tab directive', function() {
             expect(ontologyStateSvc.listItem.editorTabStates.search.selected).toEqual({});
             expect(ontologyStateSvc.listItem.editorTabStates.search.highlightText).toEqual('');
         });
+        it('should determine whether you can go to an entity', function() {
+            ontologyStateSvc.listItem.editorTabStates.search.entityIRI = '';
+            expect(this.controller.canGoTo()).toEqual(false);
+
+            ontologyStateSvc.listItem.editorTabStates.search.entityIRI = 'id';
+            ontologyManagerSvc.isOntology.and.returnValue(false);
+            expect(this.controller.canGoTo()).toEqual(true);
+
+            ontologyManagerSvc.isOntology.and.returnValue(true);
+            ontologyStateSvc.listItem.ontologyId = '';
+            expect(this.controller.canGoTo()).toEqual(false);
+
+            ontologyStateSvc.listItem.ontologyId = 'id';
+            expect(this.controller.canGoTo()).toEqual(true);
+        });
+        it('should go to an entity if you can', function() {
+            spyOn(this.controller, 'canGoTo').and.returnValue(false);
+            this.controller.goToIfYouCan({});
+            expect(ontologyStateSvc.goTo).not.toHaveBeenCalled();
+
+            this.controller.canGoTo.and.returnValue(true);
+            this.controller.goToIfYouCan({});
+            expect(ontologyStateSvc.goTo).toHaveBeenCalledWith({});
+        });
         it('check $watch', function() {
             ontologyStateSvc.listItem.selected = {
                 '@id': 'new',

@@ -67,10 +67,22 @@ describe('New Dataset Overlay component', function() {
         });
     });
     describe('controller methods', function() {
+        it('should select an ontology', function() {
+            var ontology = {title: 'A', selected: true};
+            this.controller.selectedOntologies = [{title: 'B'}]
+            this.controller.selectOntology(ontology)
+            expect(this.controller.selectedOntologies).toEqual([ontology, {title: 'B'}]);
+        });
+        it('should unselect an ontology', function() {
+            var ontology = {recordId: 'id'};
+            this.controller.selectedOntologies = [ontology];
+            this.controller.unselectOntology(ontology);
+            expect(this.controller.selectedOntologies).toEqual([]);
+        });
         describe('should create a dataset', function() {
             beforeEach(function() {
                 this.controller.keywords = ['a ', ' b', 'c d'];
-                this.controller.selectedOntologies = [{'@id': 'ontology1'}, {'@id': 'ontology2'}];
+                this.controller.selectedOntologies = [{recordId: 'ontology1'}, {recordId: 'ontology2'}];
             });
             it('unless an error occurs', function() {
                 datasetManagerSvc.createDatasetRecord.and.returnValue($q.reject('Error Message'));

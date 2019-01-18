@@ -230,7 +230,6 @@ function mockOntologyManager() {
             this.ontologyRecords = [];
             this.reset = jasmine.createSpy('reset');
             this.initialize = jasmine.createSpy('initialize');
-            this.getAllOntologyRecords = jasmine.createSpy('getAllOntologyRecords').and.returnValue($q.when([]));
             this.uploadFile = jasmine.createSpy('uploadFile').and.returnValue($q.when({}));
             this.uploadJson = jasmine.createSpy('uploadJson').and.returnValue($q.when({}));
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
@@ -754,7 +753,7 @@ function mockOntologyState() {
             this.createOntologyState = jasmine.createSpy('createOntologyState').and.returnValue($q.when());
             this.getOntologyStateByRecordId = jasmine.createSpy('getOntologyStateByRecordId').and.returnValue({});
             this.updateOntologyState = jasmine.createSpy('updateOntologyState').and.returnValue($q.when());
-            this.deleteOntologyBranch = jasmine.createSpy('deleteOntologyBranch').and.returnValue($q.when());
+            this.deleteOntologyBranchState = jasmine.createSpy('deleteOntologyBranchState').and.returnValue($q.when());
             this.deleteOntologyState = jasmine.createSpy('deleteOntologyState').and.returnValue($q.when());
             this.getCurrentStateByRecordId = jasmine.createSpy('getCurrentStateByRecordId').and.returnValue({});
             this.getCurrentStateIdByRecordId = jasmine.createSpy('getCurrentStateIdByRecordId').and.returnValue('');

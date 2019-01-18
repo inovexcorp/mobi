@@ -84,7 +84,6 @@
                             dvm.onClear();
                         }
                     }
-
                     dvm.onClear = function() {
                         httpService.cancel(dvm.id);
                         dvm.os.listItem.editorTabStates.search.errorMessage = '';
@@ -94,6 +93,14 @@
                         dvm.os.listItem.editorTabStates.search.searchText = '';
                         dvm.os.listItem.editorTabStates.search.selected = {};
                         dvm.os.listItem.editorTabStates.search.entityIRI = '';
+                    }
+                    dvm.canGoTo = function() {
+                        return !!dvm.os.listItem.editorTabStates.search.entityIRI && !(dvm.om.isOntology(dvm.os.listItem.selected) && dvm.os.listItem.editorTabStates.search.entityIRI !== dvm.os.listItem.ontologyId);
+                    }
+                    dvm.goToIfYouCan = function(item) {
+                        if (dvm.canGoTo()) {
+                            dvm.os.goTo(item);
+                        }
                     }
 
                     $scope.$watch('dvm.os.listItem.selected', (newValue, oldValue) => {
