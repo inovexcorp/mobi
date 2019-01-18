@@ -60,7 +60,7 @@
                 url: '/home',
                 views: {
                     'container@': {
-                        templateUrl: 'modules/home/home.html'
+                        template: '<home-page></home-page>'
                     }
                 },
                 data: {
