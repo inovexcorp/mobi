@@ -224,7 +224,6 @@ function mockOntologyManager() {
             this.ontologyRecords = [];
             this.reset = jasmine.createSpy('reset');
             this.initialize = jasmine.createSpy('initialize');
-            this.getAllOntologyRecords = jasmine.createSpy('getAllOntologyRecords').and.returnValue($q.when([]));
             this.uploadFile = jasmine.createSpy('uploadFile').and.returnValue($q.when({}));
             this.uploadJson = jasmine.createSpy('uploadJson').and.returnValue($q.when({}));
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
