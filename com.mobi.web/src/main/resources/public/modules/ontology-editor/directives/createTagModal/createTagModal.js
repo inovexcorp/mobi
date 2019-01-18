@@ -69,13 +69,27 @@
         dvm.iriPattern = REGEX.IRI;
         dvm.os = ontologyStateService;
         dvm.error = '';
+        dvm.tagConfig = {};
 
-        dvm.tagConfig = {
-            iri: dvm.os.listItem.ontologyId + '/' + $filter('date')(now, 'MM/dd/yyyy'),
-            title: '',
-            commitId: dvm.os.listItem.ontologyRecord.commitId
-        };
+        dvm.$onInit = function() {
+            var tagIRI = dvm.os.listItem.ontologyId
+            var endChar = dvm.os.listItem.ontologyId.slice(-1);
+            if (endChar != '/' && endChar != '#' && endChar != ':') {
+                tagIRI += '/';
+            }
+            dvm.tagConfig = {
+                iri: tagIRI,
+                title: '',
+                commitId: dvm.os.listItem.ontologyRecord.commitId
+            };
+        }
 
+        dvm.nameChanged = function() {
+            if (!dvm.iriHasChanged) {
+                var split = $filter('splitIRI')(dvm.tagConfig.iri);
+                dvm.tagConfig.iri = split.begin + split.then + $filter('camelCase')(dvm.tagConfig.title, 'class');
+            }
+        }
         dvm.create = function() {
             cm.createRecordTag(dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.tagConfig)
                 .then(() => cm.getRecordVersion(dvm.tagConfig.iri, dvm.os.listItem.ontologyRecord.recordId, catalogId), $q.reject)
