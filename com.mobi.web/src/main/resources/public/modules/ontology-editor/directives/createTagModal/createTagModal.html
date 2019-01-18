@@ -29,12 +29,12 @@
         <error-display class="break-word" ng-if="dvm.error">{{dvm.error}}</error-display>
         <div class="form-group">
             <custom-label>IRI</custom-label>
-            <input class="form-control" name="iri" ng-model="dvm.tagConfig.iri" ng-pattern="dvm.iriPattern" ng-class="{'is-invalid': dvm.form.iri.$error.pattern}" required/>
+            <input class="form-control" name="iri" ng-model="dvm.tagConfig.iri" ng-pattern="dvm.iriPattern" ng-change="dvm.iriHasChanged = true" ng-class="{'is-invalid': dvm.form.iri.$error.pattern}" required/>
             <p ng-messages="dvm.form.iri.$error" class="invalid-feedback">
                 <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
             </p>
         </div>
-        <text-input ng-model="dvm.tagConfig.title" display-text="'Title'" required="true" is-focus-me="true"></text-input>
+        <text-input ng-model="dvm.tagConfig.title" input-name="title" required="true" display-text="'Title'" is-focus-me="true" ng-keyup="dvm.nameChanged()"></text-input>
     </form>
 </div>
 <div class="modal-footer">

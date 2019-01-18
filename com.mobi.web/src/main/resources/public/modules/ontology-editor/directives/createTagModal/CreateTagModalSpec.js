@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Create Tag Modal component', function() {
-    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc;
+    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, splitIRI;
 
     beforeEach(function() {
         module('templates');
@@ -31,13 +31,16 @@ describe('Create Tag Modal component', function() {
         mockLoginManager();
         mockPrefixes();
         injectRegexConstant();
+        injectCamelCaseFilter();
+        injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _ontologyStateService_,  _splitIRIFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
             ontologyStateSvc = _ontologyStateService_;
+            splitIRI = _splitIRIFilter_;
         });
 
         this.catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
@@ -60,6 +63,7 @@ describe('Create Tag Modal component', function() {
         $q = null;
         catalogManagerSvc = null;
         ontologyStateSvc = null;
+        splitIRI = null;
         this.element.remove();
     });
 
@@ -102,6 +106,23 @@ describe('Create Tag Modal component', function() {
         });
     });
     describe('controller methods', function() {
+        describe('should update the id', function() {
+            beforeEach(function() {
+                this.original = this.controller.tagConfig.iri;
+            });
+            it('if the iri has not changed', function() {
+                this.controller.tagConfig.title = 'tag'
+                this.controller.nameChanged();
+                expect(splitIRI).toHaveBeenCalledWith(this.original);
+                expect(this.controller.tagConfig.iri).toBe('tag');
+            });
+            it('unless the iri has changed', function() {
+                this.controller.iriHasChanged = true;
+                this.controller.nameChanged();
+                expect(this.controller.tagConfig.iri).toBe(this.original);
+                expect(splitIRI).not.toHaveBeenCalled();
+            });
+        });
         it('cancel calls dismiss', function() {
             this.controller.cancel();
             expect(scope.dismiss).toHaveBeenCalled();
