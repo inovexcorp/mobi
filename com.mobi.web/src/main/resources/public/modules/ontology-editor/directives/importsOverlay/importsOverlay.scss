@@ -9,11 +9,15 @@ imports-overlay {
         max-height: 300px;
         overflow-y: auto;
 
+        md-checkbox {
+            margin-right: 0;
+        }
         .md-list-item-inner {
-            width: 100%;
+            min-width: 0;
 
             .md-list-item-text {
-                width: calc(100% - 24px);
+                flex: 1;
+                min-width: 0;
 
                 h4 {
                     margin-bottom: 0;

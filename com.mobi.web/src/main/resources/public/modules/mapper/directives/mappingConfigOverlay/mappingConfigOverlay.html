@@ -56,6 +56,7 @@
                     </div>
                 </div>
                 <div class="col-6 preview-display">
+                    <div class="text-muted no-selected-ontology" ng-if="!dvm.selectedOntology">(No ontology selected)</div>
                     <div class="ontology-record-info" ng-if="dvm.selectedOntology">
                         <h3>{{dvm.selectedOntology.title}}</h3>
                         <entity-dates entity="dvm.selectedOntology.jsonld"></entity-dates>

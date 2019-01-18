@@ -512,20 +512,18 @@ describe('Mapping Config Overlay component', function() {
             expect(this.element.find('md-list-item').length).toEqual(this.controller.ontologies.length);
         });
         it('depending on whether an ontology record has been selected', function() {
-            var ontologyInfo = this.element.querySelectorAll('.ontology-record-info');
-            expect(ontologyInfo.length).toEqual(0);
+            expect(this.element.querySelectorAll('.ontology-record-info').length).toEqual(0);
+            expect(this.element.querySelectorAll('.no-selected-ontology').length).toEqual(1);
 
-            // this.controller = this.element.controller('mappingConfigOverlay');
             this.controller.selectedOntology = {'@id': ''};
             scope.$digest();
-            ontologyInfo = this.element.querySelectorAll('.ontology-record-info');
-            expect(ontologyInfo.length).toEqual(1);
+            expect(this.element.querySelectorAll('.ontology-record-info').length).toEqual(1);
+            expect(this.element.querySelectorAll('.no-selected-ontology').length).toEqual(0);
         });
         it('depending on whether the selected ontology record has a saved version', function() {
             var options = this.element.querySelectorAll('.version-select option');
             expect(options.length).toEqual(1);
 
-            // this.controller = this.element.controller('mappingConfigOverlay');
             this.controller.selectedOntologyState = {saved: {}};
             scope.$digest();
             options = this.element.querySelectorAll('.version-select option');
