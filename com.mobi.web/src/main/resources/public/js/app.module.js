@@ -129,7 +129,6 @@
             'ontology-editor',
             'settings',
             'user-management',
-            'webtop',
 
             /* Custom Services */
             'catalogManager',
