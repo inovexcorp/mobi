@@ -32,7 +32,6 @@ import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import org.junit.Test;
 
 import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
 
 public class DateValueConverterTest extends ValueConverterTestCase<OffsetDateTime> {
 
@@ -47,7 +46,7 @@ public class DateValueConverterTest extends ValueConverterTestCase<OffsetDateTim
         OffsetDateTime expected = OffsetDateTime.now();
         Value value = valueConverter.convertType(expected, null);
         OffsetDateTime actual = OffsetDateTime.parse(value.stringValue());
-        assertEquals(expected.truncatedTo(ChronoUnit.SECONDS), actual);
+        assertEquals(expected, actual);
     }
 
     @Test
@@ -62,6 +61,6 @@ public class DateValueConverterTest extends ValueConverterTestCase<OffsetDateTim
         OffsetDateTime expected = OffsetDateTime.now();
         Literal literal = vf.createLiteral(expected);
         OffsetDateTime actual = valueConverter.convertValue(literal, null, OffsetDateTime.class);
-        assertEquals(expected.truncatedTo(ChronoUnit.SECONDS), actual);
+        assertEquals(expected, actual);
     }
 }

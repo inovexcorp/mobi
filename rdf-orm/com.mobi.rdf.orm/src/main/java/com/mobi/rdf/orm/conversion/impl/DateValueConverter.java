@@ -24,12 +24,6 @@ package com.mobi.rdf.orm.conversion.impl;
  */
 
 import aQute.bnd.annotation.component.Component;
-import com.mobi.persistence.utils.LiteralUtils;
-import com.mobi.rdf.api.Literal;
-import com.mobi.rdf.orm.Thing;
-import com.mobi.rdf.orm.conversion.AbstractValueConverter;
-import com.mobi.rdf.orm.conversion.ValueConversionException;
-import com.mobi.rdf.orm.conversion.ValueConverter;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.AbstractValueConverter;
@@ -39,9 +33,6 @@ import com.mobi.rdf.orm.conversion.ValueConverter;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.GregorianCalendar;
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
 
 /**
  * {@link ValueConverter} for creating {@link Date} objects from statements.
@@ -65,7 +56,7 @@ public class DateValueConverter extends AbstractValueConverter<OffsetDateTime> {
     public OffsetDateTime convertValue(final Value value, final Thing thing,
             final Class<? extends OffsetDateTime> desiredType) throws ValueConversionException {
         try {
-            return OffsetDateTime.parse(value.stringValue(), LiteralUtils.OFFSET_TIME_FORMATTER);
+            return OffsetDateTime.parse(value.stringValue(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         } catch (DateTimeParseException e) {
             throw new ValueConversionException("Issue converting value of statement into an OffsetDateTime object.", e);
         }

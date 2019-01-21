@@ -1,11 +1,12 @@
 package com.mobi.rdf.core.impl.sesame
 
-import com.mobi.persistence.utils.LiteralUtils
+
 import com.mobi.rdf.api.ValueFactory
 import org.eclipse.rdf4j.model.vocabulary.RDF
 import org.eclipse.rdf4j.model.vocabulary.XMLSchema
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
@@ -85,20 +86,29 @@ class SimpleLiteralSpec extends Specification {
 
     @Shared
     def dateLabels = [
-            "2015-01-01T00:00:00": OffsetDateTime.parse("2015-01-01T00:00:00Z", LiteralUtils.OFFSET_TIME_FORMATTER),
-            "2015-01-01T00:00:00Z": OffsetDateTime.parse("2015-01-01T00:00:00Z", LiteralUtils.OFFSET_TIME_FORMATTER),
-            "2015-01-01T00:00:00.000Z": OffsetDateTime.parse("2015-01-01T00:00:00Z", LiteralUtils.OFFSET_TIME_FORMATTER),
-            "2015-01-01T00:00:00+01:00": OffsetDateTime.parse("2015-01-01T00:00:00+01:00", LiteralUtils.OFFSET_TIME_FORMATTER),
-            "-2015-01-01T00:00:00": OffsetDateTime.parse("-2015-01-01T00:00:00Z", LiteralUtils.OFFSET_TIME_FORMATTER),
-            "-2015-01-01T00:00:00Z": OffsetDateTime.parse("-2015-01-01T00:00:00Z", LiteralUtils.OFFSET_TIME_FORMATTER)
+            "2015-01-01T00:00:00": OffsetDateTime.parse("2015-01-01T00:00:00Z"),
+            "2015-01-01T00:00:00.123": OffsetDateTime.parse("2015-01-01T00:00:00.123Z"),
+            "2015-01-01T00:00:00Z": OffsetDateTime.parse("2015-01-01T00:00:00Z"),
+            "2015-01-01T00:00:00.000Z": OffsetDateTime.parse("2015-01-01T00:00:00Z"),
+            "2015-01-01T00:00:00.1Z": OffsetDateTime.parse("2015-01-01T00:00:00.1Z"),
+            "2015-01-01T00:00:00.123Z": OffsetDateTime.parse("2015-01-01T00:00:00.123Z"),
+            "2015-01-01T00:00:00.12345Z": OffsetDateTime.parse("2015-01-01T00:00:00.12345Z"),
+            "2015-01-01T00:00:00.123456789Z": OffsetDateTime.parse("2015-01-01T00:00:00.123456789Z"),
+            "2015-01-01T00:00:00.100Z": OffsetDateTime.parse("2015-01-01T00:00:00.100Z"),
+            "2015-01-01T00:00:00+01:00": OffsetDateTime.parse("2015-01-01T00:00:00+01:00"),
+            "2015-01-01T00:00:00-05:00": OffsetDateTime.parse("2015-01-01T00:00:00-05:00"),
+            "-2015-01-01T00:00:00": OffsetDateTime.parse("-2015-01-01T00:00:00Z"),
+            "-2015-01-01T00:00:00Z": OffsetDateTime.parse("-2015-01-01T00:00:00Z")
     ]
 
     @Shared
     def badDateLabels = [
             "2001-10-26",
-            "2001-10-26T21:32",
+            "2001-10-26T01",
+            "2001-10-26T01:01:01.1234567890Z",
             "2001-10-26T25:32:52+02:00",
-            "01-10-26T21:32"
+            "01-10-26T21:32",
+            "2015-01-01T00:00:00.1234567890Z"
     ]
 
     @Shared
@@ -322,6 +332,7 @@ class SimpleLiteralSpec extends Specification {
         def literal = new SimpleLiteral(dateLabel, vf.createIRI(XMLSchema.DATETIME.stringValue()))
 
         expect:
+        literal.stringValue() == dateLabel
         literal.dateTimeValue() == dateVal
 
         where:
@@ -329,6 +340,7 @@ class SimpleLiteralSpec extends Specification {
         dateVal << dateLabels.values()
     }
 
+    @Unroll
     def "bad date #dateLabel throws a DateTimeParseException when accessed"() {
         when:
         new SimpleLiteral(dateLabel, vf.createIRI(XMLSchema.DATETIME.stringValue())).dateTimeValue()

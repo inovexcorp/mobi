@@ -23,7 +23,6 @@ package com.mobi.rdf.core.impl.sesame;
  * #L%
  */
 
-import com.mobi.persistence.utils.LiteralUtils;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
@@ -35,6 +34,7 @@ import com.mobi.rdf.api.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.XMLSchema;
 
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import javax.annotation.Nonnull;
 
 public abstract class AbstractValueFactory implements ValueFactory {
@@ -118,7 +118,7 @@ public abstract class AbstractValueFactory implements ValueFactory {
 
     @Override
     public Literal createLiteral(@Nonnull OffsetDateTime literal) {
-        return createLiteral(literal.format(LiteralUtils.OFFSET_TIME_FORMATTER),
+        return createLiteral(literal.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
                 new SimpleIRI(XMLSchema.DATETIME.stringValue()));
     }
 

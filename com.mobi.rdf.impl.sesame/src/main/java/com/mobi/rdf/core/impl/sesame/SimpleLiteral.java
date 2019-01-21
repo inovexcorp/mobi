@@ -24,7 +24,6 @@ package com.mobi.rdf.core.impl.sesame;
  */
 
 
-import com.mobi.persistence.utils.LiteralUtils;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
@@ -32,6 +31,7 @@ import com.mobi.rdf.api.ValueFactory;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
 
@@ -104,12 +104,10 @@ public class SimpleLiteral implements Literal {
     @Override
     public OffsetDateTime dateTimeValue() {
         String sesameDateTime = sesameLiteral.stringValue();
-        // TODO: Don't use exceptions for this!
         try {
-            return OffsetDateTime.parse(sesameDateTime, LiteralUtils.READ_TIME_FORMATTER);
+            return OffsetDateTime.parse(sesameDateTime, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         } catch (DateTimeParseException e) {
-            return LocalDateTime.parse(sesameDateTime, LiteralUtils.LOCAL_TIME_FORMATTER)
-                    .atOffset(ZoneOffset.UTC);
+            return LocalDateTime.parse(sesameDateTime, DateTimeFormatter.ISO_DATE_TIME).atOffset(ZoneOffset.UTC);
         }
     }
 
