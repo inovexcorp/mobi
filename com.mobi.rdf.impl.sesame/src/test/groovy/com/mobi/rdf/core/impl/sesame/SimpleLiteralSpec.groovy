@@ -1,12 +1,10 @@
 package com.mobi.rdf.core.impl.sesame
 
-
 import com.mobi.rdf.api.ValueFactory
 import org.eclipse.rdf4j.model.vocabulary.RDF
 import org.eclipse.rdf4j.model.vocabulary.XMLSchema
 import spock.lang.Shared
 import spock.lang.Specification
-import spock.lang.Unroll
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
@@ -339,7 +337,6 @@ class SimpleLiteralSpec extends Specification {
         dateVal << dateLabels.values()
     }
 
-    @Unroll
     def "bad date #dateLabel throws a DateTimeParseException when accessed"() {
         when:
         new SimpleLiteral(dateLabel, vf.createIRI(XMLSchema.DATETIME.stringValue())).dateTimeValue()
