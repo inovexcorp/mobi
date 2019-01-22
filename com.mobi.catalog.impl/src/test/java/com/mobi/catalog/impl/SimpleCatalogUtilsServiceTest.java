@@ -1923,17 +1923,24 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             List<Resource> expect = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3"),
-                    VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4b"),
-                    VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4a"),
-                    VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"),
-                    VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1"),
-                    VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0")).collect(Collectors.toList());
+                    VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2")).collect(Collectors.toList());
             Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3");
-            Resource entityId = VALUE_FACTORY.createIRI("");
+            Resource entityId = VALUE_FACTORY.createIRI("http://mobi.com/test/class");
 
             List<Resource> result = service.getCommitChain(commitId, entityId, false, conn);
-            System.out.print(result);
-            //assertEquals(expect, result);
+            assertEquals(expect, result);
+        }
+    }
+
+    @Test
+    public void getEmptyCommitChainEntityTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test5a");
+            Resource entityId = VALUE_FACTORY.createIRI("http://mobi.com/test/noClass");
+
+            List<Resource> result = service.getCommitChain(commitId, entityId, false, conn);
+            assertEquals(0, result.size());
         }
     }
 

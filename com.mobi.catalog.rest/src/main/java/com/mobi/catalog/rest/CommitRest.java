@@ -64,7 +64,8 @@ public interface CommitRest {
      * Gets a {@link List} of {@link Commit}s, in descending order by date, within the repository which represents the
      * {@link Commit} history starting from the specified {@link Commit}. The {@link Commit} identified by the provided
      * {@code commitId} is the first item in the {@link List} and it was informed by the previous {@link Commit} in the
-     * {@link List}. If a limit is passed which is greater than zero, will paginate the results.
+     * {@link List}. The {@link List} is then filtered by {@link Commit} containing an {@link Commit} in its additions
+     * or deletions. If a limit is passed which is greater than zero, will paginate the results.
      *
      * @param uriInfo  The {@link UriInfo} of the request.
      * @param commitId {@link String} value of the {@link Commit} ID. NOTE: Assumes an {@link IRI} unless {@link String}

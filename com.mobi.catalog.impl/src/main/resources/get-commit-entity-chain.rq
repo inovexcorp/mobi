@@ -4,21 +4,22 @@ PREFIX prov: <http://www.w3.org/ns/prov#>
 SELECT DISTINCT ?parent
 WHERE {
     ?commit a mcat:Commit ;
-        (mcat:baseCommit | mcat:auxiliaryCommit)+ ?parent;
-        prov:generated ?revision.
+        (mcat:baseCommit | mcat:auxiliaryCommit)* ?parent .
 
-    ?parent prov:atTime ?time .
+    ?parent prov:atTime ?time ;
+            prov:generated ?revision.
+
 
     ?revision a mcat:Revision ;
-        mcat:additions ?additions;
+        mcat:additions ?additions ;
         mcat:deletions ?deletions .
 
     FILTER (exists {
-        SELECT ?additions {
+        graph ?additions {
             ?entity ?p ?o .
         }
     } || exists {
-        SELECT ?deletions {
+        graph ?deletions {
             ?entity ?p ?o .
         }
     })

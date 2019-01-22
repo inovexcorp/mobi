@@ -588,7 +588,8 @@ public interface CatalogUtilsService {
 
     /**
      * Gets a List which represents the commit chain from the initial commit to the specified commit in either
-     * ascending or descending date order.
+     * ascending or descending date order. The resulting Commit is then filtered by an Entity IRI to return Commits
+     * containing the Entity IRI in the additions or deletions of a commit.
      *
      * @param commitId The Resource identifying the Commit that you want to get the chain for.
      * @param entityId The Resource identifying the Entity that you want to get the chain for.
@@ -659,7 +660,8 @@ public interface CatalogUtilsService {
 
     /**
      * Gets the commit chain between two commits, i.e. the list of commits between {@code sourceCommitId} and
-     * {@code targetCommitId} in descending order.
+     * {@code targetCommitId} in descending order.  Returns the list of commits that contain the Entity IRI in the
+     * Commit's additions or deletions.
      *
      * @param sourceCommitId Source commit
      * @param targetCommitId Target commit
@@ -674,7 +676,8 @@ public interface CatalogUtilsService {
 
     /**
      * Gets the commit chain between two commits, i.e. the list of commits between {@code sourceCommitId} and
-     * {@code targetCommitId} in the order specified.
+     * {@code targetCommitId} in the order specified. Returns the list of commits that contain the Entity IRI in the
+     * Commit's additions or deletions.
      *
      * @param sourceCommitId Source commit
      * @param targetCommitId Target commit

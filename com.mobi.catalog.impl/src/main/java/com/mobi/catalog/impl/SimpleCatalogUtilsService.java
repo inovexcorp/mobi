@@ -1128,8 +1128,9 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     /**
-     * Gets an iterator which contains all of the Commit ids in the specified direction, either ascending or
-     * descending by date. If descending, the provided Resource identifying a Commit will be first.
+     * Gets an iterator which contains all of the Commit ids, filtered by a Commit containing the Entity id in its
+     * additions or deletions, in the specified direction, either ascending or descending by date. If descending,
+     * the provided Resource identifying a Commit will be first.
      *
      * @param commitId The Resource identifying the Commit that you want to get the chain for.
      * @param entityId The Resource identifying the Entity that you want to get the chain for.

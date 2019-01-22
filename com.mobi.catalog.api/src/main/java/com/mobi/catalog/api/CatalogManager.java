@@ -804,10 +804,10 @@ public interface CatalogManager {
 
     /**
      * Gets a List of Commits ordered by date descending within the repository. The Commit identified by the first
-     * provided Resource is the first item in the List and it was informed by the previous Commit in the List. This
-     * association is repeated until you get to the second Resource which is beginning of the List. The resulting List
-     * can then be thought about the chain of Commits starting with the Commit identified by the first provided Resource
-     * and ending with the second provided Resource.
+     * provided Resource is the first item in the List and it was informed by the previous Commit in the List. Each
+     * addition or deletion of a Commit is then compared to the Entity IRI and removes graphs that don't contain the
+     * entityId. The resulting List can then be thought about the chain of Commits starting with the Commit identified
+     * by the first provided Resource and filter all chain of Commits containing the Entity IRI to the parent Commit.
      *
      * @param commitId The Resource identifying the Commit for the desired chain.
      * @param entityId The Resource identifying the Entity to start the chain of Commit.
@@ -820,7 +820,9 @@ public interface CatalogManager {
      * Gets a List of Commits ordered by date descending within the repository starting with the head Commit of the
      * Branch identified by the provided Resources. The head Commit is the first one in the List and it was informed
      * by the previous Commit in the List. This association is repeated until you get to the beginning of the List. The
-     * resulting List can then be thought as the chain of Commits on the Branch starting with the head Commit.
+     * resulting List can then be thought as the chain of Commits on the Branch starting with the head Commit. That list
+     * is then filtered by an Entity IRI resulting in Commits containing the Entity IRI in the additions or deletions of
+     * a Commit.
      *
      * @param catalogId            The Resource identifying the Catalog which contains the Record.
      * @param targetId             The Resource identifying the Commit to terminate the chain.
