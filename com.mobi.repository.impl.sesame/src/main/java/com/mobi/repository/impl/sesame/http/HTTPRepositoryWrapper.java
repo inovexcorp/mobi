@@ -73,7 +73,7 @@ public class HTTPRepositoryWrapper extends RepositoryWrapper {
         HTTPRepositoryConfig config = Configurable.createConfigurable(HTTPRepositoryConfig.class, props);
 
         String[] schemes = {"http","https"};
-        UrlValidator urlValidator = new UrlValidator(schemes);
+        UrlValidator urlValidator = new UrlValidator(schemes, UrlValidator.ALLOW_LOCAL_URLS);
         if (!urlValidator.isValid(config.serverUrl())) {
             throw new RepositoryConfigException(
                     new IllegalArgumentException("Repository serverUrl is not a valid URL.")
