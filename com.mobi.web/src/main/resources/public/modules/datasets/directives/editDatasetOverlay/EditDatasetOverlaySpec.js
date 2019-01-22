@@ -43,6 +43,7 @@ describe('Edit Dataset Overlay component', function() {
             $q = _$q_;
         });
 
+        this.catalogId = 'catalog';
         utilSvc.getSkolemizedIRI.and.returnValue('http://mobi.com/.well-known/genid/1234');
         utilSvc.getPropertyId.and.callFake((entity, propertyIRI) => {
             switch (propertyIRI) {
@@ -72,7 +73,7 @@ describe('Edit Dataset Overlay component', function() {
                     return '';
             }
         });
-        catalogManagerSvc.localCatalog = {'@id': 'http://mobi.com/catalog-local'};
+        catalogManagerSvc.localCatalog = {'@id': this.catalogId};
         datasetStateSvc.selectedDataset = {
             identifiers: [],
             record: {'@id': 'record'},
@@ -114,12 +115,29 @@ describe('Edit Dataset Overlay component', function() {
         });
     });
     describe('controller methods', function() {
+        it('should get the ontology IRI of an OntologyRecord', function() {
+            utilSvc.getPropertyId.and.returnValue('ontology')
+            expect(this.controller.getOntologyIRI({})).toEqual('ontology');
+            expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.ontologyEditor + 'ontologyIRI');
+        });
+        it('should select an ontology', function() {
+            var ontology = {title: 'A', selected: true};
+            this.controller.selectedOntologies = [{title: 'B'}]
+            this.controller.selectOntology(ontology)
+            expect(this.controller.selectedOntologies).toEqual([ontology, {title: 'B'}]);
+        });
+        it('should unselect an ontology', function() {
+            var ontology = {recordId: this.ontology1Id};
+            this.controller.selectedOntologies = [ontology];
+            this.controller.unselectOntology(ontology);
+            expect(this.controller.selectedOntologies).toEqual([]);
+        });
         describe('should update a dataset', function() {
             it('unless an error occurs', function() {
                 datasetManagerSvc.updateDatasetRecord.and.returnValue($q.reject('Error Message'));
                 this.controller.update();
                 scope.$apply();
-                expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], jasmine.any(Array), 'title');
+                expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], this.catalogId, jasmine.any(Array), 'title');
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
                 expect(datasetStateSvc.setResults).not.toHaveBeenCalled();
                 expect(scope.close).not.toHaveBeenCalled();
@@ -137,7 +155,7 @@ describe('Edit Dataset Overlay component', function() {
                     _.forEach(datasetStateSvc.selectedDataset.record[prefixes.catalog + 'keyword'], function(obj) {
                         expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(this.expectedRecord, 'keyword', obj['@value']);
                     });
-                    expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], jasmine.any(Array), 'title');
+                    expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], this.catalogId, jasmine.any(Array), 'title');
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
@@ -147,7 +165,7 @@ describe('Edit Dataset Overlay component', function() {
                     datasetStateSvc.selectedDataset.identifier = [{'@id': 'identifier'}];
                     this.controller.update();
                     scope.$apply();
-                    expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], [this.expectedRecord], 'title');
+                    expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], this.catalogId, [this.expectedRecord], 'title');
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
@@ -155,7 +173,7 @@ describe('Edit Dataset Overlay component', function() {
                 });
                 it('when an ontology is added.', function() {
                     var branch = {'@id': 'branch'};
-                    this.controller.selectedOntologies = [{'@id': 'ontology'}];
+                    this.controller.selectedOntologies = [{recordId: 'ontology'}];
                     catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.when(branch));
                     var expectedBlankNode = {};
                     expectedBlankNode[prefixes.dataset + 'linksToRecord'] = [{'@id': 'ontology'}];
@@ -163,11 +181,11 @@ describe('Edit Dataset Overlay component', function() {
                     expectedBlankNode[prefixes.dataset + 'linksToCommit'] = [{'@id': 'commit'}];
                     this.controller.update();
                     scope.$apply();
-                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith('ontology', catalogManagerSvc.localCatalog['@id']);
+                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith('ontology', this.catalogId);
                     expect(utilSvc.getSkolemizedIRI).toHaveBeenCalled();
                     expect(utilSvc.getPropertyId).toHaveBeenCalledWith(branch, prefixes.catalog + 'head');
                     expect(utilSvc.setPropertyId).toHaveBeenCalledWith(this.expectedRecord, prefixes.dataset + 'ontology', jasmine.any(String));
-                    expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], [jasmine.objectContaining(expectedBlankNode), this.expectedRecord], 'title');
+                    expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], this.catalogId, [jasmine.objectContaining(expectedBlankNode), this.expectedRecord], 'title');
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();

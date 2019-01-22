@@ -209,53 +209,6 @@ describe('Ontology Manager service', function() {
         ontologyManagerSvc.reset();
         expect(ontologyManagerSvc.ontologyRecords).toEqual([]);
     });
-    describe('getAllOntologyRecords gets a list of all ontology records', function() {
-        beforeEach(function () {
-            this.config = {
-                pageIndex: 0,
-                limit: 100,
-                recordType: prefixes.ontologyEditor + 'OntologyRecord'
-            };
-        });
-        it('with a sorting option', function() {
-            this.config.sortOption = {label: 'Test'};
-            catalogManagerSvc.getRecords.and.returnValue($q.when(this.records));
-            ontologyManagerSvc.getAllOntologyRecords(this.config.sortOption)
-                .then(function(response) {
-                    expect(response).toEqual(this.records.data);
-                }.bind(this), function() {
-                    fail('Promise should have resolved');
-                });
-            scope.$apply();
-            expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(this.catalogId, this.config, '');
-        });
-        it('with a promise id', function() {
-            var sortOption = {label: 'Title (asc)'};
-            var id = 'id';
-            catalogManagerSvc.sortOptions = [sortOption];
-            this.config.sortOption = sortOption;
-            catalogManagerSvc.getRecords.and.returnValue($q.when(this.records));
-            ontologyManagerSvc.getAllOntologyRecords(undefined, id)
-                .then(function(response) {
-                    expect(response).toEqual(this.records.data);
-                }.bind(this), function() {
-                    fail('Promise should have resolved');
-                });
-            scope.$apply();
-            expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(this.catalogId, this.config, id);
-        });
-        it('unless an error occurs', function() {
-            catalogManagerSvc.getRecords.and.returnValue($q.reject(this.error));
-            ontologyManagerSvc.getAllOntologyRecords()
-                .then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toEqual(this.error);
-                }.bind(this));
-            scope.$apply();
-            expect(catalogManagerSvc.getRecords).toHaveBeenCalled();
-        });
-    });
     describe('uploadFile hits the proper endpoint', function() {
         describe('without an id and', function() {
             it('with description and keywords', function() {

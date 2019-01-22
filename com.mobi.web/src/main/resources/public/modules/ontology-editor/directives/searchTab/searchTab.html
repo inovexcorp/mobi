@@ -35,7 +35,7 @@
                                current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, item)"
                                is-active="dvm.os.getActiveEntityIRI() === item"
                                on-click="dvm.os.selectItem(item, false)"
-                               ng-dblclick="dvm.os.goTo(item)"></tree-item>
+                               ng-dblclick="dvm.goToIfYouCan(item)"></tree-item>
                 </ul>
             </div>
         </div>
@@ -45,7 +45,7 @@
             <div class="d-flex">
                 <selected-details class="flex-1 remove-min-width" read-only="true"></selected-details>
                 <div>
-                    <button class="btn btn-primary" ng-click="dvm.os.goTo(dvm.os.listItem.editorTabStates.search.entityIRI)">Go To</button>
+                    <button class="btn btn-primary" ng-if="dvm.canGoTo()" ng-click="dvm.os.goTo(dvm.os.listItem.editorTabStates.search.entityIRI)">Go To</button>
                 </div>
             </div>
             <div class="property-values mt-3" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.selected track by key">
