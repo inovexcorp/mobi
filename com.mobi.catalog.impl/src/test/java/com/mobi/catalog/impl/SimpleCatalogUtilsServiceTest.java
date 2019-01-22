@@ -2396,25 +2396,30 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     @Test
     public void testGetDifferenceEntityChain() {
         // Setup:
-        List<Resource> commitChain = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0"),
-                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1"),
-                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"),
-                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4a"),
-                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4b"),
-                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3")).collect(Collectors.toList());
+        List<Resource> expected = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2")).collect(Collectors.toList());
         Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3");
         Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0");
-        Resource entityId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2");
-
-        // Expected list should have the first commit removed
-        List<Resource> expected = commitChain.subList(1, commitChain.size());
-        Collections.reverse(expected);
+        Resource entityId = VALUE_FACTORY.createIRI("http://mobi.com/test/class");
 
         try (RepositoryConnection conn = repo.getConnection()) {
             List<Resource> actual = service.getDifferenceChain(sourceId, targetId, entityId, conn);
 
-            System.out.print(actual);
-            //assertEquals(expected, actual);
+            assertEquals(expected, actual);
+        }
+    }
+
+    @Test
+    public void testGetDifferenceEntityChainEmpty() {
+        // Setup:
+        Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3");
+        Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0");
+        Resource entityId = VALUE_FACTORY.createIRI("http://mobi.com/test/class5");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            List<Resource> actual = service.getDifferenceChain(sourceId, targetId, entityId, conn);
+
+            assertEquals(0, actual.size());
         }
     }
 

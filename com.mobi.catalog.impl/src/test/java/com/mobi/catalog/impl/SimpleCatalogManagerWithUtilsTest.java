@@ -341,42 +341,6 @@ public class SimpleCatalogManagerWithUtilsTest extends OrmEnabledTestCase{
     }
 
     @Test
-    public void testDuplicateChangeMergeDiffEntityBaseCase() throws Exception {
-        //  Commit  Left Branch                      Right Branch
-        //      G
-        //      L                                       + Comment B
-        //      H       + Comment B
-        //      J       - Comment B + Comment A
-
-        // Setup:
-        IRI commitJIri = VALUE_FACTORY.createIRI(COMMITS + "commit-j");
-        IRI commitLIri = VALUE_FACTORY.createIRI(COMMITS + "commit-l");
-        IRI rightBranchIri = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#right-branch3");
-
-        try (RepositoryConnection conn = repo.getConnection()) {
-            Model sourceCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitJIri), MODEL_FACTORY);
-            Model targetCommitModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitLIri), MODEL_FACTORY);
-            Model entityIRIModel = RepositoryResults.asModel(conn.getStatements(null, null, null, commitLIri), MODEL_FACTORY);
-            Model rightBranchModel = RepositoryResults.asModel(conn.getStatements(null, null, null, rightBranchIri), MODEL_FACTORY);
-            Commit sourceHead = commitFactory.getExisting(commitJIri, sourceCommitModel).get();
-            Commit targetHead = commitFactory.getExisting(commitLIri, targetCommitModel).get();
-            Commit entityHead = commitFactory.getExisting(commitJIri, entityIRIModel).get();
-            Branch rightBranch = branchFactory.getExisting(rightBranchIri, rightBranchModel).get();
-
-            Commit mergeCommit = manager.createCommit(manager.createInProgressCommit(userFactory.createNew(USER_IRI)), "Left into Right", targetHead, sourceHead);
-
-            utilsService.addCommit(rightBranch, mergeCommit, conn);
-            utilsService.updateCommit(mergeCommit, MODEL_FACTORY.createModel(), MODEL_FACTORY.createModel(), conn);
-
-            List<Resource> commitsFromMerge = utilsService.getCommitChain(mergeCommit.getResource(), true, conn);
-            Model branchCompiled = utilsService.getCompiledResource(commitsFromMerge, conn);
-
-            assertTrue(branchCompiled.contains(commentA));
-            assertTrue(branchCompiled.contains(commentB));
-        }
-    }
-
-    @Test
     public void getCompiledResourceTiming() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Need dates to have an ordered commit list

@@ -893,7 +893,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                                              boolean asc) {
         validateResource(sourceCommitId, commitFactory.getTypeIRI(), conn);
         validateResource(targetCommitId, commitFactory.getTypeIRI(), conn);
-        validateResource(targetEntityId, commitFactory.getTypeIRI(), conn);
 
         final List<Resource> sourceCommits = getCommitChain(sourceCommitId, targetEntityId, true, conn);
         final List<Resource> targetCommits = getCommitChain(targetCommitId, targetEntityId, true, conn);

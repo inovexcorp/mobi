@@ -56,11 +56,14 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -70,6 +73,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -90,12 +94,16 @@ public class CommitRestImplTest extends MobiRestTestNg {
             "http://mobi.com/commits/1",
             "http://mobi.com/commits/2"
     };
+    private static final String[] ENTITY_IRI = new String[] {
+            "http://mobi.com/commits/0"
+    };
 
     private CommitRestImpl rest;
     private ValueFactory vf;
     private ModelFactory mf;
     private OrmFactory<Record> recordFactory;
     private Record testRecord;
+    private List<Commit> entityCommits;
     private List<Commit> testCommits;
     private User user;
 
@@ -130,6 +138,10 @@ public class CommitRestImplTest extends MobiRestTestNg {
         OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
 
         testCommits = Arrays.stream(COMMIT_IRIS)
+                .map(s -> commitFactory.createNew(vf.createIRI(s)))
+                .collect(Collectors.toList());
+
+        entityCommits = Arrays.stream(ENTITY_IRI)
                 .map(s -> commitFactory.createNew(vf.createIRI(s)))
                 .collect(Collectors.toList());
 
@@ -367,15 +379,29 @@ public class CommitRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getCommitHistoryWithEntityNoTargetTest() {
+        when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(testCommits);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
-                .queryParam("entityId", encode(COMMIT_IRIS[0]))
+                .queryParam("entityId", encode(COMMIT_IRIS[1]))
+                .queryParam("offset", 1)
+                .queryParam("limit", 1)
                 .request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]));
+        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[1]));
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
+        assertEquals(response.getLinks().size(), 2);
+        Set<Link> links = response.getLinks();
+        assertEquals(links.size(), 2);
+        links.forEach(link -> {
+            assertTrue(link.getUri().getRawPath().contains("commits/" + encode(COMMIT_IRIS[1]) + "/history"));
+            assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
+        });
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 1);
+            JSONObject commitObj = result.getJSONObject(0);
+            assertTrue(commitObj.containsKey("id"));
+            assertEquals(commitObj.getString("id"), COMMIT_IRIS[1]);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -383,16 +409,27 @@ public class CommitRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getCommitHistoryWithEntityAndTargetTest() {
+        when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(entityCommits);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
                 .queryParam("targetId", encode(COMMIT_IRIS[0]))
                 .queryParam("entityId", encode(COMMIT_IRIS[0]))
                 .request().get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]), vf.createIRI(COMMIT_IRIS[0]));
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + ENTITY_IRI.length);
+        Set<Link> links = response.getLinks();
+        assertEquals(links.size(), 0);
+        links.forEach(link -> {
+            assertTrue(link.getUri().getRawPath().contains("commits/" + encode(COMMIT_IRIS[1]) + "/history"));
+            assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
+        });
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 1);
+            JSONObject commitObj = result.getJSONObject(0);
+            assertTrue(commitObj.containsKey("id"));
+            assertEquals(commitObj.getString("id"), COMMIT_IRIS[0]);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
