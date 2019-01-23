@@ -12,12 +12,12 @@ package com.mobi.utils.cli;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -43,6 +43,7 @@ import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Completion;
+import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
@@ -63,6 +64,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -81,6 +83,11 @@ public class Restore implements Action {
 
     private static final String RESTORE_PATH = System.getProperty("java.io.tmpdir") + "/restoreZip";
     private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14");
+    private final List<String> defaultRepos = Arrays.asList(
+            "(&(objectClass=com.mobi.repository.api.Repository)(component.name=com.mobi.service.repository.native)"
+                    + "(id=system))",
+            "(&(objectClass=com.mobi.repository.api.Repository)(component.name=com.mobi.service.repository.native)"
+                    + "(id=prov))");
 
 
     // Service References
@@ -124,6 +131,11 @@ public class Restore implements Action {
     @Argument(name = "BackupFile", description = "The Mobi backup to restore", required = true)
     @Completion(FileCompleter.class)
     private String backupFilePath = null;
+
+    @Option(name = "-b", aliases = "--batchSize", description = "The number representing the triple transaction size "
+            + "for importing.")
+    private long batchSize = 10000;
+
 
     // Implementation
     @Override
@@ -177,6 +189,9 @@ public class Restore implements Action {
         copyPolicyFiles(bundleContext);
         restoreRepositories(manifest, backupVersion);
 
+        File tempArchive = new File(RESTORE_PATH);
+        tempArchive.delete();
+
         // Restart all services
         System.out.println("Restarting all services");
         LOGGER.trace("Restarting all services");
@@ -185,8 +200,6 @@ public class Restore implements Action {
         FrameworkWiring frameworkWiring = systemBundle.adapt(FrameworkWiring.class);
         frameworkWiring.refreshBundles(null);
 
-        File tempArchive = new File(RESTORE_PATH);
-        tempArchive.delete();
         return null;
     }
 
@@ -196,11 +209,31 @@ public class Restore implements Action {
         List<String> whitelistedFiles = IOUtils.readLines(getClass().getResourceAsStream("/configWhitelist.txt"),
                 "UTF-8");
 
+        List<String> repoServices = new ArrayList<>();
         File configDir = new File(RESTORE_PATH + File.separator + "configurations");
         File[] repoFiles = configDir.listFiles((d, name) -> name.contains("com.mobi.service.repository"));
         if (repoFiles != null && repoFiles.length != 0) {
             for (File repoFile : repoFiles) {
-                whitelistedFiles.add(repoFile.getName());
+                String filename = repoFile.getName();
+                StringBuilder sb = new StringBuilder("(&(objectClass=com.mobi.repository.api.Repository)"
+                        + "(component.name=");
+                sb.append(filename, 0, filename.indexOf("-"));
+                sb.append(")(id=");
+                sb.append(filename, filename.indexOf("-") + 1, filename.indexOf(".cfg"));
+                sb.append("))");
+                repoServices.add(sb.toString());
+                whitelistedFiles.add(filename);
+            }
+        }
+
+        // Remove default repo files if not configured in zip
+        for (String defaultRepo : defaultRepos) {
+            if (!repoServices.contains(defaultRepo)) {
+                String filename = "com.mobi.service.repository.native-"
+                        + defaultRepo.substring(defaultRepo.indexOf("id=") + 3, defaultRepo.indexOf("))"))
+                        + ".cfg";
+                Files.delete(Paths.get(System.getProperty("karaf.etc") + File.separator
+                        + filename));
             }
         }
 
@@ -215,9 +248,13 @@ public class Restore implements Action {
             }
         }
 
+        System.out.println("Waiting for services to restart");
+        TimeUnit.SECONDS.sleep(20);
+
         // Verify services have started
         List<String> services = IOUtils.readLines(getClass().getResourceAsStream("/registered-services.txt"),
                 "UTF-8");
+        services.addAll(repoServices);
         for (String service : services) {
             ServiceReference<?>[] refs = bundleContext.getAllServiceReferences(null, service);
             int count = 0;
@@ -259,7 +296,7 @@ public class Restore implements Action {
                 .continueOnError(false)
                 .logOutput(true)
                 .printOutput(true)
-                .batchSize(10000);
+                .batchSize(batchSize);
 
         for (Object key : repos.keySet()) {
             String repoName = key.toString();
