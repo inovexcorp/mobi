@@ -12,12 +12,12 @@ package com.mobi.utils.cli;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -83,12 +83,6 @@ public class Restore implements Action {
 
     private static final String RESTORE_PATH = System.getProperty("java.io.tmpdir") + "/restoreZip";
     private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14");
-    private final List<String> defaultRepos = Arrays.asList(
-            "(&(objectClass=com.mobi.repository.api.Repository)(component.name=com.mobi.service.repository.native)"
-                    + "(id=system))",
-            "(&(objectClass=com.mobi.repository.api.Repository)(component.name=com.mobi.service.repository.native)"
-                    + "(id=prov))");
-
 
     // Service References
 
@@ -206,9 +200,8 @@ public class Restore implements Action {
     private void copyConfigFiles(BundleContext bundleContext) throws IOException, InterruptedException,
             InvalidSyntaxException {
         // Copy config files to karaf.etc directory
-        List<String> whitelistedFiles = IOUtils.readLines(getClass().getResourceAsStream("/configWhitelist.txt"),
-                "UTF-8");
 
+        List<String> repoFileNames = new ArrayList<>();
         List<String> repoServices = new ArrayList<>();
         File configDir = new File(RESTORE_PATH + File.separator + "configurations");
         File[] repoFiles = configDir.listFiles((d, name) -> name.contains("com.mobi.service.repository"));
@@ -222,21 +215,21 @@ public class Restore implements Action {
                 sb.append(filename, filename.indexOf("-") + 1, filename.indexOf(".cfg"));
                 sb.append("))");
                 repoServices.add(sb.toString());
-                whitelistedFiles.add(filename);
+                repoFileNames.add(filename);
             }
         }
 
-        // Remove default repo files if not configured in zip
-        for (String defaultRepo : defaultRepos) {
-            if (!repoServices.contains(defaultRepo)) {
-                String filename = "com.mobi.service.repository.native-"
-                        + defaultRepo.substring(defaultRepo.indexOf("id=") + 3, defaultRepo.indexOf("))"))
-                        + ".cfg";
-                Files.delete(Paths.get(System.getProperty("karaf.etc") + File.separator
-                        + filename));
+        File etc = new File(System.getProperty("karaf.etc"));
+        File[] oldRepoFiles = etc.listFiles((d, name) -> name.contains("com.mobi.service.repository"));
+        for (File oldRepoFile : oldRepoFiles) {
+            if (!repoFileNames.contains(oldRepoFile.getName())) {
+                oldRepoFile.delete();
             }
         }
 
+        List<String> whitelistedFiles = IOUtils.readLines(getClass().getResourceAsStream("/configWhitelist.txt"),
+                "UTF-8");
+        whitelistedFiles.addAll(repoFileNames);
         for (String whitelistedFile : whitelistedFiles) {
             Path backupConfig = Paths.get(RESTORE_PATH + File.separator + "configurations" + File.separator
                     + whitelistedFile);
