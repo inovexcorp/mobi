@@ -20,23 +20,24 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="record-view row p-4">
-    <div class="col-auto back-column">
+<div class="record-view row p-4 h-100">
+    <div class="col-auto back-column h-100">
         <button ng-click="dvm.goBack()" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
     </div>
-    <div class="col record-body">
+    <div class="col record-body h-100 vertical-scroll">
         <div class="record-header">
-            <h2 class="record-title">
+            <h2 class="record-title break-word">
                 <record-icon record="dvm.record"></record-icon>
                 {{dvm.title}}
             </h2>
             <p class="lead text-muted">
-                {{dvm.description || '(None Specified)'}}
+                <!-- {{dvm.description || '(None Specified)'}} -->
+                <limit-description description="dvm.description" limit="400"></limit-description>
             </p>
         </div>
         <record-view-tabset record="dvm.record"></record-view-tabset>
     </div>
-    <div class="record-sidebar col-auto">
+    <div class="record-sidebar col-auto h-100 vertical-scroll">
         <h3>About this Record</h3>
         <dl>
             <dt class="text-muted">Publisher</dt>
@@ -48,7 +49,7 @@
             <dt class="text-muted">Keywords</dt>
             <dd>
                 <span ng-if="dvm.keywords.length === 0">(None specified)</span>
-                <span class="keyword badge badge-pill badge-light mr-1 mb-1" ng-repeat="keyword in dvm.keywords">{{keyword}}</span>
+                <span class="keyword badge badge-pill badge-light mr-1 mb-1 mw-100 text-truncate" ng-repeat="keyword in dvm.keywords">{{keyword}}</span>
             </dd>
         </dl>
     </div>

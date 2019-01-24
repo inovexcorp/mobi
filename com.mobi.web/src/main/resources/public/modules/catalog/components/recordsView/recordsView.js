@@ -25,8 +25,8 @@
 
     /**
      * @ngdoc component
-     * @name recordsView.component:recordsView
-     * @requires catalogState.service:cataStateService
+     * @name catalog.component:recordsView
+     * @requires catalogState.service:catalogStateService
      * @requires catalogManager.service:catalogManagerService
      * @requires utilService.service:utilService
      *

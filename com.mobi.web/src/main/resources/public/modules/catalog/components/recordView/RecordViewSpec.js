@@ -47,7 +47,7 @@ describe('Record View component', function() {
         this.recordId = 'recordId';
         this.userId = 'userId';
         this.username = 'user';
-        this.keywords = [{'@value': 'B'}, {'@value': 'A'}]
+        this.keywords = [{'@value': 'B'}, {'@value': 'A'}];
         this.record = {'@id': this.recordId, [prefixes.catalog + 'keyword']: this.keywords};
         utilSvc.getPropertyId.and.callFake((obj, propId) => {
             if (propId === prefixes.catalog + 'catalog') {

@@ -62,25 +62,6 @@
         }
     }
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name recordViewTabset
-         *
-         * @description
-         * The `recordViewTabset` module only provides the `recordViewTabset` component which creates a tabset that
-         * contains information displays about various aspects of a catalog Record.
-         */
-        .module('catalog')
-        /**
-         * @ngdoc component
-         * @name recordViewTabset.component:recordViewTabset
-         * @requires catalogState.service:catalogStateService
-         *
-         * @description
-         * `recordViewTabset` is a component that creates 
-         *
-         * @param {object} Record A catalog Record JSON-LD object
-         */
+    angular.module('catalog')
         .component('recordViewTabset', recordViewTabsetComponent);
 })();
