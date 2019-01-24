@@ -26,6 +26,7 @@ describe('Record View component', function() {
     beforeEach(function() {
         module('templates');
         module('catalog');
+        mockComponent('catalog', 'limit-description');
         mockCatalogManager();
         mockCatalogState();
         mockUtil();
@@ -120,7 +121,7 @@ describe('Record View component', function() {
             expect(this.element.querySelectorAll('.record-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.record-sidebar').length).toEqual(1);
         });
-        ['record-view-tabset', 'button', 'record-icon', 'dl'].forEach(test => {
+        ['record-view-tabset', 'button', 'record-icon', 'dl', 'limit-description'].forEach(test => {
             it('with a ' + test, function() {
                 expect(this.element.find(test).length).toBe(1);
             });
