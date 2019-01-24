@@ -34,7 +34,7 @@
         <text-input display-text="'Title'" ng-model="dvm.recordConfig.title" required="true" is-focus-me="true"></text-input>
         <text-area ng-model="dvm.recordConfig.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <keyword-select ng-model="dvm.keywords"></keyword-select>
-        <datasets-ontology-picker selected-ontologies="dvm.selectedOntologies" error="dvm.error"></datasets-ontology-picker>
+        <datasets-ontology-picker selected-ontologies="dvm.selectedOntologies" select-ontology="dvm.selectOntology(ontology)" unselect-ontology="dvm.unselectOntology(ontology)"></datasets-ontology-picker>
     </form>
 </div>
 <div class="modal-footer">
