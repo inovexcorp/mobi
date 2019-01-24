@@ -130,7 +130,6 @@ public class Restore implements Action {
             + "for importing.")
     private long batchSize = 10000;
 
-
     // Implementation
     @Override
     public Object execute() throws Exception {
