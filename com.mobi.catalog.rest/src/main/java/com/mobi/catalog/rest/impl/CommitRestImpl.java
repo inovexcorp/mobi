@@ -119,11 +119,11 @@ public class CommitRestImpl implements CommitRest {
             try {
                 final List<Commit> commits;
 
-                if (StringUtils.isBlank(entityId) && StringUtils.isBlank(targetId)) {
+                if (StringUtils.isBlank(targetId) && StringUtils.isBlank(entityId)) {
                     commits = catalogManager.getCommitChain(vf.createIRI(commitId));
-                } else if (StringUtils.isBlank(targetId) && StringUtils.isBlank(entityId)) {
+                } else if (StringUtils.isNotBlank(targetId) && StringUtils.isBlank(entityId)) {
                     commits = catalogManager.getCommitChain(vf.createIRI(commitId), vf.createIRI(targetId));
-                } else if (StringUtils.isBlank(targetId) && StringUtils.isNoneBlank(entityId)) {
+                } else if (StringUtils.isBlank(targetId) && StringUtils.isNotBlank(entityId)) {
                     commits = catalogManager.getCommitEntityChain(vf.createIRI(commitId), vf.createIRI(entityId));
                 } else {
                     commits = catalogManager.getCommitEntityChain(vf.createIRI(commitId), vf.createIRI(targetId),
