@@ -24,9 +24,11 @@ package com.mobi.jaas.rest.impl;
  */
 
 import static com.mobi.rest.util.RestUtils.getActiveUsername;
+import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.config.MobiConfiguration;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -36,16 +38,20 @@ import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.rest.UserRest;
 import com.mobi.ontologies.foaf.Agent;
+import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.RestUtils;
+import net.sf.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -54,41 +60,62 @@ import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
 public class UserRestImpl implements UserRest {
-    protected EngineManager engineManager;
-    protected ValueFactory factory;
-    protected MobiConfiguration mobiConfiguration;
-    protected Engine rdfEngine;
+    private EngineManager engineManager;
+    private ValueFactory vf;
+    private ModelFactory mf;
+    private SesameTransformer transformer;
+    private MobiConfiguration mobiConfiguration;
+    private Engine rdfEngine;
     private final Logger logger = LoggerFactory.getLogger(UserRestImpl.class);
 
     @Reference
-    protected void setEngineManager(EngineManager engineManager) {
+    void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
     }
 
     @Reference
-    protected void setFactory(ValueFactory factory) {
-        this.factory = factory;
+    void setValueFactory(ValueFactory vf) {
+        this.vf = vf;
     }
 
     @Reference
-    protected void setMobiConfiguration(MobiConfiguration configuration) {
+    void setModelFactory(ModelFactory mf) {
+        this.mf = mf;
+    }
+
+    @Reference
+    void setTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
+    }
+
+    @Reference
+    void setMobiConfiguration(MobiConfiguration configuration) {
         this.mobiConfiguration = configuration;
     }
 
     @Reference(target = "(engineName=RdfEngine)")
-    protected void setRdfEngine(Engine engine) {
+    void setRdfEngine(Engine engine) {
         this.rdfEngine = engine;
     }
 
     @Override
-    public Response listUsers() {
-        Set<String> usernames = engineManager.getUsers(rdfEngine.getEngineName()).stream()
-                .map(User::getUsername)
-                .filter(Optional::isPresent)
-                .map(username -> username.get().stringValue())
-                .collect(Collectors.toSet());
-
-        return Response.status(200).entity(usernames).build();
+    public Response getUsers() {
+        try {
+            Set<User> users = engineManager.getUsers(rdfEngine.getEngineName());
+            JSONArray result = JSONArray.fromObject(users.stream()
+                    .map(user -> {
+                        Model filteredUser = mf.createModel();
+                        user.clearPassword();
+                        filteredUser.addAll(user.getModel().filter(user.getResource(), null, null));
+                        return filteredUser;
+                    })
+                    .map(userModel -> modelToJsonld(userModel, transformer))
+                    .map(RestUtils::getObjectFromJsonld)
+                    .collect(Collectors.toList()));
+            return Response.ok(result).build();
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
@@ -229,7 +256,7 @@ public class UserRestImpl implements UserRest {
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
         Role roleObj = engineManager.getRole(rdfEngine.getEngineName(), role).orElseThrow(() ->
                 ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
-        savedUser.removeProperty(roleObj.getResource(), factory.createIRI(User.hasUserRole_IRI));
+        savedUser.removeProperty(roleObj.getResource(), vf.createIRI(User.hasUserRole_IRI));
         engineManager.updateUser(rdfEngine.getEngineName(), savedUser);
         logger.info("Role " + role + " removed from user " + username);
         return Response.ok().build();
@@ -281,7 +308,7 @@ public class UserRestImpl implements UserRest {
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
         Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
-        savedGroup.removeProperty(savedUser.getResource(), factory.createIRI(Group.member_IRI));
+        savedGroup.removeProperty(savedUser.getResource(), vf.createIRI(Group.member_IRI));
         engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
         logger.info("Removed user " + username + " from group " + groupTitle);
         return Response.ok().build();
@@ -289,7 +316,7 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response getUsername(String userIri) {
-        String username = engineManager.getUsername(factory.createIRI(userIri)).orElseThrow(() ->
+        String username = engineManager.getUsername(vf.createIRI(userIri)).orElseThrow(() ->
                 ErrorUtils.sendError("User not found", Response.Status.NOT_FOUND));
         return Response.ok(username).build();
     }

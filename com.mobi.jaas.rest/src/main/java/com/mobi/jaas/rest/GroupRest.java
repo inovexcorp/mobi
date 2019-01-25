@@ -23,29 +23,37 @@ package com.mobi.jaas.rest;
  * #L%
  */
 
+import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import com.mobi.jaas.api.ontologies.usermanagement.Group;
 
+import java.util.List;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 @Path("/groups")
 @Api( value = "/groups")
 public interface GroupRest {
     /**
-     * Retrieves the list of groups in Mobi.
+     * Retrieves a list of all the {@link Group}s in Mobi.
      *
-     * @return a Response with a JSON array of the groups in Mobi
+     * @return a Response with a JSON-LD list of the {@link Group}s in Mobi
      */
     @GET
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("List all Mobi groups")
-    Response listGroups();
+    @ApiOperation("Get all Mobi Groups")
+    Response getGroups();
 
     /**
      * Creates a group in Mobi with the passed information.

@@ -39,6 +39,7 @@
          * @requires $http
          * @requires $q
          * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * `userManagerService` is a service that provides access to the Mobi users and
@@ -46,9 +47,9 @@
          */
         .service('userManagerService', userManagerService);
 
-        userManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService'];
+        userManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'prefixes'];
 
-        function userManagerService($http, $q, REST_PREFIX, utilService) {
+        function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
             var self = this,
                 userPrefix = REST_PREFIX + 'users',
                 groupPrefix = REST_PREFIX + 'groups';
@@ -111,7 +112,7 @@
              * @ngdoc method
              * @name setUsers
              * @methodOf userManager.service:userManagerService
-             *
+             * TODO: REDO DOCUMENTATION
              * @description
              * Initializes the {@link userManager.service:userManagerService#users users} and
              * {@link userManager.service:userManagerService#groups groups} lists. Uses
@@ -125,38 +126,47 @@
              * @return {Promise} A Promise that indicates the function has completed.
              */
             self.initialize = function() {
+                //TODO: WHAT SHOULD THIS BE IN?
                 return $q.all([
-                    $http.get(userPrefix)
-                        .then(response => $q.all(_.map(response.data, username => self.getUser(username))), error => $q.reject(error))
-                        .then(responses => {
-                            self.users = responses;
-                            return $q.all(_.map(self.users, user => listUserRoles(user.username)));
-                        }, error => $q.reject(error))
-                        .then(responses => {
-                            _.forEach(responses, (response, idx) => {
-                                self.users[idx].roles = response;
-                            });
-                        }, error => console.log(util.getErrorMessage(error, 'Something went wrong. Could not load users.'))),
-                    $http.get(groupPrefix)
-                        .then(response => $q.all(_.map(response.data, groupTitle => self.getGroup(groupTitle))), error => $q.reject(error))
-                        .then(responses => {
-                            self.groups = responses;
-                            return $q.all(_.map(self.groups, group => self.getGroupUsers(group.title)));
-                        }, error => $q.reject(error))
-                        .then(responses => {
-                            _.forEach(responses, (response, idx) => {
-                                self.groups[idx].members = _.map(response, 'username');
-                            });
-                            return $q.all(_.map(self.groups, group => listGroupRoles(group.title)));
-                        }, error => $q.reject(error))
-                        .then(responses => {
-                            _.forEach(responses, (response, idx) => {
-                                self.groups[idx].roles = response;
-                            });
-                        }, error => console.log(util.getErrorMessage(error, 'Something went wrong. Could not load groups.')))
+                    self.getUsers()
+                        .then(data => {
+                            self.users = _.map(data, self.getUserObj);
+                            return self.getGroups();
+                        }, $q.reject)
+                        .then(data => {
+                            self.groups = _.map(data, self.getGroupObj)
+                        }, error => console.log(
+                            util.getErrorMessage(error)))
                     ]);
             }
-
+            /**
+             * @ngdoc method
+             * @name getUsers
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/users endpoint which retrieves a list of Users without their passwords.
+             *
+             * @return {Promise} A promise that resolves with the list of Users or rejects with an error message.
+             */
+            self.getUsers = function() {
+                return $http.get(userPrefix)
+                    .then(response => response.data, util.rejectError);
+            }
+            /**
+             * @ngdoc method
+             * @name getGroups
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/groups endpoint which retrieves a list of Groups.
+             *
+             * @return {Promise} A promise that resolves with the list of Groups or rejects with an error message.
+             */
+            self.getGroups = function() {
+                return $http.get(groupPrefix)
+                    .then(response => response.data, util.rejectError);
+            }
             /**
              * @ngdoc method
              * @name getUsername
@@ -675,6 +685,41 @@
              */
             self.getUserDisplay = function(userObject) {
                 return (_.get(userObject, 'firstName') && _.get(userObject, 'lastName')) ? userObject.firstName + ' ' + userObject.lastName : _.get(userObject, 'username', '[Not Available]');
+            }
+            /**
+             * //TODO: DOCUMENT THIS
+             * @param jsonld
+             * @return {{jsonld: *, iri: *, username: (string|*), firstName: (string|*), lastName: (string|*), email: (string|*), roles: *}}
+             */
+            self.getUserObj = function(jsonld) {
+                return {
+                    jsonld,
+                    iri: jsonld['@id'],
+                    username: util.getPropertyValue(jsonld, prefixes.user + 'username'),
+                    firstName: util.getPropertyValue(jsonld, prefixes.foaf + 'firstName'),
+                    lastName: util.getPropertyValue(jsonld, prefixes.foaf + 'lastName'),
+                    email: util.getPropertyValue(jsonld, prefixes.foaf + 'mbox'),
+                    roles: _.map(jsonld[prefixes.user + 'hasUserRole'], role => util.getBeautifulIRI(role['@id']).toLowerCase())
+                }
+            }
+            /**
+             * //TODO: DOCUMENT THIS
+             * @param jsonld
+             */
+            self.getGroupObj = function(jsonld) {
+                return {
+                    jsonld,
+                    iri: jsonld['@id'],
+                    title: util.getDctermsValue(jsonld, 'title'),
+                    description: util.getDctermsValue(jsonld, 'description'),
+                    members: _.map(jsonld[prefixes.foaf + 'member'], member => {
+                        var user = _.find(self.users, {'iri': member['@id']});
+                        if (user != undefined) {
+                            return user.username;
+                        }
+                    }),
+                    roles: _.map(jsonld[prefixes.user + 'hasGroupRole'], role => util.getBeautifulIRI(role['@id']).toLowerCase())
+                }
             }
 
             function listUserRoles(username) {

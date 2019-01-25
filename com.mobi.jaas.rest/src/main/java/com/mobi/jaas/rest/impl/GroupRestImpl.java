@@ -23,8 +23,11 @@ package com.mobi.jaas.rest.impl;
  * #L%
  */
 
+import static com.mobi.rest.util.RestUtils.modelToJsonld;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.config.MobiConfiguration;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -34,16 +37,20 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.jaas.rest.GroupRest;
 import com.mobi.ontologies.foaf.Agent;
+import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.RestUtils;
+import net.sf.json.JSONArray;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.GenericEntity;
@@ -51,52 +58,71 @@ import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
 public class GroupRestImpl implements GroupRest {
-    protected EngineManager engineManager;
-    protected ValueFactory factory;
-    protected UserFactory userFactory;
-    protected MobiConfiguration mobiConfiguration;
+    private EngineManager engineManager;
+    private ValueFactory vf;
+    private ModelFactory mf;
+    private UserFactory userFactory;
+    private SesameTransformer transformer;
+    private MobiConfiguration mobiConfiguration;
+    private Engine rdfEngine;
     private final Logger logger = LoggerFactory.getLogger(GroupRestImpl.class);
-    protected Engine rdfEngine;
 
     @Reference
-    protected void setEngineManager(EngineManager engineManager) {
+    void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
     }
 
     @Reference
-    protected void setFactory(ValueFactory factory) {
-        this.factory = factory;
+    void setValueFactory(ValueFactory vf) {
+        this.vf = vf;
     }
 
     @Reference
-    protected void setUserFactory(UserFactory userFactory) {
+    void setModelFactory(ModelFactory mf) {
+        this.mf = mf;
+    }
+
+    @Reference
+    void setUserFactory(UserFactory userFactory) {
         this.userFactory = userFactory;
     }
 
     @Reference
-    protected void setMobiConfiguration(MobiConfiguration configuration) {
+    void setTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
+    }
+
+    @Reference
+    void setMobiConfiguration(MobiConfiguration configuration) {
         this.mobiConfiguration = configuration;
     }
 
     @Reference(target = "(engineName=RdfEngine)")
-    protected void setRdfEngine(Engine engine) {
+    void setRdfEngine(Engine engine) {
         this.rdfEngine = engine;
     }
 
     @Override
-    public Response listGroups() {
-        Set<String> titles = engineManager.getGroups(rdfEngine.getEngineName()).stream()
-                .map(group -> group.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue())))
-                .filter(Optional::isPresent)
-                .map(title -> title.get().stringValue())
-                .collect(Collectors.toSet());
-
-        return Response.status(200).entity(titles).build();
+    public Response getGroups() {
+        try {
+            JSONArray result = JSONArray.fromObject(engineManager.getGroups(rdfEngine.getEngineName()).stream()
+                    .map(group -> {
+                        Model filteredGroup = mf.createModel();
+                        filteredGroup.addAll(group.getModel().filter(group.getResource(), null, null));
+                        return filteredGroup;
+                    })
+                    .map(groupModel -> modelToJsonld(groupModel, transformer))
+                    .map(RestUtils::getObjectFromJsonld)
+                    .collect(Collectors.toList()));
+            return Response.ok(result).build();
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
     public Response createGroup(Group group) {
-        Value title = group.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
+        Value title = group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
                 ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST));
         if (engineManager.groupExists(title.stringValue())) {
             throw ErrorUtils.sendError("Group " + title.stringValue() + " already exists", Response.Status.BAD_REQUEST);
@@ -124,11 +150,11 @@ public class GroupRestImpl implements GroupRest {
         if (groupTitle == null) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
-        Value title = newGroup.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
+        Value title = newGroup.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
                 ErrorUtils.sendError("Group title must be present in new group", Response.Status.BAD_REQUEST));
         Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
-        if (!savedGroup.getProperty(factory.createIRI(DCTERMS.TITLE.stringValue())).get().equals(title)) {
+        if (!savedGroup.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).get().equals(title)) {
             throw ErrorUtils.sendError("Group titles must match", Response.Status.BAD_REQUEST);
         }
         if (!savedGroup.getHasGroupRole().isEmpty()) {
@@ -196,7 +222,7 @@ public class GroupRestImpl implements GroupRest {
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
         Role roleObj = engineManager.getRole(rdfEngine.getEngineName(), role).orElseThrow(() ->
                 ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
-        savedGroup.removeProperty(roleObj.getResource(), factory.createIRI(Group.hasGroupRole_IRI));
+        savedGroup.removeProperty(roleObj.getResource(), vf.createIRI(Group.hasGroupRole_IRI));
         engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
         logger.info("Removed role " + role + " from group " + groupTitle);
         return Response.ok().build();
@@ -249,7 +275,7 @@ public class GroupRestImpl implements GroupRest {
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
         User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        savedGroup.removeProperty(savedUser.getResource(), factory.createIRI(Group.member_IRI));
+        savedGroup.removeProperty(savedUser.getResource(), vf.createIRI(Group.member_IRI));
         engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
         logger.info("Removed user " + username + " from group " + groupTitle);
         return Response.ok().build();

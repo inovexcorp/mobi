@@ -151,7 +151,7 @@ public class UserRestImplTest extends MobiRestTestNg {
         rest = spy(new UserRestImpl());
         rest.setEngineManager(engineManager);
         rest.setRdfEngine(rdfEngine);
-        rest.setFactory(vf);
+        rest.setValueFactory(vf);
 
         return new ResourceConfig()
                 .register(rest)
@@ -197,7 +197,7 @@ public class UserRestImplTest extends MobiRestTestNg {
     }
 
     @Test
-    public void listUsersTest() {
+    public void getUsersTest() {
         Response response = target().path("users").request().get();
         verify(engineManager, atLeastOnce()).getUsers(anyString());
         assertEquals(response.getStatus(), 200);

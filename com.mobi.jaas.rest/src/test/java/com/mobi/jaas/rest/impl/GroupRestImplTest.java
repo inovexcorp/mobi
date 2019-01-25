@@ -140,7 +140,7 @@ public class GroupRestImplTest extends MobiRestTestNg {
         injectOrmFactoryReferencesIntoService(rest);
         rest.setEngineManager(engineManager);
         rest.setRdfEngine(rdfEngine);
-        rest.setFactory(vf);
+        rest.setValueFactory(vf);
 
         return new ResourceConfig()
                 .register(rest)

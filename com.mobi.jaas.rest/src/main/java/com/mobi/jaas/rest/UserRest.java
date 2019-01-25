@@ -28,6 +28,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
+import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -43,21 +44,20 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 @Path("/users")
 @Api( value = "/users")
 public interface UserRest {
     /**
-     * Retrieves the list of users in Mobi.
+     * Retrieves a list of all the {@link User}s in Mobi.
      *
-     * @return a Response with a JSON array of the users in Mobi
+     * @return a Response with a JSON-LD list of the {@link User}s in Mobi
      */
     @GET
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("Get list of Mobi users")
-    Response listUsers();
+    @ApiOperation("Get all Mobi Users")
+    Response getUsers();
 
     /**
      * Creates a user in Mobi with the passed username and password. Both are required in order
