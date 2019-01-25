@@ -30,9 +30,8 @@
      * @requires utilService.service:utilService
      *
      * @description
-     * `entityPublisher` is a component which creates a div with a display of a JSON-LD object's dcterms:publisher
-     * property value. Retrieves the username of the publisher using the
-     * {@link userManager.service:userManagerService userManagerService}.
+     * `entityPublisher` is a component which creates a span with a display of a JSON-LD object's dcterms:publisher
+     * property value. Retrieves the username of the publisher using the {@link userManager.service:userManagerService}.
      *
      * @param {Object} entity A JSON-LD object
      */
@@ -51,13 +50,18 @@
         var dvm = this;
         var util = utilService;
         var um = userManagerService;
+        dvm.publisherName = '';
 
-        dvm.getUsername = function() {
-            var iri = util.getDctermsId(dvm.entity, 'publisher');
-            if (iri) {
-                return _.get(_.find(um.users, {iri}), 'username', '(None)');
-            }
-            return '(None)';
+        dvm.$onInit = function() {
+            dvm.publisherName = getPublisherName();
+        }
+        dvm.$onChanges = function() {
+            dvm.publisherName = getPublisherName();
+        }
+
+        function getPublisherName() {
+            var publisherId = util.getDctermsId(dvm.entity, 'publisher');
+            return publisherId ? _.get(_.find(um.users, {iri: publisherId}), 'username', '(None)') : '(None)';
         }
     }
 

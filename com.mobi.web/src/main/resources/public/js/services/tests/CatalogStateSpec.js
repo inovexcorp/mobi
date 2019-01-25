@@ -42,9 +42,9 @@ describe('Catalog State service', function() {
     });
 
     it('should initialize catalogs state', function() {
-        catalogManagerSvc.sortOptions = [{}];
+        catalogManagerSvc.sortOptions = [{field: prefixes.dcterms + 'modified', asc: false}, {field: prefixes.dcterms + 'modified', asc: true}];
         catalogStateSvc.initialize();
-        expect(catalogStateSvc.recordSortOption).toBe(catalogManagerSvc.sortOptions[0]);
+        expect(catalogStateSvc.recordSortOption).toEqual({field: prefixes.dcterms + 'modified', asc: false});
     });
     describe('should retrieve the icon class for a record', function() {
         it('if the record is an OntologyRecord', function() {

@@ -40,15 +40,14 @@
         <h3>About this Record</h3>
         <dl>
             <dt class="text-muted">Publisher</dt>
-            <dd>{{dvm.publisherName}}</dd>
+            <dd><entity-publisher entity="dvm.record"></entity-publisher></dd>
             <dt class="text-muted">Modified</dt>
             <dd>{{dvm.modified}}</dd>
             <dt class="text-muted">Issued</dt>
             <dd>{{dvm.issued}}</dd>
             <dt class="text-muted">Keywords</dt>
             <dd>
-                <span ng-if="dvm.keywords.length === 0">(None specified)</span>
-                <span class="keyword badge badge-pill badge-light mr-1 mb-1 mw-100 text-truncate" ng-repeat="keyword in dvm.keywords">{{keyword}}</span>
+                <catalog-record-keywords record="dvm.record"></catalog-record-keywords>
             </dd>
         </dl>
     </div>

@@ -37,7 +37,7 @@ describe('Record Filters component', function() {
 
         catalogManagerSvc.recordTypes = ['test1', 'test2'];
 
-        scope.recordType = '';
+        scope.recordType = 'test1';
         scope.changeFilter = jasmine.createSpy('changeFilter');
         this.element = $compile(angular.element('<record-filters record-type="recordType" change-filter="changeFilter(recordType)"></record-filters>'))(scope);
         scope.$digest();
@@ -53,9 +53,9 @@ describe('Record Filters component', function() {
 
     describe('controller bound variable', function() {
         it('recordType is one way bound', function() {
-            this.controller.recordType = 'test';
+            this.controller.recordType = '';
             scope.$digest();
-            expect(scope.recordType).toEqual('');
+            expect(scope.recordType).toEqual('test1');
         });
         it('changeFilter is called in the parent scope', function() {
             this.controller.changeFilter({recordType: 'test'});
@@ -63,20 +63,41 @@ describe('Record Filters component', function() {
             expect(scope.changeFilter).toHaveBeenCalledWith('test');
         });
     });
+    describe('initializes correctly', function() {
+        it('with record types', function() {
+            expect(this.controller.recordTypes).toEqual([{value: 'test1', checked: true}, {value: 'test2', checked: false}]);
+        });
+    });
     describe('controller methods', function() {
-        it('should filter records', function() {
-            this.controller.recordType = 'test';
-            this.controller.filter();
-            expect(scope.changeFilter).toHaveBeenCalledWith('test');
+        describe('should filter records', function() {
+            beforeEach(function() {
+                this.firstFilter = {value: 'test1', checked: true};
+                this.secondFilter = {value: 'test2', checked: true};
+                this.controller.recordTypes = [this.firstFilter, this.secondFilter];
+            });
+            it('if the filter has been checked', function() {
+                this.controller.filter(this.firstFilter);
+                expect(this.secondFilter.checked).toEqual(false);
+                expect(scope.changeFilter).toHaveBeenCalledWith(this.firstFilter.value);
+            });
+            it('if the filter has been unchecked', function() {
+                this.firstFilter.checked = false;
+                this.controller.recordType = this.firstFilter.value;
+                this.controller.filter(this.firstFilter);
+                expect(scope.changeFilter).toHaveBeenCalledWith('');
+            });
         });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('RECORD-FILTERS');
-            expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
+            expect(this.element.querySelectorAll('.record-filters').length).toEqual(1);
+            expect(this.element.querySelectorAll('.filter-container').length).toEqual(1);
+            expect(this.element.querySelectorAll('.record-filter-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.filter-options').length).toEqual(1);
         });
         it('depending on the number of sort options', function() {
-            expect(this.element.find('option').length).toBe(catalogManagerSvc.recordTypes.length + 1);
+            expect(this.element.querySelectorAll('.filter-option').length).toBe(catalogManagerSvc.recordTypes.length);
         });
     });
 });

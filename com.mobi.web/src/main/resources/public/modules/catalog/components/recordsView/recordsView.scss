@@ -2,5 +2,10 @@
 @import "./src/main/resources/public/css/variables";
 
 .records-view {
-    background-color: var(--light);
+    .record-card {
+        margin-bottom: 0.5rem !important;
+    }
+    .record-filters {
+        width: 175px;
+    }
 }

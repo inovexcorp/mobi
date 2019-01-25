@@ -27,32 +27,43 @@
      * @ngdoc component
      * @name catalog.component:recordType
      * @requires catalogManager.service:catalogManagerService
-     * @requires chroma
+     * @requires utilService.service:utilService
+     * @requires prefixes.service:prefixes
      *
      * @description
-     * `recordType` is a directive that creates a span with the Bootstrap `label` class with different background colors
-     * for different record type IRIs.
+     * `recordType` is a directive that creates a span with the main type of the provided catalog Record. This type is
+     * determined by removing the core Record types from the full list of Record types supported from the
+     * {@link catalogManager.service:catalogManagerService} and finding the first one of those types that is present on
+     * the provided Record JSON-LD object.
      *
-     * @param {string} type The record type IRI for record
+     * @param {Object} record A JSON-LD object for a catalog Record
      */
     const recordTypeComponent = {
         templateUrl: 'modules/catalog/components/recordType/recordType.html',
         bindings: {
-            type: '<'
+            record: '<'
         },
         controllerAs: 'dvm',
         controller: recordTypeComponentCtrl
     };
 
-    recordTypeComponentCtrl.$inject = ['catalogManagerService', 'chroma'];
+    recordTypeComponentCtrl.$inject = ['catalogManagerService', 'utilService', 'prefixes'];
 
-    function recordTypeComponentCtrl(catalogManagerService, chroma) {
+    function recordTypeComponentCtrl(catalogManagerService, utilService, prefixes) {
         var dvm = this;
+        var util = utilService;
         var cm = catalogManagerService;
-        var colors = chroma.scale('Set1').colors(cm.recordTypes.length);
+        dvm.type = '';
 
-        dvm.getColor = function(type) {
-            return _.get(colors, cm.recordTypes.indexOf(type));
+        dvm.$onInit = function() {
+            dvm.type = getType();
+        }
+        dvm.$onChanges = function() {
+            dvm.type = getType();
+        }
+        function getType() {
+            var type = _.find(_.difference(cm.recordTypes, cm.coreRecordTypes), type => _.includes(_.get(dvm.record, '@type', []), type));
+            return util.getBeautifulIRI(type || prefixes.catalog + 'Record');
         }
     }
 

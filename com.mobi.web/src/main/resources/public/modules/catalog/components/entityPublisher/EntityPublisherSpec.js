@@ -36,6 +36,11 @@ describe('Entity Publisher component', function() {
             utilSvc = _utilService_;
         });
 
+        this.userId = 'userId';
+        this.username = 'user';
+        utilSvc.getDctermsId.and.returnValue(this.userId);
+        userManagerSvc.users = [{iri: this.userId, username: this.username}];
+
         scope.entity = {};
         this.element = $compile(angular.element('<entity-publisher entity="entity"></entity-publisher>'))(scope);
         scope.$digest();
@@ -57,35 +62,29 @@ describe('Entity Publisher component', function() {
             expect(scope.entity).toEqual({});
         });
     });
-    describe('controller methods', function() {
-        describe('should retrieve the username of the publisher of the entity', function() {
-            it('unless the entity does not have the publisher property', function() {
-                expect(this.controller.getUsername()).toEqual('(None)');
+    describe('initializes correctly', function() {
+        describe('with a publisherName', function() {
+            it('if the user can be found', function() {
+                expect(this.controller.publisherName).toEqual(this.username);
             });
-            describe('if the entity has the publisher property', function() {
-                beforeEach(function() {
-                    this.iri = 'iri';
-                    utilSvc.getDctermsId.and.returnValue(this.iri);
-                });
-                it('unless the user was not found', function() {
-                    expect(this.controller.getUsername()).toBe('(None)');
-                });
-                it('and the user was found', function() {
-                    userManagerSvc.users = [{iri: this.iri, username: 'username'}];
-                    expect(this.controller.getUsername()).toEqual('username');
-                });
+            it('if the entity does not have a publisher', function() {
+                utilSvc.getDctermsId.and.returnValue('');
+                scope.record = {test: true};
+                this.controller.$onChanges();
+                expect(this.controller.publisherName).toEqual('(None)');
+            });
+            it('if the user cannot be found', function() {
+                userManagerSvc.users = [];
+                scope.record = {test: true};
+                this.controller.$onChanges();
+                expect(this.controller.publisherName).toEqual('(None)');
             });
         });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('ENTITY-PUBLISHER');
-            expect(this.element.querySelectorAll('.field-name').length).toBe(1);
-        });
-        it('with the entity publisher username', function() {
-            spyOn(this.controller, 'getUsername').and.returnValue('username');
-            scope.$digest();
-            expect(this.element.html()).toContain('username');
+            expect(this.element.querySelectorAll('.entity-publisher').length).toBe(1);
         });
     });
 });

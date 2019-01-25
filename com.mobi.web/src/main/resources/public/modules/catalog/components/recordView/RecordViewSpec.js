@@ -21,19 +21,22 @@
  * #L%
  */
 describe('Record View component', function() {
-    var $compile, scope, $q, catalogManagerSvc, catalogStateSvc, utilSvc, prefixes, userManagerSvc;
+    var $compile, scope, $q, catalogManagerSvc, catalogStateSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('catalog');
+        mockComponent('catalog', 'entityPublisher');
+        mockComponent('catalog', 'recordViewTabset');
+        mockComponent('catalog', 'recordIcon');
+        mockComponent('catalog', 'catalogRecordKeywords');
         mockComponent('catalog', 'limit-description');
         mockCatalogManager();
         mockCatalogState();
         mockUtil();
         mockPrefixes();
-        mockUserManager();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _catalogStateService_, _utilService_, _prefixes_, _userManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _catalogStateService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
@@ -41,15 +44,11 @@ describe('Record View component', function() {
             catalogStateSvc = _catalogStateService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
-            userManagerSvc = _userManagerService_;
         });
 
         this.catalogId = 'catalogId';
         this.recordId = 'recordId';
-        this.userId = 'userId';
-        this.username = 'user';
-        this.keywords = [{'@value': 'B'}, {'@value': 'A'}];
-        this.record = {'@id': this.recordId, [prefixes.catalog + 'keyword']: this.keywords};
+        this.record = {'@id': this.recordId};
         utilSvc.getPropertyId.and.callFake((obj, propId) => {
             if (propId === prefixes.catalog + 'catalog') {
                 return this.catalogId;
@@ -57,14 +56,7 @@ describe('Record View component', function() {
             return '';
         });
         utilSvc.getDctermsValue.and.callFake((obj, prop) => prop);
-        utilSvc.getDctermsId.and.callFake((obj, prop) => {
-            if (prop === 'publisher') {
-                return this.userId;
-            }
-            return '';
-        });
         utilSvc.getDate.and.returnValue('date');
-        userManagerSvc.users = [{iri: this.userId, username: this.username}];
         catalogStateSvc.selectedRecord = this.record;
         catalogManagerSvc.getRecord.and.returnValue($q.when(this.record));
         this.element = $compile(angular.element('<record-view></record-view>'))(scope);
@@ -80,7 +72,6 @@ describe('Record View component', function() {
         catalogStateSvc = null;
         utilSvc = null;
         prefixes = null;
-        userManagerSvc = null;
         this.element.remove();
     });
 
@@ -91,10 +82,8 @@ describe('Record View component', function() {
             expect(catalogStateSvc.selectedRecord).toEqual(this.record);
             expect(this.controller.title).toEqual('title');
             expect(this.controller.description).toEqual('description');
-            expect(this.controller.publisherName).toEqual(this.username);
             expect(this.controller.modified).toEqual('date');
             expect(this.controller.issued).toEqual('date');
-            expect(this.controller.keywords).toEqual(['A', 'B']);
             expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
         });
         it('unless the record is not found', function() {
@@ -121,17 +110,10 @@ describe('Record View component', function() {
             expect(this.element.querySelectorAll('.record-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.record-sidebar').length).toEqual(1);
         });
-        ['record-view-tabset', 'button', 'record-icon', 'dl', 'limit-description'].forEach(test => {
+        ['record-view-tabset', 'button', 'record-icon', 'dl', 'entity-publisher', 'catalog-record-keywords', 'limit-description'].forEach(test => {
             it('with a ' + test, function() {
                 expect(this.element.find(test).length).toBe(1);
             });
-        });
-        it('depending on how many keywords there are', function() {
-            expect(this.element.querySelectorAll('.keyword').length).toEqual(this.keywords.length);
-
-            this.controller.keywords = [];
-            scope.$digest();
-            expect(this.element.querySelectorAll('.keyword').length).toEqual(0);
         });
     });
     it('should go back to the catalog page when the button is clicked', function() {

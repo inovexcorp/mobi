@@ -892,6 +892,7 @@ function mockUserState() {
 function mockCatalogManager() {
     module(function($provide) {
         $provide.service('catalogManagerService', function($q) {
+            this.coreRecordTypes = [];
             this.sortOptions = [];
             this.recordTypes = [];
             this.localCatalog = undefined;

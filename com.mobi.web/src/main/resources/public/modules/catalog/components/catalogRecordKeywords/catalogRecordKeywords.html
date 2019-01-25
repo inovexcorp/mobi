@@ -4,7 +4,7 @@
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -20,6 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="record-types">
-    <record-type ng-repeat="type in dvm.record['@type'] | inArray:dvm.cm.recordTypes | orderBy" type="type"></record-type>
+<div class="catalog-record-keywords">
+    <span ng-if="dvm.keywords.length === 0">(No keywords specified)</span>
+    <span class="keyword badge badge-pill badge-light mr-1 mb-1 text-truncate mw-100" ng-repeat="keyword in dvm.keywords">{{keyword}}</span>
 </div>

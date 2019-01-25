@@ -30,16 +30,16 @@
      * @requires catalogManager.service:catalogManagerService
      * @requires utilService.service:utilService
      * @requires prefixes.service:prefixes
-     * @requires userManager.service:userManagerService
      *
      * @description
      * `recordView` is a component which creates a div with a Bootstrap `row` containing columns displaying different
      * information about the currently {@link catalogState.service:catalogStateService selected catalog Record}. The
      * first column just contains a button to go back to the {@link catalog.component:catalogPage}. The second column
      * contains a display of the Record's title, description, and {@link catalog.component:recordIcon icon} along with a
-     * {@link catalog.component:recordViewTabset}. The third column contains the Record's publisher, modified date,
-     * issued date, and keywords. On initialization of the component, it will re-retrieve the Record to ensure that it
-     * still exists.
+     * {@link catalog.component:recordViewTabset}. The third column contains the Record's
+     * {@link catalog.component:entityPublisher publisher}, modified date, issued date, and
+     * {@link catalog.component:catalogRecordKeywords keywords}. On initialization of the component, it will re-retrieve
+     * the Record to ensure that it still exists.
      */
     const recordViewComponent = {
         templateUrl: 'modules/catalog/components/recordView/recordView.html',
@@ -48,33 +48,27 @@
         controller: recordViewComponentCtrl
     };
 
-    recordViewComponentCtrl.$inject = ['catalogStateService', 'catalogManagerService', 'utilService', 'prefixes', 'userManagerService'];
+    recordViewComponentCtrl.$inject = ['catalogStateService', 'catalogManagerService', 'utilService', 'prefixes'];
 
-    function recordViewComponentCtrl(catalogStateService, catalogManagerService, utilService, prefixes, userManagerService) {
+    function recordViewComponentCtrl(catalogStateService, catalogManagerService, utilService, prefixes) {
         var dvm = this;
         var state = catalogStateService;
         var cm = catalogManagerService;
         var util = utilService;
-        var um = userManagerService;
         dvm.record = undefined;
         dvm.title = '';
         dvm.description = '';
-        dvm.publisherName = '';
         dvm.modified = '';
         dvm.issued = '';
-        dvm.keywords = [];
 
         dvm.$onInit = function() {
             cm.getRecord(state.selectedRecord['@id'], util.getPropertyId(state.selectedRecord, prefixes.catalog + 'catalog'))
                 .then(response => {
                     dvm.record = response;
                     dvm.title = util.getDctermsValue(dvm.record, 'title');
-                    dvm.description = util.getDctermsValue(dvm.record, 'description');
-                    var publisherId = util.getDctermsId(dvm.record, 'publisher');
-                    dvm.publisherName = publisherId ? _.get(_.find(um.users, {iri: publisherId}), 'username', '(None)') : '(None)';
+                    dvm.description = util.getDctermsValue(dvm.record, 'description') || '(No description)';
                     dvm.modified = util.getDate(util.getDctermsValue(dvm.record, 'modified'), 'short');
                     dvm.issued = util.getDate(util.getDctermsValue(dvm.record, 'issued'), 'short');
-                    dvm.keywords = _.map(_.get(dvm.record, prefixes.catalog + 'keyword', []), '@value').sort();
                 }, () => {
                     util.createWarningToast('The record you were viewing no longer exists');
                     state.selectedRecord = undefined;

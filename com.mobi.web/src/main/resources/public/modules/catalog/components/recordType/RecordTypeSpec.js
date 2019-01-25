@@ -21,24 +21,29 @@
  * #L%
  */
 describe('Record Type component', function() {
-    var $compile, scope, catalogManagerSvc;
+    var $compile, scope, catalogManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('catalog');
         mockCatalogManager();
-        injectSplitIRIFilter();
-        injectChromaConstant();
+        mockUtil();
+        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
+            utilSvc = _utilService_;
+            prefixes = _prefixes_;
         });
 
-        catalogManagerSvc.recordTypes = ['type'];
-        scope.type = '';
-        this.element = $compile(angular.element('<record-type type="type"></record-type>'))(scope);
+        catalogManagerSvc.coreRecordTypes = ['core']
+        catalogManagerSvc.recordTypes = ['core', 'typeA', 'typeB'];
+        utilSvc.getBeautifulIRI.and.callFake(_.identity);
+
+        scope.record = {'@type': ['core', 'typeA']};
+        this.element = $compile(angular.element('<record-type record="record"></record-type>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('recordType');
     });
@@ -47,32 +52,34 @@ describe('Record Type component', function() {
         $compile = null;
         scope = null;
         catalogManagerSvc = null;
+        utilSvc = null;
+        prefixes = null;
         this.element.remove();
     });
 
     describe('controller bound variable', function() {
-        it('type should be one way bound', function() {
-            this.controller.type = 'test';
+        it('record should be one way bound', function() {
+            this.controller.record = {};
             scope.$digest();
-            expect(scope.type).toEqual('');
+            expect(scope.record).not.toEqual({});
         });
     });
-    describe('controller methods', function() {
-        it('should get the color for a type', function() {
-            var result = this.controller.getColor('type');
-            expect(typeof result).toBe('string');
+    describe('initializes correctly', function() {
+        describe('with a type', function() {
+            it('if it is a recognized type', function() {
+                expect(this.controller.type).toEqual('typeA');
+            });
+            it('if it is not a recognized type', function() {
+                scope.record['@type'] = ['test'];
+                this.controller.$onChanges();
+                expect(this.controller.type).toEqual(prefixes.catalog + 'Record');                
+            });
         });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('RECORD-TYPE');
-            expect(this.element.querySelectorAll('.badge.badge-pill').length).toEqual(1);
-        });
-        it('with the correct background color depending on the record type', function() {
-            var badge = angular.element(this.element.querySelectorAll('.badge')[0]);
-            spyOn(this.controller, 'getColor').and.returnValue('white');
-            scope.$digest();
-            expect(badge.css('background-color')).toBe('white');
+            expect(this.element.querySelectorAll('.record-type').length).toEqual(1);
         });
     });
 });
