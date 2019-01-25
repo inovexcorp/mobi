@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import javax.annotation.Priority;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ResourceInfo;
@@ -36,6 +37,7 @@ import javax.ws.rs.ext.Provider;
 
 @Provider
 @Component(immediate = true)
+@Priority(10000)
 public class RequestLoggingFilter implements ContainerRequestFilter {
 
     private final Logger log = LoggerFactory.getLogger(RequestLoggingFilter.class);
