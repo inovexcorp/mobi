@@ -146,6 +146,12 @@ public class CommitRestImpl implements CommitRest {
     }
 
     @Override
+    public Response getCompiledResource(String commitId, String entityId) {
+        long start = System.currentTimeMillis();
+        return null;
+    }
+
+    @Override
     public Response getDifference(String sourceId, String targetId, String rdfFormat) {
         long start = System.currentTimeMillis();
         try {

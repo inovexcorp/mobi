@@ -86,6 +86,24 @@ public interface CommitRest {
                               @QueryParam("limit") int limit);
 
     /**
+     * Gets the Compiled Resource of {@link Commit} and or of a specific Entity IRI in that {@link Commit} if present.
+     *
+     * @param commitId {@link String} value of the {@link Commit} ID. NOTE: Assumes an {@link IRI} unless {@link String}
+     *                 starts with "{@code _:}".
+     * @param entityId {@link String} representation of the desired {@link RDFFormat}. Default value is
+     *                 {@code "jsonld"}.
+     * @return A {@link Response} with the {@link Commit} identified by the provided ID.
+     */
+    @GET
+    @Path("{commitId}/Resource")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves the Commit specified by the provided ID.")
+    Response getCompiledResource(@PathParam("commitId") String commitId,
+                                 @QueryParam("entityId") String entityId);
+
+
+    /**
      * Gets the {@link Difference} between the two specified {@link Commit}s.
      *
      * @param sourceId  {@link String} value of the sourceId {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
