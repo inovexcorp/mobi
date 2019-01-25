@@ -83,7 +83,7 @@
              * ```
              * {
              *     field: 'http://purl.org/dc/terms/title',
-             *     ascending: true,
+             *     asc: true,
              *     label: 'Title (asc)'
              * }
              * ```
