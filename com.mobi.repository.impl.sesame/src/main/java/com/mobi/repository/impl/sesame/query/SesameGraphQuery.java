@@ -26,8 +26,12 @@ package com.mobi.repository.impl.sesame.query;
 import com.mobi.query.GraphQueryResult;
 import com.mobi.query.api.GraphQuery;
 import com.mobi.query.exception.QueryEvaluationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SesameGraphQuery extends SesameOperation implements GraphQuery {
+
+    private final Logger log = LoggerFactory.getLogger(SesameGraphQuery.class);
 
     private org.eclipse.rdf4j.query.GraphQuery sesameGraphQuery;
 
@@ -43,7 +47,11 @@ public class SesameGraphQuery extends SesameOperation implements GraphQuery {
     @Override
     public GraphQueryResult evaluate() throws QueryEvaluationException {
         try {
-            return new SesameGraphQueryResult(sesameGraphQuery.evaluate());
+            long start = System.currentTimeMillis();
+            SesameGraphQueryResult queryResult = new SesameGraphQueryResult(sesameGraphQuery.evaluate());
+            log.debug("Query Plan\n{}", sesameGraphQuery.toString());
+            log.info("Query Execution Time: {}ms", System.currentTimeMillis() - start);
+            return queryResult;
         } catch (org.eclipse.rdf4j.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }
