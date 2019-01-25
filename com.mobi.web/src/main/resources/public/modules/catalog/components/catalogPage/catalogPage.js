@@ -24,11 +24,28 @@
     'use strict';
 
     /**
-     * @ngdoc overview
-     * @name catalog
+     * @ngdoc component
+     * @name catalog.component:catalogPage
+     * @requires catalogState.service:catalogStateService
      *
      * @description
-     * The `catalog` module provides components that make up the Catalog module in the Mobi application.
+     * `catalogPage` is a component which creates the main page of the Catalog module. The component contains different
+     * content depending on whether a catalog Record has been selected.
      */
-    angular.module('catalog', []);
+    const catalogPageComponent = {
+        templateUrl: 'modules/catalog/components/catalogPage/catalogPage.html',
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: catalogPageComponentCtrl
+    };
+
+    catalogPageComponentCtrl.$inject = ['catalogStateService'];
+
+    function catalogPageComponentCtrl(catalogStateService) {
+        var dvm = this;
+        dvm.state = catalogStateService;
+    }
+
+    angular.module('catalog')
+        .component('catalogPage', catalogPageComponent);
 })();
