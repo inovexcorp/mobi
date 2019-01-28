@@ -74,6 +74,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -345,9 +346,11 @@ public class CommitRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]));
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            JSONObject commitObj = result.getJSONObject(0);
+            assertTrue(commitObj.containsKey("id"));
+            assertEquals(commitObj.getString("id"), COMMIT_IRIS[0]);
+            assertTrue(result.size() == 3);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -355,14 +358,17 @@ public class CommitRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getCompiledResourceWithEntityTest() {
+        when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(entityCommits);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
-                .queryParam("entityId", encode("")).request().get();
+                .queryParam("entityId", encode("http://mobi.com/test/ontology")).request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(""));
+        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://mobi.com/test/ontology"));
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            JSONObject commitObj = result.getJSONObject(0);
+            assertTrue(commitObj.containsKey("id"));
+            assertEquals(commitObj.getString("id"), COMMIT_IRIS[1]);
+            assertTrue(result.size() == 1);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -370,14 +376,15 @@ public class CommitRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getCompiledResourceEmptyModelTest() {
+        List<Commit> emptyList = new ArrayList<>();
+        when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(emptyList);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
-                .queryParam("entityId", encode("")).request().get();
+                .queryParam("entityId", encode("http://mobi.com/test/empty")).request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(""));
+        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://mobi.com/test/empty"));
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertTrue(result.size() == 0);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }

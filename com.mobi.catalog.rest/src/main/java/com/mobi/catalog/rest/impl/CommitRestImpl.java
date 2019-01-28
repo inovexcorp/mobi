@@ -168,8 +168,6 @@ public class CommitRestImpl implements CommitRest {
                         .collect(JSONArray::new, JSONArray::add, JSONArray::add);
 
                 return createPaginatedResponseWithJson(commitChain,commits.size());
-
-                return Response.ok(getCompiledResource(commitId, entityId), MediaType.APPLICATION_JSON).build();
             } catch (IllegalArgumentException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
             } catch (IllegalStateException | MobiException ex) {
