@@ -345,6 +345,8 @@ public class CommitRestImplTest extends MobiRestTestNg {
                 .request().get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]));
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             JSONObject commitObj = result.getJSONObject(0);
@@ -363,6 +365,8 @@ public class CommitRestImplTest extends MobiRestTestNg {
                 .queryParam("entityId", encode("http://mobi.com/test/ontology")).request().get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://mobi.com/test/ontology"));
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + ENTITY_IRI.length);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             JSONObject commitObj = result.getJSONObject(0);
@@ -382,6 +386,8 @@ public class CommitRestImplTest extends MobiRestTestNg {
                 .queryParam("entityId", encode("http://mobi.com/test/empty")).request().get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://mobi.com/test/empty"));
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + emptyList.size());
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertTrue(result.size() == 0);
