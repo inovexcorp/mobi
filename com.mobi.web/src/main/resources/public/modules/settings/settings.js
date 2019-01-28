@@ -23,15 +23,12 @@
 (function() {
     'use strict';
 
-    angular
-        .module('settings', [
-            /* Custom directives */
-            'customPreference',
-            'groupTab',
-            'passwordTab',
-            'preferencesContainer',
-            'preferencesTab',
-            'profileTab',
-            'settingsTabset'
-        ]);
+    /**
+     * @ngdoc overview
+     * @name settings
+     *
+     * @description
+     * The `settings` module provides components that make up the Settings module in the Mobi application.
+     */
+    angular.module('settings', []);
 })();

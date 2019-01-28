@@ -115,7 +115,7 @@
                 url: '/settings',
                 views: {
                     'container@': {
-                        templateUrl: 'modules/settings/settings.html'
+                        template: '<settings-page></settings-page>'
                     }
                 },
                 data: {
