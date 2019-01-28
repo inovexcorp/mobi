@@ -1,0 +1,45 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="branch-list">
+    <div class="branches-list" id="branches_list_{{$id}}" ng-if="dvm.branches.length">
+        <div class="expansion-panel" ng-repeat="branch in dvm.branches">
+            <div ng-click="dvm.showPanel(branch)" aria-controls="branch_collapse_{{$id}}" aria-expanded="false" class="expansion-panel-toggler collapsed" data-target="#branch_collapse_{{$id}}" data-toggle="collapse" id="heading_{{$id}}" role="button">
+                <div>
+                    <div>{{dvm.util.getDctermsValue(branch, 'title')}}</div>
+                    <div class="small text-muted"><entity-publisher class="d-inline-block" entity="branch"></entity-publisher> &#8226; Updated {{dvm.util.getDate(dvm.util.getDctermsValue(branch, 'modified'), 'short')}}</div>
+                </div>
+                <div class="expansion-panel-icon ml-3 text-black-secondary">
+                    <i class="collapsed-show material-icons">keyboard_arrow_down</i>
+                    <i class="collapsed-hide material-icons">keyboard_arrow_up</i>
+                </div>
+            </div>
+            <div aria-labelledby="heading_{{$id}}" class="collapse" data-parent="#branches_list_{{$parent.$id}}" id="branch_collapse_{{$id}}">
+                <div class="expansion-panel-body">
+                    <span>{{dvm.util.getDctermsValue(branch, 'description')}}</span>
+                    <commit-history-table ng-if="branch.show" head-title="dvm.util.getDctermsValue(branch, 'title')" commit-id="dvm.util.getPropertyId(branch, dvm.prefixes.catalog + 'head')" graph></commit-history-table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="load-button btn" ng-if="dvm.totalSize > dvm.branches.length" ng-click="dvm.loadMore()">Load More</button>
+</div>
