@@ -803,6 +803,37 @@ public interface CatalogManager {
     List<Commit> getCommitChain(Resource catalogId, Resource versionedRDFRecordId, Resource branchId);
 
     /**
+     * Gets a List of Commits ordered by date descending within the repository. The Commit identified by the first
+     * provided Resource is the first item in the List and it was informed by the previous Commit in the List. Each
+     * addition or deletion of a Commit is then compared to the Entity IRI and removes graphs that don't contain the
+     * entityId. The resulting List can then be thought as the chain of Commits starting with the
+     * Commit identified by the first provided Resource filtered to those containing the Entity IRI.
+     *
+     * @param commitId The Resource identifying the Commit for the desired chain.
+     * @param entityId The Resource identifying the Entity to filter the chain of Commit.
+     * @return List of Commits which make up the commit chain for the provided Commit.
+     * @throws IllegalArgumentException Thrown if any of the Commits could not be found.
+     */
+    List<Commit> getCommitEntityChain(Resource commitId, Resource entityId);
+
+    /**
+     * Gets a List of Commits ordered by date descending within the repository starting with the head Commit of the
+     * Branch identified by the provided Resources. The head Commit is the first one in the List and it was informed
+     * by the previous Commit in the List. This association is repeated until you get to the second Resource which is
+     * beginning of the List. Each addition or deletion of a Commit is then compared to the Entity IRI and removes
+     * graphs that don't contain the entityId. The resulting List can then be thought as the chain of Commits on the
+     * Branch starting with the head Commit. That list is then filtered by an Entity IRI resulting in Commits containing
+     * the Entity IRI in the additions or deletions of a Commit.
+     *
+     * @param catalogId            The Resource identifying the Catalog which contains the Record.
+     * @param targetId             The Resource identifying the Commit to terminate the chain.
+     * @param entityId             The Resource identifying the Entity to filter the chain of Commit.
+     * @return List of Commits which make up the commit chain for the provided Commit and Entity IRI.
+     * @throws IllegalArgumentException Thrown if any of the Commits could not be found.
+     */
+    List<Commit> getCommitEntityChain(Resource catalogId, Resource targetId, Resource entityId);
+
+    /**
      * Gets the Model which represents the entity at the instance of the Commit identified by the provided Resource
      * using previous Commit data to construct it.
      *
