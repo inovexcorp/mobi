@@ -95,7 +95,7 @@ public class CommitRestImplTest extends MobiRestTestNg {
             "http://mobi.com/commits/2"
     };
     private static final String[] ENTITY_IRI = new String[] {
-            "http://mobi.com/commits/0"
+            "http://mobi.com/commits/1"
     };
 
     private CommitRestImpl rest;
@@ -379,19 +379,19 @@ public class CommitRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getCommitHistoryWithEntityNoTargetTest() {
-        when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(testCommits);
+        when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(entityCommits);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
-                .queryParam("entityId", encode(COMMIT_IRIS[1]))
+                .queryParam("entityId", encode(vf.createIRI("http://mobi.com/test/class5")))
                 .queryParam("offset", 1)
                 .queryParam("limit", 1)
                 .request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[1]));
+        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://mobi.com/test/class5"));
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
-        assertEquals(response.getLinks().size(), 2);
+        assertEquals(headers.get("X-Total-Count").get(0), "" + ENTITY_IRI.length);
+        assertEquals(response.getLinks().size(), 1);
         Set<Link> links = response.getLinks();
-        assertEquals(links.size(), 2);
+        assertEquals(links.size(), 1);
         links.forEach(link -> {
             assertTrue(link.getUri().getRawPath().contains("commits/" + encode(COMMIT_IRIS[1]) + "/history"));
             assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
@@ -412,10 +412,10 @@ public class CommitRestImplTest extends MobiRestTestNg {
         when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(entityCommits);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
                 .queryParam("targetId", encode(COMMIT_IRIS[0]))
-                .queryParam("entityId", encode(COMMIT_IRIS[0]))
+                .queryParam("entityId", encode(vf.createIRI("http://mobi.com/test/class5")))
                 .request().get();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]), vf.createIRI(COMMIT_IRIS[0]));
+        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]), vf.createIRI("http://mobi.com/test/class5"));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + ENTITY_IRI.length);
         Set<Link> links = response.getLinks();
@@ -429,7 +429,7 @@ public class CommitRestImplTest extends MobiRestTestNg {
             assertEquals(result.size(), 1);
             JSONObject commitObj = result.getJSONObject(0);
             assertTrue(commitObj.containsKey("id"));
-            assertEquals(commitObj.getString("id"), COMMIT_IRIS[0]);
+            assertEquals(commitObj.getString("id"), COMMIT_IRIS[1]);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
