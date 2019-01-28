@@ -157,7 +157,7 @@
              * from {@link catalogManager.service:catalogManagerService catalogManagerService}.
              */
             self.initialize = function() {
-                self.recordSortOption = _.head(cm.sortOptions);
+                self.recordSortOption = _.find(cm.sortOptions, {field: prefixes.dcterms + 'modified', asc: false});
             }
             /**
              * @ngdoc method

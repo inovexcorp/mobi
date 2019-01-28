@@ -5,6 +5,9 @@ record-view {
     .record-sidebar {
         width: 500px;
     }
+    record-view-tabset .material-tabset {
+        height: auto !important;
+    }
     dt {
         float: left;
         clear: left;

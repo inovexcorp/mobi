@@ -31,8 +31,8 @@
      * @description
      * `recordFilters` is a component which creates a div with collapsible containers for various filters that can be
      * performed on catalog Records. Each filter option has a checkbox to indicate whether that filter is active. These
-     * filter categories currently only incldue {@link catalogManager.service:catalogManagerService record types}. The
-     * `recordType` will be the selectd record type filter, but is one way bound. The `changeFilter` function is
+     * filter categories currently only include {@link catalogManager.service:catalogManagerService record types}. The
+     * `recordType` will be the selected record type filter, but is one way bound. The `changeFilter` function is
      * expected to update the `recordType` binding.
      * 
      * @param {Function} changeFilter A function that expects a parameter called `recordType` and will be called when

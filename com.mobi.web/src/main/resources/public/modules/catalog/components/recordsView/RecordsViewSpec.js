@@ -60,7 +60,6 @@ describe('Records View component', function() {
         $compile = null;
         scope = null;
         $q = null;
-        toastr = null;
         catalogManagerSvc = null;
         catalogStateSvc = null;
         utilSvc = null;
@@ -102,6 +101,46 @@ describe('Records View component', function() {
             this.controller.search('test');
             expect(catalogStateSvc.currentRecordPage).toEqual(1);
             expect(this.controller.setRecords).toHaveBeenCalledWith('test', catalogStateSvc.recordFilterType, catalogStateSvc.recordSortOption);
+        });
+        describe('should set the list of records', function() {
+            beforeEach(function() {
+                catalogStateSvc.recordFilterType = '';
+                catalogStateSvc.recordSearchText = '';
+                catalogStateSvc.recordSortOption = undefined;
+                catalogStateSvc.totalRecordSize = 0;
+                this.controller.records = [];
+                this.searchText = 'search';
+                this.recordType = 'type';
+                this.sortOption = {};
+            });
+            it('if getRecords resolves', function() {
+                this.controller.setRecords(this.searchText, this.recordType, this.sortOption);
+                scope.$apply();
+                expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(this.catalogId, {
+                    pageIndex: catalogStateSvc.currentRecordPage - 1,
+                    limit: catalogStateSvc.recordLimit,
+                    sortOption: this.sortOption,
+                    recordType: this.recordType,
+                    searchText: this.searchText
+                });
+                expect(catalogStateSvc.recordFilterType).toEqual(this.recordType);
+                expect(catalogStateSvc.recordSearchText).toEqual(this.searchText);
+                expect(catalogStateSvc.recordSortOption).toEqual(this.sortOption);
+                expect(catalogStateSvc.totalRecordSize).toEqual(this.totalSize);
+                expect(this.controller.records).toEqual(this.records);
+                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+            });
+            it('unless getRecords rejects', function() {
+                catalogManagerSvc.getRecords.and.returnValue($q.reject('Error Message'));
+                this.controller.setRecords(this.searchText, this.recordType, this.sortOption);
+                scope.$apply();
+                expect(catalogStateSvc.recordFilterType).toEqual('');
+                expect(catalogStateSvc.recordSearchText).toEqual('');
+                expect(catalogStateSvc.recordSortOption).toBeUndefined();
+                expect(catalogStateSvc.totalRecordSize).toEqual(0);
+                expect(this.controller.records).toEqual([]);
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
+            });
         });
     });
     describe('contains the correct html', function() {
