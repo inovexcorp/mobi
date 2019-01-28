@@ -97,7 +97,7 @@
              */
             self.getStates = function(stateConfig) {
                 var params = $httpParamSerializer(stateConfig);
-                return $http.get(prefix + '?' + params)
+                return $http.get(prefix + (params ? '?' + params : ''))
                     .then(response => _.get(response, 'data', []), util.rejectError);
             }
             /**

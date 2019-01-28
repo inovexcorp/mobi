@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,13 +22,26 @@
  */
 (function() {
     'use strict';
-
     /**
-     * @ngdoc overview
-     * @name home
+     * @ngdoc component
+     * @name home.component:homePage
      *
      * @description
-     * The `home` module provides components that make up the Home module in the Mobi application.
+     * `homePage` is a component which creates the main page of the Home module. The page contains a welcome banner image
+     * along with a {@link home.component:quickActionGrid grid of quick actions} and a
+     * {@link home.component:activityCard list of activities} within the Mobi instance.
      */
-    angular.module('home', []);
+    const homePageComponent = {
+        templateUrl: 'modules/home/components/homePage/homePage.html',
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: homePageComponentCtrl
+    };
+
+    function homePageComponentCtrl() {
+        var dvm = this;
+    }
+
+    angular.module('home')
+        .component('homePage', homePageComponent);
 })();
