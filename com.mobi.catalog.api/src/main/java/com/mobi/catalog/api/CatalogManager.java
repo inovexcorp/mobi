@@ -806,9 +806,7 @@ public interface CatalogManager {
      * Gets a List of Commits ordered by date descending within the repository. The Commit identified by the first
      * provided Resource is the first item in the List and it was informed by the previous Commit in the List. Each
      * addition or deletion of a Commit is then compared to the Entity IRI and removes graphs that don't contain the
-     * entityId. The resulting List can then be thought about the chain of Commits starting with the Commit identified
-     * by the first provided Resource and filter all chain of Commits containing the Entity IRI and removes Commits that
-     * don't contain the entityId. The resulting List can then be thought as the chain of Commits starting with the
+     * entityId. The resulting List can then be thought as the chain of Commits starting with the
      * Commit identified by the first provided Resource filtered to those containing the Entity IRI.
      *
      * @param commitId The Resource identifying the Commit for the desired chain.
@@ -823,7 +821,7 @@ public interface CatalogManager {
      * Branch identified by the provided Resources. The head Commit is the first one in the List and it was informed
      * by the previous Commit in the List. This association is repeated until you get to the second Resource which is
      * beginning of the List. Each addition or deletion of a Commit is then compared to the Entity IRI and removes
-     * graphs that don't contain the entityIdThe resulting List can then be thought as the chain of Commits on the
+     * graphs that don't contain the entityId. The resulting List can then be thought as the chain of Commits on the
      * Branch starting with the head Commit. That list is then filtered by an Entity IRI resulting in Commits containing
      * the Entity IRI in the additions or deletions of a Commit.
      *
