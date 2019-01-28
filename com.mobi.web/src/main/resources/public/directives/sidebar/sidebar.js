@@ -42,12 +42,12 @@
 
                 dvm.perspectives = [
                     { icon: 'home', sref: 'root.home', isActive: $state.is('root.home'), name: 'Home' },
+                    { icon: 'book', sref: 'root.catalog', isActive: $state.is('root.catalog'), name: 'Catalog' },
                     { icon: 'pencil-square-o', sref: 'root.ontology-editor', isActive: $state.is('root.ontology-editor'), name: 'Ontology Editor'},
                     { icon: 'envelope-o', sref: 'root.merge-requests', isActive: $state.is('root.merge-requests'), name: 'Merge Requests' },
                     { icon: 'map-o', sref: 'root.mapper', isActive: $state.is('root.mapper'), name: 'Mapping Tool' },
                     { icon: 'database', sref: 'root.datasets', isActive: $state.is('root.datasets'), name: 'Datasets' },
                     { icon: 'search', sref: 'root.discover', isActive: $state.is('root.discover'), name: 'Discover' },
-                    { icon: 'book', sref: 'root.catalog', isActive: $state.is('root.catalog'), name: 'Catalog' },
                 ];
 
                 dvm.toggle = function() {

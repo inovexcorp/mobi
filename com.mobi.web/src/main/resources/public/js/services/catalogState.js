@@ -29,118 +29,123 @@
          * @name catalogState
          *
          * @description
-         * The `catalogState` module only provides the `catalogStateService` service which contains
-         * various variables to hold the state of the catalog page and utility functions to update
-         * those variables.
+         * The `catalogState` module only provides the `catalogStateService` service which contains various variables to
+         * hold the state of the {@link catalog.component:catalogPage} and utility functions to update those
+         * variables.
          */
         .module('catalogState', [])
         /**
          * @ngdoc service
          * @name catalogState.service:catalogStateService
          * @requires catalogManager.service:catalogManagerService
-         * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
          *
          * @description
-         * `catalogStateService` is a service which contains various variables to hold the
-         * state of the catalog page and utility functions to update those variables.
+         * `catalogStateService` is a service which contains various variables to hold the state of the
+         * {@link catalog.component:catalogPage} and utility functions to update those variables.
          */
         .service('catalogStateService', catalogStateService);
 
-        catalogStateService.$inject = ['catalogManagerService', 'utilService'];
+        catalogStateService.$inject = ['catalogManagerService', 'prefixes'];
 
-        function catalogStateService(catalogManagerService, utilService) {
+        function catalogStateService(catalogManagerService, prefixes) {
             var self = this;
             var cm = catalogManagerService;
-            var util = utilService;
 
             /**
              * @ngdoc property
-             * @name catalogState.service:catalogStateService#catalogs
-             * @propertyOf catalogState.service:catalogStateService
-             * @type {Object}
-             *
-             * @description
-             * `catalogs` holds the current state for each catalog, local and distributed, of Mobi.
-             * Each state contains a "show" boolean indicating whether it is currently being shown, the
-             * full "catalog" object from the {@link catalogManager.service:catalogManagerService catalogManagerService},
-             * the "openedPath" indicating which entity in the catalog is currently opened, and key-value
-             * pairs for each paginated list of entities that can be shown within the catalog.
-             */
-            self.catalogs = {
-                local: {
-                    show: true,
-                    catalog: undefined,
-                    openedPath: [],
-                    records: {
-                        recordType: '',
-                        sortOption: undefined,
-                        searchText: '',
-                        limit: 10
-                    },
-                    branches: {
-                        sortOption: undefined,
-                        limit: 10
-                    }
-                },
-                distributed: {
-                    show: false,
-                    catalog: undefined,
-                    openedPath: [],
-                    records: {
-                        recordType: '',
-                        sortOption: undefined,
-                        searchText: '',
-                        limit: 10
-                    }
-                }
-            };
-            /**
-             * @ngdoc property
-             * @name catalogState.service:catalogStateService#currentPage
+             * @name totalRecordSize
              * @propertyOf catalogState.service:catalogStateService
              * @type {number}
              *
              * @description
-             * `currentPage` holds an 1 based index indicating which page of results for the current paginated
-             * results list should be shown.
+             * `totalRecordSize` holds an integer for the total number of catalog Records in the latest query on the
+             * {@link catalog.component:recordsView}.
              */
-            self.currentPage = 1;
+            self.totalRecordSize = 0;
             /**
              * @ngdoc property
-             * @name catalogState.service:catalogStateService#links
-             * @propertyOf catalogState.service:catalogStateService
-             * @type {Object}
-             *
-             * @description
-             * `links` holds the URLs for the next and previous pages of results for the current paginated
-             * results list.
-             */
-            self.links = {
-                prev: '',
-                next: ''
-            };
-            /**
-             * @ngdoc property
-             * @name catalogState.service:catalogStateService#totalSize
+             * @name currentRecordPage
              * @propertyOf catalogState.service:catalogStateService
              * @type {number}
              *
              * @description
-             * `totalSize` holds an integer for the total number of results for the current paginated
-             * results list.
+             * `currentRecordPage` holds an 1 based index indicating which page of catalog Records should be displayed
+             * in the {@link catalog.component:recordsView}.
              */
-            self.totalSize = 0;
+            self.currentRecordPage = 1;
             /**
              * @ngdoc property
-             * @name catalogState.service:catalogStateService#results
+             * @name recordLimit
              * @propertyOf catalogState.service:catalogStateService
-             * @type {Object[]}
+             * @type {number}
              *
              * @description
-             * `results` holds an array of Objects represneting the results for the current page of the
-             * current paginated results list.
+             * `recordLimit` holds an integer representing the maximum number of catalog Records to be shown in a page
+             * in the {@link catalog.component:recordsView}.
              */
-            self.results = [];
+            self.recordLimit = 10;
+            /**
+             * @ngdoc property
+             * @name recordSortOption
+             * @propertyOf catalogState.service:catalogStateService
+             * @type {Object}
+             *
+             * @description
+             * `recordSortOption` holds one of the options from the `sortOptions` in the
+             * {@link catalogManager.service:catalogManagerService} to be used when sorting the catalog Records in the
+             * {@link catalog.component:recordsView}.
+             */
+            self.recordSortOption = undefined;
+            /**
+             * @ngdoc property
+             * @name recordFilterType
+             * @propertyOf catalogState.service:catalogStateService
+             * @type {string}
+             *
+             * @description
+             * `recordFilterType` holds the IRI of a catalog Record type to be used to filter the results in the
+             * {@link catalog.component:recordsView}.
+             */
+            self.recordFilterType = '';
+            /**
+             * @ngdoc property
+             * @name recordSearchText
+             * @propertyOf catalogState.service:catalogStateService
+             * @type {string}
+             *
+             * @description
+             * `recordSearchText` holds a search text to be used when retrieving catalog Records in the
+             * {@link catalog.component:recordsView}.
+             */
+            self.recordSearchText = '';
+            /**
+             * @ngdoc property
+             * @name selectedRecord
+             * @propertyOf catalogState.service:catalogStateService
+             * @type {Object}
+             *
+             * @description
+             * `selectedRecord` holds the currently selected catalog Record object that is being viewed in the
+             * {@link catalog.component:catalogPage}.
+             */
+            self.selectedRecord = undefined;
+            /**
+             * @ngdoc property
+             * @name recordIcons
+             * @propertyOf catalogState.service:catalogStateService
+             * @type {Object}
+             *
+             * @description
+             * `recordIcons` holds each recognized Record type as keys and values of Font Awesome class names to
+             * represent the record types.
+             */
+            self.recordIcons = {
+                [prefixes.ontologyEditor + 'OntologyRecord']: 'fa-sitemap',
+                [prefixes.dataset + 'DatasetRecord']: 'fa-database',
+                [prefixes.delim + 'MappingRecord']: 'fa-map',
+                default: 'fa-book'
+            };
 
             /**
              * @ngdoc method
@@ -148,92 +153,26 @@
              * @methodOf catalogState.service:catalogStateService
              *
              * @description
-             * Initializes `catalogs` using information retrieved from
-             * {@link catalogManager.service:catalogManagerService catalogManagerService}.
+             * Initializes state variables for the {@link catalog.component:catalogPage} using information retrieved
+             * from {@link catalogManager.service:catalogManagerService catalogManagerService}.
              */
             self.initialize = function() {
-                self.catalogs.local.catalog = cm.localCatalog;
-                self.catalogs.local.openedPath = [cm.localCatalog];
-                self.catalogs.distributed.catalog = cm.distributedCatalog;
-                self.catalogs.distributed.openedPath = [cm.distributedCatalog];
-                self.resetSortOptions();
+                self.recordSortOption = _.find(cm.sortOptions, {field: prefixes.dcterms + 'modified', asc: false});
             }
             /**
              * @ngdoc method
-             * @name catalogState.service:catalogStateService#reset
+             * @name getRecordIcon
              * @methodOf catalogState.service:catalogStateService
              *
              * @description
-             * Resets all the main state variables.
+             * Returns a Font Awesome icon class representing the type of the provided catalog Record object. If the
+             * record is not a type that has a specific icon, a generic icon class is returned.
+             * 
+             * @return {string} A Font Awesome class string
              */
-            self.reset = function() {
-                self.resetPagination();
-                self.catalogs.local.openedPath = _.take(self.catalogs.local.openedPath);
-                self.catalogs.distributed.openedPath = _.take(self.catalogs.distributed.openedPath);
-                self.resetSortOptions();
-            }
-            /**
-             * @ngdoc method
-             * @name resetSortOptions
-             * @methodOf catalogState.service:catalogStateService
-             *
-             * @description
-             * Resets all selected sort options.
-             */
-            self.resetSortOptions = function() {
-                _.forEach(
-                    _.flatten(_.map(self.catalogs, catalog => _.filter(catalog, val => _.has(val, 'sortOption')))),
-                    obj => obj.sortOption = _.head(cm.sortOptions)
-                );
-            }
-            /**
-             * @ngdoc method
-             * @name catalogState.service:catalogStateService#resetPagination
-             * @methodOf catalogState.service:catalogStateService
-             *
-             * @description
-             * Resets all the pagination related variables.
-             */
-            self.resetPagination = function() {
-                self.currentPage = 0;
-                self.links = {
-                    prev: '',
-                    next: ''
-                };
-                self.totalSize = 0;
-                self.results = [];
-            }
-            /**
-             * @ngdoc method
-             * @name catalogState.service:catalogStateService#setPagination
-             * @methodOf catalogState.service:catalogStateService
-             *
-             * @description
-             * Sets the pagination state variables based on the information in the passed response from
-             * an HTTP call.
-             *
-             * @param {Object} response A response from a paginated HTTP call
-             */
-            self.setPagination = function(response) {
-                self.results = response.data;
-                var headers = response.headers();
-                self.totalSize = _.get(headers, 'x-total-count', 0);
-                var links = util.parseLinks(_.get(headers, 'link', ''));
-                self.links.prev = _.get(links, 'prev', '');
-                self.links.next = _.get(links, 'next', '');
-            }
-            /**
-             * @ngdoc method
-             * @name catalogState.service:catalogStateService#getCurrentCatalog
-             * @methodOf catalogState.service:catalogStateService
-             *
-             * @description
-             * Retrieves the catalog state object representing the catalog currently being shown.
-             *
-             * @return {Object} The catalog state object for the current catalog
-             */
-            self.getCurrentCatalog = function() {
-                return _.find(self.catalogs, {show: true});
+            self.getRecordIcon = function(record) {
+                var type = _.find(_.keys(self.recordIcons), type => _.includes(_.get(record, '@type', []), type));
+                return self.recordIcons[type || 'default'];
             }
         }
 })();

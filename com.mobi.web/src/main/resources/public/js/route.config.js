@@ -82,7 +82,7 @@
                 url: '/catalog',
                 views: {
                     'container@': {
-                        templateUrl: 'modules/catalog/catalog.html'
+                        template: '<catalog-page></catalog-page>'
                     }
                 },
                 data: {
