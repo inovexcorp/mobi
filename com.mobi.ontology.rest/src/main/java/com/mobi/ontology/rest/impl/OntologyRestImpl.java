@@ -800,7 +800,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getSubClassesOf(ontology);
+            TupleQueryResult results = ontology.getSubClassesOf();
             return Response.ok(getHierarchy(results)).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -814,7 +814,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getSubObjectPropertiesOf(ontology);
+            TupleQueryResult results = ontology.getSubObjectPropertiesOf();
             return Response.ok(getHierarchy(results)).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -828,7 +828,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getSubDatatypePropertiesOf(ontology);
+            TupleQueryResult results = ontology.getSubDatatypePropertiesOf();
             return Response.ok(getHierarchy(results)).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -842,7 +842,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getSubAnnotationPropertiesOf(ontology);
+            TupleQueryResult results = ontology.getSubAnnotationPropertiesOf();
             return Response.ok(getHierarchy(results)).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -856,7 +856,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getConceptRelationships(ontology);
+            TupleQueryResult results = ontology.getConceptRelationships();
             JSONObject response = getHierarchy(results);
             return Response.ok(response).build();
         } catch (MobiException e) {
@@ -871,7 +871,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getConceptSchemeRelationships(ontology);
+            TupleQueryResult results = ontology.getConceptSchemeRelationships();
             JSONObject response = getHierarchy(results);
             return Response.ok(response).build();
         } catch (MobiException e) {
@@ -886,7 +886,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getClassesWithIndividuals(ontology);
+            TupleQueryResult results = ontology.getClassesWithIndividuals();
             Map<String, Set<String>> classIndividuals = getClassIndividuals(results);
             JSONObject response = new JSONObject().element("individuals", classIndividuals);
             return Response.ok(response).build();
@@ -904,10 +904,10 @@ public class OntologyRestImpl implements OntologyRest {
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             Resource entityIRI = valueFactory.createIRI(entityIRIStr);
             if (queryType.equals("construct")) {
-                Model results = ontologyManager.constructEntityUsages(ontology, entityIRI);
+                Model results = ontology.constructEntityUsages(entityIRI, modelFactory);
                 return Response.ok(modelToJsonld(results, sesameTransformer)).build();
             } else if (queryType.equals("select")) {
-                TupleQueryResult results = ontologyManager.getEntityUsages(ontology, entityIRI);
+                TupleQueryResult results = ontology.getEntityUsages(entityIRI);
                 return Response.ok(JSONQueryResults.getResponse(results)).build();
             } else {
                 throw ErrorUtils.sendError("The queryType parameter is not select or construct as expected.",
@@ -926,7 +926,7 @@ public class OntologyRestImpl implements OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             checkStringParam(searchText, "The searchText is missing.");
-            TupleQueryResult results = ontologyManager.getSearchResults(ontology, searchText);
+            TupleQueryResult results = ontology.getSearchResults(searchText, valueFactory);
             Map<String, Set<String>> response = new HashMap<>();
             results.forEach(queryResult -> {
                 Value entity = Bindings.requiredResource(queryResult, "entity");
@@ -976,7 +976,7 @@ public class OntologyRestImpl implements OntologyRest {
             String queryType = Query.getQueryType(queryString);
             switch (queryType) {
                 case "select":
-                    TupleQueryResult tupResults = ontologyManager.getTupleQueryResults(ontology, queryString, includeImports);
+                    TupleQueryResult tupResults = ontology.getTupleQueryResults(queryString, includeImports);
                     if (tupResults.hasNext()) {
                         JSONObject json = JSONQueryResults.getResponse(tupResults);
                         return Response.ok(json, MediaType.APPLICATION_JSON_TYPE).build();
@@ -984,7 +984,7 @@ public class OntologyRestImpl implements OntologyRest {
                         return Response.noContent().build();
                     }
                 case "construct":
-                    Model modelResult = ontologyManager.getGraphQueryResults(ontology, queryString, includeImports);
+                    Model modelResult = ontology.getGraphQueryResults(queryString, includeImports, modelFactory);
                     if (modelResult.size() >= 1) {
                         String modelStr = modelToString(modelResult, format, sesameTransformer);
                         MediaType type = format.equals("jsonld") ? MediaType.APPLICATION_JSON_TYPE
@@ -1423,8 +1423,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private JSONObject getDerivedConceptTypeArray(Ontology ontology) {
-        return getDerivedConceptTypeArray(ontologyManager.getSubClassesFor(ontology,
-                sesameTransformer.mobiIRI(SKOS.CONCEPT)));
+        return getDerivedConceptTypeArray(ontology.getSubClassesFor(sesameTransformer.mobiIRI(SKOS.CONCEPT)));
     }
 
     private JSONObject getDerivedConceptTypeArray(RepositoryConnection conn) {
@@ -1439,13 +1438,13 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private JSONObject getDerivedConceptSchemeTypeArray(Ontology ontology) {
-        return getDerivedConceptSchemeTypeArray(ontologyManager.getSubClassesFor(ontology,
+        return getDerivedConceptSchemeTypeArray(ontology.getSubClassesFor(
                 sesameTransformer.mobiIRI(SKOS.CONCEPT_SCHEME)));
     }
 
     private JSONObject getDerivedConceptSchemeTypeArray(RepositoryConnection conn) {
-        return getDerivedConceptSchemeTypeArray(ontologyManager.getSubClassesFor(sesameTransformer
-                .mobiIRI(SKOS.CONCEPT_SCHEME), conn));
+        return getDerivedConceptSchemeTypeArray(ontologyManager.getSubClassesFor(
+                sesameTransformer.mobiIRI(SKOS.CONCEPT_SCHEME), conn));
     }
 
     private JSONObject getDerivedConceptSchemeTypeArray(TupleQueryResult queryResult) {
@@ -1456,7 +1455,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private JSONObject getDerivedSemanticRelationArray(Ontology ontology) {
-        return getDerivedSemanticRelationArray(ontologyManager.getSubPropertiesFor(ontology,
+        return getDerivedSemanticRelationArray(ontology.getSubPropertiesFor(
                 sesameTransformer.mobiIRI(SKOS.SEMANTIC_RELATION)));
     }
 

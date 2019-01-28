@@ -49,6 +49,7 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.impl.sesame.SimpleIRI;
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
+import com.mobi.repository.api.RepositoryManager;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -94,6 +95,9 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     private BNodeService bNodeService;
 
     @Mock
+    private RepositoryManager repositoryManager;
+
+    @Mock
     private IRI versionIRI;
 
     @Before
@@ -130,7 +134,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Test
     public void testStreamConstructor() throws Exception {
         InputStream stream = new FileInputStream(testFile);
-        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repositoryManager, true);
         assertEquals(ontologyIRI, ontology.getOntologyId().getOntologyIRI().get());
         assertEquals(versionIRI, ontology.getOntologyId().getVersionIRI().get());
     }
@@ -138,14 +142,14 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Test (expected = MobiOntologyException.class)
     public void testStreamConstructorEmpty() throws Exception {
         InputStream stream =  new ByteArrayInputStream(new byte[0]);
-        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repositoryManager, true);
     }
 
     @Test (expected = MobiOntologyException.class)
     public void testStreamConstructorNoFormatMatch() throws Exception {
         String noMatch = "This is not a valid ontology file.";
         InputStream stream =  new ByteArrayInputStream(noMatch.getBytes());
-        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repositoryManager, true);
     }
 
     @Test
@@ -153,8 +157,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         InputStream stream1 = new FileInputStream(testFile);
         InputStream stream2 = new FileInputStream(testFile);
 
-        Ontology ontology1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, true);
-        Ontology ontology2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repositoryManager, true);
+        Ontology ontology2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, repositoryManager, true);
 
         assertEquals(ontology1, ontology2);
     }
@@ -164,8 +168,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         InputStream stream1 = new FileInputStream(testFile);
         InputStream stream2 = this.getClass().getResourceAsStream("/travel.owl");
 
-        Ontology ontology1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, true);
-        Ontology ontology2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repositoryManager, true);
+        Ontology ontology2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, repositoryManager, true);
 
         assertNotEquals(ontology1, ontology2);
     }
@@ -176,8 +180,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         InputStream stream1 = new FileInputStream(testFile);
         InputStream stream2 = new FileInputStream(testFile);
 
-        Ontology ontology1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, true);
-        Ontology ontology2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repositoryManager, true);
+        Ontology ontology2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, repositoryManager, true);
 
         assertEquals(ontology1.hashCode(), ontology2.hashCode());
     }
@@ -185,7 +189,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Test
     public void annotationsAreEmptyForEmptyOntology() throws Exception {
         Model emptyModel = MODEL_FACTORY.createModel();
-        Ontology ontology = new SimpleOntology(emptyModel, ontologyManager, transformer, bNodeService);
+        Ontology ontology = new SimpleOntology(emptyModel, ontologyManager, transformer, bNodeService, repositoryManager);
         Set<Annotation> annotations = ontology.getOntologyAnnotations();
         assertTrue(annotations.size() == 0);
     }
@@ -197,7 +201,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
         // Setup
         InputStream stream = new FileInputStream(testFile);
-        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repositoryManager, true);
 
         // Test
         Set<Annotation> annotations = ontology.getOntologyAnnotations();
@@ -209,7 +213,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Test
     public void axiomsAreEmptyForEmptyOntology() throws Exception {
         Model emptyModel = MODEL_FACTORY.createModel();
-        Ontology ontology = new SimpleOntology(emptyModel, ontologyManager, transformer, bNodeService);
+        Ontology ontology = new SimpleOntology(emptyModel, ontologyManager, transformer, bNodeService, repositoryManager);
         Set<Axiom> axioms = ontology.getAxioms();
         assertTrue(axioms.size() == 0);
     }
@@ -221,7 +225,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
         // Setup
         InputStream stream = new FileInputStream(testFile);
-        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repositoryManager, true);
 
         // Test
         Set<Axiom> axioms = ontology.getAxioms();
@@ -233,31 +237,31 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Test
     public void missingDirectImportTest() throws Exception {
         InputStream file = getClass().getResourceAsStream("/protegeSample.owl");
-        Ontology ontology = new SimpleOntology(file, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology = new SimpleOntology(file, ontologyManager, transformer, bNodeService, repositoryManager, true);
         assertEquals(5, ontology.getUnloadableImportIRIs().size());
     }
 
     @Test
     public void getCardinalityPropertiesTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, repositoryManager, true);
         assertEquals(0, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Woman")).size());
     }
 
     @Test
     public void getCardinalityPropertiesOfSubClassTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, repositoryManager, true);
         assertEquals(1, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Parent")).size());
     }
 
     @Test
     public void getCardinalityPropertiesOfEquivalentClassTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, repositoryManager, true);
         assertEquals(1, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Person")).size());
     }
 
     @Test
     public void getCardinalityPropertiesOfEquivalentClassAndSubClassTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, true);
+        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, repositoryManager, true);
         assertEquals(2, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Man")).size());
     }
 

@@ -26,6 +26,7 @@ package com.mobi.ontology.core.impl.owlapi;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.copyOf;
 
+import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.Individual;
 import com.mobi.ontology.core.api.NamedIndividual;
@@ -45,12 +46,20 @@ import com.mobi.ontology.core.impl.owlapi.classexpression.SimpleCardinalityRestr
 import com.mobi.ontology.core.impl.owlapi.classexpression.SimpleClass;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.core.utils.MobiStringUtils;
+import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.GraphQuery;
+import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.RepositoryManager;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.util.Models;
@@ -144,9 +153,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class SimpleOntology implements Ontology {
 
@@ -156,6 +167,7 @@ public class SimpleOntology implements Ontology {
     private OntologyManager ontologyManager;
     private SesameTransformer transformer;
     private BNodeService bNodeService;
+    private RepositoryManager repoManager;
     private Set<Annotation> ontoAnnotations;
     private Set<Annotation> annotations;
     private Set<AnnotationProperty> annotationProperties;
@@ -171,6 +183,85 @@ public class SimpleOntology implements Ontology {
             .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
     private OWLOntologyManager owlManager;
 
+
+    private static final String GET_SUB_CLASSES_OF;
+    private static final String GET_CLASSES_FOR;
+    private static final String GET_PROPERTIES_FOR;
+    private static final String GET_SUB_DATATYPE_PROPERTIES_OF;
+    private static final String GET_SUB_OBJECT_PROPERTIES_OF;
+    private static final String GET_CLASSES_WITH_INDIVIDUALS;
+    private static final String SELECT_ENTITY_USAGES;
+    private static final String CONSTRUCT_ENTITY_USAGES;
+    private static final String GET_CONCEPT_RELATIONSHIPS;
+    private static final String GET_CONCEPT_SCHEME_RELATIONSHIPS;
+    private static final String GET_SEARCH_RESULTS;
+    private static final String GET_SUB_ANNOTATION_PROPERTIES_OF;
+    private static final String FIND_ONTOLOGY;
+    private static final String ENTITY_BINDING = "entity";
+    private static final String SEARCH_TEXT = "searchText";
+    private static final String ONTOLOGY_IRI = "ontologyIRI";
+    private static final String CATALOG = "catalog";
+    private static final String RECORD = "record";
+
+    static {
+        try {
+            GET_SUB_CLASSES_OF = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-classes-of.rq"),
+                    "UTF-8"
+            );
+            GET_CLASSES_FOR = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-classes-for.rq"),
+                    "UTF-8"
+            );
+            GET_PROPERTIES_FOR = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-properties-for.rq"),
+                    "UTF-8"
+            );
+            GET_SUB_DATATYPE_PROPERTIES_OF = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-datatype-properties-of.rq"),
+                    "UTF-8"
+            );
+            GET_SUB_OBJECT_PROPERTIES_OF = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-object-properties-of.rq"),
+                    "UTF-8"
+            );
+            GET_CLASSES_WITH_INDIVIDUALS = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-classes-with-individuals.rq"),
+                    "UTF-8"
+            );
+            SELECT_ENTITY_USAGES = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-entity-usages.rq"),
+                    "UTF-8"
+            );
+            CONSTRUCT_ENTITY_USAGES = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/construct-entity-usages.rq"),
+                    "UTF-8"
+            );
+            GET_CONCEPT_RELATIONSHIPS = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-concept-relationships.rq"),
+                    "UTF-8"
+            );
+            GET_CONCEPT_SCHEME_RELATIONSHIPS = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-concept-scheme-relationships.rq"),
+                    "UTF-8"
+            );
+            GET_SEARCH_RESULTS = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-search-results.rq"),
+                    "UTF-8"
+            );
+            GET_SUB_ANNOTATION_PROPERTIES_OF = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-annotation-properties-of.rq"),
+                    "UTF-8"
+            );
+            FIND_ONTOLOGY = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/find-ontology.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
+
     /**
      * Creates a SimpleOntology using the ontology data in an InputStream.
      *
@@ -181,8 +272,9 @@ public class SimpleOntology implements Ontology {
      * @throws MobiOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(InputStream inputStream, OntologyManager ontologyManager, SesameTransformer transformer,
-                          BNodeService bNodeService, boolean resolveImports) throws MobiOntologyException {
-        initialize(ontologyManager, transformer, bNodeService, resolveImports);
+                          BNodeService bNodeService, RepositoryManager repoManager, boolean resolveImports)
+            throws MobiOntologyException {
+        initialize(ontologyManager, transformer, bNodeService, repoManager, resolveImports);
         byte[] bytes = inputStreamToByteArray(inputStream);
         try {
             sesameModel = createSesameModel(new ByteArrayInputStream(bytes));
@@ -202,8 +294,8 @@ public class SimpleOntology implements Ontology {
      * @throws MobiOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(Model model, OntologyManager ontologyManager, SesameTransformer transformer,
-                          BNodeService bNodeService) throws MobiOntologyException {
-        initialize(ontologyManager, transformer, bNodeService, true);
+                          BNodeService bNodeService, RepositoryManager repoManager) throws MobiOntologyException {
+        initialize(ontologyManager, transformer, bNodeService, repoManager, true);
         sesameModel = new LinkedHashModel();
         sesameModel = this.transformer.sesameModel(model);
         createOntologyFromSesameModel();
@@ -211,10 +303,11 @@ public class SimpleOntology implements Ontology {
     }
 
     private void initialize(OntologyManager ontologyManager, SesameTransformer transformer, BNodeService bNodeService,
-                            boolean resolveImports) {
+                            RepositoryManager repoManager, boolean resolveImports) {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
+        this.repoManager = repoManager;
         this.owlManager = OWLManager.createOWLOntologyManager();
         owlManager.addMissingImportListener((MissingImportListener) arg0 -> {
             missingImports.add(SimpleOntologyValues.mobiIRI(arg0.getImportedOntologyURI()));
@@ -250,11 +343,12 @@ public class SimpleOntology implements Ontology {
      */
     protected SimpleOntology(OWLOntology ontology, OWLOntologyManager owlManager, Resource resource,
                              OntologyManager ontologyManager, SesameTransformer transformer,
-                             BNodeService bNodeService) {
+                             BNodeService bNodeService, RepositoryManager repoManager) {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
         this.owlManager = owlManager;
+        this.repoManager = repoManager;
 
         try {
             if (!owlManager.contains(ontology)) {
@@ -328,7 +422,8 @@ public class SimpleOntology implements Ontology {
                     if (ontology.equals(owlOntology)) {
                         return this;
                     }
-                    return new SimpleOntology(ontology, owlManager, null, ontologyManager, transformer, bNodeService);
+                    return new SimpleOntology(ontology, owlManager, null, ontologyManager, transformer, bNodeService,
+                            repoManager);
                 })
                 .collect(Collectors.toSet());
         LOG.trace("Exit getImportsClosure()");
@@ -547,6 +642,107 @@ public class SimpleOntology implements Ontology {
         return cardinalityVisitor.getCardinalityProperties();
     }
 
+    @Override
+    public TupleQueryResult getSubClassesOf() {
+        return runQueryOnOntology(GET_SUB_CLASSES_OF, null, "getSubClassesOf(ontology)", true);
+    }
+
+    @Override
+    public TupleQueryResult getSubClassesFor(IRI iri) {
+        return runQueryOnOntology(String.format(GET_CLASSES_FOR, iri.stringValue()), null,
+                "getSubClassesFor(ontology, iri)", true);
+    }
+
+    @Override
+    public TupleQueryResult getSubPropertiesFor(IRI iri) {
+        return runQueryOnOntology(String.format(GET_PROPERTIES_FOR, iri.stringValue()), null,
+                "getSubPropertiesFor(ontology, iri)", true);
+    }
+
+    @Override
+    public TupleQueryResult getSubDatatypePropertiesOf() {
+        return runQueryOnOntology(GET_SUB_DATATYPE_PROPERTIES_OF, null, "getSubDatatypePropertiesOf(ontology)", true);
+    }
+
+    @Override
+    public TupleQueryResult getSubAnnotationPropertiesOf() {
+        return runQueryOnOntology(GET_SUB_ANNOTATION_PROPERTIES_OF, null, "getSubAnnotationPropertiesOf(ontology)",
+                true);
+    }
+
+    @Override
+    public TupleQueryResult getSubObjectPropertiesOf() {
+        return runQueryOnOntology(GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(ontology)", true);
+    }
+
+    @Override
+    public TupleQueryResult getClassesWithIndividuals() {
+        return runQueryOnOntology(GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(ontology)", true);
+    }
+
+    @Override
+    public TupleQueryResult getEntityUsages(Resource entity) {
+        return runQueryOnOntology(SELECT_ENTITY_USAGES, tupleQuery -> {
+            tupleQuery.setBinding(ENTITY_BINDING, entity);
+            return tupleQuery;
+        }, "getEntityUsages(ontology, entity)", true);
+    }
+
+    @Override
+    public Model constructEntityUsages(Resource entity, ModelFactory modelFactory) {
+        long start = getStartTime();
+        Repository repo = repoManager.createMemoryRepository();
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(transformer.mobiModel(asSesameModel()));
+            return constructEntityUsages(entity, conn, modelFactory);
+        } finally {
+            repo.shutDown();
+            logTrace("constructEntityUsages(ontology, entity)", start);
+        }
+    }
+
+    private Model constructEntityUsages(Resource entity, RepositoryConnection conn, ModelFactory modelFactory) {
+        long start = getStartTime();
+        try {
+            GraphQuery query = conn.prepareGraphQuery(CONSTRUCT_ENTITY_USAGES);
+            query.setBinding(ENTITY_BINDING, entity);
+            return QueryResults.asModel(query.evaluate(), modelFactory);
+        } finally {
+            logTrace("constructEntityUsages(entity, conn)", start);
+        }
+    }
+
+    @Override
+    public TupleQueryResult getConceptRelationships() {
+        return runQueryOnOntology(GET_CONCEPT_RELATIONSHIPS, null, "getConceptRelationships(ontology)", true);
+    }
+
+    @Override
+    public TupleQueryResult getConceptSchemeRelationships() {
+        return runQueryOnOntology(GET_CONCEPT_SCHEME_RELATIONSHIPS, null, "getConceptSchemeRelationships(ontology)",
+                true);
+    }
+
+    @Override
+    public TupleQueryResult getSearchResults(String searchText, ValueFactory valueFactory) {
+        return runQueryOnOntology(GET_SEARCH_RESULTS, tupleQuery -> {
+            tupleQuery.setBinding(SEARCH_TEXT, valueFactory.createLiteral(searchText.toLowerCase()));
+            return tupleQuery;
+        }, "getSearchResults(ontology, searchText)", true);
+    }
+
+    @Override
+    public TupleQueryResult getTupleQueryResults(String queryString, boolean includeImports) {
+        return runQueryOnOntology(queryString, null, "getTupleQueryResults(ontology, queryString)", includeImports);
+    }
+
+    @Override
+    public Model getGraphQueryResults(String queryString, boolean includeImports, ModelFactory modelFactory) {
+        return runGraphQueryOnOntology(queryString, null, "getGraphQueryResults(ontology, queryString)", includeImports,
+                modelFactory);
+    }
+
     /**
      * Visits existential restrictions and collects the properties which are
      * restricted.
@@ -712,6 +908,122 @@ public class SimpleOntology implements Ontology {
 
     protected OWLOntologyManager getOwlapiOntologyManager() {
         return this.owlManager;
+    }
+
+    private void addOntologyData(RepositoryConnection conn, boolean includeImports) {
+        if (includeImports) {
+            conn.begin();
+            owlOntology.importsClosure()
+                    .map(ontology -> {
+                        if (ontology.equals(owlOntology)) {
+                            return this;
+                        }
+                        return new SimpleOntology(ontology, owlManager, null, ontologyManager, transformer,
+                                bNodeService, repoManager);
+                    }).forEach(ont -> conn.add(transformer.mobiModel(ont.asSesameModel())));
+            conn.commit();
+        } else {
+            conn.add(transformer.mobiModel(asSesameModel()));
+        }
+    }
+
+    /**
+     * Executes the provided Graph query on the provided Ontology.
+     *
+     * @param queryString the query string that you wish to run.
+     * @param addBinding  the binding to add to the query, if needed.
+     * @param methodName  the name of the method to provide more accurate logging messages.
+     * @return the results of the query as a model.
+     */
+    private Model runGraphQueryOnOntology(String queryString,
+                                          @Nullable Function<GraphQuery, GraphQuery> addBinding,
+                                          String methodName, boolean includeImports, ModelFactory modelFactory) {
+        Repository repo = repoManager.createMemoryRepository();
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            addOntologyData(conn, includeImports);
+            return runGraphQueryOnOntology(queryString, addBinding, methodName, conn, modelFactory);
+        } finally {
+            repo.shutDown();
+        }
+    }
+
+    /**
+     * Executes the provided Graph query on the provided RepositoryConnection.
+     *
+     * @param queryString the query string that you wish to run.
+     * @param addBinding  the binding to add to the query, if needed.
+     * @param methodName  the name of the method to provide more accurate logging messages.
+     * @param conn        the {@link RepositoryConnection} to run the query against.
+     * @return the results of the query as a model.
+     */
+    private Model runGraphQueryOnOntology(String queryString, @Nullable Function<GraphQuery, GraphQuery> addBinding,
+                                          String methodName, RepositoryConnection conn, ModelFactory modelFactory) {
+        long start = getStartTime();
+        try {
+            GraphQuery query = conn.prepareGraphQuery(queryString);
+            if (addBinding != null) {
+                query = addBinding.apply(query);
+            }
+            return QueryResults.asModel(query.evaluate(), modelFactory);
+        } finally {
+            logTrace(methodName, start);
+        }
+    }
+
+    /**
+     * Executes the provided query on the provided RepositoryConnection.
+     *
+     * @param queryString the query string that you wish to run.
+     * @param addBinding  the binding to add to the query, if needed.
+     * @param methodName  the name of the method to provide more accurate logging messages.
+     * @return the results of the query.
+     */
+    private TupleQueryResult runQueryOnOntology(String queryString,
+                                                @Nullable Function<TupleQuery, TupleQuery> addBinding,
+                                                String methodName, boolean includeImports) {
+        Repository repo = repoManager.createMemoryRepository();
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            addOntologyData(conn, includeImports);
+            return runQueryOnOntology(queryString, addBinding, methodName, conn);
+        } finally {
+            repo.shutDown();
+        }
+    }
+
+    /**
+     * Executes the provided query on the provided RepositoryConnection.
+     *
+     * @param queryString the query string that you wish to run.
+     * @param addBinding  the binding to add to the query, if needed.
+     * @param methodName  the name of the method to provide more accurate logging messages.
+     * @param conn        the {@link RepositoryConnection} to run the query against.
+     * @return the results of the query.
+     */
+    private TupleQueryResult runQueryOnOntology(String queryString,
+                                                @Nullable Function<TupleQuery, TupleQuery> addBinding,
+                                                String methodName, RepositoryConnection conn) {
+        long start = getStartTime();
+        try {
+            TupleQuery query = conn.prepareTupleQuery(queryString);
+            if (addBinding != null) {
+                query = addBinding.apply(query);
+            }
+            return query.evaluateAndReturn();
+        } finally {
+            logTrace(methodName, start);
+        }
+    }
+
+    private long getStartTime() {
+        return LOG.isTraceEnabled() ? System.currentTimeMillis() : 0L;
+    }
+
+    private void logTrace(String methodName, Long start) {
+        if (LOG.isTraceEnabled()) {
+            LOG.trace(String.format(methodName + " complete in %d ms", System.currentTimeMillis() - start));
+        }
     }
 
     private @Nonnull OutputStream getOntologyDocument(PrefixDocumentFormatImpl prefixFormat)

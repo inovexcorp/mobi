@@ -23,18 +23,20 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
-import com.mobi.ontology.core.api.propertyexpression.DataProperty;
-import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
-import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.core.api.axiom.Axiom;
 import com.mobi.ontology.core.api.classexpression.CardinalityRestriction;
 import com.mobi.ontology.core.api.classexpression.OClass;
 import com.mobi.ontology.core.api.datarange.Datatype;
+import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
+import com.mobi.ontology.core.api.propertyexpression.DataProperty;
+import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
+import com.mobi.ontology.core.utils.MobiOntologyException;
+import com.mobi.query.TupleQueryResult;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.ValueFactory;
 
 import java.io.OutputStream;
 import java.util.Optional;
@@ -245,6 +247,115 @@ public interface Ontology {
      * @return The {@link Set} of {@link CardinalityRestriction}s.
      */
     Set<CardinalityRestriction> getCardinalityProperties(IRI classIRI);
+
+    /**
+     * Gets the subClassOf relationships for classes in the Ontology.
+     *
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSubClassesOf();
+
+    /**
+     * Gets the subClassOf relationships for a particular {@link IRI} in the {@link Ontology}. It will provide
+     * <em>all</em> classes that can be traced back to the provided class IRI, even if nested.
+     *
+     * @param iri      The {@link IRI} of the class for which you want the list of subclasses.
+     * @return a {@link TupleQueryResult} with the query results.
+     */
+    TupleQueryResult getSubClassesFor(IRI iri);
+
+    /**
+     * Gets the subPropertyOf relationships for a particular {@link IRI} in the {@link Ontology}. It will provide
+     * <em>all</em> properties that can be traced back to the provided property IRI, even if nested.
+     *
+     * @param iri      The {@link IRI} of the property for which you want the list of subproperties.
+     * @return a {@link TupleQueryResult} with the query results.
+     */
+    TupleQueryResult getSubPropertiesFor(IRI iri);
+
+    /**
+     * Gets the subPropertyOf relationships for datatype properties in the Ontology.
+     *
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSubDatatypePropertiesOf();
+
+    /**
+     * Gets the subPropertyOf relationships for annotation properties in the Ontology.
+     *
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSubAnnotationPropertiesOf();
+
+    /**
+     * Gets the subPropertyOf relationships for object properties in the Ontology.
+     *
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSubObjectPropertiesOf();
+
+    /**
+     * Gets the classes with individuals in the Ontology.
+     *
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getClassesWithIndividuals();
+
+    /**
+     * Gets the entity usages for the provided Resource in the Ontology.
+     *
+     * @param entity   the Resource for the entity you want to get the usages of.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getEntityUsages(Resource entity);
+
+    /**
+     * Constructs the entity usages for the provided Resource in the Ontology.
+     *
+     * @param entity   the Resource for the entity you want to get the usages of.
+     * @return a Model with the constructed statements.
+     */
+    Model constructEntityUsages(Resource entity, ModelFactory modelFactory);
+
+    /**
+     * Gets the concept relationships in the Ontology.
+     *
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getConceptRelationships();
+
+    /**
+     * Gets the concept scheme relationships in the Ontology.
+     *
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getConceptSchemeRelationships();
+
+    /**
+     * Searches the Ontology using the provided searchText.
+     *
+     * @param searchText the String for the text you want to search for in the Ontology.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSearchResults(String searchText, ValueFactory valueFactory);
+
+    /**
+     * Searches the Ontology & its import closures using the provided Sparql query.
+     *
+     * @param queryString the Sparql query string you want to execute.
+     * @param includeImports include data from ontology imports when querying
+     * @return a Tuple Set with the query results.
+     */
+    TupleQueryResult getTupleQueryResults(String queryString, boolean includeImports);
+
+    /**
+     * Searches the Ontology & its import closures using the provided SPARQL query.
+     *
+     * @param queryString the Sparql query string you want to execute.
+     * @param includeImports include data from ontology imports when querying
+     * @return a model with the query results.
+     */
+    Model getGraphQueryResults(String queryString, boolean includeImports, ModelFactory modelFactory);
 
     /**
      * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects,

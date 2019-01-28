@@ -45,12 +45,10 @@ import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
-import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
-import com.mobi.query.api.BindingSet;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -79,7 +77,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -511,11 +508,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     /* Testing getSubClassesOf(Ontology ontology) */
 
     @Test
-    public void testGetSubClassesOf() throws Exception {
-        verifyGetSubClassesOf(manager.getSubClassesOf(ontology));
-    }
-
-    @Test
     public void testGetSubClassesOfWithConnection() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             verifyGetSubClassesOf(manager.getSubClassesOf(conn));
@@ -547,11 +539,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testGetSubDatatypePropertiesOf() throws Exception {
-        verifySubDatatypePropertiesOf(manager.getSubDatatypePropertiesOf(ontology));
-    }
-
-    @Test
     public void testGetSubDatatypePropertiesOfWithConnection() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             verifySubDatatypePropertiesOf(manager.getSubDatatypePropertiesOf(conn));
@@ -577,11 +564,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         });
         assertEquals(0, parents.size());
         assertEquals(0, children.size());
-    }
-
-    @Test
-    public void testGetSubAnnotationPropertiesOf() throws Exception {
-        verifyGetSubAnnotationPropertiesOf(manager.getSubAnnotationPropertiesOf(ontology));
     }
 
     @Test
@@ -616,11 +598,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testGetSubObjectPropertiesOf() throws Exception {
-        verifyGetSubObjectPropertiesOf(manager.getSubObjectPropertiesOf(ontology));
-    }
-
-    @Test
     public void testGetSubObjectPropertiesOfWithConnection() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             verifyGetSubObjectPropertiesOf(manager.getSubObjectPropertiesOf(conn));
@@ -646,11 +623,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         });
         assertEquals(0, parents.size());
         assertEquals(0, children.size());
-    }
-
-    @Test
-    public void testGetClassesWithIndividuals() throws Exception {
-        verifyGetClassesWithIndividuals(manager.getClassesWithIndividuals(ontology));
     }
 
     @Test
@@ -689,11 +661,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testGetEntityUsages() throws Exception {
-        verifyGetEntityUsages(manager.getEntityUsages(ontology, VALUE_FACTORY.createIRI("http://mobi.com/ontology#Class1a")));
-    }
-
-    @Test
     public void testGetEntityUsagesWithConnection() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             verifyGetEntityUsages(manager.getEntityUsages(VALUE_FACTORY.createIRI("http://mobi.com/ontology#Class1a"), conn));
@@ -726,12 +693,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testConstructEntityUsages() throws Exception {
-        Resource class1a = VALUE_FACTORY.createIRI("http://mobi.com/ontology#Class1a");
-        verifyConstructEntityUsages(manager.constructEntityUsages(ontology, class1a), class1a);
-    }
-
-    @Test
     public void testConstructEntityUsagesWithConnection() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             Resource class1a = VALUE_FACTORY.createIRI("http://mobi.com/ontology#Class1a");
@@ -748,11 +709,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
                 class1a), VALUE_FACTORY.createStatement(individual1a, type, class1a)).collect(Collectors.toSet()));
 
         assertTrue(result.equals(expected));
-    }
-
-    @Test
-    public void testGetConceptRelationships() throws Exception {
-        verifyGetConceptRelationships(manager.getConceptRelationships(vocabulary));
     }
 
     @Test
@@ -787,11 +743,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testGetConceptSchemeRelationships() throws Exception {
-        verifyGetConceptSchemeRelationships(manager.getConceptSchemeRelationships(vocabulary));
-    }
-
-    @Test
     public void testGetConceptSchemeRelationshipsWithConnection() throws Exception {
         try (RepositoryConnection conn = vocabRepo.getConnection()) {
             verifyGetConceptSchemeRelationships(manager.getConceptSchemeRelationships(conn));
@@ -823,11 +774,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testGetSearchResults() throws Exception {
-        verifyGetSearchResults(manager.getSearchResults(ontology, "class"));
-    }
-
-    @Test
     public void testGetSearchResultsWithConnection() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             verifyGetSearchResults(manager.getSearchResults("class", conn));
@@ -847,17 +793,5 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
             assertEquals("http://www.w3.org/2002/07/owl#Class", Bindings.requiredResource(b, "type").stringValue());
         });
         assertEquals(0, entities.size());
-    }
-
-    @Test
-    public void testGetTupleQueryResults() throws Exception {
-        List<BindingSet> result = QueryResults.asList(manager.getTupleQueryResults(ontology, "select distinct ?s where { ?s ?p ?o . }", true));
-        assertEquals(result.size(), 18);
-    }
-
-    @Test
-    public void testGetGraphQueryResults() throws Exception {
-        Model result = manager.getGraphQueryResults(ontology, "construct {?s ?p ?o} where { ?s ?p ?o . }", true);
-        assertEquals(result.size(), ontology.asModel(MODEL_FACTORY).size());
     }
 }
