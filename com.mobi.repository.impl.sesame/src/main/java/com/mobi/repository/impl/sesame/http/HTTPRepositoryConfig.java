@@ -1,4 +1,4 @@
-package com.mobi.repository.impl.sesame.sparql;
+package com.mobi.repository.impl.sesame.http;
 
 /*-
  * #%L
@@ -6,7 +6,7 @@ package com.mobi.repository.impl.sesame.sparql;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,24 +27,16 @@ import aQute.bnd.annotation.metatype.Meta;
 import com.mobi.repository.config.RepositoryConfig;
 
 /**
- * Configuration for Repository objects accessed through a SPARQL 1.1 compliant endpoint. The instance must be
+ * Configuration for Repository objects accessed through an HTTP endpoint. The instance must be
  * initialized prior to using it.
  */
-public interface SPARQLRepositoryConfig extends RepositoryConfig {
+public interface HTTPRepositoryConfig extends RepositoryConfig {
 
     /**
-     * The SPARQL endpoint URL.
+     * The HTTP server URL.
      *
-     * @return The String representing the SPARQL endpoint URL.
+     * @return The String representing the HTTP server URL.
      */
     @Meta.AD
-    String endpointUrl();
-
-    /**
-     * The optional SPARQL update endpoint URL.
-     *
-     * @return The String representing the SPARQL update endpoint URL.
-     */
-    @Meta.AD(required = false)
-    String updateEndpointUrl();
+    String serverUrl();
 }

@@ -1,4 +1,4 @@
-package com.mobi.repository.impl.sesame.nativestore;
+package com.mobi.repository.impl.sesame.http;
 
 /*-
  * #%L
@@ -6,7 +6,7 @@ package com.mobi.repository.impl.sesame.nativestore;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -34,27 +34,24 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.base.RepositoryWrapper;
 import com.mobi.repository.exception.RepositoryConfigException;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
-import org.apache.commons.lang3.StringUtils;
-import org.eclipse.rdf4j.repository.sail.SailRepository;
-import org.eclipse.rdf4j.sail.nativerdf.NativeStore;
+import org.apache.commons.validator.routines.UrlValidator;
+import org.eclipse.rdf4j.repository.http.HTTPRepository;
 
-import java.io.File;
 import java.util.Map;
-import java.util.Set;
 
 @Component(
         immediate = true,
         provide = { Repository.class, DelegatingRepository.class },
-        name = NativeRepositoryWrapper.NAME,
+        name = HTTPRepositoryWrapper.NAME,
         configurationPolicy = ConfigurationPolicy.require,
-        designateFactory = NativeRepositoryConfig.class,
+        designateFactory = HTTPRepositoryConfig.class,
         properties = {
-                "repositorytype=" + NativeRepositoryWrapper.REPOSITORY_TYPE
+                "repositorytype=" + HTTPRepositoryWrapper.REPOSITORY_TYPE
         }
 )
-public class NativeRepositoryWrapper extends RepositoryWrapper {
+public class HTTPRepositoryWrapper extends RepositoryWrapper {
 
-    protected static final String REPOSITORY_TYPE = "native";
+    protected static final String REPOSITORY_TYPE = "http";
     protected static final String NAME = "com.mobi.service.repository." + REPOSITORY_TYPE;
 
     @Activate
@@ -74,23 +71,12 @@ public class NativeRepositoryWrapper extends RepositoryWrapper {
 
     @Override
     protected Repository getRepo(Map<String, Object> props) {
-        NativeRepositoryConfig config = Configurable.createConfigurable(NativeRepositoryConfig.class, props);
+        HTTPRepositoryConfig config = Configurable.createConfigurable(HTTPRepositoryConfig.class, props);
         this.repositoryID = config.id();
 
-        NativeStore sesameNativeStore = new NativeStore();
+        HTTPRepository sesameHttpStore = new HTTPRepository(config.serverUrl(), this.repositoryID);
 
-        if (props.containsKey("dataDir")) {
-            File file = new File(config.dataDir());
-            sesameNativeStore.setDataDir(file);
-        }
-
-        if (props.containsKey("tripleIndexes")) {
-            Set<String> indexes = config.tripleIndexes();
-            String indexString = StringUtils.join(indexes, ",");
-            sesameNativeStore.setTripleIndexes(indexString);
-        }
-
-        SesameRepositoryWrapper repo = new SesameRepositoryWrapper(new SailRepository(sesameNativeStore));
+        SesameRepositoryWrapper repo = new SesameRepositoryWrapper(sesameHttpStore);
         repo.setConfig(config);
 
         return repo;
@@ -99,21 +85,14 @@ public class NativeRepositoryWrapper extends RepositoryWrapper {
     @Override
     public void validateConfig(Map<String, Object> props) {
         super.validateConfig(props);
-        NativeRepositoryConfig config = Configurable.createConfigurable(NativeRepositoryConfig.class, props);
+        HTTPRepositoryConfig config = Configurable.createConfigurable(HTTPRepositoryConfig.class, props);
 
-        if (props.containsKey("dataDir")) {
-            if (config.dataDir().equals(""))
-                throw new RepositoryConfigException(
-                        new IllegalArgumentException("Repository property 'dataDir' cannot be empty.")
-                );
-        }
-
-        if (props.containsKey("tripleIndexes")) {
-            config.tripleIndexes().forEach(index -> {
-                // Make sure String matches index regex
-                if (!index.matches("^(?!.*s.*s)(?!.*p.*p)(?!.*o.*o)(?!.*c.*c)[spoc]{4}$"))
-                    throw new RepositoryConfigException(new IllegalArgumentException("Invalid Triple Index"));
-            });
+        String[] schemes = {"http","https"};
+        UrlValidator urlValidator = new UrlValidator(schemes, UrlValidator.ALLOW_LOCAL_URLS);
+        if (!urlValidator.isValid(config.serverUrl())) {
+            throw new RepositoryConfigException(
+                    new IllegalArgumentException("Repository serverUrl is not a valid URL: " + config.serverUrl())
+            );
         }
     }
 }
