@@ -40,6 +40,7 @@ var jsFiles = function(prefix) {
             prefix + 'js/filters/!(*Spec).js',
             prefix + 'js/services/!(*Spec).js',
             prefix + 'directives/**/!(*Spec).js',
+            prefix + 'modules/*/!(*Spec).js',
             prefix + 'modules/**/*/services/**/!(*Spec).js',
             prefix + 'modules/**/*/directives/**/!(*Spec).js',
             prefix + 'modules/**/!(*Spec).js',
