@@ -1,0 +1,38 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="record-filters">
+    <div class="filter-container">
+        <h5 class="record-filter-header text-muted d-flex justify-content-between" ng-click="dvm.hide = !dvm.hide" data-toggle="collapse" data-target="#filter_options_{{$id}}" aria-expanded="true" aria-controls="filter_options_{{$id}}">
+            <span>Record Type</span>
+            <span><i class="material-icons">{{dvm.hide ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}}</i></span>
+        </h5>
+        <div class="filter-options collapse show" id="filter_options_{{$id}}">
+            <div class="filter-option my-2" ng-repeat="filter in dvm.recordTypes track by filter.value">
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="filter-checkbox_{{$id}}" ng-model="filter.checked" ng-change="dvm.filter(filter)">
+                    <label class="custom-control-label" for="filter-checkbox_{{$id}}">{{(filter.value | splitIRI).end}}</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

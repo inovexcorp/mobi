@@ -124,7 +124,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext context) throws IOException {
-        log.info("Authorizing...");
+        log.debug("Authorizing...");
         long start = System.currentTimeMillis();
 
         MultivaluedMap<String, String> pathParameters = uriInfo.getPathParameters();
