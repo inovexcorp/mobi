@@ -54,6 +54,21 @@ public class HTTPRepositoryWrapper extends RepositoryWrapper {
     protected static final String REPOSITORY_TYPE = "http";
     protected static final String NAME = "com.mobi.service.repository." + REPOSITORY_TYPE;
 
+    @Activate
+    protected void start(Map<String, Object> props) {
+        super.start(props);
+    }
+
+    @Deactivate
+    protected void stop() {
+        super.stop();
+    }
+
+    @Modified
+    protected void modified(Map<String, Object> props) {
+        super.modified(props);
+    }
+
     @Override
     protected Repository getRepo(Map<String, Object> props) {
         HTTPRepositoryConfig config = Configurable.createConfigurable(HTTPRepositoryConfig.class, props);
@@ -76,23 +91,8 @@ public class HTTPRepositoryWrapper extends RepositoryWrapper {
         UrlValidator urlValidator = new UrlValidator(schemes, UrlValidator.ALLOW_LOCAL_URLS);
         if (!urlValidator.isValid(config.serverUrl())) {
             throw new RepositoryConfigException(
-                    new IllegalArgumentException("Repository serverUrl is not a valid URL.")
+                    new IllegalArgumentException("Repository serverUrl is not a valid URL: " + config.serverUrl())
             );
         }
-    }
-
-    @Activate
-    protected void start(Map<String, Object> props) {
-        super.start(props);
-    }
-
-    @Deactivate
-    protected void stop() {
-        super.stop();
-    }
-
-    @Modified
-    protected void modified(Map<String, Object> props) {
-        super.modified(props);
     }
 }

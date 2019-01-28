@@ -61,4 +61,21 @@ class HTTPRepositoryWrapperSpec extends Specification {
         then:
         noExceptionThrown()
     }
+
+    def "Valid local URLs work"() {
+        setup:
+        def props = [
+                id: "test",
+                title: "test repo",
+                serverUrl: "http://localhost/server"
+        ]
+
+        def service = new HTTPRepositoryWrapper()
+
+        when:
+        service.start(props)
+
+        then:
+        noExceptionThrown()
+    }
 }

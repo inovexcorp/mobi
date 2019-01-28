@@ -63,4 +63,22 @@ class SPARQLRepositoryWrapperSpec extends Specification {
         then:
         noExceptionThrown()
     }
+
+    def "Valid local URLs work"() {
+        setup:
+        def props = [
+                id: "test",
+                title: "test repo",
+                endpointUrl: "http://locahost/sparql",
+                updateEndpointUrl: "http://localhost/sparql/statements"
+        ]
+
+        def service = new SPARQLRepositoryWrapper()
+
+        when:
+        service.start(props)
+
+        then:
+        noExceptionThrown()
+    }
 }

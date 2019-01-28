@@ -54,6 +54,21 @@ public class SPARQLRepositoryWrapper extends RepositoryWrapper {
     protected static final String REPOSITORY_TYPE = "sparql";
     protected static final String NAME = "com.mobi.service.repository." + REPOSITORY_TYPE;
 
+    @Activate
+    protected void start(Map<String, Object> props) {
+        super.start(props);
+    }
+
+    @Deactivate
+    protected void stop() {
+        super.stop();
+    }
+
+    @Modified
+    protected void modified(Map<String, Object> props) {
+        super.modified(props);
+    }
+
     @Override
     protected Repository getRepo(Map<String, Object> props) {
         SPARQLRepositoryConfig config = Configurable.createConfigurable(SPARQLRepositoryConfig.class, props);
@@ -94,20 +109,5 @@ public class SPARQLRepositoryWrapper extends RepositoryWrapper {
                             + config.updateEndpointUrl())
             );
         }
-    }
-
-    @Activate
-    protected void start(Map<String, Object> props) {
-        super.start(props);
-    }
-
-    @Deactivate
-    protected void stop() {
-        super.stop();
-    }
-
-    @Modified
-    protected void modified(Map<String, Object> props) {
-        super.modified(props);
     }
 }
