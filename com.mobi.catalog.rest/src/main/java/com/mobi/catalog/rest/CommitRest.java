@@ -90,18 +90,17 @@ public interface CommitRest {
      *
      * @param commitId {@link String} value of the {@link Commit} ID. NOTE: Assumes an {@link IRI} unless {@link String}
      *                 starts with "{@code _:}".
-     * @param entityId {@link String} representation of the desired {@link RDFFormat}. Default value is
-     *                 {@code "jsonld"}.
-     * @return A {@link Response} with the {@link Commit} identified by the provided ID.
+     * @param entityId An Optional Resource identifying the Entity to filter the chain of Commit.
+     * @return Model which represents the resource at the Commit's point in history.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found.
      */
     @GET
-    @Path("{commitId}/Resource")
+    @Path("{commitId}/resource")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves the Commit specified by the provided ID.")
     Response getCompiledResource(@PathParam("commitId") String commitId,
                                  @QueryParam("entityId") String entityId);
-
 
     /**
      * Gets the {@link Difference} between the two specified {@link Commit}s.

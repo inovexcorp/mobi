@@ -148,7 +148,30 @@ public class CommitRestImpl implements CommitRest {
     @Override
     public Response getCompiledResource(String commitId, String entityId) {
         long start = System.currentTimeMillis();
-        return null;
+        try {
+            checkStringParam(commitId, "Commit ID is required");
+            try {
+                final List<Commit> commits;
+                if (StringUtils.isNotBlank(entityId)) {
+                    commits = catalogManager.getCommitEntityChain(vf.createIRI(commitId), vf.createIRI(entityId));
+                } else {
+                    commits = catalogManager.getCommitChain(vf.createIRI(commitId));
+                }
+                Stream<Commit> result = commits.stream();
+                JSONArray commitChain = result.map(r -> createCommitJson(r, vf, engineManager))
+                        .collect(JSONArray::new, JSONArray::add, JSONArray::add);
+
+                return createPaginatedResponseWithJson(commitChain,commits.size());
+
+                return Response.ok(getCompiledResource(commitId, entityId), MediaType.APPLICATION_JSON).build();
+            } catch (IllegalArgumentException ex) {
+                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            } catch (IllegalStateException | MobiException ex) {
+                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            }
+        } finally {
+            logger.trace("getCompiledResource took {}ms", System.currentTimeMillis() - start);
+        }
     }
 
     @Override

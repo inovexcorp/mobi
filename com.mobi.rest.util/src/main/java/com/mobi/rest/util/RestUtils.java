@@ -599,6 +599,25 @@ public class RestUtils {
     }
 
     /**
+     * Creates a Response for a list of paginated Things based on the passed page of items and the total
+     * number of Things. Sets the "X-Total-Count" header
+     * to the total size.
+     *
+     * @param items     The limited and sorted Collection of items for the current page
+     * @param totalSize The total number of items.
+     * @return A Response with the current page of Things and headers for the total size .
+     */
+    public static Response createPaginatedResponseWithJson(JSONArray items, int totalSize) {
+        long start = System.currentTimeMillis();
+        try {
+            Response.ResponseBuilder response = Response.ok(items).header("X-Total-Count", totalSize);
+            return response.build();
+        } finally {
+            LOG.trace("createPaginatedResponseWithJson took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    /**
      * Creates a Response for a list of paginated Things based on the passed URI information, page of items, the total
      * number of Things, the limit for each page, and the offset for the current page. Sets the "X-Total-Count" header
      * to the total size and the "Links" header to the next and prev URLs if present.

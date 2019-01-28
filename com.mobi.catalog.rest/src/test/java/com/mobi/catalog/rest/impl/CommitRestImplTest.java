@@ -325,6 +325,53 @@ public class CommitRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 500);
     }
 
+    // GET commits/{commitId}/resource
+    @Test
+    public void getCompiledResourceNoEntityTest() {
+        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
+                .request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]));
+        try {
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertTrue(result.containsKey("additions"));
+            assertTrue(result.containsKey("deletions"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getCompiledResourceWithEntityTest() {
+        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
+                .queryParam("entityId", encode("")).request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(""));
+        try {
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertTrue(result.containsKey("additions"));
+            assertTrue(result.containsKey("deletions"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getCompiledResourceEmptyModelTest() {
+        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
+                .queryParam("entityId", encode("")).request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(""));
+        try {
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertTrue(result.containsKey("additions"));
+            assertTrue(result.containsKey("deletions"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    // GET commits/{commitId}/difference
     @Test
     public void getDifferenceTest() {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
