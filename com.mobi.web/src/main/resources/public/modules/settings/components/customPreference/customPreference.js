@@ -20,32 +20,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/**
- * @ngdoc component
- * @name customPreference.component:customPreference
- *
- * @description
- * `customPreference` is a component that creates an article with transcluded content, a header, and a question
- * representing what the setting is for. The main content for the overlay is transcluded so it can contain whatever is
- * put between the opening and closing tags.
- *
- * @param {string} header the text to display in the article's header
- * @param {string} question the text to display as the setting's representative question
- */
-const customPreferenceComponent = {
-    templateUrl: 'modules/settings/components/customPreference/customPreference.html',
-    transclude: true,
-    bindings: {
-        header: '<',
-        question: '<'
-    },
-    controllerAs: 'dvm',
-    controller: customPreferenceComponentCtrl
-}
+(function() {
+    'use strict';
+    /**
+     * @ngdoc component
+     * @name settings.component:customPreference
+     *
+     * @description
+     * `customPreference` is a component that creates an article with transcluded content, a header, and a question
+     * representing what the setting is for. The main content for the overlay is transcluded so it can contain whatever is
+     * put between the opening and closing tags.
+     *
+     * @param {string} header the text to display in the article's header
+     * @param {string} question the text to display as the setting's representative question
+     */
+    const customPreferenceComponent = {
+        templateUrl: 'modules/settings/components/customPreference/customPreference.html',
+        transclude: true,
+        bindings: {
+            header: '<',
+            question: '<'
+        },
+        controllerAs: 'dvm',
+        controller: customPreferenceComponentCtrl
+    }
 
-function customPreferenceComponentCtrl() {
-    var dvm = this;
-}
+    function customPreferenceComponentCtrl() {
+        var dvm = this;
+    }
 
-angular.module('settings')
-    .component('customPreference', customPreferenceComponent);
+    angular.module('settings')
+        .component('customPreference', customPreferenceComponent);
+})();

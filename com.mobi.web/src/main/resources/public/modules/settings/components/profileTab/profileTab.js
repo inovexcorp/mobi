@@ -20,45 +20,48 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
- /**
- * @ngdoc component
- * @name profileTab.component:profileTab
- * @requires userManager.service:userManagerService
- * @requires loginManager.service:loginManagerService
- *
- * @description
- * `profileTab` is a component that creates a Bootstrap `row` with a {@link block.directive:block block} that contains a
- * form allowing the current user to change their profile information. This information includes their first name, last
- * name, and email address.
- */
-const profileTabComponent = {
-    templateUrl: 'modules/settings/components/profileTab/profileTab.html',
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: profileTabComponentCtrl
-};
+(function() {
+    'use strict';
+    /**
+     * @ngdoc component
+     * @name settings.component:profileTab
+     * @requires userManager.service:userManagerService
+     * @requires loginManager.service:loginManagerService
+     *
+     * @description
+     * `profileTab` is a component that creates a Bootstrap `row` with a {@link block.directive:block block} that contains a
+     * form allowing the current user to change their profile information. This information includes their first name, last
+     * name, and email address.
+     */
+    const profileTabComponent = {
+        templateUrl: 'modules/settings/components/profileTab/profileTab.html',
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: profileTabComponentCtrl
+    };
 
-profileTabComponentCtrl.$inject = ['userManagerService', 'loginManagerService'];
+    profileTabComponentCtrl.$inject = ['userManagerService', 'loginManagerService'];
 
-function profileTabComponentCtrl(userManagerService, loginManagerService) {
-    var dvm = this;
-    dvm.um = userManagerService;
-    dvm.lm = loginManagerService;
-    dvm.currentUser = undefined;
+    function profileTabComponentCtrl(userManagerService, loginManagerService) {
+        var dvm = this;
+        dvm.um = userManagerService;
+        dvm.lm = loginManagerService;
+        dvm.currentUser = undefined;
 
-    dvm.$onInit = function() {
-        dvm.currentUser = angular.copy(_.find(dvm.um.users, {username: dvm.lm.currentUser}));
+        dvm.$onInit = function() {
+            dvm.currentUser = angular.copy(_.find(dvm.um.users, {username: dvm.lm.currentUser}));
+        }
+        dvm.save = function() {
+            dvm.um.updateUser(dvm.currentUser.username, dvm.currentUser).then(response => {
+                dvm.errorMessage = '';
+                dvm.success = true;
+                dvm.form.$setPristine();
+            }, error => {
+                dvm.errorMessage = error;
+                dvm.success = false;
+            });
+        }
     }
-    dvm.save = function() {
-        dvm.um.updateUser(dvm.currentUser.username, dvm.currentUser).then(response => {
-            dvm.errorMessage = '';
-            dvm.success = true;
-            dvm.form.$setPristine();
-        }, error => {
-            dvm.errorMessage = error;
-            dvm.success = false;
-        });
-    }
-}
-angular.module('settings')
-    .component('profileTab', profileTabComponent);
+    angular.module('settings')
+        .component('profileTab', profileTabComponent);
+})();

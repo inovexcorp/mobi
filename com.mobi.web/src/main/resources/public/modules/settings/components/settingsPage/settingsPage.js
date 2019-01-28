@@ -20,32 +20,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/**
- * @ngdoc component
- * @name settingsPage.component:settingsPage
- *
- * @description
- * `settingsPage` is a component which creates a {@link tabset.directive:tabset tabset} with
- * {@link tab.directive:tab tabs} for different settings pertaining to the current user. The tabs are
- * {@link settings.component:profileTab profileTab}, {@link settings.component:passwordTab passwordTab}, and the
- * {@link settings.component:preferencesTab preferencesTab}.
- */
-const settingsPageComponent = {
-    templateUrl: 'modules/settings/components/settingsPage/settingsPage.html',
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: settingsPageComponentCtrl
-};
-
-function settingsPageComponentCtrl() {
-    var dvm = this;
-    dvm.tabs = {
-        profile: true,
-        group: false,
-        password: false,
-        preferences: false
+(function() {
+    'use strict';
+    /**
+     * @ngdoc component
+     * @name settings.component:settingsPage
+     *
+     * @description
+     * `settingsPage` is a component which creates a {@link tabset.directive:tabset tabset} with
+     * {@link tab.directive:tab tabs} for different settings pertaining to the current user. The tabs are
+     * {@link settings.component:profileTab profileTab}, {@link settings.component:passwordTab passwordTab}, and the
+     * {@link settings.component:preferencesTab preferencesTab}.
+     */
+    const settingsPageComponent = {
+        templateUrl: 'modules/settings/components/settingsPage/settingsPage.html',
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: settingsPageComponentCtrl
     };
-}
 
-angular.module('settings')
-    .component('settingsPage', settingsPageComponent);
+    function settingsPageComponentCtrl() {
+        var dvm = this;
+        dvm.tabs = {
+            profile: true,
+            group: false,
+            password: false,
+            preferences: false
+        };
+    }
+
+    angular.module('settings')
+        .component('settingsPage', settingsPageComponent);
+})();

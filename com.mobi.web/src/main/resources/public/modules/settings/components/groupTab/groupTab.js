@@ -20,34 +20,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/**
- * @ngdoc component
- * @name groupTab.component:groupTab
- * @requires userManager.service:userManagerService
- * @requires loginManager.service:loginManagerService
- *
- * @description
- * `groupTab` is a component which creates a Bootstrap list of groups a user is in.
- */
-const groupTabComponent = {
-    templateUrl: 'modules/settings/components/groupTab/groupTab.html',
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: groupTabComponentCtrl
-};
+(function() {
+    'use strict';
+    /**
+     * @ngdoc component
+     * @name settings.component:groupTab
+     * @requires userManager.service:userManagerService
+     * @requires loginManager.service:loginManagerService
+     *
+     * @description
+     * `groupTab` is a component which creates a Bootstrap list of groups a user is in.
+     */
+    const groupTabComponent = {
+        templateUrl: 'modules/settings/components/groupTab/groupTab.html',
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: groupTabComponentCtrl
+    };
 
-groupTabComponentCtrl.$inject = ['userManagerService', 'loginManagerService'];
+    groupTabComponentCtrl.$inject = ['userManagerService', 'loginManagerService'];
 
-function groupTabComponentCtrl(userManagerService, loginManagerService) {
-    var dvm = this;
-    dvm.um = userManagerService;
-    dvm.lm = loginManagerService;
-    dvm.groups = [];
+    function groupTabComponentCtrl(userManagerService, loginManagerService) {
+        var dvm = this;
+        dvm.um = userManagerService;
+        dvm.lm = loginManagerService;
+        dvm.groups = [];
 
-    dvm.$onInit = function() {
-        dvm.groups = _.filter(dvm.um.groups, group => _.includes(group.members, dvm.lm.currentUser));
+        dvm.$onInit = function() {
+            dvm.groups = _.filter(dvm.um.groups, group => _.includes(group.members, dvm.lm.currentUser));
+        }
     }
-}
 
-angular.module('settings')
-    .component('groupTab', groupTabComponent);
+    angular.module('settings')
+        .component('groupTab', groupTabComponent);
+})();
