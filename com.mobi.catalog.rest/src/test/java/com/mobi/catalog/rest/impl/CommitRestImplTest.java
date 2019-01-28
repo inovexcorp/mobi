@@ -382,16 +382,16 @@ public class CommitRestImplTest extends MobiRestTestNg {
         when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(entityCommits);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
                 .queryParam("entityId", encode(vf.createIRI("http://mobi.com/test/class5")))
-                .queryParam("offset", 1)
+                .queryParam("offset", 0)
                 .queryParam("limit", 1)
                 .request().get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://mobi.com/test/class5"));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + ENTITY_IRI.length);
-        assertEquals(response.getLinks().size(), 1);
+        assertEquals(response.getLinks().size(), 0);
         Set<Link> links = response.getLinks();
-        assertEquals(links.size(), 1);
+        assertEquals(links.size(), 0);
         links.forEach(link -> {
             assertTrue(link.getUri().getRawPath().contains("commits/" + encode(COMMIT_IRIS[1]) + "/history"));
             assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
