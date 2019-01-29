@@ -23,10 +23,15 @@ package com.mobi.catalog.rest;
  * #L%
  */
 
+import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Resource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.eclipse.rdf4j.rio.RDFFormat;
 
+import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -97,7 +102,7 @@ public interface CommitRest {
      * @param commitId {@link String} value of the {@link Commit} ID. NOTE: Assumes an {@link IRI} unless {@link String}
      *                 starts with "{@code _:}".
      * @param entityId An Optional Resource identifying the Entity to filter the chain of Commit.
-     * @return a {@link Response} containing a {@link list} of Compiled {@link Resource}s.
+     * @return a {@link Response} containing a {@link List} of Compiled {@link Resource}s.
      * @throws IllegalArgumentException Thrown if a CommitId could not be found.
      */
     @GET
