@@ -845,6 +845,16 @@ public interface CatalogManager {
     Model getCompiledResource(Resource commitId);
 
     /**
+     * Gets the Model which represents the entity at the instance of the Commit identified by the provided Commit List
+     * to construct a List of Resources.
+     *
+     * @param commitList The Commit List identifying which Resources are required to return.
+     * @return Model which represents the Resource of the provided Commit List.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found.
+     */
+    Model getCompiledResource(List<Commit> commitList);
+
+    /**
      * Gets the Model which represents the entity at the instance of the Commit identified by the provided Resource
      * using previous Commit data to construct it.
      *
