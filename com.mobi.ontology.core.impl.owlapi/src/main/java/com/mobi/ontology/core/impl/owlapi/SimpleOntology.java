@@ -60,14 +60,12 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
-import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.RDFParserRegistry;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
-import org.eclipse.rdf4j.rio.helpers.XMLParserSettings;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
@@ -852,11 +850,7 @@ public class SimpleOntology implements Ontology {
             while (rdfFormatIterator.hasNext()) {
                 RDFFormat format = rdfFormatIterator.next();
                 try {
-                    RDFParser parser = Rio.createParser(format);
-                    StatementCollector collector = new StatementCollector(model);
-                    parser.setRDFHandler(collector);
-                    parser.getParserConfig().set(XMLParserSettings.DISALLOW_DOCTYPE_DECL, false);
-                    parser.parse(ontologyData, "");
+                    model = Rio.parse(ontologyData, "", format);
                     LOG.debug("File is {} formatted.", format.getName());
                     break;
                 } catch (RDFParseException | UnsupportedRDFormatException | OWLRuntimeException e) {
