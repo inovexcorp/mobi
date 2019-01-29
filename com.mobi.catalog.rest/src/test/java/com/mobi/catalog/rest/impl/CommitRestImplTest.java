@@ -31,6 +31,7 @@ import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,6 +50,7 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -56,14 +58,11 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -73,7 +72,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -106,6 +105,8 @@ public class CommitRestImplTest extends MobiRestTestNg {
     private List<Commit> entityCommits;
     private List<Commit> testCommits;
     private User user;
+
+    private final IRI typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
 
     @Mock
     private CatalogManager catalogManager;
@@ -337,6 +338,68 @@ public class CommitRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 500);
     }
 
+    // GET commits/{commitId}/resource
+    @Test
+    public void getCompiledResourceNoEntityTest() {
+        Model expected = mf.createModel();
+        expected.add(vf.createIRI(COMMIT_IRIS[0]), typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+        expected.add(vf.createIRI(COMMIT_IRIS[1]), typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+        expected.add(vf.createIRI(COMMIT_IRIS[2]), typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+        when(catalogManager.getCompiledResource(any(List.class))).thenReturn(expected);
+        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
+                .request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]));
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            JSONObject commitObj = result.getJSONObject(0);
+            assertTrue(commitObj.containsKey("@id"));
+            assertEquals(commitObj.getString("@id"), COMMIT_IRIS[0]);
+            assertTrue(result.size() == 3);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getCompiledResourceWithEntityTest() {
+        Model expected = mf.createModel();
+        expected.add(vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"), typeIRI, vf.createIRI(COMMIT_IRIS[1]));
+        when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(entityCommits);
+        when(catalogManager.getCompiledResource(any(List.class))).thenReturn(expected);
+        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
+                .queryParam("entityId", encode("http://www.w3.org/2002/07/owl#Ontology")).request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            JSONObject commitObj = result.getJSONObject(0);
+            assertTrue(commitObj.containsKey("@id"));
+            assertTrue(result.size() == 1);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getCompiledResourceEmptyModelTest() {
+        List<Commit> emptyList = new ArrayList<>();
+        Model expected = mf.createModel();
+        when(catalogManager.getCompiledResource(any(List.class))).thenReturn(expected);
+        when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(emptyList);
+        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
+                .queryParam("entityId", encode("http://mobi.com/test/empty")).request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://mobi.com/test/empty"));
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertTrue(result.size() == 0);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    // GET commits/{commitId}/difference
     @Test
     public void getDifferenceTest() {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
