@@ -68,7 +68,7 @@
         dvm.roles = {admin: false};
         dvm.newUser = {
             username: '',
-            roles: [],
+            roles: ['user'],
             firstName: '',
             lastName: '',
             email: ''
@@ -78,11 +78,10 @@
             return _.map(dvm.um.users, 'username');
         }
         dvm.add = function() {
-            var roles = ['user'];
             if (dvm.roles.admin) {
-                roles.push('admin');
+                dvm.newUser.roles.push('admin');
             }
-            dvm.um.addUser(dvm.newUser, dvm.password).then(response => dvm.um.addUserRoles(dvm.newUser.username, roles), $q.reject)
+            dvm.um.addUser(dvm.newUser, dvm.password)
                 .then(response => {
                     dvm.errorMessage = '';
                     dvm.close()

@@ -26,6 +26,8 @@ package com.mobi.jaas.rest;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
@@ -56,17 +58,23 @@ public interface GroupRest {
     Response getGroups();
 
     /**
-     * Creates a group in Mobi with the passed information.
+     *  Creates a group in Mobi with the passed information.
      *
-     * @param group the new group to create
+     * @param title The title of the group
+     * @param description The description of the group
+     * @param roles The roles of the group
+     * @param members The members of the group
      * @return a Response indicating the success or failure of the request
      */
     @POST
     @RolesAllowed("admin")
     @ApiOperation("Create a new Mobi group")
     @Produces(MediaType.TEXT_PLAIN)
-    @Consumes(MediaType.APPLICATION_JSON)
-    Response createGroup(Group group);
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    Response createGroup(@FormDataParam("title") String title,
+                         @FormDataParam("description") String description,
+                         @FormDataParam("roles") List<FormDataBodyPart> roles,
+                         @FormDataParam("members") List<FormDataBodyPart> members);
 
     /**
      * Retrieves a specific group in Mobi.
@@ -85,7 +93,7 @@ public interface GroupRest {
      * Updates information about the specified group in Mobi.
      *
      * @param groupTitle the title of the group to update
-     * @param newGroup the new group to replace the existing one
+     * @param newGroupStr the new group to replace the existing one
      * @return a Response indicating the success or failure of the request
      */
     @PUT
@@ -93,7 +101,7 @@ public interface GroupRest {
     @RolesAllowed("admin")
     @ApiOperation("Update a Mobi group's information")
     @Consumes(MediaType.APPLICATION_JSON)
-    Response updateGroup(@PathParam("groupTitle") String groupTitle, Group newGroup);
+    Response updateGroup(@PathParam("groupTitle") String groupTitle, String newGroupStr);
 
     /**
      * Removes a group from Mobi, and by consequence removing all users from it as well.

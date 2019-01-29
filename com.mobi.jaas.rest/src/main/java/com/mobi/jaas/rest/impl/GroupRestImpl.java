@@ -23,15 +23,21 @@ package com.mobi.jaas.rest.impl;
  * #L%
  */
 
+import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
+import static com.mobi.rest.util.RestUtils.getRDFFormat;
+import static com.mobi.rest.util.RestUtils.groupedModelToString;
+import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.exception.MobiException;
-import com.mobi.jaas.api.config.MobiConfiguration;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.engines.GroupConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
+import com.mobi.jaas.api.ontologies.usermanagement.GroupFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
@@ -40,12 +46,15 @@ import com.mobi.ontologies.foaf.Agent;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import net.sf.json.JSONArray;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +62,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
@@ -62,8 +70,8 @@ public class GroupRestImpl implements GroupRest {
     private ValueFactory vf;
     private ModelFactory mf;
     private UserFactory userFactory;
+    private GroupFactory groupFactory;
     private SesameTransformer transformer;
-    private MobiConfiguration mobiConfiguration;
     private Engine rdfEngine;
     private final Logger logger = LoggerFactory.getLogger(GroupRestImpl.class);
 
@@ -88,13 +96,13 @@ public class GroupRestImpl implements GroupRest {
     }
 
     @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
+    void setGroupFactory(GroupFactory groupFactory) {
+        this.groupFactory = groupFactory;
     }
 
     @Reference
-    void setMobiConfiguration(MobiConfiguration configuration) {
-        this.mobiConfiguration = configuration;
+    void setTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
     }
 
     @Reference(target = "(engineName=RdfEngine)")
@@ -106,11 +114,7 @@ public class GroupRestImpl implements GroupRest {
     public Response getGroups() {
         try {
             JSONArray result = JSONArray.fromObject(engineManager.getGroups(rdfEngine.getEngineName()).stream()
-                    .map(group -> {
-                        Model filteredGroup = mf.createModel();
-                        filteredGroup.addAll(group.getModel().filter(group.getResource(), null, null));
-                        return filteredGroup;
-                    })
+                    .map(group -> group.getModel().filter(group.getResource(), null, null))
                     .map(groupModel -> modelToJsonld(groupModel, transformer))
                     .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));
@@ -121,16 +125,27 @@ public class GroupRestImpl implements GroupRest {
     }
 
     @Override
-    public Response createGroup(Group group) {
-        Value title = group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
-                ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST));
-        if (engineManager.groupExists(title.stringValue())) {
-            throw ErrorUtils.sendError("Group " + title.stringValue() + " already exists", Response.Status.BAD_REQUEST);
+    public Response createGroup(String title, String description, List<FormDataBodyPart> roles,
+                                List<FormDataBodyPart> members) {
+        checkStringParam(title, "Group title is required");
+        if (engineManager.groupExists(title)) {
+            throw ErrorUtils.sendError("Group " + title + " already exists", Response.Status.BAD_REQUEST);
         }
 
+        Set<String> memberSet = members.stream().map(member -> member.getValue()).collect(Collectors.toSet());
+        GroupConfig.Builder builder = new GroupConfig.Builder(title).members(memberSet);
+        if (description != null) {
+            builder.description(description);
+        }
+        if (roles != null && roles.size() > 0) {
+            Set<String> roleSet = roles.stream().map(role -> role.getValue()).collect(Collectors.toSet());
+             builder.roles(roleSet);
+        }
+
+        Group group = engineManager.createGroup(rdfEngine.getEngineName(), builder.build());
         engineManager.storeGroup(rdfEngine.getEngineName(), group);
-        logger.info("Created group " + title.stringValue());
-        return Response.status(201).entity(title.stringValue()).build();
+        logger.info("Created group " + title);
+        return Response.status(201).entity(group.getResource().stringValue()).build();
     }
 
     @Override
@@ -142,14 +157,25 @@ public class GroupRestImpl implements GroupRest {
         Group group = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.NOT_FOUND));
 
-        return Response.status(200).entity(group).build();
+        String json = groupedModelToString(group.getModel().filter(group.getResource(), null, null),
+                getRDFFormat("jsonld"), transformer);
+        return Response.ok(getObjectFromJsonld(json)).build();
     }
 
     @Override
-    public Response updateGroup(String groupTitle, Group newGroup) {
+    public Response updateGroup(String groupTitle, String newGroupStr) {
         if (groupTitle == null) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
+
+        Model groupModel = jsonldToModel(newGroupStr, transformer);
+        Set<Resource> subjects = groupModel.filter(null, vf.createIRI(RDF.TYPE.stringValue()),
+                vf.createIRI(Group.TYPE)).subjects();
+        if (subjects.size() < 1) {
+            throw ErrorUtils.sendError("Group must have an ID", Response.Status.BAD_REQUEST);
+        }
+        Group newGroup = groupFactory.createNew(subjects.iterator().next(), groupModel);
+
         Value title = newGroup.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
                 ErrorUtils.sendError("Group title must be present in new group", Response.Status.BAD_REQUEST));
         Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
@@ -191,7 +217,12 @@ public class GroupRestImpl implements GroupRest {
         Group group = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
 
-        return Response.status(200).entity(new GenericEntity<Set<Role>>(group.getHasGroupRole()) {}).build();
+        JSONArray result = JSONArray.fromObject(group.getHasGroupRole().stream()
+                .map(role -> role.getModel().filter(role.getResource(), null, null))
+                .map(roleModel -> modelToJsonld(roleModel, transformer))
+                .map(RestUtils::getObjectFromJsonld)
+                .collect(Collectors.toList()));
+        return Response.ok(result).build();
     }
 
     @Override
@@ -241,7 +272,12 @@ public class GroupRestImpl implements GroupRest {
                         new IllegalStateException("Unable to get User: " + agent.getResource().stringValue())))
                 .collect(Collectors.toSet());
 
-        return Response.status(200).entity(new GenericEntity<Set<User>>(members) {}).build();
+        JSONArray result = JSONArray.fromObject(members.stream()
+                .map(member -> member.getModel().filter(member.getResource(), null, null))
+                .map(roleModel -> modelToJsonld(roleModel, transformer))
+                .map(RestUtils::getObjectFromJsonld)
+                .collect(Collectors.toList()));
+        return Response.ok(result).build();
     }
 
     @Override

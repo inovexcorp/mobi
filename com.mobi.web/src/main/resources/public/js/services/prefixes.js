@@ -65,5 +65,6 @@
         self.mergereq = 'http://mobi.com/ontologies/merge-requests#';
         self.policy = 'http://mobi.com/ontologies/policy#';
         self.user = 'http://mobi.com/ontologies/user/management#';
+        self.roles = 'http://mobi.com/roles/';
     }
 })();

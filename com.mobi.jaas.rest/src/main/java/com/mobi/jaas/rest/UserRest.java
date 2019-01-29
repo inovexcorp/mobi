@@ -23,10 +23,11 @@ package com.mobi.jaas.rest;
  * #L%
  */
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
@@ -63,21 +64,30 @@ public interface UserRest {
      * Creates a user in Mobi with the passed username and password. Both are required in order
      * to create the user.
      *
-     * @param user the new user to create
-     * @param password the password for the new user
+     * @param username the required username of the User to create
+     * @param password the required password of the User to create
+     * @param roles the roles of the user to create
+     * @param firstName the optional first name of the user to create
+     * @param lastName the optional last name of the user to create
+     * @param email the optional email of the user to create
      * @return a Response indicating the success or failure of the request
      */
     @POST
     @RolesAllowed("admin")
     @ApiOperation("Create a Mobi user account")
     @Produces(MediaType.TEXT_PLAIN)
-    @Consumes(MediaType.APPLICATION_JSON)
-    Response createUser(User user, @QueryParam("password") String password);
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    Response createUser(@FormDataParam("username") String username,
+                        @FormDataParam("password") String password,
+                        @FormDataParam("roles") List<FormDataBodyPart> roles,
+                        @FormDataParam("firstName") String firstName,
+                        @FormDataParam("lastName") String lastName,
+                        @FormDataParam("email") String email);
 
     /**
      * Retrieves the specified user in Mobi.
      *
-     * @param username the username of the user to retrieve
+     * @param username the username of the {@link User} to retrieve
      * @return a Response with a JSON representation of the specified user in Mobi
      */
     @GET
@@ -85,7 +95,6 @@ public interface UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Get a single Mobi user")
-    @JsonSerialize
     Response getUser(@PathParam("username") String username);
 
     /**
@@ -104,7 +113,7 @@ public interface UserRest {
     @Consumes(MediaType.APPLICATION_JSON)
     Response updateUser(@Context ContainerRequestContext context,
                         @PathParam("username") String username,
-                        User newUser);
+                        String newUser);
 
     /**
      * Resets the password of the specified user in Mobi. This action is only allowed by admin users.

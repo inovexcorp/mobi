@@ -24,29 +24,36 @@ package com.mobi.jaas.rest.impl;
  */
 
 import static com.mobi.rest.util.RestUtils.getActiveUsername;
+import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
+import static com.mobi.rest.util.RestUtils.getRDFFormat;
+import static com.mobi.rest.util.RestUtils.groupedModelToString;
+import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.exception.MobiException;
-import com.mobi.jaas.api.config.MobiConfiguration;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.engines.UserConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.jaas.rest.UserRest;
 import com.mobi.ontologies.foaf.Agent;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import net.sf.json.JSONArray;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +62,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.Response;
 
 @Component(immediate = true)
@@ -63,8 +69,8 @@ public class UserRestImpl implements UserRest {
     private EngineManager engineManager;
     private ValueFactory vf;
     private ModelFactory mf;
+    private UserFactory userFactory;
     private SesameTransformer transformer;
-    private MobiConfiguration mobiConfiguration;
     private Engine rdfEngine;
     private final Logger logger = LoggerFactory.getLogger(UserRestImpl.class);
 
@@ -84,13 +90,13 @@ public class UserRestImpl implements UserRest {
     }
 
     @Reference
-    void setTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
+    void setUserFactory(UserFactory userFactory) {
+        this.userFactory = userFactory;
     }
 
     @Reference
-    void setMobiConfiguration(MobiConfiguration configuration) {
-        this.mobiConfiguration = configuration;
+    void setTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
     }
 
     @Reference(target = "(engineName=RdfEngine)")
@@ -103,12 +109,7 @@ public class UserRestImpl implements UserRest {
         try {
             Set<User> users = engineManager.getUsers(rdfEngine.getEngineName());
             JSONArray result = JSONArray.fromObject(users.stream()
-                    .map(user -> {
-                        Model filteredUser = mf.createModel();
-                        user.clearPassword();
-                        filteredUser.addAll(user.getModel().filter(user.getResource(), null, null));
-                        return filteredUser;
-                    })
+                    .map(user -> user.getModel().filter(user.getResource(), null, null))
                     .map(userModel -> modelToJsonld(userModel, transformer))
                     .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));
@@ -119,22 +120,38 @@ public class UserRestImpl implements UserRest {
     }
 
     @Override
-    public Response createUser(User user, String password) {
+    public Response createUser(String username, String password, List<FormDataBodyPart> roles, String firstName,
+                               String lastName, String email) {
+        if (username == null) {
+            throw ErrorUtils.sendError("Password must be provided", Response.Status.BAD_REQUEST);
+        }
         if (password == null) {
             throw ErrorUtils.sendError("Password must be provided", Response.Status.BAD_REQUEST);
         }
-        Value username = user.getUsername().orElseThrow(() ->
-                ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST));
-        if (engineManager.userExists(username.stringValue())) {
+        if (engineManager.userExists(username)) {
             throw ErrorUtils.sendError("User already exists", Response.Status.BAD_REQUEST);
         }
 
-        User tempUser = engineManager.createUser(rdfEngine.getEngineName(),
-                new UserConfig.Builder("", password, new HashSet<>()).build());
-        user.setPassword(tempUser.getPassword().get());
+        Set<String> roleSet = new HashSet<>();
+        if (roles != null && roles.size() > 0) {
+            roleSet = roles.stream().map(role -> role.getValue()).collect(Collectors.toSet());
+        }
+
+        UserConfig.Builder builder = new UserConfig.Builder(username, password, roleSet);
+        if (firstName != null) {
+            builder.firstName(firstName);
+        }
+        if (lastName != null) {
+            builder.lastName(lastName);
+        }
+        if (email != null) {
+            builder.email(email);
+        }
+
+        User user = engineManager.createUser(rdfEngine.getEngineName(), builder.build());
         engineManager.storeUser(rdfEngine.getEngineName(), user);
-        logger.info("Created user " + username.stringValue());
-        return Response.status(201).entity(username.stringValue()).build();
+        logger.info("Created user " + user.getResource() + " with username " + username);
+        return Response.status(201).entity(user.getResource().stringValue()).build();
     }
 
     @Override
@@ -144,16 +161,27 @@ public class UserRestImpl implements UserRest {
         }
         User user = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.NOT_FOUND));
-        return Response.status(200).entity(user).build();
+        String json = groupedModelToString(user.getModel().filter(user.getResource(), null, null),
+                getRDFFormat("jsonld"), transformer);
+        return Response.ok(getObjectFromJsonld(json)).build();
     }
 
     @Override
-    public Response updateUser(ContainerRequestContext context, String username, User newUser) {
+    public Response updateUser(ContainerRequestContext context, String username, String newUserStr) {
         if (username == null) {
             throw ErrorUtils.sendError("Current username must be provided",
                     Response.Status.BAD_REQUEST);
         }
         isAuthorizedUser(context, username);
+
+        Model userModel = jsonldToModel(newUserStr, transformer);
+        Set<Resource> subjects = userModel.filter(null, vf.createIRI(RDF.TYPE.stringValue()),
+                vf.createIRI(User.TYPE)).subjects();
+        if (subjects.size() < 1) {
+            throw ErrorUtils.sendError("User must have an ID", Response.Status.BAD_REQUEST);
+        }
+        User newUser = userFactory.createNew(subjects.iterator().next(), userModel);
+
         Value newUsername = newUser.getUsername().orElseThrow(() ->
                 ErrorUtils.sendError("Username must be provided in new user", Response.Status.BAD_REQUEST));
         User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
@@ -225,7 +253,12 @@ public class UserRestImpl implements UserRest {
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
         Set<Role> roles = includeGroups ? engineManager.getUserRoles(rdfEngine.getEngineName(), username)
                 : user.getHasUserRole();
-        return Response.ok(new GenericEntity<Set<Role>>(roles) {}).build();
+        JSONArray result = JSONArray.fromObject(roles.stream()
+                .map(role -> role.getModel().filter(role.getResource(), null, null))
+                .map(roleModel -> modelToJsonld(roleModel, transformer))
+                .map(RestUtils::getObjectFromJsonld)
+                .collect(Collectors.toList()));
+        return Response.ok(result).build();
     }
 
     @Override
@@ -279,7 +312,12 @@ public class UserRestImpl implements UserRest {
                 })
                 .collect(Collectors.toSet());
 
-        return Response.status(200).entity(new GenericEntity<Set<Group>>(groups) {}).build();
+        JSONArray result = JSONArray.fromObject(groups.stream()
+                .map(group -> group.getModel().filter(group.getResource(), null, null))
+                .map(roleModel -> modelToJsonld(roleModel, transformer))
+                .map(RestUtils::getObjectFromJsonld)
+                .collect(Collectors.toList()));
+        return Response.ok(result).build();
     }
 
     @Override
