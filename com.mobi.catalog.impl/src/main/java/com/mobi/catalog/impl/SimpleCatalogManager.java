@@ -85,6 +85,7 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.repository.api.RepositoryConnection;
+import net.sf.json.JSONArray;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -1186,6 +1187,14 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
             return utils.getCompiledResource(commitId, conn);
+        }
+    }
+
+    @Override
+    public Model getCompiledResource(List<Commit> commitList) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return utils.getCompiledResource(commitList.stream().map(commit -> commit.getResource())
+                    .collect(JSONArray::new, JSONArray::add, JSONArray::add), conn);
         }
     }
 

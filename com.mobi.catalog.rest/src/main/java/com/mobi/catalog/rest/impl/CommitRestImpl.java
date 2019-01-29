@@ -28,10 +28,12 @@ import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitResponse;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.getDifferenceJsonString;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJson;
+import static com.mobi.rest.util.RestUtils.createResouceJsonString;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.rest.CommitRest;
@@ -39,6 +41,8 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
@@ -61,6 +65,7 @@ public class CommitRestImpl implements CommitRest {
 
     private BNodeService bNodeService;
     private CatalogManager catalogManager;
+    private CatalogUtilsService catalogUtilsService;
     private SesameTransformer transformer;
     private ValueFactory vf;
 
@@ -74,6 +79,11 @@ public class CommitRestImpl implements CommitRest {
     @Reference
     void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
+    }
+
+    @Reference
+    void setCatalogUtilsService(CatalogUtilsService catalogUtilsService) {
+        this.catalogUtilsService = catalogUtilsService;
     }
 
     @Reference
@@ -163,11 +173,9 @@ public class CommitRestImpl implements CommitRest {
                 } else {
                     commits = catalogManager.getCommitChain(vf.createIRI(commitId));
                 }
-                Stream<Commit> result = commits.stream();
-                JSONArray commitChain = result.map(r -> createCommitJson(r, vf, engineManager))
-                        .collect(JSONArray::new, JSONArray::add, JSONArray::add);
+                Model model = catalogManager.getCompiledResource(commits);
 
-                return createPaginatedResponseWithJson(commitChain,commits.size());
+                return createResouceJsonString(model, model.size());
             } catch (IllegalArgumentException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
             } catch (IllegalStateException | MobiException ex) {
