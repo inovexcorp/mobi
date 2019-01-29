@@ -79,6 +79,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -112,6 +113,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     private static final String GET_IN_PROGRESS_COMMIT;
     private static final String GET_COMMIT_CHAIN;
+    private static final String GET_COMMIT_ENTITY_CHAIN;
     private static final String GET_NEW_LATEST_VERSION;
     private static final String GET_COMMIT_PATHS;
     private static final String COMMIT_IN_RECORD;
@@ -119,6 +121,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private static final String PARENT_BINDING = "parent";
     private static final String RECORD_BINDING = "record";
     private static final String COMMIT_BINDING = "commit";
+    private static final String ENTITY_BINDING = "entity";
 
     static {
         try {
@@ -128,6 +131,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             );
             GET_COMMIT_CHAIN = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-chain.rq"),
+                    "UTF-8"
+            );
+            GET_COMMIT_ENTITY_CHAIN = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-entity-chain.rq"),
                     "UTF-8"
             );
             GET_NEW_LATEST_VERSION = IOUtils.toString(
@@ -840,6 +847,14 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public List<Resource> getCommitChain(Resource commitId, Resource entityId, boolean asc, RepositoryConnection conn) {
+        List<Resource> results = new ArrayList<>();
+        Iterator<Resource> commits = getCommitChainIterator(commitId, entityId, asc, conn);
+        commits.forEachRemaining(results::add);
+        return results;
+    }
+
+    @Override
     public List<Resource> getDifferenceChain(final Resource sourceCommitId, final Resource targetCommitId,
                                              final RepositoryConnection conn) {
         return getDifferenceChain(sourceCommitId, targetCommitId, conn, false);
@@ -853,6 +868,34 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
         final List<Resource> sourceCommits = getCommitChain(sourceCommitId, true, conn);
         final List<Resource> targetCommits = getCommitChain(targetCommitId, true, conn);
+
+        final List<Resource> commonCommits = new ArrayList<>(sourceCommits);
+        commonCommits.retainAll(targetCommits);
+
+        sourceCommits.removeAll(commonCommits);
+
+        if (!asc) {
+            Collections.reverse(sourceCommits);
+        }
+
+        return sourceCommits;
+    }
+
+    @Override
+    public List<Resource> getDifferenceChain(final Resource sourceCommitId, final Resource targetCommitId,
+                                             final Resource targetEntityId, final RepositoryConnection conn) {
+        return getDifferenceChain(sourceCommitId, targetCommitId, targetEntityId,conn, false);
+    }
+
+    @Override
+    public List<Resource> getDifferenceChain(final Resource sourceCommitId, final Resource targetCommitId,
+                                             final Resource targetEntityId, final RepositoryConnection conn,
+                                             boolean asc) {
+        validateResource(sourceCommitId, commitFactory.getTypeIRI(), conn);
+        validateResource(targetCommitId, commitFactory.getTypeIRI(), conn);
+
+        final List<Resource> sourceCommits = getCommitChain(sourceCommitId, targetEntityId, true, conn);
+        final List<Resource> targetCommits = getCommitChain(targetCommitId, targetEntityId, true, conn);
 
         final List<Resource> commonCommits = new ArrayList<>(sourceCommits);
         commonCommits.retainAll(targetCommits);
@@ -1080,6 +1123,28 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         LinkedList<Resource> commits = new LinkedList<>();
         result.forEach(bindings -> commits.add(Bindings.requiredResource(bindings, PARENT_BINDING)));
         commits.addFirst(commitId);
+        return asc ? commits.descendingIterator() : commits.iterator();
+    }
+
+    /**
+     * Gets an iterator which contains all of the Commit ids, filtered by a Commit containing the Entity id in its
+     * additions or deletions, in the specified direction, either ascending or descending by date. If descending,
+     * the provided Resource identifying a Commit will be first.
+     *
+     * @param commitId The Resource identifying the Commit that you want to get the chain for.
+     * @param entityId The Resource identifying the Entity that you want to get the chain for.
+     * @param conn     The RepositoryConnection which will be queried for the Commits.
+     * @param asc      Whether or not the iterator should be ascending by date
+     * @return Iterator of Resource ids for the requested Commits.
+     */
+    private Iterator<Resource> getCommitChainIterator(Resource commitId, Resource entityId, boolean asc,
+                                                      RepositoryConnection conn) {
+        TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_ENTITY_CHAIN);
+        query.setBinding(COMMIT_BINDING, commitId);
+        query.setBinding(ENTITY_BINDING, entityId);
+        TupleQueryResult result = query.evaluate();
+        LinkedList<Resource> commits = new LinkedList<>();
+        result.forEach(bindings -> commits.add(Bindings.requiredResource(bindings, PARENT_BINDING)));
         return asc ? commits.descendingIterator() : commits.iterator();
     }
 

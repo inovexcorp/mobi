@@ -64,11 +64,16 @@ public interface CommitRest {
      * Gets a {@link List} of {@link Commit}s, in descending order by date, within the repository which represents the
      * {@link Commit} history starting from the specified {@link Commit}. The {@link Commit} identified by the provided
      * {@code commitId} is the first item in the {@link List} and it was informed by the previous {@link Commit} in the
-     * {@link List}. If a limit is passed which is greater than zero, will paginate the results.
+     * {@link List}. The {@link List} is then filtered by {@link Commit Commits} containing an entity in its additions
+     * or deletions. If a limit is passed which is greater than zero, will paginate the results.
      *
      * @param uriInfo  The {@link UriInfo} of the request.
      * @param commitId {@link String} value of the {@link Commit} ID. NOTE: Assumes an {@link IRI} unless {@link String}
      *                 starts with "{@code _:}".
+     * @param targetId {@link String} value of the target {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
+     *                 {@link String} starts with "{@code _:}".
+     * @param entityId An optional {@link String} value of the entity ID. NOTE: Assumes an {@link IRI} unless
+     *                 {@link String} starts with "{@code _:}".
      * @param offset   An optional offset for the results.
      * @param limit    An optional limit for the results.
      * @return A {@link Response} containing a {@link List} of {@link Commit}s starting with the provided
@@ -82,15 +87,16 @@ public interface CommitRest {
     Response getCommitHistory(@Context UriInfo uriInfo,
                               @PathParam("commitId") String commitId,
                               @QueryParam("targetId") String targetId,
+                              @QueryParam("entityId") String entityId,
                               @QueryParam("offset") int offset,
                               @QueryParam("limit") int limit);
 
     /**
      * Gets the {@link Difference} between the two specified {@link Commit}s.
      *
-     * @param sourceId  {@link String} value of the sourceId {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
+     * @param sourceId  {@link String} value of the source {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
      *                  {@link String} starts with "{@code _:}".
-     * @param targetId  {@link String} value of the targetId {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
+     * @param targetId  {@link String} value of the target {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
      *                  {@link String} starts with "{@code _:}".
      * @param rdfFormat {@link String} representation of the desired {@link RDFFormat}. Default value is
      *                  {@code "jsonld"}.

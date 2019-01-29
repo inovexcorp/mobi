@@ -39,4 +39,12 @@ public interface SPARQLRepositoryConfig extends RepositoryConfig {
      */
     @Meta.AD
     String endpointUrl();
+
+    /**
+     * The optional SPARQL update endpoint URL.
+     *
+     * @return The String representing the SPARQL update endpoint URL.
+     */
+    @Meta.AD(required = false)
+    String updateEndpointUrl();
 }

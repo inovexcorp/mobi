@@ -1,0 +1,34 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="group-tab row h-100 py-2">
+    <div class="col-6 offset-3">
+        <block>
+            <block-content class="padding">
+                <ul class="user-groups-list">
+                    <li ng-repeat="group in dvm.groups track by group.title" class="user-group">{{group.title}} <small class="admin" ng-if="group.roles.includes('admin')">(Admin)</small><span class="member-count float-right"><i class="fa fa-users"></i> {{group.members.length}}</span></li>
+                    <li class="no-groups" ng-if="dvm.groups.length === 0"><info-message>No groups</info-message></li>
+                </ul>
+            </block-content>
+        </block>
+    </div>
+</div>

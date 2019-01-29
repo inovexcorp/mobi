@@ -1,0 +1,44 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="preferences-tab row h-100 py-2">
+    <div class="col-6 offset-3">
+        <block>
+            <block-content class="padding">
+                <preferences-container header="'Ontology Editor'">
+                    <custom-preference header="'Drop Down Tooltip Display'" question="'What do you want displayed when you hover over the items in the dropdown?'">
+                        <radio-button ng-model="vm.settings.tooltipDisplay" display-text="'Full IRI'" value="'@id'"></radio-button>
+                        <radio-button ng-model="vm.settings.tooltipDisplay" display-text="'RDFS Label/DC Title'" value="'label'"></radio-button>
+                        <radio-button ng-model="vm.settings.tooltipDisplay" display-text="'RDFS Comment/DC Description'" value="'comment'"></radio-button>
+                    </custom-preference>
+                    <custom-preference header="'Tree Item Display'" question="'What do you want displayed in the tree?'">
+                        <radio-button ng-model="vm.settings.treeDisplay" display-text="'Pretty Print'" value="'pretty'"></radio-button>
+                        <radio-button ng-model="vm.settings.treeDisplay" display-text="'Full IRI'" value="'@id'"></radio-button>
+                    </custom-preference>
+                </preferences-container>
+            </block-content>
+            <block-footer>
+                <button type="button" class="btn btn-primary float-right" ng-click="dvm.save()">Save</button>
+            </block-footer>
+        </block>
+    </div>
+</div>
