@@ -28,12 +28,11 @@ import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitResponse;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.getDifferenceJsonString;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJson;
-import static com.mobi.rest.util.RestUtils.createResouceJsonString;
+import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.rest.CommitRest;
@@ -42,12 +41,13 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +65,6 @@ public class CommitRestImpl implements CommitRest {
 
     private BNodeService bNodeService;
     private CatalogManager catalogManager;
-    private CatalogUtilsService catalogUtilsService;
     private SesameTransformer transformer;
     private ValueFactory vf;
 
@@ -79,11 +78,6 @@ public class CommitRestImpl implements CommitRest {
     @Reference
     void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    void setCatalogUtilsService(CatalogUtilsService catalogUtilsService) {
-        this.catalogUtilsService = catalogUtilsService;
     }
 
     @Reference
@@ -166,16 +160,20 @@ public class CommitRestImpl implements CommitRest {
         long start = System.currentTimeMillis();
         try {
             checkStringParam(commitId, "Commit ID is required");
+            Model model;
             try {
                 final List<Commit> commits;
                 if (StringUtils.isNotBlank(entityId)) {
                     commits = catalogManager.getCommitEntityChain(vf.createIRI(commitId), vf.createIRI(entityId));
+                    Model entityModel = catalogManager.getCompiledResource(commits);
+                    model = entityModel.filter(vf.createIRI(entityId), null,null);
                 } else {
                     commits = catalogManager.getCommitChain(vf.createIRI(commitId));
+                    model = catalogManager.getCompiledResource(commits);
                 }
-                Model model = catalogManager.getCompiledResource(commits);
 
-                return createResouceJsonString(model, model.size());
+                return Response.ok(modelToSkolemizedString(model, RDFFormat.JSONLD, transformer, bNodeService))
+                        .build();
             } catch (IllegalArgumentException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
             } catch (IllegalStateException | MobiException ex) {

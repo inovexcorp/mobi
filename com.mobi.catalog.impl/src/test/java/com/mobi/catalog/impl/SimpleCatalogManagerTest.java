@@ -67,6 +67,7 @@ import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
@@ -87,6 +88,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -113,9 +115,11 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
     private OrmFactory<UserBranch> userBranchFactory = getRequiredOrmFactory(UserBranch.class);
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+    private ValueFactory vf;
 
     private IRI distributedCatalogId;
     private IRI localCatalogId;
+    private List<Commit> testCommits;
     private final IRI typeIRI = VALUE_FACTORY.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
     private final IRI titleIRI = VALUE_FACTORY.createIRI(_Thing.title_IRI);
     private final IRI descriptionIRI = VALUE_FACTORY.createIRI(_Thing.description_IRI);
@@ -140,6 +144,11 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
     private static final String COMMITS = "http://mobi.com/test/commits#";
     private static final String RECORDS = "http://mobi.com/test/records#";
+    private static final String[] COMMIT_IRIS = new String[] {
+            "http://mobi.com/commits/0",
+            "http://mobi.com/commits/1",
+            "http://mobi.com/commits/2"
+    };
 
     private static final int TOTAL_SIZE = 9;
 
@@ -172,10 +181,16 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
     @Before
     public void setUp() throws Exception {
+        vf = getValueFactory();
+
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
         MockitoAnnotations.initMocks(this);
+
+        testCommits = Arrays.stream(COMMIT_IRIS)
+                .map(s -> commitFactory.createNew(vf.createIRI(s)))
+                .collect(Collectors.toList());
 
         when(recordService.getTypeIRI()).thenReturn(Record.TYPE);
         when(versionedRDFRecordService.getTypeIRI()).thenReturn(VersionedRDFRecord.TYPE);
@@ -1857,6 +1872,34 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     }
 
     /* getCompiledResource */
+
+    @Test
+    public void testGetCompiledResourceWithList() throws Exception {
+        // Setup:
+        Model expected = MODEL_FACTORY.createModel();
+        expected.add(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), typeIRI, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+        doReturn(expected).when(utilsService).getCompiledResource(eq(testCommits.stream().map(commit ->
+                commit.getResource()).collect(Collectors.toList())), any(RepositoryConnection.class));
+
+        Model result = manager.getCompiledResource(testCommits);
+        verify(utilsService).getCompiledResource(eq(testCommits.stream().map(commit ->
+                commit.getResource()).collect(Collectors.toList())), any(RepositoryConnection.class));
+        result.forEach(statement -> assertTrue(expected.contains(statement)));
+    }
+
+    @Test
+    public void testGetCompiledResourceWithListEmpty() throws Exception {
+        // Setup:
+        List<Commit> emptyList = new ArrayList<>();
+        Model expected = MODEL_FACTORY.createModel();
+        doReturn(expected).when(utilsService).getCompiledResource(eq(emptyList.stream().map(commit ->
+                commit.getResource()).collect(Collectors.toList())), any(RepositoryConnection.class));
+
+        Model result = manager.getCompiledResource(emptyList);
+        verify(utilsService).getCompiledResource(eq(emptyList.stream().map(commit ->
+                commit.getResource()).collect(Collectors.toList())), any(RepositoryConnection.class));
+        assertTrue(result.isEmpty());
+    }
 
     @Test
     public void testGetCompiledResourceWithUnmergedPast() throws Exception {
