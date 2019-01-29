@@ -72,7 +72,7 @@ describe('State Manager service', function() {
     });
     describe('getStates', function() {
         it('without parameters', function() {
-            $httpBackend.whenGET('/mobirest/states?').respond(200, this.states);
+            $httpBackend.whenGET('/mobirest/states').respond(200, this.states);
             var self = this;
             stateManagerSvc.getStates()
                 .then(function(response) {
