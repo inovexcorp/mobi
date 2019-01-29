@@ -1194,7 +1194,7 @@ public class SimpleCatalogManager implements CatalogManager {
     public Model getCompiledResource(List<Commit> commitList) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return utils.getCompiledResource(commitList.stream().map(commit -> commit.getResource())
-                    .collect(JSONArray::new, JSONArray::add, JSONArray::add), conn);
+                    .collect(Collectors.toList()), conn);
         }
     }
 
