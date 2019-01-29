@@ -340,8 +340,7 @@
                 if (self.newMapping) {
                     return mm.upload(self.mapping.jsonld, self.mapping.record.title, self.mapping.record.description, self.mapping.record.keywords);
                 } else {
-                    return cm.createInProgressCommit(self.mapping.record.id, catalogId)
-                        .then(() => cm.updateInProgressCommit(self.mapping.record.id, catalogId, self.mapping.difference), $q.reject)
+                    return cm.updateInProgressCommit(self.mapping.record.id, catalogId, self.mapping.difference)
                         .then(() => {
                             var addedNames = _.map(self.mapping.difference.additions, getChangedEntityName);
                             var deletedNames = _.map(self.mapping.difference.deletions, getChangedEntityName);
