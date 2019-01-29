@@ -1,8 +1,7 @@
 PREFIX prov: <http://www.w3.org/ns/prov#>
 
-CONSTRUCT {?entity ?p ?o}
-WHERE {
-    ?entity ?p ?o .
-
-    FILTER (?entity in (#ENTITIES#))
-}
+ CONSTRUCT {?entity ?p ?o}
+ WHERE {
+     VALUES ?entity {#ENTITIES#}
+     ?entity ?p ?o .
+ }
