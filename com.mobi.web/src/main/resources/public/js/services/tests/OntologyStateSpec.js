@@ -1597,6 +1597,7 @@ describe('Ontology State Service', function() {
         beforeEach(function() {
             ontologyStateSvc.list = [ontologyStateSvc.listItem];
             spyOn(ontologyStateSvc, 'updateOntologyState');
+            spyOn(ontologyStateSvc, 'resetStateTabs');
         });
         describe('and getOntology resolves', function() {
             beforeEach(function() {
@@ -1616,6 +1617,7 @@ describe('Ontology State Service', function() {
                     scope.$apply();
                     expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId, 'jsonld', false);
                     expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.emptyInProgressCommit, listItem.upToDate, listItem.ontologyRecord.title);
+                    expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalledWith(listItem);
                     expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: this.recordId, commitId: this.commitId, branchId: this.branchId});
                 });
                 it('and updateOntologyState rejects', function() {
@@ -1629,6 +1631,7 @@ describe('Ontology State Service', function() {
                     scope.$apply();
                     expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId, 'jsonld', false);
                     expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.emptyInProgressCommit, listItem.upToDate, listItem.ontologyRecord.title);
+                    expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalledWith(listItem);
                     expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: this.recordId, commitId: this.commitId, branchId: this.branchId});
                 });
             });
@@ -1661,6 +1664,7 @@ describe('Ontology State Service', function() {
         beforeEach(function() {
             ontologyStateSvc.list = [ontologyStateSvc.listItem];
             spyOn(ontologyStateSvc, 'updateOntologyState');
+            spyOn(ontologyStateSvc, 'resetStateTabs');
         });
         describe('and getOntology resolves', function() {
             beforeEach(function() {
@@ -1681,6 +1685,7 @@ describe('Ontology State Service', function() {
                         scope.$apply();
                         expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(this.recordId, '', this.commitId, 'jsonld');
                         expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(this.ontologyId, this.recordId, '', this.commitId, this.ontology, this.emptyInProgressCommit, true, listItem.ontologyRecord.title);
+                        expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalledWith(listItem);
                         expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: this.recordId, commitId: this.commitId, tagId: this.tagId});
                     });
                     it('and updateOntologyState rejects', function() {
@@ -1694,6 +1699,7 @@ describe('Ontology State Service', function() {
                         scope.$apply();
                         expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(this.recordId, '', this.commitId, 'jsonld');
                         expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(this.ontologyId, this.recordId, '', this.commitId, this.ontology, this.emptyInProgressCommit, true, listItem.ontologyRecord.title);
+                        expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalledWith(listItem);
                         expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: this.recordId, commitId: this.commitId, tagId: this.tagId});
                     });
                 });
@@ -1707,6 +1713,7 @@ describe('Ontology State Service', function() {
                         scope.$apply();
                         expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(this.recordId, '', this.commitId, 'jsonld');
                         expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(this.ontologyId, this.recordId, '', this.commitId, this.ontology, this.emptyInProgressCommit, true, listItem.ontologyRecord.title);
+                        expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalledWith(listItem);
                         expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: this.recordId, commitId: this.commitId});
                     });
                     it('and updateOntologyState rejects', function() {
@@ -1720,6 +1727,7 @@ describe('Ontology State Service', function() {
                         scope.$apply();
                         expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(this.recordId, '', this.commitId, 'jsonld');
                         expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(this.ontologyId, this.recordId, '', this.commitId, this.ontology, this.emptyInProgressCommit, true, listItem.ontologyRecord.title);
+                        expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalledWith(listItem);
                         expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: this.recordId, commitId: this.commitId});
                     });
                 });
@@ -3261,11 +3269,13 @@ describe('Ontology State Service', function() {
             };
             ontologyManagerSvc.getOntologyIRI.and.returnValue(this.newOntologyIRI);
             spyOn(ontologyStateSvc, 'getEntityByRecordId').and.returnValue({'@id': this.newOntologyIRI});
+            spyOn(ontologyStateSvc, 'resetSearchTab');
             ontologyStateSvc.listItem.selected = {};
         });
         it('when getActiveKey is not project', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('other');
             ontologyStateSvc.resetStateTabs();
+            expect(ontologyStateSvc.resetSearchTab).toHaveBeenCalled();
             expect(ontologyStateSvc.listItem.editorTabStates.classes).toEqual({});
             expect(ontologyStateSvc.listItem.editorTabStates.project).toEqual({entityIRI: this.newOntologyIRI, preview: ''});
             expect(ontologyStateSvc.listItem.selected).toBeUndefined();
@@ -3273,10 +3283,29 @@ describe('Ontology State Service', function() {
         it('when getActiveKey is project', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('project');
             ontologyStateSvc.resetStateTabs();
+            expect(ontologyStateSvc.resetSearchTab).toHaveBeenCalled();
             expect(ontologyStateSvc.listItem.editorTabStates.classes).toEqual({});
             expect(ontologyStateSvc.listItem.editorTabStates.project).toEqual({entityIRI: this.newOntologyIRI, preview: ''});
             expect(ontologyStateSvc.listItem.selected).toEqual({'@id': this.newOntologyIRI});
         });
+    });
+    it('resetSearchTab should reset variables', function() {
+        ontologyStateSvc.listItem.editorTabStates.search = {
+            errorMessage: 'test',
+            infoMessage: 'test',
+            results: {test: 'a'},
+            searchText: 'test',
+            selected: {test: 'a'},
+            highlightText: 'test'
+        };
+        ontologyStateSvc.resetSearchTab();
+        expect(httpSvc.cancel).toHaveBeenCalledWith(ontologyStateSvc.listItem.editorTabStates.search.id);
+        expect(ontologyStateSvc.listItem.editorTabStates.search.errorMessage).toEqual('');
+        expect(ontologyStateSvc.listItem.editorTabStates.search.infoMessage).toEqual('');
+        expect(ontologyStateSvc.listItem.editorTabStates.search.results).toEqual({});
+        expect(ontologyStateSvc.listItem.editorTabStates.search.searchText).toEqual('');
+        expect(ontologyStateSvc.listItem.editorTabStates.search.selected).toEqual({});
+        expect(ontologyStateSvc.listItem.editorTabStates.search.highlightText).toEqual('');
     });
     describe('getActiveKey', function() {
         it('defaults to "project"', function() {

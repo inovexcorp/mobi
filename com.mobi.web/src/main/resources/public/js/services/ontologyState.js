@@ -1369,11 +1369,22 @@
                     }
                     _.unset(value, 'usages');
                 });
+                self.resetSearchTab(listItem);
                 if (self.getActiveKey() !== 'project') {
                     listItem.selected = undefined;
                 } else {
                     listItem.selected = self.getEntityByRecordId(listItem.ontologyRecord.recordId, listItem.editorTabStates.project.entityIRI);
                 }
+            }
+            self.resetSearchTab = function(listItem = self.listItem) {
+                httpService.cancel(listItem.editorTabStates.search.id);
+                listItem.editorTabStates.search.errorMessage = '';
+                listItem.editorTabStates.search.highlightText = '';
+                listItem.editorTabStates.search.infoMessage = '';
+                listItem.editorTabStates.search.results = {};
+                listItem.editorTabStates.search.searchText = '';
+                listItem.editorTabStates.search.selected = {};
+                listItem.editorTabStates.search.entityIRI = '';
             }
             self.getActiveKey = function(listItem = self.listItem) {
                 return _.findKey(listItem.editorTabStates, 'active') || 'project';
