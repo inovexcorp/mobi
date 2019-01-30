@@ -36,6 +36,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -274,12 +275,9 @@ public class UserRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-        assertTrue(result.containsKey("iri"));
-        assertEquals(result.getString("iri"), user.getResource().stringValue());
-        assertTrue(result.containsKey("username"));
-        assertEquals(result.getString("username"), UsernameTestFilter.USERNAME);
-        assertTrue(result.containsKey("email"));
-        assertEquals(result.getString("email"), email.getResource().stringValue());
+        assertFalse(result.containsKey("@graph"));
+        assertTrue(result.containsKey("@id"));
+        assertEquals(result.getString("@id"), user.getResource().stringValue());
     }
 
     @Test
@@ -306,36 +304,25 @@ public class UserRestImplTest extends MobiRestTestNg {
     @Test
     public void updateUserWithDifferentUsernameTest() {
         //Setup:
-        JSONObject user = new JSONObject();
-        user.put("username", "testUser");
-        user.put("email", "maryjane@example.com");
-        user.put("firstName", "Mary");
-        user.put("lastName", "Jane");
-        User newUser = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + user.getString("username")));
-        newUser.setUsername(vf.createLiteral(user.getString("username")));
-        newUser.setFirstName(Collections.singleton(vf.createLiteral(user.getString("firstName"))));
-        newUser.setLastName(Collections.singleton(vf.createLiteral(user.getString("lastName"))));
-        newUser.setMbox(Collections.singleton(thingFactory.createNew(vf.createIRI("mailto:" + user.getString("email")))));
-        when(engineManager.createUser(anyString(), any(UserConfig.class))).thenReturn(newUser);
+        User newUser = userFactory.createNew(vf.createIRI("http://mobi.com/users/user2"));
+        newUser.setUsername(vf.createLiteral("user2"));
 
-        Response response = target().path("users/" + UsernameTestFilter.USERNAME)
-                .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+        Response response = target().path("users/user2")
+                .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld"), transformer),
+                        MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void updateUserThatDoesNotExistTest() {
         //Setup:
-        JSONObject user = new JSONObject();
-        user.put("username", "error");
-        user.put("email", "maryjane@example.com");
-        user.put("firstName", "Mary");
-        user.put("lastName", "Jane");
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("users/error")
-                .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME)
+                .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld"), transformer),
+                        MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
+        verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
     }
 
     @Test

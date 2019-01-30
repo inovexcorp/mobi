@@ -178,6 +178,10 @@ public class GroupRestImpl implements GroupRest {
 
         Value title = newGroup.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
                 ErrorUtils.sendError("Group title must be present in new group", Response.Status.BAD_REQUEST));
+        if (!groupTitle.equals(title.stringValue())) {
+            throw ErrorUtils.sendError("Endpoint group title and model grop title must match",
+                    Response.Status.BAD_REQUEST);
+        }
         Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
         if (!savedGroup.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).get().equals(title)) {

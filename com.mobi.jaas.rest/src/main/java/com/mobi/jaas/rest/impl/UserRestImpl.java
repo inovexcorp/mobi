@@ -184,6 +184,9 @@ public class UserRestImpl implements UserRest {
 
         Value newUsername = newUser.getUsername().orElseThrow(() ->
                 ErrorUtils.sendError("Username must be provided in new user", Response.Status.BAD_REQUEST));
+        if (!username.equals(newUsername.stringValue())) {
+            throw ErrorUtils.sendError("Endpoint username and model username must match", Response.Status.BAD_REQUEST);
+        }
         User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
         if (!savedUser.getUsername().get().equals(newUsername)) {

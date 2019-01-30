@@ -38,6 +38,8 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import com.mobi.jaas.api.engines.EngineManager;
@@ -222,10 +224,6 @@ public class GroupRestImplTest extends MobiRestTestNg {
     @Test
     public void createExistingGroupTest() {
         //Setup:
-        JSONObject group = new JSONObject();
-        group.put("title", "testGroup");
-        group.put("description", "This is a description");
-
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("title", "testGroup");
         fd.field("description", "This is a description");
@@ -240,7 +238,9 @@ public class GroupRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-        assertEquals(result.get("title"), "testGroup");
+        assertFalse(result.containsKey("@graph"));
+        assertTrue(result.containsKey("@id"));
+        assertEquals(result.getString("@id"), group.getResource().stringValue());
     }
 
     @Test
@@ -266,31 +266,26 @@ public class GroupRestImplTest extends MobiRestTestNg {
     @Test
     public void updateGroupWithDifferentTitleTest() {
         //Setup:
-        JSONObject group = new JSONObject();
-        group.put("title", "newGroup");
-        group.put("description", "This is a new description");
-        Group newGroup = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/" + group.getString("title")));
-        newGroup.setProperty(vf.createLiteral(group.getString("title")), vf.createIRI(DCTERMS.TITLE.stringValue()));
-        newGroup.setProperty(vf.createLiteral(group.getString("description")),
-                vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
-        when(engineManager.createGroup(anyString(), any(GroupConfig.class))).thenReturn(newGroup);
 
-        Response response = target().path("groups/testGroup")
-                .request().put(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+        Group newGroup = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/group2"));
+        newGroup.setTitle(Collections.singleton(vf.createLiteral("group2")));
+
+        Response response = target().path("groups/group2")
+                .request().put(Entity.entity(groupedModelToString(group.getModel(), getRDFFormat("jsonld"), transformer),
+                        MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void updateGroupThatDoesNotExistTest() {
         //Setup:
-        JSONObject group = new JSONObject();
-        group.put("title", "testGroup");
-        group.put("description", "This is a new description");
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("groups/error")
-                .request().put(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+        Response response = target().path("groups/testGroup")
+                .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld"), transformer),
+                        MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
+        verify(engineManager, atLeastOnce()).retrieveGroup(anyString(), eq("testGroup"));
     }
 
     @Test
