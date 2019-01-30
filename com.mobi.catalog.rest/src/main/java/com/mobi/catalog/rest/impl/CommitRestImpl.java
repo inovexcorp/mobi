@@ -28,6 +28,7 @@ import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitResponse;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.getDifferenceJsonString;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJson;
+import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -39,11 +40,13 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,6 +151,35 @@ public class CommitRestImpl implements CommitRest {
             }
         } finally {
             logger.trace("getCommitHistory took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    @Override
+    public Response getCompiledResource(String commitId, String entityId) {
+        long start = System.currentTimeMillis();
+        try {
+            checkStringParam(commitId, "Commit ID is required");
+            Model model;
+            try {
+                final List<Commit> commits;
+                if (StringUtils.isNotBlank(entityId)) {
+                    commits = catalogManager.getCommitEntityChain(vf.createIRI(commitId), vf.createIRI(entityId));
+                    Model entityModel = catalogManager.getCompiledResource(commits);
+                    model = entityModel.filter(vf.createIRI(entityId), null,null);
+                } else {
+                    commits = catalogManager.getCommitChain(vf.createIRI(commitId));
+                    model = catalogManager.getCompiledResource(commits);
+                }
+
+                return Response.ok(modelToSkolemizedString(model, RDFFormat.JSONLD, transformer, bNodeService))
+                        .build();
+            } catch (IllegalArgumentException ex) {
+                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            } catch (IllegalStateException | MobiException ex) {
+                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            }
+        } finally {
+            logger.trace("getCompiledResource took {}ms", System.currentTimeMillis() - start);
         }
     }
 
