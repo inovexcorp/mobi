@@ -54,33 +54,6 @@ public class SPARQLRepositoryWrapper extends RepositoryWrapper {
     protected static final String REPOSITORY_TYPE = "sparql";
     protected static final String NAME = "com.mobi.service.repository." + REPOSITORY_TYPE;
 
-    @Override
-    protected Repository getRepo(Map<String, Object> props) {
-        SPARQLRepositoryConfig config = Configurable.createConfigurable(SPARQLRepositoryConfig.class, props);
-        this.repositoryID = config.id();
-
-        SPARQLRepository sesameSparqlStore = new SPARQLRepository(config.endpointUrl());
-
-        SesameRepositoryWrapper repo = new SesameRepositoryWrapper(sesameSparqlStore);
-        repo.setConfig(config);
-
-        return repo;
-    }
-
-    @Override
-    public void validateConfig(Map<String, Object> props) {
-        super.validateConfig(props);
-        SPARQLRepositoryConfig config = Configurable.createConfigurable(SPARQLRepositoryConfig.class, props);
-
-        String[] schemes = {"http","https"};
-        UrlValidator urlValidator = new UrlValidator(schemes);
-        if (!urlValidator.isValid(config.endpointUrl())) {
-            throw new RepositoryConfigException(
-                    new IllegalArgumentException("Repository endpointUrl is not a valid URL.")
-            );
-        }
-    }
-
     @Activate
     protected void start(Map<String, Object> props) {
         super.start(props);
@@ -94,5 +67,47 @@ public class SPARQLRepositoryWrapper extends RepositoryWrapper {
     @Modified
     protected void modified(Map<String, Object> props) {
         super.modified(props);
+    }
+
+    @Override
+    protected Repository getRepo(Map<String, Object> props) {
+        SPARQLRepositoryConfig config = Configurable.createConfigurable(SPARQLRepositoryConfig.class, props);
+        this.repositoryID = config.id();
+
+        SPARQLRepository sesameSparqlStore;
+
+        if (config.updateEndpointUrl() != null) {
+            sesameSparqlStore = new SPARQLRepository(config.endpointUrl(), config.updateEndpointUrl());
+        } else {
+            sesameSparqlStore = new SPARQLRepository(config.endpointUrl());
+        }
+
+        sesameSparqlStore.enableQuadMode(true);
+
+        SesameRepositoryWrapper repo = new SesameRepositoryWrapper(sesameSparqlStore);
+        repo.setConfig(config);
+
+        return repo;
+    }
+
+    @Override
+    public void validateConfig(Map<String, Object> props) {
+        super.validateConfig(props);
+        SPARQLRepositoryConfig config = Configurable.createConfigurable(SPARQLRepositoryConfig.class, props);
+
+        String[] schemes = {"http","https"};
+        UrlValidator urlValidator = new UrlValidator(schemes, UrlValidator.ALLOW_LOCAL_URLS);
+        if (!urlValidator.isValid(config.endpointUrl())) {
+            throw new RepositoryConfigException(
+                    new IllegalArgumentException("Repository endpointUrl is not a valid URL: " + config.endpointUrl())
+            );
+        }
+
+        if (config.updateEndpointUrl() != null && !urlValidator.isValid(config.updateEndpointUrl())) {
+            throw new RepositoryConfigException(
+                    new IllegalArgumentException("Repository updateEndpointUrl is not a valid URL: "
+                            + config.updateEndpointUrl())
+            );
+        }
     }
 }
