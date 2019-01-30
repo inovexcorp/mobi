@@ -66,6 +66,7 @@
              * each object is:
              * ```
              * {
+             *    jsonld: {},
              *    title: '',
              *    description: '',
              *    roles: [],
@@ -85,6 +86,7 @@
              * each object is:
              * ```
              * {
+             *    jsonld: {},
              *    iri: '',
              *    username: '',
              *    firstName: '',
@@ -112,15 +114,12 @@
              * @ngdoc method
              * @name setUsers
              * @methodOf userManager.service:userManagerService
-             * TODO: REDO DOCUMENTATION
+             *
              * @description
              * Initializes the {@link userManager.service:userManagerService#users users} and
              * {@link userManager.service:userManagerService#groups groups} lists. Uses
-             * the results of the GET /mobirest/users, GET /mobirest/users/{username},
-             * and GET /mobirest/users/{username}/roles endpoints for the users list. Uses the
-             * results of the GET /mobirest/groups, GET /mobirest/groups/{groupTitle},
-             * GET /mobirest/groups/{groupTitle}/roles, and GET /mobirest/groups/{groupTitle}/roles
-             * endpoints for the groups list. If an error occurs in any of the HTTP calls,
+             * the results of the GET /mobirest/users and the results of the GET /mobirest/groups endpoints to retrieve
+             * user and group lists, respectively. If an error occurs in either of the HTTP calls,
              * logs the error on the console. Returns a promise.
              *
              * @return {Promise} A Promise that indicates the function has completed.
@@ -248,7 +247,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Retrieves the userId and Calls the GET /mobirest/users/{userId} endpoint to retrieve a Mobi user
+             * Calls the GET /mobirest/users/{username} endpoint to retrieve a Mobi user
              * with passed username. Returns a Promise that resolves with the result of the call
              * if it was successful and rejects with an error message if it was not.
              *
@@ -532,7 +531,7 @@
              * was successful and rejects with an error message if it was not. Updates the
              * {@link userManager.service:userManagerService#groups groups} list appropriately.
              *
-             * @param {string} title the title of the group to update
+             * @param {string} groupTitle the title of the group to update
              * @param {Object} newGroup an object containing all the new group information to
              * save. The structure of the object should be the same as the structure of the group
              * objects in the {@link userManager.service:userManagerService#groups groups list}
@@ -727,9 +726,23 @@
                 return (_.get(userObject, 'firstName') && _.get(userObject, 'lastName')) ? userObject.firstName + ' ' + userObject.lastName : _.get(userObject, 'username', '[Not Available]');
             }
             /**
-             * //TODO: DOCUMENT THIS
-             * @param jsonld
-             * @return {{jsonld: *, iri: *, username: (string|*), firstName: (string|*), lastName: (string|*), email: (string|*), roles: *}}
+             * @ngdoc method
+             * @name getUserObj
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Returns a user object from the provided JSON-LD. User object has a format of
+             * {
+             *    jsonld: {},
+             *    iri: '',
+             *    username: '',
+             *    firstName: '',
+             *    lastName: '',
+             *    email: '',
+             *    roles: []
+             * }
+             * @param jsonld The JSON-LD representation of a User
+             * @return An object representing a user
              */
             self.getUserObj = function(jsonld) {
                 return {
@@ -743,8 +756,21 @@
                 }
             }
             /**
-             * //TODO: DOCUMENT THIS
-             * @param jsonld
+             * @ngdoc method
+             * @name getGroupObj
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Returns a group object from the provided JSON-LD. Group object has a format of
+             * {
+             *    jsonld: {},
+             *    title: '',
+             *    description: '',
+             *    roles: [],
+             *    members: []
+             * }
+             * @param jsonld The JSON-LD representation of a Group
+             * @return An object representing a group
              */
             self.getGroupObj = function(jsonld) {
                 return {
@@ -761,7 +787,16 @@
                     roles: _.map(jsonld[prefixes.user + 'hasGroupRole'], role => util.getBeautifulIRI(role['@id']).toLowerCase())
                 }
             }
-
+            /**
+             * @ngdoc method
+             * @name getUserJson
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Returns a JSON-LD representation of the provided user
+             * @param user The user object to convert to JSON-LD
+             * @return A JSON-LD representation of the user
+             */
             self.getUserJson = function(user) {
                 var jsonld = user.jsonld;
 
@@ -774,7 +809,16 @@
 
                 return jsonld;
             }
-
+            /**
+             * @ngdoc method
+             * @name getGroupJson
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Returns a JSON-LD representation of the provided group
+             * @param group The group object to convert to JSON-LD
+             * @return A JSON-LD representation of the group
+             */
             self.getGroupJson = function(group) {
                 var jsonld = group.jsonld;
 

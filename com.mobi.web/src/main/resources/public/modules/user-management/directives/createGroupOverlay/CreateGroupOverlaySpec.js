@@ -81,20 +81,10 @@ describe('Create Group Overlay component', function() {
                 this.controller.newGroup = {title: 'title', description: 'Description', members: ['user']};
             });
             it('unless an error occurs', function() {
-                userManagerSvc.addGroupUsers.and.returnValue($q.reject('Error Message'));
-                this.controller.add();
-                scope.$apply();
-                expect(userManagerSvc.addGroup).toHaveBeenCalledWith(this.controller.newGroup);
-                expect(userManagerSvc.addGroupUsers).toHaveBeenCalledWith(this.controller.newGroup.title, this.controller.newGroup.members);
-                expect(this.controller.errorMessage).toEqual('Error Message');
-                expect(scope.close).not.toHaveBeenCalled();
-
-                userManagerSvc.addGroupUsers.calls.reset();
                 userManagerSvc.addGroup.and.returnValue($q.reject('Error Message'));
                 this.controller.add();
                 scope.$apply();
                 expect(userManagerSvc.addGroup).toHaveBeenCalledWith(this.controller.newGroup);
-                expect(userManagerSvc.addGroupUsers).not.toHaveBeenCalled();
                 expect(this.controller.errorMessage).toEqual('Error Message');
                 expect(scope.close).not.toHaveBeenCalled();
             });
@@ -102,7 +92,6 @@ describe('Create Group Overlay component', function() {
                 this.controller.add();
                 scope.$apply();
                 expect(userManagerSvc.addGroup).toHaveBeenCalledWith(this.controller.newGroup);
-                expect(userManagerSvc.addGroupUsers).toHaveBeenCalledWith(this.controller.newGroup.title, this.controller.newGroup.members);
                 expect(this.controller.errorMessage).toEqual('');
                 expect(scope.close).toHaveBeenCalled();
             });
