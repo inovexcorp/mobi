@@ -33,20 +33,18 @@
                 <div class="col-6 ontology-select-container">
                     <div class="form-group">
                         <custom-label>Ontology</custom-label>
-                        <div class="input-group record-search-bar">
-                            <input type="text" class="form-control" name="record-search" ng-model="dvm.recordsConfig.searchText" placeholder="Search for...">
-                            <span class="input-group-btn">
-                                <button class="btn btn-primary" type="submit" ng-click="dvm.setInitialRecords()">Search</button>
-                            </span>
-                        </div>
-                        <div class="ontology-records-list list-group">
-                            <button class="list-group-item" ng-repeat="record in dvm.records track by record['@id']" ng-class="{'active': dvm.selectedRecord['@id'] === record['@id']}" ng-click="dvm.selectOntology(record)">
-                                <span>{{dvm.util.getDctermsValue(record, 'title')}}</span>
-                            </button>
-                        </div>
-                        <div class="paging-container">
-                            <paging-details total-size="dvm.totalSize" page-index="dvm.recordsConfig.pageIndex" limit="dvm.recordsConfig.limit"></paging-details>
-                            <pagination total="dvm.totalSize" limit="dvm.recordsConfig.limit" current-page="dvm.currentPage" get-page="dvm.setRecords()"></pagination>
+                        <search-bar ng-model="dvm.recordsConfig.searchText" submit-event="dvm.setOntologies()"></search-bar>
+                        <div class="ontologies my-2" targeted-spinner="dvm.spinnerId">
+                            <info-message ng-if="dvm.ontologies.length === 0" class="padding">No ontologies are available</info-message>
+                            <md-list>
+                                <md-list-item class="ontology" ng-repeat="ontology in dvm.ontologies track by ontology.recordId">
+                                    <div class="md-list-item-text">
+                                        <h4 class="header" ng-bind-html="ontology.title | highlight:dvm.recordsConfig.searchText | trusted"></h4>
+                                        <p><small class="ontology-iri text-muted">{{ontology.ontologyIRI}}</small></p>
+                                    </div>
+                                    <md-checkbox class="md-primary" ng-model="ontology.selected" aria-label="Selected" ng-change="dvm.toggleOntology(ontology)"></md-checkbox>
+                                </md-list-item>
+                            </md-list>
                         </div>
                     </div>
                     <div class="form-group">
@@ -58,15 +56,16 @@
                     </div>
                 </div>
                 <div class="col-6 preview-display">
-                    <div class="ontology-record-info" ng-if="dvm.selectedRecord">
-                        <h3>{{dvm.util.getDctermsValue(dvm.selectedRecord, 'title')}}</h3>
-                        <entity-dates entity="dvm.selectedRecord"></entity-dates>
-                        <entity-description entity="dvm.selectedRecord"></entity-description>
-                        <record-keywords record="dvm.selectedRecord"></record-keywords>
+                    <div class="text-muted no-selected-ontology" ng-if="!dvm.selectedOntology">(No ontology selected)</div>
+                    <div class="ontology-record-info" ng-if="dvm.selectedOntology">
+                        <h3>{{dvm.selectedOntology.title}}</h3>
+                        <entity-dates entity="dvm.selectedOntology.jsonld"></entity-dates>
+                        <entity-description entity="dvm.selectedOntology.jsonld"></entity-description>
+                        <record-keywords record="dvm.selectedOntology.jsonld"></record-keywords>
                         <div class="classes-list">
                             <span class="field-name">Classes:</span>
                             <ul>
-                                <li ng-repeat="class in dvm.classes track by $index" title="{{class.classObj['@id']}}">
+                                <li ng-repeat="class in dvm.classes | limitTo:10 track by $index" title="{{class.classObj['@id']}}">
                                     {{dvm.om.getEntityName(class.classObj)}}
                                     <span class="text-muted" ng-if="dvm.om.isDeprecated(class.classObj)">(Deprecated)</span>
                                 </li>

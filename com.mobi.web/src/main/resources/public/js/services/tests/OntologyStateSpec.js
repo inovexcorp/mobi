@@ -440,7 +440,7 @@ describe('Ontology State Service', function() {
         ontologyStateSvc.deleteOntologyState(this.recordId);
         expect(stateManagerSvc.deleteState).toHaveBeenCalledWith(this.stateId);
     });
-    it('deleteOntologyBranch calls the correct method', function() {
+    it('deleteOntologyBranchState calls the correct method', function() {
         var tempState = _.cloneDeep(this.ontologyState);
         this.recordState[prefixes.ontologyState + 'branchStates'] = [{'@id': 'branchState'}];
         this.ontologyState.push({'@id': 'branchState', [prefixes.ontologyState + 'branch']: [{'@id': this.branchId}]});
@@ -448,7 +448,7 @@ describe('Ontology State Service', function() {
             id: this.stateId,
             model: this.ontologyState
         });
-        ontologyStateSvc.deleteOntologyBranch(this.recordId, this.branchId);
+        ontologyStateSvc.deleteOntologyBranchState(this.recordId, this.branchId);
         expect(stateManagerSvc.updateState).toHaveBeenCalledWith(this.stateId, tempState);
     });
     it('getCurrentStateIdByRecordId calls the correct methods', function() {
@@ -612,9 +612,9 @@ describe('Ontology State Service', function() {
                         });
                     });
                     describe('and getInProgressCommit is rejected', function() {
-                        describe('with message "InProgressCommit could not be found"', function() {
+                        describe('with a 404', function() {
                             beforeEach(function() {
-                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject('InProgressCommit could not be found'));
+                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 404}));
                             });
                             it('and getOntology is resolved', function() {
                                 ontologyManagerSvc.getOntology.and.returnValue($q.when(this.ontology));
@@ -685,9 +685,9 @@ describe('Ontology State Service', function() {
                                 });
                             });
                         });
-                        describe('with other message', function() {
+                        describe('without a 404', function() {
                             beforeEach(function() {
-                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject(this.error));
+                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 400}));
                             });
                             describe('and deleteOntologyState is resolved', function() {
                                 beforeEach(function() {
@@ -877,9 +877,9 @@ describe('Ontology State Service', function() {
                         });
                     });
                     describe('and getInProgressCommit is rejected', function() {
-                        describe('with message "InProgressCommit could not be found"', function() {
+                        describe('with a 404', function() {
                             beforeEach(function() {
-                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject('InProgressCommit could not be found'));
+                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 404}));
                             });
                             it('and getOntology is resolved', function() {
                                 ontologyManagerSvc.getOntology.and.returnValue($q.when(this.ontology));
@@ -950,9 +950,9 @@ describe('Ontology State Service', function() {
                                 });
                             });
                         });
-                        describe('with other message', function() {
+                        describe('without a 404', function() {
                             beforeEach(function() {
-                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject(this.error));
+                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 400}));
                             });
                             describe('and deleteOntologyState is resolved', function() {
                                 beforeEach(function() {
@@ -1091,9 +1091,9 @@ describe('Ontology State Service', function() {
                             });
                         });
                         describe('and getInProgressCommit is rejected', function() {
-                            describe('with message "InProgressCommit could not be found"', function() {
+                            describe('with a 404', function() {
                                 beforeEach(function() {
-                                    catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject('InProgressCommit could not be found'));
+                                    catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 404}));
                                 });
                                 it('and getOntology is resolved', function() {
                                     ontologyManagerSvc.getOntology.and.returnValue($q.when(this.ontology));
@@ -1168,9 +1168,9 @@ describe('Ontology State Service', function() {
                                     });
                                 });
                             });
-                            describe('with other message', function() {
+                            describe('without a 404', function() {
                                 beforeEach(function() {
-                                    catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject(this.error));
+                                    catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 400}));
                                 });
                                 describe('and deleteOntologyState is resolved', function() {
                                     beforeEach(function() {
@@ -1362,9 +1362,9 @@ describe('Ontology State Service', function() {
                     });
                 });
                 describe('and getInProgressCommit is rejected', function() {
-                    describe('with message "InProgressCommit could not be found"', function() {
+                    describe('with a 404', function() {
                         beforeEach(function() {
-                            catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject('InProgressCommit could not be found'));
+                            catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 404}));
                         });
                         it('and getOntology is resolved', function() {
                             ontologyManagerSvc.getOntology.and.returnValue($q.when(this.ontology));
@@ -1435,9 +1435,9 @@ describe('Ontology State Service', function() {
                             });
                         });
                     });
-                    describe('with other message', function() {
+                    describe('without a 404', function() {
                         beforeEach(function() {
-                            catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject(this.error));
+                            catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 400}));
                         });
                         describe('and deleteOntologyState is resolved', function() {
                             beforeEach(function() {
@@ -1807,127 +1807,48 @@ describe('Ontology State Service', function() {
         beforeEach(function() {
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
         });
-        describe('when deleteOntologyBranch is resolved', function() {
-            beforeEach(function() {
-                spyOn(ontologyStateSvc, 'deleteOntologyBranch').and.returnValue($q.when());
-            });
-            it('and when getRecordVersions is resolved', function() {
-                catalogManagerSvc.getRecordVersions.and.returnValue($q.when({data: [this.tag, {}]}));
-                ontologyStateSvc.removeBranch(this.recordId, this.branchId)
-                    .then(_.noop, () => fail('Promise should have resolved'));
-                scope.$apply();
-                expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
-                expect(ontologyStateSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
-                expect(catalogManagerSvc.getRecordVersions).toHaveBeenCalledWith(this.recordId, this.catalogId);
-                expect(listItem.branches).toEqual([]);
-                expect(listItem.tags).toEqual([this.tag]);
-            });
-            it('and when getRecordVersions is rejected', function() {
-                catalogManagerSvc.getRecordVersions.and.returnValue($q.reject(this.error));
-                ontologyStateSvc.removeBranch(this.recordId, this.branchId)
-                    .then(() => fail('Promise should have rejected'), response => expect(response).toEqual(this.error));
-                scope.$apply();
-                expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
-                expect(ontologyStateSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
-                expect(catalogManagerSvc.getRecordVersions).toHaveBeenCalledWith(this.recordId, this.catalogId);
-                expect(listItem.branches).toEqual([]);
-                expect(listItem.tags).toEqual([this.tag]);
-            });
+        it('when getRecordVersions is resolved', function() {
+            catalogManagerSvc.getRecordVersions.and.returnValue($q.when({data: [this.tag, {}]}));
+            ontologyStateSvc.removeBranch(this.recordId, this.branchId)
+                .then(_.noop, () => fail('Promise should have resolved'));
+            scope.$apply();
+            expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
+            expect(catalogManagerSvc.getRecordVersions).toHaveBeenCalledWith(this.recordId, this.catalogId);
+            expect(listItem.branches).toEqual([]);
+            expect(listItem.tags).toEqual([this.tag]);
         });
-        it('when deleteOntologyBranch is rejected', function() {
-            spyOn(ontologyStateSvc, 'deleteOntologyBranch').and.returnValue($q.reject(this.error));
+        it('when getRecordVersions is rejected', function() {
+            catalogManagerSvc.getRecordVersions.and.returnValue($q.reject(this.error));
             ontologyStateSvc.removeBranch(this.recordId, this.branchId)
                 .then(() => fail('Promise should have rejected'), response => expect(response).toEqual(this.error));
             scope.$apply();
             expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
-            expect(ontologyStateSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
-            expect(catalogManagerSvc.getRecordVersions).not.toHaveBeenCalled();
-            expect(listItem.branches).toEqual([this.branch]);
+            expect(catalogManagerSvc.getRecordVersions).toHaveBeenCalledWith(this.recordId, this.catalogId);
+            expect(listItem.branches).toEqual([]);
             expect(listItem.tags).toEqual([this.tag]);
         });
     });
     describe('saveChanges should call the correct methods', function() {
-        describe('when getInProgressCommit resolves', function() {
-            beforeEach(function() {
-                catalogManagerSvc.getInProgressCommit.and.returnValue($q.when());
-            });
-            it('and updateInProgressCommit resolves', function() {
-                var resolved = 'this';
-                catalogManagerSvc.updateInProgressCommit.and.returnValue($q.when(resolved));
-                ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                    .then(response => {
-                        expect(response).toEqual(resolved);
-                    }, () => {
-                        fail('Promise should have resolved');
-                    });
-                scope.$apply();
-            });
-            it('and updateInProgressCommit rejects', function() {
-                catalogManagerSvc.updateInProgressCommit.and.returnValue($q.reject(this.error));
-                ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                    .then(() => {
-                        fail('Promise should have rejected');
-                    }, response => {
-                        expect(response).toEqual(this.error);
-                    });
-                scope.$apply();
-            });
+        it('when updateInProgressCommit resolves', function() {
+            var resolved = 'this';
+            catalogManagerSvc.updateInProgressCommit.and.returnValue($q.when(resolved));
+            ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
+                .then(response => {
+                    expect(response).toEqual(resolved);
+                }, () => {
+                    fail('Promise should have resolved');
+                });
+            scope.$apply();
         });
-        describe('when getInProgressCommit rejects', function() {
-            describe('and the error message is "InProgressCommit could not be found"', function() {
-                beforeEach(function() {
-                    catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject('InProgressCommit could not be found'));
+        it('when updateInProgressCommit rejects', function() {
+            catalogManagerSvc.updateInProgressCommit.and.returnValue($q.reject(this.error));
+            ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
+                .then(() => {
+                    fail('Promise should have rejected');
+                }, response => {
+                    expect(response).toEqual(this.error);
                 });
-                describe('and createInProgressCommit resolves', function() {
-                    beforeEach(function() {
-                        catalogManagerSvc.createInProgressCommit.and.returnValue($q.when());
-                    });
-                    it('and updateInProgressCommit resolves', function() {
-                        var resolved = 'this';
-                        catalogManagerSvc.updateInProgressCommit.and.returnValue($q.when(resolved));
-                        ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                            .then(response => {
-                                expect(response).toEqual(resolved);
-                            }, () => {
-                                fail('Promise should have resolved');
-                            });
-                        scope.$apply();
-                        expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(this.recordId, this.catalogId);
-                    });
-                    it('and updateInProgressCommit rejects', function() {
-                        catalogManagerSvc.updateInProgressCommit.and.returnValue($q.reject(this.error));
-                        ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                            .then(() => {
-                                fail('Promise should have rejected');
-                            }, response => {
-                                expect(response).toEqual(this.error);
-                            });
-                        scope.$apply();
-                        expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(this.recordId, this.catalogId);
-                    });
-                });
-                it('and createInProgressCommit rejects', function() {
-                    catalogManagerSvc.createInProgressCommit.and.returnValue($q.reject(this.error));
-                    ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                        .then(() => {
-                            fail('Promise should have rejected');
-                        }, response => {
-                            expect(response).toEqual(this.error);
-                        });
-                    scope.$apply();
-                    expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(this.recordId, this.catalogId);
-                });
-            });
-            it('and the error message is not "InProgressCommit could not be found"', function() {
-                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject(this.error));
-                ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                    .then(() => {
-                        fail('Promise should have rejected');
-                    }, response => {
-                        expect(response).toEqual(this.error);
-                    });
-                scope.$apply();
-            });
+            scope.$apply();
         });
     });
     describe('addToAdditions should call the correct functions', function() {
@@ -4476,8 +4397,9 @@ describe('Ontology State Service', function() {
     describe('merge should correctly return and call the correct methods if mergeBranches', function() {
         beforeEach(function() {
             catalogManagerSvc.mergeBranches.and.returnValue($q.when(this.commitId));
-            spyOn(ontologyStateSvc, 'updateOntology').and.returnValue($q.when());
             spyOn(ontologyStateSvc, 'removeBranch').and.returnValue($q.when());
+            spyOn(ontologyStateSvc, 'deleteOntologyBranchState').and.returnValue($q.when());
+            spyOn(ontologyStateSvc, 'updateOntology').and.returnValue($q.when());
             ontologyStateSvc.listItem.merge = {
                 target: {'@id': this.branchId},
                 checkbox: true,
@@ -4487,23 +4409,41 @@ describe('Ontology State Service', function() {
                 }
             };
         });
-        describe('resolves and updateOntology', function() {
-            describe('resolves and the merge checkbox is', function() {
-                describe('true and deleteOntologyBranch', function() {
-                    describe('resolves and removeBranch', function() {
-                        it('resolves', function() {
-                            ontologyStateSvc.merge()
+        describe('resolves and the merge checkbox is', function() {
+            describe('true and deleteOntologyBranch', function() {
+                describe('resolves and removeBranch', function() {
+                    describe('resolves and deleteOntologyBranchState', function() {
+                        describe('resolves and updateOntology', function() {
+                            it('resolves', function() {
+                                ontologyStateSvc.merge()
                                 .then(_.noop, () => {
                                     fail('Promise should have resolved');
                                 });
-                            scope.$apply();
-                            expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId, ontologyStateSvc.listItem.merge.resolutions);
-                            expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
-                            expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
-                            expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                                scope.$apply();
+                                expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId, ontologyStateSvc.listItem.merge.resolutions);
+                                expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                                expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                                expect(ontologyStateSvc.deleteOntologyBranchState).toHaveBeenCalledWith(this.recordId, this.branchId);
+                                expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
+                            });
+                            it('rejects', function() {
+                                ontologyStateSvc.updateOntology.and.returnValue($q.reject('Error'));
+                                ontologyStateSvc.merge()
+                                    .then(() => {
+                                        fail('Promise should have rejected');
+                                    }, response => {
+                                        expect(response).toEqual('Error');
+                                    });
+                                scope.$apply();
+                                expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId, ontologyStateSvc.listItem.merge.resolutions);
+                                expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                                expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                                expect(ontologyStateSvc.deleteOntologyBranchState).toHaveBeenCalledWith(this.recordId, this.branchId);
+                                expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
+                            });
                         });
                         it('rejects', function() {
-                            ontologyStateSvc.removeBranch.and.returnValue($q.reject('Error'));
+                            ontologyStateSvc.deleteOntologyBranchState.and.returnValue($q.reject('Error'));
                             ontologyStateSvc.merge()
                                 .then(() => {
                                     fail('Promise should have rejected');
@@ -4512,13 +4452,14 @@ describe('Ontology State Service', function() {
                                 });
                             scope.$apply();
                             expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId, ontologyStateSvc.listItem.merge.resolutions);
-                            expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
                             expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
                             expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                            expect(ontologyStateSvc.deleteOntologyBranchState).toHaveBeenCalledWith(this.recordId, this.branchId);
+                            expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
                         });
                     });
                     it('rejects', function() {
-                        ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.reject('Error'));
+                        ontologyStateSvc.removeBranch.and.returnValue($q.reject('Error'));
                         ontologyStateSvc.merge()
                             .then(() => {
                                 fail('Promise should have rejected');
@@ -4527,13 +4468,33 @@ describe('Ontology State Service', function() {
                             });
                         scope.$apply();
                         expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId, ontologyStateSvc.listItem.merge.resolutions);
-                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
                         expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
-                        expect(ontologyStateSvc.removeBranch).not.toHaveBeenCalled();
+                        expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                        expect(ontologyStateSvc.deleteOntologyBranchState).not.toHaveBeenCalled();
+                        expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
                     });
                 });
-                it('false', function() {
+                it('rejects', function() {
+                    ontologyManagerSvc.deleteOntologyBranch.and.returnValue($q.reject('Error'));
+                    ontologyStateSvc.merge()
+                        .then(() => {
+                            fail('Promise should have rejected');
+                        }, response => {
+                            expect(response).toEqual('Error');
+                        });
+                    scope.$apply();
+                    expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId, ontologyStateSvc.listItem.merge.resolutions);
+                    expect(ontologyManagerSvc.deleteOntologyBranch).toHaveBeenCalledWith(this.recordId, this.branchId);
+                    expect(ontologyStateSvc.removeBranch).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.deleteOntologyBranchState).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
+                });
+            });
+            describe('false and updateOntology', function() {
+                beforeEach(function() {                    
                     ontologyStateSvc.listItem.merge.checkbox = false;
+                });
+                it('resolves', function() {
                     ontologyStateSvc.merge()
                         .then(_.noop, () => {
                             fail('Promise should have resolved');
@@ -4543,21 +4504,23 @@ describe('Ontology State Service', function() {
                     expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
                     expect(ontologyManagerSvc.deleteOntologyBranch).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.removeBranch).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.deleteOntologyBranchState).not.toHaveBeenCalled();
                 });
-            });
-            it('rejects', function() {
-                ontologyStateSvc.updateOntology.and.returnValue($q.reject('Error'));
-                ontologyStateSvc.merge()
-                    .then(() => {
-                        fail('Promise should have rejected');
-                    }, response => {
-                        expect(response).toEqual('Error');
-                    });
-                scope.$apply();
-                expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId, ontologyStateSvc.listItem.merge.resolutions);
-                expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
-                expect(ontologyManagerSvc.deleteOntologyBranch).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.removeBranch).not.toHaveBeenCalled();
+                it('rejects', function() {
+                    ontologyStateSvc.updateOntology.and.returnValue($q.reject('Error'));
+                    ontologyStateSvc.merge()
+                        .then(() => {
+                            fail('Promise should have rejected');
+                        }, response => {
+                            expect(response).toEqual('Error');
+                        });
+                    scope.$apply();
+                    expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.branchId, this.recordId, this.catalogId, ontologyStateSvc.listItem.merge.resolutions);
+                    expect(ontologyManagerSvc.deleteOntologyBranch).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.removeBranch).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.deleteOntologyBranchState).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
+                });
             });
         });
         it('rejects', function() {
@@ -4573,6 +4536,7 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
             expect(ontologyManagerSvc.deleteOntologyBranch).not.toHaveBeenCalled();
             expect(ontologyStateSvc.removeBranch).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.deleteOntologyBranchState).not.toHaveBeenCalled();
         });
     });
     it('cancelMerge should set the appropriate variables to reset a merge', function() {

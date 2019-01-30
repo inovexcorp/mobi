@@ -964,10 +964,22 @@ public class SimpleCatalogManager implements CatalogManager {
                                        @Nullable Model additions, @Nullable Model deletions) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
-            InProgressCommit commit = utils.getInProgressCommit(versionedRDFRecordId, user.getResource(), conn);
-            conn.begin();
-            utils.updateCommit(commit, additions, deletions, conn);
-            conn.commit();
+            Optional<Resource> inProgressCommitIri = utils.getInProgressCommitIRI(versionedRDFRecordId,
+                    user.getResource(), conn);
+            if (inProgressCommitIri.isPresent()) {
+                InProgressCommit commit = utils.getExpectedObject(inProgressCommitIri.get(), inProgressCommitFactory,
+                        conn);
+                conn.begin();
+                utils.updateCommit(commit, additions, deletions, conn);
+                conn.commit();
+            } else {
+                InProgressCommit commit = createInProgressCommit(user);
+                commit.setOnVersionedRDFRecord(versionedRDFRecordFactory.createNew(versionedRDFRecordId));
+                conn.begin();
+                utils.addObject(commit, conn);
+                utils.updateCommit(commit, additions, deletions, conn);
+                conn.commit();
+            }
         }
     }
 
@@ -1161,10 +1173,39 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public List<Commit> getCommitEntityChain(Resource commitId, Resource entityId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            return utils.getCommitChain(commitId, entityId, false, conn).stream()
+                    .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Override
+    public List<Commit> getCommitEntityChain(Resource commitId, Resource targetId, Resource entityId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            utils.validateResource(targetId, commitFactory.getTypeIRI(), conn);
+            return utils.getDifferenceChain(commitId, targetId, entityId, conn).stream()
+                    .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Override
     public Model getCompiledResource(Resource commitId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
             return utils.getCompiledResource(commitId, conn);
+        }
+    }
+
+    @Override
+    public Model getCompiledResource(List<Commit> commitList) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return utils.getCompiledResource(commitList.stream().map(commit -> commit.getResource())
+                    .collect(Collectors.toList()), conn);
         }
     }
 

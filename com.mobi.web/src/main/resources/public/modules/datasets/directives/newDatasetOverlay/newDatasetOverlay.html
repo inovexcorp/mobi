@@ -36,7 +36,7 @@
             <custom-label>Repository ID</custom-label>
             <p class="form-control-static">{{dvm.recordConfig.repositoryId}}</p>
         </div>
-        <datasets-ontology-picker selected-ontologies="dvm.selectedOntologies" error="dvm.error"></datasets-ontology-picker>
+        <datasets-ontology-picker selected-ontologies="dvm.selectedOntologies" select-ontology="dvm.selectOntology(ontology)" unselect-ontology="dvm.unselectOntology(ontology)"></datasets-ontology-picker>
     </form>
 </div>
 <div class="modal-footer">

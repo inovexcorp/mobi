@@ -159,10 +159,11 @@
             dvm.deleteBranch = function(branch) {
                 om.deleteOntologyBranch(dvm.listItem.ontologyRecord.recordId, branch['@id'])
                     .then(() => dvm.os.removeBranch(dvm.listItem.ontologyRecord.recordId, branch['@id']), $q.reject)
+                    .then(() => dvm.os.deleteOntologyBranchState(dvm.listItem.ontologyRecord.recordId, branch['@id']), $q.reject)
                     .then(() => {
                         if (!dvm.os.isStateBranch(dvm.currentState)) {
                             dvm.cm.getCommit(dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'commit'))
-                                .then(_.noop, error => {
+                                .then(_.noop, () => {
                                     dvm.util.createWarningToast((dvm.os.isStateTag(dvm.currentState) ? 'Tag' : 'Commit') + ' no longer exists. Opening MASTER');
                                     dvm.changeEntity({'@id': dvm.listItem.masterBranchIRI, '@type': [prefixes.catalog + 'Branch']});
                                 });

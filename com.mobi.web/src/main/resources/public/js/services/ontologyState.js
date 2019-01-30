@@ -374,7 +374,7 @@
             }
             /**
              * @ngdoc method
-             * @name deleteOntologyBranch
+             * @name deleteOntologyBranchState
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
@@ -387,7 +387,7 @@
              * @param {string} branchId A string identifying the Branch that was removed
              * @returns {Promise} A promise that resolves if the update was successful or rejects with an error message
              */
-            self.deleteOntologyBranch = function(recordId, branchId) {
+            self.deleteOntologyBranchState = function(recordId, branchId) {
                 var ontologyState = angular.copy(self.getOntologyStateByRecordId(recordId));
                 var record = _.find(ontologyState.model, {'@type': [prefixes.ontologyState + 'StateRecord']});
                 var branchState = _.head(_.remove(ontologyState.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]}));
@@ -611,8 +611,8 @@
                         .then(response => {
                             inProgressCommit = response;
                             return om.getOntology(recordId, branchId, commitId, rdfFormat);
-                        }, errorMessage => {
-                            if (errorMessage === 'InProgressCommit could not be found') {
+                        }, response => {
+                            if (_.get(response, 'status') === 404) {
                                 return om.getOntology(recordId, branchId, commitId, rdfFormat);
                             }
                             return $q.reject();
@@ -1181,15 +1181,7 @@
              * @returns {Promise} A promise with the ontology ID.
              */
             self.saveChanges = function(recordId, differenceObj) {
-                return cm.getInProgressCommit(recordId, catalogId)
-                    .then($q.when, errorMessage => {
-                        if (errorMessage === 'InProgressCommit could not be found') {
-                            return cm.createInProgressCommit(recordId, catalogId);
-                        } else {
-                            return $q.reject(errorMessage);
-                        }
-                    })
-                    .then(() => cm.updateInProgressCommit(recordId, catalogId, differenceObj), $q.reject);
+                return cm.updateInProgressCommit(recordId, catalogId, differenceObj);
             }
             self.addToAdditions = function(recordId, json) {
                 addToInProgress(recordId, json, 'additions');
@@ -1241,15 +1233,26 @@
                 }
                 _.remove(self.list, { ontologyRecord: { recordId }});
             }
+            /**
+             * @ngdoc method
+             * @name removeBranch
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Removes the specified branch from the `listItem` for the specified record. Meant to be called after the
+             * Branch has already been deleted. Also updates the `tags` list on the `listItem` to account for any tags
+             * that were removed as a result of the branch removal.
+             *
+             * @param {string} recordId The IRI of the Record whose Branch was deleted
+             * @param {string} branchId The IRI of the Branch that was deleted
+             */
             self.removeBranch = function(recordId, branchId) {
                 var listItem = self.getListItemByRecordId(recordId);
-                return self.deleteOntologyBranch(recordId, branchId).then(() => {
-                    _.remove(listItem.branches, {'@id': branchId});
-                    return cm.getRecordVersions(recordId, catalogId);
-                }, $q.reject)
-                .then(response => {
-                    listItem.tags = _.filter(response.data, version => _.includes(_.get(version, '@type'), prefixes.catalog + 'Tag'));
-                }, $q.reject);
+                _.remove(listItem.branches, {'@id': branchId});
+                return cm.getRecordVersions(recordId, catalogId)
+                    .then(response => {
+                        listItem.tags = _.filter(response.data, version => _.includes(_.get(version, '@type'), prefixes.catalog + 'Tag'));
+                    }, $q.reject);
             }
             self.afterSave = function() {
                 return cm.getInProgressCommit(self.listItem.ontologyRecord.recordId, catalogId)
@@ -1589,16 +1592,19 @@
             self.merge = function() {
                 var sourceId = self.listItem.ontologyRecord.branchId;
                 var checkbox = self.listItem.merge.checkbox;
+                var commitId;
                 return cm.mergeBranches(sourceId, self.listItem.merge.target['@id'], self.listItem.ontologyRecord.recordId, catalogId, self.listItem.merge.resolutions)
-                    .then(commitId => self.updateOntology(self.listItem.ontologyRecord.recordId, self.listItem.merge.target['@id'], commitId), $q.reject)
-                    .then(() => {
+                    .then(commit => {
+                        commitId = commit;
                         if (checkbox) {
                             return om.deleteOntologyBranch(self.listItem.ontologyRecord.recordId, sourceId)
-                                .then(() => self.removeBranch(self.listItem.ontologyRecord.recordId, sourceId), $q.reject);
+                                .then(() => self.removeBranch(self.listItem.ontologyRecord.recordId, sourceId), $q.reject)
+                                .then(() => self.deleteOntologyBranchState(self.listItem.ontologyRecord.recordId, sourceId), $q.reject);
                         } else {
                             return $q.when();
                         }
-                    }, $q.reject);
+                    }, $q.reject)
+                    .then(() => self.updateOntology(self.listItem.ontologyRecord.recordId, self.listItem.merge.target['@id'], commitId), $q.reject);
             }
             self.cancelMerge = function() {
                 self.listItem.merge.active = false;

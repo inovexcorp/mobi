@@ -60,6 +60,7 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
 
     @Override
     public Principal authenticate(ContainerRequestContext containerRequestContext) {
+        long start = System.currentTimeMillis();
         Subject subject = new Subject();
         boolean authenticated = false;
         String className = "";
@@ -75,6 +76,7 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
 
         if (!authenticated) {
             LOG.debug("Not authenticated using: " + StringUtils.join(helpers, ", "));
+            LOG.info("RestSecurityHelper.autheticate() complete in " + (System.currentTimeMillis() - start) + "ms");
             return null;
         }
 
@@ -83,11 +85,14 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
                 .collect(Collectors.toList());
         if (principals.isEmpty()) {
             LOG.debug("No UserPrincipals found.");
+            LOG.info("RestSecurityHelper.autheticate() complete in " + (System.currentTimeMillis() - start) + "ms");
             return null;
         }
-        Principal principal = principals.get(0);
-        containerRequestContext.setProperty(AuthenticationProps.USERNAME, principal.getName());
-        return new UserPrincipal(principal.getName(), className);
+
+        String principalName = principals.get(0).getName();
+        containerRequestContext.setProperty(AuthenticationProps.USERNAME, principalName);
+        LOG.info("RestSecurityHelper.autheticate() complete in " + (System.currentTimeMillis() - start) + "ms");
+        return new UserPrincipal(principalName, className);
     }
 
     @Override
@@ -97,7 +102,10 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
 
     @Override
     public boolean isUserInRole(Principal principal, String role) {
-        return principal instanceof UserPrincipal
+        long start = System.currentTimeMillis();
+        boolean userInRole = principal instanceof UserPrincipal
                 && helpers.get(((UserPrincipal) principal).getClassName()).isUserInRole(principal, role);
+        LOG.info("RestSecurityHelper.isUserInRole() complete in " + (System.currentTimeMillis() - start) + "ms");
+        return userInRole;
     }
 }

@@ -58,6 +58,21 @@
 
             /**
              * @ngdoc property
+             * @name coreRecordTypes
+             * @propertyOf catalogManager.service:catalogManagerService
+             * @type {string[]}
+             *
+             * @description
+             * `coreRecordTypes` contains a list of IRI strings of all the core types of Records defined by Mobi.
+             */
+            self.coreRecordTypes = [
+                prefixes.catalog + 'Record',
+                prefixes.catalog + 'UnversionedRecord',
+                prefixes.catalog + 'VersionedRecord',
+                prefixes.catalog + 'VersionedRDFRecord'
+            ];
+            /**
+             * @ngdoc property
              * @name sortOptions
              * @propertyOf catalogManager.service:catalogManagerService
              * @type {Object[]}
@@ -68,7 +83,7 @@
              * ```
              * {
              *     field: 'http://purl.org/dc/terms/title',
-             *     ascending: true,
+             *     asc: true,
              *     label: 'Title (asc)'
              * }
              * ```
@@ -1317,11 +1332,11 @@
              *
              * @param {string} recordId The id of the Record to retrieve the InProgressCommit from
              * @param {string} catalogId The id of the Catalog the Record should be part of
-             * @return {Promise} A promise that resolves with the InProgessCommit or rejects with an error message
+             * @return {Promise} A promise that resolves with the InProgessCommit or rejects with the HTTP response
              */
             self.getInProgressCommit = function(recordId, catalogId) {
                 return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
-                    .then(response => response.data, util.rejectError);
+                    .then(response => response.data, $q.reject);
             }
 
             /**
