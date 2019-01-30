@@ -1202,6 +1202,14 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public Model getCompiledResource(List<Commit> commitList) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return utils.getCompiledResource(commitList.stream().map(commit -> commit.getResource())
+                    .collect(Collectors.toList()), conn);
+        }
+    }
+
+    @Override
     public Model getCompiledResource(Resource versionedRDFRecordId, Resource branchId, Resource commitId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateCommitPath(configProvider.getLocalCatalogIRI(), versionedRDFRecordId, branchId, commitId,
