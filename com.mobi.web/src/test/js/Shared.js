@@ -482,8 +482,8 @@ function mockPrefixes() {
             this.mergereq = 'mergereq:';
             this.user = 'user:';
             this.policy = 'policy:';
-            this.roles = "roles:"
-            this.foaf = "foaf:"
+            this.roles = "roles:";
+            this.foaf = "foaf:";
         });
     });
 }
