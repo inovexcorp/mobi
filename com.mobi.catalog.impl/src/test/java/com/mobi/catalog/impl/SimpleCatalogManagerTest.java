@@ -243,6 +243,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
                 distributionFactory.createNew(i.getArgumentAt(3, Resource.class)));
         when(utilsService.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenAnswer(i ->
                 inProgressCommitFactory.createNew(i.getArgumentAt(2, Resource.class)));
+        when(utilsService.getInProgressCommitIRI(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(Optional.of(IN_PROGRESS_COMMIT_IRI));
         when(utilsService.throwAlreadyExists(any(Resource.class), any(OrmFactory.class))).thenReturn(new IllegalArgumentException());
         when(utilsService.throwThingNotFound(any(Resource.class), any(OrmFactory.class))).thenReturn(new IllegalStateException());
 
@@ -1574,11 +1575,11 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         Model additions = MODEL_FACTORY.createModel();
         Model deletions = MODEL_FACTORY.createModel();
         InProgressCommit commit = inProgressCommitFactory.createNew(IN_PROGRESS_COMMIT_IRI);
-        doReturn(commit).when(utilsService).getInProgressCommit(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
+        doReturn(commit).when(utilsService).getExpectedObject(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
 
         manager.updateInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, user, additions, deletions);
         verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).getInProgressCommit(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
+        verify(utilsService).getInProgressCommitIRI(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateCommit(eq(commit), eq(additions), eq(deletions), any(RepositoryConnection.class));
     }
 
