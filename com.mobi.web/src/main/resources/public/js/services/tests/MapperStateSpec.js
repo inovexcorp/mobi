@@ -115,84 +115,66 @@ describe('Mapper State service', function() {
                     .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error message'));
                 scope.$apply();
                 expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.record.title, mapperStateSvc.mapping.record.description, mapperStateSvc.mapping.record.keywords);
-                expect(catalogManagerSvc.createInProgressCommit).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.updateInProgressCommit).not.toHaveBeenCalled();
             });
             it('successfully', function() {
                 mappingManagerSvc.upload.and.returnValue($q.when('id'));
                 mapperStateSvc.saveMapping().then(response => expect(response).toEqual('id'), () => fail('Promise should have resolved'));
                 scope.$apply();
                 expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.record.title, mapperStateSvc.mapping.record.description, mapperStateSvc.mapping.record.keywords);
-                expect(catalogManagerSvc.createInProgressCommit).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.updateInProgressCommit).not.toHaveBeenCalled();
             });
         });
         describe('if it is an existing mapping', function() {
             beforeEach(function() {
                 mapperStateSvc.newMapping = false;
             });
-            describe("and createInProgressCommit resolves", function() {
+            describe('and updateInProgressCommit resolves', function() {
                 beforeEach(function() {
-                    catalogManagerSvc.createInProgressCommit.and.returnValue($q.when());
+                    catalogManagerSvc.updateInProgressCommit.and.returnValue($q.when());
                 });
-                describe('and updateInProgressCommit resolves', function() {
-                    beforeEach(function() {
-                        catalogManagerSvc.updateInProgressCommit.and.returnValue($q.when());
-                    });
-                    it('and createBranchCommit resolves', function() {
-                        utilSvc.getDctermsValue.and.callFake(obj => obj.title);
-                        catalogManagerSvc.createBranchCommit.and.returnValue($q.when(''));
-                        var add1 = {'@id': 'add1', title: 'Class'};
-                        var add2 = {'@id': 'add2', title: 'Prop 1'};
-                        var add3 = {'@id': 'add3'};
-                        var del1 = {'@id': 'del1', title: 'Prop 2'};
-                        mapperStateSvc.mapping.difference.additions = [add1, add2, add3];
-                        mapperStateSvc.mapping.difference.deletions = [del1, add2];
-                        mapperStateSvc.mapping.jsonld = [add1, add2, add3];
-                        mappingManagerSvc.isClassMapping.and.callFake(obj => _.isEqual(obj, add1));
-                        mappingManagerSvc.isPropertyMapping.and.callFake(obj =>_.isEqual(obj, add2) || _.isEqual(obj, del1));
-                        utilSvc.getBeautifulIRI.and.returnValue('iri');
-                        mapperStateSvc.saveMapping()
-                            .then(response => expect(response).toEqual(mapperStateSvc.mapping.record.id), () => fail('Promise should have resolved'));
-                        scope.$apply();
-                        expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId);
-                        expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
-                        expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId, mapperStateSvc.mapping.difference);
-                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(add1, 'title');
-                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(add2, 'title');
-                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(add3, 'title');
-                        expect(utilSvc.getBeautifulIRI).toHaveBeenCalledWith(add3['@id']);
-                        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(del1, 'title');
-                        expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.branch, mapperStateSvc.mapping.record.id, this.catalogId, 'Changed Class, Prop 1, iri, Prop 2');
-                    });
-                    it('and createBranchCommit rejects', function() {
-                        catalogManagerSvc.createBranchCommit.and.returnValue($q.reject('Error message'));
-                        mapperStateSvc.saveMapping()
-                            .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error message'));
-                        scope.$apply();
-                        expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId);
-                        expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
-                        expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId, mapperStateSvc.mapping.difference);
-                        expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.branch, mapperStateSvc.mapping.record.id, this.catalogId, jasmine.any(String));
-                    });
+                it('and createBranchCommit resolves', function() {
+                    utilSvc.getDctermsValue.and.callFake(obj => obj.title);
+                    catalogManagerSvc.createBranchCommit.and.returnValue($q.when(''));
+                    var add1 = {'@id': 'add1', title: 'Class'};
+                    var add2 = {'@id': 'add2', title: 'Prop 1'};
+                    var add3 = {'@id': 'add3'};
+                    var del1 = {'@id': 'del1', title: 'Prop 2'};
+                    mapperStateSvc.mapping.difference.additions = [add1, add2, add3];
+                    mapperStateSvc.mapping.difference.deletions = [del1, add2];
+                    mapperStateSvc.mapping.jsonld = [add1, add2, add3];
+                    mappingManagerSvc.isClassMapping.and.callFake(obj => _.isEqual(obj, add1));
+                    mappingManagerSvc.isPropertyMapping.and.callFake(obj =>_.isEqual(obj, add2) || _.isEqual(obj, del1));
+                    utilSvc.getBeautifulIRI.and.returnValue('iri');
+                    mapperStateSvc.saveMapping()
+                        .then(response => expect(response).toEqual(mapperStateSvc.mapping.record.id), () => fail('Promise should have resolved'));
+                    scope.$apply();
+                    expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
+                    expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId, mapperStateSvc.mapping.difference);
+                    expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(add1, 'title');
+                    expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(add2, 'title');
+                    expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(add3, 'title');
+                    expect(utilSvc.getBeautifulIRI).toHaveBeenCalledWith(add3['@id']);
+                    expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(del1, 'title');
+                    expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.branch, mapperStateSvc.mapping.record.id, this.catalogId, 'Changed Class, Prop 1, iri, Prop 2');
                 });
-                it('and updateInProgressCommit rejects', function() {
-                    catalogManagerSvc.updateInProgressCommit.and.returnValue($q.reject('Error message'));
+                it('and createBranchCommit rejects', function() {
+                    catalogManagerSvc.createBranchCommit.and.returnValue($q.reject('Error message'));
                     mapperStateSvc.saveMapping()
                         .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error message'));
                     scope.$apply();
-                    expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId);
                     expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
                     expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId, mapperStateSvc.mapping.difference);
-                    expect(catalogManagerSvc.createBranchCommit).not.toHaveBeenCalled();
+                    expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.branch, mapperStateSvc.mapping.record.id, this.catalogId, jasmine.any(String));
                 });
             });
-            it('and createInProgressCommit rejects', function() {
-                catalogManagerSvc.createInProgressCommit.and.returnValue($q.reject('Error message'));
+            it('and updateInProgressCommit rejects', function() {
+                catalogManagerSvc.updateInProgressCommit.and.returnValue($q.reject('Error message'));
                 mapperStateSvc.saveMapping()
                     .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error message'));
                 scope.$apply();
-                expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId);
                 expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
-                expect(catalogManagerSvc.updateInProgressCommit).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId, mapperStateSvc.mapping.difference);
                 expect(catalogManagerSvc.createBranchCommit).not.toHaveBeenCalled();
             });
         });

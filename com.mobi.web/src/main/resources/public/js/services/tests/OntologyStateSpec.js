@@ -612,9 +612,9 @@ describe('Ontology State Service', function() {
                         });
                     });
                     describe('and getInProgressCommit is rejected', function() {
-                        describe('with message "InProgressCommit could not be found"', function() {
+                        describe('with a 404', function() {
                             beforeEach(function() {
-                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject('InProgressCommit could not be found'));
+                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 404}));
                             });
                             it('and getOntology is resolved', function() {
                                 ontologyManagerSvc.getOntology.and.returnValue($q.when(this.ontology));
@@ -685,9 +685,9 @@ describe('Ontology State Service', function() {
                                 });
                             });
                         });
-                        describe('with other message', function() {
+                        describe('without a 404', function() {
                             beforeEach(function() {
-                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject(this.error));
+                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 400}));
                             });
                             describe('and deleteOntologyState is resolved', function() {
                                 beforeEach(function() {
@@ -877,9 +877,9 @@ describe('Ontology State Service', function() {
                         });
                     });
                     describe('and getInProgressCommit is rejected', function() {
-                        describe('with message "InProgressCommit could not be found"', function() {
+                        describe('with a 404', function() {
                             beforeEach(function() {
-                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject('InProgressCommit could not be found'));
+                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 404}));
                             });
                             it('and getOntology is resolved', function() {
                                 ontologyManagerSvc.getOntology.and.returnValue($q.when(this.ontology));
@@ -950,9 +950,9 @@ describe('Ontology State Service', function() {
                                 });
                             });
                         });
-                        describe('with other message', function() {
+                        describe('without a 404', function() {
                             beforeEach(function() {
-                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject(this.error));
+                                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 400}));
                             });
                             describe('and deleteOntologyState is resolved', function() {
                                 beforeEach(function() {
@@ -1091,9 +1091,9 @@ describe('Ontology State Service', function() {
                             });
                         });
                         describe('and getInProgressCommit is rejected', function() {
-                            describe('with message "InProgressCommit could not be found"', function() {
+                            describe('with a 404', function() {
                                 beforeEach(function() {
-                                    catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject('InProgressCommit could not be found'));
+                                    catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 404}));
                                 });
                                 it('and getOntology is resolved', function() {
                                     ontologyManagerSvc.getOntology.and.returnValue($q.when(this.ontology));
@@ -1168,9 +1168,9 @@ describe('Ontology State Service', function() {
                                     });
                                 });
                             });
-                            describe('with other message', function() {
+                            describe('without a 404', function() {
                                 beforeEach(function() {
-                                    catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject(this.error));
+                                    catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 400}));
                                 });
                                 describe('and deleteOntologyState is resolved', function() {
                                     beforeEach(function() {
@@ -1362,9 +1362,9 @@ describe('Ontology State Service', function() {
                     });
                 });
                 describe('and getInProgressCommit is rejected', function() {
-                    describe('with message "InProgressCommit could not be found"', function() {
+                    describe('with a 404', function() {
                         beforeEach(function() {
-                            catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject('InProgressCommit could not be found'));
+                            catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 404}));
                         });
                         it('and getOntology is resolved', function() {
                             ontologyManagerSvc.getOntology.and.returnValue($q.when(this.ontology));
@@ -1435,9 +1435,9 @@ describe('Ontology State Service', function() {
                             });
                         });
                     });
-                    describe('with other message', function() {
+                    describe('without a 404', function() {
                         beforeEach(function() {
-                            catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject(this.error));
+                            catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 400}));
                         });
                         describe('and deleteOntologyState is resolved', function() {
                             beforeEach(function() {
@@ -1829,87 +1829,26 @@ describe('Ontology State Service', function() {
         });
     });
     describe('saveChanges should call the correct methods', function() {
-        describe('when getInProgressCommit resolves', function() {
-            beforeEach(function() {
-                catalogManagerSvc.getInProgressCommit.and.returnValue($q.when());
-            });
-            it('and updateInProgressCommit resolves', function() {
-                var resolved = 'this';
-                catalogManagerSvc.updateInProgressCommit.and.returnValue($q.when(resolved));
-                ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                    .then(response => {
-                        expect(response).toEqual(resolved);
-                    }, () => {
-                        fail('Promise should have resolved');
-                    });
-                scope.$apply();
-            });
-            it('and updateInProgressCommit rejects', function() {
-                catalogManagerSvc.updateInProgressCommit.and.returnValue($q.reject(this.error));
-                ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                    .then(() => {
-                        fail('Promise should have rejected');
-                    }, response => {
-                        expect(response).toEqual(this.error);
-                    });
-                scope.$apply();
-            });
+        it('when updateInProgressCommit resolves', function() {
+            var resolved = 'this';
+            catalogManagerSvc.updateInProgressCommit.and.returnValue($q.when(resolved));
+            ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
+                .then(response => {
+                    expect(response).toEqual(resolved);
+                }, () => {
+                    fail('Promise should have resolved');
+                });
+            scope.$apply();
         });
-        describe('when getInProgressCommit rejects', function() {
-            describe('and the error message is "InProgressCommit could not be found"', function() {
-                beforeEach(function() {
-                    catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject('InProgressCommit could not be found'));
+        it('when updateInProgressCommit rejects', function() {
+            catalogManagerSvc.updateInProgressCommit.and.returnValue($q.reject(this.error));
+            ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
+                .then(() => {
+                    fail('Promise should have rejected');
+                }, response => {
+                    expect(response).toEqual(this.error);
                 });
-                describe('and createInProgressCommit resolves', function() {
-                    beforeEach(function() {
-                        catalogManagerSvc.createInProgressCommit.and.returnValue($q.when());
-                    });
-                    it('and updateInProgressCommit resolves', function() {
-                        var resolved = 'this';
-                        catalogManagerSvc.updateInProgressCommit.and.returnValue($q.when(resolved));
-                        ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                            .then(response => {
-                                expect(response).toEqual(resolved);
-                            }, () => {
-                                fail('Promise should have resolved');
-                            });
-                        scope.$apply();
-                        expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(this.recordId, this.catalogId);
-                    });
-                    it('and updateInProgressCommit rejects', function() {
-                        catalogManagerSvc.updateInProgressCommit.and.returnValue($q.reject(this.error));
-                        ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                            .then(() => {
-                                fail('Promise should have rejected');
-                            }, response => {
-                                expect(response).toEqual(this.error);
-                            });
-                        scope.$apply();
-                        expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(this.recordId, this.catalogId);
-                    });
-                });
-                it('and createInProgressCommit rejects', function() {
-                    catalogManagerSvc.createInProgressCommit.and.returnValue($q.reject(this.error));
-                    ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                        .then(() => {
-                            fail('Promise should have rejected');
-                        }, response => {
-                            expect(response).toEqual(this.error);
-                        });
-                    scope.$apply();
-                    expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(this.recordId, this.catalogId);
-                });
-            });
-            it('and the error message is not "InProgressCommit could not be found"', function() {
-                catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject(this.error));
-                ontologyStateSvc.saveChanges(this.recordId, this.differenceObj)
-                    .then(() => {
-                        fail('Promise should have rejected');
-                    }, response => {
-                        expect(response).toEqual(this.error);
-                    });
-                scope.$apply();
-            });
+            scope.$apply();
         });
     });
     describe('addToAdditions should call the correct functions', function() {
