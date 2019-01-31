@@ -23,8 +23,8 @@
 <div class="property-hierarchy-block py-1">
     <info-message ng-if="!dvm.flatPropertyTree.length">(No properties defined)</info-message>
     <div ng-if="dvm.flatPropertyTree.length" class="tree hierarchy-tree h-100 p-0 w-100">
-        <div class="h-100 repeater-container w-100" vs-repeat="26" vs-offset-before="10" vs-offset-after="10">
-            <div ng-repeat="node in dvm.flatPropertyTree | filter:dvm.isShown" class="tree-item-wrapper">
+        <md-virtual-repeat-container class="h-100 repeater-container w-100" >
+            <div md-virtual-repeat="node in dvm.flatPropertyTree | filter:dvm.isShown" class="tree-item-wrapper">
                 <div ng-if="!node.entityIRI" class="tree-item">
                     <a ng-click="node.set(dvm.os.listItem.ontologyRecord.recordId, !node.get(dvm.os.listItem.ontologyRecord.recordId)); $event.stopPropagation()">
                         <i class="fa fa-fw" ng-class="{'fa-folder-open-o': node.get(dvm.os.listItem.ontologyRecord.recordId), 'fa-folder-o': !node.get(dvm.os.listItem.ontologyRecord.recordId)}"></i><span>{{node.title}}</span>
@@ -36,6 +36,6 @@
                            on-click="dvm.os.selectItem(node.entityIRI)" has-children="node.hasChildren"
                            path="node.path" data-path-to="{{dvm.os.joinPath(node.path)}}" is-opened="dvm.os.getOpened(dvm.os.joinPath(node.path))"></tree-item>
             </div>
-        </div>
+        </md-virtual-repeat-container>
     </div>
 </div>

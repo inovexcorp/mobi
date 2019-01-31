@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="tree everything-tree hierarchy-tree h-100 w-100 p-0">
-    <md-virtual-repeat-container class="h-100 repeater-container w-100">
+    <md-virtual-repeat-container ng-if="dvm.os.listItem.flatEverythingTree.length" class="repeater-container w-100">
         <div md-virtual-repeat="entity in dvm.os.listItem.flatEverythingTree | filter:dvm.isShown" class="tree-item-wrapper">
             <div ng-if="!entity['@id']" class="tree-item">
                 <a ng-click="entity.set(dvm.os.listItem.ontologyRecord.recordId, !entity.get(dvm.os.listItem.ontologyRecord.recordId)); $event.stopPropagation()">
