@@ -964,10 +964,22 @@ public class SimpleCatalogManager implements CatalogManager {
                                        @Nullable Model additions, @Nullable Model deletions) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
-            InProgressCommit commit = utils.getInProgressCommit(versionedRDFRecordId, user.getResource(), conn);
-            conn.begin();
-            utils.updateCommit(commit, additions, deletions, conn);
-            conn.commit();
+            Optional<Resource> inProgressCommitIri = utils.getInProgressCommitIRI(versionedRDFRecordId,
+                    user.getResource(), conn);
+            if (inProgressCommitIri.isPresent()) {
+                InProgressCommit commit = utils.getExpectedObject(inProgressCommitIri.get(), inProgressCommitFactory,
+                        conn);
+                conn.begin();
+                utils.updateCommit(commit, additions, deletions, conn);
+                conn.commit();
+            } else {
+                InProgressCommit commit = createInProgressCommit(user);
+                commit.setOnVersionedRDFRecord(versionedRDFRecordFactory.createNew(versionedRDFRecordId));
+                conn.begin();
+                utils.addObject(commit, conn);
+                utils.updateCommit(commit, additions, deletions, conn);
+                conn.commit();
+            }
         }
     }
 
