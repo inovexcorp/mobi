@@ -45,13 +45,13 @@ import com.mobi.jaas.rest.GroupRest;
 import com.mobi.ontologies.foaf.Agent;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import net.sf.json.JSONArray;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -68,7 +68,6 @@ import javax.ws.rs.core.Response;
 public class GroupRestImpl implements GroupRest {
     private EngineManager engineManager;
     private ValueFactory vf;
-    private ModelFactory mf;
     private UserFactory userFactory;
     private GroupFactory groupFactory;
     private SesameTransformer transformer;
@@ -83,11 +82,6 @@ public class GroupRestImpl implements GroupRest {
     @Reference
     void setValueFactory(ValueFactory vf) {
         this.vf = vf;
-    }
-
-    @Reference
-    void setModelFactory(ModelFactory mf) {
-        this.mf = mf;
     }
 
     @Reference
@@ -132,25 +126,30 @@ public class GroupRestImpl implements GroupRest {
             throw ErrorUtils.sendError("Group " + title + " already exists", Response.Status.BAD_REQUEST);
         }
 
-        Set<String> memberSet = members.stream().map(member -> member.getValue()).collect(Collectors.toSet());
-        GroupConfig.Builder builder = new GroupConfig.Builder(title).members(memberSet);
+        GroupConfig.Builder builder = new GroupConfig.Builder(title);
+
+        if (members != null && members.size() > 0) {
+            builder.members(members.stream().map(member -> member.getValue()).collect(Collectors.toSet()));
+        }
         if (description != null) {
             builder.description(description);
         }
         if (roles != null && roles.size() > 0) {
             Set<String> roleSet = roles.stream().map(role -> role.getValue()).collect(Collectors.toSet());
-             builder.roles(roleSet);
+            builder.roles(roleSet);
         }
 
         Group group = engineManager.createGroup(rdfEngine.getEngineName(), builder.build());
         engineManager.storeGroup(rdfEngine.getEngineName(), group);
         logger.info("Created group " + title);
-        return Response.status(201).entity(group.getResource().stringValue()).build();
+        Value createGroupTitle = group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
+                ErrorUtils.sendError("Group title must be present in created group", Response.Status.BAD_REQUEST));
+        return Response.status(201).entity(createGroupTitle.stringValue()).build();
     }
 
     @Override
     public Response getGroup(String groupTitle) {
-        if (groupTitle == null) {
+        if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
@@ -164,7 +163,7 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response updateGroup(String groupTitle, String newGroupStr) {
-        if (groupTitle == null) {
+        if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
@@ -179,7 +178,7 @@ public class GroupRestImpl implements GroupRest {
         Value title = newGroup.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
                 ErrorUtils.sendError("Group title must be present in new group", Response.Status.BAD_REQUEST));
         if (!groupTitle.equals(title.stringValue())) {
-            throw ErrorUtils.sendError("Endpoint group title and model grop title must match",
+            throw ErrorUtils.sendError("Provided group title and the group title in the data must match",
                     Response.Status.BAD_REQUEST);
         }
         Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
@@ -200,7 +199,7 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response deleteGroup(String groupTitle) {
-        if (groupTitle == null) {
+        if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
         if (!engineManager.groupExists(groupTitle)) {
@@ -214,7 +213,7 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response getGroupRoles(String groupTitle) {
-        if (groupTitle == null) {
+        if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
@@ -231,7 +230,7 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response addGroupRoles(String groupTitle, List<String> roles) {
-        if (groupTitle == null || roles.isEmpty()) {
+        if (StringUtils.isEmpty(groupTitle) || roles.isEmpty()) {
             throw ErrorUtils.sendError("Both group title and roles must be provided", Response.Status.BAD_REQUEST);
         }
         Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
@@ -249,7 +248,7 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response removeGroupRole(String groupTitle, String role) {
-        if (groupTitle == null || role == null) {
+        if (StringUtils.isEmpty(groupTitle) || StringUtils.isEmpty(role)) {
             throw ErrorUtils.sendError("Both group title and role must be provided", Response.Status.BAD_REQUEST);
         }
 
@@ -265,7 +264,7 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response getGroupUsers(String groupTitle) {
-        if (groupTitle == null) {
+        if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
@@ -277,7 +276,10 @@ public class GroupRestImpl implements GroupRest {
                 .collect(Collectors.toSet());
 
         JSONArray result = JSONArray.fromObject(members.stream()
-                .map(member -> member.getModel().filter(member.getResource(), null, null))
+                .map(member -> {
+                    member.clearPassword();
+                    return member.getModel().filter(member.getResource(), null, null);
+                })
                 .map(roleModel -> modelToJsonld(roleModel, transformer))
                 .map(RestUtils::getObjectFromJsonld)
                 .collect(Collectors.toList()));
@@ -286,7 +288,7 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response addGroupUser(String groupTitle, List<String> usernames) {
-        if (groupTitle == null) {
+        if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
@@ -307,7 +309,7 @@ public class GroupRestImpl implements GroupRest {
 
     @Override
     public Response removeGroupUser(String groupTitle, String username) {
-        if (groupTitle == null || username == null) {
+        if (StringUtils.isEmpty(groupTitle) || StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Both group title and username must be provided", Response.Status.BAD_REQUEST);
         }
 

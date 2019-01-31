@@ -23,7 +23,6 @@ package com.mobi.jaas.rest.impl;
  * #L%
  */
 
-import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
@@ -49,7 +48,6 @@ import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
@@ -86,7 +84,6 @@ import javax.ws.rs.core.Response;
 public class UserRestImplTest extends MobiRestTestNg {
     private UserRestImpl rest;
     private ValueFactory vf;
-    private ModelFactory mf;
     private OrmFactory<User> userFactory;
     private OrmFactory<Role> roleFactory;
     private OrmFactory<Thing> thingFactory;
@@ -113,7 +110,6 @@ public class UserRestImplTest extends MobiRestTestNg {
     @Override
     protected Application configureApp() throws Exception {
         vf = getValueFactory();
-        mf = getModelFactory();
         OrmFactory<Group> groupFactory = getRequiredOrmFactory(Group.class);
         userFactory = getRequiredOrmFactory(User.class);
         roleFactory = getRequiredOrmFactory(Role.class);
@@ -152,7 +148,6 @@ public class UserRestImplTest extends MobiRestTestNg {
         rest.setEngineManager(engineManager);
         rest.setRdfEngine(rdfEngine);
         rest.setValueFactory(vf);
-        rest.setModelFactory(mf);
         rest.setTransformer(transformer);
         rest.setUserFactory(userFactoryMock);
 
@@ -390,7 +385,7 @@ public class UserRestImplTest extends MobiRestTestNg {
     public void resetPasswordTest() {
         Response response = target().path("users/username/password")
                 .queryParam("newPassword", "XYZ")
-                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+                .request().put(Entity.entity("user", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq("username"));
         verify(engineManager).updateUser(anyString(), any(User.class));

@@ -23,7 +23,6 @@ package com.mobi.jaas.rest.impl;
  * #L%
  */
 
-import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
@@ -52,7 +51,6 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
@@ -85,7 +83,6 @@ import javax.ws.rs.core.Response;
 public class GroupRestImplTest extends MobiRestTestNg {
     private GroupRestImpl rest;
     private ValueFactory vf;
-    private ModelFactory mf;
     private OrmFactory<User> userFactory;
     private OrmFactory<Group> groupFactory;
     private OrmFactory<Role> roleFactory;
@@ -111,7 +108,6 @@ public class GroupRestImplTest extends MobiRestTestNg {
     @Override
     protected Application configureApp() throws Exception {
         vf = getValueFactory();
-        mf = getModelFactory();
         userFactory = getRequiredOrmFactory(User.class);
         groupFactory = getRequiredOrmFactory(Group.class);
         roleFactory = getRequiredOrmFactory(Role.class);
@@ -147,7 +143,6 @@ public class GroupRestImplTest extends MobiRestTestNg {
         rest.setEngineManager(engineManager);
         rest.setRdfEngine(rdfEngine);
         rest.setValueFactory(vf);
-        rest.setModelFactory(mf);
         rest.setGroupFactory(groupFactoryMock);
         rest.setTransformer(transformer);
 

@@ -119,7 +119,7 @@
              * Initializes the {@link userManager.service:userManagerService#users users} and
              * {@link userManager.service:userManagerService#groups groups} lists. Uses
              * the results of the GET /mobirest/users and the results of the GET /mobirest/groups endpoints to retrieve
-             * user and group lists, respectively. If an error occurs in either of the HTTP calls,
+             * the user and group lists, respectively. If an error occurs in either of the HTTP calls,
              * logs the error on the console. Returns a promise.
              *
              * @return {Promise} A Promise that indicates the function has completed.
@@ -236,7 +236,7 @@
                 return $http.post(userPrefix, fd, config)
                     .then(response => {
                         return self.getUser(newUser.username);
-                    }, util.rejectError)
+                    }, $q.reject)
                     .then(user => {
                         self.users.push(user);
                     }, util.rejectError);
@@ -732,6 +732,7 @@
              *
              * @description
              * Returns a user object from the provided JSON-LD. User object has a format of
+             * ```
              * {
              *    jsonld: {},
              *    iri: '',
@@ -741,6 +742,7 @@
              *    email: '',
              *    roles: []
              * }
+             * ```
              * @param jsonld The JSON-LD representation of a User
              * @return An object representing a user
              */
@@ -762,6 +764,7 @@
              *
              * @description
              * Returns a group object from the provided JSON-LD. Group object has a format of
+             * ```
              * {
              *    jsonld: {},
              *    title: '',
@@ -769,6 +772,7 @@
              *    roles: [],
              *    members: []
              * }
+             * ```
              * @param jsonld The JSON-LD representation of a Group
              * @return An object representing a group
              */

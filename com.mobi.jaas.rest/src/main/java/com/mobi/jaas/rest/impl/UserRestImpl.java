@@ -44,7 +44,6 @@ import com.mobi.jaas.rest.UserRest;
 import com.mobi.ontologies.foaf.Agent;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
@@ -52,6 +51,7 @@ import com.mobi.rdf.orm.Thing;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import net.sf.json.JSONArray;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.slf4j.Logger;
@@ -68,7 +68,6 @@ import javax.ws.rs.core.Response;
 public class UserRestImpl implements UserRest {
     private EngineManager engineManager;
     private ValueFactory vf;
-    private ModelFactory mf;
     private UserFactory userFactory;
     private SesameTransformer transformer;
     private Engine rdfEngine;
@@ -82,11 +81,6 @@ public class UserRestImpl implements UserRest {
     @Reference
     void setValueFactory(ValueFactory vf) {
         this.vf = vf;
-    }
-
-    @Reference
-    void setModelFactory(ModelFactory mf) {
-        this.mf = mf;
     }
 
     @Reference
@@ -109,7 +103,10 @@ public class UserRestImpl implements UserRest {
         try {
             Set<User> users = engineManager.getUsers(rdfEngine.getEngineName());
             JSONArray result = JSONArray.fromObject(users.stream()
-                    .map(user -> user.getModel().filter(user.getResource(), null, null))
+                    .map(user -> {
+                        user.clearPassword();
+                        return user.getModel().filter(user.getResource(), null, null);
+                    })
                     .map(userModel -> modelToJsonld(userModel, transformer))
                     .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));
@@ -122,10 +119,10 @@ public class UserRestImpl implements UserRest {
     @Override
     public Response createUser(String username, String password, List<FormDataBodyPart> roles, String firstName,
                                String lastName, String email) {
-        if (username == null) {
-            throw ErrorUtils.sendError("Password must be provided", Response.Status.BAD_REQUEST);
+        if (StringUtils.isEmpty(username)) {
+            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
-        if (password == null) {
+        if (StringUtils.isEmpty(password)) {
             throw ErrorUtils.sendError("Password must be provided", Response.Status.BAD_REQUEST);
         }
         if (engineManager.userExists(username)) {
@@ -151,16 +148,17 @@ public class UserRestImpl implements UserRest {
         User user = engineManager.createUser(rdfEngine.getEngineName(), builder.build());
         engineManager.storeUser(rdfEngine.getEngineName(), user);
         logger.info("Created user " + user.getResource() + " with username " + username);
-        return Response.status(201).entity(user.getResource().stringValue()).build();
+        return Response.status(201).entity(user.getUsername().get().stringValue()).build();
     }
 
     @Override
     public Response getUser(String username) {
-        if (username == null) {
+        if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
         User user = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.NOT_FOUND));
+        user.clearPassword();
         String json = groupedModelToString(user.getModel().filter(user.getResource(), null, null),
                 getRDFFormat("jsonld"), transformer);
         return Response.ok(getObjectFromJsonld(json)).build();
@@ -168,7 +166,7 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response updateUser(ContainerRequestContext context, String username, String newUserStr) {
-        if (username == null) {
+        if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Current username must be provided",
                     Response.Status.BAD_REQUEST);
         }
@@ -185,7 +183,8 @@ public class UserRestImpl implements UserRest {
         Value newUsername = newUser.getUsername().orElseThrow(() ->
                 ErrorUtils.sendError("Username must be provided in new user", Response.Status.BAD_REQUEST));
         if (!username.equals(newUsername.stringValue())) {
-            throw ErrorUtils.sendError("Endpoint username and model username must match", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Provided username and the username in the data must match",
+                    Response.Status.BAD_REQUEST);
         }
         User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
@@ -205,17 +204,17 @@ public class UserRestImpl implements UserRest {
     @Override
     public Response changePassword(ContainerRequestContext context, String username, String currentPassword,
                                    String newPassword) {
-        if (username == null) {
+        if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
         }
         checkCurrentUser(getActiveUsername(context), username);
-        if (currentPassword == null) {
+        if (StringUtils.isEmpty(currentPassword)) {
             throw ErrorUtils.sendError("Current password must be provided", Response.Status.BAD_REQUEST);
         }
         if (!engineManager.checkPassword(rdfEngine.getEngineName(), username, currentPassword)) {
             throw ErrorUtils.sendError("Invalid password", Response.Status.UNAUTHORIZED);
         }
-        if (newPassword == null) {
+        if (StringUtils.isEmpty(newPassword)) {
             throw ErrorUtils.sendError("New password must be provided", Response.Status.BAD_REQUEST);
         }
         return changePassword(username, newPassword);
@@ -223,10 +222,10 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response resetPassword(ContainerRequestContext context, String username, String newPassword) {
-        if (username == null) {
+        if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
         }
-        if (newPassword == null) {
+        if (StringUtils.isEmpty(newPassword)) {
             throw ErrorUtils.sendError("New password must be provided", Response.Status.BAD_REQUEST);
         }
         return changePassword(username, newPassword);
@@ -234,7 +233,7 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response deleteUser(ContainerRequestContext context, String username) {
-        if (username == null) {
+        if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
         isAuthorizedUser(context, username);
@@ -249,7 +248,7 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response getUserRoles(String username, boolean includeGroups) {
-        if (username == null) {
+        if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
         User user = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
@@ -266,7 +265,7 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response addUserRoles(String username, List<String> roles) {
-        if (username == null || roles.isEmpty()) {
+        if (StringUtils.isEmpty(username) || roles.isEmpty()) {
             throw ErrorUtils.sendError("Both username and roles must be provided", Response.Status.BAD_REQUEST);
         }
 
@@ -285,7 +284,7 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response removeUserRole(String username, String role) {
-        if (username == null || role == null) {
+        if (StringUtils.isEmpty(username) || role == null) {
             throw ErrorUtils.sendError("Both username and role must be provided", Response.Status.BAD_REQUEST);
         }
         User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
@@ -300,7 +299,7 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response listUserGroups(String username) {
-        if (username == null) {
+        if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
 
@@ -325,7 +324,7 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response addUserGroup(String username, String groupTitle) {
-        if (username == null || groupTitle == null) {
+        if (StringUtils.isEmpty(username) || StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
         }
         User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
@@ -342,7 +341,7 @@ public class UserRestImpl implements UserRest {
 
     @Override
     public Response removeUserGroup(String username, String groupTitle) {
-        if (username == null || groupTitle == null) {
+        if (StringUtils.isEmpty(username) || StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
         }
         User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
