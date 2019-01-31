@@ -611,8 +611,8 @@
                         .then(response => {
                             inProgressCommit = response;
                             return om.getOntology(recordId, branchId, commitId, rdfFormat);
-                        }, errorMessage => {
-                            if (errorMessage === 'InProgressCommit could not be found') {
+                        }, response => {
+                            if (_.get(response, 'status') === 404) {
                                 return om.getOntology(recordId, branchId, commitId, rdfFormat);
                             }
                             return $q.reject();
@@ -1181,15 +1181,7 @@
              * @returns {Promise} A promise with the ontology ID.
              */
             self.saveChanges = function(recordId, differenceObj) {
-                return cm.getInProgressCommit(recordId, catalogId)
-                    .then($q.when, errorMessage => {
-                        if (errorMessage === 'InProgressCommit could not be found') {
-                            return cm.createInProgressCommit(recordId, catalogId);
-                        } else {
-                            return $q.reject(errorMessage);
-                        }
-                    })
-                    .then(() => cm.updateInProgressCommit(recordId, catalogId, differenceObj), $q.reject);
+                return cm.updateInProgressCommit(recordId, catalogId, differenceObj);
             }
             self.addToAdditions = function(recordId, json) {
                 addToInProgress(recordId, json, 'additions');
