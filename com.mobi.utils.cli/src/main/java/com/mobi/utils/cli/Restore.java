@@ -82,7 +82,7 @@ public class Restore implements Action {
     private static final Logger LOGGER = LoggerFactory.getLogger(Restore.class);
 
     private static final String RESTORE_PATH = System.getProperty("java.io.tmpdir") + "/restoreZip";
-    private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14");
+    private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15");
 
     // Service References
 
