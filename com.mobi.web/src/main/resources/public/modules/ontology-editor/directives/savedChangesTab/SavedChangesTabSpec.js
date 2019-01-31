@@ -187,19 +187,23 @@ describe('Saved Changes Tab directive', function() {
             describe('when deleteInProgressCommit resolves', function() {
                 beforeEach(function() {
                     catalogManagerSvc.deleteInProgressCommit.and.returnValue($q.when());
-                    this.controller.removeChanges();
                 });
                 it('and updateOntology resolves', function() {
                     ontologyStateSvc.updateOntology.and.returnValue($q.when());
+                    this.controller.removeChanges();
                     scope.$digest();
                     expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                     expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.upToDate);
+                    expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalled();
                     expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
                 });
                 it('and updateOntology rejects', function() {
                     ontologyStateSvc.updateOntology.and.returnValue($q.reject('error'));
+                    this.controller.removeChanges();
                     scope.$digest();
                     expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
+                    expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalled();
+                    expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.upToDate);
                     expect(this.controller.error).toEqual('error');
                 });
             });
@@ -208,6 +212,8 @@ describe('Saved Changes Tab directive', function() {
                 this.controller.removeChanges();
                 scope.$digest();
                 expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
+                expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
                 expect(this.controller.error).toBe('error');
             });
         });
